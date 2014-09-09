@@ -17,18 +17,22 @@
 
 package com.google.bitcoin.script;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -46,7 +50,6 @@ public class ScriptTest {
     static final String sigProg = "47304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c";
 
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
-
 
     static final NetworkParameters params = TestNet3Params.get();
 
@@ -195,7 +198,7 @@ public class ScriptTest {
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
     }
 
-    private Script parseScriptString(String string) throws Exception {
+    private Script parseScriptString(String string) throws IOException {
         String[] words = string.split("[ \\t\\n]");
         
         UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
@@ -233,296 +236,123 @@ public class ScriptTest {
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream("script_valid.json"), Charset.forName("UTF-8")));
-
-        NetworkParameters params = TestNet3Params.get();
-        
-        // Poor man's JSON parser (because pulling in a lib for this is overkill)
-        String script = "";
-        while (in.ready()) {
-            String line = in.readLine();
-            if (line == null || line.equals("")) continue;
-            script += line;
-            if (line.equals("]") && script.equals("]") && !in.ready())
-                break; // ignore last ]
-            if (line.trim().endsWith("],") || line.trim().endsWith("]")) {
-                String[] scripts = script.split(",");
-
-                scripts[0] = scripts[0].replaceAll("[\"\\[\\]]", "").trim();
-                scripts[1] = scripts[1].replaceAll("[\"\\[\\]]", "").trim();
-                Script scriptSig = parseScriptString(scripts[0]);
-                Script scriptPubKey = parseScriptString(scripts[1]);
-
-                try {
-                    scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
-                } catch (ScriptException e) {
-                    System.err.println("scriptSig: " + scripts[0]);
-                    System.err.println("scriptPubKey: " + scripts[1]);
-                    System.err.flush();
-                    throw e;
-                }
-                script = "";
+        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
+                "script_valid.json"), Charsets.UTF_8));
+        for (JsonNode test : json) {
+            Script scriptSig = parseScriptString(test.get(0).asText());
+            Script scriptPubKey = parseScriptString(test.get(1).asText());
+            try {
+                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+            } catch (ScriptException e) {
+                System.err.println(test);
+                System.err.flush();
+                throw e;
             }
         }
-        in.close();
     }
     
     @Test
     public void dataDrivenInvalidScripts() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream("script_invalid.json"), Charset.forName("UTF-8")));
-
-        NetworkParameters params = TestNet3Params.get();
-        
-        // Poor man's JSON parser (because pulling in a lib for this is overkill)
-        String script = "";
-        while (in.ready()) {
-            String line = in.readLine();
-            if (line == null || line.equals("")) continue;
-            script += line;
-            if (line.equals("]") && script.equals("]") && !in.ready())
-                break; // ignore last ]
-            if (line.trim().endsWith("],") || line.trim().equals("]")) {
-                String[] scripts = script.split(",");
-                try {                    
-                    scripts[0] = scripts[0].replaceAll("[\"\\[\\]]", "").trim();
-                    scripts[1] = scripts[1].replaceAll("[\"\\[\\]]", "").trim();
-                    Script scriptSig = parseScriptString(scripts[0]);
-                    Script scriptPubKey = parseScriptString(scripts[1]);
-
-                    scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
-                    System.err.println("scriptSig: " + scripts[0]);
-                    System.err.println("scriptPubKey: " + scripts[1]);
-                    System.err.flush();
-                    fail();
-                } catch (VerificationException e) {
-                    // Expected.
-                }
-                script = "";
-            }
-        }
-        in.close();
-    }
-    
-    private static class JSONObject {
-        String string;
-        List<JSONObject> list;
-        boolean booleanValue;
-        Integer integer;
-        JSONObject(String string) { this.string = string; }
-        JSONObject(List<JSONObject> list) { this.list = list; }
-        JSONObject(Integer integer) { this.integer = integer; }
-        JSONObject(boolean value) { this.booleanValue = value; }
-        boolean isList() { return list != null; }
-        boolean isString() { return string != null; }
-        boolean isInteger() { return integer != null; }
-        boolean isBoolean() { return !isList() && !isString() && !isInteger(); }
-    }
-    
-    private boolean appendToList(List<JSONObject> tx, StringBuffer buffer) {
-        if (buffer.length() == 0)
-            return true;
-        switch(buffer.charAt(0)) {
-        case '[':
-            int closePos = 0;
-            boolean inString = false;
-            int inArray = 0;
-            for (int i = 1; i < buffer.length() && closePos == 0; i++) {
-                switch (buffer.charAt(i)) {
-                case '"':
-                    if (buffer.charAt(i-1) != '\\')
-                        inString = !inString;
-                    break;
-                case ']':
-                    if (!inString) {
-                        if (inArray == 0)
-                            closePos = i;
-                        else
-                            inArray--;
-                    }
-                    break;
-                case '[':
-                    if (!inString)
-                        inArray++;
-                    break;
-                default:
-                    break;
-                }
-            }
-            if (inArray != 0 || closePos == 0)
-                return false;
-            List<JSONObject> subList = new ArrayList<JSONObject>(5);
-            StringBuffer subBuff = new StringBuffer(buffer.substring(1, closePos));
-            boolean finished = appendToList(subList, subBuff);
-            if (finished) {
-                buffer.delete(0, closePos + 1);
-                tx.add(new JSONObject(subList));
-                return appendToList(tx, buffer);
-            } else
-                return false;
-        case '"':
-            int finishPos = 0;
-            do {
-                finishPos = buffer.indexOf("\"", finishPos + 1);
-            } while (finishPos == -1 || buffer.charAt(finishPos - 1) == '\\');
-            if (finishPos == -1)
-                return false;
-            tx.add(new JSONObject(buffer.substring(1, finishPos)));
-            buffer.delete(0, finishPos + 1);
-            return appendToList(tx, buffer);
-        case ',':
-        case ' ':
-            buffer.delete(0, 1);
-            return appendToList(tx, buffer);
-        default:
-            String first = buffer.toString().split(",")[0].trim();
-            if (first.equals("true")) {
-                tx.add(new JSONObject(true));
-                buffer.delete(0, 4);
-                return appendToList(tx, buffer);
-            } else if (first.equals("false")) {
-                tx.add(new JSONObject(false));
-                buffer.delete(0, 5);
-                return appendToList(tx, buffer);
-            } else if (first.matches("^-?[0-9]*$")) {
-                tx.add(new JSONObject(Integer.parseInt(first)));
-                buffer.delete(0, first.length());
-                return appendToList(tx, buffer);
-            } else
+        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
+                "script_invalid.json"), Charsets.UTF_8));
+        for (JsonNode test : json) {
+            try {
+                Script scriptSig = parseScriptString(test.get(0).asText());
+                Script scriptPubKey = parseScriptString(test.get(1).asText());
+                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                System.err.println(test);
+                System.err.flush();
                 fail();
+            } catch (VerificationException e) {
+                // Expected.
+            }
         }
-        return false;
     }
     
+    private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
+        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+        for (JsonNode input : inputs) {
+            String hash = input.get(0).asText();
+            int index = input.get(1).asInt();
+            String script = input.get(2).asText();
+            Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
+            scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
+        }
+        return scriptPubKeys;
+    }
+
     @Test
     public void dataDrivenValidTransactions() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream("tx_valid.json"), Charset.forName("UTF-8")));
+        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
+                "tx_valid.json"), Charsets.UTF_8));
+        for (JsonNode test : json) {
+            if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
+                continue; // This is a comment.
+            Transaction transaction = null;
+            try {
+                Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
+                transaction = new Transaction(params, HEX.decode(test.get(1).asText().toLowerCase()));
+                transaction.verify();
+                boolean enforceP2SH = test.get(2).asBoolean();
 
-        NetworkParameters params = TestNet3Params.get();
-        
-        // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably not overkill)
-        int lineNum = -1;
-        List<JSONObject> tx = new ArrayList<JSONObject>(3);
-        in.read(); // remove first [
-        StringBuffer buffer = new StringBuffer(1000);
-        while (in.ready()) {
-            lineNum++;
-            String line = in.readLine();
-            if (line == null || line.equals("")) continue;
-            buffer.append(line);
-            if (line.equals("]") && buffer.toString().equals("]") && !in.ready())
-                break;
-            boolean isFinished = appendToList(tx, buffer);
-            while (tx.size() > 0 && tx.get(0).isList() && tx.get(0).list.size() == 1 && tx.get(0).list.get(0).isString())
-                tx.remove(0); // ignore last ]
-            if (isFinished && tx.size() == 1 && tx.get(0).list.size() == 3) {
-                Transaction transaction = null;
-                try {
-                    HashMap<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
-                    for (JSONObject input : tx.get(0).list.get(0).list) {
-                        String hash = input.list.get(0).string;
-                        int index = input.list.get(1).integer;
-                        String script = input.list.get(2).string;
-                        Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
-                        scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
-                    }
-
-                    transaction = new Transaction(params, HEX.decode(tx.get(0).list.get(1).string.toLowerCase()));
-                    boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
-                    assertTrue(tx.get(0).list.get(2).isBoolean());
-
-                    transaction.verify();
-
-                    for (int i = 0; i < transaction.getInputs().size(); i++) {
-                        TransactionInput input = transaction.getInputs().get(i);
-                        if (input.getOutpoint().getIndex() == 0xffffffffL)
-                            input.getOutpoint().setIndex(-1);
-                        assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                        input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()), enforceP2SH);
-                    }
-                    tx.clear();
-                } catch (Exception e) {
-                    System.err.println("Exception processing line " + lineNum + ": " + line);
-                    if (transaction != null)
-                        System.err.println(transaction);
-                    throw e;
+                for (int i = 0; i < transaction.getInputs().size(); i++) {
+                    TransactionInput input = transaction.getInputs().get(i);
+                    if (input.getOutpoint().getIndex() == 0xffffffffL)
+                        input.getOutpoint().setIndex(-1);
+                    assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
+                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
+                            enforceP2SH);
                 }
+            } catch (Exception e) {
+                System.err.println(test);
+                if (transaction != null)
+                    System.err.println(transaction);
+                throw e;
             }
         }
-        in.close();
     }
 
     @Test
     public void dataDrivenInvalidTransactions() throws Exception {
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                getClass().getResourceAsStream("tx_invalid.json"), Charset.forName("UTF-8")));
+        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
+                "tx_invalid.json"), Charsets.UTF_8));
+        for (JsonNode test : json) {
+            if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
+                continue; // This is a comment.
+            Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
+            Transaction transaction = new Transaction(params, HEX.decode(test.get(1).asText().toLowerCase()));
+            boolean enforceP2SH = test.get(2).asBoolean();
 
-        NetworkParameters params = TestNet3Params.get();
-        
-        // Poor man's (aka. really, really poor) JSON parser (because pulling in a lib for this is probably overkill)
-        List<JSONObject> tx = new ArrayList<JSONObject>(1);
-        in.read(); // remove first [
-        StringBuffer buffer = new StringBuffer(1000);
-        while (in.ready()) {
-            String line = in.readLine();
-            if (line == null || line.equals(""))
-                continue;
-            buffer.append(line);
-            if (line.equals("]") && buffer.toString().equals("]") && !in.ready())
-                break; // ignore last ]
-            boolean isFinished = appendToList(tx, buffer);
-            while (tx.size() > 0 && tx.get(0).isList() && tx.get(0).list.size() == 1 && tx.get(0).list.get(0).isString())
-                tx.remove(0);
-            if (isFinished && tx.size() == 1 && tx.get(0).list.size() == 3) {
-                HashMap<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
-                for (JSONObject input : tx.get(0).list.get(0).list) {
-                    String hash = input.list.get(0).string;
-                    int index = input.list.get(1).integer;
-                    String script = input.list.get(2).string;
-                    Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
-                    scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
-                }
+            boolean valid = true;
+            try {
+                transaction.verify();
+            } catch (VerificationException e) {
+                valid = false;
+            }
 
-                Transaction transaction = new Transaction(params, HEX.decode(tx.get(0).list.get(1).string));
-                boolean enforceP2SH = tx.get(0).list.get(2).booleanValue;
-                assertTrue(tx.get(0).list.get(2).isBoolean());
-                
-                
-                boolean valid = true;
+            // The reference client checks this case in CheckTransaction, but we leave it to
+            // later where we will see an attempt to double-spend, so we explicitly check here
+            HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
+            for (TransactionInput input : transaction.getInputs()) {
+                if (set.contains(input.getOutpoint()))
+                    valid = false;
+                set.add(input.getOutpoint());
+            }
+
+            for (int i = 0; i < transaction.getInputs().size() && valid; i++) {
+                TransactionInput input = transaction.getInputs().get(i);
+                assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                 try {
-                    transaction.verify();
+                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
+                            enforceP2SH);
                 } catch (VerificationException e) {
                     valid = false;
                 }
-                
-                // The reference client checks this case in CheckTransaction, but we leave it to
-                // later where we will see an attempt to double-spend, so we explicitly check here
-                HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
-                for(TransactionInput input : transaction.getInputs()) {
-                    if (set.contains(input.getOutpoint()))
-                        valid = false;
-                    set.add(input.getOutpoint());
-                }
-                
-                for (int i = 0; i < transaction.getInputs().size() && valid; i++) {
-                    TransactionInput input = transaction.getInputs().get(i);
-                    assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                    try {
-                        input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()), enforceP2SH);
-                    } catch (VerificationException e) {
-                        valid = false;
-                    }
-                }
-                
-                if (valid)
-                    fail();
-                
-                tx.clear();
             }
+
+            if (valid)
+                fail();
         }
-        in.close();
     }
 
     @Test
