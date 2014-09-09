@@ -135,7 +135,7 @@ public class PaymentChannelServer {
 
     /**
      * Maximum channel duration, in seconds, that the client can request. Defaults to 1 week.
-     * Note that the server need to be online for the whole time the channel is open.
+     * Note that the server needs to be online for the whole time the channel is open.
      * Failure to do this could cause loss of all payments received on the channel.
      */
     protected final long maxTimeWindow;
