@@ -153,7 +153,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void testCreateEmptyInputScript() throws Exception {
+    public void createAndUpdateEmptyInputScript() throws Exception {
         TransactionSignature dummySig = TransactionSignature.dummy();
         ECKey key = new ECKey();
 
@@ -196,6 +196,14 @@ public class ScriptTest {
         assertThat(inputScript.getChunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
         assertThat(inputScript.getChunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
         assertThat(inputScript.getChunks().get(3).data, equalTo(multisigScript.getProgram()));
+
+        // updating scriptSig with no missing signatures
+        try {
+            ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, 1, 1);
+            fail("Exception expected");
+        } catch (Exception e) {
+            assertEquals(IllegalArgumentException.class, e.getClass());
+        }
     }
 
     private Script parseScriptString(String string) throws IOException {

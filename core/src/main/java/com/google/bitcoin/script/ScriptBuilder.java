@@ -203,7 +203,8 @@ public class ScriptBuilder {
     /**
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
      *
-     * This function assumes that any missing sigs have OP_0 placeholders.
+     * This function assumes that any missing sigs have OP_0 placeholders. If given scriptSig already has all the signatures
+     * in place, IllegalArgumentException will be thrown.
      *
      * @param targetIndex where to insert the signature
      * @param sigsPrefixCount how many items to copy verbatim (e.g. initial OP_0 for multisig)
@@ -214,6 +215,12 @@ public class ScriptBuilder {
         ScriptBuilder builder = new ScriptBuilder();
         List<ScriptChunk> inputChunks = scriptSig.getChunks();
         int totalChunks = inputChunks.size();
+
+        // Check if we have a place to insert, otherwise just return given scriptSig unchanged.
+        // We assume here that OP_0 placeholders always go after the sigs, so
+        // to find if we have sigs missing, we can just check the chunk in latest sig position
+        boolean hasMissingSigs = inputChunks.get(totalChunks - sigsSuffixCount - 1).equalsOpCode(OP_0);
+        checkArgument(hasMissingSigs, "ScriptSig is already filled with signatures");
 
         // copy the prefix
         for (ScriptChunk chunk: inputChunks.subList(0, sigsPrefixCount))
