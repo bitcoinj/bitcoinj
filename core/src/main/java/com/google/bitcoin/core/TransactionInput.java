@@ -437,7 +437,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
         }
         Script pubKey = output.getScriptPubKey();
         int myIndex = getParentTransaction().getInputs().indexOf(this);
-        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey, true);
+        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey);
     }
 
     /**

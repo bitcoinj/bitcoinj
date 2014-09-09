@@ -24,6 +24,7 @@ import com.google.bitcoin.core.Transaction.SigHash;
 import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.script.Script.VerifyFlag;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -31,6 +32,8 @@ import com.google.common.collect.Lists;
 import org.hamcrest.core.IsNot;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -52,6 +55,8 @@ public class ScriptTest {
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
     static final NetworkParameters params = TestNet3Params.get();
+
+    private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 
     @Test
     public void testScriptSig() throws Exception {
@@ -241,6 +246,20 @@ public class ScriptTest {
         
         return new Script(out.toByteArray());
     }
+
+    private Set<VerifyFlag> parseVerifyFlags(String str) {
+        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
+        if (!"NONE".equals(str)) {
+            for (String flag : str.split(",")) {
+                try {
+                    flags.add(VerifyFlag.valueOf(flag));
+                } catch (IllegalArgumentException x) {
+                    log.warn("Cannot handle verify flag {} -- ignored.", flag);
+                }
+            }
+        }
+        return flags;
+    }
     
     @Test
     public void dataDrivenValidScripts() throws Exception {
@@ -249,8 +268,9 @@ public class ScriptTest {
         for (JsonNode test : json) {
             Script scriptSig = parseScriptString(test.get(0).asText());
             Script scriptPubKey = parseScriptString(test.get(1).asText());
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
             try {
-                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, verifyFlags);
             } catch (ScriptException e) {
                 System.err.println(test);
                 System.err.flush();
@@ -267,7 +287,8 @@ public class ScriptTest {
             try {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
-                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, true);
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+                scriptSig.correctlySpends(new Transaction(params), 0, scriptPubKey, verifyFlags);
                 System.err.println(test);
                 System.err.flush();
                 fail();
@@ -301,7 +322,7 @@ public class ScriptTest {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
                 transaction = new Transaction(params, HEX.decode(test.get(1).asText().toLowerCase()));
                 transaction.verify();
-                boolean enforceP2SH = test.get(2).asBoolean();
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInputs().get(i);
@@ -309,7 +330,7 @@ public class ScriptTest {
                         input.getOutpoint().setIndex(-1);
                     assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                     input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
-                            enforceP2SH);
+                            verifyFlags);
                 }
             } catch (Exception e) {
                 System.err.println(test);
@@ -329,7 +350,7 @@ public class ScriptTest {
                 continue; // This is a comment.
             Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
             Transaction transaction = new Transaction(params, HEX.decode(test.get(1).asText().toLowerCase()));
-            boolean enforceP2SH = test.get(2).asBoolean();
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
             boolean valid = true;
             try {
@@ -352,7 +373,7 @@ public class ScriptTest {
                 assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                 try {
                     input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
-                            enforceP2SH);
+                            verifyFlags);
                 } catch (VerificationException e) {
                     valid = false;
                 }
