@@ -16,10 +16,12 @@
 
 package com.google.bitcoin.net.discovery;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -45,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +67,8 @@ import static java.util.Collections.singleton;
 public class TorDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(TorDiscovery.class);
     public static final int MINIMUM_ROUTER_COUNT = 4;
-    public static final int MINIMUM_ROUTER_LOOKUP_COUNT = 10;
+    public static final int ROUTER_LOOKUP_COUNT = 10;
+    public static final int MINIMUM_ROUTER_LOOKUP_COUNT = 6;
     public static final int RECEIVE_RETRIES = 3;
     public static final int RESOLVE_STREAM_ID = 0x1000; // An arbitrary stream ID
     public static final int RESOLVE_CNAME = 0x00;
@@ -121,13 +125,14 @@ public class TorDiscovery implements PeerDiscovery {
         ArrayList<ExitTarget> dummyTargets = Lists.newArrayList();
 
         // Collect exit nodes until we have enough
-        while (routers.size() < MINIMUM_ROUTER_LOOKUP_COUNT) {
+        while (routers.size() < ROUTER_LOOKUP_COUNT) {
             Router router = pathChooser.chooseExitNodeForTargets(dummyTargets);
             routers.add(router);
         }
 
         try {
-            List<Circuit> circuits = getCircuits(timeoutValue, timeoutUnit, routers);
+            List<Circuit> circuits =
+                getCircuits(torClient.getConfig().getCircuitBuildTimeout(), TimeUnit.MILLISECONDS, routers);
             if (circuits.isEmpty())
                 throw new PeerDiscoveryException("Failed to open any circuit within " +
                                                  String.valueOf(timeoutValue) + " " + timeoutUnit);
@@ -146,34 +151,40 @@ public class TorDiscovery implements PeerDiscovery {
     }
 
     private List<Circuit> getCircuits(long timeoutValue, TimeUnit timeoutUnit, Set<Router> routers) throws InterruptedException {
+        checkArgument(routers.size() >= MINIMUM_ROUTER_LOOKUP_COUNT, "Set of {} routers is smaller than required minimum {}",
+                      routers.size(), MINIMUM_ROUTER_LOOKUP_COUNT);
         createThreadPool(routers.size());
 
         try {
             List<ListenableFuture<Circuit>> circuitFutures = Lists.newArrayList();
+            final CountDownLatch doneSignal = new CountDownLatch(MINIMUM_ROUTER_LOOKUP_COUNT);
             for (final Router router : routers) {
-                circuitFutures.add(threadPool.submit(new Callable<Circuit>() {
+                ListenableFuture<Circuit> openCircuit = threadPool.submit(new Callable<Circuit>() {
                     @Override
                     public Circuit call() throws Exception {
                         return torClient.getCircuitManager().openInternalCircuitTo(Lists.newArrayList(router));
                     }
-                }));
+                });
+                Futures.addCallback(openCircuit, new FutureCallback<Circuit>() {
+                    public void onSuccess(Circuit circuit) {
+                        doneSignal.countDown();
+                    }
+                    public void onFailure(Throwable thrown) {
+                        doneSignal.countDown();
+                    }
+                });
+                circuitFutures.add(openCircuit);
             }
 
-            int timeouts = 0;
-            threadPool.awaitTermination(timeoutValue, timeoutUnit);
-            for (ListenableFuture<Circuit> future : circuitFutures) {
-                if (!future.isDone()) {
-                    timeouts++;
-                    future.cancel(true);
-                }
-            }
-            if (timeouts > 0)
-                log.warn("{} DNS lookup circuits timed out", timeouts);
+            boolean countedDown = doneSignal.await(timeoutValue, timeoutUnit);
 
             try {
                 List<Circuit> circuits = new ArrayList<Circuit>(Futures.successfulAsList(circuitFutures).get());
                 // Any failures will result in null entries.  Remove them.
                 circuits.removeAll(singleton(null));
+                int failures = routers.size() - circuits.size();
+                if (failures > 0) log.warn("{} failures " + (countedDown ? "" : "(including timeout) ") +
+                                           "opening DNS lookup circuits", failures);
                 return circuits;
             } catch (ExecutionException e) {
                 // Cannot happen, successfulAsList accepts failures
@@ -209,7 +220,7 @@ public class TorDiscovery implements PeerDiscovery {
                 }
             }
             if (timeouts > 0)
-                log.warn("{} DNS lookup circuits timed out", timeouts);
+                log.warn("{} DNS lookups timed out", timeouts);
 
             try {
                 List<Lookup> lookups = new ArrayList<Lookup>(Futures.successfulAsList(lookupFutures).get());
