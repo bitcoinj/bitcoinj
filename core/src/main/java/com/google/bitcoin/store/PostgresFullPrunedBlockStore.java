@@ -29,7 +29,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.*;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * <p>A full pruned block store using the Postgres database engine. As an added bonus an address index is calculated,
@@ -809,8 +811,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
 
                 dbAddress = outputScript.getFromAddress(params).toString();
                 type = 2;
-            } else if (outputScript.isPayToScriptHash())
-            {
+            } else {
                 dbAddress = Address.fromP2SHHash(params, outputScript.getPubKeyHash()).toString();
                 type = 3;
             }
