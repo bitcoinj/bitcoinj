@@ -18,6 +18,7 @@
 package com.google.bitcoin.core;
 
 import com.google.bitcoin.params.MainNetParams;
+import com.google.bitcoin.params.Networks;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
@@ -88,13 +89,42 @@ public class AddressTest {
             fail();
         }
     }
-    
+
     @Test
     public void getNetwork() throws Exception {
         NetworkParameters params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
         assertEquals(MainNetParams.get().getId(), params.getId());
         params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
         assertEquals(TestNet3Params.get().getId(), params.getId());
+    }
+
+    @Test
+    public void getAltNetwork() throws Exception {
+        // An alternative network
+        class AltNetwork extends MainNetParams {
+            AltNetwork() {
+                super();
+                id = "alt.network";
+                addressHeader = 48;
+                p2shHeader = 5;
+                acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
+            }
+        }
+        AltNetwork altNetwork = new AltNetwork();
+        // Add new network params
+        Networks.register(altNetwork);
+        // Check if can parse address
+        NetworkParameters params = Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+        assertEquals(altNetwork.getId(), params.getId());
+        // Check if main network works as before
+        params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        assertEquals(MainNetParams.get().getId(), params.getId());
+        // Unregister network
+        Networks.unregister(altNetwork);
+        try {
+            Address.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            fail();
+        } catch (AddressFormatException e) { }
     }
     
     @Test
