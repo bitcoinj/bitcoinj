@@ -1,28 +1,22 @@
 package com.subgraph.orchid.sockets;
 
+import com.subgraph.orchid.OpenFailedException;
+import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.Threading;
+import com.subgraph.orchid.TorClient;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.SocketImpl;
-import java.net.SocketOptions;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.util.concurrent.TimeoutException;
-
-import com.subgraph.orchid.OpenFailedException;
-import com.subgraph.orchid.Stream;
-import com.subgraph.orchid.TorClient;
+import java.util.concurrent.locks.Lock;
 
 public class OrchidSocketImpl extends SocketImpl {
-	
 	private final TorClient torClient;
-	private final Object streamLock = new Object();	
 
+	private Lock streamLock = Threading.lock("stream");
 	private Stream stream;
 	
 	OrchidSocketImpl(TorClient torClient) {
@@ -53,16 +47,16 @@ public class OrchidSocketImpl extends SocketImpl {
 
 	@Override
 	protected void connect(String host, int port) throws IOException {
-        SocketAddress endpoint =
-                InetSocketAddress.createUnresolved(host, port);
-        connect(endpoint, 0);
+		SocketAddress endpoint =
+				InetSocketAddress.createUnresolved(host, port);
+		connect(endpoint, 0);
 	}
 
 	@Override
 	protected void connect(InetAddress address, int port) throws IOException {
-        SocketAddress endpoint =
-                InetSocketAddress.createUnresolved(address.getHostAddress(), port);
-        connect(endpoint, 0);
+		SocketAddress endpoint =
+				InetSocketAddress.createUnresolved(address.getHostAddress(), port);
+		connect(endpoint, 0);
 	}
 
 	@Override
@@ -85,20 +79,36 @@ public class OrchidSocketImpl extends SocketImpl {
 	}
 
 	private void doConnect(String host, int port) throws IOException {
-		synchronized(streamLock) {
-			if(stream != null) {
-				throw new SocketException("Already connected");
-			}
-			try {
-				stream = torClient.openExitStreamTo(host, port);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				throw new SocketException("connect() interrupted");
-			} catch (TimeoutException e) {
-				throw new SocketTimeoutException();
-			} catch (OpenFailedException e) {
-				throw new ConnectException(e.getMessage());
-			}
+		Stream stream;
+
+		// Try to avoid holding the stream lock here whilst calling into torclient to avoid accidental inversions.
+
+		streamLock.lock();
+		stream = this.stream;
+		streamLock.unlock();
+
+		if (stream != null)
+			throw new SocketException("Already connected");
+
+		try {
+			stream = torClient.openExitStreamTo(host, port);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new SocketException("connect() interrupted");
+		} catch (TimeoutException e) {
+			throw new SocketTimeoutException();
+		} catch (OpenFailedException e) {
+			throw new ConnectException(e.getMessage());
+		}
+
+		streamLock.lock();
+		if (this.stream != null) {
+			// Raced with another concurrent call.
+			streamLock.unlock();
+			stream.close();
+		} else {
+			this.stream = stream;
+			streamLock.unlock();
 		}
 	}
 
@@ -117,44 +127,41 @@ public class OrchidSocketImpl extends SocketImpl {
 		throw new UnsupportedOperationException();
 	}
 
+	private Stream getStream() throws IOException {
+		streamLock.lock();
+		try {
+			if (stream == null)
+				throw new IOException("Not connected");
+			return stream;
+		} finally {
+			streamLock.unlock();
+		}
+	}
+
 	@Override
 	protected InputStream getInputStream() throws IOException {
-		synchronized (streamLock) {
-			if(stream == null) {
-				throw new IOException("Not connected");
-			}
-			return stream.getInputStream();
-		}
+		return getStream().getInputStream();
 	}
 
 	@Override
 	protected OutputStream getOutputStream() throws IOException {
-		synchronized (streamLock) {
-			if(stream == null) {
-				throw new IOException("Not connected");
-			}
-			return stream.getOutputStream();
-		}
+		return getStream().getOutputStream();
 	}
 
 	@Override
 	protected int available() throws IOException {
-		synchronized(streamLock) {
-			if(stream == null) {
-				throw new IOException("Not connected");
-			}
-			return stream.getInputStream().available();
-		}
+		return getStream().getInputStream().available();
 	}
 
 	@Override
 	protected void close() throws IOException {
-		synchronized (streamLock) {
-			if(stream != null) {
-				stream.close();
-				stream = null;
-			}
-		}
+		Stream toClose;
+		streamLock.lock();
+		toClose = this.stream;
+		this.stream = null;
+		streamLock.unlock();
+		if (toClose != null)
+			toClose.close();
 	}
 
 	@Override
@@ -163,10 +170,10 @@ public class OrchidSocketImpl extends SocketImpl {
 	}
 	
 	 protected void shutdownInput() throws IOException {
-      //throw new IOException("Method not implemented!");
-    }
+	  //throw new IOException("Method not implemented!");
+	}
 	 
 	 protected void shutdownOutput() throws IOException {
-      //throw new IOException("Method not implemented!");
-    }
+	  //throw new IOException("Method not implemented!");
+	}
 }
