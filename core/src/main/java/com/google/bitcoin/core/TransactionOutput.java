@@ -270,9 +270,9 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         availableForSpending = false;
         spentBy = input;
         if (parent != null)
-            log.info("Marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), input);
+            if (log.isDebugEnabled()) log.debug("Marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), input);
         else
-            log.info("Marked floating output as spent by {}", input);
+            if (log.isDebugEnabled()) log.debug("Marked floating output as spent by {}", input);
     }
 
     /**
@@ -280,9 +280,9 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     public void markAsUnspent() {
         if (parent != null)
-            log.info("Un-marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), spentBy);
+            if (log.isDebugEnabled()) log.debug("Un-marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), spentBy);
         else
-            log.info("Un-marked floating output as spent by {}", spentBy);
+            if (log.isDebugEnabled()) log.debug("Un-marked floating output as spent by {}", spentBy);
         availableForSpending = true;
         spentBy = null;
     }
