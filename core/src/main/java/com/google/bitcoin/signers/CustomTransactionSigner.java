@@ -60,8 +60,20 @@ public abstract class CustomTransactionSigner extends StatelessTransactionSigner
                 log.warn("CustomTransactionSigner works only with P2SH transactions");
                 return false;
             }
-            Script inputScript = txIn.getScriptSig();
-            checkNotNull(inputScript);
+
+            Script inputScript = checkNotNull(txIn.getScriptSig());
+
+            try {
+                // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
+                // we sign missing pieces (to check this would require either assuming any signatures are signing
+                // standard output types or a way to get processed signatures out of script execution)
+                txIn.getScriptSig().correctlySpends(tx, i, txIn.getConnectedOutput().getScriptPubKey(), true);
+                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
+                continue;
+            } catch (ScriptException e) {
+                // Expected.
+            }
+
             RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
             if (redeemData == null) {
                 log.warn("No redeem data found for input {}", i);
