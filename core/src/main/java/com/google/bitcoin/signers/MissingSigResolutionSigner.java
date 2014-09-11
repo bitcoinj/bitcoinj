@@ -65,9 +65,10 @@ public class MissingSigResolutionSigner extends StatelessTransactionSigner {
 
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             Script inputScript = txIn.getScriptSig();
-            if (scriptPubKey.isPayToScriptHash()) {
+            if (scriptPubKey.isPayToScriptHash() || scriptPubKey.isSentToMultiSig()) {
+                int sigSuffixCount = scriptPubKey.isPayToScriptHash() ? 1 : 0;
                 // all chunks except the first one (OP_0) and the last (redeem script) are signatures
-                for (int j = 1; j < inputScript.getChunks().size() - 1; j++) {
+                for (int j = 1; j < inputScript.getChunks().size() - sigSuffixCount; j++) {
                     ScriptChunk scriptChunk = inputScript.getChunks().get(j);
                     if (scriptChunk.equalsOpCode(0)) {
                         if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
