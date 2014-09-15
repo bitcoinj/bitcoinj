@@ -1,46 +1,85 @@
 package com.google.bitcoin.examples;
 
+/**
+ * The following example shows you how to to create a SendRequest to send coins from a wallet to a given address.
+ */
+
 import java.io.File;
 
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.Coin;
+import com.google.bitcoin.core.InsufficientMoneyException;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.Wallet.BalanceType;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public class SendRequest {
 
     public static void main(String[] args) throws Exception {
-        // we reuse the code from the WalletAppKit example. have a look there for explanation
+        /**
+         * We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details
+         */
         NetworkParameters params = TestNet3Params.get();
         WalletAppKit kit = new WalletAppKit(params, new File("."), "sendrequest-example");
         kit.startAsync();
         kit.awaitRunning();
 
-        // you can get testnet coins from: http://faucet.xeno-genesis.com/
-        System.out.println("send money to: " + kit.wallet().currentReceiveAddress().toString());
+        System.out.println("Send money to: " + kit.wallet().currentReceiveAddress().toString());
 
-        // the coin class represents a bitcoin value
-        // we use the parseCoin method to simple a readable string as value 
+        /**
+         * How much coins do we want to send?
+         * The Coin class represents a monetary Bitcoin value.
+         * We use the parseCoin function to simply get a Coin instance from a simple String.
+         */
         Coin value = Coin.parseCoin("0.09");
 
-        // to which address should we send the money to?
-        // create a new Address object from the address hash
-        Address to = new Address(params, "mhPoR8WQ3vNnYw2tgpRVBViZHkkydan31G");
+        /**
+         * To which address you want to send the coins?
+         * The Address class represents a Bitcoin address.
+         */
+        Address to = new Address(params, "mupBAFeT63hXfeeT4rnAUcpKHDkz1n4fdw");
 
-        // there are different ways to create and publish a SendRequest. this is probably the easiest. 
-        // have a look at the SendRequest class: https://bitcoinj.github.io/javadoc/0.11/com/google/bitcoin/core/Wallet.SendRequest.html
+        /**
+         * There are different ways to create and publish a SendRequest. This is probably the easiest one.
+         * Have a look at the code of the SendRequest class to see what's happening and what other options you have: https://bitcoinj.github.io/javadoc/0.11/com/google/bitcoin/core/Wallet.SendRequest.html
+         * 
+         * Please not that this might raise a InsufficientMoneyException if your wallet has not enough coins to spend.
+         * When using the testnet you can use a faucet (like the http://faucet.xeno-genesis.com/) to get testnet coins.
+         * In this example we simply catch the InsufficientMoneyException and print a notice.
+         */
+        try {
+            Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
+            System.out.println("coins sent. transaction hash: " + result.tx.getHashAsString());
+            // you can use a block explorer like https://www.biteasy.com/ to inspect the transaction with the printed transaction hash. 
+        } catch (InsufficientMoneyException e) {
+            System.out.println("Not enough coins in your wallet. Missing " + e.missing.getValue() + " satoshis are missing (including fees)");
+            System.out.println("Send money to: " + kit.wallet().currentReceiveAddress().toString());
 
-        // this might raise an Insufficent money error when you do not have enough coins to spend in your wallet. 
-        // to test send money to the address that we print in line 19. You can use the http://faucet.xeno-genesis.com/ to get testnet coins. 
-        Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
+            /**
+             * Bitcoinj allows you to define a BalanceFuture to execute a callback once your wallet has a certain balance.
+             * Here we wait until the we have enough balance.
+             * Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
+             */
+            ListenableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
+            FutureCallback<Coin> callback = new FutureCallback<Coin>() {
+                public void onSuccess(Coin balance) {
+                    System.out.println("coins arrived");
+                }
 
-        System.out.println("coins sent " + result.tx.getHashAsString());
+                public void onFailure(Throwable t) {
+                    System.out.println("something went wrong");
+                }
+            };
+            Futures.addCallback(balanceFuture, callback);
+        }
 
         // shutting down 
-        kit.stopAsync();
-        kit.awaitTerminated();
+        //kit.stopAsync();
+        //kit.awaitTerminated();
     }
-
 }

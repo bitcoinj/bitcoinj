@@ -1,53 +1,70 @@
 package com.google.bitcoin.examples;
 
+/**
+ * The following example shows you how to restore a HD wallet from a previously generated deterministic seed. 
+ * In this example we manually setup the blockchain, peer group, etc. You can also use the WalletAppKit which provides a restoreWalletFromSeed function to load a wallet from a deterministic seed. 
+ */
+
 import java.io.File;
 
+import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.BlockChain;
+import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.PeerGroup;
 import com.google.bitcoin.core.Wallet;
-import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.wallet.DeterministicSeed;
 
-// this example restores a wallet from a deterministic seed and re-syncs the blockchain again
 public class RestoreFromSeed {
 
     public static void main(String[] args) throws Exception {
-        // we reuse the code from the WalletAppKit example. have a look there
-        // for explanation
         NetworkParameters params = TestNet3Params.get();
 
+        /**
+         * Bitcoinj supports hierarchical deterministic wallets (or "HD Wallets"): https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
+         * HD wallets allow you to restore your wallet simply from a root seed. This seed can be represented using a short mnemonic sentence as described in BIP 39: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+         * 
+         * Here we restore our wallet from a seed with no passphrase. Also have a look at the BackupToMnemonicSeed.java example that shows how to backup a wallet by creating a mnemonic seed.
+         */
         String seedCode = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
         String passphrase = "";
         Long creationtime = new Long(1409478661);
 
         DeterministicSeed seed = new DeterministicSeed(seedCode, passphrase, creationtime);
+        /**
+         * The wallet class provides a easy fromSeed function that creates a new wallet from a given seed.
+         */
         Wallet wallet = Wallet.fromSeed(params, seed);
 
-        // make sure to replay the blockchain. so that the wallet picks up the
-        // transaction (at least from the seed creation time)
+        /**
+         * Because we are importing an existing wallet which might already have transactions we must re-download the blockchain to make the wallet picks up these transactions
+         * You can find some information about this in the guides: https://bitcoinj.github.io/working-with-the-wallet#setup
+         * To do this we clear the transactions of the wallet and delete a possible existing blockchain file before we download the blockchain later.
+         */
+        System.out.println(wallet.toString());
         wallet.clearTransactions(0);
-        // we need to delete the old chain file to sync the blockchain again to
-        // make sure the wallet picks up the transactions
         File chainFile = new File("restore-from-seed.spvchain");
         if (chainFile.exists()) {
             chainFile.delete();
         }
 
-        // in this example we manually setup the blockstore, blockchain and connect to the bitcoin peers
-        SPVBlockStore chainStore = new SPVBlockStore(params, chainFile); // where to store the blockchain
-
+        /**
+         * Setting up the BlochChain, the BlocksStore and connecting to the network.
+         */
+        SPVBlockStore chainStore = new SPVBlockStore(params, chainFile);
         BlockChain chain = new BlockChain(params, chainStore);
         PeerGroup peers = new PeerGroup(params, chain);
-        peers.addPeerDiscovery(new DnsDiscovery(params)); // how do we find
-                                                          // peers
+        peers.addPeerDiscovery(new DnsDiscovery(params));
 
-        chain.addWallet(wallet); // hook up the blockchain and our wallet - we need to know when new transactions arrive in a block
-        peers.addWallet(wallet); // hook up the peers network and our wallet - we need to know when pending transactions arrive
+        /**
+         * Now we need to hook the wallet up to the blockchain and the peers. This registers event listeners that notify our wallet about new transactions.
+         */
+        chain.addWallet(wallet);
+        peers.addWallet(wallet);
 
         DownloadListener bListener = new DownloadListener() {
             @Override
@@ -55,38 +72,28 @@ public class RestoreFromSeed {
                 System.out.println("blockchain downloaded");
             }
         };
-        // connect and sync the blockchain
+
+        /**
+         * Now we re-download the blockchain. This replys the chain into the wallet. Once this is completed our wallet should know of all its transactions and print the correct balance.
+         */
         peers.startAsync();
         peers.awaitRunning();
-        peers.startBlockChainDownload(bListener); // download the blockchain... takes a long time
+        peers.startBlockChainDownload(bListener);
 
-        System.out.println("downloading");
         bListener.await();
 
-        // done wallet is restored and it should have the correct balance
+        /**
+         * Print a debug message with the details about the wallet. The correct balance should now be displayed.
+         */
         System.out.println(wallet.toString());
 
-        // shutting down again
-        peers.stopAsync();
-        peers.awaitTerminated();
-
-        // !!!!!!!!
-        // same code as above but using the WalletAppKit - much shorter
-        //
-
-        WalletAppKit kit = new WalletAppKit(params, new File("."), "restorefromseed-example");
-        // the important part. give the kit a seed to restore from. This must happen before starting the kit (startAsync())
-        kit.restoreWalletFromSeed(seed);
-
-        kit.startAsync();
-        kit.awaitRunning();
-        System.out.println(kit.wallet().toString());
-
-        System.out.println("send money to: " + kit.wallet().currentReceiveAddress().toString());
+        Coin value = Coin.parseCoin("0.009");
+        Address to = new Address(params, "mkLQmg2aqDpTNvrm4sCxCAnAhk7uPsAf7A");
+        Wallet.SendResult result = wallet.sendCoins(peers, to, value);
 
         // shutting down again
-        kit.stopAsync();
-        kit.awaitTerminated();
+        //peers.stopAsync();
+        //peers.awaitTerminated();
+
     }
-
 }

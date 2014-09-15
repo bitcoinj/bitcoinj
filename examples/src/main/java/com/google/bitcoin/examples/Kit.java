@@ -1,53 +1,122 @@
 package com.google.bitcoin.examples;
 
-import java.io.File;
+/**
+ * The following example shows how to use the by bitcoinj provided WalletAppKit.
+ * The WalletAppKit class wraps the boilerplate (Peers, BlockChain, BlockStorage, Wallet) needed to set up a new SPV bitcoinj app.
+ * 
+ * In this example we define a WalletEventListener class with implementors that are called when the wallet changes (for example sending/receiving money)
+ */
 
+import java.io.File;
+import java.util.List;
+
+import com.google.bitcoin.core.AbstractWalletEventListener;
+import com.google.bitcoin.core.Coin;
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.NetworkParameters;
+import com.google.bitcoin.core.Transaction;
+import com.google.bitcoin.core.TransactionConfidence;
+import com.google.bitcoin.core.Wallet;
 import com.google.bitcoin.kits.WalletAppKit;
 import com.google.bitcoin.params.TestNet3Params;
+import com.google.bitcoin.script.Script;
 
 public class Kit {
 
     public static void main(String[] args) {
 
-        // configuring the network we want to use. 
-        // MainNetParams - for the live/main network
-        // TestNet3Params - for using the test network. An alternative bitcoin network, following the same rules as the live network but coins are worth nothing. Get coins from: http://faucet.xeno-genesis.com/
-        // RegTestParams - for testing with your local bitcoin network. Run the bitcoid in regtest mode
-        // for more information have a look at: 
-        //   - https://bitcoinj.github.io/testing  
-        //   - https://bitcoin.org/en/developer-examples#testing-applications
+        /**
+         * First we configure the network we want to use.
+         * The available options are:
+         * - MainNetParams
+         * - TestNet3Params
+         * - RegTestParams
+         * While developing your application you probably want to use the Regtest mode and run your local bitcoin network. Run bitcoind with the -regtest flag
+         * To test you app with a real network you can use the testnet. The testnet is an alternative bitcoin network that follows the same rules as main network. Coins are worth nothing and you can get coins for example from http://faucet.xeno-genesis.com/
+         * 
+         * For more information have a look at: https://bitcoinj.github.io/testing and https://bitcoin.org/en/developer-examples#testing-applications
+         */
         NetworkParameters params = TestNet3Params.get();
 
-        // initialize a new WalletAppKit. The WalletAppKit sets up the peers, blockchain, blockstorage and the wallet for you. 
-        // it is the easiest way to get everything up and running. 
-        // have a look at the source of the WalletAppKit to see what's happening behind the scenes: https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/com/google/bitcoin/kits/WalletAppKit.java
-        final WalletAppKit kit = new WalletAppKit(params, new File("."), "walletappkit-example");
+        /**
+         * Now we initialize a new WalletAppKit. The kit handles all the boilerplate for us and is the easiest way to get everything up and running.
+         * Have a look at the WalletAppKit documentation and its source to understand what's happening behind the scenes: https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/com/google/bitcoin/kits/WalletAppKit.java
+         */
+        WalletAppKit kit = new WalletAppKit(params, new File("."), "walletappkit-example");
 
-        //kit.connectToLocalHost(); // you want to connect to localhost when running behind a bitcoind (probably in regtest mode)
+        /**
+         * In case you want to connect with your local bitcoind tell the kit to connect to localhost.
+         * You must do that in reg test mode.
+         */
+        //kit.connectToLocalHost();
 
-        // start everything up. sync the blockchain
-        // bitcoinj is working a lot with the google guava libraries. Here the Guava Service. have a look at the intorduction: https://code.google.com/p/guava-libraries/wiki/ServiceExplained
+        /**
+         * Now we start the kit and sync the blockchain.
+         * bitcoinj is working a lot with the Google Guava libraries. The WalletAppKit extends the AbstractIdleService. Have a look at the introduction to Guava services: https://code.google.com/p/guava-libraries/wiki/ServiceExplained
+         */
         kit.startAsync();
-        // we wait until everything is done. 
         kit.awaitRunning();
 
-        // the best way to to observe wallet events (like when coins are received) is to implement your own WalletListener
-        // have a look at the interface: https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/com/google/bitcoin/core/WalletEventListener.java
-        // https://bitcoinj.github.io/javadoc/0.11/com/google/bitcoin/core/AbstractWalletEventListener.html
+        /**
+         * To observer wallet events (like coins received) we implement a EventListener class that extends the AbstractWalletEventListener bitcoinj calls the different functions from the EventListener class
+         */
         WalletListener wListener = new WalletListener();
-        // register the event listener. From now on the WalletListener code will run.  
         kit.wallet().addEventListener(wListener);
 
-        // print a new receiving address. 
-        // have a look a the documentation of the wallet class: 
-        // send money to this address to test your code. 
+        /**
+         * Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.
+         * To test everything we create and print a fresh receiving address. Send some coins to that address and see if everything works
+         */
         System.out.println("send money to: " + kit.wallet().freshReceiveAddress().toString());
 
-        // shutting down
-        System.out.println("shutting down again");
-        kit.stopAsync();
-        kit.awaitTerminated();
+        /**
+         * Make sure to properly shut down all the running services when you manually want to stop the kit. The WalletAppKit registers a runtime ShutdownHook so we actually do not need to worry about that when our application is stopping.
+         */
+        //System.out.println("shutting down again");
+        //kit.stopAsync();
+        //kit.awaitTerminated();
+    }
+
+    /**
+     * The Wallet event listener its implementations get called on wallet changes.
+     */
+    static class WalletListener extends AbstractWalletEventListener {
+
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            System.out.println("-----> coins resceived: " + tx.getHashAsString());
+            System.out.println("received: " + tx.getValue(wallet));
+        }
+
+        @Override
+        public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            System.out.println("-----> confidence changed: " + tx.getHashAsString());
+            TransactionConfidence confidence = tx.getConfidence();
+            System.out.println("new block depth: " + confidence.getDepthInBlocks());
+        }
+
+        @Override
+        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            System.out.println("coins sent");
+        }
+
+        @Override
+        public void onReorganize(Wallet wallet) {
+        }
+
+        @Override
+        public void onWalletChanged(Wallet wallet) {
+        }
+
+        @Override
+        public void onKeysAdded(List<ECKey> keys) {
+            System.out.println("new key added");
+        }
+
+        @Override
+        public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+            System.out.println("new script added");
+        }
     }
 
 }
