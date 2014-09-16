@@ -1,7 +1,7 @@
 package com.google.bitcoin.examples;
 
 /**
- * The following example shows you how to to create a SendRequest to send coins from a wallet to a given address.
+ * The following example shows you how to create a SendRequest to send coins from a wallet to a given address.
  */
 
 import java.io.File;
@@ -22,7 +22,7 @@ public class SendRequest {
 
     public static void main(String[] args) throws Exception {
         /**
-         * We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details
+         * We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details.
          */
         NetworkParameters params = TestNet3Params.get();
         WalletAppKit kit = new WalletAppKit(params, new File("."), "sendrequest-example");
@@ -48,9 +48,9 @@ public class SendRequest {
          * There are different ways to create and publish a SendRequest. This is probably the easiest one.
          * Have a look at the code of the SendRequest class to see what's happening and what other options you have: https://bitcoinj.github.io/javadoc/0.11/com/google/bitcoin/core/Wallet.SendRequest.html
          * 
-         * Please not that this might raise a InsufficientMoneyException if your wallet has not enough coins to spend.
+         * Please note that this might raise a InsufficientMoneyException if your wallet has not enough coins to spend.
          * When using the testnet you can use a faucet (like the http://faucet.xeno-genesis.com/) to get testnet coins.
-         * In this example we simply catch the InsufficientMoneyException and print a notice.
+         * In this example we catch the InsufficientMoneyException and register a BalanceFuture callback that runs once the wallet has enough balance.
          */
         try {
             Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
@@ -62,13 +62,13 @@ public class SendRequest {
 
             /**
              * Bitcoinj allows you to define a BalanceFuture to execute a callback once your wallet has a certain balance.
-             * Here we wait until the we have enough balance.
+             * Here we wait until the we have enough balance and display a notice.
              * Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
              */
             ListenableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
             FutureCallback<Coin> callback = new FutureCallback<Coin>() {
                 public void onSuccess(Coin balance) {
-                    System.out.println("coins arrived");
+                    System.out.println("coins arrived and the wallet now has enough balance");
                 }
 
                 public void onFailure(Throwable t) {

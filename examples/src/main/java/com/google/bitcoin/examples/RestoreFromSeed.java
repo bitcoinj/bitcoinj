@@ -7,9 +7,7 @@ package com.google.bitcoin.examples;
 
 import java.io.File;
 
-import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.DownloadListener;
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.core.PeerGroup;
@@ -28,7 +26,7 @@ public class RestoreFromSeed {
          * Bitcoinj supports hierarchical deterministic wallets (or "HD Wallets"): https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
          * HD wallets allow you to restore your wallet simply from a root seed. This seed can be represented using a short mnemonic sentence as described in BIP 39: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
          * 
-         * Here we restore our wallet from a seed with no passphrase. Also have a look at the BackupToMnemonicSeed.java example that shows how to backup a wallet by creating a mnemonic seed.
+         * Here we restore our wallet from a seed with no passphrase. Also have a look at the BackupToMnemonicSeed.java example that shows how to backup a wallet by creating a mnemonic sentence.
          */
         String seedCode = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
         String passphrase = "";
@@ -36,14 +34,14 @@ public class RestoreFromSeed {
 
         DeterministicSeed seed = new DeterministicSeed(seedCode, passphrase, creationtime);
         /**
-         * The wallet class provides a easy fromSeed function that creates a new wallet from a given seed.
+         * The wallet class provides a easy fromSeed() function that loads a new wallet from a given seed.
          */
         Wallet wallet = Wallet.fromSeed(params, seed);
 
         /**
          * Because we are importing an existing wallet which might already have transactions we must re-download the blockchain to make the wallet picks up these transactions
          * You can find some information about this in the guides: https://bitcoinj.github.io/working-with-the-wallet#setup
-         * To do this we clear the transactions of the wallet and delete a possible existing blockchain file before we download the blockchain later.
+         * To do this we clear the transactions of the wallet and delete a possible existing blockchain file before we download the blockchain again further down.
          */
         System.out.println(wallet.toString());
         wallet.clearTransactions(0);
@@ -74,7 +72,7 @@ public class RestoreFromSeed {
         };
 
         /**
-         * Now we re-download the blockchain. This replys the chain into the wallet. Once this is completed our wallet should know of all its transactions and print the correct balance.
+         * Now we re-download the blockchain. This replays the chain into the wallet. Once this is completed our wallet should know of all its transactions and print the correct balance.
          */
         peers.startAsync();
         peers.awaitRunning();
@@ -86,10 +84,6 @@ public class RestoreFromSeed {
          * Print a debug message with the details about the wallet. The correct balance should now be displayed.
          */
         System.out.println(wallet.toString());
-
-        Coin value = Coin.parseCoin("0.009");
-        Address to = new Address(params, "mkLQmg2aqDpTNvrm4sCxCAnAhk7uPsAf7A");
-        Wallet.SendResult result = wallet.sendCoins(peers, to, value);
 
         // shutting down again
         //peers.stopAsync();

@@ -4,7 +4,7 @@ package com.google.bitcoin.examples;
  * The following example shows how to use the by bitcoinj provided WalletAppKit.
  * The WalletAppKit class wraps the boilerplate (Peers, BlockChain, BlockStorage, Wallet) needed to set up a new SPV bitcoinj app.
  * 
- * In this example we define a WalletEventListener class with implementors that are called when the wallet changes (for example sending/receiving money)
+ * In this example we also define a WalletEventListener class with implementors that are called when the wallet changes (for example sending/receiving money)
  */
 
 import java.io.File;
@@ -58,14 +58,14 @@ public class Kit {
         kit.awaitRunning();
 
         /**
-         * To observer wallet events (like coins received) we implement a EventListener class that extends the AbstractWalletEventListener bitcoinj calls the different functions from the EventListener class
+         * To observe wallet events (like coins received) we implement a EventListener class that extends the AbstractWalletEventListener bitcoinj then calls the different functions from the EventListener class
          */
         WalletListener wListener = new WalletListener();
         kit.wallet().addEventListener(wListener);
 
         /**
          * Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.
-         * To test everything we create and print a fresh receiving address. Send some coins to that address and see if everything works
+         * To test everything we create and print a fresh receiving address. Send some coins to that address and see if everything works.
          */
         System.out.println("send money to: " + kit.wallet().freshReceiveAddress().toString());
 
