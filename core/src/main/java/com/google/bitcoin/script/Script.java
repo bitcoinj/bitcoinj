@@ -137,7 +137,7 @@ public class Script {
         }
     }
 
-    /** Returns an immutable list of the scripts parsed form. */
+    /** Returns an immutable list of the scripts parsed form. Each chunk is either an opcode or data element. */
     public List<ScriptChunk> getChunks() {
         return Collections.unmodifiableList(chunks);
     }
