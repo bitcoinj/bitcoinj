@@ -228,6 +228,12 @@ public class BloomFilter extends Message {
             Utils.setBitLE(data, hash(i, object));
     }
 
+    /** Inserts the given key and equivalent hashed form (for the address). */
+    public void insert(ECKey key) {
+        insert(key.getPubKey());
+        insert(key.getPubKeyHash());
+    }
+
     /**
      * Sets this filter to match all objects. A Bloom filter which matches everything may seem pointless, however,
      * it is useful in order to reduce steady state bandwidth usage when you want full blocks. Instead of receiving
