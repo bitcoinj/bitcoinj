@@ -20,7 +20,6 @@ package com.google.bitcoin.script;
 
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.crypto.TransactionSignature;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,11 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static com.google.bitcoin.script.ScriptOpCodes.*;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-// TODO: Make this class a superclass with derived classes giving accessor methods for the various common templates.
+import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>Programs embedded inside transactions that control redemption of payments.</p>
