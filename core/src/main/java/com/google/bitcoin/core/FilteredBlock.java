@@ -117,4 +117,34 @@ public class FilteredBlock extends Message {
     public int getTransactionCount() {
         return merkleTree.getTransactionCount();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FilteredBlock block = (FilteredBlock) o;
+
+        if (!associatedTransactions.equals(block.associatedTransactions)) return false;
+        if (!header.equals(block.header)) return false;
+        if (!merkleTree.equals(block.merkleTree)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = header.hashCode();
+        result = 31 * result + merkleTree.hashCode();
+        result = 31 * result + associatedTransactions.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "FilteredBlock{" +
+                "merkleTree=" + merkleTree +
+                ", header=" + header +
+                '}';
+    }
 }

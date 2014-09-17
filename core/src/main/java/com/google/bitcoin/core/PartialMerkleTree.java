@@ -20,6 +20,7 @@ package com.google.bitcoin.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -179,5 +180,36 @@ public class PartialMerkleTree extends Message {
 
     public int getTransactionCount() {
         return transactionCount;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PartialMerkleTree tree = (PartialMerkleTree) o;
+
+        if (transactionCount != tree.transactionCount) return false;
+        if (!hashes.equals(tree.hashes)) return false;
+        if (!Arrays.equals(matchedChildBits, tree.matchedChildBits)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = transactionCount;
+        result = 31 * result + Arrays.hashCode(matchedChildBits);
+        result = 31 * result + hashes.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "PartialMerkleTree{" +
+                "transactionCount=" + transactionCount +
+                ", matchedChildBits=" + Arrays.toString(matchedChildBits) +
+                ", hashes=" + hashes +
+                '}';
     }
 }

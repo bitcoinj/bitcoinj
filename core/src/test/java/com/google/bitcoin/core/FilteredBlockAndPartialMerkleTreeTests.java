@@ -50,7 +50,6 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
     }
 
     @Test
-    // Simple deserialization sanity check
     public void deserializeFilteredBlock() throws Exception {
         NetworkParameters params = UnitTestParams.get();
 
@@ -65,6 +64,9 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         List<Sha256Hash> txesMatched = block.getTransactionHashes();
         assertTrue(txesMatched.size() == 1);
         assertTrue(txesMatched.contains(new Sha256Hash("63194f18be0af63f2c6bc9dc0f777cbefed3d9415c4af83f3ee3a3d669c00cb5")));
+
+        // Check round tripping.
+        assertEquals(block, new FilteredBlock(params, block.bitcoinSerialize()));
     }
     
     @Test
