@@ -67,7 +67,8 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 // If e is a CancelledKeyException, there is a race to get to interestOps after finishConnect() which
                 // may cause this. Otherwise it may be any arbitrary kind of connection failure.
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
-                log.error("Failed to connect with exception: {}", Throwables.getRootCause(e).getMessage());
+                Throwable cause = Throwables.getRootCause(e);
+                log.error("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage());
                 handler.closeConnection();
             }
         } else // Process bytes read
