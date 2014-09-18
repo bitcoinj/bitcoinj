@@ -29,7 +29,6 @@ public class FilteredBlock extends Message {
     public static final int MIN_PROTOCOL_VERSION = 70000;
     private Block header;
 
-    // The PartialMerkleTree of transactions
     private PartialMerkleTree merkleTree;
     private List<Sha256Hash> cachedTransactionHashes = null;
     
@@ -40,7 +39,13 @@ public class FilteredBlock extends Message {
     public FilteredBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
-    
+
+    public FilteredBlock(NetworkParameters params, Block header, PartialMerkleTree pmt) {
+        super(params);
+        this.header = header;
+        this.merkleTree = pmt;
+    }
+
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (header.transactions == null)

@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.google.bitcoin.core.Utils.*;
+
 /**
  * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>
  *
@@ -62,14 +64,44 @@ public class PartialMerkleTree extends Message {
     public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
         super(params, payloadBytes, offset);
     }
-    
+
+    /**
+     * Constructs a new PMT with the given bit set (little endian) and the raw list of hashes including internal hashes,
+     * taking ownership of the list.
+     */
+    public PartialMerkleTree(NetworkParameters params, byte[] bits, List<Sha256Hash> hashes, int origTxCount) {
+        super(params);
+        this.matchedChildBits = bits;
+        this.hashes = hashes;
+        this.transactionCount = origTxCount;
+    }
+
+    /**
+     * Calculates a PMT given the list of leaf hashes and which leaves need to be included. The relevant interior hashes
+     * are calculated and a new PMT returned.
+     */
+    public static PartialMerkleTree buildFromLeaves(NetworkParameters params, byte[] includeBits, List<Sha256Hash> allLeafHashes) {
+        // Calculate height of the tree.
+        int height = 0;
+        while (getTreeWidth(allLeafHashes.size(), height) > 1)
+            height++;
+        List<Boolean> bitList = new ArrayList<Boolean>();
+        List<Sha256Hash> hashes = new ArrayList<Sha256Hash>();
+        traverseAndBuild(height, 0, allLeafHashes, includeBits, bitList, hashes);
+        byte[] bits = new byte[(int)Math.ceil(bitList.size() / 8.0)];
+        for (int i = 0; i < bitList.size(); i++)
+            if (bitList.get(i))
+                Utils.setBitLE(bits, i);
+        return new PartialMerkleTree(params, bits, hashes, allLeafHashes.size());
+    }
+
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        Utils.uint32ToByteStreamLE(transactionCount, stream);
+        uint32ToByteStreamLE(transactionCount, stream);
 
         stream.write(new VarInt(hashes.size()).encode());
         for (Sha256Hash hash : hashes)
-            stream.write(Utils.reverseBytes(hash.getBytes()));
+            stream.write(reverseBytes(hash.getBytes()));
 
         stream.write(new VarInt(matchedChildBits.length).encode());
         stream.write(matchedChildBits);
@@ -86,18 +118,62 @@ public class PartialMerkleTree extends Message {
 
         int nFlagBytes = (int) readVarInt();
         matchedChildBits = readBytes(nFlagBytes);
-        
+
         length = cursor - offset;
     }
-    
+
+    // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.
+    private static void traverseAndBuild(int height, int pos, List<Sha256Hash> allLeafHashes, byte[] includeBits,
+                                         List<Boolean> matchedChildBits, List<Sha256Hash> resultHashes) {
+        boolean parentOfMatch = false;
+        // Is this node a parent of at least one matched hash?
+        for (int p = pos << height; p < (pos+1) << height && p < allLeafHashes.size(); p++) {
+            if (Utils.checkBitLE(includeBits, p)) {
+                parentOfMatch = true;
+                break;
+            }
+        }
+        // Store as a flag bit.
+        matchedChildBits.add(parentOfMatch);
+        if (height == 0 || !parentOfMatch) {
+            // If at height 0, or nothing interesting below, store hash and stop.
+            resultHashes.add(calcHash(height, pos, allLeafHashes));
+        } else {
+            // Otherwise descend into the subtrees.
+            int h = height - 1;
+            int p = pos * 2;
+            traverseAndBuild(h, p, allLeafHashes, includeBits, matchedChildBits, resultHashes);
+            if (p + 1 < getTreeWidth(allLeafHashes.size(), h))
+                traverseAndBuild(h, p + 1, allLeafHashes, includeBits, matchedChildBits, resultHashes);
+        }
+    }
+
+    private static Sha256Hash calcHash(int height, int pos, List<Sha256Hash> hashes) {
+        if (height == 0) {
+            // Hash at height 0 is just the regular tx hash itself.
+            return hashes.get(pos);
+        }
+        int h = height - 1;
+        int p = pos * 2;
+        Sha256Hash left = calcHash(h, p, hashes);
+        // Calculate right hash if not beyond the end of the array - copy left hash otherwise.
+        Sha256Hash right;
+        if (p + 1 < getTreeWidth(hashes.size(), h)) {
+            right = calcHash(h, p + 1, hashes);
+        } else {
+            right = left;
+        }
+        return combineLeftRight(left.getBytes(), right.getBytes());
+    }
+
     @Override
     protected void parseLite() {
         
     }
     
     // helper function to efficiently calculate the number of nodes at given height in the merkle tree
-    private int getTreeWidth(int height) {
-        return (transactionCount+(1 << height)-1) >> height;
+    private static int getTreeWidth(int transactionCount, int height) {
+        return (transactionCount + (1 << height) - 1) >> height;
     }
     
     private static class ValuesUsed {
@@ -111,30 +187,35 @@ public class PartialMerkleTree extends Message {
             // overflowed the bits array - failure
             throw new VerificationException("CPartialMerkleTree overflowed its bits array");
         }
-        boolean parentOfMatch = Utils.checkBitLE(matchedChildBits, used.bitsUsed++);
+        boolean parentOfMatch = checkBitLE(matchedChildBits, used.bitsUsed++);
         if (height == 0 || !parentOfMatch) {
             // if at height 0, or nothing interesting below, use stored hash and do not descend
             if (used.hashesUsed >= hashes.size()) {
                 // overflowed the hash array - failure
                 throw new VerificationException("CPartialMerkleTree overflowed its hash array");
             }
+            Sha256Hash hash = hashes.get(used.hashesUsed++);
             if (height == 0 && parentOfMatch) // in case of height 0, we have a matched txid
-                matchedHashes.add(hashes.get(used.hashesUsed));
-            return hashes.get(used.hashesUsed++);
+                matchedHashes.add(hash);
+            return hash;
         } else {
             // otherwise, descend into the subtrees to extract matched txids and hashes
-            byte[] left = recursiveExtractHashes(height-1, pos*2, used, matchedHashes).getBytes(), right;
-            if (pos*2+1 < getTreeWidth(height-1))
-                right = recursiveExtractHashes(height-1, pos*2+1, used, matchedHashes).getBytes();
+            byte[] left = recursiveExtractHashes(height - 1, pos * 2, used, matchedHashes).getBytes(), right;
+            if (pos * 2 + 1 < getTreeWidth(transactionCount, height-1))
+                right = recursiveExtractHashes(height - 1, pos * 2 + 1, used, matchedHashes).getBytes();
             else
                 right = left;
             // and combine them before returning
-            return new Sha256Hash(Utils.reverseBytes(Utils.doubleDigestTwoBuffers(
-                    Utils.reverseBytes(left), 0, 32,
-                    Utils.reverseBytes(right), 0, 32)));
+            return combineLeftRight(left, right);
         }
     }
-    
+
+    private static Sha256Hash combineLeftRight(byte[] left, byte[] right) {
+        return new Sha256Hash(reverseBytes(doubleDigestTwoBuffers(
+                reverseBytes(left), 0, 32,
+                reverseBytes(right), 0, 32)));
+    }
+
     /**
      * Extracts tx hashes that are in this merkle tree
      * and returns the merkle root of this tree.
@@ -164,7 +245,7 @@ public class PartialMerkleTree extends Message {
             throw new VerificationException("Got a CPartialMerkleTree with fewer matched bits than hashes");
         // calculate height of tree
         int height = 0;
-        while (getTreeWidth(height) > 1)
+        while (getTreeWidth(transactionCount, height) > 1)
             height++;
         // traverse the partial tree
         ValuesUsed used = new ValuesUsed();

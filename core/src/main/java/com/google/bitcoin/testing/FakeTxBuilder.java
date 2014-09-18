@@ -208,4 +208,14 @@ public class FakeTxBuilder {
         b.solve();
         return b;
     }
+
+    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions) throws BlockStoreException {
+        Block b = prev.createNextBlock(to);
+        // Coinbase tx already exists.
+        for (Transaction tx : transactions) {
+            b.addTransaction(tx);
+        }
+        b.solve();
+        return b;
+    }
 }

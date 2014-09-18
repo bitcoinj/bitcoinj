@@ -143,7 +143,9 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             final double rate = checkNotNull(chain).getFalsePositiveRate();
             final double target = bloomFilterMerger.getBloomFilterFPRate() * MAX_FP_RATE_INCREASE;
             if (rate > target) {
-                log.info("Force update Bloom filter due to high false positive rate ({} vs {})", rate, target);
+                // TODO: Avoid hitting this path if the remote peer didn't acknowledge applying a new filter yet.
+                if (log.isDebugEnabled())
+                    log.debug("Force update Bloom filter due to high false positive rate ({} vs {})", rate, target);
                 recalculateFastCatchupAndFilter(FilterRecalculateMode.FORCE_SEND_FOR_REFRESH);
             }
         }
