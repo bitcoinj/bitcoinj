@@ -904,7 +904,6 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
             if (chain != null && chain.shouldVerifyTransactions())
                 return;
-            log.info("Recalculating filter in mode {}", mode);
             FilterMerger.Result result = bloomFilterMerger.calculate(ImmutableList.copyOf(peerFilterProviders));
             boolean send;
             switch (mode) {
