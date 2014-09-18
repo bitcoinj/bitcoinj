@@ -86,8 +86,8 @@ public class RestoreFromSeed {
         System.out.println(wallet.toString());
 
         // shutting down again
-        //peers.stopAsync();
-        //peers.awaitTerminated();
+        peers.stopAsync();
+        peers.awaitTerminated();
 
     }
 }
