@@ -584,6 +584,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
             LinkedList<Protos.Key> entries = newLinkedList();
             if (seed != null) {
+                Protos.Key.Builder seedEntry = BasicKeyChain.serializeEncryptableItem(seed.getSeedEncryptableItem());
+                seedEntry.setType(Protos.Key.Type.DETERMINISTIC_SEED);
+                entries.add(seedEntry.build());
                 Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
                 mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
                 entries.add(mnemonicEntry.build());
@@ -627,11 +630,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
+        byte[] seedBytes = null;
+        EncryptedData encryptedSeedBytes = null;
         DeterministicKeyChain chain = null;
+
         int lookaheadSize = -1;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
-            if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
+            if (t == Protos.Key.Type.DETERMINISTIC_SEED) {
+                if (key.hasSecretBytes()) {
+                    seedBytes = key.getSecretBytes().toByteArray();
+                } else if (key.hasEncryptedData()) {
+                    encryptedSeedBytes = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
+                            key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
+                } else {
+                    throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                }
+            } else if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
                     chain.setLookaheadSize(lookaheadSize);
@@ -642,11 +657,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 long timestamp = key.getCreationTimestamp() / 1000;
                 String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
                 if (key.hasSecretBytes()) {
-                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), passphrase, timestamp);
+                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, timestamp);
+                    seedBytes = null;
                 } else if (key.hasEncryptedData()) {
                     EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
                             key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
-                    seed = new DeterministicSeed(data, timestamp);
+                    seed = new DeterministicSeed(data, encryptedSeedBytes, timestamp);
+                    encryptedSeedBytes = null;
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key.toString());
                 }

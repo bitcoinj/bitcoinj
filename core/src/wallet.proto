@@ -99,6 +99,13 @@ message Key {
      * key can be rederived on the fly.
      */
     DETERMINISTIC_KEY = 4;
+
+    /**
+    * The seed for a deterministic key hierarchy in the private_key field.  Derived from the mnemonic,
+    * but cached here for quick startup.  Must come before the mnemonic if present.
+    * The label and public_key fields are missing. Creation timestamp will exist.
+    */
+    DETERMINISTIC_SEED = 5;
   }
   required Type type = 1;
 

@@ -135,7 +135,10 @@ public class MnemonicCode {
         String pass = Joiner.on(' ').join(words);
         String salt = "mnemonic" + passphrase;
 
-        return PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
+        long start = System.currentTimeMillis();
+        byte[] seed = PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
+        log.info("PBKDF2 took {}ms", System.currentTimeMillis() - start);
+        return seed;
     }
 
     /**
