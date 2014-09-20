@@ -448,4 +448,22 @@ public class DeterministicKey extends ECKey {
             helper.add("creationTimeSeconds", creationTimeSeconds);
         return helper.toString();
     }
+
+    @Override
+    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
+        final Address address = toAddress(params);
+        builder.append("  addr:");
+        builder.append(address.toString());
+        builder.append("  hash160:");
+        builder.append(Utils.HEX.encode(getPubKeyHash()));
+        builder.append("  (");
+        builder.append(getPathAsString());
+        builder.append(")");
+        builder.append("\n");
+        if (includePrivateKeys) {
+            builder.append("  ");
+            builder.append(toStringWithPrivate());
+            builder.append("\n");
+        }
+    }
 }

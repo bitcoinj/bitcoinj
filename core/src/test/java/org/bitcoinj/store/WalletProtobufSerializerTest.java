@@ -31,6 +31,8 @@ import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
+
+import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
@@ -287,16 +289,20 @@ public class WalletProtobufSerializerTest {
     public void testRoundTripMarriedWallet() throws Exception {
         // create 2-of-2 married wallet
         myWallet = new Wallet(params);
-        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+        final DeterministicKeyChain partnerChain = new DeterministicKeyChain(new SecureRandom());
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58());
+        MarriedKeyChain chain = MarriedKeyChain.builder()
+                .random(new SecureRandom())
+                .followingKeys(partnerKey)
+                .threshold(2).build();
+        myWallet.addAndActivateHDChain(chain);
 
-        myWallet.addFollowingAccountKeys(ImmutableList.of(partnerKey), 2);
         myAddress = myWallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(Coin.ZERO, wallet1.getBalance());
-        assertEquals(2, wallet1.getSigsRequiredToSpend());
+        assertEquals(2, wallet1.getActiveKeychain().getSigsRequiredToSpend());
         assertEquals(myAddress, wallet1.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS));
     }
 

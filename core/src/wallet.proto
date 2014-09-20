@@ -66,6 +66,10 @@ message DeterministicKey {
    * a single P2SH multisignature address
    */
   optional bool isFollowing = 5;
+
+  // Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
+  // and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+  optional uint32 sigsRequiredToSpend = 6 [default = 1];
 }
 
 /**
@@ -379,11 +383,7 @@ message Wallet {
   // transaction signers added to the wallet
   repeated TransactionSigner transaction_signers = 17;
 
-  // Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
-  // and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
-  optional uint32 sigsRequiredToSpend = 18 [default = 1];
-
-  // Next tag: 19
+  // Next tag: 18
 }
 
 /** An exchange rate between Bitcoin and some fiat currency. */

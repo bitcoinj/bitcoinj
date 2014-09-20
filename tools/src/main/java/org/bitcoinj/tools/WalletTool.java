@@ -48,6 +48,8 @@ import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
+
+import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +61,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -428,7 +431,11 @@ public class WalletTool {
         for (String xpubkey : xpubkeys) {
             keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim()));
         }
-        wallet.addFollowingAccountKeys(keys.build());
+        MarriedKeyChain chain = MarriedKeyChain.builder()
+                .random(new SecureRandom())
+                .followingKeys(keys.build())
+                .build();
+        wallet.addAndActivateHDChain(chain);
     }
 
     private static void rotate() throws BlockStoreException {
