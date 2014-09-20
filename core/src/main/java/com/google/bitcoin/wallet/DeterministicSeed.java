@@ -74,7 +74,7 @@ public class DeterministicSeed implements EncryptableItem {
      * Constructs a seed from a BIP 39 mnemonic code. See {@link com.google.bitcoin.crypto.MnemonicCode} for more
      * details on this scheme.
      * @param mnemonicCode A list of words.
-     * @param seed
+     * @param seed The derived seed, or pass null to derive it from mnemonicCode (slow)
      * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
      * @param creationTimeSeconds When the seed was originally created, UNIX time.
      */

@@ -670,6 +670,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (log.isDebugEnabled())
                     log.debug("Deserializing: DETERMINISTIC_MNEMONIC: {}", seed);
             } else if (t == Protos.Key.Type.DETERMINISTIC_KEY) {
+                if (seedBytes != null || encryptedSeedBytes != null)
+                    throw new UnreadableWalletException("Stray DETERMINISTIC_SEED entry");
                 if (!key.hasDeterministicKey())
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
