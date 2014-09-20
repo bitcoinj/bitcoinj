@@ -111,7 +111,11 @@ public class WalletTest extends TestWithWallet {
                 wallet.addTransactionSigner(new KeyChainTransactionSigner(keyChain));
         }
 
-        wallet.addFollowingAccountKeys(followingKeys, threshold);
+        MarriedKeyChain chain = MarriedKeyChain.builder()
+                .random(new SecureRandom())
+                .followingKeys(followingKeys)
+                .threshold(threshold).build();
+        wallet.addAndActivateHDChain(chain);
     }
 
     @Test
@@ -2652,7 +2656,11 @@ public class WalletTest extends TestWithWallet {
             }
         };
         wallet.addTransactionSigner(signer);
-        wallet.addFollowingAccountKeys(ImmutableList.of(partnerKey));
+        MarriedKeyChain chain = MarriedKeyChain.builder()
+                .random(new SecureRandom())
+                .followingKeys(partnerKey)
+                .build();
+        wallet.addAndActivateHDChain(chain);
 
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);

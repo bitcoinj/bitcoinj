@@ -26,6 +26,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -67,19 +68,8 @@ public class KeyChainGroup implements KeyBag {
 
     private BasicKeyChain basic;
     private NetworkParameters params;
-    private final List<DeterministicKeyChain> chains;
+    private final LinkedList<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
-
-    // The map keys are the watching keys of the followed chains and values are the following chains
-    private Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains;
-
-    // holds a number of signatures required to spend. It's the N from N-of-M CHECKMULTISIG script for P2SH transactions
-    // and always 1 for other transaction types
-    private int sigsRequiredToSpend;
-
-    // The map holds P2SH redeem script and corresponding ECKeys issued by this KeyChainGroup (including lookahead)
-    // mapped to redeem script hashes.
-    private LinkedHashMap<ByteString, RedeemData> marriedKeysRedeemData;
 
     private EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
     @Nullable private KeyCrypter keyCrypter;
@@ -88,12 +78,12 @@ public class KeyChainGroup implements KeyBag {
 
     /** Creates a keychain group with no basic chain, and a single, lazily created HD chain. */
     public KeyChainGroup(NetworkParameters params) {
-        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null, 1, null);
+        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null);
     }
 
     /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. */
     public KeyChainGroup(NetworkParameters params, DeterministicSeed seed) {
-        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null, 1, null);
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
     }
 
     /**
@@ -101,7 +91,7 @@ public class KeyChainGroup implements KeyBag {
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey) {
-        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null, 1, null);
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null);
     }
 
     /**
@@ -110,115 +100,36 @@ public class KeyChainGroup implements KeyBag {
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey, long creationTimeSecondsSecs) {
-        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null, null, 1, null);
-    }
-
-    /**
-     * Creates a keychain group with no basic chain, with an HD chain initialized from the given seed and being followed
-     * by given list of watch keys. Watch keys have to be account keys.
-     */
-    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, List<DeterministicKey> followingAccountKeys, int sigsRequiredToSpend) {
-        this(params, seed);
-
-        addFollowingAccountKeys(followingAccountKeys, sigsRequiredToSpend);
-    }
-
-    /**
-     * <p>Alias for <code>addFollowingAccountKeys(followingAccountKeys, (followingAccountKeys.size() + 1) / 2 + 1)</code></p>
-     * <p>Creates married keychain requiring majority of keys to spend (2-of-3, 3-of-5 and so on)</p>
-     * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are non-standard
-     * and such spends won't be processed by peers with default settings, essentially making such transactions almost
-     * nonspendable</p>
-     */
-    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys) {
-        addFollowingAccountKeys(followingAccountKeys, (followingAccountKeys.size() + 1) / 2 + 1);
-    }
-
-    /**
-     * <p>Makes given account keys follow the account key of the active keychain. After that active keychain will be
-     * treated as married and you will be able to get P2SH addresses to receive coins to. Given sigsRequiredToSpend value
-     * specifies how many signatures required to spend transactions for this married keychain. This value should not exceed
-     * total number of keys involved (one followed key plus number of following keys), otherwise IllegalArgumentException
-     * will be thrown.</p>
-     * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are non-standard
-     * and such spends won't be processed by peers with default settings, essentially making such transactions almost
-     * nonspendable</p>
-     * <p>This method will throw an IllegalStateException, if active keychain is already married or already has leaf keys
-     * issued. In future this behaviour may be replaced with key rotation.</p>
-     */
-    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys, int sigsRequiredToSpend) {
-        checkArgument(sigsRequiredToSpend <= followingAccountKeys.size() + 1, "Multisig threshold can't exceed total number of keys");
-        checkState(!isMarried(), "KeyChainGroup is married already");
-        checkState(getActiveKeyChain().numLeafKeysIssued() == 0, "Active keychain already has keys in use");
-
-        this.sigsRequiredToSpend = sigsRequiredToSpend;
-
-        DeterministicKey accountKey = getActiveKeyChain().getWatchingKey();
-        for (DeterministicKey key : followingAccountKeys) {
-            checkArgument(key.getPath().size() == 1, "Following keys have to be account keys");
-            DeterministicKeyChain chain = DeterministicKeyChain.watchAndFollow(key);
-            if (lookaheadSize >= 0)
-                chain.setLookaheadSize(lookaheadSize);
-            if (lookaheadThreshold >= 0)
-                chain.setLookaheadThreshold(lookaheadThreshold);
-            followingKeychains.put(accountKey, chain);
-        }
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, creationTimeSecondsSecs)), null, null);
     }
 
     // Used for deserialization.
     private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains,
-                          @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, Multimap<DeterministicKey,
-                          DeterministicKeyChain> followingKeychains, int sigsRequiredToSpend, @Nullable KeyCrypter crypter) {
+                          @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
         this.params = params;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
-        this.chains = new ArrayList<DeterministicKeyChain>(checkNotNull(chains));
+        this.chains = new LinkedList<DeterministicKeyChain>(checkNotNull(chains));
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
                 ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
                 : currentKeys;
         this.currentAddresses = new EnumMap<KeyChain.KeyPurpose, Address>(KeyChain.KeyPurpose.class);
-        this.followingKeychains = HashMultimap.create();
-        if (followingKeychains != null) {
-            this.followingKeychains.putAll(followingKeychains);
-        }
-        this.sigsRequiredToSpend = sigsRequiredToSpend;
-        marriedKeysRedeemData = new LinkedHashMap<ByteString, RedeemData>();
         maybeLookaheadScripts();
 
-        if (!this.followingKeychains.isEmpty()) {
-            DeterministicKey followedWatchKey = getActiveKeyChain().getWatchingKey();
+        if (isMarried()) {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
-                Address address = makeP2SHOutputScript(entry.getValue(), followedWatchKey).getToAddress(params);
+                Address address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
                 currentAddresses.put(entry.getKey(), address);
             }
         }
     }
 
     /**
-     * This keeps {@link #marriedKeysRedeemData} in sync with the number of keys issued
+     * This keeps married redeem data in sync with the number of keys issued
      */
     private void maybeLookaheadScripts() {
-        if (chains.isEmpty())
-            return;
-
-        int numLeafKeys = 0;
         for (DeterministicKeyChain chain : chains) {
-            numLeafKeys += chain.getLeafKeys().size();
-        }
-
-        checkState(marriedKeysRedeemData.size() <= numLeafKeys, "Number of scripts is greater than number of leaf keys");
-        if (marriedKeysRedeemData.size() == numLeafKeys)
-            return;
-
-        for (DeterministicKeyChain chain : chains) {
-            if (isMarried(chain)) {
-                chain.maybeLookAhead();
-                for (DeterministicKey followedKey : chain.getLeafKeys()) {
-                    RedeemData redeemData = getRedeemData(followedKey, chain.getWatchingKey());
-                    Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript);
-                    marriedKeysRedeemData.put(ByteString.copyFrom(scriptPubKey.getPubKeyHash()), redeemData);
-                }
-            }
+            chain.maybeLookAheadScripts();
         }
     }
 
@@ -226,6 +137,14 @@ public class KeyChainGroup implements KeyBag {
     public void createAndActivateNewHDChain() {
         // We can't do auto upgrade here because we don't know the rotation time, if any.
         final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        addAndActivateHDChain(chain);
+    }
+
+    /**
+     * Adds an HD chain to the chains list, and make it the default chain (from which keys are issued).
+     * Useful for adding a complex pre-configured keychain, such as a married wallet.
+     */
+    public void addAndActivateHDChain(DeterministicKeyChain chain) {
         log.info("Creating and activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
@@ -249,7 +168,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (isMarried(chain)) {
+        if (chain.isMarried()) {
             throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
                                                     " Use freshAddress to get P2SH address instead");
         }
@@ -266,7 +185,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (isMarried(chain)) {
+        if (chain.isMarried()) {
             Address current = currentAddresses.get(purpose);
             if (current == null) {
                 current = freshAddress(purpose);
@@ -308,7 +227,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (isMarried(chain)) {
+        if (chain.isMarried()) {
             throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
                     " Use freshAddress to get P2SH address instead");
         }
@@ -320,38 +239,16 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (isMarried(chain)) {
-            List<ECKey> marriedKeys = freshMarriedKeys(purpose, chain);
-            Script p2shScript = makeP2SHOutputScript(marriedKeys);
-            Address freshAddress = Address.fromP2SHScript(params, p2shScript);
+        if (chain.isMarried()) {
+            Script outputScript = chain.freshOutputScript(purpose);
+            checkState(outputScript.isPayToScriptHash()); // Only handle P2SH for now
+            Address freshAddress = Address.fromP2SHScript(params, outputScript);
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
             return freshKey(purpose).toAddress(params);
         }
-    }
-
-    private List<ECKey> freshMarriedKeys(KeyChain.KeyPurpose purpose, DeterministicKeyChain followedKeyChain) {
-        DeterministicKey followedKey = followedKeyChain.getKey(purpose);
-        ImmutableList.Builder<ECKey> keys = ImmutableList.<ECKey>builder().add(followedKey);
-        Collection<DeterministicKeyChain> keyChains = followingKeychains.get(followedKeyChain.getWatchingKey());
-        for (DeterministicKeyChain keyChain : keyChains) {
-            DeterministicKey followingKey = keyChain.getKey(purpose);
-            checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
-            keys.add(followingKey);
-        }
-        return keys.build();
-    }
-
-    private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey, Collection<DeterministicKeyChain> followingChains) {
-        ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
-        for (DeterministicKeyChain keyChain : followingChains) {
-            keyChain.maybeLookAhead();
-            keys.add(keyChain.getKeyByPath(followedKey.getPath()));
-        }
-        keys.add(followedKey);
-        return keys.build();
     }
 
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
@@ -377,9 +274,6 @@ public class KeyChainGroup implements KeyBag {
     public void setLookaheadSize(int lookaheadSize) {
         this.lookaheadSize = lookaheadSize;
         for (DeterministicKeyChain chain : chains) {
-            chain.setLookaheadSize(lookaheadSize);
-        }
-        for (DeterministicKeyChain chain : followingKeychains.values()) {
             chain.setLookaheadSize(lookaheadSize);
         }
     }
@@ -456,7 +350,14 @@ public class KeyChainGroup implements KeyBag {
 
     @Nullable
     public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
-        return marriedKeysRedeemData.get(ByteString.copyFrom(scriptHash));
+        // Iterate in reverse order, since the active keychain is the one most likely to have the hit
+        for (Iterator<DeterministicKeyChain> iter = chains.descendingIterator() ; iter.hasNext() ; ) {
+            DeterministicKeyChain chain = iter.next();
+            RedeemData redeemData = chain.findRedeemDataByScriptHash(ByteString.copyFrom(scriptHash));
+            if (redeemData != null)
+                return redeemData;
+        }
+        return null;
     }
 
     @Nullable
@@ -552,18 +453,12 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * Returns true if the given keychain is being followed by at least one another keychain
-     */
-    public boolean isMarried(DeterministicKeyChain keychain) {
-        DeterministicKey watchingKey = keychain.getWatchingKey();
-        return followingKeychains.containsKey(watchingKey) && followingKeychains.get(watchingKey).size() > 0;
-    }
-
-    /**
-     * An alias for {@link #isMarried(DeterministicKeyChain)} called for the active keychain
+     * Whether the active keychain is married.  A keychain is married when it vends P2SH addresses
+     * from multiple keychains in a multisig relationship.
+     * @see org.bitcoinj.wallet.MarriedKeyChain
      */
     public boolean isMarried() {
-        return isMarried(getActiveKeyChain());
+        return !chains.isEmpty() && getActiveKeyChain().isMarried();
     }
 
     /**
@@ -638,12 +533,7 @@ public class KeyChainGroup implements KeyBag {
     public int getBloomFilterElementCount() {
         int result = basic.numBloomFilterEntries();
         for (DeterministicKeyChain chain : chains) {
-            if (isMarried(chain)) {
-                chain.maybeLookAhead();
-                result += chain.getLeafKeys().size() * 2;
-            } else {
-                result += chain.numBloomFilterEntries();
-            }
+            result += chain.numBloomFilterEntries();
         }
         return result;
     }
@@ -653,15 +543,8 @@ public class KeyChainGroup implements KeyBag {
         if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));
 
-        for (Map.Entry<ByteString, RedeemData> entry : marriedKeysRedeemData.entrySet()) {
-            filter.insert(entry.getKey().toByteArray());
-            filter.insert(entry.getValue().redeemScript.getProgram());
-        }
-
         for (DeterministicKeyChain chain : chains) {
-            if (!isMarried(chain)) {
-                filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
-            }
+            filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
         }
         return filter;
     }
@@ -671,22 +554,8 @@ public class KeyChainGroup implements KeyBag {
         throw new UnsupportedOperationException();   // Unused.
     }
 
-    private Script makeP2SHOutputScript(List<ECKey> marriedKeys) {
-        return ScriptBuilder.createP2SHOutputScript(makeRedeemScript(marriedKeys));
-    }
-
-    private Script makeP2SHOutputScript(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
-        return ScriptBuilder.createP2SHOutputScript(getRedeemData(followedKey, followedAccountKey).redeemScript);
-    }
-
-    private RedeemData getRedeemData(DeterministicKey followedKey, DeterministicKey followedAccountKey) {
-        Collection<DeterministicKeyChain> followingChains = followingKeychains.get(followedAccountKey);
-        List<ECKey> marriedKeys = getMarriedKeysWithFollowed(followedKey, followingChains);
-        return RedeemData.of(marriedKeys, makeRedeemScript(marriedKeys));
-    }
-
-    private Script makeRedeemScript(List<ECKey> marriedKeys) {
-        return ScriptBuilder.createRedeemScript(sigsRequiredToSpend, marriedKeys);
+    private Script makeP2SHOutputScript(DeterministicKey followedKey, DeterministicKeyChain chain) {
+        return ScriptBuilder.createP2SHOutputScript(chain.getRedeemData(followedKey).redeemScript);
     }
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
@@ -719,41 +588,31 @@ public class KeyChainGroup implements KeyBag {
         else
             result = Lists.newArrayList();
         for (DeterministicKeyChain chain : chains) {
-            // prepend each chain with it's following chains if any
-            for (DeterministicKeyChain followingChain : followingKeychains.get(chain.getWatchingKey())) {
-                result.addAll(followingChain.serializeToProtobuf());
-            }
             List<Protos.Key> protos = chain.serializeToProtobuf();
             result.addAll(protos);
         }
         return result;
     }
 
-    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, int sigsRequiredToSpend) throws UnreadableWalletException {
-        checkArgument(sigsRequiredToSpend > 0);
+    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
-        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = extractFollowingKeychains(chains);
-        if (sigsRequiredToSpend < 2 && followingKeychains.size() > 0)
-            throw new IllegalArgumentException("Married KeyChainGroup requires multiple signatures to spend");
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, followingKeychains, sigsRequiredToSpend, null);
+        extractFollowingKeychains(chains);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, null);
     }
 
-    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, int sigsRequiredToSpend, KeyCrypter crypter) throws UnreadableWalletException {
-        checkArgument(sigsRequiredToSpend > 0);
+    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
-        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = extractFollowingKeychains(chains);
-        if (sigsRequiredToSpend < 2 && followingKeychains.size() > 0)
-            throw new IllegalArgumentException("Married KeyChainGroup requires multiple signatures to spend");
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, followingKeychains, sigsRequiredToSpend, crypter);
+        extractFollowingKeychains(chains);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, crypter);
     }
 
     /**
@@ -848,111 +707,42 @@ public class KeyChainGroup implements KeyBag {
         return currentKeys;
     }
 
-    private static Multimap<DeterministicKey, DeterministicKeyChain> extractFollowingKeychains(List<DeterministicKeyChain> chains) {
+    private static void extractFollowingKeychains(List<DeterministicKeyChain> chains) {
         // look for following key chains and map them to the watch keys of followed keychains
         Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = HashMultimap.create();
-        List<DeterministicKeyChain> followingChains = new ArrayList<DeterministicKeyChain>();
+        List<DeterministicKeyChain> followingChains = Lists.newArrayList();
         for (Iterator<DeterministicKeyChain> it = chains.iterator(); it.hasNext(); ) {
             DeterministicKeyChain chain = it.next();
             if (chain.isFollowing()) {
                 followingChains.add(chain);
                 it.remove();
             } else if (!followingChains.isEmpty()) {
-                followingKeychains.putAll(chain.getWatchingKey(), followingChains);
-                followingChains.clear();
+                if (!(chain instanceof MarriedKeyChain))
+                    throw new IllegalStateException();
+                ((MarriedKeyChain)chain).setFollowingKeyChains(followingChains);
+                followingChains = Lists.newArrayList();
             }
         }
-        return followingKeychains;
     }
 
     public String toString(boolean includePrivateKeys) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null) {
             for (ECKey key : basic.getKeys())
-                formatKeyWithAddress(includePrivateKeys, key, builder);
+                key.formatKeyWithAddress(includePrivateKeys, builder, params);
         }
         List<String> chainStrs = Lists.newLinkedList();
         for (DeterministicKeyChain chain : chains) {
-            final StringBuilder builder2 = new StringBuilder();
-            DeterministicSeed seed = chain.getSeed();
-            if (seed != null) {
-                if (seed.isEncrypted()) {
-                    builder2.append(String.format("Seed is encrypted%n"));
-                } else if (includePrivateKeys) {
-                    final List<String> words = seed.getMnemonicCode();
-                    builder2.append(
-                            String.format("Seed as words: %s%nSeed as hex:   %s%n", Joiner.on(' ').join(words),
-                                    seed.toHexString())
-                    );
-                }
-                builder2.append(String.format("Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(), new Date(seed.getCreationTimeSeconds() * 1000)));
-            }
-            final DeterministicKey watchingKey = chain.getWatchingKey();
-            // Don't show if it's been imported from a watching wallet already, because it'd result in a weird/
-            // unintuitive result where the watching key in a watching wallet is not the one it was created with
-            // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
-            // optionally as well to fix this, but it seems unimportant for now.
-            if (watchingKey.getParent() != null) {
-                builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58()));
-            }
-            if (isMarried(chain)) {
-                Collection<DeterministicKeyChain> followingChains = followingKeychains.get(chain.getWatchingKey());
-                for (DeterministicKeyChain followingChain : followingChains) {
-                    builder2.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58()));
-                }
-                builder2.append(String.format("%n"));
-                for (RedeemData redeemData : marriedKeysRedeemData.values())
-                    formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder2);
-            } else {
-                for (ECKey key : chain.getKeys(false))
-                    formatKeyWithAddress(includePrivateKeys, key, builder2);
-            }
-            chainStrs.add(builder2.toString());
+            chainStrs.add(chain.toString(includePrivateKeys, params));
         }
         builder.append(Joiner.on(String.format("%n")).join(chainStrs));
         return builder.toString();
-    }
-
-    private void formatScript(Script script, StringBuilder builder) {
-        builder.append("  addr:");
-        builder.append(script.getToAddress(params));
-        builder.append("  hash160:");
-        builder.append(Utils.HEX.encode(script.getPubKeyHash()));
-        builder.append("\n");
-    }
-
-    private void formatKeyWithAddress(boolean includePrivateKeys, ECKey key, StringBuilder builder) {
-        final Address address = key.toAddress(params);
-        builder.append("  addr:");
-        builder.append(address.toString());
-        builder.append("  hash160:");
-        builder.append(Utils.HEX.encode(key.getPubKeyHash()));
-        if (key instanceof DeterministicKey) {
-            builder.append("  (");
-            builder.append((((DeterministicKey) key).getPathAsString()));
-            builder.append(")");
-        }
-        builder.append("\n");
-        if (includePrivateKeys) {
-            builder.append("  ");
-            builder.append(key.toStringWithPrivate());
-            builder.append("\n");
-        }
     }
 
     /** Returns a copy of the current list of chains. */
     public List<DeterministicKeyChain> getDeterministicKeyChains() {
         return new ArrayList<DeterministicKeyChain>(chains);
     }
-
-    /**
-     * Returns the number of signatures required to spend transactions for this KeyChainGroup. It's the N from
-     * N-of-M CHECKMULTISIG script for P2SH transactions and always 1 for other transaction types.
-     */
-    public int getSigsRequiredToSpend() {
-        return sigsRequiredToSpend;
-    }
-
     /**
      * Returns a counter that increases (by an arbitrary amount) each time new keys have been calculated due to
      * lookahead and thus the Bloom filter that was previously calculated has become stale.

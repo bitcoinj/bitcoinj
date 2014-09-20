@@ -293,18 +293,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Returns the number of signatures required to spend from this wallet. For a normal non-married wallet this will
-     * always be 1. For a married wallet this will be the N from N-of-M CHECKMULTISIG scripts used in this wallet.
-     * This value is either directly specified during the marriage (see {@link #addFollowingAccountKeys(java.util.List, int)})
-     * or, if not specified, calculated implicitly as a simple majority of keys.
+     * Gets the active keychain via {@link KeyChainGroup#getActiveKeyChain()}
      */
-    public int getSigsRequiredToSpend() {
-        lock.lock();
-        try {
-            return keychain.getSigsRequiredToSpend();
-        } finally {
-            lock.unlock();
-        }
+    public DeterministicKeyChain getActiveKeychain() {
+        return keychain.getActiveKeyChain();
     }
 
     /**
@@ -629,38 +621,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * <p>Alias for <code>addFollowingAccountKeys(followingAccountKeys, (followingAccountKeys.size() + 1) / 2 + 1)</code></p>
-     * <p>Creates married wallet requiring majority of keys to spend (2-of-3, 3-of-5 and so on)</p>
-     * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are
-     * non-standard and such spends won't be processed by peers with default settings, essentially making such
-     * transactions almost nonspendable</p>
+     * Add a pre-configured keychain to the wallet.  Useful for setting up a complex keychain,
+     * such as for a married wallet.  For example:
+     * <pre>
+     * MarriedKeyChain chain = MarriedKeyChain.builder()
+     *     .random(new SecureRandom())
+     *     .followingKeys(followingKeys)
+     *     .threshold(2).build();
+     * wallet.addAndActivateHDChain(chain);
+     * </p>
      */
-    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys) {
-        lock.lock();
-        try {
-            keychain.addFollowingAccountKeys(followingAccountKeys);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Makes given account keys follow the account key of the active keychain. After that you will be able
-     * to get P2SH addresses to receive coins to. Given threshold value specifies how many signatures required to
-     * spend transactions for this married wallet. This value should not exceed total number of keys involved
-     * (one followed key plus number of following keys).</p>
-     * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are
-     * non-standard and such spends won't be processed by peers with default settings, essentially making such
-     * transactions almost nonspendable</p>
-     * This method should be called only once before key rotation, otherwise it will throw an IllegalStateException.
-     */
-    public void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys, int threshold) {
-        lock.lock();
-        try {
-            keychain.addFollowingAccountKeys(followingAccountKeys, threshold);
-        } finally {
-            lock.unlock();
-        }
+    public void addAndActivateHDChain(DeterministicKeyChain chain) {
+        keychain.addAndActivateHDChain(chain);
     }
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */

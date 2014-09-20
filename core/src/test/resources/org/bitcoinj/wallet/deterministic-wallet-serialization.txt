@@ -28,6 +28,7 @@ deterministic_key {
   path: 0
   issued_subkeys: 2
   lookahead_size: 10
+  sigsRequiredToSpend: 1
 }
 
 type: DETERMINISTIC_KEY
@@ -39,6 +40,7 @@ deterministic_key {
   path: 1
   issued_subkeys: 1
   lookahead_size: 10
+  sigsRequiredToSpend: 1
 }
 
 type: DETERMINISTIC_KEY
