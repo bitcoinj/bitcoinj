@@ -129,9 +129,9 @@ public class DeterministicKeyChainTest {
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         List<Protos.Key> keys = chain.serializeToProtobuf();
-        // 1 root seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
+        // 1 mnemonic/seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
         int numItems =
-                1  // root seed
+                1  // mnemonic/seed
               + 1  // master key
               + 1  // account key
               + 2  // ext/int parent keys

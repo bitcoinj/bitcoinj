@@ -121,6 +121,13 @@ message Key {
   optional int64 creation_timestamp = 5;
 
   optional DeterministicKey deterministic_key = 7;
+
+  // The seed for a deterministic key hierarchy.  Derived from the mnemonic,
+  // but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
+  optional bytes deterministic_seed = 8;
+
+  // Encrypted version of the seed
+  optional EncryptedData encrypted_deterministic_seed = 9;
 }
 
 message Script {

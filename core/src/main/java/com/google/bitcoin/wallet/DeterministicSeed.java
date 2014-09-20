@@ -48,10 +48,11 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable private final byte[] seed;
     @Nullable private List<String> mnemonicCode;
     @Nullable private EncryptedData encryptedMnemonicCode;
+    @Nullable private EncryptedData encryptedSeed;
     private final long creationTimeSeconds;
 
-    public DeterministicSeed(String mnemonicCode, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
-        this(decodeMnemonicCode(mnemonicCode), passphrase, creationTimeSeconds);
+    public DeterministicSeed(String mnemonicCode, byte[] seed, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
+        this(decodeMnemonicCode(mnemonicCode), seed, passphrase, creationTimeSeconds);
     }
 
     public DeterministicSeed(byte[] seed, List<String> mnemonic, long creationTimeSeconds) {
@@ -61,10 +62,11 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
-    public DeterministicSeed(EncryptedData encryptedMnemonic, long creationTimeSeconds) {
+    public DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, long creationTimeSeconds) {
         this.seed = null;
         this.mnemonicCode = null;
         this.encryptedMnemonicCode = checkNotNull(encryptedMnemonic);
+        this.encryptedSeed = encryptedSeed;
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
@@ -72,11 +74,12 @@ public class DeterministicSeed implements EncryptableItem {
      * Constructs a seed from a BIP 39 mnemonic code. See {@link com.google.bitcoin.crypto.MnemonicCode} for more
      * details on this scheme.
      * @param mnemonicCode A list of words.
+     * @param seed The derived seed, or pass null to derive it from mnemonicCode (slow)
      * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
      * @param creationTimeSeconds When the seed was originally created, UNIX time.
      */
-    public DeterministicSeed(List<String> mnemonicCode, String passphrase, long creationTimeSeconds) {
-        this(MnemonicCode.toSeed(mnemonicCode, passphrase), mnemonicCode, creationTimeSeconds);
+    public DeterministicSeed(List<String> mnemonicCode, @Nullable byte[] seed, String passphrase, long creationTimeSeconds) {
+        this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, passphrase)), mnemonicCode, creationTimeSeconds);
     }
 
     /**
@@ -167,6 +170,11 @@ public class DeterministicSeed implements EncryptableItem {
         return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
     }
 
+    @Nullable
+    public EncryptedData getEncryptedSeedData() {
+        return encryptedSeed;
+    }
+
     @Override
     public long getCreationTimeSeconds() {
         return creationTimeSeconds;
@@ -175,8 +183,9 @@ public class DeterministicSeed implements EncryptableItem {
     public DeterministicSeed encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         checkState(encryptedMnemonicCode == null, "Trying to encrypt seed twice");
         checkState(mnemonicCode != null, "Mnemonic missing so cannot encrypt");
-        EncryptedData mnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
-        return new DeterministicSeed(mnemonic, creationTimeSeconds);
+        EncryptedData encryptedMnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
+        EncryptedData encryptedSeed = keyCrypter.encrypt(seed, aesKey);
+        return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTimeSeconds);
     }
 
     private byte[] getMnemonicAsBytes() {
@@ -187,13 +196,17 @@ public class DeterministicSeed implements EncryptableItem {
         checkState(isEncrypted());
         checkNotNull(encryptedMnemonicCode);
         List<String> mnemonic = null;
+        byte[] seed = null;
         try {
             mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
+            if (encryptedSeed != null) {
+                seed = crypter.decrypt(encryptedSeed, aesKey);
+            }
         } catch (UnreadableWalletException e) {
             // TODO what is the best way to handle this exception?
             throw new RuntimeException(e);
         }
-        return new DeterministicSeed(mnemonic, passphrase, creationTimeSeconds);
+        return new DeterministicSeed(mnemonic, seed, passphrase, creationTimeSeconds);
     }
 
     @Override

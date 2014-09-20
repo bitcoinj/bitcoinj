@@ -1,16 +1,12 @@
 package com.google.bitcoin.examples;
 
-import java.io.File;
-
-import com.google.bitcoin.core.BlockChain;
-import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.core.PeerGroup;
-import com.google.bitcoin.core.Wallet;
+import com.google.bitcoin.core.*;
 import com.google.bitcoin.net.discovery.DnsDiscovery;
 import com.google.bitcoin.params.TestNet3Params;
 import com.google.bitcoin.store.SPVBlockStore;
 import com.google.bitcoin.wallet.DeterministicSeed;
+
+import java.io.File;
 
 /**
  * The following example shows you how to restore a HD wallet from a previously generated deterministic seed.
@@ -27,9 +23,9 @@ public class RestoreFromSeed {
         // Here we restore our wallet from a seed with no passphrase. Also have a look at the BackupToMnemonicSeed.java example that shows how to backup a wallet by creating a mnemonic sentence.
         String seedCode = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
         String passphrase = "";
-        Long creationtime = new Long(1409478661);
+        Long creationtime = 1409478661L;
 
-        DeterministicSeed seed = new DeterministicSeed(seedCode, passphrase, creationtime);
+        DeterministicSeed seed = new DeterministicSeed(seedCode, null, passphrase, creationtime);
 
         // The wallet class provides a easy fromSeed() function that loads a new wallet from a given seed.
         Wallet wallet = Wallet.fromSeed(params, seed);

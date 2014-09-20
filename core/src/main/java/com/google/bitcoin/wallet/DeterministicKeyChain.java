@@ -586,6 +586,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             if (seed != null) {
                 Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
                 mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
+                serializeSeedEncryptableItem(seed, mnemonicEntry);
                 entries.add(mnemonicEntry.build());
             }
             Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
@@ -628,6 +629,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
+
         int lookaheadSize = -1;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
@@ -642,11 +644,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 long timestamp = key.getCreationTimestamp() / 1000;
                 String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
                 if (key.hasSecretBytes()) {
-                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), passphrase, timestamp);
+                    if (key.hasEncryptedDeterministicSeed())
+                        throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                    byte[] seedBytes = null;
+                    if (key.hasDeterministicSeed()) {
+                        seedBytes = key.getDeterministicSeed().toByteArray();
+                    }
+                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, timestamp);
                 } else if (key.hasEncryptedData()) {
+                    if (key.hasDeterministicSeed())
+                        throw new UnreadableWalletException("Malformed key proto: " + key.toString());
                     EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
                             key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
-                    seed = new DeterministicSeed(data, timestamp);
+                    EncryptedData encryptedSeedBytes = null;
+                    if (key.hasEncryptedDeterministicSeed()) {
+                        Protos.EncryptedData encryptedSeed = key.getEncryptedDeterministicSeed();
+                        encryptedSeedBytes = new EncryptedData(encryptedSeed.getInitialisationVector().toByteArray(),
+                                encryptedSeed.getEncryptedPrivateKey().toByteArray());
+                    }
+                    seed = new DeterministicSeed(data, encryptedSeedBytes, timestamp);
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key.toString());
                 }
@@ -1058,5 +1074,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             }
         }
         return keys.build();
+    }
+
+    /*package*/ static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {
+        // The seed can be missing if we have not derived it yet from the mnemonic.
+        // This will not normally happen once all the wallets are on the latest code that caches
+        // the seed.
+        if (seed.isEncrypted() && seed.getEncryptedSeedData() != null) {
+            EncryptedData data = seed.getEncryptedSeedData();
+            proto.getEncryptedDeterministicSeedBuilder()
+                    .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
+                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector));
+            // We don't allow mixing of encryption types at the moment.
+            checkState(seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+        } else {
+            final byte[] secret = seed.getSeedBytes();
+            if (secret != null)
+                proto.setDeterministicSeed(ByteString.copyFrom(secret));
+        }
     }
 }
