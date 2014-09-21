@@ -19,6 +19,7 @@ package com.google.bitcoin.core;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptChunk;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -297,19 +298,27 @@ public class BloomFilter extends Message {
     /**
      * Creates a new FilteredBlock from the given Block, using this filter to select transactions. Matches can cause the
      * filter to be updated with the matched element, this ensures that when a filter is applied to a block, spends of
-     * matched transactions are also matched. However it means this filter can be mutated by the operation.
+     * matched transactions are also matched. However it means this filter can be mutated by the operation. The returned
+     * filtered block already has the matched transactions associated with it.
      */
     public synchronized FilteredBlock applyAndUpdate(Block block) {
         List<Transaction> txns = block.getTransactions();
         List<Sha256Hash> txHashes = new ArrayList<Sha256Hash>(txns.size());
+        List<Transaction> matched = Lists.newArrayList();
         byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];
         for (int i = 0; i < txns.size(); i++) {
-            txHashes.add(txns.get(i).getHash());
-            if (applyAndUpdate(txns.get(i)))
+            Transaction tx = txns.get(i);
+            txHashes.add(tx.getHash());
+            if (applyAndUpdate(tx)) {
                 Utils.setBitLE(bits, i);
+                matched.add(tx);
+            }
         }
         PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(block.getParams(), bits, txHashes);
-        return new FilteredBlock(block.getParams(), block.cloneAsHeader(), pmt);
+        FilteredBlock filteredBlock = new FilteredBlock(block.getParams(), block.cloneAsHeader(), pmt);
+        for (Transaction transaction : matched)
+            filteredBlock.provideTransaction(transaction);
+        return filteredBlock;
     }
 
     public synchronized boolean applyAndUpdate(Transaction tx) {
