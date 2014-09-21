@@ -152,24 +152,40 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     };
 
     private int minBroadcastConnections = 0;
-    private Runnable bloomSendIfChanged = new Runnable() {
-        @Override public void run() {
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
-    private Runnable bloomDontSend = new Runnable() {
-        @Override public void run() {
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
-        }
-    };
-    private AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
-        private void queueRecalc(boolean andTransmit) {
+    private final AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
+        // Because calculation of the new filter takes place asynchronously, these flags deduplicate requests.
+        @GuardedBy("this") private boolean sendIfChangedQueued, dontSendQueued;
+
+        private Runnable bloomSendIfChanged = new Runnable() {
+            @Override public void run() {
+                recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+                synchronized (walletEventListener) {
+                    sendIfChangedQueued = false;
+                }
+            }
+        };
+        private Runnable bloomDontSend = new Runnable() {
+            @Override public void run() {
+                recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
+                synchronized (walletEventListener) {
+                    dontSendQueued = false;
+                }
+            }
+        };
+
+        private synchronized void queueRecalc(boolean andTransmit) {
             if (andTransmit) {
-                log.info("Queuing recalc of the Bloom filter due to new keys or scripts becoming available");
-                Uninterruptibles.putUninterruptibly(jobQueue, bloomSendIfChanged);
+                if (!sendIfChangedQueued) {
+                    log.info("Queuing recalc of the Bloom filter due to new keys or scripts becoming available");
+                    sendIfChangedQueued = true;
+                    Uninterruptibles.putUninterruptibly(jobQueue, bloomSendIfChanged);
+                }
             } else {
-                log.info("Queuing recalc of the Bloom filter due to observing a pay to pubkey output on a relevant tx");
-                Uninterruptibles.putUninterruptibly(jobQueue, bloomDontSend);
+                if (!dontSendQueued) {
+                    log.info("Queuing recalc of the Bloom filter due to observing a pay to pubkey output on a relevant tx");
+                    dontSendQueued = true;
+                    Uninterruptibles.putUninterruptibly(jobQueue, bloomDontSend);
+                }
             }
         }
 
