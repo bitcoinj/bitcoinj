@@ -232,7 +232,7 @@ public class TestWithNetworkConnections {
         return p1.nextMessage();
     }
 
-    protected Object waitForOutbound(InboundMessageQueuer ch) throws InterruptedException {
+    protected Message waitForOutbound(InboundMessageQueuer ch) throws InterruptedException {
         return ch.nextMessageBlocking();
     }
 
