@@ -55,4 +55,12 @@ public class GetDataMessage extends ListMessage {
     public void addBlock(Sha256Hash hash) {
         addItem(new InventoryItem(InventoryItem.Type.Block, hash));
     }
+
+    public void addFilteredBlock(Sha256Hash hash) {
+        addItem(new InventoryItem(InventoryItem.Type.FilteredBlock, hash));
+    }
+
+    public Sha256Hash getHashOf(int i) {
+        return getItems().get(i).hash;
+    }
 }
