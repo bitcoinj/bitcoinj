@@ -3887,6 +3887,29 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 out.isWatched(this);
     }
 
+    /**
+     * Used by {@link Peer} to decide whether or not to discard this block and any blocks building upon it, in case
+     * the Bloom filter used to request them may be exhausted, that is, not have sufficient keys in the deterministic
+     * sequence within it to reliably find relevant transactions.
+     */
+    public boolean checkForFilterExhaustion(FilteredBlock block) {
+        lock.lock();
+        try {
+            int epoch = keychain.getCombinedKeyLookaheadEpochs();
+            for (Transaction tx : block.getAssociatedTransactions().values()) {
+                markKeysAsUsed(tx);
+            }
+            int newEpoch = keychain.getCombinedKeyLookaheadEpochs();
+            checkState(newEpoch >= epoch);
+            // If the key lookahead epoch has advanced, there was a call to addKeys and the PeerGroup already has a
+            // pending request to recalculate the filter queued up on another thread. The calling Peer should abandon
+            // block at this point and await a new filter before restarting the download.
+            return newEpoch > epoch;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     //endregion
 
     /******************************************************************************************************************/

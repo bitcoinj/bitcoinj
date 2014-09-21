@@ -662,4 +662,102 @@ public class PeerGroupTest extends TestWithPeerGroup {
             local.close();
         }
     }
+
+    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws Exception {
+        Message outbound = waitForOutbound(q);
+        assertEquals(klass, outbound.getClass());
+        return (T) outbound;
+    }
+
+    @Test
+    public void autoRescanOnKeyExhaustion() throws Exception {
+        // Check that if the last key that was inserted into the bloom filter is seen in some requested blocks,
+        // that the exhausting block is discarded, a new filter is calculated and sent, and then the download resumes.
+
+        final int NUM_KEYS = 9;
+
+        // First, grab a load of keys from the wallet, and then recreate it so it forgets that those keys were issued.
+        Wallet shadow = Wallet.fromSeed(wallet.getParams(), wallet.getKeyChainSeed());
+        List<ECKey> keys = new ArrayList<ECKey>(NUM_KEYS);
+        for (int i = 0; i < NUM_KEYS; i++) {
+            keys.add(shadow.freshReceiveKey());
+        }
+        // Reduce the number of keys we need to work with to speed up this test.
+        wallet.setKeychainLookaheadSize(4);
+        wallet.setKeychainLookaheadThreshold(2);
+
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
+        InboundMessageQueuer p1 = connectPeer(1);
+        assertTrue(p1.lastReceivedFilter.contains(keys.get(0).getPubKey()));
+        assertTrue(p1.lastReceivedFilter.contains(keys.get(5).getPubKeyHash()));
+        assertFalse(p1.lastReceivedFilter.contains(keys.get(keys.size() - 1).getPubKey()));
+        peerGroup.startBlockChainDownload(null);
+        assertNextMessageIs(p1, GetBlocksMessage.class);
+
+        // Make some transactions and blocks that send money to the wallet thus using up all the keys.
+        List<Block> blocks = Lists.newArrayList();
+        Coin expectedBalance = Coin.ZERO;
+        Block prev = blockStore.getChainHead().getHeader();
+        for (ECKey key1 : keys) {
+            Address addr = key1.toAddress(params);
+            Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(params, Coin.FIFTY_COINS, addr));
+            expectedBalance = expectedBalance.add(next.getTransactions().get(2).getOutput(0).getValue());
+            blocks.add(next);
+            prev = next;
+        }
+
+        // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
+        // be ignored.
+        int epoch = wallet.keychain.getCombinedKeyLookaheadEpochs();
+        BloomFilter filter = new BloomFilter(params, p1.lastReceivedFilter.bitcoinSerialize());
+        filterAndSend(p1, blocks, filter);
+        Block exhaustionPoint = blocks.get(3);
+        pingAndWait(p1);
+
+        assertNotEquals(epoch, wallet.keychain.getCombinedKeyLookaheadEpochs());
+        // 4th block was end of the lookahead zone and thus was discarded, so we got 3 blocks worth of money (50 each).
+        assertEquals(Coin.FIFTY_COINS.multiply(3), wallet.getBalance());
+        assertEquals(exhaustionPoint.getPrevBlockHash(), blockChain.getChainHead().getHeader().getHash());
+
+        // Await the new filter.
+        peerGroup.waitForJobQueue();
+        BloomFilter newFilter = assertNextMessageIs(p1, BloomFilter.class);
+        assertNotEquals(filter, newFilter);
+        assertNextMessageIs(p1, MemoryPoolMessage.class);
+        Ping ping = assertNextMessageIs(p1, Ping.class);
+        inbound(p1, new Pong(ping.getNonce()));
+
+        // Await restart of the chain download.
+        GetDataMessage getdata = assertNextMessageIs(p1, GetDataMessage.class);
+        assertEquals(exhaustionPoint.getHash(), getdata.getHashOf(0));
+        assertEquals(InventoryItem.Type.FilteredBlock, getdata.getItems().get(0).type);
+        List<Block> newBlocks = blocks.subList(3, blocks.size());
+        filterAndSend(p1, newBlocks, newFilter);
+        assertNextMessageIs(p1, Ping.class);
+
+        // It happened again.
+        peerGroup.waitForJobQueue();
+        newFilter = assertNextMessageIs(p1, BloomFilter.class);
+        assertNextMessageIs(p1, MemoryPoolMessage.class);
+        inbound(p1, new Pong(assertNextMessageIs(p1, Ping.class).getNonce()));
+        assertNextMessageIs(p1, GetDataMessage.class);
+        newBlocks = blocks.subList(6, blocks.size());
+        filterAndSend(p1, newBlocks, newFilter);
+        // Send a non-tx message so the peer knows the filtered block is over and force processing.
+        inbound(p1, new Ping());
+        pingAndWait(p1);
+
+        assertEquals(expectedBalance, wallet.getBalance());
+        assertEquals(blocks.get(blocks.size() - 1).getHash(), blockChain.getChainHead().getHeader().getHash());
+    }
+
+    private void filterAndSend(InboundMessageQueuer p1, List<Block> blocks, BloomFilter filter) {
+        for (Block block : blocks) {
+            FilteredBlock fb = filter.applyAndUpdate(block);
+            inbound(p1, fb);
+            for (Transaction tx : fb.getAssociatedTransactions().values())
+                inbound(p1, tx);
+        }
+    }
 }
