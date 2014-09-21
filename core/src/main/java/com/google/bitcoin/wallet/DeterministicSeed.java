@@ -170,35 +170,9 @@ public class DeterministicSeed implements EncryptableItem {
         return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
     }
 
-    public EncryptableItem getSeedEncryptableItem() {
-        return new EncryptableItem() {
-            @Override
-            public boolean isEncrypted() {
-                return DeterministicSeed.this.isEncrypted();
-            }
-
-            @Nullable
-            @Override
-            public byte[] getSecretBytes() {
-                return seed;
-            }
-
-            @Nullable
-            @Override
-            public EncryptedData getEncryptedData() {
-                return encryptedSeed;
-            }
-
-            @Override
-            public Protos.Wallet.EncryptionType getEncryptionType() {
-                return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
-            }
-
-            @Override
-            public long getCreationTimeSeconds() {
-                return DeterministicSeed.this.getCreationTimeSeconds();
-            }
-        };
+    @Nullable
+    public EncryptedData getEncryptedSeedData() {
+        return encryptedSeed;
     }
 
     @Override
