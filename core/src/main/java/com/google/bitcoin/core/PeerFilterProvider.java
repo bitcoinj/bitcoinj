@@ -20,8 +20,8 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers.
- * Note that an implementer is responsible for calling {@link PeerGroup#recalculateFastCatchupAndFilter(boolean)} whenever a
- * change occurs which effects the data provided via this interface.
+ * Note that an implementer is responsible for calling {@link PeerGroup#recalculateFastCatchupAndFilter(com.google.bitcoin.core.PeerGroup.FilterRecalculateMode)}
+ * whenever a change occurs which effects the data provided via this interface.
  */
 public interface PeerFilterProvider {
     /**
@@ -44,7 +44,7 @@ public interface PeerFilterProvider {
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
 
     /** Whether this filter provider depends on the server updating the filter on all matches */
-    boolean isRequiringUpdateAllBloomFilter();
+    public boolean isRequiringUpdateAllBloomFilter();
 
     /**
      * Returns an object that will be locked before any other methods are called and unlocked afterwards. You must
