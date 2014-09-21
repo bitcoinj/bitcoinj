@@ -107,7 +107,12 @@ public class Peer extends PeerSocketHandler {
     // How many filtered blocks have been received during the lifetime of this connection. Used to decide when to
     // refresh the server-side side filter by sending a new one (it degrades over time as false positives are added
     // on the remote side, see BIP 37 for a discussion of this).
+    // TODO: Is this still needed? It should not be since the auto FP tracking logic was added.
     private int filteredBlocksReceived;
+    // If non-null, we should discard incoming filtered blocks because we ran out of keys and are awaiting a new filter
+    // to be calculated by the PeerGroup. The discarded block hashes should be added here so we can re-request them
+    // once we've recalculated and resent a new filter.
+    @GuardedBy("lock") @Nullable private List<Sha256Hash> awaitingFreshFilter;
     // How frequently to refresh the filter. This should become dynamic in future and calculated depending on the
     // actual false positive rate. For now a good value was determined empirically around January 2013.
     private static final int RESEND_BLOOM_FILTER_BLOCK_COUNT = 25000;
@@ -888,9 +893,8 @@ public class Peer extends PeerSocketHandler {
 
     // TODO: Fix this duplication.
     private void endFilteredBlock(FilteredBlock m) {
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug("{}: Received broadcast filtered block {}", getAddress(), m.getHash().toString());
-        }
         if (!vDownloadData) {
             log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHash().toString());
             return;
@@ -904,7 +908,7 @@ public class Peer extends PeerSocketHandler {
         // by cross-checking peers against each other.
         pendingBlockDownloads.remove(m.getBlockHeader().getHash());
         try {
-            // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
+            // It's a block sent to us because the peer thought we needed it, so maybe add it to the block chain.
             // The FilteredBlock m here contains a list of hashes, and may contain Transaction objects for a subset
             // of the hashes (those that were sent to us by the remote peer). Any hashes that haven't had a tx
             // provided in processTransaction are ones that were announced to us previously via an 'inv' so the
@@ -919,6 +923,35 @@ public class Peer extends PeerSocketHandler {
             // confirmation and become stuck forever. The fix is to notice that there's a pending getdata for a tx
             // that appeared in this block and delay processing until it arrived ... it's complicated by the fact that
             // the data may be requested by a different peer to this one.
+
+            // Ask each wallet attached to the peer/blockchain if this block exhausts the list of data items
+            // (keys/addresses) that were used to calculate the previous filter. If so, then it's possible this block
+            // is only partial. Check for discarding first so we don't check for exhaustion on blocks we already know
+            // we're going to discard, otherwise redundant filters might end up being queued and calculated.
+            lock.lock();
+            try {
+                if (awaitingFreshFilter != null) {
+                    log.info("Discarding block {} because we're still waiting for a fresh filter", m.getHash());
+                    // We must record the hashes of blocks we discard because you cannot do getblocks twice on the same
+                    // range of blocks and get an inv both times, due to the codepath in Bitcoin Core hitting
+                    // CPeer::PushInventory() which checks CPeer::setInventoryKnown and thus deduplicates.
+                    awaitingFreshFilter.add(m.getHash());
+                    return;   // Chain download process is restarted via a call to setBloomFilter.
+                } else if (checkForFilterExhaustion(m)) {
+                    // Yes, so we must abandon the attempt to process this block and any further blocks we receive,
+                    // then wait for the Bloom filter to be recalculated, sent to this peer and for the peer to acknowledge
+                    // that the new filter is now in use (which we have to simulate with a ping/pong), and then we can
+                    // safely restart the chain download with the new filter that contains a new set of lookahead keys.
+                    log.info("Bloom filter exhausted whilst processing block {}, discarding", m.getHash());
+                    awaitingFreshFilter = new LinkedList<Sha256Hash>();
+                    awaitingFreshFilter.add(m.getHash());
+                    awaitingFreshFilter.addAll(blockChain.drainOrphanBlocks());
+                    return;   // Chain download process is restarted via a call to setBloomFilter.
+                }
+            } finally {
+                lock.unlock();
+            }
+
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m.getBlockHeader());
@@ -955,6 +988,14 @@ public class Peer extends PeerSocketHandler {
             // TODO: Request e.getHash() and submit it to the block store before any other blocks
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean checkForFilterExhaustion(FilteredBlock m) {
+        boolean exhausted = false;
+        for (Wallet wallet : wallets) {
+            exhausted |= wallet.checkForFilterExhaustion(m);
+        }
+        return exhausted;
     }
 
     private boolean maybeHandleRequestedData(Message m) {
@@ -1082,7 +1123,7 @@ public class Peer extends PeerSocketHandler {
                         // it's better to be safe here.
                         if (!pendingBlockDownloads.contains(item.hash)) {
                             if (vPeerVersionMessage.isBloomFilteringSupported() && useFilteredBlocks) {
-                                getdata.addItem(new InventoryItem(InventoryItem.Type.FilteredBlock, item.hash));
+                                getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
                                 getdata.addItem(item);
@@ -1259,8 +1300,9 @@ public class Peer extends PeerSocketHandler {
             log.info("blockChainDownloadLocked({}): ignoring duplicated request", toHash.toString());
             return;
         }
-        log.debug("{}: blockChainDownloadLocked({}) current head = {}",
-                toString(), toHash.toString(), chainHead.getHeader().getHashAsString());
+        if (log.isDebugEnabled())
+            log.debug("{}: blockChainDownloadLocked({}) current head = {}",
+                    toString(), toHash.toString(), chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());
@@ -1272,9 +1314,8 @@ public class Peer extends PeerSocketHandler {
             }
         }
         // Only add the locator if we didn't already do so. If the chain is < 50 blocks we already reached it.
-        if (cursor != null) {
+        if (cursor != null)
             blockLocator.add(params.getGenesisBlock().getHash());
-        }
 
         // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
         // block being solved during chain download.
@@ -1539,6 +1580,43 @@ public class Peer extends PeerSocketHandler {
         sendMessage(filter);
         if (andQueryMemPool)
             sendMessage(new MemoryPoolMessage());
+        maybeRestartChainDownload();
+    }
+
+    private void maybeRestartChainDownload() {
+        lock.lock();
+        try {
+            if (awaitingFreshFilter == null)
+                return;
+            if (!vDownloadData) {
+                // This branch should be harmless but I want to know how often it happens in reality.
+                log.warn("Lost download peer status whilst awaiting fresh filter.");
+                return;
+            }
+            // Ping/pong to wait for blocks that are still being streamed to us to finish being downloaded and
+            // discarded.
+            ping().addListener(new Runnable() {
+                @Override
+                public void run() {
+                    lock.lock();
+                    checkNotNull(awaitingFreshFilter);
+                    GetDataMessage getdata = new GetDataMessage(params);
+                    for (Sha256Hash hash : awaitingFreshFilter)
+                        getdata.addFilteredBlock(hash);
+                    awaitingFreshFilter = null;
+                    lock.unlock();
+
+                    log.info("Restarting chain download");
+                    sendMessage(getdata);
+                    // TODO: This bizarre ping-after-getdata hack probably isn't necessary.
+                    // It's to ensure we know when the end of a filtered block stream of txns is, but we should just be
+                    // able to match txns with the merkleblock. Ask Matt why it's written this way.
+                    sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
+                }
+            }, Threading.SAME_THREAD);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

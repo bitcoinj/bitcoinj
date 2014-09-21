@@ -130,6 +130,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // How many keys on each path have actually been used. This may be fewer than the number that have been deserialized
     // or held in memory, because of the lookahead zone.
     private int issuedExternalKeys, issuedInternalKeys;
+    // A counter that is incremented each time a key in the lookahead threshold zone is marked as used and lookahead
+    // is triggered. The Wallet/KCG reads these counters and combines them so it can tell the Peer whether to throw
+    // away the current block (and any future blocks in the same download batch) and restart chain sync once a new
+    // filter has been calculated. This field isn't persisted to the wallet as it's only relevant within a network
+    // session.
+    private int keyLookaheadEpoch;
 
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
     // listeners "for free". All keys in the key tree appear here, even if they aren't meant to be used for receiving
@@ -936,8 +942,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * Gets the threshold for the key pre-generation.
-     * See {@link #setLookaheadThreshold(int)} for details on what this is.
+     * Gets the threshold for the key pre-generation. See {@link #setLookaheadThreshold(int)} for details on what this
+     * is. The default is a third of the lookahead size (100 / 3 == 33). If you don't modify it explicitly then this
+     * value will always be one third of the lookahead size.
      */
     public int getLookaheadThreshold() {
         lock.lock();
@@ -959,6 +966,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         try {
             List<DeterministicKey> keys = maybeLookAhead(externalKey, issuedExternalKeys);
             keys.addAll(maybeLookAhead(internalKey, issuedInternalKeys));
+            if (keys.isEmpty())
+                return;
+            keyLookaheadEpoch++;
             // Batch add all keys at once so there's only one event listener invocation, as this will be listened to
             // by the wallet and used to rebuild/broadcast the Bloom filter. That's expensive so we don't want to do
             // it more often than necessary.
@@ -1091,6 +1101,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             final byte[] secret = seed.getSeedBytes();
             if (secret != null)
                 proto.setDeterministicSeed(ByteString.copyFrom(secret));
+        }
+    }
+
+    /**
+     * Returns a counter that is incremented each time new keys are generated due to lookahead. Used by the network
+     * code to learn whether to discard the current block and await calculation of a new filter.
+     */
+    public int getKeyLookaheadEpoch() {
+        lock.lock();
+        try {
+            return keyLookaheadEpoch;
+        } finally {
+            lock.unlock();
         }
     }
 }
