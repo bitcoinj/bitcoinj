@@ -75,7 +75,7 @@
   <dependencies>
     <dependency>
       <groupId>com.google</groupId>
-      <artifactId>bitcoinj</artifactId>
+      <artifactId>bitcoinj-core</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
