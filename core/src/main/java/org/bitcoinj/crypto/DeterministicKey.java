@@ -381,17 +381,13 @@ public class DeterministicKey extends ECKey {
             if (path.size() != depth)
                 throw new IllegalArgumentException("Depth does not match");
         } else {
-            if (depth == 0) {
-                path = ImmutableList.of();
-            } else if (depth == 1) {
-                // We have been given a key that is not a root key, yet we also don't have any object representing
-                // the parent. This can happen when deserializing an account key for a watching wallet. In this case,
-                // we assume that the parent has a path of zero.
+            if (depth >= 1)
+                // We have been given a key that is not a root key, yet we lack any object representing the parent.
+                // This can happen when deserializing an account key for a watching wallet. In this case, we assume that
+                // the client wants to conceal the key's position in the hierarchy. The parent is deemed to be the
+                // root of the hierarchy.
                 path = ImmutableList.of(childNumber);
-            } else {
-                throw new IllegalArgumentException("Depth is " + depth + " and no parent key was provided, so we " +
-                                                   "cannot reconstruct the key path from the provided data.");
-            }
+            else path = ImmutableList.of();
         }
         byte[] chainCode = new byte[32];
         buffer.get(chainCode);

@@ -208,6 +208,17 @@ public class ChildKeyDerivationTest {
         }
     }
 
+    @Test
+    public void parentlessDeserialization() {
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+        DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
+        DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
+        assertEquals(key4.getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(key3, key4.serializePrivate()).getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(null, key4.serializePrivate()).getPath().size(), 1);
+    }
+
     private static String hexEncodePub(DeterministicKey pubKey) {
         return HEX.encode(pubKey.getPubKey());
     }
