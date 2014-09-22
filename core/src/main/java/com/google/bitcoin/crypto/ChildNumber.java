@@ -71,7 +71,7 @@ public class ChildNumber {
 
     @Override
     public String toString() {
-        return String.format("%d%s", num(), isHardened() ? "'" : "");
+        return String.format("%d%s", num(), isHardened() ? "H" : "");
     }
 
     @Override
