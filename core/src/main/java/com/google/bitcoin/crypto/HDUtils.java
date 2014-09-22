@@ -78,9 +78,9 @@ public final class HDUtils {
     /**
      * The path is a human-friendly representation of the deterministic path. For example:
      *
-     * "44' / 0' / 0' / 1 / 1"
+     * "44H / 0H / 0H / 1 / 1"
      *
-     * Where a single quote (') means hardened key. Spaces are ignored.
+     * Where a letter "H" means hardened key. Spaces are ignored.
      */
     public static List<ChildNumber> parsePath(@Nonnull String path) {
         String[] parsedNodes = path.replace("M", "").split("/");
@@ -89,7 +89,7 @@ public final class HDUtils {
         for (String n : parsedNodes) {
             n = n.replaceAll(" ", "");
             if (n.length() == 0) continue;
-            boolean isHard = n.endsWith("'");
+            boolean isHard = n.endsWith("H");
             if (isHard) n = n.substring(0, n.length() - 1);
             int nodeNumber = Integer.parseInt(n);
             nodes.add(new ChildNumber(nodeNumber, isHard));

@@ -128,15 +128,15 @@ public class HDUtilsTest {
     @Test
     public void testFormatPath() {
         Object tv[] = {
-                "M/44'/0'/0'/1/1",
+                "M/44H/0H/0H/1/1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
 
-                "M/7'/3/3/1'",
+                "M/7H/3/3/1H",
                 ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
 
-                "M/1'/2'/3'",
+                "M/1H/2H/3H",
                 ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
 
                 "M/1/2/3",
@@ -157,15 +157,15 @@ public class HDUtilsTest {
     @Test
     public void testParsePath() {
         Object tv[] = {
-                "M / 44' / 0' / 0' / 1 / 1",
+                "M / 44H / 0H / 0H / 1 / 1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
 
-                "M/7'/3/3/1'/",
+                "M/7H/3/3/1H/",
                 ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
 
-                "1 ' / 2 ' / 3 ' /",
+                "1 H / 2 H / 3 H /",
                 ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
 
                 "1 / 2 / 3 /",
