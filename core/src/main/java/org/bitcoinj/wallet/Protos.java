@@ -2351,7 +2351,6 @@ public final class Protos {
      * <code>optional bytes deterministic_seed = 8;</code>
      *
      * <pre>
-     **
      * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
      * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
      * </pre>
@@ -2361,7 +2360,6 @@ public final class Protos {
      * <code>optional bytes deterministic_seed = 8;</code>
      *
      * <pre>
-     **
      * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
      * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
      * </pre>
@@ -2373,7 +2371,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     boolean hasEncryptedDeterministicSeed();
@@ -2381,7 +2379,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed();
@@ -2389,7 +2387,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDeterministicSeedOrBuilder();
@@ -2929,7 +2927,6 @@ public final class Protos {
      * <code>optional bytes deterministic_seed = 8;</code>
      *
      * <pre>
-     **
      * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
      * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
      * </pre>
@@ -2941,7 +2938,6 @@ public final class Protos {
      * <code>optional bytes deterministic_seed = 8;</code>
      *
      * <pre>
-     **
      * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
      * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
      * </pre>
@@ -2957,7 +2953,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     public boolean hasEncryptedDeterministicSeed() {
@@ -2967,7 +2963,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed() {
@@ -2977,7 +2973,7 @@ public final class Protos {
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      *
      * <pre>
-     ** Encrypted version of the seed 
+     * Encrypted version of the seed
      * </pre>
      */
     public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDeterministicSeedOrBuilder() {
@@ -4006,7 +4002,6 @@ public final class Protos {
        * <code>optional bytes deterministic_seed = 8;</code>
        *
        * <pre>
-       **
        * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
        * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
        * </pre>
@@ -4018,7 +4013,6 @@ public final class Protos {
        * <code>optional bytes deterministic_seed = 8;</code>
        *
        * <pre>
-       **
        * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
        * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
        * </pre>
@@ -4030,7 +4024,6 @@ public final class Protos {
        * <code>optional bytes deterministic_seed = 8;</code>
        *
        * <pre>
-       **
        * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
        * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
        * </pre>
@@ -4048,7 +4041,6 @@ public final class Protos {
        * <code>optional bytes deterministic_seed = 8;</code>
        *
        * <pre>
-       **
        * The seed for a deterministic key hierarchy.  Derived from the mnemonic,
        * but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
        * </pre>
@@ -4068,7 +4060,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public boolean hasEncryptedDeterministicSeed() {
@@ -4078,7 +4070,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed() {
@@ -4092,7 +4084,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public Builder setEncryptedDeterministicSeed(org.bitcoinj.wallet.Protos.EncryptedData value) {
@@ -4112,7 +4104,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public Builder setEncryptedDeterministicSeed(
@@ -4130,7 +4122,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public Builder mergeEncryptedDeterministicSeed(org.bitcoinj.wallet.Protos.EncryptedData value) {
@@ -4153,7 +4145,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public Builder clearEncryptedDeterministicSeed() {
@@ -4170,7 +4162,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public org.bitcoinj.wallet.Protos.EncryptedData.Builder getEncryptedDeterministicSeedBuilder() {
@@ -4182,7 +4174,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDeterministicSeedOrBuilder() {
@@ -4196,7 +4188,7 @@ public final class Protos {
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
        *
        * <pre>
-       ** Encrypted version of the seed 
+       * Encrypted version of the seed
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<
