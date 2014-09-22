@@ -29,3 +29,30 @@
 .info-bar > .progress-bar > .track {
     -fx-opacity: 0.0;
 }
+
+
+.fat-button {
+    -fx-padding: 10 15 10 15;
+    -fx-min-width: 100;
+    -fx-base: whitesmoke;
+}
+
+.fat-button:default {
+    -fx-base: orange;
+    -fx-text-fill: white;
+}
+
+.fat-button:cancel {
+    -fx-background-color: lightgray, white;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 3;
+    -fx-text-fill: black;
+}
+
+.fat-button:cancel:hover {
+    -fx-base: white;
+    -fx-background-insets: -1, 0, 1, 2;
+    -fx-background-color: -fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;
+    -fx-background-radius: 3;
+    -fx-text-fill: black;
+}
