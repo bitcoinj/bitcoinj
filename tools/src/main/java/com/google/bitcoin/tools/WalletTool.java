@@ -884,7 +884,7 @@ public class WalletTool {
             // Parse as mnemonic code.
             final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
             String passphrase = ""; // TODO allow user to specify a passphrase
-            seed = new DeterministicSeed(split, passphrase, creationTimeSecs);
+            seed = new DeterministicSeed(split, null, passphrase, creationTimeSecs);
             try {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {
