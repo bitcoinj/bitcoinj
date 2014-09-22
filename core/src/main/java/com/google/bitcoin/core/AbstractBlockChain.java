@@ -430,6 +430,22 @@ public abstract class AbstractBlockChain {
         }
     }
 
+    /**
+     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
+     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
+     * might be inaccurate/incomplete.
+     */
+    public Set<Sha256Hash> drainOrphanBlocks() {
+        lock.lock();
+        try {
+            Set<Sha256Hash> hashes = new HashSet<Sha256Hash>(orphanBlocks.keySet());
+            orphanBlocks.clear();
+            return hashes;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     // expensiveChecks enables checks that require looking at blocks further back in the chain
     // than the previous one when connecting (eg median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
@@ -796,7 +812,6 @@ public abstract class AbstractBlockChain {
             Iterator<OrphanBlock> iter = orphanBlocks.values().iterator();
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();
-                log.debug("Trying to connect {}", orphanBlock.block.getHash());
                 // Look up the blocks previous.
                 StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
                 if (prev == null) {
@@ -806,6 +821,7 @@ public abstract class AbstractBlockChain {
                 }
                 // Otherwise we can connect it now.
                 // False here ensures we don't recurse infinitely downwards when connecting huge chains.
+                log.info("Connected orphan {}", orphanBlock.block.getHash());
                 add(orphanBlock.block, false, orphanBlock.filteredTxHashes, orphanBlock.filteredTxn);
                 iter.remove();
                 blocksConnectedThisRound++;

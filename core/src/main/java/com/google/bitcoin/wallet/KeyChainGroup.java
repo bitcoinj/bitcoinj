@@ -26,7 +26,6 @@ import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.store.UnreadableWalletException;
 import com.google.bitcoin.utils.ListenerRegistration;
 import com.google.bitcoin.utils.Threading;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -482,14 +481,14 @@ public class KeyChainGroup implements KeyBag {
         for (DeterministicKeyChain chain : chains) {
             DeterministicKey key;
             if ((key = chain.markPubHashAsUsed(pubkeyHash)) != null) {
-                markKeyAsUsed(key);
+                maybeMarkCurrentKeyAsUsed(key);
                 return;
             }
         }
     }
 
     /** If the given key is "current", advance the current key to a new one. */
-    private void markKeyAsUsed(DeterministicKey key) {
+    private void maybeMarkCurrentKeyAsUsed(DeterministicKey key) {
         for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : currentKeys.entrySet()) {
             if (entry.getValue() != null && entry.getValue().equals(key)) {
                 log.info("Marking key as used: {}", key);
@@ -498,7 +497,6 @@ public class KeyChainGroup implements KeyBag {
             }
         }
     }
-
 
     public boolean hasKey(ECKey key) {
         if (basic.hasKey(key))
@@ -530,7 +528,7 @@ public class KeyChainGroup implements KeyBag {
         for (DeterministicKeyChain chain : chains) {
             DeterministicKey key;
             if ((key = chain.markPubKeyAsUsed(pubkey)) != null) {
-                markKeyAsUsed(key);
+                maybeMarkCurrentKeyAsUsed(key);
                 return;
             }
         }
@@ -954,5 +952,16 @@ public class KeyChainGroup implements KeyBag {
      */
     public int getSigsRequiredToSpend() {
         return sigsRequiredToSpend;
+    }
+
+    /**
+     * Returns a counter that increases (by an arbitrary amount) each time new keys have been calculated due to
+     * lookahead and thus the Bloom filter that was previously calculated has become stale.
+     */
+    public int getCombinedKeyLookaheadEpochs() {
+        int epoch = 0;
+        for (DeterministicKeyChain chain : chains)
+            epoch += chain.getKeyLookaheadEpoch();
+        return epoch;
     }
 }
