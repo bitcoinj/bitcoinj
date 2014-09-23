@@ -102,7 +102,7 @@ import static com.google.common.base.Preconditions.*;
  * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, com.google.bitcoin.wallet.WalletFiles.Listener)}
  * for more information about this.</p>
  */
-public class Wallet extends BaseTaggableObject implements Serializable, BlockChainListener, PeerFilterProvider, KeyBag {
+public class Wallet extends BaseTaggableObject implements Serializable, BlockChainListener, PeerFilterProvider, KeyBag, TransactionBag {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final long serialVersionUID = 2L;
     private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
@@ -829,14 +829,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    /**
-     * Returns true if this wallet contains a public key which hashes to the given hash.
-     */
+    /** {@inheritDoc} */
+    @Override
     public boolean isPubKeyHashMine(byte[] pubkeyHash) {
         return findKeyFromPubHash(pubkeyHash) != null;
     }
 
-    /** Returns true if this wallet is watching transactions for outputs with the script. */
+    /** {@inheritDoc} */
+    @Override
     public boolean isWatchedScript(Script script) {
         lock.lock();
         try {
@@ -861,9 +861,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    /**
-     * Returns true if this wallet contains a keypair with the given public key.
-     */
+    /** {@inheritDoc} */
+    @Override
     public boolean isPubKeyMine(byte[] pubkey) {
         return findKeyFromPubKey(pubkey) != null;
     }
@@ -883,9 +882,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    /**
-     * Returns true if this wallet knows the script corresponding to the given hash
-     */
+    /** {@inheritDoc} */
+    @Override
     public boolean isPayToScriptHashMine(byte[] payToScriptHash) {
         return findRedeemDataFromScriptHash(payToScriptHash) != null;
     }
@@ -2351,6 +2349,28 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             return transactions.get(hash);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Map<Sha256Hash, Transaction> getTransactionPool(Pool pool) {
+        lock.lock();
+        try {
+            switch (pool) {
+                case UNSPENT:
+                    return unspent;
+                case SPENT:
+                    return spent;
+                case PENDING:
+                    return pending;
+                case DEAD:
+                    return dead;
+                default:
+                    throw new RuntimeException("Unknown wallet transaction type " + pool);
+            }
         } finally {
             lock.unlock();
         }

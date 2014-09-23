@@ -310,17 +310,17 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Returns true if this output is to a key in the wallet or to an address/script we are watching.
      */
-    public boolean isMineOrWatched(Wallet wallet) {
-        return isMine(wallet) || isWatched(wallet);
+    public boolean isMineOrWatched(TransactionBag transactionBag) {
+        return isMine(transactionBag) || isWatched(transactionBag);
     }
 
     /**
      * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
      */
-    public boolean isWatched(Wallet wallet) {
+    public boolean isWatched(TransactionBag transactionBag) {
         try {
             Script script = getScriptPubKey();
-            return wallet.isWatchedScript(script);
+            return transactionBag.isWatchedScript(script);
         } catch (ScriptException e) {
             // Just means we didn't understand the output of this transaction: ignore it.
             log.debug("Could not parse tx output script: {}", e.toString());
@@ -331,17 +331,17 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     /**
      * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
      */
-    public boolean isMine(Wallet wallet) {
+    public boolean isMine(TransactionBag transactionBag) {
         try {
             Script script = getScriptPubKey();
             if (script.isSentToRawPubKey()) {
                 byte[] pubkey = script.getPubKey();
-                return wallet.isPubKeyMine(pubkey);
+                return transactionBag.isPubKeyMine(pubkey);
             } if (script.isPayToScriptHash()) {
-                return wallet.isPayToScriptHashMine(script.getPubKeyHash());
+                return transactionBag.isPayToScriptHashMine(script.getPubKeyHash());
             } else {
                 byte[] pubkeyHash = script.getPubKeyHash();
-                return wallet.isPubKeyHashMine(pubkeyHash);
+                return transactionBag.isPubKeyHashMine(pubkeyHash);
             }
         } catch (ScriptException e) {
             // Just means we didn't understand the output of this transaction: ignore it.
