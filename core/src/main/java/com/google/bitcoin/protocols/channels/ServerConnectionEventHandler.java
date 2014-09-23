@@ -20,6 +20,7 @@ import com.google.bitcoin.core.Coin;
 import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.net.ProtobufParser;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
 
@@ -74,7 +75,7 @@ public abstract class ServerConnectionEventHandler {
      * @return acknowledgment information to be sent to the client.
      */
     @Nullable
-    public abstract ByteString paymentIncrease(Coin by, Coin to, ByteString info);
+    public abstract ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, ByteString info);
 
     /**
      * <p>Called when the channel was closed for some reason. May be called without a call to

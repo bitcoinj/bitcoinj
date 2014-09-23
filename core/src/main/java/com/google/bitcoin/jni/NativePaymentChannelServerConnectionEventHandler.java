@@ -3,6 +3,7 @@ package com.google.bitcoin.jni;
 import com.google.bitcoin.core.*;
 import com.google.bitcoin.protocols.channels.PaymentChannelCloseException;
 import com.google.bitcoin.protocols.channels.ServerConnectionEventHandler;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 /**
@@ -17,7 +18,7 @@ public class NativePaymentChannelServerConnectionEventHandler extends ServerConn
     public native void channelOpen(Sha256Hash channelId);
 
     @Override
-    public native ByteString paymentIncrease(Coin by, Coin to, ByteString info);
+    public native ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, ByteString info);
 
     @Override
     public native void channelClosed(PaymentChannelCloseException.CloseReason reason);

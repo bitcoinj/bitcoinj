@@ -21,6 +21,7 @@ import com.google.bitcoin.protocols.channels.PaymentChannelCloseException.CloseR
 import com.google.bitcoin.utils.Threading;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
@@ -103,10 +104,10 @@ public class PaymentChannelServer {
          * @param by The increase in total payment
          * @param to The new total payment to us (not including fees which may be required to claim the payment)
          * @param info Information about this payment increase, used to extend this protocol.
-         * @return An ack message that will be included in the PaymentAck message to the client. Use null for no ack message.
+         * @return A future that completes with the ack message that will be included in the PaymentAck message to the client. Use null for no ack message.
          */
         @Nullable
-        public ByteString paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
+        public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
     }
     private final ServerConnection conn;
 
@@ -368,17 +369,32 @@ public class PaymentChannelServer {
         boolean stillUsable = state.incrementPayment(refundSize, msg.getSignature().toByteArray());
         Coin bestPaymentChange = state.getBestValueToMe().subtract(lastBestPayment);
 
-        ByteString ackInfo = null;
+        ListenableFuture<ByteString> ackInfoFuture = null;
         if (bestPaymentChange.signum() > 0) {
             ByteString info = (msg.hasInfo()) ? msg.getInfo() : null;
-            ackInfo = conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe(), info);
+            ackInfoFuture = conn.paymentIncrease(bestPaymentChange, state.getBestValueToMe(), info);
         }
 
         if (sendAck) {
-            Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
+            final Protos.TwoWayChannelMessage.Builder ack = Protos.TwoWayChannelMessage.newBuilder();
             ack.setType(Protos.TwoWayChannelMessage.MessageType.PAYMENT_ACK);
-            if (ackInfo != null) ack.setPaymentAck(ack.getPaymentAckBuilder().setInfo(ackInfo));
-            conn.sendToClient(ack.build());
+            if (ackInfoFuture == null) {
+                conn.sendToClient(ack.build());
+            } else {
+                Futures.addCallback(ackInfoFuture, new FutureCallback<ByteString>() {
+                    @Override
+                    public void onSuccess(@Nullable ByteString result) {
+                        if (result != null) ack.setPaymentAck(ack.getPaymentAckBuilder().setInfo(result));
+                        conn.sendToClient(ack.build());
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.info("Failed retrieving paymentIncrease info future");
+                        error("Failed processing payment update", Protos.Error.ErrorCode.OTHER, CloseReason.UPDATE_PAYMENT_FAILED);
+                    }
+                });
+            }
         }
 
         if (!stillUsable) {
@@ -551,7 +567,7 @@ public class PaymentChannelServer {
      * <p>Closes the connection by generating a settle message for the client and calls
      * {@link ServerConnection#destroyConnection(CloseReason)}. Note that this does not broadcast
      * the payment transaction and the client may still resume the same channel if they reconnect</p>
-     *
+     * <p>
      * <p>Note that {@link PaymentChannelServer#connectionClosed()} must still be called after the connection fully
      * closes.</p>
      */

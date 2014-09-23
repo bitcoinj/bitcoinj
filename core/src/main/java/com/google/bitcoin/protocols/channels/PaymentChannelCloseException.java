@@ -61,6 +61,9 @@ public class PaymentChannelCloseException extends Exception {
 
         /** The connection was closed without an ERROR/CLOSE message */
         CONNECTION_CLOSED,
+
+        /** The server failed processing an UpdatePayment message */
+        UPDATE_PAYMENT_FAILED,
     }
 
     private final CloseReason error;
