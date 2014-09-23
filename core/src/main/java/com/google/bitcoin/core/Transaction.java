@@ -23,6 +23,7 @@ import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
 import com.google.bitcoin.utils.ExchangeRate;
+import com.google.bitcoin.wallet.WalletTransaction.Pool;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -250,12 +251,12 @@ public class Transaction extends ChildMessage implements Serializable {
      * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
      * include spent outputs or not.
      */
-    Coin getValueSentToMe(Wallet wallet, boolean includeSpent) {
+    Coin getValueSentToMe(TransactionBag transactionBag, boolean includeSpent) {
         maybeParse();
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(wallet)) continue;
+            if (!o.isMineOrWatched(transactionBag)) continue;
             if (!includeSpent && !o.isAvailableForSpending()) continue;
             v = v.add(o.getValue());
         }
@@ -266,11 +267,11 @@ public class Transaction extends ChildMessage implements Serializable {
      * If isSpent - check that all my outputs spent, otherwise check that there at least
      * one unspent.
      */
-    boolean isConsistent(Wallet wallet, boolean isSpent) {
+    boolean isConsistent(TransactionBag transactionBag, boolean isSpent) {
         boolean isActuallySpent = true;
         for (TransactionOutput o : outputs) {
             if (o.isAvailableForSpending()) {
-                if (o.isMineOrWatched(wallet)) isActuallySpent = false;
+                if (o.isMineOrWatched(transactionBag)) isActuallySpent = false;
                 if (o.getSpentBy() != null) {
                     log.error("isAvailableForSpending != spentBy");
                     return false;
@@ -288,8 +289,8 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
      */
-    public Coin getValueSentToMe(Wallet wallet) {
-        return getValueSentToMe(wallet, true);
+    public Coin getValueSentToMe(TransactionBag transactionBag) {
+        return getValueSentToMe(transactionBag, true);
     }
 
     /**
@@ -354,18 +355,18 @@ public class Transaction extends ChildMessage implements Serializable {
      *
      * @return sum of the inputs that are spending coins with keys in the wallet
      */
-    public Coin getValueSentFromMe(Wallet wallet) throws ScriptException {
+    public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
         maybeParse();
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
         for (TransactionInput input : inputs) {
             // This input is taking value from a transaction in our wallet. To discover the value,
             // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(wallet.unspent);
+            TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
             if (connected == null)
-                connected = input.getConnectedOutput(wallet.spent);
+                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
             if (connected == null)
-                connected = input.getConnectedOutput(wallet.pending);
+                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
             if (connected == null)
                 continue;
             // The connected output may be the change to the sender of a previous input sent to this wallet. In this
@@ -378,9 +379,9 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the difference of {@link Transaction#getValueSentFromMe(Wallet)} and {@link Transaction#getValueSentToMe(Wallet)}.
+     * Returns the difference of {@link Transaction#getValueSentFromMe(TransactionBag)} and {@link Transaction#getValueSentToMe(TransactionBag)}.
      */
-    public Coin getValue(Wallet wallet) throws ScriptException {
+    public Coin getValue(TransactionBag wallet) throws ScriptException {
         return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
     }
 
@@ -440,10 +441,10 @@ public class Transaction extends ChildMessage implements Serializable {
      * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
      * otherwise.
      */
-    public boolean isEveryOwnedOutputSpent(Wallet wallet) {
+    public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
         maybeParse();
         for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMineOrWatched(wallet))
+            if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
                 return false;
         }
         return true;
@@ -1091,15 +1092,15 @@ public class Transaction extends ChildMessage implements Serializable {
      * watched by a wallet, i.e., transaction outputs whose script's address is controlled by the wallet and transaction
      * outputs whose script is watched by the wallet.</p>
      *
-     * @param wallet The wallet that controls addresses and watches scripts.
+     * @param transactionBag The wallet that controls addresses and watches scripts.
      * @return linked list of outputs relevant to the wallet in this transaction
      */
-    public List<TransactionOutput> getWalletOutputs(Wallet wallet){
+    public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
         maybeParse();
         List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
         Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(wallet)) continue;
+            if (!o.isMineOrWatched(transactionBag)) continue;
             walletOutputs.add(o);
         }
 
