@@ -21,6 +21,7 @@ import com.google.bitcoin.store.WalletProtobufSerializer;
 import com.google.bitcoin.testing.TestWithWallet;
 import com.google.bitcoin.utils.Threading;
 import com.google.bitcoin.wallet.WalletFiles;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
@@ -35,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -131,9 +133,9 @@ public class ChannelConnectionTest extends TestWithWallet {
                             }
 
                             @Override
-                            public ByteString paymentIncrease(Coin by, Coin to, ByteString info) {
+                            public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, ByteString info) {
                                 q.add(new ChannelTestUtils.UpdatePair(to, info));
-                                return null;
+                                return Futures.immediateFuture(info);
                             }
 
                             @Override
@@ -174,11 +176,16 @@ public class ChannelConnectionTest extends TestWithWallet {
         Thread.sleep(1250); // No timeouts once the channel is open
         Coin amount = client.state().getValueSpent();
         q.take().assertPair(amount, null);
-        ByteString[] infos = new ByteString[]{null, ByteString.copyFromUtf8("one"),ByteString.copyFromUtf8("two")};
-        for (ByteString info : infos) {
-            client.incrementPayment(CENT, info).get();
+        for (String info : new String[] {null, "one", "two"} ) {
+            final ByteString bytes = (info==null) ? null :ByteString.copyFromUtf8(info);
+            final PaymentIncrementAck ack = client.incrementPayment(CENT, bytes).get();
+            if (info != null) {
+                final ByteString ackInfo = ack.getInfo();
+                assertNotNull("Ack info is null", ackInfo);
+                assertEquals("Ack info differs ", info, ackInfo.toStringUtf8());
+            }
             amount = amount.add(CENT);
-            q.take().assertPair(amount, info);
+            q.take().assertPair(amount, bytes);
         }
         latch.await();
 

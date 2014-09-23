@@ -5,6 +5,9 @@ import com.google.bitcoin.core.Sha256Hash;
 import com.google.bitcoin.core.TransactionBroadcaster;
 import com.google.bitcoin.core.Wallet;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
 
@@ -37,9 +40,9 @@ public class ChannelTestUtils {
         }
 
         @Override
-        public ByteString paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
+        public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
             q.add(new UpdatePair(to, info));
-            return ByteString.copyFromUtf8(by.toPlainString());
+            return Futures.immediateFuture(ByteString.copyFromUtf8(by.toPlainString()));
         }
 
         public Protos.TwoWayChannelMessage getNextMsg() throws InterruptedException {

@@ -28,6 +28,7 @@ import com.google.bitcoin.protocols.channels.*;
 import com.google.bitcoin.utils.BriefLogFormatter;
 import com.google.common.collect.ImmutableList;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,7 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
             }
 
             @Override
-            public ByteString paymentIncrease(Coin by, Coin to, ByteString info) {
+            public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, ByteString info) {
                 log.info("Client {} paid increased payment by {} for a total of " + to.toString(), clientAddress, by);
                 return null;
             }
