@@ -32,6 +32,7 @@ import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
@@ -80,6 +81,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     private static final int DEFAULT_CONNECTIONS = 4;
     private static final int TOR_TIMEOUT_SECONDS = 60;
+    private int maxPeersToDiscoverCount = 100;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
@@ -661,12 +663,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         if (peerDiscoverers.isEmpty())
             throw new PeerDiscoveryException("No peer discoverers registered");
         long start = System.currentTimeMillis();
-        Set<PeerAddress> addressSet = Sets.newHashSet();
+        final Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
             for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
-            if (addressSet.size() > 0) break;
+            if (addressSet.size() >= maxPeersToDiscoverCount) break;
         }
         lock.lock();
         try {
@@ -676,6 +678,17 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         } finally {
             lock.unlock();
         }
+
+        final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressSet);
+        for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeersDiscovered(peersDiscoveredSet);
+                }
+            });
+        }
+
         log.info("Peer discovery took {}msec and returned {} items",
                 System.currentTimeMillis() - start, addressSet.size());
     }
@@ -1647,6 +1660,24 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     @Nullable
     public TorClient getTorClient() {
         return torClient;
+    }
+
+    /**
+     * Returns the maximum number of {@link Peer}s to discover. This maximum is checked after
+     * each {@link PeerDiscovery} so this max number can be surpassed.
+     * @return the maximum number of peers to discover
+     */
+    public int getMaxPeersToDiscoverCount() {
+        return maxPeersToDiscoverCount;
+    }
+
+    /**
+     * Sets the maximum number of {@link Peer}s to discover. This maximum is checked after
+     * each {@link PeerDiscovery} so this max number can be surpassed.
+     * @param maxPeersToDiscoverCount the maximum number of peers to discover
+     */
+    public void setMaxPeersToDiscoverCount(int maxPeersToDiscoverCount) {
+        this.maxPeersToDiscoverCount = maxPeersToDiscoverCount;
     }
 
     /** See {@link #setUseLocalhostPeerWhenPossible(boolean)} */
