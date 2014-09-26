@@ -18,6 +18,7 @@ package com.google.bitcoin.core;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
@@ -25,6 +26,14 @@ import java.util.List;
  * provide transactions to remote peers when they ask for them.</p>
  */
 public interface PeerEventListener {
+    /**
+     * <p>Called when peers are discovered, this happens at startup of {@link PeerGroup} or if we run out of
+     * suitable {@link Peer}s to connect to.</p>
+     *
+     * @param peerAddresses the set of discovered {@link PeerAddress}es
+     */
+    public void onPeersDiscovered(Set<PeerAddress> peerAddresses);
+
     /**
      * Called on a Peer thread when a block is received.<p>
      *

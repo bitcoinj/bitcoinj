@@ -166,6 +166,40 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(result.get());
     }
 
+    // Utility method to create a PeerDiscovery with a certain number of addresses.
+    private PeerDiscovery createPeerDiscovery(int nrOfAddressesWanted, int port) {
+        final InetSocketAddress[] addresses = new InetSocketAddress[nrOfAddressesWanted];
+        for (int addressNr = 0; addressNr < nrOfAddressesWanted; addressNr++) {
+            // make each address unique by using the counter to increment the port.
+            addresses[addressNr] = new InetSocketAddress("localhost", port + addressNr);
+        }
+        return new PeerDiscovery() {
+            public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {
+                return addresses;
+            }
+            public void shutdown() {
+            }
+        };
+    }
+
+    @Test
+    public void multiplePeerDiscovery() throws InterruptedException {
+        peerGroup.setMaxNrPeersToDiscover(98);
+        peerGroup.addPeerDiscovery(createPeerDiscovery(1, 0));
+        peerGroup.addPeerDiscovery(createPeerDiscovery(2, 100));
+        peerGroup.addPeerDiscovery(createPeerDiscovery(96, 200));
+        peerGroup.addPeerDiscovery(createPeerDiscovery(3, 300));
+        peerGroup.addPeerDiscovery(createPeerDiscovery(1, 400));
+        peerGroup.addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
+                assertEquals(99, peerAddresses.size());
+            }
+        });
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
+    }
+
     @Test
     public void receiveTxBroadcast() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.

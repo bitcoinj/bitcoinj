@@ -80,6 +80,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     private static final int DEFAULT_CONNECTIONS = 4;
     private static final int TOR_TIMEOUT_SECONDS = 60;
+    private int maxNrPeersToDiscover = 100;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
@@ -661,12 +662,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         if (peerDiscoverers.isEmpty())
             throw new PeerDiscoveryException("No peer discoverers registered");
         long start = System.currentTimeMillis();
-        Set<PeerAddress> addressSet = Sets.newHashSet();
+        final Set<PeerAddress> addressSet = Sets.newHashSet();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
             for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
-            if (addressSet.size() > 0) break;
+            if (addressSet.size() >= maxNrPeersToDiscover) break;
         }
         lock.lock();
         try {
@@ -676,6 +677,16 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         } finally {
             lock.unlock();
         }
+
+        for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeersDiscovered(Sets.newHashSet(addressSet));
+                }
+            });
+        }
+
         log.info("Peer discovery took {}msec and returned {} items",
                 System.currentTimeMillis() - start, addressSet.size());
     }
@@ -1647,6 +1658,14 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     @Nullable
     public TorClient getTorClient() {
         return torClient;
+    }
+
+    public int getMaxNrPeersToDiscover() {
+        return maxNrPeersToDiscover;
+    }
+
+    public void setMaxNrPeersToDiscover(int maxNrPeersToDiscover) {
+        this.maxNrPeersToDiscover = maxNrPeersToDiscover;
     }
 
     /** See {@link #setUseLocalhostPeerWhenPossible(boolean)} */

@@ -17,11 +17,16 @@
 package com.google.bitcoin.core;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Convenience implementation of {@link PeerEventListener}.
  */
 public class AbstractPeerEventListener implements PeerEventListener {
+    @Override
+    public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
+    }
+
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
     }

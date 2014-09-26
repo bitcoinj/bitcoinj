@@ -19,6 +19,7 @@ package com.google.bitcoin.jni;
 import com.google.bitcoin.core.*;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in
@@ -27,6 +28,9 @@ import java.util.List;
  */
 public class NativePeerEventListener implements PeerEventListener {
     public long ptr;
+
+    @Override
+    public native void onPeersDiscovered(Set<PeerAddress> peerAddresses);
 
     @Override
     public native void onBlocksDownloaded(Peer peer, Block block, int blocksLeft);
