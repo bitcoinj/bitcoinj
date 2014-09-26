@@ -184,7 +184,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void multiplePeerDiscovery() throws InterruptedException {
-        peerGroup.setMaxNrPeersToDiscover(98);
+        peerGroup.setMaxPeersToDiscoverCount(98);
         peerGroup.addPeerDiscovery(createPeerDiscovery(1, 0));
         peerGroup.addPeerDiscovery(createPeerDiscovery(2, 100));
         peerGroup.addPeerDiscovery(createPeerDiscovery(96, 200));

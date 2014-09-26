@@ -80,7 +80,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
     private static final int DEFAULT_CONNECTIONS = 4;
     private static final int TOR_TIMEOUT_SECONDS = 60;
-    private int maxNrPeersToDiscover = 100;
+    private int maxPeersToDiscoverCount = 100;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
@@ -667,7 +667,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
             for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
-            if (addressSet.size() >= maxNrPeersToDiscover) break;
+            if (addressSet.size() >= maxPeersToDiscoverCount) break;
         }
         lock.lock();
         try {
@@ -1660,12 +1660,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         return torClient;
     }
 
-    public int getMaxNrPeersToDiscover() {
-        return maxNrPeersToDiscover;
+    public int getMaxPeersToDiscoverCount() {
+        return maxPeersToDiscoverCount;
     }
 
-    public void setMaxNrPeersToDiscover(int maxNrPeersToDiscover) {
-        this.maxNrPeersToDiscover = maxNrPeersToDiscover;
+    public void setMaxPeersToDiscoverCount(int maxPeersToDiscoverCount) {
+        this.maxPeersToDiscoverCount = maxPeersToDiscoverCount;
     }
 
     /** See {@link #setUseLocalhostPeerWhenPossible(boolean)} */
