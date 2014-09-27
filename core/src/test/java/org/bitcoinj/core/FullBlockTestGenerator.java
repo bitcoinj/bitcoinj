@@ -1102,7 +1102,52 @@ public class FullBlockTestGenerator {
         checkState(b56.getHash().equals(b57.getHash()));
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b56, false, true, b55.getHash(), chainHeadHeight + 16, "b56"));
 
-        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b57, true, false, b57.getHash(), chainHeadHeight + 17, "b57"));
+        Block b57p2 = createNextBlock(b55, chainHeadHeight + 17, out16, null);
+        Transaction b56p2txToDuplicate1, b56p2txToDuplicate2;
+        {
+            Transaction tx1 = new Transaction(params);
+            tx1.addOutput(new TransactionOutput(params, tx1, SATOSHI, new byte[] {OP_TRUE}));
+            addOnlyInputToTransaction(tx1, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 1, b57p2.getTransactions().get(1).getHash()),
+                    SATOSHI, b57p2.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+            b57p2.addTransaction(tx1);
+
+            Transaction tx2 = new Transaction(params);
+            tx2.addOutput(new TransactionOutput(params, tx2, SATOSHI, new byte[] {OP_TRUE}));
+            addOnlyInputToTransaction(tx2, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 0, tx1.getHash()),
+                    SATOSHI, tx1.getOutputs().get(0).getScriptPubKey()));
+            b57p2.addTransaction(tx2);
+
+            b56p2txToDuplicate1 = new Transaction(params);
+            b56p2txToDuplicate1.addOutput(new TransactionOutput(params, b56p2txToDuplicate1, SATOSHI, new byte[]{OP_TRUE}));
+            addOnlyInputToTransaction(b56p2txToDuplicate1, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 0, tx2.getHash()),
+                    SATOSHI, tx2.getOutputs().get(0).getScriptPubKey()));
+            b57p2.addTransaction(b56p2txToDuplicate1);
+
+            b56p2txToDuplicate2 = new Transaction(params);
+            b56p2txToDuplicate2.addOutput(new TransactionOutput(params, b56p2txToDuplicate2, SATOSHI, new byte[]{}));
+            addOnlyInputToTransaction(b56p2txToDuplicate2, new TransactionOutPointWithValue(
+                    new TransactionOutPoint(params, 0, b56p2txToDuplicate1.getHash()),
+                    SATOSHI, b56p2txToDuplicate1.getOutputs().get(0).getScriptPubKey()));
+            b57p2.addTransaction(b56p2txToDuplicate2);
+        }
+        b57p2.solve();
+
+        Block b56p2;
+        try {
+            b56p2 = new Block(params, b57p2.bitcoinSerialize());
+        } catch (ProtocolException e) {
+            throw new RuntimeException(e); // Cannot happen.
+        }
+        b56p2.addTransaction(b56p2txToDuplicate1);
+        b56p2.addTransaction(b56p2txToDuplicate2);
+        checkState(b56p2.getHash().equals(b57p2.getHash()));
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b56p2, false, true, b55.getHash(), chainHeadHeight + 16, "b56p2"));
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b57p2, true, false, b57p2.getHash(), chainHeadHeight + 17, "b57p2"));
+
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b57, true, false, b57p2.getHash(), chainHeadHeight + 17, "b57"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b57.getTransactions().get(0).getHash()),
                 b57.getTransactions().get(0).getOutputs().get(0).getValue(),
@@ -1124,7 +1169,7 @@ public class FullBlockTestGenerator {
             b58.addTransaction(tx);
         }
         b58.solve();
-        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b58, false, true, b57.getHash(), chainHeadHeight + 17, "b58"));
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b58, false, true, b57p2.getHash(), chainHeadHeight + 17, "b58"));
         
         // tx with output value > input value out of range
         Block b59 = createNextBlock(b57, chainHeadHeight + 18, out17, null);
@@ -1137,7 +1182,7 @@ public class FullBlockTestGenerator {
             b59.addTransaction(tx);
         }
         b59.solve();
-        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b59, false, true, b57.getHash(), chainHeadHeight + 17, "b59"));
+        blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b59, false, true, b57p2.getHash(), chainHeadHeight + 17, "b59"));
         
         Block b60 = createNextBlock(b57, chainHeadHeight + 18, out17, null);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b60, true, false, b60.getHash(), chainHeadHeight + 18, "b60"));
@@ -1651,7 +1696,7 @@ public class FullBlockTestGenerator {
         Block b89 = createNextBlock(b88, chainHeadHeight + 33, out32, null);
         {
             Transaction tx = new Transaction(params);
-            tx.addOutput(new TransactionOutput(params, tx, BigInteger.ZERO, new byte[] {OP_TRUE}));
+            tx.addOutput(new TransactionOutput(params, tx, ZERO, new byte[] {OP_TRUE}));
             tx.addInput(new TransactionInput(params, tx, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 0, b84tx1)));
             b89.addTransaction(tx);
             b89.solve();
