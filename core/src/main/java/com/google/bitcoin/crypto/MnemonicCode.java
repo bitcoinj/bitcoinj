@@ -148,6 +148,9 @@ public class MnemonicCode {
         if (words.size() % 3 > 0)
             throw new MnemonicException.MnemonicLengthException("Word list size must be multiple of three words.");
 
+        if (words.size() == 0)
+            throw new MnemonicException.MnemonicLengthException("Word list is empty.");
+
         // Look up all the words in the list and construct the
         // concatenation of the original entropy and the checksum.
         //
@@ -193,7 +196,10 @@ public class MnemonicCode {
      */
     public List<String> toMnemonic(byte[] entropy) throws MnemonicException.MnemonicLengthException {
         if (entropy.length % 4 > 0)
-            throw new MnemonicException.MnemonicLengthException("entropy length not multiple of 32 bits");
+            throw new MnemonicException.MnemonicLengthException("Entropy length not multiple of 32 bits.");
+
+        if (entropy.length == 0)
+            throw new MnemonicException.MnemonicLengthException("Entropy is empty.");
 
         // We take initial entropy of ENT bits and compute its
         // checksum by taking first ENT / 32 bits of its SHA256 hash.
