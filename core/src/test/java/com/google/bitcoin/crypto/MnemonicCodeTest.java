@@ -18,6 +18,7 @@
 package com.google.bitcoin.crypto;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -197,6 +198,18 @@ public class MnemonicCodeTest {
     public void testBadChecksum() throws Exception {
         List<String> words = split("bless cloud wheel regular tiny venue bird web grief security dignity zoo");
         mc.check(words);
+    }
+
+    @Test(expected = MnemonicException.MnemonicLengthException.class)
+    public void testEmptyMnemonic() throws Exception {
+        List<String> words = Lists.newArrayList();
+        mc.check(words);
+    }
+
+    @Test(expected = MnemonicException.MnemonicLengthException.class)
+    public void testEmptyEntropy() throws Exception {
+        byte[] entropy = new byte[]{};
+        mc.toMnemonic(entropy);
     }
 
     static public List<String> split(String words) {
