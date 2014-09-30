@@ -19,7 +19,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>com.google</groupId>
+    <groupId>org.bitcoinj</groupId>
     <artifactId>bitcoinj-parent</artifactId>
     <version>0.12-SNAPSHOT</version>
   </parent>
@@ -54,7 +54,7 @@
                   </filters>
                   <transformers>
                       <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                          <mainClass>com.google.bitcoin.tools.WalletTool</mainClass>
+                          <mainClass>org.bitcoinj.tools.WalletTool</mainClass>
                       </transformer>
                   </transformers>
                   <outputFile>target/wallet-tool.jar</outputFile>
@@ -74,8 +74,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google</groupId>
-      <artifactId>bitcoinj</artifactId>
+      <groupId>org.bitcoinj</groupId>
+      <artifactId>bitcoinj-core</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
