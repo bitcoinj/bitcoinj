@@ -39,6 +39,7 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * <p>A multi-signature keychain using synchronized HD keys (a.k.a HDM)</p>
@@ -214,11 +215,18 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    protected void beforeSerializeToProtobuf(List<Protos.Key> result) {
-        super.beforeSerializeToProtobuf(result);
-        for (DeterministicKeyChain chain : followingKeyChains) {
-            result.addAll(chain.serializeMyselfToProtobuf());
+    public List<Protos.Key> serializeToProtobuf() {
+        List<Protos.Key> result = newArrayList();
+        lock.lock();
+        try {
+            for (DeterministicKeyChain chain : followingKeyChains) {
+                result.addAll(chain.serializeMyselfToProtobuf());
+            }
+            result.addAll(serializeMyselfToProtobuf());
+        } finally {
+            lock.unlock();
         }
+        return result;
     }
 
     @Override
