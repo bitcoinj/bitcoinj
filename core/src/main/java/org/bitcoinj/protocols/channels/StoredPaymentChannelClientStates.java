@@ -360,8 +360,8 @@ class StoredClientChannel {
         final String closeStr = close == null ? "still open" : close.toString().replaceAll(newline, newline + "   ");
         return String.format("Stored client channel for server ID %s (%s)%n" +
                 "    Key:         %s%n" +
-                "    Value left:  %d%n" +
-                "    Refund fees: %d%n" +
+                "    Value left:  %s%n" +
+                "    Refund fees: %s%n" +
                 "    Contract:  %s" +
                 "Refund:    %s" +
                 "Close:     %s",
