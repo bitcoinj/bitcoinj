@@ -124,9 +124,7 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    /**
-     * This keeps married redeem data in sync with the number of keys issued
-     */
+    // This keeps married redeem data in sync with the number of keys issued
     private void maybeLookaheadScripts() {
         for (DeterministicKeyChain chain : chains) {
             chain.maybeLookAheadScripts();

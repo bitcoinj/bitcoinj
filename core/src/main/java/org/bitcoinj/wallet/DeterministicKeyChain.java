@@ -680,15 +680,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    protected void beforeSerializeToProtobuf(List<Protos.Key> result) {
-    }
-
     @Override
     public List<Protos.Key> serializeToProtobuf() {
         List<Protos.Key> result = newArrayList();
         lock.lock();
         try {
-            beforeSerializeToProtobuf(result);
             result.addAll(serializeMyselfToProtobuf());
         } finally {
             lock.unlock();
