@@ -32,6 +32,7 @@ import com.google.bitcoin.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
@@ -678,11 +679,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             lock.unlock();
         }
 
+        final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressSet);
         for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onPeersDiscovered(Sets.newHashSet(addressSet));
+                    registration.listener.onPeersDiscovered(peersDiscoveredSet);
                 }
             });
         }
@@ -1660,10 +1662,20 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         return torClient;
     }
 
+    /**
+     * Returns the maximum number of {@link Peer}s to discover. This maximum is checked after
+     * each {@link PeerDiscovery} so this max number can be surpassed.
+     * @return the maximum number of peers to discover
+     */
     public int getMaxPeersToDiscoverCount() {
         return maxPeersToDiscoverCount;
     }
 
+    /**
+     * Sets the maximum number of {@link Peer}s to discover. This maximum is checked after
+     * each {@link PeerDiscovery} so this max number can be surpassed.
+     * @param maxPeersToDiscoverCount the maximum number of peers to discover
+     */
     public void setMaxPeersToDiscoverCount(int maxPeersToDiscoverCount) {
         this.maxPeersToDiscoverCount = maxPeersToDiscoverCount;
     }
