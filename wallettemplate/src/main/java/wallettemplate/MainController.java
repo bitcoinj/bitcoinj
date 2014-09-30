@@ -1,8 +1,8 @@
 package wallettemplate;
 
-import com.google.bitcoin.core.Coin;
-import com.google.bitcoin.core.DownloadListener;
-import com.google.bitcoin.utils.MonetaryFormat;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.DownloadListener;
+import org.bitcoinj.utils.MonetaryFormat;
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;
 import javafx.animation.FadeTransition;

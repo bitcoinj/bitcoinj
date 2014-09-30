@@ -1,6 +1,6 @@
 package wallettemplate;
 
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

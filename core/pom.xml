@@ -20,12 +20,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.google</groupId>
+        <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
         <version>0.12-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bitcoinj</artifactId>
+    <artifactId>bitcoinj-core</artifactId>
 
     <name>bitcoinj</name>
     <description>A Java Bitcoin library</description>
@@ -246,7 +246,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <outputDirectory>target/test-classes/</outputDirectory>
-                                    <groupId>com.google</groupId>
+                                    <groupId>org.bitcoinj</groupId>
                                     <artifactId>bitcoinj</artifactId>
                                     <version>0.12-SNAPSHOT</version>
                                 </artifactItem>
@@ -280,7 +280,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>com.google.bitcoin.core.BitcoindComparisonTool</mainClass>
+                                    <mainClass>org.bitcoinj.core.BitcoindComparisonTool</mainClass>
                                     <addClasspath>false</addClasspath>
                                 </manifest>
                             </archive>

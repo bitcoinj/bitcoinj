@@ -1,6 +1,6 @@
 package wallettemplate;
 
-import com.google.bitcoin.crypto.KeyCrypterScrypt;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import javafx.beans.property.ReadOnlyObjectProperty;
