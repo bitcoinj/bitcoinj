@@ -247,7 +247,7 @@
                                 <artifactItem>
                                     <outputDirectory>target/test-classes/</outputDirectory>
                                     <groupId>org.bitcoinj</groupId>
-                                    <artifactId>bitcoinj</artifactId>
+                                    <artifactId>bitcoinj-core</artifactId>
                                     <version>0.12-SNAPSHOT</version>
                                 </artifactItem>
                             </artifactItems>
