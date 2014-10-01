@@ -371,7 +371,7 @@
         </dependency>
         -->
         <dependency>
-            <groupId>com.subgraph</groupId>
+            <groupId>org.bitcoinj</groupId>
             <artifactId>orchid</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
