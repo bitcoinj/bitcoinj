@@ -722,9 +722,16 @@ public class Script {
             throw new ScriptException("Script attempted to use an integer larger than 4 bytes");
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
-    
-    private static void executeScript(Transaction txContainingThis, long index,
-                                      Script script, LinkedList<byte[]> stack, boolean enforceNullDummy) throws ScriptException {
+
+    /**
+     * Exposes the script interpreter. Normally you should not use this directly, instead use
+     * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
+     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script)}. This method
+     * is useful if you need more precise control or access to the final state of the stack. This interface is very
+     * likely to change in future.
+     */
+    public static void executeScript(@Nullable Transaction txContainingThis, long index,
+                                     Script script, LinkedList<byte[]> stack, boolean enforceNullDummy) throws ScriptException {
         int opCount = 0;
         int lastCodeSepLocation = 0;
         
@@ -1198,10 +1205,14 @@ public class Script {
                     break;
                 case OP_CHECKSIG:
                 case OP_CHECKSIGVERIFY:
+                    if (txContainingThis == null)
+                        throw new IllegalStateException("Script attempted signature check but no tx was provided");
                     executeCheckSig(txContainingThis, (int) index, script, stack, lastCodeSepLocation, opcode);
                     break;
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:
+                    if (txContainingThis == null)
+                        throw new IllegalStateException("Script attempted signature check but no tx was provided");
                     opCount = executeMultiSig(txContainingThis, (int) index, script, stack, opCount, lastCodeSepLocation, opcode, enforceNullDummy);
                     break;
                 case OP_NOP1:
