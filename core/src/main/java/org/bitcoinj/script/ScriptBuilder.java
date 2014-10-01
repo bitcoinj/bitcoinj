@@ -16,18 +16,21 @@
 
 package org.bitcoinj.script;
 
+import com.google.common.collect.Lists;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
-import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import static org.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind
@@ -37,21 +40,45 @@ import static com.google.common.base.Preconditions.checkState;
 public class ScriptBuilder {
     private List<ScriptChunk> chunks;
 
+    /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
         chunks = Lists.newLinkedList();
     }
 
+    /** Creates a fresh ScriptBuilder with the given program as the starting point. */
+    public ScriptBuilder(Script template) {
+        chunks = new ArrayList<ScriptChunk>(template.getChunks());
+    }
+
+    /** Adds the given chunk to the end of the program */
     public ScriptBuilder addChunk(ScriptChunk chunk) {
-        chunks.add(chunk);
+        return addChunk(chunks.size(), chunk);
+    }
+
+    /** Adds the given chunk at the given index in the program */
+    public ScriptBuilder addChunk(int index, ScriptChunk chunk) {
+        chunks.add(index, chunk);
         return this;
     }
 
+    /** Adds the given opcode to the end of the program. */
     public ScriptBuilder op(int opcode) {
-        checkArgument(opcode > OP_PUSHDATA4);
-        return addChunk(new ScriptChunk(opcode, null));
+        return op(chunks.size(), opcode);
     }
 
+    /** Adds the given opcode to the given index in the program */
+    public ScriptBuilder op(int index, int opcode) {
+        checkArgument(opcode > OP_PUSHDATA4);
+        return addChunk(index, new ScriptChunk(opcode, null));
+    }
+
+    /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the end of the program. */
     public ScriptBuilder data(byte[] data) {
+        return data(chunks.size(), data);
+    }
+
+    /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the given index in the program. */
+    public ScriptBuilder data(int index, byte[] data) {
         // implements BIP62
         byte[] copy = Arrays.copyOf(data, data.length);
         int opcode;
@@ -72,15 +99,22 @@ public class ScriptBuilder {
         } else {
             throw new RuntimeException("Unimplemented");
         }
-        return addChunk(new ScriptChunk(opcode, copy));
+        return addChunk(index, new ScriptChunk(opcode, copy));
     }
 
+    /** Adds the given number as a OP_N opcode to the end of the program. */
     public ScriptBuilder smallNum(int num) {
+        return smallNum(chunks.size(), num);
+    }
+
+    /** Adds the given number as a OP_N opcode to the given index in the program. */
+    public ScriptBuilder smallNum(int index, int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
         checkArgument(num <= 16, "Cannot encode numbers larger than 16 with smallNum");
-        return addChunk(new ScriptChunk(Script.encodeToOpN(num), null));
+        return addChunk(index, new ScriptChunk(Script.encodeToOpN(num), null));
     }
 
+    /** Creates a new immutable Script based on the state of the builder. */
     public Script build() {
         return new Script(chunks);
     }
