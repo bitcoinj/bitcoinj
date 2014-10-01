@@ -107,7 +107,8 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         NONE,
         VERSION,
         DUST,
-        SHORTEST_POSSIBLE_PUSHDATA
+        SHORTEST_POSSIBLE_PUSHDATA,
+        NONEMPTY_STACK  // Not yet implemented (for post 0.12)
     }
 
     /**
@@ -126,16 +127,10 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         final List<TransactionOutput> outputs = tx.getOutputs();
         for (int i = 0; i < outputs.size(); i++) {
             TransactionOutput output = outputs.get(i);
-            if (MIN_ANALYSIS_NONDUST_OUTPUT.compareTo(output.getValue()) > 0) {
-                log.warn("TX considered non-standard due to output {} being dusty", i);
-                return RuleViolation.DUST;
-            }
-            for (ScriptChunk chunk : output.getScriptPubKey().getChunks()) {
-                if (chunk.isPushData() && !chunk.isShortestPossiblePushData()) {
-                    log.warn("TX considered non-standard due to output {} having a longer than necessary data push: {}",
-                            i, chunk);
-                    return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
-                }
+            RuleViolation violation = isOutputStandard(output);
+            if (violation != RuleViolation.NONE) {
+                log.warn("TX considered non-standard due to output {} violating rule {}", i, violation);
+                return violation;
             }
         }
 
@@ -149,6 +144,19 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
             }
         }
 
+        return RuleViolation.NONE;
+    }
+
+    /**
+     * Checks the output to see if the script violates a standardness rule. Not complete.
+     */
+    public static RuleViolation isOutputStandard(TransactionOutput output) {
+        if (MIN_ANALYSIS_NONDUST_OUTPUT.compareTo(output.getValue()) > 0)
+            return RuleViolation.DUST;
+        for (ScriptChunk chunk : output.getScriptPubKey().getChunks()) {
+            if (chunk.isPushData() && !chunk.isShortestPossiblePushData())
+                return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
+        }
         return RuleViolation.NONE;
     }
 
