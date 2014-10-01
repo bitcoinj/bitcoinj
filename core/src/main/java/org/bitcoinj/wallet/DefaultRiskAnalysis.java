@@ -142,15 +142,22 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         final List<TransactionInput> inputs = tx.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
-            for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
-                if (chunk.data != null && !chunk.isShortestPossiblePushData()) {
-                    log.warn("TX considered non-standard due to input {} having a longer than necessary data push: {}",
-                            i, chunk);
-                    return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
-                }
+            RuleViolation violation = isInputStandard(input);
+            if (violation != RuleViolation.NONE) {
+                log.warn("TX considered non-standard due to input {} violating rule {}", i, violation);
+                return violation;
             }
         }
 
+        return RuleViolation.NONE;
+    }
+
+    /** Checks if the given input passes some of the AreInputsStandard checks. Not complete. */
+    public static RuleViolation isInputStandard(TransactionInput input) {
+        for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
+            if (chunk.data != null && !chunk.isShortestPossiblePushData())
+                return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
+        }
         return RuleViolation.NONE;
     }
 
