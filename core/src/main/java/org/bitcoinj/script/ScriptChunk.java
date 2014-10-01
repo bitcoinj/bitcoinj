@@ -19,23 +19,14 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.core.Utils;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import javax.annotation.Nullable;
-
-import static org.bitcoinj.script.ScriptOpCodes.OP_0;
-import static org.bitcoinj.script.ScriptOpCodes.OP_1;
-import static org.bitcoinj.script.ScriptOpCodes.OP_16;
-import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
-import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
-import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
-import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
-import static org.bitcoinj.script.ScriptOpCodes.getOpCodeName;
-import static org.bitcoinj.script.ScriptOpCodes.getPushDataName;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
  * An element that is either an opcode or a raw byte array (signature, pubkey, etc).
@@ -77,6 +68,12 @@ public class ScriptChunk {
     public int getStartLocationInProgram() {
         checkState(startLocationInProgram >= 0);
         return startLocationInProgram;
+    }
+
+    /** If this chunk is an OP_N opcode returns the equivalent integer value. */
+    public int decodeOpN() {
+        checkState(isOpCode());
+        return Script.decodeFromOpN(opcode);
     }
 
     /**
