@@ -435,16 +435,16 @@ public class FullBlockTestGenerator {
         Block b23 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         {
             Transaction tx = new Transaction(params);
-            // Signature size is non-deterministic, so it may take several runs before finding any off-by-one errors
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b23.getMessageSize() - 138];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b23.getMessageSize() - 65];
             Arrays.fill(outputScript, (byte) OP_FALSE);
-            tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
+            tx.addOutput(new TransactionOutput(params, tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 1, b23.getTransactions().get(1).getHash()),
-                    SATOSHI, b23.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+                    new TransactionOutPoint(params, 2, b23.getTransactions().get(1).getHash()),
+                    ZERO, b23.getTransactions().get(1).getOutputs().get(2).getScriptPubKey()));
             b23.addTransaction(tx);
         }
         b23.solve();
+        checkState(b23.getMessageSize() == Block.MAX_BLOCK_SIZE);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b23, true, false, b23.getHash(), chainHeadHeight + 7, "b23"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(params, 0, b23.getTransactions().get(0).getHash()),
@@ -454,16 +454,16 @@ public class FullBlockTestGenerator {
         Block b24 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         {
             Transaction tx = new Transaction(params);
-            // Signature size is non-deterministic, so it may take several runs before finding any off-by-one errors
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b24.getMessageSize() - 135];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b24.getMessageSize() - 64];
             Arrays.fill(outputScript, (byte) OP_FALSE);
-            tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
+            tx.addOutput(new TransactionOutput(params, tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 1, b24.getTransactions().get(1).getHash()),
-                    SATOSHI, b24.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+                    new TransactionOutPoint(params, 2, b24.getTransactions().get(1).getHash()),
+                    ZERO, b24.getTransactions().get(1).getOutputs().get(2).getScriptPubKey()));
             b24.addTransaction(tx);
         }
         b24.solve();
+        checkState(b24.getMessageSize() == Block.MAX_BLOCK_SIZE + 1);
         blocks.add(new BlockAndValidity(blockToHeightMap, hashHeaderMap, b24, false, true, b23.getHash(), chainHeadHeight + 7, "b24"));
         
         // Extend the b24 chain to make sure bitcoind isn't accepting b24
@@ -1262,15 +1262,15 @@ public class FullBlockTestGenerator {
         {
             Block b64Created = createNextBlock(b60, chainHeadHeight + 19, out18, null);
             Transaction tx = new Transaction(params);
-            // Signature size is non-deterministic, so it may take several runs before finding any off-by-one errors
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b64Created.getMessageSize() - 138];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b64Created.getMessageSize() - 65];
             Arrays.fill(outputScript, (byte) OP_FALSE);
-            tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
+            tx.addOutput(new TransactionOutput(params, tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 1, b64Created.getTransactions().get(1).getHash()),
-                    SATOSHI, b64Created.getTransactions().get(1).getOutputs().get(1).getScriptPubKey()));
+                    new TransactionOutPoint(params, 2, b64Created.getTransactions().get(1).getHash()),
+                    ZERO, b64Created.getTransactions().get(1).getOutputs().get(2).getScriptPubKey()));
             b64Created.addTransaction(tx);
             b64Created.solve();
+            checkState(b64Created.getMessageSize() == Block.MAX_BLOCK_SIZE);
             
             UnsafeByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(b64Created.getMessageSize() + 8);
             b64Created.writeHeader(stream);
@@ -1843,11 +1843,11 @@ public class FullBlockTestGenerator {
         if (prevOut != null) {
             Transaction t = new Transaction(params);
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
-            t.addOutput(new TransactionOutput(params, t, ZERO, new byte[] {OP_PUSHDATA1 - 1 }));
+            t.addOutput(new TransactionOutput(params, t, ZERO, new byte[] {OP_PUSHDATA1 - 1, uniquenessCounter++}));
             t.addOutput(new TransactionOutput(params, t, SATOSHI,
                     ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram()));
             // Spendable output
-            t.addOutput(new TransactionOutput(params, t, ZERO, new byte[] {OP_1, uniquenessCounter++}));
+            t.addOutput(new TransactionOutput(params, t, ZERO, new byte[] {OP_1}));
             addOnlyInputToTransaction(t, prevOut);
             block.addTransaction(t);
             block.solve();
