@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.12</version>
     </parent>
 
     <artifactId>bitcoinj-core</artifactId>
@@ -32,7 +32,7 @@
 
     <packaging>jar</packaging>
 
-    <url>https://code.google.com/p/bitcoinj</url>
+    <url>https://bitcoinj.github.io</url>
 
     <licenses>
         <license>
@@ -164,6 +164,7 @@
                                     <!-- Format is URN of groupId:artifactId:version:type:classifier:scope:hash -->
                                     <!-- classifier is "null" if not present -->
                                     <urns>
+                                        <urn>org.bitcoinj:orchid:1.0:jar:null:compile:bd98285f39f88875bb91bde940d6ca2d020edaa4</urn>
                                         <urn>cglib:cglib-nodep:2.2:jar:null:test:59afed7ab65e7ec6585d5bc60556c3cbd203532b</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
@@ -269,7 +270,7 @@
                                     <outputDirectory>target/test-classes/</outputDirectory>
                                     <groupId>org.bitcoinj</groupId>
                                     <artifactId>bitcoinj-core</artifactId>
-                                    <version>0.12-SNAPSHOT</version>
+                                    <version>0.12</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -394,7 +395,7 @@
         <dependency>
             <groupId>org.bitcoinj</groupId>
             <artifactId>orchid</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 
