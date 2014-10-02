@@ -157,6 +157,10 @@ public class BitcoindComparisonTool {
                     return null;
                 } else if (m instanceof GetHeadersMessage) {
                     try {
+                        if (currentBlock.block == null) {
+                            log.info("Got a request for a header before we had even begun processing blocks!");
+                            return null;
+                        }
                         LinkedList<Block> headers = new LinkedList<Block>();
                         Block it = blockList.hashHeaderMap.get(currentBlock.block.getHash());
                         while (it != null) {
