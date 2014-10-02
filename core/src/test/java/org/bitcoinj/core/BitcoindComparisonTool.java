@@ -218,10 +218,7 @@ public class BitcoindComparisonTool {
         locator.add(params.getGenesisBlock().getHash());
         Sha256Hash hashTo = new Sha256Hash("0000000000000000000000000000000000000000000000000000000000000000");
                 
-        int differingBlocks = 0;
-        int invalidBlocks = 0;
-        int mempoolRulesFailed = 0;
-        Sha256Hash lastBlockTestedHash = null;
+        int rulesSinceFirstFail = 0;
         for (Rule rule : blockList.list) {
             if (rule instanceof BlockAndValidity) {
                 BlockAndValidity block = (BlockAndValidity) rule;
@@ -242,35 +239,34 @@ public class BitcoindComparisonTool {
                             throw e;
                     }
                 }
-                lastBlockTestedHash = block.blockHash;
                 currentBlock.block = nextBlock;
                 log.info("Testing block {} {}", block.ruleName, currentBlock.block.getHash());
                 try {
                     if (chain.add(nextBlock) != block.connects) {
-                        log.error("Block didn't match connects flag on block \"" + block.ruleName + "\"");
-                        invalidBlocks++;
+                        log.error("ERROR: Block didn't match connects flag on block \"" + block.ruleName + "\"");
+                        rulesSinceFirstFail++;
                     }
                 } catch (VerificationException e) {
                     threw = true;
                     if (!block.throwsException) {
-                        log.error("Block didn't match throws flag on block \"" + block.ruleName + "\"");
+                        log.error("ERROR: Block didn't match throws flag on block \"" + block.ruleName + "\"");
                         e.printStackTrace();
-                        invalidBlocks++;
+                        rulesSinceFirstFail++;
                     } else if (block.connects) {
-                        log.error("Block didn't match connects flag on block \"" + block.ruleName + "\"");
+                        log.error("ERROR: Block didn't match connects flag on block \"" + block.ruleName + "\"");
                         e.printStackTrace();
-                        invalidBlocks++;
+                        rulesSinceFirstFail++;
                     }
                 }
                 if (!threw && block.throwsException) {
-                    log.error("Block didn't match throws flag on block \"" + block.ruleName + "\"");
-                    invalidBlocks++;
+                    log.error("ERROR: Block didn't match throws flag on block \"" + block.ruleName + "\"");
+                    rulesSinceFirstFail++;
                 } else if (!chain.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
-                    log.error("New block head didn't match the correct value after block \"" + block.ruleName + "\"");
-                    invalidBlocks++;
+                    log.error("ERROR: New block head didn't match the correct value after block \"" + block.ruleName + "\"");
+                    rulesSinceFirstFail++;
                 } else if (chain.getChainHead().getHeight() != block.heightAfterBlock) {
-                    log.error("New block head didn't match the correct height after block " + block.ruleName);
-                    invalidBlocks++;
+                    log.error("ERROR: New block head didn't match the correct height after block " + block.ruleName);
+                    rulesSinceFirstFail++;
                 }
 
                 // Shouldnt double-request
@@ -299,8 +295,8 @@ public class BitcoindComparisonTool {
                 if (shouldntRequest) {
                     Thread.sleep(100);
                     if (blocksRequested.contains(nextBlock.getHash())) {
-                        log.error("bitcoind re-requested block " + block.ruleName + " with hash " + nextBlock.getHash());
-                        invalidBlocks++;
+                        log.error("ERROR: bitcoind re-requested block " + block.ruleName + " with hash " + nextBlock.getHash());
+                        rulesSinceFirstFail++;
                     }
                 }
                 // If the block throws, we may want to get bitcoind to request the same block again
@@ -312,8 +308,8 @@ public class BitcoindComparisonTool {
                 bitcoind.sendMessage(new GetHeadersMessage(params, locator, hashTo));
                 bitcoind.ping().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
-                    differingBlocks++;
-                    log.error("bitcoind and bitcoinj acceptance differs on block \"" + block.ruleName + "\"");
+                    rulesSinceFirstFail++;
+                    log.error("ERROR: bitcoind and bitcoinj acceptance differs on block \"" + block.ruleName + "\"");
                 }
                 if (block.sendOnce)
                     preloadedBlocks.remove(nextBlock.getHash());
@@ -323,11 +319,11 @@ public class BitcoindComparisonTool {
                 bitcoind.sendMessage(message);
                 bitcoind.ping().get();
                 if (mostRecentInv == null && !((MemoryPoolState) rule).mempool.isEmpty()) {
-                    log.error("bitcoind had an empty mempool, but we expected some transactions on rule " + rule.ruleName);
-                    mempoolRulesFailed++;
+                    log.error("ERROR: bitcoind had an empty mempool, but we expected some transactions on rule " + rule.ruleName);
+                    rulesSinceFirstFail++;
                 } else if (mostRecentInv != null && ((MemoryPoolState) rule).mempool.isEmpty()) {
-                    log.error("bitcoind had a non-empty mempool, but we expected an empty one on rule " + rule.ruleName);
-                    mempoolRulesFailed++;
+                    log.error("ERROR: bitcoind had a non-empty mempool, but we expected an empty one on rule " + rule.ruleName);
+                    rulesSinceFirstFail++;
                 } else if (mostRecentInv != null) {
                     Set<InventoryItem> originalRuleSet = new HashSet<InventoryItem>(((MemoryPoolState)rule).mempool);
                     boolean matches = mostRecentInv.items.size() == ((MemoryPoolState)rule).mempool.size();
@@ -343,19 +339,21 @@ public class BitcoindComparisonTool {
                     log.info("  The expected mempool was: ");
                     for (InventoryItem item : originalRuleSet)
                         log.info("    " + item.hash);
-                    mempoolRulesFailed++;
+                    rulesSinceFirstFail++;
                 }
                 mostRecentInv = null;
             } else {
                 throw new RuntimeException("Unknown rule");
             }
+            if (rulesSinceFirstFail > 0)
+                rulesSinceFirstFail++;
+            if (rulesSinceFirstFail > 6)
+                System.exit(1);
         }
 
-        log.info("Done testing.\n" +
-                "Blocks which were not handled the same between bitcoind/bitcoinj: " + differingBlocks + "\n" +
-                "Blocks which should/should not have been accepted but weren't/were: " + invalidBlocks + "\n" +
-                "Transactions which were/weren't in memory pool but shouldn't/should have been: " + mempoolRulesFailed + "\n" +
-                "Unexpected inv messages: " + unexpectedInvs.get());
-        System.exit(differingBlocks > 0 || invalidBlocks > 0 || mempoolRulesFailed > 0 || unexpectedInvs.get() > 0 ? 1 : 0);
+        if (unexpectedInvs.get() > 0)
+            log.error("ERROR: Got " + unexpectedInvs.get() + " unexpected invs from bitcoind");
+        log.info("Done testing.");
+        System.exit(rulesSinceFirstFail > 0 || unexpectedInvs.get() > 0 ? 1 : 0);
     }
 }
