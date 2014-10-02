@@ -88,7 +88,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
@@ -104,6 +103,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Generate source and javadoc jars: Maven Central requires this -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -116,6 +116,27 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <detectLinks/>
+                    <links>
+                        <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
+                    </links>
+                    <detectJavaApiLink/>
+                </configuration>
             </plugin>
 
             <!-- Verify the dependency chain: see https://github.com/gary-rowe/BitcoinjEnforcerRules for
