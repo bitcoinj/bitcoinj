@@ -254,7 +254,7 @@ public class ScriptTest {
                 try {
                     flags.add(VerifyFlag.valueOf(flag));
                 } catch (IllegalArgumentException x) {
-                    log.warn("Cannot handle verify flag {} -- ignored.", flag);
+                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
                 }
             }
         }
