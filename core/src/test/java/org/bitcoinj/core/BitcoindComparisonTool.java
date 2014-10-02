@@ -287,9 +287,14 @@ public class BitcoindComparisonTool {
                 }
                 // bitcoind doesn't request blocks inline so we can't rely on a ping for synchronization
                 for (int i = 0; !shouldntRequest && !blocksRequested.contains(nextBlock.getHash()); i++) {
-                    if (i % 100 == 99)
+                    int SLEEP_TIME = 10;
+                    if (i % 1000/SLEEP_TIME == 1000/SLEEP_TIME - 1)
                         log.error("bitcoind still hasn't requested block " + block.ruleName + " with hash " + nextBlock.getHash());
-                    Thread.sleep(10);
+                    Thread.sleep(SLEEP_TIME);
+                    if (i > 60000/SLEEP_TIME) {
+                        log.error("bitcoind failed to request block " + block.ruleName);
+                        System.exit(1);
+                    }
                 }
                 if (shouldntRequest) {
                     Thread.sleep(100);
