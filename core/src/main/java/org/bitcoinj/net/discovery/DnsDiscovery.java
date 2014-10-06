@@ -19,6 +19,7 @@ package org.bitcoinj.net.discovery;
 
 import org.bitcoinj.core.NetworkParameters;
 import com.google.common.collect.Lists;
+import org.bitcoinj.utils.DaemonThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,7 @@ public class DnsDiscovery implements PeerDiscovery {
 
         // Java doesn't have an async DNS API so we have to do all lookups in a thread pool, as sometimes seeds go
         // hard down and it takes ages to give up and move on.
-        ExecutorService threadPool = Executors.newFixedThreadPool(dnsSeeds.length);
+        ExecutorService threadPool = Executors.newFixedThreadPool(dnsSeeds.length, new DaemonThreadFactory());
         try {
             List<Callable<InetAddress[]>> tasks = Lists.newArrayList();
             for (final String seed : dnsSeeds) {
