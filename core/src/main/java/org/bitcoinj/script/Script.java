@@ -1269,9 +1269,11 @@ public class Script {
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
-            log.warn("Signature checking failed! {}", e1.toString());
-            // Don't dump a stack trace here because we sometimes expect this to fail inside
-            // LocalTransactionSigner.signInputs().
+
+            // This RuntimeException occurs when signing as we run partial/invalid scripts to see if they need more
+            // signing work to be done inside LocalTransactionSigner.signInputs.
+            if (!e1.getMessage().contains("Reached past end of ASN.1 stream"))
+                log.warn("Signature checking failed! {}", e1.toString());
         }
 
         if (opcode == OP_CHECKSIG)
