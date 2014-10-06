@@ -21,6 +21,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
+import org.bitcoinj.utils.DaemonThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +122,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     //TODO: Remove lots of duplicated code in the two connectTransactions
     
     // TODO: execute in order of largest transaction (by input count) first
-    ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
+            Runtime.getRuntime().availableProcessors(), new DaemonThreadFactory());
 
     /** A job submitted to the executor which verifies signatures. */
     private static class Verifier implements Callable<VerificationException> {
