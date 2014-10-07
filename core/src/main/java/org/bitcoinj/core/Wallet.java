@@ -3427,7 +3427,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             final Coin calculatedFee = req.tx.getFee();
             if (calculatedFee != null) {
-                log.info("  with a fee of {} BTC", calculatedFee.toFriendlyString());
+                log.info("  with a fee of {}", calculatedFee.toFriendlyString());
             }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
