@@ -3470,7 +3470,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             for (int i = 0; i < numInputs; i++) {
                 TransactionInput txIn = tx.getInput(i);
                 if (txIn.getConnectedOutput() == null) {
-                    log.warn("Missing connected output, assuming input {} is already signed.", i);
+                    // Missing connected output, assuming already signed.
                     continue;
                 }
 
