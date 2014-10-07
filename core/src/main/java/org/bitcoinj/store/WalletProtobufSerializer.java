@@ -346,8 +346,7 @@ public class WalletProtobufSerializer {
             }
         }
 
-        for (ListIterator<PeerAddress> it = confidence.getBroadcastBy(); it.hasNext();) {
-            PeerAddress address = it.next();
+        for (PeerAddress address : confidence.getBroadcastBy()) {
             Protos.PeerAddress proto = Protos.PeerAddress.newBuilder()
                     .setIpAddress(ByteString.copyFrom(address.getAddr().getAddress()))
                     .setPort(address.getPort())
