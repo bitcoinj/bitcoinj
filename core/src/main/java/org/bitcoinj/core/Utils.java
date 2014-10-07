@@ -25,11 +25,11 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
-
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.URL;
@@ -603,4 +603,22 @@ public class Utils {
         return Joiner.on('\n').join(lines);
     }
 
+    // Can't use Closeable here because it's Java 7 only and Android devices only got that with KitKat.
+    public static InputStream closeUnchecked(InputStream stream) {
+        try {
+            stream.close();
+            return stream;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static OutputStream closeUnchecked(OutputStream stream) {
+        try {
+            stream.close();
+            return stream;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

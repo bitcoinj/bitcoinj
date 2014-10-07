@@ -17,6 +17,11 @@
 
 package org.bitcoinj.kits;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
+import com.subgraph.orchid.TorClient;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.protocols.channels.StoredPaymentChannelClientStates;
@@ -26,11 +31,6 @@ import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.store.WalletProtobufSerializer;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Service;
-import com.subgraph.orchid.TorClient;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +97,11 @@ public class WalletAppKit extends AbstractIdleService {
         this.params = checkNotNull(params);
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
+        if (!Utils.isAndroidRuntime()) {
+            InputStream stream = WalletAppKit.class.getResourceAsStream("/" + params.getId() + ".checkpoints");
+            if (stream != null)
+                setCheckpoints(stream);
+        }
     }
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
@@ -144,6 +149,8 @@ public class WalletAppKit extends AbstractIdleService {
      * block sync faster for new users - please refer to the documentation on the bitcoinj website for further details.
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
+        if (this.checkpoints != null)
+            Utils.closeUnchecked(this.checkpoints);
         this.checkpoints = checkNotNull(checkpoints);
         return this;
     }

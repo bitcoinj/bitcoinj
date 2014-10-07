@@ -124,7 +124,7 @@ public class Main extends Application {
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
         } else if (params == TestNet3Params.get()) {
-            bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints.testnet"));
+            bitcoin.setCheckpoints(getClass().getResourceAsStream("org.bitcoin.test.checkpoints"));
             // As an example!
             bitcoin.useTor();
         }
