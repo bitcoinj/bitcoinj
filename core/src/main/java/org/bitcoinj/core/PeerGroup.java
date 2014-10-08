@@ -17,6 +17,17 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.net.InetAddresses;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import com.google.common.util.concurrent.*;
+import com.subgraph.orchid.TorClient;
+import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.crypto.DRMWorkaround;
 import org.bitcoinj.net.BlockingClientManager;
 import org.bitcoinj.net.ClientConnectionManager;
@@ -29,25 +40,12 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.ExponentialBackoff;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.net.InetAddresses;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import com.google.common.util.concurrent.*;
-import com.subgraph.orchid.TorClient;
-import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -125,6 +123,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
 
     @GuardedBy("lock") private boolean useLocalhostPeerWhenPossible = true;
+    @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
     private final NetworkParameters params;
     private final AbstractBlockChain chain;
@@ -257,7 +256,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         @Override
         public void onPeerDisconnected(Peer peer, int peerCount) {
             // The channel will be automatically removed from channels.
-            handlePeerDeath(peer);
+            handlePeerDeath(peer, null);
         }
     }
 
@@ -660,26 +659,29 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
     }
 
     protected void discoverPeers() throws PeerDiscoveryException {
+        checkState(lock.isHeldByCurrentThread());
         if (peerDiscoverers.isEmpty())
             throw new PeerDiscoveryException("No peer discoverers registered");
         long start = System.currentTimeMillis();
-        final Set<PeerAddress> addressSet = Sets.newHashSet();
+        final List<PeerAddress> addressList = Lists.newLinkedList();
         for (PeerDiscovery peerDiscovery : peerDiscoverers) {
             InetSocketAddress[] addresses;
-            addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
-            for (InetSocketAddress address : addresses) addressSet.add(new PeerAddress(address));
-            if (addressSet.size() >= maxPeersToDiscoverCount) break;
-        }
-        lock.lock();
-        try {
-            for (PeerAddress address : addressSet) {
-                addInactive(address);
-            }
-        } finally {
+            // Don't hold the peergroup lock across peer discovery as it's likely to be very slow and would make the
+            // peergroup API high latency.
             lock.unlock();
+            try {
+                addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
+            } finally {
+                lock.lock();
+            }
+            for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(address));
+            if (addressList.size() >= maxPeersToDiscoverCount) break;
+        }
+        for (PeerAddress address : addressList) {
+            addInactive(address);
         }
 
-        final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressSet);
+        final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressList);
         for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
@@ -690,7 +692,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         }
 
         log.info("Peer discovery took {}msec and returned {} items",
-                System.currentTimeMillis() - start, addressSet.size());
+                System.currentTimeMillis() - start, addressList.size());
     }
 
     @Override
@@ -771,6 +773,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 return;
             }
             if (!haveReadyInactivePeer(nowMillis)) {
+                // Release the lock here because we'll probably do slow things like DNS lookups below,
                 discoverPeers();
                 groupBackoff.trackSuccess();
                 nowMillis = Utils.currentTimeMillis();
@@ -779,7 +782,8 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
                 log.debug("Peer discovery didn't provide us any more peers, not trying to build new connection.");
                 return;
             }
-            addr = inactives.poll();
+            while (addr == null || (ipv6Unreachable && addr.getAddr() instanceof Inet6Address))
+                addr = inactives.poll();
             retryTime = backoffMap.get(addr).getRetryTime();
         } finally {
             // discoverPeers might throw an exception if something goes wrong: we then hit this path with addr == null.
@@ -1038,7 +1042,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             channels.openConnection(address.toSocketAddress(), peer);
         } catch (Exception e) {
             log.warn("Failed to connect to " + address + ": " + e.getMessage());
-            handlePeerDeath(peer);
+            handlePeerDeath(peer, e);
             return null;
         }
         peer.setSocketTimeout(connectTimeoutMillis);
@@ -1288,12 +1292,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         }
     }
 
-    protected void handlePeerDeath(final Peer peer) {
+    protected void handlePeerDeath(final Peer peer, @Nullable Exception exception) {
         // Peer deaths can occur during startup if a connect attempt after peer discovery aborts immediately.
         final State state = state();
         if (state != State.RUNNING && state != State.STARTING) return;
 
-        int numPeers = 0;
+        int numPeers;
         int numConnectedPeers = 0;
         lock.lock();
         try {
@@ -1320,10 +1324,15 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
             groupBackoff.trackFailure();
 
-            //TODO: if network failure is suspected, do not backoff peer
-            backoffMap.get(address).trackFailure();
-            // Put back on inactive list
-            inactives.offer(address);
+            if (!(exception instanceof NoRouteToHostException)) {
+                if (address.getAddr() instanceof Inet6Address && !ipv6Unreachable) {
+                    ipv6Unreachable = true;
+                    log.warn("IPv6 peer connect failed due to routing failure, ignoring IPv6 addresses from now on");
+                }
+                backoffMap.get(address).trackFailure();
+                // Put back on inactive list
+                inactives.offer(address);
+            }
 
             if (numPeers < getMaxConnections()) {
                 triggerConnections();
