@@ -352,6 +352,15 @@ public class DeterministicKey extends ECKey {
         return Base58.encode(addChecksum(ser));
     }
 
+    /** Deserialize a base-58-encoded HD Key with no parent */
+    public static DeterministicKey deserializeB58(String base58) {
+        return deserializeB58(null, base58);
+    }
+
+    /**
+      * Deserialize a base-58-encoded HD Key.
+      *  @param parent The parent node in the given key's deterministic hierarchy.
+      */
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
         try {
             return deserialize(parent, Base58.decodeChecked(base58));
@@ -360,6 +369,17 @@ public class DeterministicKey extends ECKey {
         }
     }
 
+    /**
+      * Deserialize an HD Key with no parent
+      */
+    public static DeterministicKey deserialize(byte[] serializedKey) {
+        return deserialize(null, serializedKey);
+    }
+
+    /**
+      * Deserialize an HD Key.
+      *  @param parent The parent node in the given key's deterministic hierarchy.
+      */
     public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey) {
         ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
         int header = buffer.getInt();
