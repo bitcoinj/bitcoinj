@@ -881,6 +881,9 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             wallet.setTransactionBroadcaster(this);
             wallet.addEventListener(walletEventListener, Threading.SAME_THREAD);
             addPeerFilterProvider(wallet);
+            for (Peer peer : peers) {
+                peer.addWallet(wallet);
+            }
         } finally {
             lock.unlock();
         }
@@ -919,6 +922,9 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         peerFilterProviders.remove(wallet);
         wallet.removeEventListener(walletEventListener);
         wallet.setTransactionBroadcaster(null);
+        for (Peer peer : peers) {
+            peer.removeWallet(wallet);
+        }        
     }
 
     public static enum FilterRecalculateMode {

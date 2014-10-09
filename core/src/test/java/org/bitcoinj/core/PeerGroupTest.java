@@ -241,6 +241,44 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.awaitTerminated();
     }
 
+    
+    @Test
+    public void receiveTxBroadcastOnAddedWallet() throws Exception {
+        // Check that when we receive transactions on all our peers, we do the right thing.
+        peerGroup.startAsync();
+        peerGroup.awaitRunning();
+
+        // Create a peer.
+        InboundMessageQueuer p1 = connectPeer(1);
+        
+        Wallet wallet2 = new Wallet(unitTestParams);
+        ECKey key2 = wallet2.freshReceiveKey();
+        Address address2 = key2.toAddress(unitTestParams);
+        
+        peerGroup.addWallet(wallet2);
+        blockChain.addWallet(wallet2);
+
+        assertTrue(outbound(p1) instanceof BloomFilter);
+        assertTrue(outbound(p1) instanceof MemoryPoolMessage);
+
+        Coin value = COIN;
+        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, value, address2);
+        InventoryMessage inv = new InventoryMessage(unitTestParams);
+        inv.addTransaction(t1);
+
+        inbound(p1, inv);
+        assertTrue(outbound(p1) instanceof GetDataMessage);
+        inbound(p1, t1);
+        // Asks for dependency.
+        GetDataMessage getdata = (GetDataMessage) outbound(p1);
+        assertNotNull(getdata);
+        inbound(p1, new NotFoundMessage(unitTestParams, getdata.getItems()));
+        pingAndWait(p1);
+        assertEquals(value, wallet2.getBalance(Wallet.BalanceType.ESTIMATED));
+        peerGroup.stopAsync();
+        peerGroup.awaitTerminated();
+    } 
+    
     @Test
     public void singleDownloadPeer1() throws Exception {
         // Check that we don't attempt to retrieve blocks on multiple peers.
