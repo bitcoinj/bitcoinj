@@ -49,6 +49,10 @@ public class VersionedChecksummedBytes implements Serializable {
         this.bytes = bytes;
     }
 
+    /**
+     * Returns the base-58 encoded String representation of this
+     * object, including version and checksum bytes.
+     */
     @Override
     public String toString() {
         // A stringified buffer is:
