@@ -6,7 +6,7 @@ __author__ = "richard 'ragmondo' green"
 import sys
 
 # Change this to point to where you have a copy of the bitcoinj.jar
-sys.path.append(r"/home/richard/code/libs/bitcoinj-core-0.12-bundled.jar")
+sys.path.append(r"/path/to/bitcoinj-core-0.12-bundled.jar")
 
 # This is the address to forward all payments to. Change this (unless you want to send me some testnet coins)
 my_address_text = "mzEjmna15T7DXj4HC9MBEG2UJzgFfEYtFo"
