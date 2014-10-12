@@ -27,6 +27,8 @@ import org.bitcoinj.utils.Threading;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,6 +315,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain = new BasicKeyChain();
         this.creationTimeSeconds = creationTimeSeconds;
         this.seed = null;
+        rootKey = null;
+        addToBasicChain(watchingKey);
+        hierarchy = new DeterministicHierarchy(watchingKey);
         initializeHierarchyUnencrypted(watchingKey);
     }
 
@@ -356,12 +361,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return new DeterministicKeyChain(accountKey, seedCreationTimeSecs);
     }
 
-    DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
+    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
+            addToBasicChain(rootKey);
+            hierarchy = new DeterministicHierarchy(rootKey);
+            addToBasicChain(hierarchy.get(getAccountPath(), false, true));
             initializeHierarchyUnencrypted(rootKey);
         }
         // Else...
@@ -390,7 +398,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         hierarchy = new DeterministicHierarchy(rootKey);
         basicKeyChain.importKey(rootKey);
 
-        DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, ACCOUNT_ZERO_PATH);
+        DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, getAccountPath());
         externalKey = encryptNonLeaf(aesKey, chain, account, EXTERNAL_PATH);
         internalKey = encryptNonLeaf(aesKey, chain, account, INTERNAL_PATH);
 
@@ -407,6 +415,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    protected ImmutableList<ChildNumber> getAccountPath() {
+        return ACCOUNT_ZERO_PATH;
+    }
+
     private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
                                             DeterministicKey parent, ImmutableList<ChildNumber> path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
@@ -419,21 +431,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // Derives the account path keys and inserts them into the basic key chain. This is important to preserve their
     // order for serialization, amongst other things.
     private void initializeHierarchyUnencrypted(DeterministicKey baseKey) {
-        if (baseKey.getPath().isEmpty()) {
-            // baseKey is a master/root key derived directly from a seed.
-            addToBasicChain(rootKey);
-            hierarchy = new DeterministicHierarchy(rootKey);
-            addToBasicChain(hierarchy.get(ACCOUNT_ZERO_PATH, false, true));
-        } else if (baseKey.getPath().size() == 1) {
-            // baseKey is a "watching key" that we were given so we could follow along with this account.
-            rootKey = null;
-            addToBasicChain(baseKey);
-            hierarchy = new DeterministicHierarchy(baseKey);
-        } else {
-            throw new IllegalArgumentException();
-        }
-        externalKey = hierarchy.deriveChild(ACCOUNT_ZERO_PATH, false, false, ChildNumber.ZERO);
-        internalKey = hierarchy.deriveChild(ACCOUNT_ZERO_PATH, false, false, ChildNumber.ONE);
+        externalKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ZERO);
+        internalKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ONE);
         addToBasicChain(externalKey);
         addToBasicChain(internalKey);
     }
@@ -615,7 +614,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * <p>An alias for <code>getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH)</code>.</p>
+     * <p>An alias for <code>getKeyByPath(getAccountPath())</code>.</p>
      *
      * <p>Use this when you would like to create a watching key chain that follows this one, but can't spend money from it.
      * The returned key can be serialized and then passed into {@link #watch(org.bitcoinj.crypto.DeterministicKey)}
@@ -625,13 +624,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * be used for signing etc if the private key bytes are available.</p>
      */
     public DeterministicKey getWatchingKey() {
-        return getKeyByPath(ACCOUNT_ZERO_PATH);
+        return getKeyByPath(getAccountPath());
     }
 
     /** Returns true if this chain is watch only, meaning it has public keys but no private key. */
     public boolean isWatching() {
-        DeterministicKey key = getKeyByPath(ACCOUNT_ZERO_PATH);
-        return key.isWatching();
+        return getWatchingKey().isWatching();
     }
 
     @Override
@@ -760,11 +758,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return entries;
     }
 
+    static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
+        return fromProtobuf(keys, crypter, new DefaultKeyChainFactory());
+    }
+
     /**
      * Returns all the key chains found in the given list of keys. Typically there will only be one, but in the case of
      * key rotation it can happen that there are multiple chains found.
      */
-    public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
+    public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
@@ -772,7 +774,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        for (Protos.Key key : keys) {
+        PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
+        while (iter.hasNext()) {
+            Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 if (chain != null) {
@@ -846,16 +850,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         if (!accountKey.getPath().equals(ACCOUNT_ZERO_PATH))
                             throw new UnreadableWalletException("Expecting account key but found key with path: " +
                                     HDUtils.formatPath(accountKey.getPath()));
-                        if (isMarried)
-                            chain = new MarriedKeyChain(accountKey);
-                        else
-                            chain = new DeterministicKeyChain(accountKey, isFollowingKey);
+                        chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
                         isWatchingAccountKey = true;
                     } else {
-                        if (isMarried)
-                            chain = new MarriedKeyChain(seed, crypter);
-                        else
-                            chain = new DeterministicKeyChain(seed, crypter);
+                        chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried);
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded
@@ -892,14 +890,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (log.isDebugEnabled())
                     log.debug("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 if (!isWatchingAccountKey) {
-                    // If the non-encrypted case, the non-leaf keys (account, internal, external) have already been
-                    // rederived and inserted at this point and the two lines below are just a no-op. In the encrypted
-                    // case though, we can't rederive and we must reinsert, potentially building the heirarchy object
+                    // If the non-encrypted case, the non-leaf keys (account, internal, external) have already
+                    // been rederived and inserted at this point. In the encrypted case though,
+                    // we can't rederive and we must reinsert, potentially building the heirarchy object
                     // if need be.
                     if (path.size() == 0) {
                         // Master key.
-                        chain.rootKey = detkey;
-                        chain.hierarchy = new DeterministicHierarchy(detkey);
+                        if (chain.rootKey == null) {
+                            chain.rootKey = detkey;
+                            chain.hierarchy = new DeterministicHierarchy(detkey);
+                        }
                     } else if (path.size() == 2) {
                         if (detkey.getChildNumber().num() == 0) {
                             chain.externalKey = detkey;

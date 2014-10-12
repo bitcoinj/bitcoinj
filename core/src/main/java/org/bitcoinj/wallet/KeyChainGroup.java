@@ -650,9 +650,13 @@ public class KeyChainGroup implements KeyBag {
         return result;
     }
 
-    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
+    static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
+        return fromProtobufUnencrypted(params, keys, new DefaultKeyChainFactory());
+    }
+
+    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, KeyChainFactory factory) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
-        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null);
+        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null, factory);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
@@ -660,10 +664,14 @@ public class KeyChainGroup implements KeyBag {
         return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, null);
     }
 
-    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
+    static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
+        return fromProtobufEncrypted(params, keys, crypter, new DefaultKeyChainFactory());
+    }
+
+    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
-        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter);
+        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
