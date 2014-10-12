@@ -70,6 +70,10 @@ public class ExchangeRate implements Serializable {
         if (converted.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0
                 || converted.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0)
             throw new ArithmeticException("Overflow");
-        return Coin.valueOf(converted.longValue());
+        try {
+            return Coin.valueOf(converted.longValue());
+        } catch (IllegalArgumentException x) {
+            throw new ArithmeticException("Overflow: " + x.getMessage());
+        }
     }
 }
