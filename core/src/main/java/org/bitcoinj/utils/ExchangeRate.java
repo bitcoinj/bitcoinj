@@ -31,16 +31,22 @@ public class ExchangeRate implements Serializable {
     public final Coin coin;
     public final Fiat fiat;
 
+    /** Construct exchange rate. This amount of coin is worth that amount of fiat. */
     public ExchangeRate(Coin coin, Fiat fiat) {
         this.coin = coin;
         this.fiat = fiat;
     }
 
+    /** Construct exchange rate. One coin is worth this amount of fiat. */
     public ExchangeRate(Fiat fiat) {
         this.coin = Coin.COIN;
         this.fiat = fiat;
     }
 
+    /**
+     * Convert a coin amount to a fiat amount using this exchange rate.
+     * @throws ArithmeticException if the converted fiat amount is too high or too low.
+     */
     public Fiat coinToFiat(Coin convertCoin) {
         // Use BigInteger because it's much easier to maintain full precision without overflowing.
         final BigInteger converted = BigInteger.valueOf(convertCoin.value).multiply(BigInteger.valueOf(fiat.value))
@@ -51,6 +57,10 @@ public class ExchangeRate implements Serializable {
         return Fiat.valueOf(fiat.currencyCode, converted.longValue());
     }
 
+    /**
+     * Convert a fiat amount to a coin amount using this exchange rate.
+     * @throws ArithmeticException if the converted coin amount is too high or too low.
+     */
     public Coin fiatToCoin(Fiat convertFiat) {
         checkArgument(convertFiat.currencyCode.equals(fiat.currencyCode), "Currency mismatch: %s vs %s",
                 convertFiat.currencyCode, fiat.currencyCode);
