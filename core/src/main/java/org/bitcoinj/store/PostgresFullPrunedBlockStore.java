@@ -195,7 +195,7 @@ public class PostgresFullPrunedBlockStore implements FullPrunedBlockStore {
 
     private synchronized void maybeConnect() throws BlockStoreException {
         try {
-            if (conn.get() != null)
+            if (conn.get() != null && !conn.get().isClosed())
                 return;
 
             Properties props = new Properties();
