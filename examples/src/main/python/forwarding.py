@@ -27,8 +27,6 @@ from com.google.common.util.concurrent import Futures
 
 import java.io.File
 
-#import traceback,sys
-
 import sys
 
 def loud_exceptions(*args):
@@ -37,11 +35,9 @@ def loud_exceptions(*args):
             try:
                 func(*args, **kwargs)
             except Exception, e:
-          #      traceback.print_exc()
                 print "** python exception ",e
                 raise
             except java.lang.Exception,e:
-           #     traceback.print_exc()
                 print "** java exception",e
                 raise
         return wrapper
@@ -55,7 +51,6 @@ def loud_exceptions(*args):
 def forwardCoins(tx,w,pg,addr):
     v = tx.getValueSentToMe(w)
     amountToSend = v.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)
-   # v_bigint = java.math.BigInteger(str(v))
     sr = w.sendCoins(pg, addr, amountToSend)
 
 class SenderListener(AbstractWalletEventListener):
