@@ -90,9 +90,21 @@ import static com.google.common.base.Preconditions.*;
 public class ECKey implements EncryptableItem, Serializable {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
-    /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} **/
+    /** Sorts oldest keys first, newest last. */
+    public static final Comparator<ECKey> AGE_COMPARATOR = new Comparator<ECKey>() {
+
+        @Override
+        public int compare(ECKey k1, ECKey k2) {
+            if (k1.creationTimeSeconds == k2.creationTimeSeconds)
+                return 0;
+            else
+                return k1.creationTimeSeconds > k2.creationTimeSeconds ? 1 : -1;
+        }
+    };
+
+    /** Compares pub key bytes using {@link com.google.common.primitives.UnsignedBytes#lexicographicalComparator()} */
     public static final Comparator<ECKey> PUBKEY_COMPARATOR = new Comparator<ECKey>() {
-        private Comparator comparator = UnsignedBytes.lexicographicalComparator();
+        private Comparator<byte[]> comparator = UnsignedBytes.lexicographicalComparator();
 
         @Override
         public int compare(ECKey k1, ECKey k2) {

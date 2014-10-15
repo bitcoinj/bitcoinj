@@ -726,7 +726,9 @@ public class KeyChainGroup implements KeyBag {
     public String toString(boolean includePrivateKeys) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null) {
-            for (ECKey key : basic.getKeys())
+            List<ECKey> keys = basic.getKeys();
+            Collections.sort(keys, ECKey.AGE_COMPARATOR);
+            for (ECKey key : keys)
                 key.formatKeyWithAddress(includePrivateKeys, builder, params);
         }
         List<String> chainStrs = Lists.newLinkedList();
