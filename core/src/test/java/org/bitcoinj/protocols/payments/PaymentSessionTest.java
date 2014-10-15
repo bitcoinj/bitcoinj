@@ -37,6 +37,7 @@ import static org.junit.Assert.*;
 
 public class PaymentSessionTest {
     private static final NetworkParameters params = TestNet3Params.get();
+    private static final String type = PaymentProtocol.PAYMENT_REQUEST_TYPE_STANDARD;
     private static final String simplePaymentUrl = "http://a.simple.url.com/";
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
     private static final String paymentMemo = "take ze coinz";
@@ -59,6 +60,7 @@ public class PaymentSessionTest {
     public void testSimplePayment() throws Exception {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("test"));
+        assertEquals(type, paymentSession.getType());
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
         assertEquals(coin, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
@@ -98,6 +100,7 @@ public class PaymentSessionTest {
                 .build();
         MockPaymentSession paymentSession = new MockPaymentSession(paymentRequest);
         assertEquals(Coin.ZERO, paymentSession.getValue());
+        assertEquals(PaymentProtocol.PAYMENT_REQUEST_TYPE_STANDARD, paymentSession.getType());
         assertNull(paymentSession.getPaymentUrl());
         assertNull(paymentSession.getMemo());
     }
@@ -153,6 +156,7 @@ public class PaymentSessionTest {
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork(netID)
+                .setType(type)
                 .setTime(time)
                 .setPaymentUrl(simplePaymentUrl)
                 .addOutputs(outputBuilder)
@@ -172,6 +176,7 @@ public class PaymentSessionTest {
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork("test")
+                .setType(type)
                 .setTime(time - 10)
                 .setExpires(time - 1)
                 .setPaymentUrl(simplePaymentUrl)

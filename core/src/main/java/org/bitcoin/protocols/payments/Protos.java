@@ -8,10 +8,10 @@ public final class Protos {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface OutputOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface OutputOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.Output)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional uint64 amount = 1 [default = 0];
     /**
      * <code>optional uint64 amount = 1 [default = 0];</code>
      *
@@ -29,7 +29,6 @@ public final class Protos {
      */
     long getAmount();
 
-    // required bytes script = 2;
     /**
      * <code>required bytes script = 2;</code>
      *
@@ -55,8 +54,9 @@ public final class Protos {
    * </pre>
    */
   public static final class Output extends
-      com.google.protobuf.GeneratedMessage
-      implements OutputOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.Output)
+      OutputOrBuilder {
     // Use Output.newBuilder() to construct.
     private Output(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -152,7 +152,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional uint64 amount = 1 [default = 0];
     public static final int AMOUNT_FIELD_NUMBER = 1;
     private long amount_;
     /**
@@ -176,7 +175,6 @@ public final class Protos {
       return amount_;
     }
 
-    // required bytes script = 2;
     public static final int SCRIPT_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString script_;
     /**
@@ -207,7 +205,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasScript()) {
         memoizedIsInitialized = 0;
@@ -329,8 +328,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.OutputOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.Output)
+        org.bitcoin.protocols.payments.Protos.OutputOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_Output_descriptor;
@@ -456,7 +456,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional uint64 amount = 1 [default = 0];
       private long amount_ ;
       /**
        * <code>optional uint64 amount = 1 [default = 0];</code>
@@ -505,7 +504,6 @@ public final class Protos {
         return this;
       }
 
-      // required bytes script = 2;
       private com.google.protobuf.ByteString script_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes script = 2;</code>
@@ -568,10 +566,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.Output)
   }
 
-  public interface PaymentDetailsOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface PaymentDetailsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.PaymentDetails)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional string network = 1 [default = "main"];
     /**
      * <code>optional string network = 1 [default = "main"];</code>
      *
@@ -598,7 +596,32 @@ public final class Protos {
     com.google.protobuf.ByteString
         getNetworkBytes();
 
-    // repeated .payments.Output outputs = 2;
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    boolean hasType();
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    java.lang.String getType();
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getTypeBytes();
+
     /**
      * <code>repeated .payments.Output outputs = 2;</code>
      *
@@ -643,7 +666,6 @@ public final class Protos {
     org.bitcoin.protocols.payments.Protos.OutputOrBuilder getOutputsOrBuilder(
         int index);
 
-    // required uint64 time = 3;
     /**
      * <code>required uint64 time = 3;</code>
      *
@@ -661,7 +683,6 @@ public final class Protos {
      */
     long getTime();
 
-    // optional uint64 expires = 4;
     /**
      * <code>optional uint64 expires = 4;</code>
      *
@@ -679,7 +700,6 @@ public final class Protos {
      */
     long getExpires();
 
-    // optional string memo = 5;
     /**
      * <code>optional string memo = 5;</code>
      *
@@ -706,7 +726,6 @@ public final class Protos {
     com.google.protobuf.ByteString
         getMemoBytes();
 
-    // optional string payment_url = 6;
     /**
      * <code>optional string payment_url = 6;</code>
      *
@@ -733,7 +752,6 @@ public final class Protos {
     com.google.protobuf.ByteString
         getPaymentUrlBytes();
 
-    // optional bytes merchant_data = 7;
     /**
      * <code>optional bytes merchant_data = 7;</code>
      *
@@ -755,8 +773,9 @@ public final class Protos {
    * Protobuf type {@code payments.PaymentDetails}
    */
   public static final class PaymentDetails extends
-      com.google.protobuf.GeneratedMessage
-      implements PaymentDetailsOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.PaymentDetails)
+      PaymentDetailsOrBuilder {
     // Use PaymentDetails.newBuilder() to construct.
     private PaymentDetails(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -803,41 +822,50 @@ public final class Protos {
               break;
             }
             case 10: {
+              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
-              network_ = input.readBytes();
+              network_ = bs;
               break;
             }
             case 18: {
-              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
                 outputs_ = new java.util.ArrayList<org.bitcoin.protocols.payments.Protos.Output>();
-                mutable_bitField0_ |= 0x00000002;
+                mutable_bitField0_ |= 0x00000004;
               }
               outputs_.add(input.readMessage(org.bitcoin.protocols.payments.Protos.Output.PARSER, extensionRegistry));
               break;
             }
             case 24: {
-              bitField0_ |= 0x00000002;
+              bitField0_ |= 0x00000004;
               time_ = input.readUInt64();
               break;
             }
             case 32: {
-              bitField0_ |= 0x00000004;
+              bitField0_ |= 0x00000008;
               expires_ = input.readUInt64();
               break;
             }
             case 42: {
-              bitField0_ |= 0x00000008;
-              memo_ = input.readBytes();
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000010;
+              memo_ = bs;
               break;
             }
             case 50: {
-              bitField0_ |= 0x00000010;
-              paymentUrl_ = input.readBytes();
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000020;
+              paymentUrl_ = bs;
               break;
             }
             case 58: {
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000040;
               merchantData_ = input.readBytes();
+              break;
+            }
+            case 66: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000002;
+              type_ = bs;
               break;
             }
           }
@@ -848,7 +876,7 @@ public final class Protos {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+        if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
           outputs_ = java.util.Collections.unmodifiableList(outputs_);
         }
         this.unknownFields = unknownFields.build();
@@ -883,7 +911,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional string network = 1 [default = "main"];
     public static final int NETWORK_FIELD_NUMBER = 1;
     private java.lang.Object network_;
     /**
@@ -938,7 +965,60 @@ public final class Protos {
       }
     }
 
-    // repeated .payments.Output outputs = 2;
+    public static final int TYPE_FIELD_NUMBER = 8;
+    private java.lang.Object type_;
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    public boolean hasType() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    public java.lang.String getType() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          type_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string type = 8 [default = "standard"];</code>
+     *
+     * <pre>
+     * "standard" or "auth"
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getTypeBytes() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        type_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     public static final int OUTPUTS_FIELD_NUMBER = 2;
     private java.util.List<org.bitcoin.protocols.payments.Protos.Output> outputs_;
     /**
@@ -994,7 +1074,6 @@ public final class Protos {
       return outputs_.get(index);
     }
 
-    // required uint64 time = 3;
     public static final int TIME_FIELD_NUMBER = 3;
     private long time_;
     /**
@@ -1005,7 +1084,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasTime() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>required uint64 time = 3;</code>
@@ -1018,7 +1097,6 @@ public final class Protos {
       return time_;
     }
 
-    // optional uint64 expires = 4;
     public static final int EXPIRES_FIELD_NUMBER = 4;
     private long expires_;
     /**
@@ -1029,7 +1107,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasExpires() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional uint64 expires = 4;</code>
@@ -1042,7 +1120,6 @@ public final class Protos {
       return expires_;
     }
 
-    // optional string memo = 5;
     public static final int MEMO_FIELD_NUMBER = 5;
     private java.lang.Object memo_;
     /**
@@ -1053,7 +1130,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasMemo() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional string memo = 5;</code>
@@ -1097,7 +1174,6 @@ public final class Protos {
       }
     }
 
-    // optional string payment_url = 6;
     public static final int PAYMENT_URL_FIELD_NUMBER = 6;
     private java.lang.Object paymentUrl_;
     /**
@@ -1108,7 +1184,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasPaymentUrl() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>optional string payment_url = 6;</code>
@@ -1152,7 +1228,6 @@ public final class Protos {
       }
     }
 
-    // optional bytes merchant_data = 7;
     public static final int MERCHANT_DATA_FIELD_NUMBER = 7;
     private com.google.protobuf.ByteString merchantData_;
     /**
@@ -1163,7 +1238,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasMerchantData() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <code>optional bytes merchant_data = 7;</code>
@@ -1178,6 +1253,7 @@ public final class Protos {
 
     private void initFields() {
       network_ = "main";
+      type_ = "standard";
       outputs_ = java.util.Collections.emptyList();
       time_ = 0L;
       expires_ = 0L;
@@ -1188,7 +1264,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasTime()) {
         memoizedIsInitialized = 0;
@@ -1213,20 +1290,23 @@ public final class Protos {
       for (int i = 0; i < outputs_.size(); i++) {
         output.writeMessage(2, outputs_.get(i));
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeUInt64(3, time_);
       }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeUInt64(4, expires_);
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeBytes(5, getMemoBytes());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeBytes(6, getPaymentUrlBytes());
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeBytes(7, merchantData_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(8, getTypeBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -1245,25 +1325,29 @@ public final class Protos {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, outputs_.get(i));
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt64Size(3, time_);
       }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt64Size(4, expires_);
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(5, getMemoBytes());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(6, getPaymentUrlBytes());
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(7, merchantData_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(8, getTypeBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1347,8 +1431,9 @@ public final class Protos {
      * Protobuf type {@code payments.PaymentDetails}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.PaymentDetailsOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.PaymentDetails)
+        org.bitcoin.protocols.payments.Protos.PaymentDetailsOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_PaymentDetails_descriptor;
@@ -1384,22 +1469,24 @@ public final class Protos {
         super.clear();
         network_ = "main";
         bitField0_ = (bitField0_ & ~0x00000001);
+        type_ = "standard";
+        bitField0_ = (bitField0_ & ~0x00000002);
         if (outputsBuilder_ == null) {
           outputs_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000004);
         } else {
           outputsBuilder_.clear();
         }
         time_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        expires_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000008);
-        memo_ = "";
+        expires_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
-        paymentUrl_ = "";
+        memo_ = "";
         bitField0_ = (bitField0_ & ~0x00000020);
-        merchantData_ = com.google.protobuf.ByteString.EMPTY;
+        paymentUrl_ = "";
         bitField0_ = (bitField0_ & ~0x00000040);
+        merchantData_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000080);
         return this;
       }
 
@@ -1432,33 +1519,37 @@ public final class Protos {
           to_bitField0_ |= 0x00000001;
         }
         result.network_ = network_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.type_ = type_;
         if (outputsBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
             outputs_ = java.util.Collections.unmodifiableList(outputs_);
-            bitField0_ = (bitField0_ & ~0x00000002);
+            bitField0_ = (bitField0_ & ~0x00000004);
           }
           result.outputs_ = outputs_;
         } else {
           result.outputs_ = outputsBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.time_ = time_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.expires_ = expires_;
+        result.time_ = time_;
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.memo_ = memo_;
+        result.expires_ = expires_;
         if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000010;
         }
-        result.paymentUrl_ = paymentUrl_;
+        result.memo_ = memo_;
         if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
           to_bitField0_ |= 0x00000020;
+        }
+        result.paymentUrl_ = paymentUrl_;
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+          to_bitField0_ |= 0x00000040;
         }
         result.merchantData_ = merchantData_;
         result.bitField0_ = to_bitField0_;
@@ -1482,11 +1573,16 @@ public final class Protos {
           network_ = other.network_;
           onChanged();
         }
+        if (other.hasType()) {
+          bitField0_ |= 0x00000002;
+          type_ = other.type_;
+          onChanged();
+        }
         if (outputsBuilder_ == null) {
           if (!other.outputs_.isEmpty()) {
             if (outputs_.isEmpty()) {
               outputs_ = other.outputs_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000004);
             } else {
               ensureOutputsIsMutable();
               outputs_.addAll(other.outputs_);
@@ -1499,7 +1595,7 @@ public final class Protos {
               outputsBuilder_.dispose();
               outputsBuilder_ = null;
               outputs_ = other.outputs_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000004);
               outputsBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getOutputsFieldBuilder() : null;
@@ -1515,12 +1611,12 @@ public final class Protos {
           setExpires(other.getExpires());
         }
         if (other.hasMemo()) {
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
           memo_ = other.memo_;
           onChanged();
         }
         if (other.hasPaymentUrl()) {
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
           paymentUrl_ = other.paymentUrl_;
           onChanged();
         }
@@ -1564,7 +1660,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional string network = 1 [default = "main"];
       private java.lang.Object network_ = "main";
       /**
        * <code>optional string network = 1 [default = "main"];</code>
@@ -1586,9 +1681,12 @@ public final class Protos {
       public java.lang.String getNetwork() {
         java.lang.Object ref = network_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          network_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            network_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -1662,13 +1760,112 @@ public final class Protos {
         return this;
       }
 
-      // repeated .payments.Output outputs = 2;
+      private java.lang.Object type_ = "standard";
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public java.lang.String getType() {
+        java.lang.Object ref = type_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            type_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getTypeBytes() {
+        java.lang.Object ref = type_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          type_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public Builder setType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public Builder clearType() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        type_ = getDefaultInstance().getType();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string type = 8 [default = "standard"];</code>
+       *
+       * <pre>
+       * "standard" or "auth"
+       * </pre>
+       */
+      public Builder setTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+
       private java.util.List<org.bitcoin.protocols.payments.Protos.Output> outputs_ =
         java.util.Collections.emptyList();
       private void ensureOutputsIsMutable() {
-        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           outputs_ = new java.util.ArrayList<org.bitcoin.protocols.payments.Protos.Output>(outputs_);
-          bitField0_ |= 0x00000002;
+          bitField0_ |= 0x00000004;
          }
       }
 
@@ -1844,7 +2041,8 @@ public final class Protos {
           java.lang.Iterable<? extends org.bitcoin.protocols.payments.Protos.Output> values) {
         if (outputsBuilder_ == null) {
           ensureOutputsIsMutable();
-          super.addAll(values, outputs_);
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, outputs_);
           onChanged();
         } else {
           outputsBuilder_.addAllMessages(values);
@@ -1861,7 +2059,7 @@ public final class Protos {
       public Builder clearOutputs() {
         if (outputsBuilder_ == null) {
           outputs_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000004);
           onChanged();
         } else {
           outputsBuilder_.clear();
@@ -1966,7 +2164,7 @@ public final class Protos {
           outputsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.bitcoin.protocols.payments.Protos.Output, org.bitcoin.protocols.payments.Protos.Output.Builder, org.bitcoin.protocols.payments.Protos.OutputOrBuilder>(
                   outputs_,
-                  ((bitField0_ & 0x00000002) == 0x00000002),
+                  ((bitField0_ & 0x00000004) == 0x00000004),
                   getParentForChildren(),
                   isClean());
           outputs_ = null;
@@ -1974,7 +2172,6 @@ public final class Protos {
         return outputsBuilder_;
       }
 
-      // required uint64 time = 3;
       private long time_ ;
       /**
        * <code>required uint64 time = 3;</code>
@@ -1984,7 +2181,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasTime() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
        * <code>required uint64 time = 3;</code>
@@ -2004,7 +2201,7 @@ public final class Protos {
        * </pre>
        */
       public Builder setTime(long value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         time_ = value;
         onChanged();
         return this;
@@ -2017,13 +2214,12 @@ public final class Protos {
        * </pre>
        */
       public Builder clearTime() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         time_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional uint64 expires = 4;
       private long expires_ ;
       /**
        * <code>optional uint64 expires = 4;</code>
@@ -2033,7 +2229,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasExpires() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional uint64 expires = 4;</code>
@@ -2053,7 +2249,7 @@ public final class Protos {
        * </pre>
        */
       public Builder setExpires(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         expires_ = value;
         onChanged();
         return this;
@@ -2066,13 +2262,12 @@ public final class Protos {
        * </pre>
        */
       public Builder clearExpires() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         expires_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional string memo = 5;
       private java.lang.Object memo_ = "";
       /**
        * <code>optional string memo = 5;</code>
@@ -2082,7 +2277,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasMemo() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
        * <code>optional string memo = 5;</code>
@@ -2094,9 +2289,12 @@ public final class Protos {
       public java.lang.String getMemo() {
         java.lang.Object ref = memo_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          memo_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            memo_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -2134,7 +2332,7 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         memo_ = value;
         onChanged();
         return this;
@@ -2147,7 +2345,7 @@ public final class Protos {
        * </pre>
        */
       public Builder clearMemo() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         memo_ = getDefaultInstance().getMemo();
         onChanged();
         return this;
@@ -2164,13 +2362,12 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         memo_ = value;
         onChanged();
         return this;
       }
 
-      // optional string payment_url = 6;
       private java.lang.Object paymentUrl_ = "";
       /**
        * <code>optional string payment_url = 6;</code>
@@ -2180,7 +2377,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasPaymentUrl() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
        * <code>optional string payment_url = 6;</code>
@@ -2192,9 +2389,12 @@ public final class Protos {
       public java.lang.String getPaymentUrl() {
         java.lang.Object ref = paymentUrl_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          paymentUrl_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            paymentUrl_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -2232,7 +2432,7 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         paymentUrl_ = value;
         onChanged();
         return this;
@@ -2245,7 +2445,7 @@ public final class Protos {
        * </pre>
        */
       public Builder clearPaymentUrl() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         paymentUrl_ = getDefaultInstance().getPaymentUrl();
         onChanged();
         return this;
@@ -2262,13 +2462,12 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         paymentUrl_ = value;
         onChanged();
         return this;
       }
 
-      // optional bytes merchant_data = 7;
       private com.google.protobuf.ByteString merchantData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes merchant_data = 7;</code>
@@ -2278,7 +2477,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasMerchantData() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
        * <code>optional bytes merchant_data = 7;</code>
@@ -2301,7 +2500,7 @@ public final class Protos {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         merchantData_ = value;
         onChanged();
         return this;
@@ -2314,7 +2513,7 @@ public final class Protos {
        * </pre>
        */
       public Builder clearMerchantData() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         merchantData_ = getDefaultInstance().getMerchantData();
         onChanged();
         return this;
@@ -2331,10 +2530,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.PaymentDetails)
   }
 
-  public interface PaymentRequestOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface PaymentRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.PaymentRequest)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional uint32 payment_details_version = 1 [default = 1];
     /**
      * <code>optional uint32 payment_details_version = 1 [default = 1];</code>
      */
@@ -2344,7 +2543,6 @@ public final class Protos {
      */
     int getPaymentDetailsVersion();
 
-    // optional string pki_type = 2 [default = "none"];
     /**
      * <code>optional string pki_type = 2 [default = "none"];</code>
      *
@@ -2371,7 +2569,6 @@ public final class Protos {
     com.google.protobuf.ByteString
         getPkiTypeBytes();
 
-    // optional bytes pki_data = 3;
     /**
      * <code>optional bytes pki_data = 3;</code>
      *
@@ -2389,7 +2586,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getPkiData();
 
-    // required bytes serialized_payment_details = 4;
     /**
      * <code>required bytes serialized_payment_details = 4;</code>
      *
@@ -2407,7 +2603,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getSerializedPaymentDetails();
 
-    // optional bytes signature = 5;
     /**
      * <code>optional bytes signature = 5;</code>
      *
@@ -2429,8 +2624,9 @@ public final class Protos {
    * Protobuf type {@code payments.PaymentRequest}
    */
   public static final class PaymentRequest extends
-      com.google.protobuf.GeneratedMessage
-      implements PaymentRequestOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.PaymentRequest)
+      PaymentRequestOrBuilder {
     // Use PaymentRequest.newBuilder() to construct.
     private PaymentRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -2482,8 +2678,9 @@ public final class Protos {
               break;
             }
             case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              pkiType_ = input.readBytes();
+              pkiType_ = bs;
               break;
             }
             case 26: {
@@ -2541,7 +2738,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional uint32 payment_details_version = 1 [default = 1];
     public static final int PAYMENT_DETAILS_VERSION_FIELD_NUMBER = 1;
     private int paymentDetailsVersion_;
     /**
@@ -2557,7 +2753,6 @@ public final class Protos {
       return paymentDetailsVersion_;
     }
 
-    // optional string pki_type = 2 [default = "none"];
     public static final int PKI_TYPE_FIELD_NUMBER = 2;
     private java.lang.Object pkiType_;
     /**
@@ -2612,7 +2807,6 @@ public final class Protos {
       }
     }
 
-    // optional bytes pki_data = 3;
     public static final int PKI_DATA_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString pkiData_;
     /**
@@ -2636,7 +2830,6 @@ public final class Protos {
       return pkiData_;
     }
 
-    // required bytes serialized_payment_details = 4;
     public static final int SERIALIZED_PAYMENT_DETAILS_FIELD_NUMBER = 4;
     private com.google.protobuf.ByteString serializedPaymentDetails_;
     /**
@@ -2660,7 +2853,6 @@ public final class Protos {
       return serializedPaymentDetails_;
     }
 
-    // optional bytes signature = 5;
     public static final int SIGNATURE_FIELD_NUMBER = 5;
     private com.google.protobuf.ByteString signature_;
     /**
@@ -2694,7 +2886,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasSerializedPaymentDetails()) {
         memoizedIsInitialized = 0;
@@ -2833,8 +3026,9 @@ public final class Protos {
      * Protobuf type {@code payments.PaymentRequest}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.PaymentRequestOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.PaymentRequest)
+        org.bitcoin.protocols.payments.Protos.PaymentRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_PaymentRequest_descriptor;
@@ -2989,7 +3183,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional uint32 payment_details_version = 1 [default = 1];
       private int paymentDetailsVersion_ = 1;
       /**
        * <code>optional uint32 payment_details_version = 1 [default = 1];</code>
@@ -3022,7 +3215,6 @@ public final class Protos {
         return this;
       }
 
-      // optional string pki_type = 2 [default = "none"];
       private java.lang.Object pkiType_ = "none";
       /**
        * <code>optional string pki_type = 2 [default = "none"];</code>
@@ -3044,9 +3236,12 @@ public final class Protos {
       public java.lang.String getPkiType() {
         java.lang.Object ref = pkiType_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          pkiType_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            pkiType_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -3120,7 +3315,6 @@ public final class Protos {
         return this;
       }
 
-      // optional bytes pki_data = 3;
       private com.google.protobuf.ByteString pkiData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes pki_data = 3;</code>
@@ -3172,7 +3366,6 @@ public final class Protos {
         return this;
       }
 
-      // required bytes serialized_payment_details = 4;
       private com.google.protobuf.ByteString serializedPaymentDetails_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes serialized_payment_details = 4;</code>
@@ -3224,7 +3417,6 @@ public final class Protos {
         return this;
       }
 
-      // optional bytes signature = 5;
       private com.google.protobuf.ByteString signature_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes signature = 5;</code>
@@ -3287,10 +3479,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.PaymentRequest)
   }
 
-  public interface X509CertificatesOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface X509CertificatesOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.X509Certificates)
+      com.google.protobuf.MessageOrBuilder {
 
-    // repeated bytes certificate = 1;
     /**
      * <code>repeated bytes certificate = 1;</code>
      *
@@ -3320,8 +3512,9 @@ public final class Protos {
    * Protobuf type {@code payments.X509Certificates}
    */
   public static final class X509Certificates extends
-      com.google.protobuf.GeneratedMessage
-      implements X509CertificatesOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.X509Certificates)
+      X509CertificatesOrBuilder {
     // Use X509Certificates.newBuilder() to construct.
     private X509Certificates(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -3417,7 +3610,6 @@ public final class Protos {
       return PARSER;
     }
 
-    // repeated bytes certificate = 1;
     public static final int CERTIFICATE_FIELD_NUMBER = 1;
     private java.util.List<com.google.protobuf.ByteString> certificate_;
     /**
@@ -3458,7 +3650,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       memoizedIsInitialized = 1;
       return true;
@@ -3570,8 +3763,9 @@ public final class Protos {
      * Protobuf type {@code payments.X509Certificates}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.X509CertificatesOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.X509Certificates)
+        org.bitcoin.protocols.payments.Protos.X509CertificatesOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_X509Certificates_descriptor;
@@ -3690,7 +3884,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // repeated bytes certificate = 1;
       private java.util.List<com.google.protobuf.ByteString> certificate_ = java.util.Collections.emptyList();
       private void ensureCertificateIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -3772,7 +3965,8 @@ public final class Protos {
       public Builder addAllCertificate(
           java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
         ensureCertificateIsMutable();
-        super.addAll(values, certificate_);
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, certificate_);
         onChanged();
         return this;
       }
@@ -3801,10 +3995,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.X509Certificates)
   }
 
-  public interface PaymentOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface PaymentOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.Payment)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional bytes merchant_data = 1;
     /**
      * <code>optional bytes merchant_data = 1;</code>
      *
@@ -3822,7 +4016,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getMerchantData();
 
-    // repeated bytes transactions = 2;
     /**
      * <code>repeated bytes transactions = 2;</code>
      *
@@ -3848,7 +4041,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getTransactions(int index);
 
-    // repeated .payments.Output refund_to = 3;
     /**
      * <code>repeated .payments.Output refund_to = 3;</code>
      *
@@ -3893,7 +4085,6 @@ public final class Protos {
     org.bitcoin.protocols.payments.Protos.OutputOrBuilder getRefundToOrBuilder(
         int index);
 
-    // optional string memo = 4;
     /**
      * <code>optional string memo = 4;</code>
      *
@@ -3924,8 +4115,9 @@ public final class Protos {
    * Protobuf type {@code payments.Payment}
    */
   public static final class Payment extends
-      com.google.protobuf.GeneratedMessage
-      implements PaymentOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.Payment)
+      PaymentOrBuilder {
     // Use Payment.newBuilder() to construct.
     private Payment(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -3993,8 +4185,9 @@ public final class Protos {
               break;
             }
             case 34: {
+              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              memo_ = input.readBytes();
+              memo_ = bs;
               break;
             }
           }
@@ -4043,7 +4236,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional bytes merchant_data = 1;
     public static final int MERCHANT_DATA_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString merchantData_;
     /**
@@ -4067,7 +4259,6 @@ public final class Protos {
       return merchantData_;
     }
 
-    // repeated bytes transactions = 2;
     public static final int TRANSACTIONS_FIELD_NUMBER = 2;
     private java.util.List<com.google.protobuf.ByteString> transactions_;
     /**
@@ -4102,7 +4293,6 @@ public final class Protos {
       return transactions_.get(index);
     }
 
-    // repeated .payments.Output refund_to = 3;
     public static final int REFUND_TO_FIELD_NUMBER = 3;
     private java.util.List<org.bitcoin.protocols.payments.Protos.Output> refundTo_;
     /**
@@ -4158,7 +4348,6 @@ public final class Protos {
       return refundTo_.get(index);
     }
 
-    // optional string memo = 4;
     public static final int MEMO_FIELD_NUMBER = 4;
     private java.lang.Object memo_;
     /**
@@ -4222,7 +4411,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       for (int i = 0; i < getRefundToCount(); i++) {
         if (!getRefundTo(i).isInitialized()) {
@@ -4361,8 +4551,9 @@ public final class Protos {
      * Protobuf type {@code payments.Payment}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.PaymentOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.Payment)
+        org.bitcoin.protocols.payments.Protos.PaymentOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_Payment_descriptor;
@@ -4551,7 +4742,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional bytes merchant_data = 1;
       private com.google.protobuf.ByteString merchantData_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes merchant_data = 1;</code>
@@ -4603,7 +4793,6 @@ public final class Protos {
         return this;
       }
 
-      // repeated bytes transactions = 2;
       private java.util.List<com.google.protobuf.ByteString> transactions_ = java.util.Collections.emptyList();
       private void ensureTransactionsIsMutable() {
         if (!((bitField0_ & 0x00000002) == 0x00000002)) {
@@ -4685,7 +4874,8 @@ public final class Protos {
       public Builder addAllTransactions(
           java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
         ensureTransactionsIsMutable();
-        super.addAll(values, transactions_);
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, transactions_);
         onChanged();
         return this;
       }
@@ -4703,7 +4893,6 @@ public final class Protos {
         return this;
       }
 
-      // repeated .payments.Output refund_to = 3;
       private java.util.List<org.bitcoin.protocols.payments.Protos.Output> refundTo_ =
         java.util.Collections.emptyList();
       private void ensureRefundToIsMutable() {
@@ -4885,7 +5074,8 @@ public final class Protos {
           java.lang.Iterable<? extends org.bitcoin.protocols.payments.Protos.Output> values) {
         if (refundToBuilder_ == null) {
           ensureRefundToIsMutable();
-          super.addAll(values, refundTo_);
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, refundTo_);
           onChanged();
         } else {
           refundToBuilder_.addAllMessages(values);
@@ -5015,7 +5205,6 @@ public final class Protos {
         return refundToBuilder_;
       }
 
-      // optional string memo = 4;
       private java.lang.Object memo_ = "";
       /**
        * <code>optional string memo = 4;</code>
@@ -5037,9 +5226,12 @@ public final class Protos {
       public java.lang.String getMemo() {
         java.lang.Object ref = memo_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          memo_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            memo_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -5124,10 +5316,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.Payment)
   }
 
-  public interface PaymentACKOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface PaymentACKOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:payments.PaymentACK)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required .payments.Payment payment = 1;
     /**
      * <code>required .payments.Payment payment = 1;</code>
      *
@@ -5153,7 +5345,6 @@ public final class Protos {
      */
     org.bitcoin.protocols.payments.Protos.PaymentOrBuilder getPaymentOrBuilder();
 
-    // optional string memo = 2;
     /**
      * <code>optional string memo = 2;</code>
      *
@@ -5184,8 +5375,9 @@ public final class Protos {
    * Protobuf type {@code payments.PaymentACK}
    */
   public static final class PaymentACK extends
-      com.google.protobuf.GeneratedMessage
-      implements PaymentACKOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:payments.PaymentACK)
+      PaymentACKOrBuilder {
     // Use PaymentACK.newBuilder() to construct.
     private PaymentACK(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -5245,8 +5437,9 @@ public final class Protos {
               break;
             }
             case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              memo_ = input.readBytes();
+              memo_ = bs;
               break;
             }
           }
@@ -5289,7 +5482,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required .payments.Payment payment = 1;
     public static final int PAYMENT_FIELD_NUMBER = 1;
     private org.bitcoin.protocols.payments.Protos.Payment payment_;
     /**
@@ -5323,7 +5515,6 @@ public final class Protos {
       return payment_;
     }
 
-    // optional string memo = 2;
     public static final int MEMO_FIELD_NUMBER = 2;
     private java.lang.Object memo_;
     /**
@@ -5385,7 +5576,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasPayment()) {
         memoizedIsInitialized = 0;
@@ -5507,8 +5699,9 @@ public final class Protos {
      * Protobuf type {@code payments.PaymentACK}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.protocols.payments.Protos.PaymentACKOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:payments.PaymentACK)
+        org.bitcoin.protocols.payments.Protos.PaymentACKOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.protocols.payments.Protos.internal_static_payments_PaymentACK_descriptor;
@@ -5649,7 +5842,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required .payments.Payment payment = 1;
       private org.bitcoin.protocols.payments.Protos.Payment payment_ = org.bitcoin.protocols.payments.Protos.Payment.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.protocols.payments.Protos.Payment, org.bitcoin.protocols.payments.Protos.Payment.Builder, org.bitcoin.protocols.payments.Protos.PaymentOrBuilder> paymentBuilder_;
@@ -5794,7 +5986,7 @@ public final class Protos {
         if (paymentBuilder_ == null) {
           paymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.protocols.payments.Protos.Payment, org.bitcoin.protocols.payments.Protos.Payment.Builder, org.bitcoin.protocols.payments.Protos.PaymentOrBuilder>(
-                  payment_,
+                  getPayment(),
                   getParentForChildren(),
                   isClean());
           payment_ = null;
@@ -5802,7 +5994,6 @@ public final class Protos {
         return paymentBuilder_;
       }
 
-      // optional string memo = 2;
       private java.lang.Object memo_ = "";
       /**
        * <code>optional string memo = 2;</code>
@@ -5824,9 +6015,12 @@ public final class Protos {
       public java.lang.String getMemo() {
         java.lang.Object ref = memo_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          memo_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            memo_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -5911,32 +6105,32 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:payments.PaymentACK)
   }
 
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_Output_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_payments_Output_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_PaymentDetails_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_payments_PaymentDetails_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_PaymentRequest_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_payments_PaymentRequest_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_X509Certificates_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_payments_X509Certificates_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_Payment_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_payments_Payment_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_payments_PaymentACK_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -5951,71 +6145,71 @@ public final class Protos {
   static {
     java.lang.String[] descriptorData = {
       "\n\024paymentrequest.proto\022\010payments\"+\n\006Outp" +
-      "ut\022\021\n\006amount\030\001 \001(\004:\0010\022\016\n\006script\030\002 \002(\014\"\243\001" +
+      "ut\022\021\n\006amount\030\001 \001(\004:\0010\022\016\n\006script\030\002 \002(\014\"\273\001" +
       "\n\016PaymentDetails\022\025\n\007network\030\001 \001(\t:\004main\022" +
-      "!\n\007outputs\030\002 \003(\0132\020.payments.Output\022\014\n\004ti" +
-      "me\030\003 \002(\004\022\017\n\007expires\030\004 \001(\004\022\014\n\004memo\030\005 \001(\t\022" +
-      "\023\n\013payment_url\030\006 \001(\t\022\025\n\rmerchant_data\030\007 " +
-      "\001(\014\"\225\001\n\016PaymentRequest\022\"\n\027payment_detail" +
-      "s_version\030\001 \001(\r:\0011\022\026\n\010pki_type\030\002 \001(\t:\004no" +
-      "ne\022\020\n\010pki_data\030\003 \001(\014\022\"\n\032serialized_payme" +
-      "nt_details\030\004 \002(\014\022\021\n\tsignature\030\005 \001(\014\"\'\n\020X",
-      "509Certificates\022\023\n\013certificate\030\001 \003(\014\"i\n\007" +
-      "Payment\022\025\n\rmerchant_data\030\001 \001(\014\022\024\n\014transa" +
-      "ctions\030\002 \003(\014\022#\n\trefund_to\030\003 \003(\0132\020.paymen" +
-      "ts.Output\022\014\n\004memo\030\004 \001(\t\">\n\nPaymentACK\022\"\n" +
-      "\007payment\030\001 \002(\0132\021.payments.Payment\022\014\n\004mem" +
-      "o\030\002 \001(\tB(\n\036org.bitcoin.protocols.payment" +
-      "sB\006Protos"
+      "\026\n\004type\030\010 \001(\t:\010standard\022!\n\007outputs\030\002 \003(\013" +
+      "2\020.payments.Output\022\014\n\004time\030\003 \002(\004\022\017\n\007expi" +
+      "res\030\004 \001(\004\022\014\n\004memo\030\005 \001(\t\022\023\n\013payment_url\030\006" +
+      " \001(\t\022\025\n\rmerchant_data\030\007 \001(\014\"\225\001\n\016PaymentR" +
+      "equest\022\"\n\027payment_details_version\030\001 \001(\r:" +
+      "\0011\022\026\n\010pki_type\030\002 \001(\t:\004none\022\020\n\010pki_data\030\003" +
+      " \001(\014\022\"\n\032serialized_payment_details\030\004 \002(\014",
+      "\022\021\n\tsignature\030\005 \001(\014\"\'\n\020X509Certificates\022" +
+      "\023\n\013certificate\030\001 \003(\014\"i\n\007Payment\022\025\n\rmerch" +
+      "ant_data\030\001 \001(\014\022\024\n\014transactions\030\002 \003(\014\022#\n\t" +
+      "refund_to\030\003 \003(\0132\020.payments.Output\022\014\n\004mem" +
+      "o\030\004 \001(\t\">\n\nPaymentACK\022\"\n\007payment\030\001 \002(\0132\021" +
+      ".payments.Payment\022\014\n\004memo\030\002 \001(\tB(\n\036org.b" +
+      "itcoin.protocols.paymentsB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-      new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
-        public com.google.protobuf.ExtensionRegistry assignDescriptors(
-            com.google.protobuf.Descriptors.FileDescriptor root) {
-          descriptor = root;
-          internal_static_payments_Output_descriptor =
-            getDescriptor().getMessageTypes().get(0);
-          internal_static_payments_Output_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_Output_descriptor,
-              new java.lang.String[] { "Amount", "Script", });
-          internal_static_payments_PaymentDetails_descriptor =
-            getDescriptor().getMessageTypes().get(1);
-          internal_static_payments_PaymentDetails_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_PaymentDetails_descriptor,
-              new java.lang.String[] { "Network", "Outputs", "Time", "Expires", "Memo", "PaymentUrl", "MerchantData", });
-          internal_static_payments_PaymentRequest_descriptor =
-            getDescriptor().getMessageTypes().get(2);
-          internal_static_payments_PaymentRequest_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_PaymentRequest_descriptor,
-              new java.lang.String[] { "PaymentDetailsVersion", "PkiType", "PkiData", "SerializedPaymentDetails", "Signature", });
-          internal_static_payments_X509Certificates_descriptor =
-            getDescriptor().getMessageTypes().get(3);
-          internal_static_payments_X509Certificates_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_X509Certificates_descriptor,
-              new java.lang.String[] { "Certificate", });
-          internal_static_payments_Payment_descriptor =
-            getDescriptor().getMessageTypes().get(4);
-          internal_static_payments_Payment_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_Payment_descriptor,
-              new java.lang.String[] { "MerchantData", "Transactions", "RefundTo", "Memo", });
-          internal_static_payments_PaymentACK_descriptor =
-            getDescriptor().getMessageTypes().get(5);
-          internal_static_payments_PaymentACK_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_payments_PaymentACK_descriptor,
-              new java.lang.String[] { "Payment", "Memo", });
-          return null;
-        }
-      };
+        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
+    internal_static_payments_Output_descriptor =
+      getDescriptor().getMessageTypes().get(0);
+    internal_static_payments_Output_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_Output_descriptor,
+        new java.lang.String[] { "Amount", "Script", });
+    internal_static_payments_PaymentDetails_descriptor =
+      getDescriptor().getMessageTypes().get(1);
+    internal_static_payments_PaymentDetails_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_PaymentDetails_descriptor,
+        new java.lang.String[] { "Network", "Type", "Outputs", "Time", "Expires", "Memo", "PaymentUrl", "MerchantData", });
+    internal_static_payments_PaymentRequest_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_payments_PaymentRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_PaymentRequest_descriptor,
+        new java.lang.String[] { "PaymentDetailsVersion", "PkiType", "PkiData", "SerializedPaymentDetails", "Signature", });
+    internal_static_payments_X509Certificates_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_payments_X509Certificates_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_X509Certificates_descriptor,
+        new java.lang.String[] { "Certificate", });
+    internal_static_payments_Payment_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_payments_Payment_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_Payment_descriptor,
+        new java.lang.String[] { "MerchantData", "Transactions", "RefundTo", "Memo", });
+    internal_static_payments_PaymentACK_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_payments_PaymentACK_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_payments_PaymentACK_descriptor,
+        new java.lang.String[] { "Payment", "Memo", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

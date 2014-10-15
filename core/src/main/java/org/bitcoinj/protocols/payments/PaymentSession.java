@@ -218,6 +218,19 @@ public class PaymentSession {
     }
 
     /**
+     * Returns the type of the payment request. Can be either "payment" or "auth".
+     *
+     * A "payment" is a standard BIP70 payment. It is the default.
+     *
+     * If the type is "auth" is the first step in the auth/capture/settle process.
+     * The Payment.refund_to field must be specified, and a settlement refund is expected in the future
+     * from the merchant to that address.
+     */
+    public String getType() {
+        return paymentDetails.hasType() ? paymentDetails.getType() : PaymentProtocol.PAYMENT_REQUEST_TYPE_STANDARD;
+    }
+
+    /**
      * Returns the outputs of the payment request.
      */
     public List<PaymentProtocol.Output> getOutputs() {
