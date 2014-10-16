@@ -56,7 +56,7 @@
         <dependency>
             <groupId>org.bitcoinj</groupId>
             <artifactId>bitcoinj-core</artifactId>
-            <version>0.13-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

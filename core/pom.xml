@@ -270,7 +270,7 @@
                                     <outputDirectory>target/test-classes/</outputDirectory>
                                     <groupId>org.bitcoinj</groupId>
                                     <artifactId>bitcoinj-core</artifactId>
-                                    <version>0.13-SNAPSHOT</version>
+                                    <version>${project.version}</version>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
