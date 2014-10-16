@@ -34,27 +34,25 @@ public class VarInt {
     // Bitcoin has its own varint format, known in the C++ source as "compact size".
     public VarInt(byte[] buf, int offset) {
         int first = 0xFF & buf[offset];
-        long val;
         if (first < 253) {
             // 8 bits.
-            val = first;
+            this.value = first;
             originallyEncodedSize = 1;
         } else if (first == 253) {
             // 16 bits.
-            val = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8);
+            this.value = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8);
             originallyEncodedSize = 3;
         } else if (first == 254) {
             // 32 bits.
-            val = Utils.readUint32(buf, offset + 1);
+            this.value = Utils.readUint32(buf, offset + 1);
             originallyEncodedSize = 5;
         } else {
             // 64 bits.
-            val = Utils.readUint32(buf, offset + 1) | (Utils.readUint32(buf, offset + 5) << 32);
+            this.value = Utils.readUint32(buf, offset + 1) | (Utils.readUint32(buf, offset + 5) << 32);
             originallyEncodedSize = 9;
         }
-        this.value = val;
     }
-    
+
     /**
      * Gets the number of bytes used to encode this originally if deserialized from a byte array.
      * Otherwise returns the minimum encoded size
