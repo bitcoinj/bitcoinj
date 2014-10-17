@@ -63,6 +63,11 @@ public class CoinTest {
         }
 
         try {
+            valueOf(Long.MIN_VALUE);
+            fail();
+        } catch (IllegalArgumentException e) {}
+
+        try {
             valueOf(1, -1);
             fail();
         } catch (IllegalArgumentException e) {}
