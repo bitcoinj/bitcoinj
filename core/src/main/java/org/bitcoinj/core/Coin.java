@@ -82,9 +82,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public final long value;
 
+    private final long MAX_SATOSHIS = COIN_VALUE * NetworkParameters.MAX_COINS;
+
     private Coin(final long satoshis) {
-        checkArgument(Math.abs(satoshis) <= COIN_VALUE * NetworkParameters.MAX_COINS,
-                      "%s satoshis exceeds maximum possible quantity of Bitcoin.", satoshis);
+        checkArgument(-MAX_SATOSHIS <= satoshis && satoshis <= MAX_SATOSHIS,
+            "%s satoshis exceeds maximum possible quantity of Bitcoin.", satoshis);
         this.value = satoshis;
     }
 
