@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -432,6 +433,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(b, b2);
     }
 
+    @Ignore
     @Test
     public void fastCatchup() throws Exception {
         connect();

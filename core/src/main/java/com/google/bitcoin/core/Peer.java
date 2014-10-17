@@ -1095,6 +1095,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
+     * !!! wa: commented out the content of this function in order to disable fastCatchup
      * When downloading the block chain, the bodies will be skipped for blocks created before the given date. Any
      * transactions relevant to the wallet will therefore not be found, but if you know your wallet has no such
      * transactions it doesn't matter and can save a lot of bandwidth and processing time. Note that the times of blocks
@@ -1104,24 +1105,24 @@ public class Peer extends PeerSocketHandler {
      * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
      */
     public void setDownloadParameters(long secondsSinceEpoch, boolean useFilteredBlocks) {
-        lock.lock();
-        try {
-            Preconditions.checkNotNull(blockChain);
-            if (secondsSinceEpoch == 0) {
-                fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
-                downloadBlockBodies = true;
-            } else {
-                fastCatchupTimeSecs = secondsSinceEpoch;
-                // If the given time is before the current chains head block time, then this has no effect (we already
-                // downloaded everything we need).
-                if (fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds()) {
-                    downloadBlockBodies = false;
-                }
-            }
-            this.useFilteredBlocks = useFilteredBlocks;
-        } finally {
-            lock.unlock();
-        }
+//        lock.lock();
+//        try {
+//            Preconditions.checkNotNull(blockChain);
+//            if (secondsSinceEpoch == 0) {
+//                fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
+//                downloadBlockBodies = true;
+//            } else {
+//                fastCatchupTimeSecs = secondsSinceEpoch;
+//                // If the given time is before the current chains head block time, then this has no effect (we already
+//                // downloaded everything we need).
+//                if (fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds()) {
+//                    downloadBlockBodies = false;
+//                }
+//            }
+//            this.useFilteredBlocks = useFilteredBlocks;
+//        } finally {
+//            lock.unlock();
+//        }
     }
 
     /**
