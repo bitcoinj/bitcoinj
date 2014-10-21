@@ -448,6 +448,30 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
+    /**
+     * Returns only the keys that have been issued by {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
+     * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
+     */
+    public List<ECKey> getIssuedReceiveKeys() {
+        keychainLock.lock();
+        try {
+            return keychain.getActiveKeyChain().getIssuedReceiveKeys();
+        } finally {
+            keychainLock.unlock();
+        }
+    }
+
+    /**
+     * Returns only the addresses that have been issued by {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
+     * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
+     */
+    public List<Address> getIssuedReceiveAddresses() {
+        final List<ECKey> keys = getIssuedReceiveKeys();
+        List<Address> addresses = new ArrayList<Address>(keys.size());
+        for (ECKey key : keys)
+            addresses.add(key.toAddress(getParams()));
+        return addresses;
+    }
 
     /**
      * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption

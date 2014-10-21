@@ -1200,6 +1200,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return keys;
     }
 
+    /**
+     * Returns only the keys that have been issued by this chain, lookahead not included.
+     */
+    public List<ECKey> getIssuedReceiveKeys() {
+        return getKeys(false);
+    }
 
     /**
      * Returns leaf keys issued by this chain (including lookahead zone)
