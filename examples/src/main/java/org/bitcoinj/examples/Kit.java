@@ -91,7 +91,7 @@ public class Kit {
         }
 
         @Override
-        public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+        public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
             System.out.println("new script added");
         }
     }
