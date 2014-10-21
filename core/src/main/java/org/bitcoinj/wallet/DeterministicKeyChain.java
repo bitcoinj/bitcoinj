@@ -1186,8 +1186,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 DeterministicKey parent = detkey.getParent();
                 if (parent == null) continue;
                 if (detkey.getPath().size() <= treeSize) continue;
-                if (parent.equals(internalKey) && detkey.getChildNumber().i() > issuedInternalKeys) continue;
-                if (parent.equals(externalKey) && detkey.getChildNumber().i() > issuedExternalKeys) continue;
+                if (parent.equals(internalKey) && detkey.getChildNumber().i() >= issuedInternalKeys) continue;
+                if (parent.equals(externalKey) && detkey.getChildNumber().i() >= issuedExternalKeys) continue;
                 issuedKeys.add(detkey);
             }
             return issuedKeys;
