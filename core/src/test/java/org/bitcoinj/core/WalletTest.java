@@ -1243,6 +1243,49 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void removeWatchedAddresses() {
+        List<Address> addressesForRemoval = new ArrayList<Address>();
+        for (int i = 0; i < 10; i++) {
+            ECKey key = new ECKey();
+            Address watchedAddress = key.toAddress(params);
+            addressesForRemoval.add(watchedAddress);
+            wallet.addWatchedAddress(watchedAddress);
+        }
+
+        wallet.removeWatchedAddresses(addressesForRemoval);
+        for (Address addr : addressesForRemoval)
+            assertFalse(wallet.isAddressWatched(addr));
+
+        assertFalse(wallet.isRequiringUpdateAllBloomFilter());
+    }
+
+    @Test
+    public void removeScriptsBloomFilter() throws Exception {
+        List<Address> addressesForRemoval = new ArrayList<Address>();
+        for (int i = 0; i < 10; i++) {
+            ECKey key = new ECKey();
+            Address watchedAddress = key.toAddress(params);
+            addressesForRemoval.add(watchedAddress);
+            wallet.addWatchedAddress(watchedAddress);
+        }
+
+        wallet.removeWatchedAddresses(addressesForRemoval);
+
+        for (Address addr : addressesForRemoval) {
+            Transaction t1 = createFakeTx(params, CENT, addr);
+            StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+
+            TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
+
+            // Note that this has a 1e-12 chance of failing this unit test due to a false positive
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+
+            wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+        }
+    }
+
+    @Test
     public void marriedKeychainBloomFilter() throws Exception {
         createMarriedWallet(2, 2);
         Address address = wallet.currentReceiveAddress();

@@ -766,9 +766,57 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         } finally {
             keychainLock.writeLock().unlock();
         }
-        queueOnScriptsAdded(scripts);
+        queueOnScriptsChanged(scripts, true);
         saveNow();
         return added;
+    }
+
+    /**
+     * Removes the given output scripts from the wallet that were being watched.
+     *
+     * @return true if successful
+     */
+    public boolean removeWatchedAddress(final Address address) {
+        return removeWatchedAddresses(ImmutableList.of(address));
+    }
+
+    /**
+     * Removes the given output scripts from the wallet that were being watched.
+     *
+     * @return true if successful
+     */
+    public boolean removeWatchedAddresses(final List<Address> addresses) {
+        List<Script> scripts = Lists.newArrayList();
+
+        for (Address address : addresses) {
+            Script script = ScriptBuilder.createOutputScript(address);
+            scripts.add(script);
+        }
+
+        return removeWatchedScripts(scripts);
+    }
+
+    /**
+     * Removes the given output scripts from the wallet that were being watched.
+     *
+     * @return true if successful
+     */
+    public boolean removeWatchedScripts(final List<Script> scripts) {
+        lock.lock();
+        try {
+            for (final Script script : scripts) {
+                if (!watchedScripts.contains(script))
+                    continue;
+
+                watchedScripts.remove(script);
+            }
+
+            queueOnScriptsChanged(scripts, false);
+            saveNow();
+            return true;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -2175,12 +2223,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    protected void queueOnScriptsAdded(final List<Script> scripts) {
+    protected void queueOnScriptsChanged(final List<Script> scripts, final boolean isAddingScripts) {
         for (final ListenerRegistration<WalletEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onScriptsAdded(Wallet.this, scripts);
+                    registration.listener.onScriptsChanged(Wallet.this, scripts, isAddingScripts);
                 }
             });
         }

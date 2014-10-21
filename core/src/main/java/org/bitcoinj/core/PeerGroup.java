@@ -190,7 +190,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             }
         }
 
-        @Override public void onScriptsAdded(Wallet wallet, List<Script> scripts) {
+        @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
             queueRecalc(true);
         }
 
