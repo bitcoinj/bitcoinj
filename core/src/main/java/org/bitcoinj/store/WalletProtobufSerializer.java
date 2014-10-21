@@ -513,13 +513,14 @@ public class WalletProtobufSerializer {
             } else {
                 log.info("Loading wallet extension {}", id);
                 try {
-                    extension.deserializeWalletExtension(wallet, extProto.getData().toByteArray());
-                    wallet.addOrGetExistingExtension(extension);
+                    wallet.deserializeAndAddExtension(extension, extProto.getData().toByteArray());
                 } catch (Exception e) {
-                    if (extProto.getMandatory() && requireMandatoryExtensions)
+                    if (extProto.getMandatory() && requireMandatoryExtensions) {
+                        log.error("Error whilst reading extension {}, failing to read wallet", id, e);
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
-                    else
+                    } else {
                         log.error("Error whilst reading extension {}, ignoring", id, e);
+                    }
                 }
             }
         }
