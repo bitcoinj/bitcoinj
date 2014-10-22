@@ -90,16 +90,16 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /**
      * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
-     * Currently this is 10000 satoshis.
+     * Currently this is 1000 satoshis.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(10000);
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1000);
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
-     * {@link TransactionOutput#getMinNonDustValue(Coin)}. Currently it's 5460 satoshis.
+     * {@link TransactionOutput#getMinNonDustValue(Coin)}. Currently it's 546 satoshis.
      */
-    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(5460);
+    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546);
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
