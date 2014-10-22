@@ -4313,16 +4313,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * in which case an exception will be thrown.
      *
      * @param aesKey the users password, if any.
-     * @param andSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
+     * @param signAndSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
+    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         try {
-            txns = maybeRotateKeys(aesKey);
-            if (!andSend)
+            txns = maybeRotateKeys(aesKey, signAndSend);
+            if (!signAndSend)
                 return Futures.immediateFuture(txns);
         } finally {
             lock.unlock();
@@ -4353,7 +4353,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
-    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
         // TODO: Handle chain replays here.
@@ -4389,14 +4389,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // fully done, at least for now (we may still get more transactions later and this method will be reinvoked).
         Transaction tx;
         do {
-            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results);
+            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results, sign);
             if (tx != null) results.add(tx);
         } while (tx != null && tx.getInputs().size() == KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS);
         return results;
     }
 
     @Nullable
-    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others) {
+    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign) {
         lock.lock();
         try {
             // Build the transaction using some custom logic for our special needs. Last parameter to
@@ -4428,7 +4428,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             rekeyTx.setPurpose(Transaction.Purpose.KEY_ROTATION);
             SendRequest req = SendRequest.forTx(rekeyTx);
             req.aesKey = aesKey;
-            signTransaction(req);
+            if (sign)
+                signTransaction(req);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
             checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;
