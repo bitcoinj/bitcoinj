@@ -448,7 +448,6 @@ public class WalletTool {
             rotationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
         }
         log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
-        wallet.setKeyRotationEnabled(true);
         wallet.setKeyRotationTime(rotationTimeSecs);
         KeyParameter aesKey = null;
         if (wallet.isEncrypted()) {

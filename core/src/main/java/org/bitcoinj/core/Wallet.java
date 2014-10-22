@@ -187,7 +187,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // UNIX time in seconds. Money controlled by keys created before this time will be automatically respent to a key
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
-    private volatile boolean vKeyRotationEnabled;
 
     protected transient CoinSelector coinSelector = new DefaultCoinSelector();
 
@@ -451,7 +450,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         lock.lock();
         try {
-            keychain.upgradeToDeterministic(vKeyRotationEnabled ? vKeyRotationTimestamp : 0, aesKey);
+            keychain.upgradeToDeterministic(vKeyRotationTimestamp, aesKey);
         } finally {
             lock.unlock();
         }
@@ -4295,11 +4294,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         saveNow();
     }
 
-    /** Toggles key rotation on and off. Note that this state is not serialized. */
-    public void setKeyRotationEnabled(boolean enabled) {
-        vKeyRotationEnabled = enabled;
-    }
-
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
     public boolean isKeyRotating(ECKey key) {
         long time = vKeyRotationTimestamp;
@@ -4357,8 +4351,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         checkState(lock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
         // TODO: Handle chain replays here.
-        if (!vKeyRotationEnabled) return results;
-        // Snapshot volatiles so this method has an atomic view.
         long keyRotationTimestamp = vKeyRotationTimestamp;
         if (keyRotationTimestamp == 0) return results;  // Nothing to do.
 

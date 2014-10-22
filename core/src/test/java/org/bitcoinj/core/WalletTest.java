@@ -2288,7 +2288,6 @@ public class WalletTest extends TestWithWallet {
         wallet = new Wallet(params);
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
-        wallet.setKeyRotationEnabled(true);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
         ECKey key1 = new ECKey();
         key1.setCreationTimeSeconds(Utils.currentTimeSeconds() - (86400 * 2));
@@ -2375,7 +2374,6 @@ public class WalletTest extends TestWithWallet {
         // A day later, we get compromised.
         Utils.rollMockClock(86400);
         wallet.setKeyRotationTime(Utils.currentTimeSeconds());
-        wallet.setKeyRotationEnabled(true);
 
         List<Transaction> txns = wallet.maybeDoMaintenance(null, false).get();
         assertEquals(1, txns.size());
@@ -2400,7 +2398,6 @@ public class WalletTest extends TestWithWallet {
         }
 
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
-        wallet.setKeyRotationEnabled(true);
 
         Date compromise = Utils.now();
         Utils.rollMockClock(86400);
