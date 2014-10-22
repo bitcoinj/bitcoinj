@@ -73,6 +73,14 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
+    public void getKeys() throws Exception {
+        chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        chain.maybeLookAhead();
+        assertEquals(2, chain.getKeys(false).size());
+    }
+
+    @Test
     public void signMessage() throws Exception {
         ECKey key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         key.verifyMessage("test", key.signMessage("test"));
