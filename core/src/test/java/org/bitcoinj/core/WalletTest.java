@@ -78,6 +78,7 @@ public class WalletTest extends TestWithWallet {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        // TODO: Move these fields into the right tests so we don't create two wallets for every test case.
         encryptedWallet = new Wallet(params);
         myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
         encryptedWallet.encrypt(PASSWORD1);
@@ -96,7 +97,6 @@ public class WalletTest extends TestWithWallet {
         createMarriedWallet(threshold, numKeys, true);
     }
 
-    
     private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
         wallet = new Wallet(params);
         blockStore = new MemoryBlockStore(params);
@@ -2302,11 +2302,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(0, broadcaster.size());
         assertFalse(wallet.isKeyRotating(key1));
 
-        // We got compromised! We have an old style random-only wallet. So let's upgrade to HD: for that we need a fresh
-        // random key that's not rotating as the wallet won't create a new seed for us, it'll just refuse to upgrade.
+        // We got compromised!
         Utils.rollMockClock(1);
-        ECKey key3 = new ECKey();
-        wallet.importKey(key3);
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
         wallet.maybeDoMaintenance(null, true);
@@ -2379,6 +2376,42 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, txns.size());
         DeterministicKey watchKey2 = wallet.getWatchingKey();
         assertNotEquals(watchKey1, watchKey2);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void keyRotationHD2() throws Exception {
+        // Check we handle the following scenario: a weak random key is created, then some good random keys are created
+        // but the weakness of the first isn't known yet. The wallet is upgraded to HD based on the weak key. Later, we
+        // find out about the weakness and set the rotation time to after the bad key's creation date. A new HD chain
+        // should be created based on the oldest known good key and the old chain + bad random key should rotate to it.
+
+        // We fix the private keys just to make the test deterministic (last byte differs).
+        Utils.setMockClock();
+        ECKey badKey = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdbb"));
+        badKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
+        Utils.rollMockClock(86400);
+        ECKey goodKey = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
+        goodKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
+
+        // Do an upgrade based on the bad key.
+        KeyChainGroup kcg = new KeyChainGroup(params);
+        kcg.importKeys(badKey, goodKey);
+        Utils.rollMockClock(86400);
+        wallet = new Wallet(params, kcg);   // This avoids the automatic HD initialisation
+        wallet.upgradeToDeterministic(null);
+        DeterministicKey badWatchingKey = wallet.getWatchingKey();
+        assertEquals(badKey.getCreationTimeSeconds(), badWatchingKey.getCreationTimeSeconds());
+        sendMoneyToWallet(wallet, CENT, badWatchingKey.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+
+        // Now we set the rotation time to the time we started making good keys. This should create a new HD chain.
+        wallet.setKeyRotationTime(goodKey.getCreationTimeSeconds());
+        List<Transaction> txns = wallet.maybeDoMaintenance(null, false).get();
+        assertEquals(1, txns.size());
+        Address output = txns.get(0).getOutput(0).getAddressFromP2PKHScript(params);
+        ECKey usedKey = wallet.findKeyFromPubHash(output.getHash160());
+        assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
+        assertEquals("mrM3TpCnav5YQuVA1xLercCGJH4DXujMtv", usedKey.toAddress(params).toString());
     }
 
     @Test(expected = IllegalArgumentException.class)

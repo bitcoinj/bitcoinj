@@ -4273,15 +4273,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * <p>When a key rotation time is set, and money controlled by keys created before the given timestamp T will be
+     * <p>When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
      * automatically respent to any key that was created after T. This can be used to recover from a situation where
      * a set of keys is believed to be compromised. You can stop key rotation by calling this method again with zero
-     * as the argument, or by using {@link #setKeyRotationEnabled(boolean)}. Once set up, calling
-     * {@link #maybeDoMaintenance(org.spongycastle.crypto.params.KeyParameter, boolean)} will create and possibly
-     * send rotation transactions: but it won't be done automatically (because you might have to ask for the users
-     * password).</p>
-     *
-     * <p>Note that this method won't do anything unless you call {@link #setKeyRotationEnabled(boolean)} first.</p>
+     * as the argument. Once set up, calling {@link #maybeDoMaintenance(org.spongycastle.crypto.params.KeyParameter, boolean)}
+     * will create and possibly send rotation transactions: but it won't be done automatically (because you might have
+     * to ask for the users password).</p>
      *
      * <p>The given time cannot be in the future.</p>
      */
@@ -4311,7 +4308,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @param andSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      */
-    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) {
+    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         try {
@@ -4347,7 +4344,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
-    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey) {
+    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
         // TODO: Handle chain replays here.
@@ -4363,8 +4360,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
         }
         if (allChainsRotating) {
-            log.info("All HD chains are currently rotating, creating a new one");
-            keychain.createAndActivateNewHDChain();
+            log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
+            try {
+                keychain.upgradeToDeterministic(keyRotationTimestamp, aesKey);
+                log.info(" ... upgraded to HD again, based on next best oldest key.");
+            } catch (AllRandomKeysRotating rotating) {
+                log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
+                keychain.createAndActivateNewHDChain();
+            }
         }
 
         // Because transactions are size limited, we might not be able to re-key the entire wallet in one go. So
