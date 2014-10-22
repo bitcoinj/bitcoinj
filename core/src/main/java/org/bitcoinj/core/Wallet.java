@@ -4382,6 +4382,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
                 keychain.createAndActivateNewHDChain();
             }
+            saveNow();
         }
 
         // Because transactions are size limited, we might not be able to re-key the entire wallet in one go. So
