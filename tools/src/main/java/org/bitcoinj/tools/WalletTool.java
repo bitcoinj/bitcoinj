@@ -455,7 +455,7 @@ public class WalletTool {
             if (aesKey == null)
                 return;
         }
-        Futures.getUnchecked(wallet.maybeDoMaintenance(aesKey, true));
+        Futures.getUnchecked(wallet.doMaintenance(aesKey, true));
     }
 
     private static void encrypt() {

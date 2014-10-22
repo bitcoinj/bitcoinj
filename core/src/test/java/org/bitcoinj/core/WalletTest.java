@@ -2306,7 +2306,7 @@ public class WalletTest extends TestWithWallet {
         Utils.rollMockClock(1);
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
-        wallet.maybeDoMaintenance(null, true);
+        wallet.doMaintenance(null, true);
 
         Transaction tx = broadcaster.waitForTransactionAndSucceed();
         final Coin THREE_CENTS = CENT.add(CENT).add(CENT);
@@ -2323,12 +2323,12 @@ public class WalletTest extends TestWithWallet {
 
         // Now receive some more money to the newly derived address via a new block and check that nothing happens.
         sendMoneyToWallet(wallet, CENT, toAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(wallet.maybeDoMaintenance(null, true).get().isEmpty());
+        assertTrue(wallet.doMaintenance(null, true).get().isEmpty());
         assertEquals(0, broadcaster.size());
 
         // Receive money via a new block on key1 and ensure it shows up as a maintenance task.
         sendMoneyToWallet(wallet, CENT, key1.toAddress(params), AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        wallet.maybeDoMaintenance(null, true);
+        wallet.doMaintenance(null, true);
         tx = broadcaster.waitForTransactionAndSucceed();
         assertNotNull(wallet.findKeyFromPubHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash()));
         log.info("Unexpected thing: {}", tx);
@@ -2372,7 +2372,7 @@ public class WalletTest extends TestWithWallet {
         Utils.rollMockClock(86400);
         wallet.setKeyRotationTime(Utils.currentTimeSeconds());
 
-        List<Transaction> txns = wallet.maybeDoMaintenance(null, false).get();
+        List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
         DeterministicKey watchKey2 = wallet.getWatchingKey();
         assertNotEquals(watchKey1, watchKey2);
@@ -2406,7 +2406,7 @@ public class WalletTest extends TestWithWallet {
 
         // Now we set the rotation time to the time we started making good keys. This should create a new HD chain.
         wallet.setKeyRotationTime(goodKey.getCreationTimeSeconds());
-        List<Transaction> txns = wallet.maybeDoMaintenance(null, false).get();
+        List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
         Address output = txns.get(0).getOutput(0).getAddressFromP2PKHScript(params);
         ECKey usedKey = wallet.findKeyFromPubHash(output.getHash160());
@@ -2436,7 +2436,7 @@ public class WalletTest extends TestWithWallet {
         Utils.rollMockClock(86400);
         wallet.freshReceiveKey();
         wallet.setKeyRotationTime(compromise);
-        wallet.maybeDoMaintenance(null, true);
+        wallet.doMaintenance(null, true);
 
         Transaction tx = broadcaster.waitForTransactionAndSucceed();
         final Coin valueSentToMe = tx.getValueSentToMe(wallet);

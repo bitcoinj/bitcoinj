@@ -4276,7 +4276,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * <p>When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
      * automatically respent to any key that was created after T. This can be used to recover from a situation where
      * a set of keys is believed to be compromised. You can stop key rotation by calling this method again with zero
-     * as the argument. Once set up, calling {@link #maybeDoMaintenance(org.spongycastle.crypto.params.KeyParameter, boolean)}
+     * as the argument. Once set up, calling {@link #doMaintenance(org.spongycastle.crypto.params.KeyParameter, boolean)}
      * will create and possibly send rotation transactions: but it won't be done automatically (because you might have
      * to ask for the users password).</p>
      *
@@ -4298,17 +4298,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * A wallet app should call this from time to time if key rotation is enabled in order to let the wallet craft and
-     * send transactions needed to re-organise coins internally. A good time to call this would be after receiving coins
-     * for an unencrypted wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and
-     * just want to know if some maintenance needs doing, call this method with doSend set to false and look at the
-     * returned list of transactions.
+     * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
+     * to re-organise coins internally. A good time to call this would be after receiving coins for an unencrypted
+     * wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and just want to know
+     * if some maintenance needs doing, call this method with andSend set to false and look at the returned list of
+     * transactions. Maintenance might also include internal changes that involve some processing or work but
+     * which don't require making transactions - these will happen automatically unless the password is required
+     * in which case an exception will be thrown.
      *
      * @param aesKey the users password, if any.
      * @param andSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
+     * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
+    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         try {
