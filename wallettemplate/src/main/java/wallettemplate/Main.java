@@ -117,14 +117,7 @@ public class Main extends Application {
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
         if (params == RegTestParams.get()) {
             bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
-        } else if (params == MainNetParams.get()) {
-            // Checkpoints are block headers that ship inside our app: for a new user, we pick the last header
-            // in the checkpoints file and then download the rest from the network. It makes things much faster.
-            // Checkpoint files are made using the BuildCheckpoints tool and usually we have to download the
-            // last months worth or more (takes a few seconds).
-            bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
         } else if (params == TestNet3Params.get()) {
-            bitcoin.setCheckpoints(getClass().getResourceAsStream("org.bitcoin.test.checkpoints"));
             // As an example!
             bitcoin.useTor();
         }
