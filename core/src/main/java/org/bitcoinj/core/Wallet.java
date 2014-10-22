@@ -4297,6 +4297,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return time != 0 && key.getCreationTimeSeconds() < time;
     }
 
+    /** @deprecated Renamed to doMaintenance */
+    @Deprecated
+    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
+        return doMaintenance(aesKey, andSend);
+    }
+
     /**
      * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
      * to re-organise coins internally. A good time to call this would be after receiving coins for an unencrypted
@@ -4363,10 +4369,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
         }
         if (allChainsRotating) {
-            log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
             try {
-                keychain.upgradeToDeterministic(keyRotationTimestamp, aesKey);
-                log.info(" ... upgraded to HD again, based on next best oldest key.");
+                if (keychain.getImportedKeys().isEmpty()) {
+                    log.info("All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
+                    keychain.createAndActivateNewHDChain();
+                } else {
+                    log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
+                    keychain.upgradeToDeterministic(keyRotationTimestamp, aesKey);
+                    log.info(" ... upgraded to HD again, based on next best oldest key.");
+                }
             } catch (AllRandomKeysRotating rotating) {
                 log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
                 keychain.createAndActivateNewHDChain();
