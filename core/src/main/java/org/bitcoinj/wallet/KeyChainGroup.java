@@ -68,7 +68,7 @@ public class KeyChainGroup implements KeyBag {
 
     private BasicKeyChain basic;
     private NetworkParameters params;
-    private final LinkedList<DeterministicKeyChain> chains;
+    protected final LinkedList<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
 
     private EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;

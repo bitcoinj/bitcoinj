@@ -52,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Utils.HEX;
@@ -2397,10 +2398,17 @@ public class WalletTest extends TestWithWallet {
         goodKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
 
         // Do an upgrade based on the bad key.
-        KeyChainGroup kcg = new KeyChainGroup(params);
+        final AtomicReference<List<DeterministicKeyChain>> fChains = new AtomicReference<List<DeterministicKeyChain>>();
+        KeyChainGroup kcg = new KeyChainGroup(params) {
+
+            {
+                fChains.set(chains);
+            }
+        };
         kcg.importKeys(badKey, goodKey);
         Utils.rollMockClock(86400);
         wallet = new Wallet(params, kcg);   // This avoids the automatic HD initialisation
+        assertTrue(fChains.get().isEmpty());
         wallet.upgradeToDeterministic(null);
         DeterministicKey badWatchingKey = wallet.getWatchingKey();
         assertEquals(badKey.getCreationTimeSeconds(), badWatchingKey.getCreationTimeSeconds());
@@ -2415,6 +2423,17 @@ public class WalletTest extends TestWithWallet {
         assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
         assertEquals(goodKey.getCreationTimeSeconds(), wallet.freshReceiveKey().getCreationTimeSeconds());
         assertEquals("mrM3TpCnav5YQuVA1xLercCGJH4DXujMtv", usedKey.toAddress(params).toString());
+        DeterministicKeyChain c = fChains.get().get(1);
+        assertEquals(c.getEarliestKeyCreationTime(), goodKey.getCreationTimeSeconds());
+        assertEquals(2, fChains.get().size());
+
+        // Commit the maint txns.
+        wallet.commitTx(txns.get(0));
+
+        // Check next maintenance does nothing.
+        assertTrue(wallet.doMaintenance(null, false).get().isEmpty());
+        assertEquals(c, fChains.get().get(1));
+        assertEquals(2, fChains.get().size());
     }
 
     @Test(expected = IllegalArgumentException.class)

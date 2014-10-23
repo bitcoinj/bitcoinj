@@ -4363,7 +4363,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
         for (DeterministicKeyChain chain : keychain.getDeterministicKeyChains()) {
-            if (chain.getEarliestKeyCreationTime() > vKeyRotationTimestamp) {
+            if (chain.getEarliestKeyCreationTime() >= vKeyRotationTimestamp) {
                 allChainsRotating = false;
                 break;
             }
