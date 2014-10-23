@@ -1473,7 +1473,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             RiskAnalysis analysis = riskAnalyzer.create(this, tx, dependencies);
             RiskAnalysis.Result result = analysis.analyze();
             if (result != RiskAnalysis.Result.OK) {
-                log.warn("Pending transaction {} was considered risky: {}", tx.getHashAsString(), analysis);
+                log.warn("Pending transaction was considered risky: {}\n{}", analysis, tx);
                 return true;
             }
             return false;
