@@ -67,7 +67,7 @@ public class KeyChainGroup implements KeyBag {
 
     private BasicKeyChain basic;
     private NetworkParameters params;
-    private final List<DeterministicKeyChain> chains;
+    protected final List<DeterministicKeyChain> chains;
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
 
     // The map keys are the watching keys of the followed chains and values are the following chains
