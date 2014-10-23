@@ -446,6 +446,8 @@ public class WalletTool {
         long rotationTimeSecs = Utils.currentTimeSeconds();
         if (options.has(dateFlag)) {
             rotationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
+        } else if (options.has(unixtimeFlag)) {
+            rotationTimeSecs = options.valueOf(unixtimeFlag);
         }
         log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
         wallet.setKeyRotationTime(rotationTimeSecs);
