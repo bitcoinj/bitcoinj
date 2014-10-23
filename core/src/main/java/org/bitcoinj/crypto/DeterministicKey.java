@@ -482,7 +482,7 @@ public class DeterministicKey extends ECKey {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toStringWithPrivate());
+            builder.append(toStringWithPrivate(params));
             builder.append("\n");
         }
     }
