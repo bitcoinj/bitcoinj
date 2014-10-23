@@ -1117,23 +1117,36 @@ public class ECKey implements EncryptableItem, Serializable {
 
     @Override
     public String toString() {
-        return toString(false);
+        return toString(false, null);
     }
 
     /**
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
      */
-    public String toStringWithPrivate() {
-        return toString(true);
+    public String toStringWithPrivate(NetworkParameters params) {
+        return toString(true, params);
     }
 
-    private String toString(boolean includePrivate) {
+    public String getPrivateKeyAsHex() {
+        return Utils.HEX.encode(getPrivKeyBytes());
+    }
+
+    public String getPublicKeyAsHex() {
+        return Utils.HEX.encode(pub.getEncoded());
+    }
+
+    public String getPrivateKeyAsWiF(NetworkParameters params) {
+        return getPrivateKeyEncoded(params).toString();
+    }
+
+    private String toString(boolean includePrivate, NetworkParameters params) {
         final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
-        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
             try {
-                helper.add("priv", Utils.HEX.encode(getPrivKey().toByteArray()));
+                helper.add("priv HEX", getPrivateKeyAsHex());
+                helper.add("priv WIF", getPrivateKeyAsWiF(params));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
             }
@@ -1156,7 +1169,7 @@ public class ECKey implements EncryptableItem, Serializable {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toStringWithPrivate());
+            builder.append(toStringWithPrivate(params));
             builder.append("\n");
         }
     }
