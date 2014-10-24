@@ -39,7 +39,9 @@ public class CoinTest {
         try {
             parseCoin("2E-20");
             org.junit.Assert.fail("should not have accepted fractional satoshis");
-        } catch (ArithmeticException e) {
+        } catch (IllegalArgumentException expected) {
+        } catch (Exception e) {
+            org.junit.Assert.fail("should throw IllegalArgumentException");
         }
     }
 

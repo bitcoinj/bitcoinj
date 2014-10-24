@@ -128,7 +128,12 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * @throws IllegalArgumentException if you try to specify fractional satoshis, or a value out of range.
      */
     public static Coin parseCoin(final String str) {
-        return Coin.valueOf(new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue());
+        try {
+            long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).toBigIntegerExact().longValue();
+            return Coin.valueOf(satoshis);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(e); // Repackage exception to honor method contract
+        }
     }
 
     public Coin add(final Coin value) {
