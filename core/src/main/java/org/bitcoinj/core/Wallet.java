@@ -57,8 +57,6 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -3371,6 +3369,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     public static class CompletionException extends RuntimeException {}
     public static class DustySendRequested extends CompletionException {}
+    public static class MultipleOpReturnRequested extends CompletionException {}
+
     /**
      * Thrown when we were trying to empty the wallet, and the total amount of money we were trying to empty after
      * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
@@ -3413,17 +3413,29 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             value = value.subtract(totalInput);
 
             List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
+            int opReturnCount = 0;
 
             // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
             boolean needAtLeastReferenceFee = false;
-            if (req.ensureMinRequiredFee && !req.emptyWallet) { // min fee checking is handled later for emptyWallet
-                for (TransactionOutput output : req.tx.getOutputs())
+            if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
+                for (TransactionOutput output : req.tx.getOutputs()) {
                     if (output.getValue().compareTo(Coin.CENT) < 0) {
-                        if (output.getValue().compareTo(output.getMinNonDustValue()) < 0)
-                            throw new DustySendRequested();
                         needAtLeastReferenceFee = true;
+                        if (output.getValue().compareTo(output.getMinNonDustValue()) < 0) { // Is transaction a "dust".
+                            if (output.getScriptPubKey().isOpReturn()) { // Transactions that are OP_RETURN can't be dust regardless of their value.
+                                ++opReturnCount;
+                                continue;
+                            } else {
+                                throw new DustySendRequested();
+                            }
+                        }
                         break;
                     }
+                }
+            }
+
+            if (opReturnCount > 1) { // Only 1 OP_RETURN per transaction allowed.
+                throw new MultipleOpReturnRequested();
             }
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
