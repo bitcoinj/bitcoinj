@@ -80,6 +80,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
             peerGroup = new PeerGroup(unitTestParams, blockChain, new BlockingClientManager());
         peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
         peerGroup.addWallet(wallet);
+        peerGroup.setUseLocalhostPeerWhenPossible(false); // Prevents from connecting to bitcoin nodes on localhost.
     }
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
