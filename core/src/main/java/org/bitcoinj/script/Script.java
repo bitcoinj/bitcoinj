@@ -725,6 +725,10 @@ public class Script {
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
 
+    public boolean isOpReturn() {
+        return chunks.size() == 2 && chunks.get(0).equalsOpCode(OP_RETURN);
+    }
+
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
      * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
