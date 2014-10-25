@@ -195,6 +195,7 @@
                                         <url>com.fasterxml.jackson.core:jackson-databind:2.4.2:jar:null:test:8e31266a272ad25ac4c089734d93e8d811652c1f</url>
                                         <url>com.fasterxml.jackson.core:jackson-core:2.4.2:jar:null:test:ceb72830d95c512b4b300a38f29febc85bdf6e4b</url>
                                         <url>com.fasterxml.jackson.core:jackson-annotations:2.4.2:jar:null:test:6bb52af09372d5064206d47d7887d41671f00f7d</url>
+                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.2.201409121644:maven-plugin:null:runtime:b2cb310459d082db505fdfa66dbadd4d8bac8e34</urn>
                                         <!-- A check for the rules themselves -->
                                         <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                                     </urns>
@@ -243,6 +244,55 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Code coverage plugin, generates coverage report to target/site/jacoco/
+                To skip coverage generation add -Djacoco.skip=true
+             -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.2.201409121644</version>
+                <executions>
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/coverage-reports/jacoco.exec</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Unit tests plugin, to skip runing test add -Dmaven.test.skip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+                <configuration>
+                    <argLine>${surefireArgLine}</argLine> <!-- This is required for code coverage to work. -->
+                </configuration>
             </plugin>
 
             <!-- Create a bundled executable test jar that runs the regtester/pulltester.
