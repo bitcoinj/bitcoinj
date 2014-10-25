@@ -36,6 +36,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.*;
@@ -720,9 +721,24 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void preferLocalPeer() throws IOException {
-        // Check that if we have a localhost port 8333 then it's used instead of the p2p network.
-        ServerSocket local = new ServerSocket(params.getPort(), 100, InetAddresses.forString("127.0.0.1"));
+        // Because we are using the same port (8333 or 18333) that is used by Satoshi client
+        // We have to consider 2 cases:
+        // 1. Test are executed on the same machine that is running full node / Satoshi client
+        // 2. Test are executed without any full node running locally
+        // We have to avoid to connecting to real and external services in unit tests
+        // So we skip this test in case we have already something running on port params.getPort()
+
+        // Check that if we have a localhost port 8333 or 18333 then it's used instead of the p2p network.
+        ServerSocket local = null;
         try {
+            local = new ServerSocket(params.getPort(), 100, InetAddresses.forString("127.0.0.1"));
+        }
+        catch(BindException e) { // Port already in use, skipping this test.
+            return;
+        }
+
+        try {
+            peerGroup.setUseLocalhostPeerWhenPossible(true);
             peerGroup.startAsync();
             peerGroup.awaitRunning();
             local.accept().close();   // Probe connect
