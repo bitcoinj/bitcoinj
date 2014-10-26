@@ -441,15 +441,20 @@
             <artifactId>scrypt</artifactId>
             <version>1.4.0</version>
         </dependency>
-
-        <!-- Add in to test/use Postgres blockstore -->
-        <!--
+        <!-- Note this is an optional dependency: Postgres blockstore -->
         <dependency>
           <groupId>postgresql</groupId>
           <artifactId>postgresql</artifactId>
           <version>9.1-901.jdbc4</version>
+          <optional>true</optional>
         </dependency>
-        -->
+        <!-- Note this is an optional dependency: MySQL blockstore -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.33</version>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.bitcoinj</groupId>
             <artifactId>orchid</artifactId>

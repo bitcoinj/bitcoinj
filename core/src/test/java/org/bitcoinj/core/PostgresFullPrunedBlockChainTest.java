@@ -3,6 +3,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.PostgresFullPrunedBlockStore;
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -21,6 +22,11 @@ public class PostgresFullPrunedBlockChainTest extends AbstractFullPrunedBlockCha
 
     // whether to run the test with a schema name
     private boolean useSchema = false;
+
+    @After
+    public void tearDown() throws Exception {
+        ((PostgresFullPrunedBlockStore)store).deleteStore();
+    }
 
     @Override
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
