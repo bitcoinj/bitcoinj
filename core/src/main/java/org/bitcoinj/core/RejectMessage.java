@@ -137,6 +137,13 @@ public class RejectMessage extends Message {
         return reason;
     }
 
+
+    /**
+     * A String representation of the relevant details of this reject message.
+     * Be aware that the value returned by this method includes the value returned by
+     * {@link #getReasonString() getReasonString}, which is taken from the reject message unchecked.
+     * Through malice or otherwise, it might contain control characters or other harmful content.
+     */
     @Override
     public String toString() {
         Sha256Hash hash = getRejectedObjectHash();
