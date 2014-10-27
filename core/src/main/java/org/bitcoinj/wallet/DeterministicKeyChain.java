@@ -378,7 +378,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     // For use in encryption.
-    private DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
+    protected DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
         checkNotNull(chain.rootKey);
         checkNotNull(chain.seed);
@@ -965,7 +965,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
-        DeterministicKeyChain chain = new DeterministicKeyChain(decSeed);
+        DeterministicKeyChain chain = makeDecryptedKeyChain(decSeed);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
             throw new KeyCrypterException("Provided AES key is wrong");
@@ -985,6 +985,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         chain.issuedExternalKeys = issuedExternalKeys;
         chain.issuedInternalKeys = issuedInternalKeys;
         return chain;
+    }
+
+    protected DeterministicKeyChain makeDecryptedKeyChain(DeterministicSeed decSeed) {
+        return new DeterministicKeyChain(decSeed);
     }
 
     @Override
