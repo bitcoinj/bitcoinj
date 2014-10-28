@@ -87,7 +87,7 @@ public class ScriptChunk {
             byte b = data[0];
             if (b >= 0x01 && b <= 0x10)
                 return opcode == OP_1 + b - 1;
-            if (b == 0x81)
+            if ((b & 0xFF) == 0x81)
                 return opcode == OP_1NEGATE;
         }
         if (data.length < OP_PUSHDATA1)
@@ -106,7 +106,6 @@ public class ScriptChunk {
             checkState(data == null);
             stream.write(opcode);
         } else if (data != null) {
-            checkNotNull(data);
             if (opcode < OP_PUSHDATA1) {
                 checkState(data.length == opcode);
                 stream.write(opcode);
