@@ -17,6 +17,8 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
@@ -43,7 +45,8 @@ public class FakeTxBuilder {
         TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
-        t.addInput(prevOut);
+        t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        // Fake signature.
         // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(params, t);
     }

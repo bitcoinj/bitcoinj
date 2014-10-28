@@ -961,6 +961,7 @@ public class Block extends Message {
     static private int txCounter;
 
     /** Adds a coinbase transaction to the block. This exists for unit tests. */
+    @VisibleForTesting
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
@@ -970,7 +971,8 @@ public class Block extends Message {
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(new TransactionInput(params, coinbase, new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)}));
+        coinbase.addInput(new TransactionInput(params, coinbase,
+                new ScriptBuilder().data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)}).build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
