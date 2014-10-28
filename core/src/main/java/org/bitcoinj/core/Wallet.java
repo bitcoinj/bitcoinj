@@ -3818,6 +3818,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     //region Bloom filtering
 
+    @Override
+    public void beginBloomFilterCalculation() {
+        lock.lock();
+        keychainLock.readLock().lock();
+    }
+
+    @Override
+    public void endBloomFilterCalculation() {
+        keychainLock.readLock().unlock();
+        lock.unlock();
+    }
+
     /**
      * Returns the number of distinct data items (note: NOT keys) that will be inserted into a bloom filter, when it
      * is constructed.
@@ -4516,50 +4528,4 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
     //endregion
-
-    /**
-     * Returns the wallet lock under which most operations happen. This is here to satisfy the
-     * {@link org.bitcoinj.core.PeerFilterProvider} interface and generally should not be used directly by apps.
-     * In particular, do <b>not</b> hold this lock if you're display a send confirm screen to the user or for any other
-     * long length of time, as it may cause processing holdups elsewhere. Instead, for the "confirm payment screen"
-     * use case you should complete a candidate transaction, present it to the user (e.g. for fee purposes) and then
-     * when they confirm - which may be quite some time later - recalculate the transaction and check if it's the same.
-     * If not, redisplay the confirm window and try again.
-     */
-    @Override
-    public Lock getLock() {
-        return new Lock() {
-            @Override
-            public void lock() {
-                lock.lock();
-                keychainLock.readLock().lock();
-            }
-
-            @Override
-            public void lockInterruptibly() throws InterruptedException {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean tryLock() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean tryLock(long l, TimeUnit unit) throws InterruptedException {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void unlock() {
-                keychainLock.readLock().unlock();
-                lock.unlock();
-            }
-
-            @Override
-            public Condition newCondition() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
 }

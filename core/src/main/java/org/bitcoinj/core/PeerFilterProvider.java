@@ -32,6 +32,16 @@ public interface PeerFilterProvider {
     public long getEarliestKeyCreationTime();
 
     /**
+     * Called on all registered filter providers before getBloomFilterElementCount and getBloomFilter are called.
+     * Once called, the provider should ensure that the items it will want to insert into the filter don't change.
+     * The reason is that all providers will have their element counts queried, and then a filter big enough for
+     * all of them will be specified. So the provider must use consistent state. There is guaranteed to be a matching
+     * call to endBloomFilterCalculation that can be used to e.g. unlock a lock.
+     */
+    public void beginBloomFilterCalculation();
+
+
+    /**
      * Gets the number of elements that will be added to a bloom filter returned by
      * {@link PeerFilterProvider#getBloomFilter(int, double, long)}
      */
@@ -46,14 +56,5 @@ public interface PeerFilterProvider {
     /** Whether this filter provider depends on the server updating the filter on all matches */
     public boolean isRequiringUpdateAllBloomFilter();
 
-    /**
-     * Returns an object that will be locked before any other methods are called and unlocked afterwards. You must
-     * provide one of these because the results from calling the above methods must be consistent. Otherwise it's
-     * possible for the {@link org.bitcoinj.net.FilterMerger} to request the counts of a bunch of providers
-     * with {@link #getBloomFilterElementCount()}, create a filter of the right size, call {@link #getBloomFilter(int, double, long)}
-     * and then the filter provider discovers it's been mutated in the mean time and now has a different number of
-     * elements. For instance, a Wallet that has keys added to it whilst a filter recalc is in progress could cause
-     * experience this race.
-     */
-    public Lock getLock();
+    public void endBloomFilterCalculation();
 }
