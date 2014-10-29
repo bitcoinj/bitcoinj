@@ -113,8 +113,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // that feature yet. In future we might hand out different accounts for cases where we wish to hand payers
     // a payment request that can generate lots of addresses independently.
     public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
-    public static final ImmutableList<ChildNumber> EXTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO);
-    public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ONE);
+    public static final ImmutableList<ChildNumber> EXTERNAL_PATH = ImmutableList.of(ChildNumber.ZERO);
+    public static final ImmutableList<ChildNumber> INTERNAL_PATH = ImmutableList.of(ChildNumber.ONE);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
@@ -369,7 +369,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
             addToBasicChain(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            addToBasicChain(hierarchy.get(getAccountPath(), false, true));
+            for (int i = 1; i <= getAccountPath().size(); i++) {
+                addToBasicChain(hierarchy.get(getAccountPath().subList(0, i), false, true));
+            }
             initializeHierarchyUnencrypted(rootKey);
         }
         // Else...
@@ -398,15 +400,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         hierarchy = new DeterministicHierarchy(rootKey);
         basicKeyChain.importKey(rootKey);
 
+        for (int i = 1; i < getAccountPath().size(); i++) {
+            encryptNonLeaf(aesKey, chain, rootKey, getAccountPath().subList(0, i));
+        }
         DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, getAccountPath());
-        externalKey = encryptNonLeaf(aesKey, chain, account, EXTERNAL_PATH);
-        internalKey = encryptNonLeaf(aesKey, chain, account, INTERNAL_PATH);
+        externalKey = encryptNonLeaf(aesKey, chain, account, ImmutableList.<ChildNumber>builder().addAll(getAccountPath()).addAll(EXTERNAL_PATH).build());
+        internalKey = encryptNonLeaf(aesKey, chain, account, ImmutableList.<ChildNumber>builder().addAll(getAccountPath()).addAll(INTERNAL_PATH).build());
 
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to encrypt.
         for (ECKey eckey : chain.basicKeyChain.getKeys()) {
             DeterministicKey key = (DeterministicKey) eckey;
-            if (key.getPath().size() != 3) continue; // Not a leaf key.
+            if (key.getPath().size() != getAccountPath().size() + 2) continue; // Not a leaf key.
             DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new encrypted hierarchy.
             key = new DeterministicKey(key.dropPrivateBytes(), parent);
@@ -900,7 +905,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                             chain.rootKey = detkey;
                             chain.hierarchy = new DeterministicHierarchy(detkey);
                         }
-                    } else if (path.size() == 2) {
+                    } else if (path.size() == chain.getAccountPath().size() + 1) {
                         if (detkey.getChildNumber().num() == 0) {
                             chain.externalKey = detkey;
                             chain.issuedExternalKeys = key.getDeterministicKey().getIssuedSubkeys();
