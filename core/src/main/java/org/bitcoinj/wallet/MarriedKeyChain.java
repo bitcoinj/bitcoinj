@@ -97,9 +97,9 @@ public class MarriedKeyChain extends DeterministicKeyChain {
             if (threshold == 0)
                 threshold = (followingKeys.size() + 1) / 2 + 1;
             if (random != null) {
-                chain = new MarriedKeyChain(random, bits, passphrase, seedCreationTimeSecs);
+                chain = new MarriedKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs);
             } else if (entropy != null) {
-                chain = new MarriedKeyChain(entropy, passphrase, seedCreationTimeSecs);
+                chain = new MarriedKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
             } else {
                 chain = new MarriedKeyChain(seed);
             }

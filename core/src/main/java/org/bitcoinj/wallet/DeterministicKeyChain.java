@@ -214,7 +214,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
-        /** The passphrase to use with the generated mnemonic, or null. Currently must be empty. */
+        /** The passphrase to use with the generated mnemonic, or null if you would like to use the default empty string. Currently must be the empty string. */
         public T passphrase(String passphrase) {
             // FIXME support non-empty passphrase
             this.passphrase = passphrase;
@@ -228,14 +228,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             DeterministicKeyChain chain;
 
             if (random != null) {
-                chain = new DeterministicKeyChain(random, bits, passphrase, seedCreationTimeSecs);
+                // Default passphrase to "" if not specified
+                chain = new DeterministicKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs);
             } else if (entropy != null) {
-                chain = new DeterministicKeyChain(entropy, passphrase, seedCreationTimeSecs);
+                chain = new DeterministicKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
             } else {
                 chain = new DeterministicKeyChain(seed);
             }
 
             return chain;
+        }
+
+        protected String getPassphrase() {
+            return passphrase != null ? passphrase : DEFAULT_PASSPHRASE_FOR_MNEMONIC;
         }
     }
 
