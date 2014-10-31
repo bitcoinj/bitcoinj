@@ -379,7 +379,7 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Returns the difference of {@link Transaction#getValueSentFromMe(TransactionBag)} and {@link Transaction#getValueSentToMe(TransactionBag)}.
+     * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
      */
     public Coin getValue(TransactionBag wallet) throws ScriptException {
         return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
