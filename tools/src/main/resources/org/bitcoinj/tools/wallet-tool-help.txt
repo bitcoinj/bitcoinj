@@ -55,7 +55,7 @@ Usage: wallet-tool --flags action-name
 
 >>> GENERAL OPTIONS
   --debuglog           Enables logging from the core library.
-  --net=XXX            Which network to connect to, defaults to PROD, can also be TEST or REGTEST.
+  --net=XXX            Which network to connect to, defaults to MAIN, can also be TEST or REGTEST.
   --mode=FULL/SPV      Whether to do full verification of the chain or just light mode.
   --wallet=<file>      Specifies what wallet file to load and save.
   --chain=<file>       Specifies the name of the file that stores the block chain.

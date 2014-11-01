@@ -180,7 +180,8 @@ public class WalletTool {
     }
     
     public enum NetworkEnum {
-        PROD,
+        MAIN,
+        PROD, // alias for MAIN
         TEST,
         REGTEST
     }
@@ -198,7 +199,7 @@ public class WalletTool {
         OptionSpec<String> walletFileName = parser.accepts("wallet").withRequiredArg().defaultsTo("wallet");
         seedFlag = parser.accepts("seed").withRequiredArg();
         watchFlag = parser.accepts("watchkey").withRequiredArg();
-        OptionSpec<NetworkEnum> netFlag = parser.accepts("net").withOptionalArg().ofType(NetworkEnum.class).defaultsTo(NetworkEnum.PROD);
+        OptionSpec<NetworkEnum> netFlag = parser.accepts("net").withOptionalArg().ofType(NetworkEnum.class).defaultsTo(NetworkEnum.MAIN);
         dateFlag = parser.accepts("date").withRequiredArg().ofType(Date.class)
                 .withValuesConvertedBy(DateConverter.datePattern("yyyy/MM/dd"));
         OptionSpec<WaitForEnum> waitForFlag = parser.accepts("waitfor").withRequiredArg().ofType(WaitForEnum.class);
@@ -255,9 +256,10 @@ public class WalletTool {
             logger.setLevel(Level.SEVERE);
         }
         switch (netFlag.value(options)) {
+            case MAIN:
             case PROD:
                 params = MainNetParams.get();
-                chainFileName = new File("prodnet.chain");
+                chainFileName = new File("mainnet.chain");
                 break;
             case TEST:
                 params = TestNet3Params.get();
