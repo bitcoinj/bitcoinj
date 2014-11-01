@@ -518,7 +518,7 @@ public class Block extends Message {
 
     /**
      * Returns the hash of the block (which for a valid, solved block should be below the target) in the form seen on
-     * the block explorer. If you call this on block 1 in the production chain
+     * the block explorer. If you call this on block 1 in the mainnet chain
      * you will get "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048".
      */
     public String getHashAsString() {

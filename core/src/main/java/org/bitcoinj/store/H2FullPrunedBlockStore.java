@@ -352,7 +352,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             PreparedStatement s =
                     conn.get().prepareStatement("INSERT INTO headers(hash, chainWork, height, header, wasUndoable)"
                             + " VALUES(?, ?, ?, ?, ?)");
-            // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
@@ -370,7 +370,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
             
             PreparedStatement s = conn.get().prepareStatement("UPDATE headers SET wasUndoable=? WHERE hash=?");
             s.setBoolean(1, true);
-            // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(2, hashBytes);
@@ -392,7 +392,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
-        // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+        // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
         byte[] hashBytes = new byte[28];
         System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
         int height = storedBlock.getHeight();
@@ -474,7 +474,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         PreparedStatement s = null;
         try {
             s = conn.get().prepareStatement("SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?");
-            // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
@@ -530,7 +530,7 @@ public class H2FullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             s = conn.get()
                 .prepareStatement("SELECT txOutChanges, transactions FROM undoableBlocks WHERE hash = ?");
-            // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
             System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
