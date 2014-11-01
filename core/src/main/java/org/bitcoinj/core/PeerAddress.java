@@ -90,7 +90,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     /**
-     * Constructs a peer address from the given IP address. Port and protocol version are default for the prodnet.
+     * Constructs a peer address from the given IP address. Port and protocol version are default for the mainnet.
      */
     public PeerAddress(InetAddress addr) {
         this(addr, MainNetParams.get().getPort());

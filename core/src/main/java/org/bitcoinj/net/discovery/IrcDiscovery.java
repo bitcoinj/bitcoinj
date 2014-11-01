@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * IrcDiscovery provides a way to find network peers by joining a pre-agreed rendevouz point on the LFnet IRC network.
- * <b>This class is deprecated because LFnet has ceased to operate and DNS seeds now exist for both prod and test
+ * <b>This class is deprecated because LFnet has ceased to operate and DNS seeds now exist for both main and test
  * networks.</b> It may conceivably still be useful for running small ad-hoc networks by yourself.
  */
 @Deprecated
@@ -49,7 +49,7 @@ public class IrcDiscovery implements PeerDiscovery {
      * Finds a list of peers by connecting to an IRC network, joining a channel, decoding the nicks and then
      * disconnecting.
      *
-     * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST3" for the production and test networks
+     * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST3" for the main and test networks
      *                respectively.
      */
     public IrcDiscovery(String channel) {
@@ -61,7 +61,7 @@ public class IrcDiscovery implements PeerDiscovery {
      * disconnecting.
      *
      * @param server  Name or textual IP address of the IRC server to join.
-     * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST3" for the production and test networks
+     * @param channel The IRC channel to join, either "#bitcoin" or "#bitcoinTEST3" for the main and test networks
      */
     public IrcDiscovery(String channel, String server, int port) {
         this.channel = channel;

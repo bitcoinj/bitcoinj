@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Test that an example production coinbase transactions can be added to a wallet ok.
+ * Test that an example mainnet coinbase transactions can be added to a wallet ok.
  */
 public class CoinbaseBlockTest {
     static final NetworkParameters params = MainNetParams.get();

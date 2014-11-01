@@ -263,7 +263,7 @@ public abstract class NetworkParameters implements Serializable {
      * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
      * prevBlockHash pointers in the block headers.</p>
      *
-     * <p>The genesis blocks for both test and prod networks contain the timestamp of when they were created,
+     * <p>The genesis blocks for both test and main networks contain the timestamp of when they were created,
      * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
      * bailout for banks"</i>.</p>
      */
@@ -305,7 +305,7 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
-     * test and production Bitcoin networks use 2 weeks (1209600 seconds).
+     * test and main Bitcoin networks use 2 weeks (1209600 seconds).
      */
     public int getTargetTimespan() {
         return targetTimespan;
