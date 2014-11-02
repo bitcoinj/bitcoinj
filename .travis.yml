@@ -9,6 +9,10 @@ script:
   - jdk_switcher use oraclejdk8
   - mvn -q clean install
 
+after_success:
+  - cd ../core
+  - mvn jacoco:report coveralls:report
+
 notifications:
   irc:
     channels: "irc.freenode.net#bitcoinj"

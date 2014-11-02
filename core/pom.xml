@@ -196,6 +196,7 @@
                                         <url>com.fasterxml.jackson.core:jackson-core:2.4.2:jar:null:test:ceb72830d95c512b4b300a38f29febc85bdf6e4b</url>
                                         <url>com.fasterxml.jackson.core:jackson-annotations:2.4.2:jar:null:test:6bb52af09372d5064206d47d7887d41671f00f7d</url>
                                         <urn>org.jacoco:jacoco-maven-plugin:0.7.2.201409121644:maven-plugin:null:runtime:b2cb310459d082db505fdfa66dbadd4d8bac8e34</urn>
+                                        <urn>org.eluder.coveralls:coveralls-maven-plugin:3.0.1:maven-plugin:null:runtime:3907ee5cf1e5c85af7bb90e486ce4c7b1408a552</urn>
                                         <!-- A check for the rules themselves -->
                                         <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                                     </urns>
@@ -293,6 +294,13 @@
                 <configuration>
                     <argLine>${surefireArgLine}</argLine> <!-- This is required for code coverage to work. -->
                 </configuration>
+            </plugin>
+
+            <!-- Coveralls is a online code coverage tool, you can track code coverage here: https://coveralls.io/r/bitcoinj/bitcoinj -->
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>3.0.1</version>
             </plugin>
 
             <!-- Create a bundled executable test jar that runs the regtester/pulltester.
