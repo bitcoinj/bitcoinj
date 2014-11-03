@@ -38,35 +38,36 @@ public class StoredTransactionOutput implements Serializable {
     private Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
     private long index;
-
-    /** arbitrary value lower than -{@link NetworkParameters#spendableCoinbaseDepth}
-     * (not too low to get overflows when we do blockHeight - NONCOINBASE_HEIGHT, though) */
-    private static final int NONCOINBASE_HEIGHT = -200;
-    /** The height of the creating block (for coinbases, NONCOINBASE_HEIGHT otherwise) */
+    /** The height of the tx of this output */
     private int height;
+    /** If this output is from a coinbase tx */
+    private boolean coinbase;
 
     /**
-     * Creates a stored transaction output
-     * @param hash the hash of the containing transaction
-     * @param index the outpoint
-     * @param value the value available
-     * @param height the height this output was created in
-     * @param scriptBytes
+     * Creates a stored transaction output.
+     * @param hash The hash of the containing transaction
+     * @param index The outpoint.
+     * @param value The value available.
+     * @param height The height this output was created in.
+     * @param coinbase The coinbase flag.
+     * @param scriptBytes The script bytes.
      */
-    public StoredTransactionOutput(Sha256Hash hash, long index, Coin value, int height, boolean isCoinbase, byte[] scriptBytes) {
+    public StoredTransactionOutput(Sha256Hash hash, long index, Coin value, int height, boolean coinbase, byte[] scriptBytes) {
         this.hash = hash;
         this.index = index;
         this.value = value;
-        this.height = isCoinbase ? height : NONCOINBASE_HEIGHT;
+        this.height = height;
         this.scriptBytes = scriptBytes;
+        this.coinbase = coinbase;
     }
 
-    public StoredTransactionOutput(Sha256Hash hash, TransactionOutput out, int height, boolean isCoinbase) {
+    public StoredTransactionOutput(Sha256Hash hash, TransactionOutput out, int height, boolean coinbase) {
         this.hash = hash;
         this.index = out.getIndex();
         this.value = out.getValue();
-        this.height = isCoinbase ? height : NONCOINBASE_HEIGHT;
+        this.height = height;
         this.scriptBytes = out.getScriptBytes();
+        this.coinbase = coinbase;
     }
 
     public StoredTransactionOutput(InputStream in) throws IOException {
@@ -97,11 +98,19 @@ public class StoredTransactionOutput implements Serializable {
                  ((in.read() & 0xFF) << 8) |
                  ((in.read() & 0xFF) << 16) |
                  ((in.read() & 0xFF) << 24);
+
+        byte[] coinbaseByte = new byte[1];
+        in.read(coinbaseByte);
+        if (coinbaseByte[0] == 1) {
+            coinbase = true;
+        } else {
+            coinbase = false;
+        }
     }
 
     /**
-     * The value which this Transaction output holds
-     * @return the value
+     * The value which this Transaction output holds.
+     * @return the value.
      */
     public Coin getValue() {
         return value;
@@ -109,33 +118,42 @@ public class StoredTransactionOutput implements Serializable {
 
     /**
      * The backing script bytes which can be turned into a Script object.
-     * @return the scriptBytes
+     * @return the scriptBytes.
      */
     public byte[] getScriptBytes() {
         return scriptBytes;
     }
 
     /**
-     * The hash of the transaction which holds this output
-     * @return the hash
+     * The hash of the transaction which holds this output.
+     * @return the hash.
      */
     public Sha256Hash getHash() {
         return hash;
     }
 
     /**
-     * The index of this output in the transaction which holds it
-     * @return the index
+     * The index of this output in the transaction which holds it.
+     * @return the index.
      */
     public long getIndex() {
         return index;
     }
 
     /**
-     * Gets the height of the block that created this output (or -1 if this output was not created by a coinbase)
+     * Gets the height of the block that created this output.
+     * @return The height.
      */
     public int getHeight() {
         return height;
+    }
+
+    /**
+     * Gets the flag of whether this was created by a coinbase tx.
+     * @return The coinbase flag.
+     */
+    public boolean isCoinbase() {
+        return coinbase;
     }
 
     @Override
@@ -173,5 +191,13 @@ public class StoredTransactionOutput implements Serializable {
         bos.write(0xFF & (height >> 8));
         bos.write(0xFF & (height >> 16));
         bos.write(0xFF & (height >> 24));
+
+        byte[] coinbaseByte = new byte[1];
+        if(coinbase) {
+            coinbaseByte[0] = 1;
+        } else {
+            coinbaseByte[0] = 0;
+        }
+        bos.write(coinbaseByte);
     }
 }

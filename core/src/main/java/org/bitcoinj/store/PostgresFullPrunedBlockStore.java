@@ -71,10 +71,11 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    hash bytea NOT NULL,\n" +
             "    index integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
-            "    value bytea NOT NULL,\n" +
+            "    value bigint NOT NULL,\n" +
             "    scriptbytes bytea NOT NULL,\n" +
             "    toaddress character varying(35),\n" +
-            "    addresstargetable integer,\n" +
+            "    addresstargetable smallint,\n" +
+            "    coinbase boolean,\n" +
             "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,index)\n" +
             ")\n";
 
@@ -86,8 +87,6 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks USING btree (height)";
 
     private static final String SELECT_UNDOABLEBLOCKS_EXISTS_SQL        = "select 1 from undoableBlocks where hash = ?";
-
-    private static final String SELECT_BALANCE_SQL                      = "select sum(('x'||lpad(substr(value::text, 3, 50),16,'0'))::bit(64)::bigint) from openoutputs where toaddress = ?";
 
     /**
      * Creates a new PostgresFullPrunedBlockStore.
@@ -161,18 +160,8 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getTableExistSQL(String tableName) {
-        return "SELECT * FROM " + tableName + " WHERE 1 = 2";
-    }
-
-    @Override
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
-    }
-
-    @Override
-    protected String getBalanceSelectSQL() {
-        return SELECT_BALANCE_SQL;
     }
 
     @Override
@@ -180,7 +169,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         maybeConnect();
         // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
         byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;

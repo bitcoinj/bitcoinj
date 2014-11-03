@@ -68,10 +68,11 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "hash BINARY(32) NOT NULL,"
             + "index INT NOT NULL,"
             + "height INT NOT NULL,"
-            + "value BLOB NOT NULL,"
+            + "value BIGINT NOT NULL,"
             + "scriptBytes BLOB NOT NULL,"
             + "toaddress VARCHAR(35),"
-            + "addresstargetable INT,"
+            + "addresstargetable TINYINT,"
+            + "coinbase BOOLEAN,"
             + "PRIMARY KEY (hash, index),"
             + ")";
 
@@ -81,8 +82,6 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX  = "CREATE INDEX openoutputs_addresstargetable_idx ON openoutputs (addresstargetable)";
     private static final String CREATE_OUTPUTS_HASH_INDEX               = "CREATE INDEX openoutputs_hash_idx ON openoutputs (hash)";
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks (height)";
-
-    private static final String SELECT_BALANCE_SQL                      = "SELECT value from openoutputs where toaddress = ?";
 
     /**
      * Creates a new H2FullPrunedBlockStore
@@ -114,11 +113,6 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         }
-    }
-
-    @Override
-    public BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
-        return calculateBalanceForAddress(address, true);
     }
 
     @Override
@@ -154,18 +148,7 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getTableExistSQL(String tableName) {
-        return "SELECT * FROM " + tableName + " WHERE 1 = 2";
-    }
-
-    @Override
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
-
-    @Override
-    protected String getBalanceSelectSQL() {
-        return SELECT_BALANCE_SQL;
-    }
-
 }
