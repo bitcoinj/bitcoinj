@@ -29,10 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * <p>A generic full pruned block store for a relational database.  This generic class requires
@@ -79,10 +76,11 @@ import java.util.Properties;
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>index</td><td>integer</td></tr>
  *     <tr><td>height</td><td>integer</td></tr>
- *     <tr><td>value</td><td>binary</td></tr>
+ *     <tr><td>value</td><td>integer</td></tr>
  *     <tr><td>scriptbytes</td><td>binary</td></tr>
  *     <tr><td>toaddress</td><td>string</td></tr>
  *     <tr><td>addresstargetable</td><td>integer</td></tr>
+ *     <tr><td>coinbase</td><td>boolean</td></tr>
  * </table>
  * </p>
  *
@@ -90,43 +88,52 @@ import java.util.Properties;
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
 
-    private static final String CHAIN_HEAD_SETTING                          = "chainhead";
-    private static final String VERIFIED_CHAIN_HEAD_SETTING                 = "verifiedchainhead";
-    private static final String VERSION_SETTING                             = "version";
+    private static final String CHAIN_HEAD_SETTING                              = "chainhead";
+    private static final String VERIFIED_CHAIN_HEAD_SETTING                     = "verifiedchainhead";
+    private static final String VERSION_SETTING                                 = "version";
 
-    // drop table SQL
-    private static final String DROP_SETTINGS_TABLE                         = "DROP TABLE settings";
-    private static final String DROP_HEADERS_TABLE                          = "DROP TABLE headers";
-    private static final String DROP_UNDOABLE_TABLE                         = "DROP TABLE undoableblocks";
-    private static final String DROP_OPEN_OUTPUT_TABLE                      = "DROP TABLE openoutputs";
+    // Drop table SQL.
+    private static final String DROP_SETTINGS_TABLE                             = "DROP TABLE settings";
+    private static final String DROP_HEADERS_TABLE                              = "DROP TABLE headers";
+    private static final String DROP_UNDOABLE_TABLE                             = "DROP TABLE undoableblocks";
+    private static final String DROP_OPEN_OUTPUT_TABLE                          = "DROP TABLE openoutputs";
 
-    // SQL Queries
-    private static final String SELECT_SETTINGS_SQL                         = "SELECT value FROM settings WHERE name = ?";
-    private static final String INSERT_SETTINGS_SQL                         = "INSERT INTO settings(name, value) VALUES(?, ?)";
-    private static final String UPDATE_SETTINGS_SQL                         = "UPDATE settings SET value = ? WHERE name = ?";
+    // Queries SQL.
+    private static final String SELECT_SETTINGS_SQL                             = "SELECT value FROM settings WHERE name = ?";
+    private static final String INSERT_SETTINGS_SQL                             = "INSERT INTO settings(name, value) VALUES(?, ?)";
+    private static final String UPDATE_SETTINGS_SQL                             = "UPDATE settings SET value = ? WHERE name = ?";
 
-    private static final String SELECT_HEADERS_SQL                          = "SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?";
-    private static final String INSERT_HEADERS_SQL                          = "INSERT INTO headers(hash, chainWork, height, header, wasUndoable) VALUES(?, ?, ?, ?, ?)";
-    private static final String UPDATE_HEADERS_SQL                          = "UPDATE headers SET wasUndoable=? WHERE hash=?";
+    private static final String SELECT_HEADERS_SQL                              = "SELECT chainWork, height, header, wasUndoable FROM headers WHERE hash = ?";
+    private static final String INSERT_HEADERS_SQL                              = "INSERT INTO headers(hash, chainWork, height, header, wasUndoable) VALUES(?, ?, ?, ?, ?)";
+    private static final String UPDATE_HEADERS_SQL                              = "UPDATE headers SET wasUndoable=? WHERE hash=?";
 
-    private static final String SELECT_UNDOABLEBLOCKS_SQL                   = "SELECT txOutChanges, transactions FROM undoableBlocks WHERE hash = ?";
-    private static final String INSERT_UNDOABLEBLOCKS_SQL                   = "INSERT INTO undoableBlocks(hash, height, txOutChanges, transactions) VALUES(?, ?, ?, ?)";
-    private static final String UPDATE_UNDOABLEBLOCKS_SQL                   = "UPDATE undoableBlocks SET txOutChanges=?, transactions=? WHERE hash = ?";
-    private static final String DELETE_UNDOABLEBLOCKS_SQL                   = "DELETE FROM undoableBlocks WHERE height <= ?";
+    private static final String SELECT_UNDOABLEBLOCKS_SQL                       = "SELECT txOutChanges, transactions FROM undoableBlocks WHERE hash = ?";
+    private static final String INSERT_UNDOABLEBLOCKS_SQL                       = "INSERT INTO undoableBlocks(hash, height, txOutChanges, transactions) VALUES(?, ?, ?, ?)";
+    private static final String UPDATE_UNDOABLEBLOCKS_SQL                       = "UPDATE undoableBlocks SET txOutChanges=?, transactions=? WHERE hash = ?";
+    private static final String DELETE_UNDOABLEBLOCKS_SQL                       = "DELETE FROM undoableBlocks WHERE height <= ?";
 
-    private static final String SELECT_OPENOUTPUTS_SQL                      = "SELECT height, value, scriptBytes FROM openOutputs WHERE hash = ? AND index = ?";
-    private static final String SELECT_OPENOUTPUTS_COUNT_SQL                = "SELECT COUNT(*) FROM openOutputs WHERE hash = ?";
-    private static final String INSERT_OPENOUTPUTS_SQL                      = "INSERT INTO openOutputs (hash, index, height, value, scriptBytes, toAddress, addressTargetable) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String DELETE_OPENOUTPUTS_SQL                      = "DELETE FROM openOutputs WHERE hash = ? AND index = ?";
+    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase FROM openOutputs WHERE hash = ? AND index = ?";
+    private static final String SELECT_OPENOUTPUTS_COUNT_SQL                    = "SELECT COUNT(*) FROM openOutputs WHERE hash = ?";
+    private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openOutputs (hash, index, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND index = ?";
 
-    // dump table SQL (this is just for data sizing statistics).
-    private static final String SELECT_DUMP_SETTINGS_SQL                    = "SELECT name, value FROM settings";
-    private static final String SELECT_DUMP_HEADERS_SQL                     = "SELECT chainWork, header FROM headers";
-    private static final String SELECT_DUMP_UNDOABLEBLOCKS_SQL              = "SELECT txOutChanges, transactions FROM undoableBlocks";
-    private static final String SELECT_DUMP_OPENOUTPUTS_SQL                 = "SELECT value, scriptBytes FROM openOutputs";
+    // Dump table SQL (this is just for data sizing statistics).
+    private static final String SELECT_DUMP_SETTINGS_SQL                        = "SELECT name, value FROM settings";
+    private static final String SELECT_DUMP_HEADERS_SQL                         = "SELECT chainWork, header FROM headers";
+    private static final String SELECT_DUMP_UNDOABLEBLOCKS_SQL                  = "SELECT txOutChanges, transactions FROM undoableBlocks";
+    private static final String SELECT_DUMP_OPENOUTPUTS_SQL                     = "SELECT value, scriptBytes FROM openOutputs";
 
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL              = "SELECT value, scriptBytes FROM openOutputs where toaddress = ?";
-    private static final String SELECT_TRANSACTION_OUTPUTS_WITH_HEIGHT_SQL  = "SELECT value, scriptBytes FROM openOutputs where toaddress = ? AND height <= ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT value, scriptBytes, height FROM openOutputs where toaddress = ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_WITH_HEIGHT_SQL      = "SELECT value, scriptBytes, height FROM openOutputs where toaddress = ? AND height <= ?";
+
+    // Select the balance of an address SQL.
+    private static final String SELECT_BALANCE_SQL                              = "select sum(value) from openoutputs where toaddress = ?";
+
+    // Tables exist SQL.
+    private static final String SELECT_CHECK_TABLES_EXIST_SQL                   = "SELECT * FROM settings WHERE 1 = 2";
+
+    // Compatibility SQL.
+    private static final String SELECT_COMPATIBILITY_COINBASE_SQL               = "SELECT coinbase FROM openOutputs WHERE 1 = 2";
 
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
@@ -175,8 +182,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
         try {
             // Create tables if needed
-            if (!tableExists("settings")) {
+            if (!tablesExists()) {
                 createTables();
+            } else {
+                checkCompatibility();
             }
             initFromDatabase();
         } catch (SQLException e) {
@@ -190,13 +199,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The fully qualified database driver class.
      */
     protected abstract String getDatabaseDriverClass();
-
-    /**
-     * Get the SQL statement that checks is a particular table exists.
-     * @param tableName The name of the table.
-     * @return The SQL select statement.
-     */
-    protected abstract String getTableExistSQL(String tableName);
 
     /**
      * Get the SQL statements that create the schema (DDL).
@@ -224,12 +226,30 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     protected abstract String getDuplicateKeyErrorCode();
 
     /**
-     * Get the SQL to select the total balance for a given address. This has been abstracted as
-     * difference databases will handle casting of return values differently (since values/balances
-     * are stored as bytes within the database for space reasons).
+     * Get the SQL to select the total balance for a given address.
      * @return The SQL prepared statement.
      */
-    protected abstract String getBalanceSelectSQL();
+    protected String getBalanceSelectSQL() {
+        return SELECT_BALANCE_SQL;
+    }
+
+    /**
+     * Get the SQL statement that checks if tables exist.
+     * @return The SQL prepared statement.
+     */
+    protected String getTablesExistSQL() {
+        return SELECT_CHECK_TABLES_EXIST_SQL;
+    }
+
+    /**
+     * Get the SQL statements to check if the database is compatible.
+     * @return The SQL prepared statements.
+     */
+    protected List<String> getCompatibilitySQL() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add(SELECT_COMPATIBILITY_COINBASE_SQL);
+        return sqlStatements;
+    }
 
     /**
      * Get the SQL to select the transaction outputs for a given address.
@@ -456,21 +476,51 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Check if a table exists within the database.
-     * @param table The name of the table.
-     * @return If the table exists.
+     * <p>Check if a tables exists within the database.</p>
+     *
+     * <p>This specifically checks for the 'settings' table and
+     * if it exists makes an assumption that the rest of the data
+     * structures are present.</p>
+     *
+     * @return If the tables exists.
      * @throws java.sql.SQLException
      */
-    private boolean tableExists(String table) throws SQLException {
-        Statement s = conn.get().createStatement();
+    private boolean tablesExists() throws SQLException {
+        PreparedStatement ps = null;
         try {
-            ResultSet results = s.executeQuery(getTableExistSQL(table));
+            ps = conn.get().prepareStatement(getTablesExistSQL());
+            ResultSet results = ps.executeQuery();
             results.close();
             return true;
         } catch (SQLException ex) {
             return false;
         } finally {
-            s.close();
+            if(ps != null && !ps.isClosed()) {
+                ps.close();
+            }
+        }
+    }
+
+    /**
+     * Check that the database is compatible with this version of the {@link DatabaseFullPrunedBlockStore}.
+     * @throws BlockStoreException If the database is not compatible.
+     */
+    private void checkCompatibility() throws SQLException, BlockStoreException {
+        for(String sql : getCompatibilitySQL()) {
+            PreparedStatement ps = null;
+            try {
+                ps = conn.get().prepareStatement(sql);
+                ResultSet results = ps.executeQuery();
+                results.close();
+            } catch (SQLException ex) {
+                String message = "Database block store is not compatible with the current release.  " +
+                        "See bitcoinj release notes for further information.";
+                throw new BlockStoreException(message);
+            } finally {
+                if (ps != null && !ps.isClosed()) {
+                    ps.close();
+                }
+            }
         }
     }
 
@@ -547,7 +597,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (!rs.next()) {
             throw new BlockStoreException("corrupt database block store - no chain head pointer");
         }
-        //Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
         Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
         rs.close();
         this.chainHeadBlock = get(hash);
@@ -576,7 +625,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     conn.get().prepareStatement(getInsertHeadersSQL());
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
             s.setInt(3, storedBlock.getHeight());
@@ -594,7 +643,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBoolean(1, true);
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(2, hashBytes);
             s.executeUpdate();
             s.close();
@@ -617,7 +666,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
         byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 3, hashBytes, 0, 28);
+        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -697,7 +746,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     .prepareStatement(getSelectHeadersSQL());
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
             byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -754,7 +803,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
 
             byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 3, hashBytes, 0, 28);
+            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(1, hashBytes);
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -887,9 +936,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             }
             // Parse it.
             int height = results.getInt(1);
-            Coin value = Coin.valueOf(new BigInteger(results.getBytes(2)).longValue());
-            // Tell the StoredTransactionOutput that we are a coinbase, as that is encoded in height
-            StoredTransactionOutput txout = new StoredTransactionOutput(hash, index, value, height, true, results.getBytes(3));
+            Coin value = Coin.valueOf(results.getLong(2));
+            byte[] scriptBytes = results.getBytes(3);
+            boolean coinbase = results.getBoolean(4);
+            StoredTransactionOutput txout = new StoredTransactionOutput(hash, index, value, height, coinbase, scriptBytes);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -947,10 +997,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // index is actually an unsigned int
             s.setInt(2, (int) out.getIndex());
             s.setInt(3, out.getHeight());
-            s.setBytes(4, BigInteger.valueOf(out.getValue().value).toByteArray());
+            s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScriptBytes());
             s.setString(6, dbAddress);
             s.setInt(7, type);
+            s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();
         } catch (SQLException e) {
@@ -1166,9 +1217,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException If there is an error getting the list of outputs.
      */
     public List<TransactionOutput> getOpenTransactionOutputs(Address address, @Nullable Integer maxHeight) throws BlockStoreException {
+        List<TransactionOutput> outputs = new ArrayList<TransactionOutput>();
+        for(List<TransactionOutput> outputsSubList : getOpenTransactionOutputsHeightMap(address, maxHeight).values()) {
+            outputs.addAll(outputsSubList);
+        }
+        return  outputs;
+    }
+
+    /**
+     * Get the map of the {@link org.bitcoinj.core.TransactionOutput}'s keyed on their height for a given address.
+     * @param address The address.
+     * @return The map of transaction outputs (list) keyed by height
+     * @throws BlockStoreException If there is an error getting the list out outputs.
+     */
+    public Map<Integer, List<TransactionOutput>> getOpenTransactionOutputsHeightMap(Address address) throws BlockStoreException {
+        return getOpenTransactionOutputsHeightMap(address, null);
+    }
+
+    /**
+     * Get the map of the {@link org.bitcoinj.core.TransactionOutput}'s keyed on their height for a given address
+     * and a specified height.
+     * @param address The address.
+     * @param maxHeight The minimum block height of this tx output (inclusive).
+     * @return The map of transaction outputs (list) keyed by height
+     * @throws BlockStoreException If there is an error getting the list out outputs.
+     */
+    public Map<Integer, List<TransactionOutput>> getOpenTransactionOutputsHeightMap(Address address, @Nullable Integer maxHeight) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
-        List<TransactionOutput> outputs = new ArrayList<TransactionOutput>();
+        HashMap<Integer, List<TransactionOutput>> outputsMap = new HashMap<Integer, List<TransactionOutput>>();
         try {
             if(maxHeight != null) {
                 s = conn.get().prepareStatement(getTrasactionOutputWithHeightSelectSQL());
@@ -1181,19 +1258,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             while (rs.next()) {
                 Coin amount = Coin.valueOf((new BigInteger(rs.getBytes(1)).longValue()));
                 byte[] scriptBytes = rs.getBytes(2);
+                int height = rs.getInt(3);
                 TransactionOutput output = new TransactionOutput(params, null, amount, scriptBytes);
-                outputs.add(output);
+                if (outputsMap.containsKey(height)) {
+                    outputsMap.get(height).add(output);
+                } else {
+                    List outputs = new ArrayList<TransactionOutput>();
+                    outputs.add(output);
+                    outputsMap.put(height, outputs);
+                }
             }
-            return outputs;
+            return outputsMap;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
-            if (s != null) {
+            if (s != null)
                 try {
                     s.close();
                 } catch (SQLException e) {
                     throw new BlockStoreException("Could not close statement");
-                }
             }
         }
     }

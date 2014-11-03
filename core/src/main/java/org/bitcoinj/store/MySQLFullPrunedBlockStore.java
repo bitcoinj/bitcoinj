@@ -63,10 +63,11 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    hash blob NOT NULL,\n" +
             "    `index` integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
-            "    value blob NOT NULL,\n" +
+            "    value bigint NOT NULL,\n" +
             "    scriptbytes mediumblob NOT NULL,\n" +
             "    toaddress varchar(35),\n" +
-            "    addresstargetable integer,\n" +
+            "    addresstargetable tinyint(1),\n" +
+            "    coinbase boolean,\n" +
             "    CONSTRAINT `openoutputs_pk` PRIMARY KEY (hash(32),`index`) USING btree\n" +
             ")\n";
 
@@ -78,11 +79,9 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks (height) USING btree";
 
     // SQL involving index column (table openOutputs) overridden as it is a reserved word and must be back ticked in MySQL.
-    private static final String SELECT_OPENOUTPUTS_SQL                  = "SELECT height, value, scriptBytes FROM openOutputs WHERE hash = ? AND `index` = ?";
-    private static final String INSERT_OPENOUTPUTS_SQL                  = "INSERT INTO openOutputs (hash, `index`, height, value, scriptBytes, toAddress, addressTargetable) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String SELECT_OPENOUTPUTS_SQL                  = "SELECT height, value, scriptBytes, coinbase FROM openOutputs WHERE hash = ? AND `index` = ?";
+    private static final String INSERT_OPENOUTPUTS_SQL                  = "INSERT INTO openOutputs (hash, `index`, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_OPENOUTPUTS_SQL                  = "DELETE FROM openOutputs WHERE hash = ? AND `index` = ?";
-
-    private static final String SELECT_BALANCE_SQL                      = "SELECT sum(conv(hex(value),16,10)) from openoutputs where toaddress = ?";
 
     /**
      * Creates a new MySQLFullPrunedBlockStore.
@@ -148,17 +147,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getTableExistSQL(String tableName) {
-        return "SELECT * FROM " + tableName + " WHERE 1 = 2";
-    }
-
-    @Override
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
-    }
-
-    @Override
-    protected String getBalanceSelectSQL() {
-        return SELECT_BALANCE_SQL;
     }
 }

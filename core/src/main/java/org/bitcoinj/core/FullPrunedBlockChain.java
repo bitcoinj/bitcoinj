@@ -206,8 +206,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         // Coinbases can't be spent until they mature, to avoid re-orgs destroying entire transaction
                         // chains. The assumption is there will ~never be re-orgs deeper than the spendable coinbase
                         // chain depth.
-                        if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
-                            throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
+                        if (prevOut.isCoinbase()) {
+                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
+                                throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
+                            }
+                        }
                         // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {
@@ -332,7 +335,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                                                                                     in.getOutpoint().getIndex());
                             if (prevOut == null)
                                 throw new VerificationException("Attempted spend of a non-existent or already spent output!");
-                            if (newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
+                            if (prevOut.isCoinbase() && newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
                                 throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
                             valueIn = valueIn.add(prevOut.getValue());
                             if (verifyFlags.contains(VerifyFlag.P2SH)) {

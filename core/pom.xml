@@ -442,6 +442,7 @@
             <version>1.4.0</version>
         </dependency>
         <!-- Note this is an optional dependency: Postgres blockstore -->
+        <!-- To Test remove optional -->
         <dependency>
           <groupId>postgresql</groupId>
           <artifactId>postgresql</artifactId>
@@ -449,6 +450,7 @@
           <optional>true</optional>
         </dependency>
         <!-- Note this is an optional dependency: MySQL blockstore -->
+        <!-- To Test remove optional -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
