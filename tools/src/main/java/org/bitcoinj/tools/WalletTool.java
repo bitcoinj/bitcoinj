@@ -820,6 +820,8 @@ public class WalletTool {
             peers = new PeerGroup(params, chain);
         }
         peers.setUserAgent("WalletTool", "1.0");
+        if (params == RegTestParams.get())
+            peers.setMinBroadcastConnections(1);
         peers.addWallet(wallet);
         if (options.has("peers")) {
             String peersFlag = (String) options.valueOf("peers");
@@ -833,13 +835,7 @@ public class WalletTool {
                 }
             }
         } else if (!options.has("tor")) {
-            // If Tor mode then PeerGroup already has discovery set up.
-//            if (params == RegTestParams.get()) {
-//                log.info("Assuming regtest node on localhost");
-//                peers.addAddress(PeerAddress.localhost(params));
-//            } else {
-                peers.addPeerDiscovery(new DnsDiscovery(params));
-            //}
+            peers.addPeerDiscovery(new DnsDiscovery(params));
         }
     }
 
