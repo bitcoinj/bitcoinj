@@ -167,7 +167,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
-        // We skip the first 4 bytes because (on prodnet) the minimum target has 4 0-bytes
+        // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
         byte[] hashBytes = new byte[28];
         System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
         int height = storedBlock.getHeight();
