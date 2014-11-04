@@ -939,6 +939,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     } else if (script.isSentToAddress()) {
                         byte[] pubkeyHash = script.getPubKeyHash();
                         keychain.markPubKeyHashAsUsed(pubkeyHash);
+                    } else if (script.isPayToScriptHash() && keychain.isMarried()) {
+                        Address a = Address.fromP2SHScript(tx.getParams(), script);
+                        keychain.markP2SHAddressAsUsed(a);
                     }
                 } catch (ScriptException e) {
                     // Just means we didn't understand the output of this transaction: ignore it.

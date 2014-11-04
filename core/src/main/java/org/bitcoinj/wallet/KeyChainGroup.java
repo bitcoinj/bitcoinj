@@ -69,9 +69,10 @@ public class KeyChainGroup implements KeyBag {
     private BasicKeyChain basic;
     private NetworkParameters params;
     protected final LinkedList<DeterministicKeyChain> chains;
+    // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
+    // P2SH addresses. They're mutually exclusive.
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
-
-    private EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
+    private final EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
     private int lookaheadThreshold = -1;
@@ -358,6 +359,22 @@ public class KeyChainGroup implements KeyBag {
         return null;
     }
 
+    public void markP2SHAddressAsUsed(Address address) {
+        checkState(isMarried());
+        checkArgument(address.isP2SHAddress());
+        RedeemData data = findRedeemDataFromScriptHash(address.getHash160());
+        if (data == null)
+            return;   // Not our P2SH address.
+        for (ECKey key : data.keys) {
+            for (DeterministicKeyChain chain : chains) {
+                DeterministicKey k = chain.findKeyFromPubKey(key.getPubKey());
+                if (k == null) continue;
+                chain.markKeyAsUsed(k);
+                maybeMarkCurrentAddressAsUsed(address);
+            }
+        }
+    }
+
     @Nullable
     @Override
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
@@ -385,12 +402,27 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
+    /** If the given P2SH address is "current", advance it to a new one. */
+    private void maybeMarkCurrentAddressAsUsed(Address address) {
+        checkState(isMarried());
+        checkArgument(address.isP2SHAddress());
+        for (Map.Entry<KeyChain.KeyPurpose, Address> entry : currentAddresses.entrySet()) {
+            if (entry.getValue() != null && entry.getValue().equals(address)) {
+                log.info("Marking P2SH address as used: {}", address);
+                currentAddresses.put(entry.getKey(), freshAddress(entry.getKey()));
+                return;
+            }
+        }
+    }
+
     /** If the given key is "current", advance the current key to a new one. */
     private void maybeMarkCurrentKeyAsUsed(DeterministicKey key) {
+        // It's OK for currentKeys to be empty here: it means we're a married wallet and the key may be a part of a
+        // rotating chain.
         for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : currentKeys.entrySet()) {
             if (entry.getValue() != null && entry.getValue().equals(key)) {
                 log.info("Marking key as used: {}", key);
-                currentKeys.put(entry.getKey(), null);
+                currentKeys.put(entry.getKey(), freshKey(entry.getKey()));
                 return;
             }
         }

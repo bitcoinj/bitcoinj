@@ -23,6 +23,7 @@ import org.bitcoinj.signers.StatelessTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.store.WalletProtobufSerializer;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.ExchangeRate;
@@ -348,7 +349,6 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Wrong number of ALL.3", 1, wallet.getTransactions(true).size());
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
         assertEquals(Transaction.Purpose.USER_PAYMENT, t2.getPurpose());
-        assertEquals(wallet.getChangeAddress(), t2.getOutput(1).getScriptPubKey().getToAddress(params));
 
         // Do some basic sanity checks.
         basicSanityChecks(wallet, t2, destination);
@@ -422,16 +422,18 @@ public class WalletTest extends TestWithWallet {
     }
 
     private void spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
+        if (wallet.getTransactionSigners().size() == 1)   // don't bother reconfiguring the p2sh wallet
+            wallet = roundTrip(wallet);
         Coin v3 = valueOf(0, 49);
         assertEquals(v3, wallet.getBalance());
         Wallet.SendRequest req = Wallet.SendRequest.to(new ECKey().toAddress(params), valueOf(0, 48));
         req.aesKey = aesKey;
-        Address a = req.changeAddress = new ECKey().toAddress(params);
         req.ensureMinRequiredFee = false;
         req.shuffleOutputs = false;
         wallet.completeTx(req);
         Transaction t3 = req.tx;
-        assertEquals(a, t3.getOutput(1).getScriptPubKey().getToAddress(params));
+        assertNotEquals(t2.getOutput(1).getScriptPubKey().getToAddress(params),
+                        t3.getOutput(1).getScriptPubKey().getToAddress(params));
         assertNotNull(t3);
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
@@ -2387,8 +2389,7 @@ public class WalletTest extends TestWithWallet {
         // We don't attempt to race an attacker against unconfirmed transactions.
 
         // Now round-trip the wallet and check the protobufs are storing the data correctly.
-        Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
-        wallet = new WalletProtobufSerializer().readWallet(params, null, protos);
+        wallet = roundTrip(wallet);
 
         tx = wallet.getTransaction(tx.getHash());
         checkNotNull(tx);
@@ -2401,6 +2402,11 @@ public class WalletTest extends TestWithWallet {
         wallet.sendCoins(broadcaster, address, wallet.getBalance());
         tx = broadcaster.waitForTransaction();
         assertArrayEquals(address.getHash160(), tx.getOutput(0).getScriptPubKey().getPubKeyHash());
+    }
+
+    private Wallet roundTrip(Wallet wallet) throws UnreadableWalletException {
+        Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
+        return new WalletProtobufSerializer().readWallet(params, null, protos);
     }
 
     @Test
@@ -2713,8 +2719,7 @@ public class WalletTest extends TestWithWallet {
         TransactionSigner signer = new NopTransactionSigner(true);
         wallet.addTransactionSigner(signer);
         assertEquals(2, wallet.getTransactionSigners().size());
-        Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
-        wallet = new WalletProtobufSerializer().readWallet(params, null, protos);
+        wallet = roundTrip(wallet);
         assertEquals(2, wallet.getTransactionSigners().size());
         assertTrue(wallet.getTransactionSigners().get(1).isReady());
     }
