@@ -766,8 +766,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         } finally {
             keychainLock.writeLock().unlock();
         }
-        queueOnScriptsChanged(scripts, true);
-        saveNow();
+        if (added > 0) {
+            queueOnScriptsChanged(scripts, true);
+            saveNow();
+        }
         return added;
     }
 
