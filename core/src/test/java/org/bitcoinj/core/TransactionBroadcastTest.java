@@ -93,6 +93,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(channels[1], InventoryMessage.with(tx));
         pingAndWait(channels[1]);
         Threading.waitForUserCode();
+        // FIXME flaky test - future is not handled on user thread
         assertTrue(future.isDone());
     }
 
