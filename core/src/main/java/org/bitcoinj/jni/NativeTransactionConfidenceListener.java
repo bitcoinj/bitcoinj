@@ -16,6 +16,7 @@
 
 package org.bitcoinj.jni;
 
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 
@@ -28,5 +29,5 @@ public class NativeTransactionConfidenceListener implements TransactionConfidenc
     public long ptr;
 
     @Override
-    public native void onConfidenceChanged(Transaction tx, ChangeReason reason);
+    public native void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason);
 }

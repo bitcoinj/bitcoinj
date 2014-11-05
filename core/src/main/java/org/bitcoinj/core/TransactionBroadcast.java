@@ -143,9 +143,8 @@ public class TransactionBroadcast {
 
     private class ConfidenceChange implements TransactionConfidence.Listener {
         @Override
-        public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
+        public void onConfidenceChanged(TransactionConfidence conf, ChangeReason reason) {
             // The number of peers that announced this tx has gone up.
-            final TransactionConfidence conf = tx.getConfidence();
             int numSeenPeers = conf.numBroadcastPeers();
             boolean mined = tx.getAppearsInHashes() != null;
             log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
@@ -165,8 +164,8 @@ public class TransactionBroadcast {
                 // We're done! It's important that the PeerGroup lock is not held (by this thread) at this
                 // point to avoid triggering inversions when the Future completes.
                 log.info("broadcastTransaction: {} complete", pinnedTx.getHashAsString());
-                tx.getConfidence().removeEventListener(this);
                 peerGroup.removeEventListener(rejectionListener);
+                conf.removeEventListener(this);
                 future.set(pinnedTx);  // RE-ENTRANCY POINT
             }
         }

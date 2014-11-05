@@ -368,7 +368,7 @@ public class WalletTest extends TestWithWallet {
         // Send some pending coins to the wallet.
         Transaction t1 = sendMoneyToWallet(wallet, amount, toAddress, null);
         Threading.waitForUserCode();
-        final ListenableFuture<Transaction> depthFuture = t1.getConfidence().getDepthFuture(1);
+        final ListenableFuture<TransactionConfidence> depthFuture = t1.getConfidence().getDepthFuture(1);
         assertFalse(depthFuture.isDone());
         assertEquals(ZERO, wallet.getBalance());
         assertEquals(amount, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
@@ -764,13 +764,13 @@ public class WalletTest extends TestWithWallet {
         Transaction send3 = checkNotNull(wallet.createSend(address, value));
         wallet.commitTx(send3);
         assertEquals(ZERO, wallet.getBalance());
-        final LinkedList<Transaction> dead = new LinkedList<Transaction>();
+        final LinkedList<TransactionConfidence> dead = new LinkedList<TransactionConfidence>();
         final TransactionConfidence.Listener listener = new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
-                final TransactionConfidence.ConfidenceType type = tx.getConfidence().getConfidenceType();
+            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+                final TransactionConfidence.ConfidenceType type = confidence.getConfidenceType();
                 if (reason == ChangeReason.TYPE && type == TransactionConfidence.ConfidenceType.DEAD)
-                    dead.add(tx);
+                    dead.add(confidence);
             }
         };
         send2.getConfidence().addEventListener(listener, Threading.SAME_THREAD);
@@ -779,8 +779,8 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(send1, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         // Back to having one coin.
         assertEquals(value, wallet.getBalance());
-        assertEquals(send2, dead.poll());
-        assertEquals(send3, dead.poll());
+        assertEquals(send2.getHash(), dead.poll().getTransactionHash());
+        assertEquals(send3.getHash(), dead.poll().getTransactionHash());
     }
 
     @Test
@@ -892,7 +892,7 @@ public class WalletTest extends TestWithWallet {
         final TransactionConfidence.Listener.ChangeReason[] reasons = new TransactionConfidence.Listener.ChangeReason[1];
         notifiedTx[0].getConfidence().addEventListener(new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
+            public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
                 flags[1] = true;
                 reasons[0] = reason;
             }

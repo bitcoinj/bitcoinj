@@ -604,8 +604,8 @@ public class ChainSplitTest {
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
         fodder.getConfidence().addEventListener(new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
-                fodderIsDead.set(tx.getConfidence().getConfidenceType() == ConfidenceType.DEAD);
+            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+                fodderIsDead.set(confidence.getConfidenceType() == ConfidenceType.DEAD);
             }
         }, Threading.SAME_THREAD);
 

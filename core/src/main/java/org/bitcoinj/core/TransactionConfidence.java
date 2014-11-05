@@ -70,7 +70,7 @@ public class TransactionConfidence implements Serializable {
      */
     private CopyOnWriteArrayList<PeerAddress> broadcastBy;
     /** The Transaction that this confidence object is associated with. */
-    private final Transaction transaction;
+    private final Sha256Hash hash;
     // Lazily created listeners array.
     private transient CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
@@ -135,11 +135,11 @@ public class TransactionConfidence implements Serializable {
     }
     private Source source = Source.UNKNOWN;
 
-    public TransactionConfidence(Transaction tx) {
+    public TransactionConfidence(Sha256Hash hash) {
         // Assume a default number of peers for our set.
         broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
         listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
-        transaction = tx;
+        this.hash = hash;
     }
 
     /**
@@ -175,7 +175,7 @@ public class TransactionConfidence implements Serializable {
              */
             SEEN_PEERS,
         }
-        public void onConfidenceChanged(Transaction tx, ChangeReason reason);
+        public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason);
     }
 
     /**
@@ -382,7 +382,7 @@ public class TransactionConfidence implements Serializable {
 
     /** Returns a copy of this object. Event listeners are not duplicated. */
     public synchronized TransactionConfidence duplicate() {
-        TransactionConfidence c = new TransactionConfidence(transaction);
+        TransactionConfidence c = new TransactionConfidence(hash);
         // There is no point in this sync block, it's just to help FindBugs.
         synchronized (c) {
             c.broadcastBy.addAll(broadcastBy);
@@ -404,7 +404,7 @@ public class TransactionConfidence implements Serializable {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onConfidenceChanged(transaction, reason);
+                    registration.listener.onConfidenceChanged(TransactionConfidence.this, reason);
                 }
             });
         }
@@ -435,23 +435,27 @@ public class TransactionConfidence implements Serializable {
      * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
      * on the network.
      */
-    public synchronized ListenableFuture<Transaction> getDepthFuture(final int depth, Executor executor) {
-        final SettableFuture<Transaction> result = SettableFuture.create();
+    public synchronized ListenableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
+        final SettableFuture<TransactionConfidence> result = SettableFuture.create();
         if (getDepthInBlocks() >= depth) {
-            result.set(transaction);
+            result.set(this);
         }
         addEventListener(new Listener() {
-            @Override public void onConfidenceChanged(Transaction tx, ChangeReason reason) {
+            @Override public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
                 if (getDepthInBlocks() >= depth) {
                     removeEventListener(this);
-                    result.set(transaction);
+                    result.set(confidence);
                 }
             }
         }, executor);
         return result;
     }
 
-    public synchronized ListenableFuture<Transaction> getDepthFuture(final int depth) {
+    public synchronized ListenableFuture<TransactionConfidence> getDepthFuture(final int depth) {
         return getDepthFuture(depth, Threading.USER_THREAD);
+    }
+
+    public Sha256Hash getTransactionHash() {
+        return hash;
     }
 }
