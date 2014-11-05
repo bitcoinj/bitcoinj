@@ -355,7 +355,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // its trustworthyness assuming an untampered with internet connection.
         peerGroup.start();
 
-        final Transaction[] event = new Transaction[2];
+        final Transaction[] event = new Transaction[1];
+        final TransactionConfidence[] confEvent = new TransactionConfidence[1];
         peerGroup.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onTransaction(Peer peer, Transaction t) {
@@ -397,15 +398,15 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
-                event[1] = tx;
+            public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
+                confEvent[0] = confidence;
             }
         });
         // A straggler reports in.
         inbound(p3, inv);
         pingAndWait(p3);
         Threading.waitForUserCode();
-        assertEquals(tx, event[1]);
+        assertEquals(tx.getHash(), confEvent[0].getTransactionHash());
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p3).getAddress()));
     }

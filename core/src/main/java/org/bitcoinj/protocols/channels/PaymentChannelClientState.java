@@ -197,10 +197,10 @@ public class PaymentChannelClientState {
         // of this channel along with the refund tx from the wallet, because we're not going to need
         // any of that any more.
         final TransactionConfidence confidence = storedChannel.close.getConfidence();
-        ListenableFuture<Transaction> future = confidence.getDepthFuture(CONFIRMATIONS_FOR_DELETE, Threading.SAME_THREAD);
-        Futures.addCallback(future, new FutureCallback<Transaction>() {
+        ListenableFuture<TransactionConfidence> future = confidence.getDepthFuture(CONFIRMATIONS_FOR_DELETE, Threading.SAME_THREAD);
+        Futures.addCallback(future, new FutureCallback<TransactionConfidence>() {
             @Override
-            public void onSuccess(Transaction result) {
+            public void onSuccess(TransactionConfidence result) {
                 deleteChannelFromWallet();
             }
 

@@ -271,7 +271,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         ignoreNextNewBlock = new HashSet<Sha256Hash>();
         txConfidenceListener = new TransactionConfidence.Listener() {
             @Override
-            public void onConfidenceChanged(Transaction tx, TransactionConfidence.Listener.ChangeReason reason) {
+            public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
                 // This will run on the user code thread so we shouldn't do anything too complicated here.
                 // We only want to queue a wallet changed event and auto-save if the number of peers announcing
                 // the transaction has changed, as that confidence change is made by the networking code which
@@ -282,6 +282,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     lock.lock();
                     try {
                         checkBalanceFuturesLocked(null);
+                        Transaction tx = getTransaction(confidence.getTransactionHash());
                         queueOnTransactionConfidenceChanged(tx);
                         maybeQueueOnWalletChanged();
                     } finally {
