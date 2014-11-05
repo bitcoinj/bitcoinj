@@ -254,6 +254,13 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.7.2.201409121644</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/Protos*.class</exclude> <!-- Exclude generated protobuf classes -->
+                        <exclude>org/bitcoinj/jni/*</exclude> <!-- Exclude JNI classes -->
+                        <exclude>org/bitcoin/*</exclude> <!-- Exclude native classes -->
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <id>pre-unit-test</id>
