@@ -121,7 +121,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean downloadTxDependencies;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private final MemoryPool memoryPool;
+    private final TxConfidencePool confidencePool;
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
@@ -335,7 +335,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         downloadTxDependencies = true;
 
-        memoryPool = new MemoryPool();
+        confidencePool = params.getConfidencePool();
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
@@ -516,7 +516,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the mempool first.
-                Transaction tx = memoryPool.get(item.hash);
+                Transaction tx = confidencePool.get(item.hash);
                 if (tx != null) {
                     transactions.add(tx);
                     it.remove();
@@ -1137,7 +1137,7 @@ public class PeerGroup implements TransactionBroadcaster {
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
 
-        Peer peer = new Peer(params, ver, address, chain, memoryPool, downloadTxDependencies);
+        Peer peer = new Peer(params, ver, address, chain, confidencePool, downloadTxDependencies);
         peer.addEventListener(startupListener, Threading.SAME_THREAD);
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
@@ -1321,13 +1321,13 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns the {@link MemoryPool} created by this peer group to synchronize its peers. The pool tracks advertised
+     * Returns the {@link TxConfidencePool} created by this peer group to synchronize its peers. The pool tracks advertised
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
      * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
      * have that it's really valid.
      */
-    public MemoryPool getMemoryPool() {
-        return memoryPool;
+    public TxConfidencePool getConfidencePool() {
+        return confidencePool;
     }
 
     /**

@@ -101,7 +101,7 @@ public class TransactionBroadcast {
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
             // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
-            pinnedTx = peerGroup.getMemoryPool().intern(tx);
+            pinnedTx = peerGroup.getConfidencePool().intern(tx);
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)

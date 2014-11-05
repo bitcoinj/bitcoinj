@@ -44,9 +44,9 @@ import static com.google.common.base.Preconditions.checkState;
  * <p>It is <b>not</b> at this time directly equivalent to the Satoshi clients memory pool, which tracks
  * all transactions not currently included in the best chain - it's simply a cache.</p>
  */
-public class MemoryPool {
-    private static final Logger log = LoggerFactory.getLogger(MemoryPool.class);
-    protected ReentrantLock lock = Threading.lock("mempool");
+public class TxConfidencePool {
+    private static final Logger log = LoggerFactory.getLogger(TxConfidencePool.class);
+    protected ReentrantLock lock = Threading.lock("txconfidencepool");
 
     // For each transaction we may have seen:
     //   - only its hash in an inv packet
@@ -72,10 +72,10 @@ public class MemoryPool {
         // allowing us to delete the associated entry (the tx itself has already gone away).
         WeakTransactionReference tx;
     }
-    private LinkedHashMap<Sha256Hash, Entry> memoryPool;
+    private LinkedHashMap<Sha256Hash, Entry> pool;
 
     // This ReferenceQueue gets entries added to it when they are only weakly reachable, ie, the MemoryPool is the
-    // only thing that is tracking the transaction anymore. We check it from time to time and delete memoryPool entries
+    // only thing that is tracking the transaction anymore. We check it from time to time and delete pool entries
     // corresponding to expired transactions. In this way memory usage of the system is in line with however many
     // transactions you actually care to track the confidence of. We can still end up with lots of hashes being stored
     // if our peers flood us with invs but the MAX_SIZE param caps this.
@@ -89,10 +89,10 @@ public class MemoryPool {
      * usage).
      * @param size Max number of transactions to track. The pool will fill up to this size then stop growing.
      */
-    public MemoryPool(final int size) {
-        memoryPool = new LinkedHashMap<Sha256Hash, Entry>() {
+    public TxConfidencePool(final int size) {
+        pool = new LinkedHashMap<Sha256Hash, Entry>() {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Entry> entry) {
+            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, TxConfidencePool.Entry> entry) {
                 // An arbitrary choice to stop the memory used by tracked transactions getting too huge in the event
                 // of some kind of DoS attack.
                 return size() > size;
@@ -102,16 +102,16 @@ public class MemoryPool {
     }
 
     /**
-     * Creates a memory pool that will track at most {@link MemoryPool#MAX_SIZE} entries. You should normally use
+     * Creates a memory pool that will track at most {@link TxConfidencePool#MAX_SIZE} entries. You should normally use
      * this constructor.
      */
-    public MemoryPool() {
+    public TxConfidencePool() {
         this(MAX_SIZE);
     }
 
     /**
      * If any transactions have expired due to being only weakly reachable through us, go ahead and delete their
-     * memoryPool entries - it means we downloaded the transaction and sent it to various event listeners, none of
+     * pool entries - it means we downloaded the transaction and sent it to various event listeners, none of
      * which bothered to keep a reference. Typically, this is because the transaction does not involve any keys that
      * are relevant to any of our wallets.
      */
@@ -123,7 +123,7 @@ public class MemoryPool {
                 // Find which transaction got deleted by the GC.
                 WeakTransactionReference txRef = (WeakTransactionReference) ref;
                 // And remove the associated map entry so the other bits of memory can also be reclaimed.
-                memoryPool.remove(txRef.hash);
+                pool.remove(txRef.hash);
             }
         } finally {
             lock.unlock();
@@ -137,7 +137,7 @@ public class MemoryPool {
         lock.lock();
         try {
             cleanPool();
-            Entry entry = memoryPool.get(txHash);
+            Entry entry = pool.get(txHash);
             if (entry == null) {
                 // No such TX known.
                 return 0;
@@ -151,7 +151,7 @@ public class MemoryPool {
                     // We previously downloaded this transaction, but nothing cared about it so the garbage collector threw
                     // it away. We also deleted the set that tracked which peers had seen it. Treat this case as a zero and
                     // just delete it from the map.
-                    memoryPool.remove(txHash);
+                    pool.remove(txHash);
                     return 0;
                 } else {
                     checkState(entry.addresses == null);
@@ -172,7 +172,7 @@ public class MemoryPool {
         lock.lock();
         try {
             cleanPool();
-            Entry entry = memoryPool.get(tx.getHash());
+            Entry entry = pool.get(tx.getHash());
             if (entry != null) {
                 // This TX or its hash have been previously interned.
                 if (entry.tx != null) {
@@ -206,7 +206,7 @@ public class MemoryPool {
                 log.debug("Provided with a downloaded transaction we didn't see announced yet: {}", tx.getHashAsString());
                 entry = new Entry();
                 entry.tx = new WeakTransactionReference(tx, referenceQueue);
-                memoryPool.put(tx.getHash(), entry);
+                pool.put(tx.getHash(), entry);
                 return tx;
             }
         } finally {
@@ -239,7 +239,7 @@ public class MemoryPool {
         lock.lock();
         try {
             cleanPool();
-            Entry entry = memoryPool.get(hash);
+            Entry entry = pool.get(hash);
             if (entry != null) {
                 // This TX or its hash have been previously announced.
                 if (entry.tx != null) {
@@ -265,7 +265,7 @@ public class MemoryPool {
                 // TODO: Using hashsets here is inefficient compared to just having an array.
                 entry.addresses = new HashSet<PeerAddress>();
                 entry.addresses.add(byPeer);
-                memoryPool.put(hash, entry);
+                pool.put(hash, entry);
                 log.info("{}: Peer announced new transaction [1] {}", byPeer, hash);
             }
         } finally {
@@ -289,7 +289,7 @@ public class MemoryPool {
     public Transaction get(Sha256Hash hash) {
         lock.lock();
         try {
-            Entry entry = memoryPool.get(hash);
+            Entry entry = pool.get(hash);
             if (entry == null) return null;  // Unknown.
             if (entry.tx == null) return null;  // Seen but only in advertisements.
             if (entry.tx.get() == null) return null;  // Was downloaded but garbage collected.
@@ -309,7 +309,7 @@ public class MemoryPool {
     public boolean maybeWasSeen(Sha256Hash hash) {
         lock.lock();
         try {
-            Entry entry = memoryPool.get(hash);
+            Entry entry = pool.get(hash);
             return entry != null;
         } finally {
             lock.unlock();
