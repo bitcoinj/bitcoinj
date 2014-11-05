@@ -46,7 +46,7 @@ public class MemoryPoolTest {
 
     @Test
     public void canonicalInstance() throws Exception {
-        MemoryPool pool = new MemoryPool();
+        TxConfidencePool pool = new TxConfidencePool();
         // Check that if we repeatedly send it the same transaction but with different objects, we get back the same
         // canonical instance with the confidences update.
         assertEquals(0, pool.numBroadcastPeers(tx1.getHash()));
@@ -61,7 +61,7 @@ public class MemoryPoolTest {
     
     @Test
     public void invAndDownload() throws Exception {
-        MemoryPool pool = new MemoryPool();
+        TxConfidencePool pool = new TxConfidencePool();
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
         assertEquals(0, pool.numBroadcastPeers(tx1.getHash()));
         pool.seen(tx1.getHash(), address1);
