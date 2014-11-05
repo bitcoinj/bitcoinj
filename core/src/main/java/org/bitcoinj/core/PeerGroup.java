@@ -564,6 +564,10 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      */
     public void addEventListener(PeerEventListener listener, Executor executor) {
         peerEventListeners.add(new ListenerRegistration<PeerEventListener>(checkNotNull(listener), executor));
+        for (Peer peer : getConnectedPeers())
+            peer.addEventListener(listener, executor);
+        for (Peer peer: getPendingPeers())
+            peer.addEventListener(listener, executor);
     }
 
     /**
@@ -576,7 +580,12 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
 
     /** The given event listener will no longer be called with events. */
     public boolean removeEventListener(PeerEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, peerEventListeners);
+        boolean result = ListenerRegistration.removeFromList(listener, peerEventListeners);
+        for (Peer peer : getConnectedPeers())
+            peer.removeEventListener(listener);
+        for (Peer peer : getPendingPeers())
+            peer.removeEventListener(listener);
+        return result;
     }
 
     /**
