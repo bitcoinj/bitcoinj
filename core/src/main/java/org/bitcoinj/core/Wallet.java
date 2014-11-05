@@ -4049,26 +4049,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    /** 
-     * Deserialize the wallet extension with the supplied data and add
-     * it to the wallet, unless there exists an extension with the
-     * same id.
-     */ 
-    public void deserializeAndAddExtension(WalletExtension extension, byte[] data) throws Exception {
-        String id = checkNotNull(extension).getWalletExtensionID();
+    /**
+     * Deserialize the wallet extension with the supplied data and then install it, replacing any existing extension
+     * that may have existed with the same ID.
+     */
+    public void deserializeExtension(WalletExtension extension, byte[] data) throws Exception {
         lock.lock();
         try {
-            if (extensions.containsKey(id)) {
-                return;
-            } else {
-                extension.deserializeWalletExtension(this, data);
-                addExtension(extension);
-            }
+            // This method exists partly to establish a lock ordering of wallet > extension.
+            extension.deserializeWalletExtension(this, data);
+            extensions.put(extension.getWalletExtensionID(), extension);
         } finally {
             lock.unlock();
-        }        
+        }
     }
-    
+
     @Override
     public synchronized void setTag(String tag, ByteString value) {
         super.setTag(tag, value);
