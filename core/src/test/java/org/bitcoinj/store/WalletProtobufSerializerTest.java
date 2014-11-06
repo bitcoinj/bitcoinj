@@ -25,11 +25,11 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.MarriedKeyChain;
@@ -332,7 +332,7 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void testExtensions() throws Exception {
-        myWallet.addExtension(new SomeFooExtension("com.whatever.required", true));
+        myWallet.addExtension(new FooWalletExtension("com.whatever.required", true));
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
         // Initial extension is mandatory: try to read it back into a wallet that doesn't know about it.
         try {
@@ -342,13 +342,13 @@ public class WalletProtobufSerializerTest {
             assertTrue(e.getMessage().contains("mandatory"));
         }
         Wallet wallet = new WalletProtobufSerializer().readWallet(params,
-                new WalletExtension[]{ new SomeFooExtension("com.whatever.required", true) },
+                new WalletExtension[]{ new FooWalletExtension("com.whatever.required", true) },
                 proto);
         assertTrue(wallet.getExtensions().containsKey("com.whatever.required"));
 
         // Non-mandatory extensions are ignored if the wallet doesn't know how to read them.
         Wallet wallet2 = new Wallet(params);
-        wallet2.addExtension(new SomeFooExtension("com.whatever.optional", false));
+        wallet2.addExtension(new FooWalletExtension("com.whatever.optional", false));
         Protos.Wallet proto2 = new WalletProtobufSerializer().walletToProto(wallet2);
         Wallet wallet5 = new WalletProtobufSerializer().readWallet(params, null, proto2);
         assertEquals(0, wallet5.getExtensions().size());
@@ -359,37 +359,5 @@ public class WalletProtobufSerializerTest {
         Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
         proto.setVersion(2);
         new WalletProtobufSerializer().readWallet(params, null, proto.build());
-    }
-
-    private static class SomeFooExtension implements WalletExtension {
-        private final byte[] data = new byte[]{1, 2, 3};
-
-        private final boolean isMandatory;
-        private final String id;
-
-        public SomeFooExtension(String id, boolean isMandatory) {
-            this.isMandatory = isMandatory;
-            this.id = id;
-        }
-
-        @Override
-        public String getWalletExtensionID() {
-            return id;
-        }
-
-        @Override
-        public boolean isWalletExtensionMandatory() {
-            return isMandatory;
-        }
-
-        @Override
-        public byte[] serializeWalletExtension() {
-            return data;
-        }
-
-        @Override
-        public void deserializeWalletExtension(Wallet wallet, byte[] data) {
-            assertArrayEquals(this.data, data);
-        }
     }
 }
