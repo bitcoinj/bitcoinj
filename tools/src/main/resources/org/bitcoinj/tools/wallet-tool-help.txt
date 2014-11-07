@@ -27,9 +27,11 @@ Usage: wallet-tool --flags action-name
   send                 Creates and broadcasts a transaction from the given wallet.
                        Requires either --output or --payment-request to be specified.
                        If --output is specified, a transaction is created from the provided output
-                       from this wallet and broadcasted, eg:
+                       from this wallet and broadcasted, e.g.:
                          --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245
                        You can repeat --output=address:value multiple times.
+                       There is a magic value ALL which empties the wallet to that address, e.g.:
+                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL
                        If the output destination starts with 04 and is 65 or 33 bytes long it will be
                        treated as a public key instead of an address and the send will use
                        <key> CHECKSIG as the script.
