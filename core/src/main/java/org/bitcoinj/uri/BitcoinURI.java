@@ -151,7 +151,7 @@ public class BitcoinURI {
         }
 
         // Split off the address from the rest of the query parameters.
-        String[] addressSplitTokens = schemeSpecificPart.split("\\?");
+        String[] addressSplitTokens = schemeSpecificPart.split("\\?", 2);
         if (addressSplitTokens.length == 0)
             throw new BitcoinURIParseException("No data found after the bitcoin: prefix");
         String addressToken = addressSplitTokens[0];  // may be empty!
@@ -161,12 +161,8 @@ public class BitcoinURI {
             // Only an address is specified - use an empty '<name>=<value>' token array.
             nameValuePairTokens = new String[] {};
         } else {
-            if (addressSplitTokens.length == 2) {
-                // Split into '<name>=<value>' tokens.
-                nameValuePairTokens = addressSplitTokens[1].split("&");
-            } else {
-                throw new BitcoinURIParseException("Too many question marks in URI '" + uri + "'");
-            }
+            // Split into '<name>=<value>' tokens.
+            nameValuePairTokens = addressSplitTokens[1].split("&");
         }
 
         // Attempt to parse the rest of the URI parameters.
