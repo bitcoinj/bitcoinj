@@ -35,6 +35,8 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -442,6 +444,28 @@ public class Utils {
 
     public static long currentTimeSeconds() {
         return currentTimeMillis() / 1000;
+    }
+
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+
+    /**
+     * Formats a given date+time value to an ISO 8601 string.
+     * @param dateTime value to format, as a Date
+     */
+    public static String dateTimeFormat(Date dateTime) {
+        DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        iso8601.setTimeZone(UTC);
+        return iso8601.format(dateTime);
+    }
+
+    /**
+     * Formats a given date+time value to an ISO 8601 string.
+     * @param dateTime value to format, unix time (ms)
+     */
+    public static String dateTimeFormat(long dateTime) {
+        DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        iso8601.setTimeZone(UTC);
+        return iso8601.format(dateTime);
     }
 
     public static byte[] copyOf(byte[] in, int length) {

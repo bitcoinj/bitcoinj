@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +30,6 @@ import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -65,8 +65,6 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     // The state object used to step through initialization and pay the server
     @GuardedBy("lock") private PaymentChannelClientState state;
-
-    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
     // The step we are at in initialization, this is partially duplicated in the state object
     private enum InitStep {
@@ -180,7 +178,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         checkState( expireTime >= 0 && initiate.getMinAcceptedChannelSize() >= 0);
 
         if (! conn.acceptExpireTime(expireTime)) {
-            log.error("Server suggested expire time was out of our allowed bounds: {} ({} s)", dateFormat.format(new Date(expireTime * 1000)), expireTime);
+            log.error("Server suggested expire time was out of our allowed bounds: {} ({} s)", Utils.dateTimeFormat(expireTime * 1000), expireTime);
             errorBuilder.setCode(Protos.Error.ErrorCode.TIME_WINDOW_UNACCEPTABLE);
             return CloseReason.TIME_WINDOW_UNACCEPTABLE;
         }

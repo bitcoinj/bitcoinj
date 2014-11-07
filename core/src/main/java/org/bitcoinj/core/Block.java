@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -588,7 +589,7 @@ public class Block extends Message {
         s.append("   time: [");
         s.append(time);
         s.append("] ");
-        s.append(new Date(time * 1000));
+        s.append(Utils.dateTimeFormat(time * 1000));
         s.append("\n");
         s.append("   difficulty target (nBits): ");
         s.append(difficultyTarget);
