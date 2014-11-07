@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Thilo Planz
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,8 @@
 package org.bitcoinj.core;
 
 import java.math.BigInteger;
+import java.util.Date;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -51,5 +54,11 @@ public class UtilsTest {
         assertEquals(new BigInteger("c0de000000", 16), Utils.decodeCompactBits(0x0600c0de));
         assertEquals(0x05123456L, Utils.encodeCompactBits(new BigInteger("1234560000", 16)));
         assertEquals(0x0600c0deL, Utils.encodeCompactBits(new BigInteger("c0de000000", 16)));
+    }
+
+    @Test
+    public void dateTimeFormat() {
+        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
+        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
     }
 }

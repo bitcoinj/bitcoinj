@@ -64,8 +64,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -561,7 +563,7 @@ public class WalletTool {
 
             try {
                 if (lockTimeStr != null) {
-                    t.setLockTime(Transaction.parseLockTimeStr(lockTimeStr));
+                    t.setLockTime(parseLockTimeStr(lockTimeStr));
                     // For lock times to take effect, at least one output must have a non-final sequence number.
                     t.getInputs().get(0).setSequenceNumber(0);
                     // And because we modified the transaction after it was completed, we must re-sign the inputs.
@@ -602,6 +604,19 @@ public class WalletTool {
         } catch (InsufficientMoneyException e) {
             System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
         }
+    }
+
+    /**
+     * Parses the string either as a whole number of blocks, or if it contains slashes as a YYYY/MM/DD format date
+     * and returns the lock time in wire format.
+     */
+    private static long parseLockTimeStr(String lockTimeStr) throws ParseException {
+        if (lockTimeStr.indexOf("/") != -1) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd", Locale.US);
+            Date date = format.parse(lockTimeStr);
+            return date.getTime() / 1000;
+        }
+        return Long.parseLong(lockTimeStr);
     }
 
     private static void sendPaymentRequest(String location, boolean verifyPki) {

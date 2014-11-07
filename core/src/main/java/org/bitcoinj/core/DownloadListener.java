@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +20,6 @@ package org.bitcoinj.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
@@ -80,8 +80,8 @@ public class DownloadListener extends AbstractPeerEventListener {
      * @param date the date of the last block downloaded
      */
     protected void progress(double pct, int blocksSoFar, Date date) {
-        log.info(String.format("Chain download %d%% done with %d blocks to go, block date %s", (int) pct,
-                blocksSoFar, DateFormat.getDateTimeInstance().format(date)));
+        log.info(String.format("Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
+                Utils.dateTimeFormat(date)));
     }
 
     /**
