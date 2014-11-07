@@ -305,23 +305,6 @@ public class BitcoinURITest {
         assertEquals("aardvark=zebra", new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":"
                 + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra").getLabel());
     }
-
-    /**
-     * Handles case when there are too many question marks
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
-     */
-    @Test
-    public void testBad_TooManyQuestionMarks() throws BitcoinURIParseException {
-        try {
-            testObject = new BitcoinURI(MainNetParams.get(), BitcoinURI.BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?label=aardvark?message=zebra");
-            fail("Expecting BitcoinURIParseException");
-        } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Too many question marks"));
-        }
-    }
     
     /**
      * Handles unknown fields (required and not required)
@@ -408,5 +391,14 @@ public class BitcoinURITest {
         assertNull(uri.getPaymentRequestUrl());
         assertEquals(ImmutableList.of(), uri.getPaymentRequestUrls());
         assertNotNull(uri.getAddress());
+    }
+
+    @Test
+    public void testUnescapedPaymentProtocolReq() throws Exception {
+        BitcoinURI uri = new BitcoinURI(TestNet3Params.get(),
+                "bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe");
+        assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
+        assertEquals(ImmutableList.of("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
+        assertNull(uri.getAddress());
     }
 }
