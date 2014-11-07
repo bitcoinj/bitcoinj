@@ -18,6 +18,7 @@
 package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.MnemonicCode;
@@ -517,7 +518,11 @@ public class WalletTool {
                 }
                 String destination = parts[0];
                 try {
-                    Coin value = parseCoin(parts[1]);
+                    Coin value;
+                    if ("ALL".equalsIgnoreCase(parts[1]))
+                        value = wallet.getBalance(BalanceType.ESTIMATED);
+                    else
+                        value = parseCoin(parts[1]);
                     if (destination.startsWith("0")) {
                         // Treat as a raw public key.
                         byte[] pubKey = new BigInteger(destination, 16).toByteArray();
