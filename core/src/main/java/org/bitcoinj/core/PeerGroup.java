@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -926,6 +927,20 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
             // all transparently and in the background. But we are a long way from that yet.
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Opposite of {@link #addPeerFilterProvider(PeerFilterProvider)}. Again, don't use this for wallets. Does not
+     * trigger recalculation of the filter.
+     */
+    public void removePeerFilterProvider(PeerFilterProvider provider) {
+        lock.lock();
+        try {
+            checkNotNull(provider);
+            checkArgument(peerFilterProviders.remove(provider));
         } finally {
             lock.unlock();
         }
