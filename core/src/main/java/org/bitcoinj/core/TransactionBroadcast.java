@@ -16,6 +16,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.AbstractPeerEventListener;
+import org.bitcoinj.core.RejectMessage;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -32,9 +35,8 @@ import java.util.Random;
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
  * (typically by a {@link Wallet} and needs to be sent to the network. A broadcast can succeed or fail. A success is
  * defined as seeing the transaction be announced by peers via inv messages, thus indicating their acceptance. A failure
- * is defined as not reaching acceptance within a timeout period, or getting an explicit error message from peers
- * indicating that the transaction was not acceptable (this isn't currently implemented in v0.8 of the network protocol
- * but should be coming in 0.9).
+ * is defined as not reaching acceptance within a timeout period, or getting an explicit reject message from a peer
+ * indicating that the transaction was not acceptable.
  */
 public class TransactionBroadcast {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
@@ -64,7 +66,22 @@ public class TransactionBroadcast {
         this.minConnections = minConnections;
     }
 
+    private PeerEventListener rejectionListener = new AbstractPeerEventListener() {
+        @Override
+        public Message onPreMessageReceived(Peer peer, Message m) {
+            if (m instanceof RejectMessage) {
+                RejectMessage rejectMessage = (RejectMessage)m;
+                if (tx.getHash().equals(rejectMessage.getRejectedObjectHash())) {
+                    future.setException(new RejectedTransactionException(tx, rejectMessage));
+                    peerGroup.removeEventListener(this);
+                }
+            }
+            return m;
+        }
+    };
+
     public ListenableFuture<Transaction> broadcast() {
+        peerGroup.addEventListener(rejectionListener, Threading.SAME_THREAD);
         log.info("Waiting for {} peers required for broadcast ...", minConnections);
         peerGroup.waitForPeers(minConnections).addListener(new EnoughAvailablePeers(), Threading.SAME_THREAD);
         return future;
@@ -118,6 +135,7 @@ public class TransactionBroadcast {
             // So we just have to assume we're done, at that point. This happens when we're not given
             // any peer discovery source and the user just calls connectTo() once.
             if (minConnections == 1) {
+                peerGroup.removeEventListener(rejectionListener);
                 future.set(pinnedTx);
             }
         }
@@ -148,6 +166,7 @@ public class TransactionBroadcast {
                 // point to avoid triggering inversions when the Future completes.
                 log.info("broadcastTransaction: {} complete", pinnedTx.getHashAsString());
                 tx.getConfidence().removeEventListener(this);
+                peerGroup.removeEventListener(rejectionListener);
                 future.set(pinnedTx);  // RE-ENTRANCY POINT
             }
         }
