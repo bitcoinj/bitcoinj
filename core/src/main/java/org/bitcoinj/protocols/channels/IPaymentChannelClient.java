@@ -17,11 +17,13 @@
 package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 
@@ -82,9 +84,12 @@ public interface IPaymentChannelClient {
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
+     * @throws ECKey.KeyIsEncryptedException If the keys are encrypted and no AES key has been provided,
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      */
-    ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException;
+    ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info,
+                                                           @Nullable KeyParameter userKey)
+            throws ValueOutOfRangeException, IllegalStateException, ECKey.KeyIsEncryptedException;
 
     /**
      * Implements the connection between this client and the server, providing an interface which allows messages to be

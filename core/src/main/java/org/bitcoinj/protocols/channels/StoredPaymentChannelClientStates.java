@@ -264,13 +264,14 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                 // First a few asserts to make sure things won't break
                 checkState(channel.valueToMe.signum() >= 0 && channel.valueToMe.compareTo(NetworkParameters.MAX_MONEY) < 0);
                 checkState(channel.refundFees.signum() >= 0 && channel.refundFees.compareTo(NetworkParameters.MAX_MONEY) < 0);
-                checkNotNull(channel.myKey.getPrivKeyBytes());
+                checkNotNull(channel.myKey.getPubKey());
                 checkState(channel.refund.getConfidence().getSource() == TransactionConfidence.Source.SELF);
                 final ClientState.StoredClientPaymentChannel.Builder value = ClientState.StoredClientPaymentChannel.newBuilder()
                         .setId(ByteString.copyFrom(channel.id.getBytes()))
                         .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
                         .setRefundTransaction(ByteString.copyFrom(channel.refund.bitcoinSerialize()))
-                        .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()))
+                        .setMyKey(ByteString.copyFrom(new byte[0])) // Not  used, but protobuf message requires
+                        .setMyPublicKey(ByteString.copyFrom(channel.myKey.getPubKey()))
                         .setValueToMe(channel.valueToMe.value)
                         .setRefundFees(channel.refundFees.value);
                 if (channel.close != null)
@@ -294,10 +295,13 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             for (ClientState.StoredClientPaymentChannel storedState : states.getChannelsList()) {
                 Transaction refundTransaction = new Transaction(params, storedState.getRefundTransaction().toByteArray());
                 refundTransaction.getConfidence().setSource(TransactionConfidence.Source.SELF);
+                ECKey myKey = (storedState.getMyKey().isEmpty()) ?
+                        containingWallet.findKeyFromPubKey(storedState.getMyPublicKey().toByteArray()) :
+                        ECKey.fromPrivate(storedState.getMyKey().toByteArray());
                 StoredClientChannel channel = new StoredClientChannel(new Sha256Hash(storedState.getId().toByteArray()),
                         new Transaction(params, storedState.getContractTransaction().toByteArray()),
                         refundTransaction,
-                        ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
+                        myKey,
                         Coin.valueOf(storedState.getValueToMe()),
                         Coin.valueOf(storedState.getRefundFees()), false);
                 if (storedState.hasCloseTransactionHash()) {

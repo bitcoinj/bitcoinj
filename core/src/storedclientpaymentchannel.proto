@@ -39,6 +39,8 @@ message StoredClientPaymentChannel {
 	required bytes id = 1;
 	required bytes contractTransaction = 2;
 	required bytes refundTransaction = 3;
+	required bytes myPublicKey = 8;
+	// Deprecated, key is already stored in the wallet, and found using myPublicKey;
 	required bytes myKey = 4;
 	required uint64 valueToMe = 5;
 	required uint64 refundFees = 6;

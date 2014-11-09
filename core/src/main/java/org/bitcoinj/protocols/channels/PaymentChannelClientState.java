@@ -22,6 +22,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
+import org.spongycastle.crypto.params.KeyParameter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -31,6 +32,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
@@ -59,7 +61,7 @@ import static com.google.common.base.Preconditions.*;
  * INITIATED and creates the initial multi-sig contract and refund transaction. If the wallet has insufficient funds an
  * exception will be thrown at this point. Once this is done, call
  * {@link PaymentChannelClientState#getIncompleteRefundTransaction()} and pass the resultant transaction through to the
- * server. Once you have retrieved the signature, use {@link PaymentChannelClientState#provideRefundSignature(byte[])}.
+ * server. Once you have retrieved the signature, use {@link PaymentChannelClientState#provideRefundSignature(byte[], KeyParameter)}.
  * You must then call {@link PaymentChannelClientState#storeChannelInWallet(Sha256Hash)} to store the refund transaction
  * in the wallet, protecting you against a malicious server attempting to destroy all your coins. At this point, you can
  * provide the server with the multi-sig contract (via {@link PaymentChannelClientState#getMultisigContract()}) safely.
@@ -149,7 +151,7 @@ public class PaymentChannelClientState {
      * @param myKey a freshly generated private key for this channel.
      * @param serverMultisigKey a public key retrieved from the server used for the initial multisig contract
      * @param value how many satoshis to put into this contract. If the channel reaches this limit, it must be closed.
-     *              It is suggested you use at least {@link Utils#CENT} to avoid paying fees if you need to spend the refund transaction
+     *              It is suggested you use at least {@link Coin#CENT} to avoid paying fees if you need to spend the refund transaction
      * @param expiryTimeInSeconds At what point (UNIX timestamp +/- a few hours) the channel will expire
      *
      * @throws VerificationException If either myKey's pubkey or serverMultisigKey's pubkey are non-canonical (ie invalid)
@@ -235,7 +237,23 @@ public class PaymentChannelClientState {
      * @throws ValueOutOfRangeException if the value being used is too small to be accepted by the network
      * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
      */
-    public synchronized void initiate() throws ValueOutOfRangeException, InsufficientMoneyException {
+    public void initiate() throws ValueOutOfRangeException, InsufficientMoneyException {
+        initiate(null);
+    }
+
+    /**
+     * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
+     * time using {@link PaymentChannelClientState#getIncompleteRefundTransaction} and
+     * {@link PaymentChannelClientState#getMultisigContract()}. The way the contract is crafted can be adjusted by
+     * overriding {@link PaymentChannelClientState#editContractSendRequest(org.bitcoinj.core.Wallet.SendRequest)}.
+     * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
+     * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
+     *                  The wallet KeyCrypter is assumed.
+     *
+     * @throws ValueOutOfRangeException   if the value being used is too small to be accepted by the network
+     * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
+     */
+    public synchronized void initiate(@Nullable KeyParameter userKey) throws ValueOutOfRangeException, InsufficientMoneyException {
         final NetworkParameters params = wallet.getParams();
         Transaction template = new Transaction(params);
         // We always place the client key before the server key because, if either side wants some privacy, they can
@@ -251,6 +269,7 @@ public class PaymentChannelClientState {
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
+        req.aesKey = userKey;
         wallet.completeTx(req);
         Coin multisigFee = req.tx.getFee();
         multisigContract = req.tx;
@@ -291,7 +310,7 @@ public class PaymentChannelClientState {
 
     /**
      * Returns the transaction that locks the money to the agreement of both parties. Do not mutate the result.
-     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(Coin)} to
+     * Once this step is done, you can use {@link PaymentChannelClientState#incrementPaymentBy(Coin, KeyParameter)} to
      * start paying the server.
      */
     public synchronized Transaction getMultisigContract() {
@@ -304,7 +323,7 @@ public class PaymentChannelClientState {
     /**
      * Returns a partially signed (invalid) refund transaction that should be passed to the server. Once the server
      * has checked it out and provided its own signature, call
-     * {@link PaymentChannelClientState#provideRefundSignature(byte[])} with the result.
+     * {@link PaymentChannelClientState#provideRefundSignature(byte[], KeyParameter)} with the result.
      */
     public synchronized Transaction getIncompleteRefundTransaction() {
         checkState(refundTx != null);
@@ -322,7 +341,8 @@ public class PaymentChannelClientState {
      * transaction are automatically committed to wallet so that it can handle broadcasting the refund transaction at
      * the appropriate time if necessary.</p>
      */
-    public synchronized void provideRefundSignature(byte[] theirSignature) throws VerificationException {
+    public synchronized void provideRefundSignature(byte[] theirSignature, @Nullable KeyParameter userKey)
+            throws VerificationException {
         checkNotNull(theirSignature);
         checkState(state == State.WAITING_FOR_SIGNED_REFUND);
         TransactionSignature theirSig = TransactionSignature.decodeFromBitcoin(theirSignature, true);
@@ -336,7 +356,8 @@ public class PaymentChannelClientState {
             throw new RuntimeException(e);  // Cannot happen: we built this ourselves.
         }
         TransactionSignature ourSignature =
-                refundTx.calculateSignature(0, myKey, multisigScript, Transaction.SigHash.ALL, false);
+                refundTx.calculateSignature(0, myKey.maybeDecrypt(userKey),
+                        multisigScript, Transaction.SigHash.ALL, false);
         // Insert the signatures.
         Script scriptSig = ScriptBuilder.createMultiSigInputScript(ourSignature, theirSig);
         log.info("Refund scriptSig: {}", scriptSig);
@@ -390,7 +411,8 @@ public class PaymentChannelClientState {
      * @throws ValueOutOfRangeException If size is negative or the channel does not have sufficient money in it to
      *                                  complete this payment.
      */
-    public synchronized IncrementedPayment incrementPaymentBy(Coin size) throws ValueOutOfRangeException {
+    public synchronized IncrementedPayment incrementPaymentBy(Coin size, @Nullable KeyParameter userKey)
+            throws ValueOutOfRangeException {
         checkState(state == State.READY);
         checkNotExpired();
         checkNotNull(size);  // Validity of size will be checked by makeUnsignedChannelContract.
@@ -413,7 +435,7 @@ public class PaymentChannelClientState {
             mode = Transaction.SigHash.NONE;
         else
             mode = Transaction.SigHash.SINGLE;
-        TransactionSignature sig = tx.calculateSignature(0, myKey, multisigScript, mode, true);
+        TransactionSignature sig = tx.calculateSignature(0, myKey.maybeDecrypt(userKey), multisigScript, mode, true);
         valueToMe = newValueToMe;
         updateChannelInWallet();
         IncrementedPayment payment = new IncrementedPayment();
@@ -506,7 +528,7 @@ public class PaymentChannelClientState {
 
     /**
      * Once the servers signature over the refund transaction has been received and provided using
-     * {@link PaymentChannelClientState#provideRefundSignature(byte[])} then this
+     * {@link PaymentChannelClientState#provideRefundSignature(byte[], KeyParameter)} then this
      * method can be called to receive the now valid and broadcastable refund transaction.
      */
     public synchronized Transaction getCompletedRefundTransaction() {

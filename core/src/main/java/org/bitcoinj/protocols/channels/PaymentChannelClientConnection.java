@@ -29,7 +29,9 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -45,14 +47,15 @@ public class PaymentChannelClientConnection {
 
     /**
      * Attempts to open a new connection to and open a payment channel with the given host and port, blocking until the
-     * connection is open. The server is requested to keep the channel open for {@link org.bitcoinj.protocols.channels.PaymentChannelClient#DEFAULT_TIME_WINDOW}
+     * connection is open. The server is requested to keep the channel open for
+     * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#DEFAULT_TIME_WINDOW}
      * seconds. If the server proposes a longer time the channel will be closed.
      *
      * @param server The host/port pair where the server is listening.
      * @param timeoutSeconds The connection timeout and read timeout during initialization. This should be large enough
      *                       to accommodate ECDSA signature operations and network latency.
      * @param wallet The wallet which will be paid from, and where completed transactions will be committed.
-     *               Must already have a {@link StoredPaymentChannelClientStates} object in its extensions set.
+     *               Must be unencrypted. Must already have a {@link StoredPaymentChannelClientStates} object in its extensions set.
      * @param myKey A freshly generated keypair used for the multisig contract and refund output.
      * @param maxValue The maximum value this channel is allowed to request
      * @param serverId A unique ID which is used to attempt reopening of an existing channel.
@@ -65,7 +68,8 @@ public class PaymentChannelClientConnection {
      */
     public PaymentChannelClientConnection(InetSocketAddress server, int timeoutSeconds, Wallet wallet, ECKey myKey,
                                           Coin maxValue, String serverId) throws IOException, ValueOutOfRangeException {
-        this(server, timeoutSeconds, wallet, myKey, maxValue, serverId, PaymentChannelClient.DEFAULT_TIME_WINDOW);
+        this(server, timeoutSeconds, wallet, myKey, maxValue, serverId,
+                PaymentChannelClient.DEFAULT_TIME_WINDOW, null);
     }
 
     /**
@@ -77,7 +81,8 @@ public class PaymentChannelClientConnection {
      * @param timeoutSeconds The connection timeout and read timeout during initialization. This should be large enough
      *                       to accommodate ECDSA signature operations and network latency.
      * @param wallet The wallet which will be paid from, and where completed transactions will be committed.
-     *               Must already have a {@link StoredPaymentChannelClientStates} object in its extensions set.
+     *               Can be encrypted if user key is supplied when needed. Must already have a
+     *               {@link StoredPaymentChannelClientStates} object in its extensions set.
      * @param myKey A freshly generated keypair used for the multisig contract and refund output.
      * @param maxValue The maximum value this channel is allowed to request
      * @param serverId A unique ID which is used to attempt reopening of an existing channel.
@@ -85,16 +90,19 @@ public class PaymentChannelClientConnection {
      *                 API, this should also probably encompass some caller UID to avoid applications opening channels
      *                 which were created by others.
      * @param timeWindow The time in seconds, relative to now, on how long this channel should be kept open.
+     * @param userKeySetup Key derived from a user password, used to decrypt myKey, if it is encrypted, during setup.
      *
      * @throws IOException if there's an issue using the network.
      * @throws ValueOutOfRangeException if the balance of wallet is lower than maxValue.
      */
     public PaymentChannelClientConnection(InetSocketAddress server, int timeoutSeconds, Wallet wallet, ECKey myKey,
-                                          Coin maxValue, String serverId, final long timeWindow) throws IOException, ValueOutOfRangeException {
+                                          Coin maxValue, String serverId, final long timeWindow,
+                                          @Nullable KeyParameter userKeySetup)
+            throws IOException, ValueOutOfRangeException {
         // Glue the object which vends/ingests protobuf messages in order to manage state to the network object which
         // reads/writes them to the wire in length prefixed form.
         channelClient = new PaymentChannelClient(wallet, myKey, maxValue, Sha256Hash.create(serverId.getBytes()), timeWindow,
-              new PaymentChannelClient.ClientConnection() {
+                userKeySetup, new PaymentChannelClient.ClientConnection() {
             @Override
             public void sendToServer(Protos.TwoWayChannelMessage msg) {
                 wireParser.write(msg);
@@ -170,7 +178,7 @@ public class PaymentChannelClientConnection {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
     public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
-        return channelClient.incrementPayment(size, null);
+        return channelClient.incrementPayment(size, null, null);
     }
     /**
      * Increments the total value which we pay the server.
@@ -182,8 +190,28 @@ public class PaymentChannelClientConnection {
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
+    /*
     public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, ByteString info) throws ValueOutOfRangeException, IllegalStateException {
-        return channelClient.incrementPayment(size, info);
+        return channelClient.incrementPayment(size, info, null);
+    }
+*/
+    /**
+     * Increments the total value which we pay the server.
+     *
+     * @param size How many satoshis to increment the payment by (note: not the new total).
+     * @param info Information about this payment increment, used to extend this protocol.
+     * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
+     *                The wallet KeyCrypter is assumed.
+     * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
+     *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
+     * @throws IllegalStateException If the channel has been closed or is not yet open
+     *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
+     */
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size,
+                                                                  @Nullable ByteString info,
+                                                                  @Nullable KeyParameter userKey)
+            throws ValueOutOfRangeException, IllegalStateException {
+        return channelClient.incrementPayment(size, info, userKey);
     }
 
     /**

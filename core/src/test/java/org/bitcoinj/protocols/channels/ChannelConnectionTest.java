@@ -29,6 +29,7 @@ import org.bitcoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -116,6 +117,20 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testSimpleChannel() throws Exception {
+        exectuteSimpleChannelTest(null);
+    }
+
+    @Test
+    public void testEncryptedClientWallet() throws Exception {
+        // Encrypt the client wallet
+        String mySecretPw = "MySecret";
+        wallet.encrypt(mySecretPw);
+
+        KeyParameter userKeySetup = wallet.getKeyCrypter().deriveKey(mySecretPw);
+        exectuteSimpleChannelTest(userKeySetup);
+    }
+
+    public void exectuteSimpleChannelTest(KeyParameter userKeySetup) throws Exception {
         // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
         final SettableFuture<ListenableFuture<PaymentChannelServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
@@ -147,7 +162,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.bindAndStart(4243);
 
         PaymentChannelClientConnection client = new PaymentChannelClientConnection(
-                new InetSocketAddress("localhost", 4243), 30, wallet, myKey, COIN, "");
+                new InetSocketAddress("localhost", 4243), 30, wallet, myKey, COIN, "", PaymentChannelClient.DEFAULT_TIME_WINDOW, userKeySetup);
 
         // Wait for the multi-sig tx to be transmitted.
         broadcastTxPause.release();
@@ -177,7 +192,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         q.take().assertPair(amount, null);
         for (String info : new String[] {null, "one", "two"} ) {
             final ByteString bytes = (info==null) ? null :ByteString.copyFromUtf8(info);
-            final PaymentIncrementAck ack = client.incrementPayment(CENT, bytes).get();
+            final PaymentIncrementAck ack = client.incrementPayment(CENT, bytes, userKeySetup).get();
             if (info != null) {
                 final ByteString ackInfo = ack.getInfo();
                 assertNotNull("Ack info is null", ackInfo);

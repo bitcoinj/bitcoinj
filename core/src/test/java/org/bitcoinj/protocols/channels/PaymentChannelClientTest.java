@@ -6,6 +6,7 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.util.HashMap;
 
@@ -49,7 +50,9 @@ public class PaymentChannelClientTest {
     @Test
     public void shouldSendTimeWindowInClientVersion() throws Exception {
         long timeWindow = 4000;
-        PaymentChannelClient dut = new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, timeWindow, connection);
+        KeyParameter userKey = null;
+        PaymentChannelClient dut =
+                new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, timeWindow, userKey, connection);
         connection.sendToServer(capture(clientVersionCapture));
         EasyMock.expect(wallet.getExtensions()).andReturn(new HashMap<String, WalletExtension>());
         replay(connection, wallet);

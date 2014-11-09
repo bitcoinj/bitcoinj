@@ -28,9 +28,9 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -93,6 +93,9 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     private Coin missing;
 
+    // key to decrypt myKey, if it is encrypted, during setup.
+    private KeyParameter userKeySetup;
+
     private final long timeWindow;
 
     @GuardedBy("lock") private long minPayment;
@@ -127,7 +130,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *             the server)
      */
     public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, ClientConnection conn) {
-      this(wallet,myKey,maxValue,serverId, DEFAULT_TIME_WINDOW, conn);
+      this(wallet,myKey,maxValue,serverId, DEFAULT_TIME_WINDOW, null, conn);
     }
 
     /**
@@ -146,10 +149,12 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      * @param timeWindow The time in seconds, relative to now, on how long this channel should be kept open. Note that is is
      *                   a proposal to the server. The server may in turn propose something different.
      *                   See {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#acceptExpireTime(long)}
+     * @param userKeySetup Key derived from a user password, used to decrypt myKey, if it is encrypted, during setup.
      * @param conn A callback listener which represents the connection to the server (forwards messages we generate to
      *             the server)
      */
-    public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, long timeWindow, ClientConnection conn) {
+    public PaymentChannelClient(Wallet wallet, ECKey myKey, Coin maxValue, Sha256Hash serverId, long timeWindow,
+                                @Nullable KeyParameter userKeySetup, ClientConnection conn) {
         this.wallet = checkNotNull(wallet);
         this.myKey = checkNotNull(myKey);
         this.maxValue = checkNotNull(maxValue);
@@ -157,6 +162,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         checkState(timeWindow >= 0);
         this.timeWindow = timeWindow;
         this.conn = checkNotNull(conn);
+        this.userKeySetup = userKeySetup;
     }
 
     /** 
@@ -171,8 +177,12 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
     @Nullable
     @GuardedBy("lock")
-    private CloseReason receiveInitiate(Protos.Initiate initiate, Coin contractValue, Protos.Error.Builder errorBuilder) throws VerificationException, InsufficientMoneyException {
+    private CloseReason receiveInitiate(Protos.Initiate initiate, Coin contractValue, Protos.Error.Builder errorBuilder)
+            throws VerificationException, InsufficientMoneyException, ECKey.KeyIsEncryptedException {
         log.info("Got INITIATE message:\n{}", initiate.toString());
+
+        if (wallet.isEncrypted() && this.userKeySetup == null)
+            throw new ECKey.KeyIsEncryptedException();
 
         final long expireTime = initiate.getExpireTimeSecs();
         checkState( expireTime >= 0 && initiate.getMinAcceptedChannelSize() >= 0);
@@ -207,7 +217,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             throw new VerificationException("Server gave us a non-canonical public key, protocol error.");
         state = new PaymentChannelClientState(wallet, myKey, ECKey.fromPublicOnly(pubKeyBytes), contractValue, expireTime);
         try {
-            state.initiate();
+            state.initiate(userKeySetup);
         } catch (ValueOutOfRangeException e) {
             log.error("Value out of range when trying to initiate", e);
             errorBuilder.setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE);
@@ -228,11 +238,11 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     }
 
     @GuardedBy("lock")
-    private void receiveRefund(Protos.TwoWayChannelMessage refundMsg) throws VerificationException {
+    private void receiveRefund(Protos.TwoWayChannelMessage refundMsg, @Nullable KeyParameter userKey) throws VerificationException {
         checkState(step == InitStep.WAITING_FOR_REFUND_RETURN && refundMsg.hasReturnRefund());
         log.info("Got RETURN_REFUND message, providing signed contract");
         Protos.ReturnRefund returnedRefund = refundMsg.getReturnRefund();
-        state.provideRefundSignature(returnedRefund.getSignature().toByteArray());
+        state.provideRefundSignature(returnedRefund.getSignature().toByteArray(), userKey);
         step = InitStep.WAITING_FOR_CHANNEL_OPEN;
 
         // Before we can send the server the contract (ie send it to the network), we must ensure that our refund
@@ -244,7 +254,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         try {
             // Make an initial payment of the dust limit, and put it into the message as well. The size of the
             // server-requested dust limit was already sanity checked by this point.
-            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment));
+            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(Coin.valueOf(minPayment), userKey);
             Protos.UpdatePayment.Builder initialMsg = contractMsg.getInitialPaymentBuilder();
             initialMsg.setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()));
             initialMsg.setClientChangeValue(state.getValueRefunded().value);
@@ -311,7 +321,9 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         log.error("Initiate failed with error: {}", errorBuilder.build().toString());
                         break;
                     case RETURN_REFUND:
-                        receiveRefund(msg);
+                        receiveRefund(msg, userKeySetup);
+                        // Key not used anymore
+                        userKeySetup = null;
                         return;
                     case CHANNEL_OPEN:
                         receiveChannelOpen();
@@ -498,7 +510,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
      */
     public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
-        return  incrementPayment(size, null);
+        return incrementPayment(size, null, null);
     }
 
     /**
@@ -510,22 +522,28 @@ public class PaymentChannelClient implements IPaymentChannelClient {
      *
      * @param size How many satoshis to increment the payment by (note: not the new total).
      * @param info Information about this update, used to extend this protocol.
+     * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
+     *                The wallet KeyCrypter is assumed.
      * @return a future that completes when the server acknowledges receipt and acceptance of the payment.
      * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
      *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
      * @throws IllegalStateException If the channel has been closed or is not yet open
      *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
+     * @throws ECKey.KeyIsEncryptedException If the keys are encrypted and no AES key has been provided,
      */
     @Override
-    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info) throws ValueOutOfRangeException, IllegalStateException {
+    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, @Nullable ByteString info, @Nullable KeyParameter userKey)
+            throws ValueOutOfRangeException, IllegalStateException, ECKey.KeyIsEncryptedException {
         lock.lock();
         try {
             if (state() == null || !connectionOpen || step != InitStep.CHANNEL_OPEN)
                 throw new IllegalStateException("Channel is not fully initialized/has already been closed");
             if (increasePaymentFuture != null)
                 throw new IllegalStateException("Already incrementing paying, wait for previous payment to complete.");
+            if (wallet.isEncrypted() && userKey == null)
+                throw new ECKey.KeyIsEncryptedException();
 
-            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(size);
+            PaymentChannelClientState.IncrementedPayment payment = state().incrementPaymentBy(size, userKey);
             Protos.UpdatePayment.Builder updatePaymentBuilder = Protos.UpdatePayment.newBuilder()
                     .setSignature(ByteString.copyFrom(payment.signature.encodeToBitcoin()))
                     .setClientChangeValue(state.getValueRefunded().value);
