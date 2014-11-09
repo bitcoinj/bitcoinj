@@ -1245,7 +1245,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
         for (ECKey key : getKeys(true)) {
             DeterministicKey dKey = (DeterministicKey) key;
-            if (dKey.getPath().size() > 2) {
+            if (dKey.getPath().size() == getAccountPath().size() + 2) {
                 keys.add(dKey);
             }
         }
