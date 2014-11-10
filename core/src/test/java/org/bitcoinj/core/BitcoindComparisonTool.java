@@ -60,8 +60,8 @@ public class BitcoindComparisonTool {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        System.out.println("USAGE: bitcoinjBlockStoreLocation runLargeReorgs(1/0) [port=18444]");
-        boolean runLargeReorgs = args.length > 1 && Integer.parseInt(args[1]) == 1;
+        System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
+        boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
         params = RegTestParams.get();
 
@@ -69,7 +69,7 @@ public class BitcoindComparisonTool {
         blockFile.deleteOnExit();
 
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        final RuleList blockList = generator.getBlocksToTest(false, runLargeReorgs, blockFile);
+        final RuleList blockList = generator.getBlocksToTest(true, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<Sha256Hash, Block>();
         final Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
 
@@ -220,10 +220,10 @@ public class BitcoindComparisonTool {
                 
         int rulesSinceFirstFail = 0;
         for (Rule rule : blockList.list) {
-            if (rule instanceof BlockAndValidity) {
-                BlockAndValidity block = (BlockAndValidity) rule;
+            if (rule instanceof FullBlockTestGenerator.BlockAndValidity) {
+                FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
                 boolean threw = false;
-                Block nextBlock = preloadedBlocks.get(((BlockAndValidity) rule).blockHash);
+                Block nextBlock = preloadedBlocks.get(((FullBlockTestGenerator.BlockAndValidity) rule).blockHash);
                 // Often load at least one block because sometimes we have duplicates with the same hash (b56/57)
                 for (int i = 0; i < 1
                         || nextBlock == null || !nextBlock.getHash().equals(block.blockHash);
@@ -283,7 +283,7 @@ public class BitcoindComparisonTool {
                 }
                 // bitcoind doesn't request blocks inline so we can't rely on a ping for synchronization
                 for (int i = 0; !shouldntRequest && !blocksRequested.contains(nextBlock.getHash()); i++) {
-                    int SLEEP_TIME = 10;
+                    int SLEEP_TIME = 1;
                     if (i % 1000/SLEEP_TIME == 1000/SLEEP_TIME - 1)
                         log.error("bitcoind still hasn't requested block " + block.ruleName + " with hash " + nextBlock.getHash());
                     Thread.sleep(SLEEP_TIME);

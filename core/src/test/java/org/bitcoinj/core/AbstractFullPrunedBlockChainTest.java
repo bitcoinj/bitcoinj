@@ -74,9 +74,9 @@ public abstract class AbstractFullPrunedBlockChainTest
         chain = new FullPrunedBlockChain(params, store);
 
         for (Rule rule : blockList.list) {
-            if (!(rule instanceof BlockAndValidity))
+            if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
                 continue;
-            BlockAndValidity block = (BlockAndValidity) rule;
+            FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
             log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
             boolean threw = false;
             try {
