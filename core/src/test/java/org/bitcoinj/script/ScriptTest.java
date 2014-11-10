@@ -102,8 +102,8 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() throws Exception {
-      Address p2shAddress = new Address(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
-      assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
+        Address p2shAddress = new Address(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
     }
 
     @Test
