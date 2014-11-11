@@ -54,6 +54,8 @@ public class TestNet3Params extends NetworkParameters {
                 "testnet-seed.bitcoin.schildbach.de", // Andreas Schildbach
                 "testnet-seed.bitcoin.petertodd.org"  // Peter Todd
         };
+        bip32HeaderPub = 0x043587CF;
+        bip32HeaderPriv = 0x04358394;
     }
 
     private static TestNet3Params instance;

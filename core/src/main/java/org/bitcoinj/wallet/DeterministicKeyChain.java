@@ -1285,7 +1285,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
         // optionally as well to fix this, but it seems unimportant for now.
         if (watchingKey.getParent() != null) {
-            builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58()));
+            builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58(params)));
         }
         formatAddresses(includePrivateKeys, params, builder2);
         return builder2.toString();

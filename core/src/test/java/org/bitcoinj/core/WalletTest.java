@@ -110,7 +110,7 @@ public class WalletTest extends TestWithWallet {
         List<DeterministicKey> followingKeys = Lists.newArrayList();
         for (int i = 0; i < numKeys - 1; i++) {
             final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
-            DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+            DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(params), params);
             followingKeys.add(partnerKey);
             if (addSigners && i < threshold - 1)
                 wallet.addTransactionSigner(new KeyChainTransactionSigner(keyChain));
@@ -1154,8 +1154,8 @@ public class WalletTest extends TestWithWallet {
     @Test(expected = ECKey.MissingPrivateKeyException.class)
     public void watchingWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
-        String serialized = watchKey.serializePubB58();
-        watchKey = DeterministicKey.deserializeB58(null, serialized);
+        String serialized = watchKey.serializePubB58(params);
+        watchKey = DeterministicKey.deserializeB58(null, serialized, params);
         Wallet watchingWallet = Wallet.fromWatchingKey(params, watchKey);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
@@ -1170,8 +1170,8 @@ public class WalletTest extends TestWithWallet {
     @Test(expected = ECKey.MissingPrivateKeyException.class)
     public void watchingWalletWithCreationTime() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
-        String serialized = watchKey.serializePubB58();
-        watchKey = DeterministicKey.deserializeB58(null, serialized);
+        String serialized = watchKey.serializePubB58(params);
+        watchKey = DeterministicKey.deserializeB58(null, serialized, params);
         Wallet watchingWallet = Wallet.fromWatchingKey(params, watchKey, 1415282801);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
@@ -2917,14 +2917,14 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
-        String serialized = watchKey.serializePubB58();
-        watchKey = DeterministicKey.deserializeB58(null, serialized);
+        String serialized = watchKey.serializePubB58(params);
+        watchKey = DeterministicKey.deserializeB58(null, serialized, params);
         Wallet wallet = Wallet.fromWatchingKey(params, watchKey);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
 
         final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58());
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(params), params);
 
         TransactionSigner signer = new StatelessTransactionSigner() {
             @Override
