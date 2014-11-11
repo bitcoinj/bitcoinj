@@ -46,11 +46,6 @@ public class DeterministicKey extends ECKey {
     /** 32 bytes */
     private final byte[] chainCode;
 
-    /** The 4 byte header that serializes in base58 to "xpub" */
-    public static final int HEADER_PUB = 0x0488B21E;
-    /** The 4 byte header that serializes in base58 to "xprv" */
-    public static final int HEADER_PRIV = 0x0488ADE4;
-
     /** Constructs a key from its components. This is not normally something you should use. */
     public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
@@ -316,17 +311,17 @@ public class DeterministicKey extends ECKey {
         return key;
     }
 
-    public byte[] serializePublic() {
-        return serialize(true);
+    public byte[] serializePublic(NetworkParameters params) {
+        return serialize(true, params);
     }
 
-    public byte[] serializePrivate() {
-        return serialize(false);
+    public byte[] serializePrivate(NetworkParameters params) {
+        return serialize(false, params);
     }
 
-    private byte[] serialize(boolean pub) {
+    private byte[] serialize(boolean pub, NetworkParameters params) {
         ByteBuffer ser = ByteBuffer.allocate(78);
-        ser.putInt(pub ? HEADER_PUB : HEADER_PRIV);
+        ser.putInt(pub ? params.getBip32HeaderPub() : params.getBip32HeaderPriv());
         ser.put((byte) getDepth());
         if (parent == null) {
             ser.putInt(0);
@@ -340,12 +335,12 @@ public class DeterministicKey extends ECKey {
         return ser.array();
     }
 
-    public String serializePubB58() {
-        return toBase58(serialize(true));
+    public String serializePubB58(NetworkParameters params) {
+        return toBase58(serialize(true, params));
     }
 
-    public String serializePrivB58() {
-        return toBase58(serialize(false));
+    public String serializePrivB58(NetworkParameters params) {
+        return toBase58(serialize(false, params));
     }
 
     static String toBase58(byte[] ser) {
@@ -353,17 +348,17 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Deserialize a base-58-encoded HD Key with no parent */
-    public static DeterministicKey deserializeB58(String base58) {
-        return deserializeB58(null, base58);
+    public static DeterministicKey deserializeB58(String base58, NetworkParameters params) {
+        return deserializeB58(null, base58, params);
     }
 
     /**
       * Deserialize a base-58-encoded HD Key.
       *  @param parent The parent node in the given key's deterministic hierarchy.
       */
-    public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58) {
+    public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58, NetworkParameters params) {
         try {
-            return deserialize(parent, Base58.decodeChecked(base58));
+            return deserialize(parent, Base58.decodeChecked(base58), params);
         } catch (AddressFormatException e) {
             throw new IllegalArgumentException(e);
         }
@@ -372,20 +367,20 @@ public class DeterministicKey extends ECKey {
     /**
       * Deserialize an HD Key with no parent
       */
-    public static DeterministicKey deserialize(byte[] serializedKey) {
-        return deserialize(null, serializedKey);
+    public static DeterministicKey deserialize(byte[] serializedKey, NetworkParameters params) {
+        return deserialize(null, serializedKey, params);
     }
 
     /**
       * Deserialize an HD Key.
       *  @param parent The parent node in the given key's deterministic hierarchy.
       */
-    public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey) {
+    public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey, NetworkParameters params) {
         ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
         int header = buffer.getInt();
-        if (header != HEADER_PRIV && header != HEADER_PUB)
+        if (header != params.getBip32HeaderPriv() && header != params.getBip32HeaderPub())
             throw new IllegalArgumentException("Unknown header bytes: " + toBase58(serializedKey).substring(0, 4));
-        boolean pub = header == HEADER_PUB;
+        boolean pub = header == params.getBip32HeaderPub();
         byte depth = buffer.get();
         byte[] parentFingerprint = new byte[4];
         buffer.get(parentFingerprint);

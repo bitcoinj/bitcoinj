@@ -21,6 +21,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -63,6 +64,12 @@ public class BitcoinSerializerTest {
         assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
         ByteArrayOutputStream bos = new ByteArrayOutputStream(addrMessage.length);
         bs.serialize(a, bos);
+
+        assertEquals(31, a.getMessageSize());
+        a.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        assertEquals(61, a.getMessageSize());
+        a.removeAddress(0);
+        assertEquals(31, a.getMessageSize());
 
         //this wont be true due to dynamic timestamps.
         //assertTrue(LazyParseByteCacheTest.arrayContains(bos.toByteArray(), addrMessage));

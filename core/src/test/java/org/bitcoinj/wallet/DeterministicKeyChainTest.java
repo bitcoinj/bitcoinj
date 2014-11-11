@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.DeterministicHierarchy;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -238,10 +239,11 @@ public class DeterministicKeyChainTest {
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
+        NetworkParameters params = MainNetParams.get();
         DeterministicKey watchingKey = chain.getWatchingKey();
-        final String pub58 = watchingKey.serializePubB58();
+        final String pub58 = watchingKey.serializePubB58(params);
         assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
-        watchingKey = DeterministicKey.deserializeB58(null, pub58);
+        watchingKey = DeterministicKey.deserializeB58(null, pub58, params);
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey);
         assertEquals(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS, chain.getEarliestKeyCreationTime());

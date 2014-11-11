@@ -432,7 +432,7 @@ public class WalletTool {
         String[] xpubkeys = options.valueOf(xpubkeysFlag).split(",");
         ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
         for (String xpubkey : xpubkeys) {
-            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim()));
+            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim(), params));
         }
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
@@ -913,7 +913,7 @@ public class WalletTool {
             }
             wallet = Wallet.fromSeed(params, seed);
         } else if (options.has(watchFlag)) {
-            DeterministicKey watchKey = DeterministicKey.deserializeB58(null, options.valueOf(watchFlag));
+            DeterministicKey watchKey = DeterministicKey.deserializeB58(null, options.valueOf(watchFlag), params);
             wallet = Wallet.fromWatchingKey(params, watchKey);
         } else {
             wallet = new Wallet(params);
