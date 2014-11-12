@@ -23,7 +23,6 @@ import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
@@ -62,7 +61,7 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
-            throws IOException, VerificationException {
+            throws VerificationException {
         if (type == null) {
             // Pending/broadcast tx.
             if (wallet.isPendingTransactionRelevant(tx))
@@ -77,22 +76,22 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws IOException, VerificationException {
+    protected Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws VerificationException {
         return sendMoneyToWallet(this.wallet, tx, type);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, Address toAddress, AbstractBlockChain.NewBlockType type) throws IOException, VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, Address toAddress, AbstractBlockChain.NewBlockType type) throws VerificationException {
         return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, ECKey toPubKey, AbstractBlockChain.NewBlockType type) throws IOException, VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, ECKey toPubKey, AbstractBlockChain.NewBlockType type) throws VerificationException {
         return sendMoneyToWallet(wallet, createFakeTx(params, value, toPubKey), type);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Coin value, AbstractBlockChain.NewBlockType type) throws IOException,  VerificationException {
+    protected Transaction sendMoneyToWallet(Coin value, AbstractBlockChain.NewBlockType type) throws VerificationException {
         return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);
     }
 }
