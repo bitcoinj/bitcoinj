@@ -2281,6 +2281,42 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void lowerThanDefaultFee() throws InsufficientMoneyException {
+        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(10);
+        receiveATransactionAmount(wallet, myAddress, Coin.COIN);
+        SendRequest req = SendRequest.to(myAddress, Coin.CENT);
+        req.feePerKb = fee;
+        wallet.completeTx(req);
+        assertEquals(fee, req.tx.getFee());
+        wallet.commitTx(req.tx);
+        SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
+        emptyReq.feePerKb = fee;
+        emptyReq.emptyWallet = true;
+        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        wallet.completeTx(emptyReq);
+        assertEquals(fee, emptyReq.tx.getFee());
+        wallet.commitTx(emptyReq.tx);
+    }
+
+    @Test
+    public void higherThanDefaultFee() throws InsufficientMoneyException {
+        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(10);
+        receiveATransactionAmount(wallet, myAddress, Coin.COIN);
+        SendRequest req = SendRequest.to(myAddress, Coin.CENT);
+        req.feePerKb = fee;
+        wallet.completeTx(req);
+        assertEquals(fee, req.tx.getFee());
+        wallet.commitTx(req.tx);
+        SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
+        emptyReq.feePerKb = fee;
+        emptyReq.emptyWallet = true;
+        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        wallet.completeTx(emptyReq);
+        assertEquals(fee, emptyReq.tx.getFee());
+        wallet.commitTx(emptyReq.tx);
+    }
+
+    @Test
     public void feePerKbCategoryJumpTest() throws Exception {
         // Simple test of boundary condition on fee per kb in category fee solver
 
