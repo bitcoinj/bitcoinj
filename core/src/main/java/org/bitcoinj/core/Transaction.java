@@ -704,6 +704,9 @@ public class Transaction extends ChildMessage implements Serializable {
             }
             s.append(String.format("%n"));
         }
+        Coin fee = getFee();
+        if (fee != null)
+            s.append("     fee  ").append(fee.toFriendlyString()).append(String.format("%n"));
         return s.toString();
     }
 
