@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
@@ -368,7 +367,7 @@ public class WalletTest extends TestWithWallet {
         receiveATransactionAmount(wallet, toAddress, COIN);
     }
 
-    private void receiveATransactionAmount(Wallet wallet, Address toAddress, Coin amount) throws IOException {
+    private void receiveATransactionAmount(Wallet wallet, Address toAddress, Coin amount) {
         final ListenableFuture<Coin> availFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.AVAILABLE);
         final ListenableFuture<Coin> estimatedFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.ESTIMATED);
         assertFalse(availFuture.isDone());
@@ -1598,7 +1597,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void importAndEncrypt() throws IOException, InsufficientMoneyException {
+    public void importAndEncrypt() throws InsufficientMoneyException {
         final ECKey key = new ECKey();
         encryptedWallet.importKeysAndEncrypt(ImmutableList.of(key), PASSWORD1);
         assertEquals(1, encryptedWallet.getImportedKeys().size());
@@ -2988,7 +2987,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void sendCoinsWithBroadcasterTest() throws InsufficientMoneyException, IOException {
+    public void sendCoinsWithBroadcasterTest() throws InsufficientMoneyException {
         ECKey key = ECKey.fromPrivate(BigInteger.ONE);
         Address notMyAddr = key.toAddress(params);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
