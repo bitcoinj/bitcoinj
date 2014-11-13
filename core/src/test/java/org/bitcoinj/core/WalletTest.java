@@ -66,29 +66,15 @@ import static org.junit.Assert.*;
 public class WalletTest extends TestWithWallet {
     private static final Logger log = LoggerFactory.getLogger(WalletTest.class);
 
-    private Address myEncryptedAddress;
+    private static final CharSequence PASSWORD1 = "my helicopter contains eels";
+    private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
-    private Wallet encryptedWallet;
-
-    private static CharSequence PASSWORD1 = "my helicopter contains eels";
-    private static CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
-
-    private KeyParameter aesKey;
-    private KeyParameter wrongAesKey;
-    private KeyCrypter keyCrypter;
     private SecureRandom secureRandom = new SecureRandom();
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        // TODO: Move these fields into the right tests so we don't create two wallets for every test case.
-        encryptedWallet = new Wallet(params);
-        myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
-        encryptedWallet.encrypt(PASSWORD1);
-        keyCrypter = encryptedWallet.getKeyCrypter();
-        aesKey = keyCrypter.deriveKey(PASSWORD1);
-        wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
     }
 
     @After
@@ -135,33 +121,36 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpending() throws Exception {
-        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), null);
     }
 
     @Test
     public void basicSpendingToP2SH() throws Exception {
         Address destination = new Address(params, params.getP2SHHeader(), HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
-        basicSpendingCommon(wallet, myAddress, destination, false);
+        basicSpendingCommon(wallet, myAddress, destination, null);
     }
 
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
-        basicSpendingCommon(encryptedWallet, myEncryptedAddress, new ECKey().toAddress(params), true);
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        Address myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(params);
+        basicSpendingCommon(encryptedWallet, myEncryptedAddress, new ECKey().toAddress(params), encryptedWallet);
     }
 
     @Test
     public void basicSpendingFromP2SH() throws Exception {
         createMarriedWallet(2, 2);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), null);
 
         createMarriedWallet(2, 3);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), null);
 
         createMarriedWallet(3, 3);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), null);
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -172,7 +161,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void spendingWithIncompatibleSigners() throws Exception {
         wallet.addTransactionSigner(new NopTransactionSigner(true));
-        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), false);
+        basicSpendingCommon(wallet, myAddress, new ECKey().toAddress(params), null);
     }
 
     static class TestRiskAnalysis implements RiskAnalysis {
@@ -285,7 +274,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
-    private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, boolean testEncryption) throws Exception {
+    private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, Wallet encryptedWallet) throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
         // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
         // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
@@ -308,7 +297,11 @@ public class WalletTest extends TestWithWallet {
         req = Wallet.SendRequest.to(destination, v2);
         req.fee = CENT;
 
-        if (testEncryption) {
+        if (encryptedWallet != null) {
+            KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+            KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+            KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
+
             // Try to create a send with a fee but no password (this should fail).
             try {
                 req.ensureMinRequiredFee = false;
@@ -1489,6 +1482,11 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionAESBasic() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+
         assertEquals(EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
         assertTrue(encryptedWallet.checkPassword(PASSWORD1));
         assertTrue(encryptedWallet.checkAESKey(aesKey));
@@ -1507,6 +1505,9 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionPasswordBasic() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+
         assertTrue(encryptedWallet.isEncrypted());
         encryptedWallet.decrypt(PASSWORD1);
         assertFalse(encryptedWallet.isEncrypted());
@@ -1522,6 +1523,11 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionBadPassword() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+        KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
+
         // Check the wallet is currently encrypted
         assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
         assertFalse(encryptedWallet.checkAESKey(wrongAesKey));
@@ -1537,6 +1543,11 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionCheckExceptions() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+
         // Check the wallet is currently encrypted
         assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
 
@@ -1571,12 +1582,19 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void addUnencryptedKeyToEncryptedWallet() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+
         ECKey key1 = new ECKey();
         encryptedWallet.importKey(key1);
     }
 
     @Test(expected = KeyCrypterException.class)
     public void addEncryptedKeyToUnencryptedWallet() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+
         ECKey key1 = new ECKey();
         key1 = key1.encrypt(keyCrypter, keyCrypter.deriveKey("PASSWORD!"));
         wallet.importKey(key1);
@@ -1584,6 +1602,11 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void mismatchedCrypter() throws Exception {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+        KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
+        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+
         // Try added an ECKey that was encrypted with a differenct ScryptParameters (i.e. a non-homogenous key).
         // This is not allowed as the ScryptParameters is stored at the Wallet level.
         byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
@@ -1598,6 +1621,9 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void importAndEncrypt() throws InsufficientMoneyException {
+        Wallet encryptedWallet = new Wallet(params);
+        encryptedWallet.encrypt(PASSWORD1);
+
         final ECKey key = new ECKey();
         encryptedWallet.importKeysAndEncrypt(ImmutableList.of(key), PASSWORD1);
         assertEquals(1, encryptedWallet.getImportedKeys().size());
