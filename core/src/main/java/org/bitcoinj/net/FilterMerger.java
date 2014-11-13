@@ -6,7 +6,6 @@ import org.bitcoinj.core.PeerFilterProvider;
 import com.google.common.collect.ImmutableList;
 
 import java.util.LinkedList;
-import java.util.concurrent.locks.Lock;
 
 // This code is unit tested by the PeerGroup tests.
 
@@ -15,20 +14,23 @@ import java.util.concurrent.locks.Lock;
  * {@link org.bitcoinj.core.BloomFilter} and earliest key time for all of them.
  * Used by the {@link org.bitcoinj.core.PeerGroup} class internally.</p>
  *
- * <p>Thread safety: this class tracks the element count of the last filter it calculated and so must be synchronised
- * externally or used from only one thread. It will acquire a lock on each filter in turn before performing the
- * calculation because the providers may be mutated in other threads in parallel, but global consistency is required
- * to produce a merged filter.</p>
+ * <p>Thread safety: threading here can be complicated. Each filter provider is given a begin event, which may acquire
+ * a lock (and is guaranteed to receive an end event). This class is mostly thread unsafe and is meant to be used from a
+ * single thread only, PeerGroup ensures this by only accessing it from the dedicated PeerGroup thread. PeerGroup does
+ * not hold any locks whilst this object is used, relying on the single thread to prevent multiple filters being
+ * calculated in parallel, thus a filter provider can do things like make blocking calls into PeerGroup from a separate
+ * thread. However the bloomFilterFPRate property IS thread safe, for convenience.</p>
  */
 public class FilterMerger {
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
     private final long bloomFilterTweak = (long) (Math.random() * Long.MAX_VALUE);
-    private double bloomFilterFPRate;
+
+    private volatile double vBloomFilterFPRate;
     private int lastBloomFilterElementCount;
     private BloomFilter lastFilter;
 
     public FilterMerger(double bloomFilterFPRate) {
-        this.bloomFilterFPRate = bloomFilterFPRate;
+        this.vBloomFilterFPRate = bloomFilterFPRate;
     }
 
     public static class Result {
@@ -66,9 +68,10 @@ public class FilterMerger {
                 lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
                 BloomFilter.BloomUpdate bloomFlags =
                         requiresUpdateAll ? BloomFilter.BloomUpdate.UPDATE_ALL : BloomFilter.BloomUpdate.UPDATE_P2PUBKEY_ONLY;
-                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak, bloomFlags);
+                double fpRate = vBloomFilterFPRate;
+                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak, bloomFlags);
                 for (PeerFilterProvider p : providers)
-                    filter.merge(p.getBloomFilter(lastBloomFilterElementCount, bloomFilterFPRate, bloomFilterTweak));
+                    filter.merge(p.getBloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak));
 
                 result.changed = !filter.equals(lastFilter);
                 result.filter = lastFilter = filter;
@@ -86,11 +89,11 @@ public class FilterMerger {
     }
 
     public void setBloomFilterFPRate(double bloomFilterFPRate) {
-        this.bloomFilterFPRate = bloomFilterFPRate;
+        this.vBloomFilterFPRate = bloomFilterFPRate;
     }
 
     public double getBloomFilterFPRate() {
-        return bloomFilterFPRate;
+        return vBloomFilterFPRate;
     }
 
     public BloomFilter getLastFilter() {
