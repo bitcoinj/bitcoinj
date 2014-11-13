@@ -59,8 +59,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Fix the random permutation that TransactionBroadcast uses to shuffle the peers.
         TransactionBroadcast.random = new Random(0);
         peerGroup.setMinBroadcastConnections(2);
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
     }
 
     @Override

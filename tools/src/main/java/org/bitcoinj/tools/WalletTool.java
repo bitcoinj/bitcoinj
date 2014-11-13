@@ -445,8 +445,7 @@ public class WalletTool {
 
     private static void rotate() throws BlockStoreException {
         setup();
-        peers.startAsync();
-        peers.awaitRunning();
+        peers.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         long rotationTimeSecs = Utils.currentTimeSeconds();
         if (options.has(dateFlag)) {
@@ -583,8 +582,7 @@ public class WalletTool {
             }
 
             setup();
-            peers.startAsync();
-            peers.awaitRunning();
+            peers.start();
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
@@ -700,8 +698,7 @@ public class WalletTool {
             ListenableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
             if (future == null) {
                 // No payment_url for submission so, broadcast and wait.
-                peers.startAsync();
-                peers.awaitRunning();
+                peers.start();
                 peers.broadcastTransaction(req.tx).get();
             } else {
                 PaymentProtocol.Ack ack = future.get();
@@ -864,8 +861,7 @@ public class WalletTool {
             setup();
             int startTransactions = wallet.getTransactions(true).size();
             DownloadListener listener = new DownloadListener();
-            peers.startAsync();
-            peers.awaitRunning();
+            peers.start();
             peers.startBlockChainDownload(listener);
             try {
                 listener.await();
@@ -886,8 +882,7 @@ public class WalletTool {
     private static void shutdown() {
         try {
             if (peers == null) return;  // setup() never called so nothing to do.
-            peers.stopAsync();
-            peers.awaitTerminated();
+            peers.stop();
             saveWallet(walletFile);
             store.close();
             wallet = null;

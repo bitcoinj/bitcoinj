@@ -112,8 +112,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         peerGroup.addEventListener(listener);
 
         // Create a couple of peers.
@@ -155,6 +154,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                     return new InetSocketAddress[]{new InetSocketAddress("localhost", 1)};
                 }
             }
+
             @Override
             public void shutdown() {
             }
@@ -196,15 +196,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 assertEquals(99, peerAddresses.size());
             }
         });
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
     }
 
     @Test
     public void receiveTxBroadcast() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -241,10 +239,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     
     @Test
-    public void receiveTxBroadcastOnAddedWallet() throws Exception {
+    public void receiveTxBroadcastOnAddeweldWallet() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         // Create a peer.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -256,8 +253,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addWallet(wallet2);
         blockChain.addWallet(wallet2);
 
-        assertTrue(outbound(p1) instanceof BloomFilter);
-        assertTrue(outbound(p1) instanceof MemoryPoolMessage);
+        assertEquals(BloomFilter.class, waitForOutbound(p1).getClass());
+        assertEquals(MemoryPoolMessage.class, waitForOutbound(p1).getClass());
 
         Coin value = COIN;
         Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, value, address2);
@@ -278,8 +275,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void singleDownloadPeer1() throws Exception {
         // Check that we don't attempt to retrieve blocks on multiple peers.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -322,8 +318,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Check that we don't attempt multiple simultaneous block chain downloads, when adding a new peer in the
         // middle of an existing chain download.
         // Create a couple of peers.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -358,8 +353,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void transactionConfidence() throws Exception {
         // Checks that we correctly count how many peers broadcast a transaction, so we can establish some measure of
         // its trustworthyness assuming an untampered with internet connection.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         final Transaction[] event = new Transaction[2];
         peerGroup.addEventListener(new AbstractPeerEventListener() {
@@ -422,8 +416,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
         final long now = Utils.currentTimeSeconds();
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
         Wallet w2 = new Wallet(params);
         ECKey key1 = new ECKey();
@@ -443,8 +436,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void noPings() throws Exception {
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         peerGroup.setPingIntervalMsec(0);
         VersionMessage versionMessage = new VersionMessage(params, 2);
         versionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
@@ -456,8 +448,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void pings() throws Exception {
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         peerGroup.setPingIntervalMsec(100);
         VersionMessage versionMessage = new VersionMessage(params, 2);
         versionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
@@ -475,8 +466,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void downloadPeerSelection() throws Exception {
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
         versionMessage2.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
         versionMessage2.localServices = VersionMessage.NODE_NETWORK;
@@ -508,8 +498,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void peerTimeoutTest() throws Exception {
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         peerGroup.setConnectTimeoutMillis(100);
 
         final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
@@ -557,8 +546,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         blockJobs = true;
 
         jobBlocks.release(2);   // startup + first peer discovery
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         jobBlocks.release(3);  // One for each peer.
         handleConnectToPeer(0);
@@ -608,8 +596,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Cover bug 513. When a relevant transaction with a p2pubkey output is found, the Bloom filter should be
         // recalculated to include that transaction hash but not re-broadcast as the remote nodes should have followed
         // the same procedure. However a new node that's connected should get the fresh filter.
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         final ECKey key = wallet.currentReceiveKey();
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -642,8 +629,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // we exceed the lookahead threshold.
         wallet.setKeychainLookaheadSize(5);
         wallet.setKeychainLookaheadThreshold(4);
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
@@ -674,8 +660,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void waitForNumPeers1() throws Exception {
         ListenableFuture<List<Peer>> future = peerGroup.waitForPeers(3);
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         assertFalse(future.isDone());
         connectPeer(1);
         assertFalse(future.isDone());
@@ -700,8 +685,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         VersionMessage ver2 = new VersionMessage(params, 10);
         ver2.clientVersion = newVer;
         ver2.localServices = VersionMessage.NODE_NETWORK;
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         assertFalse(future.isDone());
         connectPeer(1, ver1);
         assertFalse(future.isDone());
@@ -733,8 +717,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         try {
             peerGroup.setUseLocalhostPeerWhenPossible(true);
-            peerGroup.startAsync();
-            peerGroup.awaitRunning();
+            peerGroup.start();
             local.accept().close();   // Probe connect
             local.accept();   // Real connect
             // If we get here it used the local peer. Check no others are in use.
@@ -768,8 +751,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         wallet.setKeychainLookaheadSize(4);
         wallet.setKeychainLookaheadThreshold(2);
 
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         InboundMessageQueuer p1 = connectPeer(1);
         assertTrue(p1.lastReceivedFilter.contains(keys.get(0).getPubKey()));
         assertTrue(p1.lastReceivedFilter.contains(keys.get(5).getPubKeyHash()));
