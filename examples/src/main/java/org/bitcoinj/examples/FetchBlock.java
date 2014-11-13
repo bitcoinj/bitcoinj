@@ -38,8 +38,7 @@ public class FetchBlock {
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(params, chain);
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         PeerAddress addr = new PeerAddress(InetAddress.getLocalHost(), params.getPort());
         peerGroup.addAddress(addr);
         peerGroup.waitForPeers(1).get();

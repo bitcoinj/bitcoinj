@@ -145,8 +145,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
         blockChain.addWallet(wallet);
 
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
 
         // Create a peer.
         InboundMessageQueuer p1 = connectPeer(1);

@@ -80,8 +80,7 @@ public class BuildCheckpoints {
             }
         }, Threading.SAME_THREAD);
 
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         peerGroup.downloadBlockChain();
 
         checkState(checkpoints.size() > 0);
@@ -90,8 +89,7 @@ public class BuildCheckpoints {
         writeBinaryCheckpoints(checkpoints, PLAIN_CHECKPOINTS_FILE);
         writeTextualCheckpoints(checkpoints, TEXTUAL_CHECKPOINTS_FILE);
 
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
+        peerGroup.stop();
         store.close();
 
         // Sanity check the created files.

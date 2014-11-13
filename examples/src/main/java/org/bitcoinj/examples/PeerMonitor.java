@@ -115,8 +115,7 @@ public class PeerMonitor {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
                 System.out.println("Shutting down ...");
-                peerGroup.stopAsync();
-                peerGroup.awaitTerminated();
+                peerGroup.stop();
                 System.out.println("Shutdown complete.");
                 System.exit(0);
             }
