@@ -454,7 +454,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         versionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
         versionMessage.localServices = VersionMessage.NODE_NETWORK;
         InboundMessageQueuer p1 = connectPeer(1, versionMessage);
-        Ping ping = (Ping) outbound(p1);
+        Ping ping = (Ping) waitForOutbound(p1);
         inbound(p1, new Pong(ping.getNonce()));
         pingAndWait(p1);
         assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);

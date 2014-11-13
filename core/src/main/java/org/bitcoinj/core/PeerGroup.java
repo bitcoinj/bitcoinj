@@ -824,7 +824,6 @@ public class PeerGroup implements TransactionBroadcaster {
             @Override
             public void run() {
                 log.info("Starting ...");
-                vPingTimer = new Timer("Peer pinging thread", true);
                 if (torClient != null) {
                     log.info("Starting Tor/Orchid ...");
                     torClient.start();
@@ -838,6 +837,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 channels.startAsync();
                 channels.awaitRunning();
                 triggerConnections();
+                setupPinging();
             }
         });
     }
@@ -860,7 +860,6 @@ public class PeerGroup implements TransactionBroadcaster {
             @Override
             public void run() {
                 log.info("Stopping ...");
-                vPingTimer.cancel();
                 // Blocking close of all sockets.
                 channels.stopAsync();
                 channels.awaitTerminated();
@@ -1242,7 +1241,6 @@ public class PeerGroup implements TransactionBroadcaster {
             for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
                 peer.addEventListenerWithoutOnDisconnect(registration.listener, registration.executor);
             }
-            setupPingingForNewPeer(peer);
         } finally {
             lock.unlock();
         }
@@ -1258,57 +1256,31 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    private void setupPingingForNewPeer(final Peer peer) {
-        checkState(lock.isHeldByCurrentThread());
-        if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
-            return;
+    @Nullable private volatile ListenableScheduledFuture<?> vPingTask;
+
+    @SuppressWarnings("NonAtomicOperationOnVolatileField")
+    private void setupPinging() {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
-        // Start the process of pinging the peer. Do a ping right now and then ensure there's a fixed delay between
-        // each ping. If the peer is taken out of the peers list then the cycle will stop.
-        //
-        // TODO: This should really be done by a timer integrated with the network thread to avoid races.
-        final Runnable[] pingRunnable = new Runnable[1];
-        pingRunnable[0] = new Runnable() {
-            private boolean firstRun = true;
+
+        vPingTask = executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                // Ensure that the first ping happens immediately and later pings after the requested delay.
-                if (firstRun) {
-                    firstRun = false;
-                    try {
-                        peer.ping().addListener(this, Threading.SAME_THREAD);
-                    } catch (Exception e) {
-                        log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
-                        return;
+                if (getPingIntervalMsec() <= 0) {
+                    ListenableScheduledFuture<?> task = vPingTask;
+                    if (task != null) {
+                        task.cancel(false);
+                        vPingTask = null;
                     }
-                    return;
-                }
-
-                final long interval = getPingIntervalMsec();
-                if (interval <= 0)
                     return;  // Disabled.
-                final TimerTask task = new TimerTask() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (!peers.contains(peer) || !PeerGroup.this.isRunning())
-                                return;  // Peer was removed/shut down.
-                            peer.ping().addListener(pingRunnable[0], Threading.SAME_THREAD);
-                        } catch (Exception e) {
-                            log.warn("{}: Exception whilst trying to ping peer: {}", peer, e.toString());
-                        }
-                    }
-                };
-                try {
-                    vPingTimer.schedule(task, interval);
-                } catch (IllegalStateException ignored) {
-                    // This can happen if there's a shutdown race and this runnable is executing whilst the timer is
-                    // simultaneously cancelled.
+                }
+                for (Peer peer : getConnectedPeers()) {
+                    if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
+                        continue;
+                    peer.ping();
                 }
             }
-        };
-        pingRunnable[0].run();
+        }, getPingIntervalMsec(), getPingIntervalMsec(), TimeUnit.MILLISECONDS);
     }
 
     private void setDownloadPeer(@Nullable Peer peer) {
@@ -1646,6 +1618,10 @@ public class PeerGroup implements TransactionBroadcaster {
         lock.lock();
         try {
             this.pingIntervalMsec = pingIntervalMsec;
+            ListenableScheduledFuture<?> task = vPingTask;
+            if (task != null)
+                task.cancel(false);
+            setupPinging();
         } finally {
             lock.unlock();
         }
