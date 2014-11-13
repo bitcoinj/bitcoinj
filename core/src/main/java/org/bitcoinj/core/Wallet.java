@@ -648,11 +648,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
     public void setKeychainLookaheadSize(int lookaheadSize) {
-        lock.lock();
+        keychainLock.lock();
         try {
             keychain.setLookaheadSize(lookaheadSize);
         } finally {
-            lock.unlock();
+            keychainLock.unlock();
         }
     }
 
