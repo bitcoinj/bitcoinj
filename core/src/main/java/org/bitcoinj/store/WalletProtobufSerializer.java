@@ -72,7 +72,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class WalletProtobufSerializer {
     private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
-
+    /** Current version used for serializing wallets. A version higher than this is considered from the future. */
+    public static final int CURRENT_WALLET_VERSION = Protos.Wallet.getDefaultInstance().getVersion();
     // Used for de-serialization
     protected Map<ByteString, Transaction> txMap;
 
@@ -404,7 +405,7 @@ public class WalletProtobufSerializer {
      */
     public Wallet readWallet(NetworkParameters params, @Nullable WalletExtension[] extensions,
                              Protos.Wallet walletProto) throws UnreadableWalletException {
-        if (walletProto.getVersion() > 1)
+        if (walletProto.getVersion() > CURRENT_WALLET_VERSION)
             throw new UnreadableWalletException.FutureVersion();
         if (!walletProto.getNetworkIdentifier().equals(params.getId()))
             throw new UnreadableWalletException.WrongNetwork();
