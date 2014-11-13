@@ -159,8 +159,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             public void shutdown() {
             }
         });
-        peerGroup.startAsync();
-        peerGroup.awaitRunning();
+        peerGroup.start();
         latch.await();
         // Check that we did indeed throw an exception. If we got here it means we threw and then PeerGroup tried
         // again a bit later.
@@ -238,8 +237,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p2, new NotFoundMessage(unitTestParams, getdata.getItems()));
         pingAndWait(p2);
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
     }
 
     
@@ -276,9 +273,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p1, new NotFoundMessage(unitTestParams, getdata.getItems()));
         pingAndWait(p1);
         assertEquals(value, wallet2.getBalance(Wallet.BalanceType.ESTIMATED));
-        peerGroup.stopAsync();
-        peerGroup.awaitTerminated();
-    } 
+    }
     
     @Test
     public void singleDownloadPeer1() throws Exception {
@@ -320,7 +315,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
         inbound(p2, inv);
         assertTrue(outbound(p2) instanceof GetDataMessage);
-        peerGroup.stopAsync();
     }
 
     @Test
@@ -358,7 +352,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         Message message = (Message)outbound(p2);
         assertNull(message == null ? "" : message.toString(), message);
-        peerGroup.stopAsync();
     }
 
     @Test
@@ -559,10 +552,15 @@ public class PeerGroupTest extends TestWithPeerGroup {
             }
         });
         peerGroup.setMaxConnections(3);
+
         Utils.setMockSleep(true);
+        blockJobs = true;
+
+        jobBlocks.release(2);   // startup + first peer discovery
         peerGroup.startAsync();
         peerGroup.awaitRunning();
 
+        jobBlocks.release(3);  // One for each peer.
         handleConnectToPeer(0);
         handleConnectToPeer(1);
         handleConnectToPeer(2);
@@ -575,6 +573,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
 
         // discovers, connects to new peer
+        jobBlocks.release(1);
         handleConnectToPeer(3);
         assertEquals(2003, connectedPeers.take().getAddress().getPort());
 
@@ -582,30 +581,25 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort()); // peer died
 
         // Alternates trying two offline peers
-        Utils.passMockSleep();
+        jobBlocks.release(10);
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
-        Utils.passMockSleep();
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
-        Utils.passMockSleep();
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
-        Utils.passMockSleep();
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
-        Utils.passMockSleep();
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
 
         // Peer 2 comes online
         startPeerServer(2);
-        Utils.passMockSleep();
+        jobBlocks.release(1);
         handleConnectToPeer(2);
         assertEquals(2002, connectedPeers.take().getAddress().getPort());
 
+        jobBlocks.release(6);
         stopPeerServer(2);
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
 
         // Peer 2 is tried before peer 1, since it has a lower backoff due to recent success
-        Utils.passMockSleep();
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort());
-        Utils.passMockSleep();
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
     }
 

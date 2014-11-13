@@ -18,9 +18,7 @@
 package org.bitcoinj.kits;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.*;
 import com.subgraph.orchid.TorClient;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -293,8 +291,7 @@ public class WalletAppKit extends AbstractIdleService {
             onSetupCompleted();
 
             if (blockingStartup) {
-                vPeerGroup.startAsync();
-                vPeerGroup.awaitRunning();
+                vPeerGroup.start();
                 // Make sure we shut down cleanly.
                 installShutdownHook();
                 completeExtensionInitiations(vPeerGroup);
@@ -304,20 +301,20 @@ public class WalletAppKit extends AbstractIdleService {
                 vPeerGroup.startBlockChainDownload(listener);
                 listener.await();
             } else {
-                vPeerGroup.startAsync();
-                vPeerGroup.addListener(new Service.Listener() {
+                Futures.addCallback(vPeerGroup.startAsync(), new FutureCallback() {
                     @Override
-                    public void running() {
+                    public void onSuccess(@Nullable Object result) {
                         completeExtensionInitiations(vPeerGroup);
                         final PeerEventListener l = downloadListener == null ? new DownloadListener() : downloadListener;
                         vPeerGroup.startBlockChainDownload(l);
                     }
 
                     @Override
-                    public void failed(State from, Throwable failure) {
-                        throw new RuntimeException(failure);
+                    public void onFailure(Throwable t) {
+                        throw new RuntimeException(t);
+
                     }
-                }, MoreExecutors.sameThreadExecutor());
+                });
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);
@@ -441,8 +438,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
-            vPeerGroup.stopAsync();
-            vPeerGroup.awaitTerminated();
+            vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
 

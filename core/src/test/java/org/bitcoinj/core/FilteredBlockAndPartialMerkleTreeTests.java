@@ -188,7 +188,6 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
         // Peer 1 goes away.
         closePeer(peerOf(p1));
-        peerGroup.stopAsync();
         super.tearDown();
     }
 }

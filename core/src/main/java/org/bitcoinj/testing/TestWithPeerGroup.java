@@ -16,15 +16,19 @@
 
 package org.bitcoinj.testing;
 
+import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.BlockingClientManager;
+import org.bitcoinj.net.ClientConnectionManager;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import com.google.common.base.Preconditions;
+import org.bitcoinj.utils.DaemonThreadFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -58,6 +62,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         remoteVersionMessage = new VersionMessage(unitTestParams, 1);
         remoteVersionMessage.localServices = VersionMessage.NODE_NETWORK;
         remoteVersionMessage.clientVersion = NotFoundMessage.MIN_PROTOCOL_VERSION;
+        blockJobs = false;
         initPeerGroup();
     }
 
@@ -65,9 +70,9 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     public void tearDown() {
         try {
             super.tearDown();
+            blockJobs = false;
             Utils.finishMockSleep();
             peerGroup.stopAsync();
-            peerGroup.awaitTerminated();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -75,12 +80,38 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
     protected void initPeerGroup() {
         if (clientType == ClientType.NIO_CLIENT_MANAGER)
-            peerGroup = new PeerGroup(unitTestParams, blockChain, new NioClientManager());
+            peerGroup = createPeerGroup(new NioClientManager());
         else
-            peerGroup = new PeerGroup(unitTestParams, blockChain, new BlockingClientManager());
+            peerGroup = createPeerGroup(new BlockingClientManager());
         peerGroup.setPingIntervalMsec(0);  // Disable the pings as they just get in the way of most tests.
         peerGroup.addWallet(wallet);
         peerGroup.setUseLocalhostPeerWhenPossible(false); // Prevents from connecting to bitcoin nodes on localhost.
+    }
+
+    protected boolean blockJobs = false;
+    protected final Semaphore jobBlocks = new Semaphore(0);
+
+    private PeerGroup createPeerGroup(final ClientConnectionManager manager) {
+        return new PeerGroup(unitTestParams, blockChain, manager) {
+            @Override
+            protected ListeningScheduledExecutorService createPrivateExecutor() {
+                return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new DaemonThreadFactory("PeerGroup test thread")) {
+                    @Override
+                    public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
+                        if (!blockJobs)
+                            return super.schedule(command, delay, unit);
+                        return super.schedule(new Runnable() {
+                            @Override
+                            public void run() {
+                                Utils.rollMockClockMillis(unit.toMillis(delay));
+                                command.run();
+                                jobBlocks.acquireUninterruptibly();
+                            }
+                        }, 0 /* immediate */, unit);
+                    }
+                });
+            }
+        };
     }
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
