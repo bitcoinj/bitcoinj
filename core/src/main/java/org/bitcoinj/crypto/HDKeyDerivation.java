@@ -90,8 +90,12 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * Derives a key given the "extended" child number, ie. with the 0x80000000 bit specifying whether to use hardened
-     * derivation or not.
+     * Derives a key given the "extended" child number, ie. the 0x80000000 bit of the value that you
+     * pass for <code>childNumber</code> will determine whether to use hardened derivation or not.
+     * Consider whether your code would benefit from the clarity of the equivalent, but explicit, form
+     * of this method that takes a <code>ChildNumber</code> rather than an <code>int</code>, for example:
+     * <code>deriveChildKey(parent, new ChildNumber(childNumber, true))</code>
+     * where the value of the hardened bit of <code>childNumber</code> is zero.
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, int childNumber) {
         return deriveChildKey(parent, new ChildNumber(childNumber));
