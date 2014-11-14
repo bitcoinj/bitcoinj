@@ -1711,10 +1711,11 @@ public class WalletTest extends TestWithWallet {
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         Transaction tx = new Transaction(params);
         Address notMyAddr = new ECKey().toAddress(params);
-        tx.addOutput(COIN.CENT.subtract(SATOSHI), notMyAddr);
-        tx.addOutput(COIN.CENT.subtract(SATOSHI), notMyAddr);
-        tx.addOutput(COIN.CENT.subtract(SATOSHI), notMyAddr);
-        tx.addOutput(COIN.CENT.subtract(SATOSHI), notMyAddr);
+        Coin c = CENT.subtract(SATOSHI);
+        tx.addOutput(c, notMyAddr);
+        tx.addOutput(c, notMyAddr);
+        tx.addOutput(c, notMyAddr);
+        tx.addOutput(c, notMyAddr);
         SendRequest request = Wallet.SendRequest.forTx(tx);
         wallet.completeTx(request);
     }
