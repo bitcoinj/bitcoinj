@@ -4522,7 +4522,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             for (TransactionOutput output : toMove.gathered) {
                 rekeyTx.addInput(output);
             }
-            rekeyTx.addOutput(toMove.valueGathered, freshReceiveAddress());
+            // When not signing, don't waste addresses.
+            rekeyTx.addOutput(toMove.valueGathered, sign ? freshReceiveAddress() : currentReceiveAddress());
             if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
