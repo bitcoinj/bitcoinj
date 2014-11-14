@@ -130,10 +130,6 @@ public class Peer extends PeerSocketHandler {
     private static class GetDataRequest {
         Sha256Hash hash;
         SettableFuture future;
-        // If the peer does not support the notfound message, we'll use ping/pong messages to simulate it. This is
-        // a nasty hack that relies on the fact that bitcoin-qt is single threaded and processes messages in order.
-        // The nonce field records which pong should clear this request as "not found".
-        long nonce;
     }
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
 
@@ -744,7 +740,6 @@ public class Peer extends PeerSocketHandler {
             // Build the request for the missing dependencies.
             List<ListenableFuture<Transaction>> futures = Lists.newArrayList();
             GetDataMessage getdata = new GetDataMessage(params);
-            final long nonce = (long)(Math.random()*Long.MAX_VALUE);
             if (needToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for dep resolution", getAddress(), needToRequest.size());
             for (Sha256Hash hash : needToRequest) {
@@ -752,9 +747,6 @@ public class Peer extends PeerSocketHandler {
                 GetDataRequest req = new GetDataRequest();
                 req.hash = hash;
                 req.future = SettableFuture.create();
-                if (!isNotFoundMessageSupported()) {
-                    req.nonce = nonce;
-                }
                 futures.add(req.future);
                 getDataFutures.add(req);
             }
@@ -803,25 +795,6 @@ public class Peer extends PeerSocketHandler {
             });
             // Start the operation.
             sendMessage(getdata);
-            if (!isNotFoundMessageSupported()) {
-                // If the peer isn't new enough to support the notfound message, we use a nasty hack instead and
-                // assume if we send a ping message after the getdata message, it'll be processed after all answers
-                // from getdata are done, so we can watch for the pong message as a substitute.
-                log.info("{}: Dep resolution waiting for a pong with nonce {}", this, nonce);
-                ping(nonce).addListener(new Runnable() {
-                    @Override
-                    public void run() {
-                        // The pong came back so clear out any transactions we requested but didn't get.
-                        for (GetDataRequest req : getDataFutures) {
-                            if (req.nonce == nonce) {
-                                log.info("{}: Bottomed out dep tree at {}", this, req.hash);
-                                req.future.cancel(true);
-                                getDataFutures.remove(req);
-                            }
-                        }
-                    }
-                }, Threading.SAME_THREAD);
-            }
         } catch (Exception e) {
             log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash());
             resultFuture.setException(e);
