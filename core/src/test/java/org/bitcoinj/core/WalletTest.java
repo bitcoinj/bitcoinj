@@ -1650,7 +1650,7 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(params);
         Coin messagePrice = Coin.ZERO;
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
+        Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
         SendRequest request = Wallet.SendRequest.forTx(tx);
         wallet.completeTx(request);
@@ -1662,7 +1662,7 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(params);
         Coin messagePrice = CENT;
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
+        Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
         SendRequest request = Wallet.SendRequest.forTx(tx);
         wallet.completeTx(request);
@@ -1675,7 +1675,7 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
         Transaction tx = new Transaction(params);
         Coin messagePrice = Coin.ZERO;
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
+        Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(CENT, notMyAddr);
         tx.addOutput(messagePrice, script);
         SendRequest request = Wallet.SendRequest.forTx(tx);
@@ -1688,8 +1688,8 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(params);
         Coin messagePrice = Coin.ZERO;
-        Script script1 = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world 1!".getBytes()).build();
-        Script script2 = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world 2!".getBytes()).build();
+        Script script1 = ScriptBuilder.createOpReturnScript("hello world 1!".getBytes());
+        Script script2 = ScriptBuilder.createOpReturnScript("hello world 2!".getBytes());
         tx.addOutput(messagePrice, script1);
         tx.addOutput(messagePrice, script2);
         SendRequest request = Wallet.SendRequest.forTx(tx);
