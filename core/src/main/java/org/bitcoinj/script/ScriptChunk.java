@@ -81,6 +81,8 @@ public class ScriptChunk {
      */
     public boolean isShortestPossiblePushData() {
         checkState(isPushData());
+        if (data == null)
+            return true;   // OP_N
         if (data.length == 0)
             return opcode == OP_0;
         if (data.length == 1) {
