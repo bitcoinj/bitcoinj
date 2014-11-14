@@ -61,7 +61,7 @@
     <HBox spacing="20" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
        <children>
            <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
-           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen;" styleClass="fat-button" text="Send money out" />
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
        </children>
     </HBox>
   </children>

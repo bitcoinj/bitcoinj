@@ -1,5 +1,6 @@
 package wallettemplate;
 
+import javafx.scene.layout.HBox;
 import org.bitcoinj.core.*;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -9,6 +10,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import org.spongycastle.crypto.params.KeyParameter;
 import wallettemplate.controls.BitcoinAddressValidator;
+import wallettemplate.utils.TextFieldValidator;
+import wallettemplate.utils.WTUtils;
 
 import static com.google.common.base.Preconditions.checkState;
 import static wallettemplate.utils.GuiUtils.*;
@@ -18,6 +21,8 @@ public class SendMoneyController {
     public Button cancelBtn;
     public TextField address;
     public Label titleLabel;
+    public TextField amountEdit;
+    public Label btcLabel;
 
     public Main.OverlayUI overlayUI;
 
@@ -26,8 +31,12 @@ public class SendMoneyController {
 
     // Called by FXMLLoader
     public void initialize() {
-        checkState(!Main.bitcoin.wallet().getBalance().isZero());
+        Coin balance = Main.bitcoin.wallet().getBalance();
+        checkState(!balance.isZero());
         new BitcoinAddressValidator(Main.params, address, sendBtn);
+        new TextFieldValidator(amountEdit, text ->
+                !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
+        amountEdit.setText(balance.toPlainString());
     }
 
     public void cancel(ActionEvent event) {
@@ -37,8 +46,9 @@ public class SendMoneyController {
     public void send(ActionEvent event) {
         // Address exception cannot happen as we validated it beforehand.
         try {
+            Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = new Address(Main.params, address.getText());
-            Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(destination);
+            Wallet.SendRequest req = Wallet.SendRequest.to(destination, amount);
             req.aesKey = aesKey;
             sendResult = Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
@@ -60,6 +70,8 @@ public class SendMoneyController {
             });
             sendBtn.setDisable(true);
             address.setDisable(true);
+            ((HBox)amountEdit.getParent()).getChildren().remove(amountEdit);
+            ((HBox)btcLabel.getParent()).getChildren().remove(btcLabel);
             updateTitleForBroadcast();
         } catch (InsufficientMoneyException e) {
             informationalAlert("Could not empty the wallet",
