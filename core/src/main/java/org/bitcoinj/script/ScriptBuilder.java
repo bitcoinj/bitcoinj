@@ -331,4 +331,14 @@ public class ScriptBuilder {
         Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
     }
+
+    /**
+     * Creates a script of the form OP_RETURN [data]. This feature allows you to attach a small piece of data (like
+     * a hash of something stored elsewhere) to a zero valued output which can never be spent and thus does not pollute
+     * the ledger.
+     */
+    public static Script createOpReturnScript(byte[] data) {
+        checkArgument(data.length <= 40);
+        return new ScriptBuilder().op(OP_RETURN).data(data).build();
+    }
 }
