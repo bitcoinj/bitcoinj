@@ -312,14 +312,14 @@ public class DeterministicKey extends ECKey {
     }
 
     public byte[] serializePublic(NetworkParameters params) {
-        return serialize(true, params);
+        return serialize(params, true);
     }
 
     public byte[] serializePrivate(NetworkParameters params) {
-        return serialize(false, params);
+        return serialize(params, false);
     }
 
-    private byte[] serialize(boolean pub, NetworkParameters params) {
+    private byte[] serialize(NetworkParameters params, boolean pub) {
         ByteBuffer ser = ByteBuffer.allocate(78);
         ser.putInt(pub ? params.getBip32HeaderPub() : params.getBip32HeaderPriv());
         ser.put((byte) getDepth());
@@ -336,11 +336,11 @@ public class DeterministicKey extends ECKey {
     }
 
     public String serializePubB58(NetworkParameters params) {
-        return toBase58(serialize(true, params));
+        return toBase58(serialize(params, true));
     }
 
     public String serializePrivB58(NetworkParameters params) {
-        return toBase58(serialize(false, params));
+        return toBase58(serialize(params, false));
     }
 
     static String toBase58(byte[] ser) {
@@ -358,7 +358,7 @@ public class DeterministicKey extends ECKey {
       */
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58, NetworkParameters params) {
         try {
-            return deserialize(parent, Base58.decodeChecked(base58), params);
+            return deserialize(params, Base58.decodeChecked(base58), parent);
         } catch (AddressFormatException e) {
             throw new IllegalArgumentException(e);
         }
@@ -367,15 +367,15 @@ public class DeterministicKey extends ECKey {
     /**
       * Deserialize an HD Key with no parent
       */
-    public static DeterministicKey deserialize(byte[] serializedKey, NetworkParameters params) {
-        return deserialize(null, serializedKey, params);
+    public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey) {
+        return deserialize(params, serializedKey, null);
     }
 
     /**
       * Deserialize an HD Key.
-      *  @param parent The parent node in the given key's deterministic hierarchy.
-      */
-    public static DeterministicKey deserialize(@Nullable DeterministicKey parent, byte[] serializedKey, NetworkParameters params) {
+     * @param parent The parent node in the given key's deterministic hierarchy.
+     */
+    public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey, @Nullable DeterministicKey parent) {
         ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
         int header = buffer.getInt();
         if (header != params.getBip32HeaderPriv() && header != params.getBip32HeaderPub())

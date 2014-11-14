@@ -215,10 +215,10 @@ public class ChildKeyDerivationTest {
             assertEquals(DeterministicKey.deserializeB58(priv58, params), key1);
             assertEquals(DeterministicKey.deserializeB58(null, pub58, params).getPubKeyPoint(), key1.getPubKeyPoint());
             assertEquals(DeterministicKey.deserializeB58(pub58, params).getPubKeyPoint(), key1.getPubKeyPoint());
-            assertEquals(DeterministicKey.deserialize(null, priv, params), key1);
-            assertEquals(DeterministicKey.deserialize(priv, params), key1);
-            assertEquals(DeterministicKey.deserialize(null, pub, params).getPubKeyPoint(), key1.getPubKeyPoint());
-            assertEquals(DeterministicKey.deserialize(pub, params).getPubKeyPoint(), key1.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(params, priv, null), key1);
+            assertEquals(DeterministicKey.deserialize(params, priv), key1);
+            assertEquals(DeterministicKey.deserialize(params, pub, null).getPubKeyPoint(), key1.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(params, pub).getPubKeyPoint(), key1.getPubKeyPoint());
         }
         {
             final String pub58 = key2.serializePubB58(params);
@@ -227,8 +227,8 @@ public class ChildKeyDerivationTest {
             final byte[] priv = key2.serializePrivate(params);
             assertEquals(DeterministicKey.deserializeB58(key1, priv58, params), key2);
             assertEquals(DeterministicKey.deserializeB58(key1, pub58, params).getPubKeyPoint(), key2.getPubKeyPoint());
-            assertEquals(DeterministicKey.deserialize(key1, priv, params), key2);
-            assertEquals(DeterministicKey.deserialize(key1, pub, params).getPubKeyPoint(), key2.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(params, priv, key1), key2);
+            assertEquals(DeterministicKey.deserialize(params, pub, key1).getPubKeyPoint(), key2.getPubKeyPoint());
         }
     }
 
@@ -240,9 +240,9 @@ public class ChildKeyDerivationTest {
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
         DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
         assertEquals(key4.getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(key3, key4.serializePrivate(params), params).getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(null, key4.serializePrivate(params), params).getPath().size(), 1);
-        assertEquals(DeterministicKey.deserialize(key4.serializePrivate(params), params).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(params, key4.serializePrivate(params), key3).getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(params, key4.serializePrivate(params), null).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(params, key4.serializePrivate(params)).getPath().size(), 1);
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {
