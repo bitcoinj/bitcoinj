@@ -100,15 +100,36 @@ public class PaymentProtocolTest {
     }
 
     @Test
-    public void testPaymentRequest() throws Exception {
+    public void testStandardPaymentRequest() throws Exception {
         // Create
-        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet3Params.get(), AMOUNT, TO_ADDRESS, MEMO,
-                PAYMENT_URL, MERCHANT_DATA).build();
+        PaymentRequest paymentRequest = PaymentProtocol.createStandardPaymentRequest(TestNet3Params.get(), AMOUNT,
+                TO_ADDRESS, MEMO, PAYMENT_URL, MERCHANT_DATA).build();
         byte[] paymentRequestBytes = paymentRequest.toByteArray();
 
         // Parse
         PaymentSession parsedPaymentRequest = PaymentProtocol.parsePaymentRequest(PaymentRequest
                 .parseFrom(paymentRequestBytes));
+        assertEquals(parsedPaymentRequest.getType(), PaymentProtocol.PAYMENT_REQUEST_TYPE_STANDARD);
+        final List<Output> parsedOutputs = parsedPaymentRequest.getOutputs();
+        assertEquals(1, parsedOutputs.size());
+        assertEquals(AMOUNT, parsedOutputs.get(0).amount);
+        assertArrayEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).getProgram(), parsedOutputs.get(0).scriptData);
+        assertEquals(MEMO, parsedPaymentRequest.getMemo());
+        assertEquals(PAYMENT_URL, parsedPaymentRequest.getPaymentUrl());
+        assertArrayEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());
+    }
+
+    @Test
+    public void testAuthPaymentRequest() throws Exception {
+        // Create
+        PaymentRequest paymentRequest = PaymentProtocol.createAuthPaymentRequest(TestNet3Params.get(), AMOUNT,
+                TO_ADDRESS, MEMO, PAYMENT_URL, MERCHANT_DATA).build();
+        byte[] paymentRequestBytes = paymentRequest.toByteArray();
+
+        // Parse
+        PaymentSession parsedPaymentRequest = PaymentProtocol.parsePaymentRequest(PaymentRequest
+                .parseFrom(paymentRequestBytes));
+        assertEquals(parsedPaymentRequest.getType(), PaymentProtocol.PAYMENT_REQUEST_TYPE_AUTH);
         final List<Output> parsedOutputs = parsedPaymentRequest.getOutputs();
         assertEquals(1, parsedOutputs.size());
         assertEquals(AMOUNT, parsedOutputs.get(0).amount);

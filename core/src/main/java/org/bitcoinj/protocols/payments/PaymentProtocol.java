@@ -51,6 +51,55 @@ public class PaymentProtocol {
     public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
     public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
 
+    public static final String PAYMENT_REQUEST_TYPE_STANDARD = "standard";
+    public static final String PAYMENT_REQUEST_TYPE_AUTH = "auth";
+
+    /**
+     * Create a payment request with type "auth" and one standard pay to address output.
+     * An "auth" payment request is semantically different from a standard payment request. When the customer sends a
+     * {@link Protos.Payment} message in response to an "auth" payment request, they are authorizing the merchant to
+     * settle the transaction for up to that amount. The customer is required to provide a refund address, and the
+     * merchant is expected to settle later for the final amount by sending the difference to that refund address.
+     * You may want to sign the request using {@link #signPaymentRequest}.
+     * Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment request.
+     *
+     * @param params network parameters
+     * @param amount amount of coins to request, or null
+     * @param toAddress address to request coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param paymentUrl URL to send payment message to, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
+     * @return created payment request, in its builder form
+     */
+    public static Protos.PaymentRequest.Builder createAuthPaymentRequest(NetworkParameters params,
+            @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable byte[] merchantData) {
+        return createAuthPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
+                paymentUrl, merchantData);
+    }
+
+    /**
+     * Create a payment request with type "auth".
+     * An "auth" payment request is semantically different from a standard payment request. When the customer sends a
+     * {@link Protos.Payment} message in response to an "auth" payment request, they are authorizing the merchant to
+     * settle the transaction for up to that amount. The customer is required to provide a refund address, and the
+     * merchant is expected to settle later for the final amount by sending the difference to that refund address.
+     * You may want to sign the request using {@link #signPaymentRequest}.
+     * Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment request.
+     *
+     * @param params network parameters
+     * @param outputs list of outputs to request coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param paymentUrl URL to send payment message to, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
+     * @return created payment request, in its builder form
+     */
+    public static Protos.PaymentRequest.Builder createAuthPaymentRequest(NetworkParameters params,
+            List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable byte[] merchantData) {
+        return createPaymentRequest(params, PAYMENT_REQUEST_TYPE_AUTH, outputs, memo, paymentUrl, merchantData);
+    }
+
     /**
      * Create a payment request with one standard pay to address output. You may want to sign the request using
      * {@link #signPaymentRequest}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
@@ -64,10 +113,10 @@ public class PaymentProtocol {
      * @param merchantData arbitrary merchant data, or null if none
      * @return created payment request, in its builder form
      */
-    public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
+    public static Protos.PaymentRequest.Builder createStandardPaymentRequest(NetworkParameters params,
             @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
-        return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
+        return createStandardPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
                 paymentUrl, merchantData);
     }
 
@@ -82,11 +131,32 @@ public class PaymentProtocol {
      * @param merchantData arbitrary merchant data, or null if none
      * @return created payment request, in its builder form
      */
-    public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
+    public static Protos.PaymentRequest.Builder createStandardPaymentRequest(NetworkParameters params,
             List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
+        return createPaymentRequest(params, PAYMENT_REQUEST_TYPE_STANDARD, outputs, memo, paymentUrl, merchantData);
+    }
+
+    /**
+     * Create a payment request by directly providing the type.
+     * You should probably use {@link #createStandardPaymentRequest} or {@link #createAuthPaymentRequest}
+     * depending on your use-case.
+     * You may want to sign the request using {@link #signPaymentRequest}.
+     * Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment request.
+     *
+     * @param params network parameters
+     * @param outputs list of outputs to request coins to
+     * @param memo arbitrary, user readable memo, or null if none
+     * @param paymentUrl URL to send payment message to, or null if none
+     * @param merchantData arbitrary merchant data, or null if none
+     * @return created payment request, in its builder form
+     */
+    public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params, String type,
+             List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
+             @Nullable byte[] merchantData) {
         final Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
         paymentDetails.setNetwork(params.getPaymentProtocolId());
+        paymentDetails.setType(type);
         for (Protos.Output output : outputs)
             paymentDetails.addOutputs(output);
         if (memo != null)

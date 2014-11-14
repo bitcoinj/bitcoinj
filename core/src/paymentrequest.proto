@@ -14,7 +14,7 @@
  */
 
 /*
- * Authors: Mike Hearn, Gavin Andresen
+ * Authors: Mike Hearn, Gavin Andresen, Kevin Greene
  */
 
 /* Notes:
@@ -41,6 +41,7 @@ message Output {
 }
 message PaymentDetails {
         optional string network = 1 [default = "main"]; // "main" or "test"
+        optional string type = 8 [default = "standard"]; // "standard" or "auth"
         repeated Output outputs = 2;        // Where payment should be sent
         required uint64 time = 3;           // Timestamp; when payment request created
         optional uint64 expires = 4;        // Timestamp; when this request should be considered invalid
