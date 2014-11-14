@@ -232,7 +232,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     @Override
     protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder2) {
         for (DeterministicKeyChain followingChain : followingKeyChains) {
-            builder2.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58()));
+            builder2.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58(params)));
         }
         builder2.append(String.format("%n"));
         for (RedeemData redeemData : marriedKeysRedeemData.values())

@@ -52,7 +52,7 @@ public class KeyChainGroupTest {
         group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
         group.getActiveKeyChain();  // Force create a chain.
 
-        watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB);
+        watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB, params);
     }
 
     private KeyChainGroup createMarriedKeyChainGroup() {

@@ -75,6 +75,8 @@ public abstract class NetworkParameters implements Serializable {
     protected int interval;
     protected int targetTimespan;
     protected byte[] alertSigningKey;
+    protected int bip32HeaderPub;
+    protected int bip32HeaderPriv;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
@@ -343,5 +345,15 @@ public abstract class NetworkParameters implements Serializable {
      */
     public byte[] getAlertSigningKey() {
         return alertSigningKey;
+    }
+
+    /** Returns the 4 byte header for BIP32 (HD) wallet - public key part. */
+    public int getBip32HeaderPub() {
+        return bip32HeaderPub;
+    }
+
+    /** Returns the 4 byte header for BIP32 (HD) wallet - private key part. */
+    public int getBip32HeaderPriv() {
+        return bip32HeaderPriv;
     }
 }
