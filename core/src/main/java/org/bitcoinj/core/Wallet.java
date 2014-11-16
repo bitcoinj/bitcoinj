@@ -4459,13 +4459,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         checkState(keychainLock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
         // TODO: Handle chain replays here.
-        long keyRotationTimestamp = vKeyRotationTimestamp;
+        final long keyRotationTimestamp = vKeyRotationTimestamp;
         if (keyRotationTimestamp == 0) return results;  // Nothing to do.
 
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
         for (DeterministicKeyChain chain : keychain.getDeterministicKeyChains()) {
-            if (chain.getEarliestKeyCreationTime() >= vKeyRotationTimestamp) {
+            if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
                 allChainsRotating = false;
                 break;
             }
