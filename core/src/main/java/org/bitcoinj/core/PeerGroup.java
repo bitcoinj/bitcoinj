@@ -363,7 +363,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         memoryPool = new MemoryPool();
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
-            @Override
+            @Override @GuardedBy("lock")
             public int compare(PeerAddress a, PeerAddress b) {
                 int result = backoffMap.get(a).compareTo(backoffMap.get(b));
                 // Sort by port if otherwise equals - for testing
@@ -640,6 +640,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         setMaxConnections(newMax);
     }
 
+    @GuardedBy("lock")
     private void addInactive(PeerAddress peerAddress) {
         // Deduplicate
         if (backoffMap.containsKey(peerAddress))
@@ -812,6 +813,7 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
         connectTo(addr, false, vConnectTimeoutMillis);
     }
 
+    @GuardedBy("lock")
     private boolean haveReadyInactivePeer(long nowMillis) {
         // No inactive peers to try?
         if (inactives.size() == 0)
@@ -1042,9 +1044,14 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      */
     @Nullable
     public Peer connectTo(InetSocketAddress address) {
-        PeerAddress peerAddress = new PeerAddress(address);
-        backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
-        return connectTo(peerAddress, true, vConnectTimeoutMillis);
+        try {
+            lock.lock();
+            PeerAddress peerAddress = new PeerAddress(address);
+            backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
+            return connectTo(peerAddress, true, vConnectTimeoutMillis);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1052,9 +1059,14 @@ public class PeerGroup extends AbstractExecutionThreadService implements Transac
      */
     @Nullable
     public Peer connectToLocalHost() {
-        final PeerAddress localhost = PeerAddress.localhost(params);
-        backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
-        return connectTo(localhost, true, vConnectTimeoutMillis);
+        try {
+            lock.lock();
+            final PeerAddress localhost = PeerAddress.localhost(params);
+            backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
+            return connectTo(localhost, true, vConnectTimeoutMillis);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
