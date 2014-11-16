@@ -2544,6 +2544,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Do the keys.
             builder.append("\nKeys:\n");
+            final long keyRotationTime = vKeyRotationTimestamp * 1000;
+            if (keyRotationTime > 0)
+                builder.append(String.format("Key rotation time: %s\n", Utils.dateTimeFormat(keyRotationTime)));
             builder.append(keychain.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
@@ -4332,9 +4335,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public void setKeyRotationTime(long unixTimeSeconds) {
         checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds());
         vKeyRotationTimestamp = unixTimeSeconds;
-        if (unixTimeSeconds > 0) {
-            log.info("Key rotation time set: {}", unixTimeSeconds);
-        }
         saveNow();
     }
 
