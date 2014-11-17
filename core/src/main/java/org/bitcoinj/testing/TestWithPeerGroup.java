@@ -34,7 +34,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Utility class that makes it easy to work with mock NetworkConnections in PeerGroups.
+ * You can derive from this class and call peerGroup.start() in your tests to get a functional PeerGroup that can be
+ * used with loopback peers created using connectPeer. This involves real TCP connections so is a pretty accurate
+ * mock, but means unit tests cannot be run simultaneously.
  */
 public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected static final NetworkParameters params = UnitTestParams.get();
@@ -72,7 +74,8 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
             super.tearDown();
             blockJobs = false;
             Utils.finishMockSleep();
-            peerGroup.stopAsync();
+            if (peerGroup.isRunning())
+                peerGroup.stopAsync();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
