@@ -49,7 +49,7 @@ public class DeterministicKey extends ECKey {
     /** Constructs a key from its components. This is not normally something you should use. */
     public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
-                            ECPoint publicAsPoint,
+                            LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
         super(priv, compressPoint(checkNotNull(publicAsPoint)));
@@ -57,6 +57,14 @@ public class DeterministicKey extends ECKey {
         this.parent = parent;
         this.childNumberPath = checkNotNull(childNumberPath);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
+    }
+
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            ECPoint publicAsPoint,
+                            @Nullable BigInteger priv,
+                            @Nullable DeterministicKey parent) {
+        this(childNumberPath, chainCode, new LazyECPoint(publicAsPoint), priv, parent);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -74,7 +82,10 @@ public class DeterministicKey extends ECKey {
     /** Constructs a key from its components. This is not normally something you should use. */
     public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
-                            KeyCrypter crypter, ECPoint pub, EncryptedData priv, @Nullable DeterministicKey parent) {
+                            KeyCrypter crypter,
+                            LazyECPoint pub,
+                            EncryptedData priv,
+                            @Nullable DeterministicKey parent) {
         this(childNumberPath, chainCode, pub, null, parent);
         this.encryptedPrivateKey = checkNotNull(priv);
         this.keyCrypter = checkNotNull(crypter);
@@ -82,7 +93,7 @@ public class DeterministicKey extends ECKey {
 
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        super(keyToClone.priv, keyToClone.pub);
+        super(keyToClone.priv, keyToClone.pub.get());
         this.parent = newParent;
         this.childNumberPath = keyToClone.childNumberPath;
         this.chainCode = keyToClone.chainCode;
@@ -155,8 +166,7 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey getPubOnly() {
         if (isPubKeyOnly()) return this;
-        //final DeterministicKey parentPub = getParent() == null ? null : getParent().getPubOnly();
-        return new DeterministicKey(getPath(), getChainCode(), getPubKeyPoint(), null, parent);
+        return new DeterministicKey(getPath(), getChainCode(), pub, null, parent);
     }
 
 
@@ -413,7 +423,7 @@ public class DeterministicKey extends ECKey {
         checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
         if (pub) {
             ECPoint point = ECKey.CURVE.getCurve().decodePoint(data);
-            return new DeterministicKey(path, chainCode, point, null, parent);
+            return new DeterministicKey(path, chainCode, new LazyECPoint(point), null, parent);
         } else {
             return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent);
         }
