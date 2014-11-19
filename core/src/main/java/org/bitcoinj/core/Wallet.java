@@ -38,6 +38,7 @@ import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.store.WalletProtobufSerializer;
 import org.bitcoinj.utils.BaseTaggableObject;
@@ -58,7 +59,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -208,6 +208,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     // Objects that perform transaction signing. Applied subsequently one after another
     @GuardedBy("lock") private List<TransactionSigner> signers;
+
+    // If this is set then the wallet selects spendable candidate outputs from a UTXO provider.
+    @Nullable volatile private UTXOProvider vUTXOProvider;
 
     /**
      * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
@@ -3600,20 +3603,82 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public LinkedList<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
         lock.lock();
         try {
-            LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-            for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-                if (excludeImmatureCoinbases && !tx.isMature()) continue;
-                for (TransactionOutput output : tx.getOutputs()) {
-                    if (!output.isAvailableForSpending()) continue;
-                    if (!output.isMine(this)) continue;
-                    candidates.add(output);
+            LinkedList<TransactionOutput> candidates;
+            if (vUTXOProvider == null) {
+                candidates = Lists.newLinkedList();
+                for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
+                    // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+                    if (excludeImmatureCoinbases && !tx.isMature()) continue;
+                    for (TransactionOutput output : tx.getOutputs()) {
+                        if (!output.isAvailableForSpending()) continue;
+                        if (!output.isMine(this)) continue;
+                        candidates.add(output);
+                    }
                 }
+            } else {
+                candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
             }
             return candidates;
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
+     * @return The list of candidates.
+     */
+    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases){
+        checkState(lock.isHeldByCurrentThread());
+        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        try {
+            int chainHeight = vUTXOProvider.getChainHeadHeight();
+            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+                boolean coinbase = output.isCoinbase();
+                int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
+                // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+                if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
+                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
+                }
+            }
+        } catch (UTXOProviderException e) {
+            throw new RuntimeException("UTXO provider error", e);
+        }
+        // We need to handle the pending transactions that we know about.
+        for (Transaction tx : Iterables.concat(pending.values())) {
+            // Remove the spent outputs.
+            for(TransactionInput input : tx.getInputs()) {
+                if (input.getConnectedOutput().isMine(this)) {
+                    candidates.remove(input.getConnectedOutput());
+                }
+            }
+            // Add change outputs. Do not try and spend coinbases that were mined too recently, the protocol forbids it.
+            if (!excludeImmatureCoinbases || tx.isMature()) {
+                for (TransactionOutput output : tx.getOutputs()) {
+                    if (output.isAvailableForSpending() && output.isMine(this)) {
+                        candidates.add(output);
+                    }
+                }
+            }
+        }
+        return candidates;
+    }
+
+    /**
+     * Get all the {@link UTXO}'s from the {@link UTXOProvider} based on keys that the
+     * wallet contains.
+     * @return The list of stored outputs.
+     */
+    protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
+        List<UTXO> candidates = new ArrayList<UTXO>();
+        List<DeterministicKey> keys = getActiveKeychain().getLeafKeys();
+        List<Address> addresses = new ArrayList<Address>();
+        for (ECKey key : keys) {
+            Address address = new Address(params, key.getPubKeyHash());
+            addresses.add(address);
+        }
+        candidates.addAll(vUTXOProvider.getOpenTransactionOutputs(addresses));
+        return candidates;
     }
 
     /** Returns the {@link CoinSelector} object which controls which outputs can be spent by this wallet. */
@@ -3650,7 +3715,96 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         setCoinSelector(AllowUnconfirmedCoinSelector.get());
     }
 
+    /**
+     * Get the {@link UTXOProvider}.
+     * @return The UTXO provider.
+     */
+    @Nullable public UTXOProvider getUTXOProvider() {
+        lock.lock();
+        try {
+            return vUTXOProvider;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Set the {@link UTXOProvider}.
+     *
+     * <p>The wallet will query the provider for the spendable candidates.
+     * The spendable candidates are the outputs controlled exclusively
+     * by private keys contained in the wallet.</p>
+     *
+     * <p>Note that the associated provider must be reattached after a wallet is loaded from disk.
+     * The association is not serialized.</p>
+     *
+     * @param vUTXOProvider The UTXO provider.
+     */
+    public void setUTXOProvider(@Nullable FullPrunedBlockStore vUTXOProvider) {
+        lock.lock();
+        try {
+            checkArgument(vUTXOProvider == null ? true : vUTXOProvider.getParams().equals(params));
+            this.vUTXOProvider = vUTXOProvider;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     //endregion
+
+    /******************************************************************************************************************/
+
+    /**
+     * A custom {@link TransactionOutput} that is free standing. This contains all the information
+     * required for spending without actually having all the linked data (i.e parent tx).
+     *
+     */
+    private class FreeStandingTransactionOutput extends TransactionOutput {
+        private UTXO output;
+        private int chainHeight;
+
+        /**
+         * Construct a free standing Transaction Output.
+         * @param params The network parameters.
+         * @param output The stored output (free standing).
+         */
+        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
+            super(params, null, output.getValue(), output.getScriptBytes());
+            this.output = output;
+            this.chainHeight = chainHeight;
+        }
+
+        /**
+         * Get the {@link UTXO}.
+         * @return The stored output.
+         */
+        public UTXO getUTXO() {
+            return output;
+        }
+
+        /**
+         * Get the depth withing the chain of the parent tx, depth is 1 if it the output height is the height of
+         * the latest block.
+         * @return The depth.
+         */
+        @Override
+        public int getParentTransactionDepthInBlocks() {
+            return chainHeight - output.getHeight() + 1;
+        }
+
+        @Override
+        public int getIndex() {
+            return (int) output.getIndex();
+        }
+
+        @Override
+        public Sha256Hash getParentTransactionHash() {
+            return output.getHash();
+        }
+    }
+
+    /******************************************************************************************************************/
+
 
     /******************************************************************************************************************/
 

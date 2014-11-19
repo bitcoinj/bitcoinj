@@ -51,6 +51,15 @@ import static com.google.common.base.Preconditions.*;
  */
 public class Script {
 
+    /** Enumeration to encapsulate the type of this script. */
+    public enum ScriptType {
+        // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
+        NO_TYPE,
+        P2PKH,
+        PUB_KEY,
+        P2SH
+    };
+
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}. */
     public enum VerifyFlag {
         P2SH, // Enable BIP16-style subscript evaluation.
@@ -1456,6 +1465,22 @@ public class Script {
         if (program != null)
             return program;
         return getProgram();
+    }
+
+    /**
+     * Get the {@link org.bitcoinj.script.Script.ScriptType}.
+     * @return The script type.
+     */
+    public ScriptType getScriptType() {
+        ScriptType type = ScriptType.NO_TYPE;
+        if (isSentToAddress()) {
+            type = ScriptType.P2PKH;
+        } else if (isSentToRawPubKey()) {
+            type = ScriptType.PUB_KEY;
+        } else if (isPayToScriptHash()) {
+            type = ScriptType.P2SH;
+        }
+        return type;
     }
 
     @Override

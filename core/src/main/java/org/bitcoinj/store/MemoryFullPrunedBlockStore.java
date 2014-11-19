@@ -42,7 +42,7 @@ class StoredTransactionOutPoint implements Serializable {
         this.index = index;
     }
     
-    StoredTransactionOutPoint(StoredTransactionOutput out) {
+    StoredTransactionOutPoint(UTXO out) {
         this.hash = out.getHash();
         this.index = out.getIndex();
     }
@@ -131,6 +131,14 @@ class TransactionalHashMap<KeyType, ValueType> {
                 return null;
         }
         return map.get(key);
+    }
+
+    public List<ValueType> values() {
+        List<ValueType> valueTypes = new ArrayList<ValueType>();
+        for (KeyType keyType : map.keySet()) {
+            valueTypes.add(get(keyType));
+        }
+        return valueTypes;
     }
     
     public void put(KeyType key, ValueType value) {
@@ -224,10 +232,10 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
 }
 
 /**
- * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link StoredTransactionOutput}s in memory.
+ * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link org.bitcoinj.core.UTXO}s in memory.
  * Used primarily for unit testing.
  */
-public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
+public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore, UTXOProvider {
     protected static class StoredBlockAndWasUndoableFlag {
         public StoredBlock block;
         public boolean wasUndoable;
@@ -236,10 +244,11 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private TransactionalHashMap<StoredTransactionOutPoint, StoredTransactionOutput> transactionOutputMap;
+    private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
+    private NetworkParameters params;
     
     /**
      * Set up the MemoryFullPrunedBlockStore
@@ -249,7 +258,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
         blockMap = new TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag>();
         fullBlockMap = new TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock>();
-        transactionOutputMap = new TransactionalHashMap<StoredTransactionOutPoint, StoredTransactionOutput>();
+        transactionOutputMap = new TransactionalHashMap<StoredTransactionOutPoint, UTXO>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
         try {
@@ -260,6 +269,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
+            this.params = params;
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         } catch (VerificationException e) {
@@ -343,22 +353,22 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     
     @Override
     @Nullable
-    public synchronized StoredTransactionOutput getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
+    public synchronized UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         return transactionOutputMap.get(new StoredTransactionOutPoint(hash, index));
     }
 
     @Override
-    public synchronized void addUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
+    public synchronized void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         transactionOutputMap.put(new StoredTransactionOutPoint(out), out);
     }
 
     @Override
-    public synchronized void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
+    public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         if (transactionOutputMap.remove(new StoredTransactionOutPoint(out)) == null)
-            throw new BlockStoreException("Tried to remove a StoredTransactionOutput from MemoryFullPrunedBlockStore that it didn't have!");
+            throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
     }
 
     @Override
@@ -388,5 +398,35 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             if (getTransactionOutput(hash, i) != null)
                 return true;
         return false;
+    }
+
+    @Override
+    public NetworkParameters getParams() {
+        return params;
+    }
+
+    @Override
+    public int getChainHeadHeight() throws UTXOProviderException {
+        try {
+            return getVerifiedChainHead().getHeight();
+        } catch (BlockStoreException e) {
+            throw new UTXOProviderException(e);
+        }
+    }
+
+    @Override
+    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+        // This is *NOT* optimal: We go through all the outputs and select the ones we are looking for.
+        // If someone uses this store for production then they have a lot more to worry about than an inefficient impl :)
+        List<UTXO> foundOutputs = new ArrayList<UTXO>();
+        List<UTXO> outputsList = transactionOutputMap.values();
+        for (UTXO output : outputsList) {
+            for (Address address : addresses) {
+                if (output.getAddress().equals(address.toString())) {
+                    foundOutputs.add(output);
+                }
+            }
+        }
+        return foundOutputs;
     }
 }
