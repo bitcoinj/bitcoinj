@@ -86,7 +86,7 @@ public final class HDKeyDerivation {
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, ECKey.CURVE.getCurve().decodePoint(pubKeyBytes), null, null);
+        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), pubKeyBytes), null, null);
     }
 
     /**
@@ -130,7 +130,7 @@ public final class HDKeyDerivation {
             return new DeterministicKey(
                     HDUtils.append(parent.getPath(), childNumber),
                     rawKey.chainCode,
-                    ECKey.CURVE.getCurve().decodePoint(rawKey.keyBytes),   // c'tor will compress
+                    new LazyECPoint(ECKey.CURVE.getCurve(), rawKey.keyBytes),
                     null,
                     parent);
         } else {
