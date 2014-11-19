@@ -25,6 +25,7 @@ public class H2FullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest
     private void deleteFiles() {
         maybeDelete("test.h2.db");
         maybeDelete("test.trace.db");
+        maybeDelete("test.lock.db");
     }
 
     private void maybeDelete(String s) {

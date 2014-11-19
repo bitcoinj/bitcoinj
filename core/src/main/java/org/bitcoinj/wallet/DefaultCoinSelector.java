@@ -48,14 +48,8 @@ public class DefaultCoinSelector implements CoinSelector {
         Collections.sort(outputs, new Comparator<TransactionOutput>() {
             @Override
             public int compare(TransactionOutput a, TransactionOutput b) {
-                int depth1 = 0;
-                int depth2 = 0;
-                TransactionConfidence conf1 = a.getParentTransaction().getConfidence();
-                TransactionConfidence conf2 = b.getParentTransaction().getConfidence();
-                if (conf1.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                    depth1 = conf1.getDepthInBlocks();
-                if (conf2.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-                    depth2 = conf2.getDepthInBlocks();
+                int depth1 = a.getParentTransactionDepthInBlocks();
+                int depth2 = b.getParentTransactionDepthInBlocks();
                 Coin aValue = a.getValue();
                 Coin bValue = b.getValue();
                 BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
@@ -66,8 +60,8 @@ public class DefaultCoinSelector implements CoinSelector {
                 int c2 = bValue.compareTo(aValue);
                 if (c2 != 0) return c2;
                 // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
-                BigInteger aHash = a.getParentTransaction().getHash().toBigInteger();
-                BigInteger bHash = b.getParentTransaction().getHash().toBigInteger();
+                BigInteger aHash = a.getParentTransactionHash().toBigInteger();
+                BigInteger bHash = b.getParentTransactionHash().toBigInteger();
                 return aHash.compareTo(bHash);
             }
         });
@@ -75,7 +69,10 @@ public class DefaultCoinSelector implements CoinSelector {
 
     /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
     protected boolean shouldSelect(Transaction tx) {
-        return isSelectable(tx);
+        if (tx != null) {
+            return isSelectable(tx);
+        }
+        return true;
     }
 
     public static boolean isSelectable(Transaction tx) {

@@ -19,7 +19,6 @@ package org.bitcoinj.store;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.*;
-import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +111,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_UNDOABLEBLOCKS_SQL                       = "UPDATE undoableBlocks SET txOutChanges=?, transactions=? WHERE hash = ?";
     private static final String DELETE_UNDOABLEBLOCKS_SQL                       = "DELETE FROM undoableBlocks WHERE height <= ?";
 
-    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase FROM openOutputs WHERE hash = ? AND index = ?";
+    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase, toaddress, addresstargetable FROM openOutputs WHERE hash = ? AND index = ?";
     private static final String SELECT_OPENOUTPUTS_COUNT_SQL                    = "SELECT COUNT(*) FROM openOutputs WHERE hash = ?";
     private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openOutputs (hash, index, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND index = ?";
@@ -123,8 +122,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String SELECT_DUMP_UNDOABLEBLOCKS_SQL                  = "SELECT txOutChanges, transactions FROM undoableBlocks";
     private static final String SELECT_DUMP_OPENOUTPUTS_SQL                     = "SELECT value, scriptBytes FROM openOutputs";
 
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT value, scriptBytes, height FROM openOutputs where toaddress = ?";
-    private static final String SELECT_TRANSACTION_OUTPUTS_WITH_HEIGHT_SQL      = "SELECT value, scriptBytes, height FROM openOutputs where toaddress = ? AND height <= ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT hash, value, scriptBytes, height, index, coinbase, toaddress, addresstargetable FROM openOutputs where toaddress = ?";
 
     // Select the balance of an address SQL.
     private static final String SELECT_BALANCE_SQL                              = "select sum(value) from openoutputs where toaddress = ?";
@@ -257,14 +255,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     protected String getTrasactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
-    }
-
-    /**
-     * Get the SQL to select the transaction outputs for a given address and height seen.
-     * @return The SQL prepared statement.
-     */
-    protected String getTrasactionOutputWithHeightSelectSQL() {
-        return SELECT_TRANSACTION_OUTPUTS_WITH_HEIGHT_SQL;
     }
 
     /**
@@ -921,7 +911,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public StoredTransactionOutput getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
+    public UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
         try {
@@ -939,7 +929,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             Coin value = Coin.valueOf(results.getLong(2));
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
-            StoredTransactionOutput txout = new StoredTransactionOutput(hash, index, value, height, coinbase, scriptBytes);
+            String address = results.getString(5);
+            int addressType = results.getInt(6);
+            UTXO txout = new UTXO(hash,
+                    index,
+                    value,
+                    height,
+                    coinbase,
+                    scriptBytes,
+                    address,
+                    addressType);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -955,42 +954,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void addUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
+    public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
-
-        // Calculate the toAddress (if any)
-        String dbAddress = "";
-        int type = 0;
-        Script outputScript = null;
-        try {
-            outputScript = new Script(out.getScriptBytes());
-        }
-        catch (ScriptException e) {
-            // Unparseable, but this isn't an error - it's an output not containing an address
-            log.info("Could not parse script for output: " + out.getHash().toString());
-        }
-        if (outputScript != null && (outputScript.isSentToAddress()
-                || outputScript.isSentToRawPubKey()
-                || outputScript.isPayToScriptHash())) {
-            if (outputScript.isSentToAddress()) {
-                Address targetAddr = new Address(params, outputScript.getPubKeyHash());
-                dbAddress = targetAddr.toString();
-                type = 1;
-            }
-            else if (outputScript.isSentToRawPubKey()) {
-                /*
-                 *   Note we use the deprecated getFromAddress here.  Coinbase outputs seem to have the target address
-                 *   in the pubkey of the script - perhaps we can rename this function?
-                 */
-                dbAddress = outputScript.getFromAddress(params).toString();
-                type = 2;
-            } else {
-                dbAddress = Address.fromP2SHHash(params, outputScript.getPubKeyHash()).toString();
-                type = 3;
-            }
-        }
-
         try {
             s = conn.get().prepareStatement(getInsertOpenoutputsSQL());
             s.setBytes(1, out.getHash().getBytes());
@@ -999,8 +965,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setInt(3, out.getHeight());
             s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScriptBytes());
-            s.setString(6, dbAddress);
-            s.setInt(7, type);
+            s.setString(6, out.getAddress());
+            s.setInt(7, out.getAddressType());
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();
@@ -1019,11 +985,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public void removeUnspentTransactionOutput(StoredTransactionOutput out) throws BlockStoreException {
+    public void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         maybeConnect();
         // TODO: This should only need one query (maybe a stored procedure)
         if (getTransactionOutput(out.getHash(), out.getIndex()) == null)
-            throw new BlockStoreException("Tried to remove a StoredTransactionOutput from DatabaseFullPrunedBlockStore that it didn't have!");
+            throw new BlockStoreException("Tried to remove a UTXO from DatabaseFullPrunedBlockStore that it didn't have!");
         try {
             PreparedStatement s = conn.get()
                     .prepareStatement(getDeleteOpenoutputsSQL());
@@ -1105,6 +1071,20 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
+    @Override
+    public NetworkParameters getParams() {
+        return params;
+    }
+
+    @Override
+    public int getChainHeadHeight() throws UTXOProviderException {
+        try {
+            return getVerifiedChainHead().getHeight();
+        } catch (BlockStoreException e) {
+            throw new UTXOProviderException(e);
+        }
+    }
+
     /**
      * Resets the store by deleting the contents of the tables and reinitialising them.
      * @throws BlockStoreException If the tables couldn't be cleared and initialised.
@@ -1147,12 +1127,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * the all the openoutputs as stored in the DB (binary), then use calculateClientSide=true</p>
      *
      * @param address The address to calculate the balance of
-     * @param calculateClientSide Flag to indicate if the DB returns the raw value/s or the actual balance (summed)
      * @return The balance of the address supplied.  If the address has not been seen, or there are no outputs open for this
      *         address, the return value is 0.
      * @throws BlockStoreException If there is an error getting the balance.
      */
-    protected BigInteger calculateBalanceForAddress(Address address, boolean calculateClientSide) throws BlockStoreException {
+    protected BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
         try {
@@ -1161,14 +1140,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             ResultSet rs = s.executeQuery();
             BigInteger balance = BigInteger.ZERO;
             while (rs.next()) {
-                if(calculateClientSide) {
-                    // The binary data is returned and we calculate the balance.  This could be because the DB
-                    // doesn't offer a convert function.
-                    //balance = balance.add(BigInteger.valueOf(rs.getLong(1)));
-                    balance = balance.add(new BigInteger(rs.getBytes(1)));
-                } else {
-                    return BigInteger.valueOf(rs.getLong(1));
-                }
+                return BigInteger.valueOf(rs.getLong(1));
             }
             return balance;
         } catch (SQLException ex) {
@@ -1184,100 +1156,48 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
     }
 
-    /**
-     * Calculate the balance for a coinbase, to-address, or p2sh address.
-     *
-     * <p>The balance {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
-     * the balance (summed) as an number.</p>
-     *
-     * @param address The address to calculate the balance of
-     * @return The balance of the address supplied.  If the address has not been seen, or there are no outputs open for this
-     *         address, the return value is 0.
-     * @throws BlockStoreException If there is an error getting the balance.
-     */
-    public BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
-        return calculateBalanceForAddress(address, false);
-    }
-
-    /**
-     * Get the list of {@link org.bitcoinj.core.TransactionOutput}'s for a given address.
-     * @param address The address.
-     * @return The list of transaction outputs.
-     * @throws BlockStoreException If there is an error getting the list of outputs.
-     */
-    public List<TransactionOutput> getOpenTransactionOutputs(Address address) throws BlockStoreException {
-        return getOpenTransactionOutputs(address, null);
-    }
-
-    /**
-     * Get the list of {@link org.bitcoinj.core.TransactionOutput}'s for a given address and a specified height.
-     * @param address The address.
-     * @param maxHeight The maximum block height of this tx output (inclusive).
-     * @return The list of transaction outputs.
-     * @throws BlockStoreException If there is an error getting the list of outputs.
-     */
-    public List<TransactionOutput> getOpenTransactionOutputs(Address address, @Nullable Integer maxHeight) throws BlockStoreException {
-        List<TransactionOutput> outputs = new ArrayList<TransactionOutput>();
-        for(List<TransactionOutput> outputsSubList : getOpenTransactionOutputsHeightMap(address, maxHeight).values()) {
-            outputs.addAll(outputsSubList);
-        }
-        return  outputs;
-    }
-
-    /**
-     * Get the map of the {@link org.bitcoinj.core.TransactionOutput}'s keyed on their height for a given address.
-     * @param address The address.
-     * @return The map of transaction outputs (list) keyed by height
-     * @throws BlockStoreException If there is an error getting the list out outputs.
-     */
-    public Map<Integer, List<TransactionOutput>> getOpenTransactionOutputsHeightMap(Address address) throws BlockStoreException {
-        return getOpenTransactionOutputsHeightMap(address, null);
-    }
-
-    /**
-     * Get the map of the {@link org.bitcoinj.core.TransactionOutput}'s keyed on their height for a given address
-     * and a specified height.
-     * @param address The address.
-     * @param maxHeight The minimum block height of this tx output (inclusive).
-     * @return The map of transaction outputs (list) keyed by height
-     * @throws BlockStoreException If there is an error getting the list out outputs.
-     */
-    public Map<Integer, List<TransactionOutput>> getOpenTransactionOutputsHeightMap(Address address, @Nullable Integer maxHeight) throws BlockStoreException {
-        maybeConnect();
+    @Override
+    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
         PreparedStatement s = null;
-        HashMap<Integer, List<TransactionOutput>> outputsMap = new HashMap<Integer, List<TransactionOutput>>();
+        List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            if(maxHeight != null) {
-                s = conn.get().prepareStatement(getTrasactionOutputWithHeightSelectSQL());
-                s.setInt(2, maxHeight);
-            } else {
-                s = conn.get().prepareStatement(getTrasactionOutputSelectSQL());
-            }
-            s.setString(1, address.toString());
-            ResultSet rs = s.executeQuery();
-            while (rs.next()) {
-                Coin amount = Coin.valueOf(rs.getLong(1));
-                byte[] scriptBytes = rs.getBytes(2);
-                int height = rs.getInt(3);
-                TransactionOutput output = new TransactionOutput(params, null, amount, scriptBytes);
-                if (outputsMap.containsKey(height)) {
-                    outputsMap.get(height).add(output);
-                } else {
-                    List outputs = new ArrayList<TransactionOutput>();
+            maybeConnect();
+            s = conn.get().prepareStatement(getTrasactionOutputSelectSQL());
+            for (Address address : addresses) {
+                s.setString(1, address.toString());
+                ResultSet rs = s.executeQuery();
+                while (rs.next()) {
+                    Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
+                    Coin amount = Coin.valueOf(rs.getLong(2));
+                    byte[] scriptBytes = rs.getBytes(3);
+                    int height = rs.getInt(4);
+                    int index = rs.getInt(5);
+                    boolean coinbase = rs.getBoolean(6);
+                    String toAddress = rs.getString(7);
+                    int addressType = rs.getInt(8);
+                    UTXO output = new UTXO(hash,
+                            index,
+                            amount,
+                            height,
+                            coinbase,
+                            scriptBytes,
+                            toAddress,
+                            addressType);
                     outputs.add(output);
-                    outputsMap.put(height, outputs);
                 }
             }
-            return outputsMap;
+            return outputs;
         } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
         } finally {
             if (s != null)
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-            }
+                    throw new UTXOProviderException("Could not close statement", e);
+                }
         }
     }
 
