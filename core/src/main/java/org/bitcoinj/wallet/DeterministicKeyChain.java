@@ -797,7 +797,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 for (int i : key.getDeterministicKey().getPathList())
                     path.add(new ChildNumber(i));
                 // Deserialize the public key and path.
-                ECPoint pubkey = ECKey.CURVE.getCurve().decodePoint(key.getPublicKey().toByteArray());
+                LazyECPoint pubkey = new LazyECPoint(ECKey.CURVE.getCurve(), key.getPublicKey().toByteArray());
                 final ImmutableList<ChildNumber> immutablePath = ImmutableList.copyOf(path);
                 // Possibly create the chain, if we didn't already do so yet.
                 boolean isWatchingAccountKey = false;
