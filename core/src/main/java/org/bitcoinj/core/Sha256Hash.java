@@ -39,12 +39,11 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
     /**
-     * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long.
+     * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long. Takes ownership!
      */
     public Sha256Hash(byte[] rawHashBytes) {
         checkArgument(rawHashBytes.length == 32);
         this.bytes = rawHashBytes;
-
     }
 
     /**
