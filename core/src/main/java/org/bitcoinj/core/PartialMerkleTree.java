@@ -185,14 +185,14 @@ public class PartialMerkleTree extends Message {
     private Sha256Hash recursiveExtractHashes(int height, int pos, ValuesUsed used, List<Sha256Hash> matchedHashes) throws VerificationException {
         if (used.bitsUsed >= matchedChildBits.length*8) {
             // overflowed the bits array - failure
-            throw new VerificationException("CPartialMerkleTree overflowed its bits array");
+            throw new VerificationException("PartialMerkleTree overflowed its bits array");
         }
         boolean parentOfMatch = checkBitLE(matchedChildBits, used.bitsUsed++);
         if (height == 0 || !parentOfMatch) {
             // if at height 0, or nothing interesting below, use stored hash and do not descend
             if (used.hashesUsed >= hashes.size()) {
                 // overflowed the hash array - failure
-                throw new VerificationException("CPartialMerkleTree overflowed its hash array");
+                throw new VerificationException("PartialMerkleTree overflowed its hash array");
             }
             Sha256Hash hash = hashes.get(used.hashesUsed++);
             if (height == 0 && parentOfMatch) // in case of height 0, we have a matched txid
@@ -201,10 +201,13 @@ public class PartialMerkleTree extends Message {
         } else {
             // otherwise, descend into the subtrees to extract matched txids and hashes
             byte[] left = recursiveExtractHashes(height - 1, pos * 2, used, matchedHashes).getBytes(), right;
-            if (pos * 2 + 1 < getTreeWidth(transactionCount, height-1))
+            if (pos * 2 + 1 < getTreeWidth(transactionCount, height-1)) {
                 right = recursiveExtractHashes(height - 1, pos * 2 + 1, used, matchedHashes).getBytes();
-            else
+                if (Arrays.equals(right, left))
+                    throw new VerificationException("Invalid merkle tree with duplicated left/right branches");
+            } else {
                 right = left;
+            }
             // and combine them before returning
             return combineLeftRight(left, right);
         }
@@ -223,13 +226,12 @@ public class PartialMerkleTree extends Message {
      * The returned root should be checked against the
      * merkle root contained in the block header for security.
      * 
-     * @param matchedHashes A list which will contain the matched txn (will be cleared)
-     *                      Required to be a LinkedHashSet in order to retain order or transactions in the block
+     * @param matchedHashesOut A list which will contain the matched txn (will be cleared).
      * @return the merkle root of this merkle tree
      * @throws ProtocolException if this partial merkle tree is invalid
      */
-    public Sha256Hash getTxnHashAndMerkleRoot(List<Sha256Hash> matchedHashes) throws VerificationException {
-        matchedHashes.clear();
+    public Sha256Hash getTxnHashAndMerkleRoot(List<Sha256Hash> matchedHashesOut) throws VerificationException {
+        matchedHashesOut.clear();
         
         // An empty set will not work
         if (transactionCount == 0)
@@ -249,7 +251,7 @@ public class PartialMerkleTree extends Message {
             height++;
         // traverse the partial tree
         ValuesUsed used = new ValuesUsed();
-        Sha256Hash merkleRoot = recursiveExtractHashes(height, 0, used, matchedHashes);
+        Sha256Hash merkleRoot = recursiveExtractHashes(height, 0, used, matchedHashesOut);
         // verify that all bits were consumed (except for the padding caused by serializing it as a byte sequence)
         if ((used.bitsUsed+7)/8 != matchedChildBits.length ||
                 // verify that all hashes were consumed
