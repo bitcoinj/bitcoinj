@@ -1043,12 +1043,12 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, prevOut, Utils.currentTimeSeconds(), pubkeyForTesting, FIFTY_COINS);
+        return createNextBlock(to, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS);
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, null, Utils.currentTimeSeconds(), pubkeyForTesting, value);
+        return createNextBlock(to, null, getTimeSeconds() + 5, pubkeyForTesting, value);
     }
 
     @VisibleForTesting
