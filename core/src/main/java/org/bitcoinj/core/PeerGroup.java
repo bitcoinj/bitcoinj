@@ -341,6 +341,7 @@ public class PeerGroup implements TransactionBroadcaster {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
             @Override
             public int compare(PeerAddress a, PeerAddress b) {
+                checkState(lock.isHeldByCurrentThread());
                 int result = backoffMap.get(a).compareTo(backoffMap.get(b));
                 // Sort by port if otherwise equals - for testing
                 if (result == 0)
@@ -479,10 +480,10 @@ public class PeerGroup implements TransactionBroadcaster {
                     executor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     return;
                 }
+                connectTo(addrToTry, false, vConnectTimeoutMillis);
             } finally {
                 lock.unlock();
             }
-            connectTo(addrToTry, false, vConnectTimeoutMillis);
             if (countConnectedAndPendingPeers() < getMaxConnections()) {
                 executor.execute(this);   // Try next peer immediately.
             }
@@ -1096,9 +1097,14 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     @Nullable
     public Peer connectTo(InetSocketAddress address) {
-        PeerAddress peerAddress = new PeerAddress(address);
-        backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
-        return connectTo(peerAddress, true, vConnectTimeoutMillis);
+        lock.lock();
+        try {
+            PeerAddress peerAddress = new PeerAddress(address);
+            backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
+            return connectTo(peerAddress, true, vConnectTimeoutMillis);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1106,9 +1112,14 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     @Nullable
     public Peer connectToLocalHost() {
-        final PeerAddress localhost = PeerAddress.localhost(params);
-        backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
-        return connectTo(localhost, true, vConnectTimeoutMillis);
+        lock.lock();
+        try {
+            final PeerAddress localhost = PeerAddress.localhost(params);
+            backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
+            return connectTo(localhost, true, vConnectTimeoutMillis);
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1119,8 +1130,9 @@ public class PeerGroup implements TransactionBroadcaster {
      *                                explicitly requested.
      * @return Peer or null.
      */
-    @Nullable
+    @Nullable @GuardedBy("lock")
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) {
+        checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
@@ -1140,16 +1152,10 @@ public class PeerGroup implements TransactionBroadcaster {
         peer.setSocketTimeout(connectTimeoutMillis);
         // When the channel has connected and version negotiated successfully, handleNewPeer will end up being called on
         // a worker thread.
-
         if (incrementMaxConnections) {
             // We don't use setMaxConnections here as that would trigger a recursive attempt to establish a new
             // outbound connection.
-            lock.lock();
-            try {
-                maxConnections++;
-            } finally {
-                lock.unlock();
-            }
+            maxConnections++;
         }
         return peer;
     }
@@ -1461,7 +1467,8 @@ public class PeerGroup implements TransactionBroadcaster {
         }
         final SettableFuture<List<Peer>> future = SettableFuture.create();
         addEventListener(new AbstractPeerEventListener() {
-            @Override public void onPeerConnected(Peer peer, int peerCount) {
+            @Override
+            public void onPeerConnected(Peer peer, int peerCount) {
                 final List<Peer> peers = findPeersOfAtLeastVersion(protocolVersion);
                 if (peers.size() >= numPeers) {
                     future.set(peers);
