@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
@@ -88,5 +90,14 @@ public class TransactionTest {
         TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
         tx.verify();
+    }
+
+    @Test
+    public void connectingDisconnectOutputs() throws Exception {
+        assertNotNull(tx.getInput(0).getValue());
+        tx.getInput(0).disconnect();
+        assertNull(tx.getInput(0).getValue());
+        tx.getInput(0).connect(dummy.getOutput(0));
+        assertNotNull(tx.getInput(0).getValue());
     }
 }
