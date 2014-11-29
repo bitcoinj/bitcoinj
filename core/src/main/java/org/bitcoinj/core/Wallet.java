@@ -1336,15 +1336,13 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return params;
     }
 
-    /**
-     * Returns a wallet deserialized from the given file.
-     */
-    public static Wallet loadFromFile(File f) throws UnreadableWalletException {
+    /** Deserializes a wallet given extensions that know how to deserialize themeslves */
+    public static Wallet loadFromFile(File f, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try {
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(f);
-                return loadFromFileStream(stream);
+                return loadFromFileStream(stream, walletExtensions);
             } finally {
                 if (stream != null) stream.close();
             }
@@ -1352,7 +1350,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             throw new UnreadableWalletException("Could not open file", e);
         }
     }
-    
+
+    /**  Returns a wallet deserialized from the given file. */
+    public static Wallet loadFromFile(File f) throws UnreadableWalletException { return loadFromFile(f, null); }
+
     public boolean isConsistent() {
         lock.lock();
         try {
@@ -1404,15 +1405,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
-    /**
-     * Returns a wallet deserialized from the given input stream.
-     */
-    public static Wallet loadFromFileStream(InputStream stream) throws UnreadableWalletException {
-        Wallet wallet = new WalletProtobufSerializer().readWallet(stream);
+    /** Returns a wallet deserialized from the given input stream and wallet extensions. */
+    public static Wallet loadFromFileStream(InputStream stream, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+        Wallet wallet = new WalletProtobufSerializer().readWallet(stream, walletExtensions);
         if (!wallet.isConsistent()) {
             log.error("Loaded an inconsistent wallet");
         }
         return wallet;
+    }
+
+    /** Returns a wallet deserialized from the given input stream. */
+    public static Wallet loadFromFileStream(InputStream stream) throws UnreadableWalletException {
+        return loadFromFileStream(stream, null);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

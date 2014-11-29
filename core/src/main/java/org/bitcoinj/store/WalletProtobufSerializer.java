@@ -367,9 +367,8 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * <p>Parses a wallet from the given stream, using the provided Wallet instance to load data into. This is primarily
-     * used when you want to register extensions. Data in the proto will be added into the wallet where applicable and
-     * overwrite where not.</p>
+     * <p>Parses a wallet from the given stream, using the provided Wallet instance to load data into. Data in the proto
+     * will be added into the wallet where applicable and overwritten where not.</p>
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
      * inconsistent data, a wallet extension marked as mandatory that cannot be handled and so on. You should always
@@ -377,14 +376,26 @@ public class WalletProtobufSerializer {
      *
      * @throws UnreadableWalletException thrown in various error conditions (see description).
      */
-    public Wallet readWallet(InputStream input) throws UnreadableWalletException {
+    public Wallet readWallet(InputStream input) throws UnreadableWalletException { return readWallet(input, null); }
+
+    /**
+     * <p>Parses a wallet from the given stream. The input stream might contain wallet extensions, which are identified and
+     * loaded into the wallet by calling their deserialization method. </p>
+     *
+     * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
+     * inconsistent data and so on. You should always handle {@link UnreadableWalletException} and communicate failure
+     * to the user in an appropriate manner.</p>
+     *
+     * @throws UnreadableWalletException thrown in various error conditions (see description).
+     */
+    public Wallet readWallet(InputStream input, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try {
             Protos.Wallet walletProto = parseToProto(input);
             final String paramsID = walletProto.getNetworkIdentifier();
             NetworkParameters params = NetworkParameters.fromID(paramsID);
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
-            return readWallet(params, null, walletProto);
+            return readWallet(params, walletExtensions, walletProto);
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         } catch (IllegalStateException e) {
