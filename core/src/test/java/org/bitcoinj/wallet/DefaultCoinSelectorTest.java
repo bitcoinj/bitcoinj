@@ -30,7 +30,6 @@ import org.junit.Test;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 
 import static org.bitcoinj.core.Coin.*;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -131,7 +130,6 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         DefaultCoinSelector selector = new DefaultCoinSelector();
         CoinSelection selection = selector.select(COIN.multiply(2), outputs);
 
-        // Originally size would be 1 here
         assertTrue(selection.gathered.size() == 4);
     }
 }
