@@ -335,7 +335,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         downloadTxDependencies = true;
 
-        confidencePool = params.getConfidencePool();
+        confidencePool = chain.getContext().getConfidencePool();
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
@@ -515,7 +515,7 @@ public class PeerGroup implements TransactionBroadcaster {
             Iterator<InventoryItem> it = items.iterator();
             while (it.hasNext()) {
                 InventoryItem item = it.next();
-                // Check the mempool first.
+                // Check the confidence pool first.
                 Transaction tx = confidencePool.get(item.hash);
                 if (tx != null) {
                     transactions.add(tx);
@@ -1137,7 +1137,7 @@ public class PeerGroup implements TransactionBroadcaster {
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
 
-        Peer peer = new Peer(params, ver, address, chain, confidencePool, downloadTxDependencies);
+        Peer peer = new Peer(params, ver, address, chain, downloadTxDependencies);
         peer.addEventListener(startupListener, Threading.SAME_THREAD);
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
@@ -1321,11 +1321,12 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns the {@link TxConfidencePool} created by this peer group to synchronize its peers. The pool tracks advertised
+     * Returns the {@link TxConfidencePool} used by this peer group to synchronize its peers. The pool tracks advertised
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
      * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
      * have that it's really valid.
      */
+    @Deprecated
     public TxConfidencePool getConfidencePool() {
         return confidencePool;
     }

@@ -86,6 +86,7 @@ public abstract class AbstractBlockChain {
 
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;
+    private final Context context;
 
     /**
      * Tracks the top of the best known chain.<p>
@@ -149,6 +150,11 @@ public abstract class AbstractBlockChain {
         this.params = params;
         this.listeners = new CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>>();
         for (BlockChainListener l : listeners) addListener(l, Threading.SAME_THREAD);
+        context = new Context();
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     /**

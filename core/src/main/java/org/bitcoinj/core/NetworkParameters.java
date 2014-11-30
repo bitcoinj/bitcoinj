@@ -77,7 +77,6 @@ public abstract class NetworkParameters implements Serializable {
     protected byte[] alertSigningKey;
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
-    transient protected TxConfidencePool confidencePool;
 
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
@@ -98,7 +97,6 @@ public abstract class NetworkParameters implements Serializable {
     protected NetworkParameters() {
         alertSigningKey = SATOSHI_KEY;
         genesisBlock = createGenesis(this);
-        confidencePool = new TxConfidencePool();
     }
 
     private static Block createGenesis(NetworkParameters n) {
@@ -357,9 +355,5 @@ public abstract class NetworkParameters implements Serializable {
     /** Returns the 4 byte header for BIP32 (HD) wallet - private key part. */
     public int getBip32HeaderPriv() {
         return bip32HeaderPriv;
-    }
-
-    public TxConfidencePool getConfidencePool() {
-        return confidencePool;
     }
 }

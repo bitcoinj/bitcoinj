@@ -77,10 +77,10 @@ public class PeerTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
 
-        confidencePool = new TxConfidencePool();
+        confidencePool = blockChain.getContext().getConfidencePool();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
-        peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain, confidencePool);
+        peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain);
         peer.addWallet(wallet);
     }
 
@@ -269,7 +269,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Check co-ordination of which peer to download via the memory pool.
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4242);
-        Peer peer2 = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain, confidencePool);
+        Peer peer2 = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain);
         peer2.addWallet(wallet);
         VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = 70001;
