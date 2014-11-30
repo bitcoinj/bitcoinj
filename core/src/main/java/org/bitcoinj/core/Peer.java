@@ -161,7 +161,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
-        this(params, ver, remoteAddress, chain, null);
+        this(params, ver, remoteAddress, chain);
     }
 
     /**
@@ -179,8 +179,8 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain, @Nullable TxConfidencePool mempool) {
-        this(params, ver, remoteAddress, chain, mempool, true);
+                @Nullable AbstractBlockChain chain) {
+        this(params, ver, remoteAddress, chain, true);
     }
 
     /**
@@ -198,7 +198,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain, @Nullable TxConfidencePool mempool, boolean downloadTxDependencies) {
+                @Nullable AbstractBlockChain chain, boolean downloadTxDependencies) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
@@ -211,7 +211,7 @@ public class Peer extends PeerSocketHandler {
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.confidencePool = mempool;
+        this.confidencePool = chain.getContext().getConfidencePool();
     }
 
     /**
