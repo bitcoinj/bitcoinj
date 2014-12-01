@@ -56,7 +56,7 @@ public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
     private InboundMessageQueuer writeTarget;
     private static final int OTHER_PEER_CHAIN_HEIGHT = 110;
-    private TxConfidencePool confidencePool;
+    private TxConfidenceTable confidenceTable;
     private final AtomicBoolean fail = new AtomicBoolean(false);
 
 
@@ -77,7 +77,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
 
-        confidencePool = blockChain.getContext().getConfidencePool();
+        confidenceTable = blockChain.getContext().getConfidenceTable();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
         peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain);
@@ -291,7 +291,7 @@ public class PeerTest extends TestWithNetworkConnections {
         GetDataMessage message = (GetDataMessage)outbound(writeTarget);
         assertEquals(1, message.getItems().size());
         assertEquals(tx.getHash(), message.getItems().get(0).hash);
-        assertTrue(confidencePool.maybeWasSeen(tx.getHash()));
+        assertTrue(confidenceTable.maybeWasSeen(tx.getHash()));
 
         // Advertising to peer2 results in no getdata message.
         inbound(writeTarget2, inv);

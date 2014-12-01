@@ -16,9 +16,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.AbstractPeerEventListener;
-import org.bitcoinj.core.RejectMessage;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -101,7 +98,7 @@ public class TransactionBroadcast {
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
             // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
-            pinnedTx = peerGroup.getConfidencePool().intern(tx);
+            pinnedTx = peerGroup.getConfidenceTable().intern(tx);
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
