@@ -1321,10 +1321,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns the {@link TxConfidencePool} used by this peer group to synchronize its peers. The pool tracks advertised
-     * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
-     * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
-     * have that it's really valid.
+     * Use {@link org.bitcoinj.core.Context#getConfidencePool()} instead.
      */
     @Deprecated
     public TxConfidencePool getConfidencePool() {

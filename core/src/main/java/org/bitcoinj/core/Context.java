@@ -2,7 +2,8 @@ package org.bitcoinj.core;
 
 /**
  * The Context object holds various objects that are relevant to the global state of our
- * view of the Bitcoin network.
+ * view of the Bitcoin network.  You can get an instance of this class
+ * through {@link AbstractBlockChain#getContext()}.
  */
 public class Context {
     protected TxConfidencePool confidencePool;
