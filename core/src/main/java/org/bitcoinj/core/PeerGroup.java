@@ -121,7 +121,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean downloadTxDependencies;
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private final TxConfidencePool confidencePool;
+    private final TxConfidenceTable confidenceTable;
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
@@ -335,7 +335,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         downloadTxDependencies = true;
 
-        confidencePool = chain.getContext().getConfidencePool();
+        confidenceTable = chain.getContext().getConfidenceTable();
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
@@ -516,7 +516,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the confidence pool first.
-                Transaction tx = confidencePool.get(item.hash);
+                Transaction tx = confidenceTable.get(item.hash);
                 if (tx != null) {
                     transactions.add(tx);
                     it.remove();
@@ -1321,11 +1321,11 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Use {@link org.bitcoinj.core.Context#getConfidencePool()} instead.
+     * Use {@link org.bitcoinj.core.Context#getConfidenceTable()} instead.
      */
     @Deprecated
-    public TxConfidencePool getConfidencePool() {
-        return confidencePool;
+    public TxConfidenceTable getConfidenceTable() {
+        return confidenceTable;
     }
 
     /**

@@ -93,7 +93,7 @@ public class BloomFilter extends Message {
      * 
      * <p>In order for filtered block download to function efficiently, the number of matched transactions in any given
      * block should be less than (with some headroom) the maximum size of the MemoryPool used by the Peer
-     * doing the downloading (default is {@link TxConfidencePool#MAX_SIZE}). See the comment in processBlock(FilteredBlock)
+     * doing the downloading (default is {@link TxConfidenceTable#MAX_SIZE}). See the comment in processBlock(FilteredBlock)
      * for more information on this restriction.</p>
      * 
      * <p>randomNonce is a tweak for the hash function used to prevent some theoretical DoS attacks.

@@ -44,9 +44,9 @@ import static com.google.common.base.Preconditions.checkState;
  * <p>It is <b>not</b> at this time directly equivalent to the Satoshi clients memory pool, which tracks
  * all transactions not currently included in the best chain - it's simply a cache.</p>
  */
-public class TxConfidencePool {
-    private static final Logger log = LoggerFactory.getLogger(TxConfidencePool.class);
-    protected ReentrantLock lock = Threading.lock("txconfidencepool");
+public class TxConfidenceTable {
+    private static final Logger log = LoggerFactory.getLogger(TxConfidenceTable.class);
+    protected ReentrantLock lock = Threading.lock("txconfidencetable");
 
     // For each transaction we may have seen:
     //   - only its hash in an inv packet
@@ -72,27 +72,27 @@ public class TxConfidencePool {
         // allowing us to delete the associated entry (the tx itself has already gone away).
         WeakTransactionReference tx;
     }
-    private LinkedHashMap<Sha256Hash, Entry> pool;
+    private LinkedHashMap<Sha256Hash, Entry> table;
 
-    // This ReferenceQueue gets entries added to it when they are only weakly reachable, ie, the MemoryPool is the
-    // only thing that is tracking the transaction anymore. We check it from time to time and delete pool entries
+    // This ReferenceQueue gets entries added to it when they are only weakly reachable, ie, the TxConfidenceTable is the
+    // only thing that is tracking the transaction anymore. We check it from time to time and delete table entries
     // corresponding to expired transactions. In this way memory usage of the system is in line with however many
     // transactions you actually care to track the confidence of. We can still end up with lots of hashes being stored
     // if our peers flood us with invs but the MAX_SIZE param caps this.
     private ReferenceQueue<Transaction> referenceQueue;
 
-    /** The max size of a memory pool created with the no-args constructor. */
+    /** The max size of a table created with the no-args constructor. */
     public static final int MAX_SIZE = 1000;
 
     /**
-     * Creates a memory pool that will track at most the given number of transactions (allowing you to bound memory
+     * Creates a table that will track at most the given number of transactions (allowing you to bound memory
      * usage).
-     * @param size Max number of transactions to track. The pool will fill up to this size then stop growing.
+     * @param size Max number of transactions to track. The table will fill up to this size then stop growing.
      */
-    public TxConfidencePool(final int size) {
-        pool = new LinkedHashMap<Sha256Hash, Entry>() {
+    public TxConfidenceTable(final int size) {
+        table = new LinkedHashMap<Sha256Hash, Entry>() {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, TxConfidencePool.Entry> entry) {
+            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, TxConfidenceTable.Entry> entry) {
                 // An arbitrary choice to stop the memory used by tracked transactions getting too huge in the event
                 // of some kind of DoS attack.
                 return size() > size;
@@ -102,20 +102,20 @@ public class TxConfidencePool {
     }
 
     /**
-     * Creates a memory pool that will track at most {@link TxConfidencePool#MAX_SIZE} entries. You should normally use
+     * Creates a table that will track at most {@link TxConfidenceTable#MAX_SIZE} entries. You should normally use
      * this constructor.
      */
-    public TxConfidencePool() {
+    public TxConfidenceTable() {
         this(MAX_SIZE);
     }
 
     /**
      * If any transactions have expired due to being only weakly reachable through us, go ahead and delete their
-     * pool entries - it means we downloaded the transaction and sent it to various event listeners, none of
+     * table entries - it means we downloaded the transaction and sent it to various event listeners, none of
      * which bothered to keep a reference. Typically, this is because the transaction does not involve any keys that
      * are relevant to any of our wallets.
      */
-    private void cleanPool() {
+    private void cleanTable() {
         lock.lock();
         try {
             Reference<? extends Transaction> ref;
@@ -123,7 +123,7 @@ public class TxConfidencePool {
                 // Find which transaction got deleted by the GC.
                 WeakTransactionReference txRef = (WeakTransactionReference) ref;
                 // And remove the associated map entry so the other bits of memory can also be reclaimed.
-                pool.remove(txRef.hash);
+                table.remove(txRef.hash);
             }
         } finally {
             lock.unlock();
@@ -136,8 +136,8 @@ public class TxConfidencePool {
     public int numBroadcastPeers(Sha256Hash txHash) {
         lock.lock();
         try {
-            cleanPool();
-            Entry entry = pool.get(txHash);
+            cleanTable();
+            Entry entry = table.get(txHash);
             if (entry == null) {
                 // No such TX known.
                 return 0;
@@ -151,7 +151,7 @@ public class TxConfidencePool {
                     // We previously downloaded this transaction, but nothing cared about it so the garbage collector threw
                     // it away. We also deleted the set that tracked which peers had seen it. Treat this case as a zero and
                     // just delete it from the map.
-                    pool.remove(txHash);
+                    table.remove(txHash);
                     return 0;
                 } else {
                     checkState(entry.addresses == null);
@@ -171,8 +171,8 @@ public class TxConfidencePool {
     public Transaction intern(Transaction tx) {
         lock.lock();
         try {
-            cleanPool();
-            Entry entry = pool.get(tx.getHash());
+            cleanTable();
+            Entry entry = table.get(tx.getHash());
             if (entry != null) {
                 // This TX or its hash have been previously interned.
                 if (entry.tx != null) {
@@ -193,7 +193,7 @@ public class TxConfidencePool {
                     Set<PeerAddress> addrs = entry.addresses;
                     entry.addresses = null;
                     TransactionConfidence confidence = tx.getConfidence();
-                    log.debug("Adding tx [{}] {} to the memory pool",
+                    log.debug("Adding tx [{}] {} to the confidence table",
                             confidence.numBroadcastPeers(), tx.getHashAsString());
                     for (PeerAddress a : addrs) {
                         markBroadcast(a, tx);
@@ -206,7 +206,7 @@ public class TxConfidencePool {
                 log.debug("Provided with a downloaded transaction we didn't see announced yet: {}", tx.getHashAsString());
                 entry = new Entry();
                 entry.tx = new WeakTransactionReference(tx, referenceQueue);
-                pool.put(tx.getHash(), entry);
+                table.put(tx.getHash(), entry);
                 return tx;
             }
         } finally {
@@ -238,8 +238,8 @@ public class TxConfidencePool {
     public void seen(Sha256Hash hash, PeerAddress byPeer) {
         lock.lock();
         try {
-            cleanPool();
-            Entry entry = pool.get(hash);
+            cleanTable();
+            Entry entry = table.get(hash);
             if (entry != null) {
                 // This TX or its hash have been previously announced.
                 if (entry.tx != null) {
@@ -265,7 +265,7 @@ public class TxConfidencePool {
                 // TODO: Using hashsets here is inefficient compared to just having an array.
                 entry.addresses = new HashSet<PeerAddress>();
                 entry.addresses.add(byPeer);
-                pool.put(hash, entry);
+                table.put(hash, entry);
                 log.info("{}: Peer announced new transaction [1] {}", byPeer, hash);
             }
         } finally {
@@ -289,7 +289,7 @@ public class TxConfidencePool {
     public Transaction get(Sha256Hash hash) {
         lock.lock();
         try {
-            Entry entry = pool.get(hash);
+            Entry entry = table.get(hash);
             if (entry == null) return null;  // Unknown.
             if (entry.tx == null) return null;  // Seen but only in advertisements.
             if (entry.tx.get() == null) return null;  // Was downloaded but garbage collected.
@@ -309,7 +309,7 @@ public class TxConfidencePool {
     public boolean maybeWasSeen(Sha256Hash hash) {
         lock.lock();
         try {
-            Entry entry = pool.get(hash);
+            Entry entry = table.get(hash);
             return entry != null;
         } finally {
             lock.unlock();

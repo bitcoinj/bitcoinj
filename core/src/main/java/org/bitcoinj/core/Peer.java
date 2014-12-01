@@ -89,7 +89,7 @@ public class Peer extends PeerSocketHandler {
     private final AtomicInteger blocksAnnounced = new AtomicInteger();
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private final TxConfidencePool confidencePool;
+    private final TxConfidenceTable confidenceTable;
     // Each wallet added to the peer will be notified of downloaded transaction data.
     private final CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
@@ -165,8 +165,8 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain and memory pool. Transactions stored in a memory
-     * pool will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
@@ -184,8 +184,8 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain and memory pool. Transactions stored in a memory
-     * pool will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
@@ -211,7 +211,7 @@ public class Peer extends PeerSocketHandler {
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.confidencePool = chain.getContext().getConfidencePool();
+        this.confidenceTable = chain.getContext().getConfidenceTable();
     }
 
     /**
@@ -583,9 +583,9 @@ public class Peer extends PeerSocketHandler {
         lock.lock();
         try {
             log.debug("{}: Received tx {}", getAddress(), tx.getHashAsString());
-            if (confidencePool != null) {
+            if (confidenceTable != null) {
                 // We may get back a different transaction object.
-                tx = confidencePool.seen(tx, getAddress());
+                tx = confidenceTable.seen(tx, getAddress());
             }
             fTx = tx;
             // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
@@ -686,7 +686,7 @@ public class Peer extends PeerSocketHandler {
      * <p>Note that dependencies downloaded this way will not trigger the onTransaction method of event listeners.</p>
      */
     public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
-        checkNotNull(confidencePool, "Must have a configured MemoryPool object to download dependencies.");
+        checkNotNull(confidenceTable, "Must have a configured TxConfidenceTable object to download dependencies.");
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
@@ -712,7 +712,7 @@ public class Peer extends PeerSocketHandler {
     private ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
                                                                   final Object marker,
                                                                   final List<Transaction> results) {
-        checkNotNull(confidencePool, "Must have a configured MemoryPool object to download dependencies.");
+        checkNotNull(confidenceTable, "Must have a configured TxConfidenceTable object to download dependencies.");
         final SettableFuture<Object> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getHash();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
@@ -727,7 +727,7 @@ public class Peer extends PeerSocketHandler {
         for (TransactionInput input : tx.getInputs()) {
             // There may be multiple inputs that connect to the same transaction.
             Sha256Hash hash = input.getOutpoint().getHash();
-            Transaction dep = confidencePool.get(hash);
+            Transaction dep = confidenceTable.get(hash);
             if (dep == null) {
                 needToRequest.add(hash);
             } else {
@@ -1043,7 +1043,7 @@ public class Peer extends PeerSocketHandler {
         Iterator<InventoryItem> it = transactions.iterator();
         while (it.hasNext()) {
             InventoryItem item = it.next();
-            if (confidencePool == null) {
+            if (confidenceTable == null) {
                 if (downloadData) {
                     // If there's no memory pool only download transactions if we're configured to.
                     getdata.addItem(item);
@@ -1055,7 +1055,7 @@ public class Peer extends PeerSocketHandler {
                 // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
                 // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
                 // sending us the transaction: currently we'll never try to re-fetch after a timeout.
-                if (confidencePool.maybeWasSeen(item.hash)) {
+                if (confidenceTable.maybeWasSeen(item.hash)) {
                     // Some other peer already announced this so don't download.
                     it.remove();
                 } else {
@@ -1063,7 +1063,7 @@ public class Peer extends PeerSocketHandler {
                     getdata.addItem(item);
                 }
                 // This can trigger transaction confidence listeners.
-                confidencePool.seen(item.hash, this.getAddress());
+                confidenceTable.seen(item.hash, this.getAddress());
             }
         }
 
@@ -1528,7 +1528,7 @@ public class Peer extends PeerSocketHandler {
      * unset a filter, though the underlying p2p protocol does support it.</p>
      */
     public void setBloomFilter(BloomFilter filter) {
-        setBloomFilter(filter, confidencePool != null || vDownloadData);
+        setBloomFilter(filter, confidenceTable != null || vDownloadData);
     }
 
     /**

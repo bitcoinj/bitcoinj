@@ -6,19 +6,19 @@ package org.bitcoinj.core;
  * through {@link AbstractBlockChain#getContext()}.
  */
 public class Context {
-    protected TxConfidencePool confidencePool;
+    protected TxConfidenceTable confidenceTable;
 
     protected Context() {
-        confidencePool = new TxConfidencePool();
+        confidenceTable = new TxConfidenceTable();
     }
 
     /**
-     * Returns the {@link TxConfidencePool} created by this context. The pool tracks advertised
+     * Returns the {@link TxConfidenceTable} created by this context. The pool tracks advertised
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
      * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
      * have that it's really valid.
      */
-    public TxConfidencePool getConfidencePool() {
-        return confidencePool;
+    public TxConfidenceTable getConfidenceTable() {
+        return confidenceTable;
     }
 }
