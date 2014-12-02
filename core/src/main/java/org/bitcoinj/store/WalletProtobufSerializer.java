@@ -367,24 +367,13 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * <p>Parses a wallet from the given stream, using the provided Wallet instance to load data into. Data in the proto
-     * will be added into the wallet where applicable and overwritten where not.</p>
+     * <p>Loads wallet data from the given protocol buffer and inserts it into the given Wallet object. This is primarily
+     * useful when you wish to pre-register extension objects. Note that if loading fails the provided Wallet object
+     * may be in an indeterminate state and should be thrown away.</p>
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
      * inconsistent data, a wallet extension marked as mandatory that cannot be handled and so on. You should always
      * handle {@link UnreadableWalletException} and communicate failure to the user in an appropriate manner.</p>
-     *
-     * @throws UnreadableWalletException thrown in various error conditions (see description).
-     */
-    public Wallet readWallet(InputStream input) throws UnreadableWalletException { return readWallet(input, null); }
-
-    /**
-     * <p>Parses a wallet from the given stream. The input stream might contain wallet extensions, which are identified and
-     * loaded into the wallet by calling their deserialization method. </p>
-     *
-     * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
-     * inconsistent data and so on. You should always handle {@link UnreadableWalletException} and communicate failure
-     * to the user in an appropriate manner.</p>
      *
      * @throws UnreadableWalletException thrown in various error conditions (see description).
      */

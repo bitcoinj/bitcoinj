@@ -1336,12 +1336,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return params;
     }
 
-    /** Deserializes a wallet given extensions that know how to deserialize themeslves */
-    public static Wallet loadFromFile(File f, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+    /**
+     * <p>Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
+     * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}</p>
+     *
+     * @param file the wallet file to read
+     * @param walletExtensions extensions possibly added to the wallet.
+     */
+    public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try {
             FileInputStream stream = null;
             try {
-                stream = new FileInputStream(f);
+                stream = new FileInputStream(file);
                 return loadFromFileStream(stream, walletExtensions);
             } finally {
                 if (stream != null) stream.close();
@@ -1350,9 +1356,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             throw new UnreadableWalletException("Could not open file", e);
         }
     }
-
-    /**  Returns a wallet deserialized from the given file. */
-    public static Wallet loadFromFile(File f) throws UnreadableWalletException { return loadFromFile(f, null); }
 
     public boolean isConsistent() {
         lock.lock();
@@ -1412,11 +1415,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             log.error("Loaded an inconsistent wallet");
         }
         return wallet;
-    }
-
-    /** Returns a wallet deserialized from the given input stream. */
-    public static Wallet loadFromFileStream(InputStream stream) throws UnreadableWalletException {
-        return loadFromFileStream(stream, null);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
