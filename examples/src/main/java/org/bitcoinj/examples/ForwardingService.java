@@ -136,11 +136,8 @@ public class ForwardingService {
                     System.out.println("Sent coins onwards! Transaction hash is " + sendResult.tx.getHashAsString());
                 }
             }, MoreExecutors.sameThreadExecutor());
-        } catch (KeyCrypterException e) {
+        } catch (KeyCrypterException | InsufficientMoneyException e) {
             // We don't use encrypted wallets in this example - can never happen.
-            throw new RuntimeException(e);
-        } catch (InsufficientMoneyException e) {
-            // This should never happen - we're only trying to forward what we received!
             throw new RuntimeException(e);
         }
     }
