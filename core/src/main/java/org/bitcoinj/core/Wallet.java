@@ -4227,7 +4227,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     @Override
-    public synchronized void setTag(String tag, ByteString value) {
+    public void setTag(String tag, ByteString value) {
         super.setTag(tag, value);
         saveNow();
     }
