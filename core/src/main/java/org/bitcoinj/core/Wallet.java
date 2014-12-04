@@ -1975,22 +1975,27 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // ever occur because we expect transactions to arrive in temporal order, but this assumption can be violated
         // when we receive a pending transaction from the mempool that is relevant to us, which spends coins that we
         // didn't see arrive on the best chain yet. For instance, because of a chain replay or because of our keys were
-        // used by another wallet somewhere else.
-        if (fromChain) {
-            for (Transaction pendingTx : pending.values()) {
-                for (TransactionInput input : pendingTx.getInputs()) {
-                    TransactionInput.ConnectionResult result = input.connect(tx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+        // used by another wallet somewhere else. Also, unconfirmed transactions can arrive from the mempool in more or
+        // less random order.
+        for (Transaction pendingTx : pending.values()) {
+            for (TransactionInput input : pendingTx.getInputs()) {
+                TransactionInput.ConnectionResult result = input.connect(tx, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
+                if (fromChain) {
                     // This TX is supposed to have just appeared on the best chain, so its outputs should not be marked
                     // as spent yet. If they are, it means something is happening out of order.
                     checkState(result != TransactionInput.ConnectionResult.ALREADY_SPENT);
-                    if (result == TransactionInput.ConnectionResult.SUCCESS) {
-                        log.info("Connected pending tx input {}:{}",
-                                pendingTx.getHashAsString(), pendingTx.getInputs().indexOf(input));
-                    }
                 }
-                // If the transactions outputs are now all spent, it will be moved into the spent pool by the
-                // processTxFromBestChain method.
+                if (result == TransactionInput.ConnectionResult.SUCCESS) {
+                    log.info("Connected pending tx input {}:{}",
+                            pendingTx.getHashAsString(), pendingTx.getInputs().indexOf(input));
+                }
             }
+        }
+        if (!fromChain) {
+            maybeMovePool(tx, "pendingtx");
+        } else {
+            // If the transactions outputs are now all spent, it will be moved into the spent pool by the
+            // processTxFromBestChain method.
         }
     }
 

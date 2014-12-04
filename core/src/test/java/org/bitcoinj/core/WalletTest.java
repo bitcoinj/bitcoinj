@@ -71,6 +71,9 @@ public class WalletTest extends TestWithWallet {
 
     private SecureRandom secureRandom = new SecureRandom();
 
+    private ECKey someOtherKey = new ECKey();
+    private Address someOtherAddress = someOtherKey.toAddress(params);
+
     @Before
     @Override
     public void setUp() throws Exception {
@@ -1467,7 +1470,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx1 = createFakeTx(params, value, myAddress);
         Transaction tx2 = new Transaction(params);
         tx2.addInput(tx1.getOutput(0));
-        tx2.addOutput(valueOf(0, 9), new ECKey());
+        tx2.addOutput(valueOf(0, 9), someOtherAddress);
         // Add a change address to ensure this tx is relevant.
         tx2.addOutput(CENT, wallet.getChangeAddress());
         wallet.receivePending(tx2, null);
@@ -1478,6 +1481,26 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, wallet.getPoolSize(Pool.SPENT));
         assertEquals(1, wallet.getPoolSize(Pool.PENDING));
         assertEquals(0, wallet.getPoolSize(Pool.UNSPENT));
+    }
+
+    @Test
+    public void outOfOrderPendingTxns() throws Exception {
+        // Check that if there are two pending transactions which we receive out of order, they are marked as spent
+        // correctly. For instance, we are watching a wallet, someone pays us (A) and we then pay someone else (B)
+        // with a change address but the network delivers the transactions to us in order B then A.
+        Coin value = COIN;
+        Transaction a = createFakeTx(params, value, myAddress);
+        Transaction b = new Transaction(params);
+        b.addInput(a.getOutput(0));
+        b.addOutput(CENT, someOtherAddress);
+        Coin v = COIN.subtract(CENT);
+        b.addOutput(v, wallet.getChangeAddress());
+        a = roundTripTransaction(params, a);
+        b = roundTripTransaction(params, b);
+        wallet.receivePending(b, null);
+        assertEquals(v, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        wallet.receivePending(a, null);
+        assertEquals(v, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     @Test
