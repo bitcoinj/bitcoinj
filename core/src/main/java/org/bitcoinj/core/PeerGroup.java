@@ -463,8 +463,13 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
                 // Inactives is sorted by backoffMap time.
                 if (inactives.isEmpty()) {
-                    log.info("Peer discovery didn't provide us any more peers, will try again later.");
-                    executor.schedule(this, groupBackoff.getRetryTime() - now, TimeUnit.MILLISECONDS);
+                    if (countConnectedAndPendingPeers() < getMaxConnections()) {
+                        log.info("Peer discovery didn't provide us any more peers, will try again later.");
+                        executor.schedule(this, groupBackoff.getRetryTime() - now, TimeUnit.MILLISECONDS);
+                    } else {
+                        // We have enough peers and discovery provided no more, so just settle down. Most likely we
+                        // were given a fixed set of addresses in some test scenario.
+                    }
                     return;
                 } else {
                     do {
