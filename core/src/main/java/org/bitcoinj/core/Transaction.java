@@ -1114,17 +1114,19 @@ public class Transaction extends ChildMessage implements Serializable {
         Collections.shuffle(outputs);
     }
 
-    /** @return the given transaction: same as getInputs().get(index). */
-    public TransactionInput getInput(int index) {
+    /** Same as getInputs().get(index). */
+    public TransactionInput getInput(long index) {
         maybeParse();
-        return inputs.get(index);
+        return inputs.get((int)index);
     }
 
-    public TransactionOutput getOutput(int index) {
+    /** Same as getOutputs().get(index) */
+    public TransactionOutput getOutput(long index) {
         maybeParse();
-        return outputs.get(index);
+        return outputs.get((int)index);
     }
 
+    /** Returns the confidence object that is owned by this transaction object. */
     public synchronized TransactionConfidence getConfidence() {
         if (confidence == null) {
             confidence = new TransactionConfidence(getHash());
