@@ -255,22 +255,30 @@ public class WalletAppKit extends AbstractIdleService {
 
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
             vStore = new SPVBlockStore(params, chainFile);
-            if ((!chainFileExists || restoreFromSeed != null) && checkpoints != null) {
-                // Initialize the chain file with a checkpoint to speed up first-run sync.
-                long time;
-                if (restoreFromSeed != null) {
-                    time = restoreFromSeed.getCreationTimeSeconds();
-                    if (chainFileExists) {
-                        log.info("Deleting the chain file in preparation from restore.");
-                        vStore.close();
-                        if (!chainFile.delete())
-                            throw new Exception("Failed to delete chain file in preparation for restore.");
-                        vStore = new SPVBlockStore(params, chainFile);
+            if (!chainFileExists || restoreFromSeed != null) {
+                if (checkpoints != null) {
+                    // Initialize the chain file with a checkpoint to speed up first-run sync.
+                    long time;
+                    if (restoreFromSeed != null) {
+                        time = restoreFromSeed.getCreationTimeSeconds();
+                        if (chainFileExists) {
+                            log.info("Deleting the chain file in preparation from restore.");
+                            vStore.close();
+                            if (!chainFile.delete())
+                                throw new Exception("Failed to delete chain file in preparation for restore.");
+                            vStore = new SPVBlockStore(params, chainFile);
+                        }
+                    } else {
+                        time = vWallet.getEarliestKeyCreationTime();
                     }
-                } else {
-                    time = vWallet.getEarliestKeyCreationTime();
+                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                } else if (chainFileExists) {
+                    log.info("Deleting the chain file in preparation from restore.");
+                    vStore.close();
+                    if (!chainFile.delete())
+                        throw new Exception("Failed to delete chain file in preparation for restore.");
+                    vStore = new SPVBlockStore(params, chainFile);
                 }
-                CheckpointManager.checkpoint(params, checkpoints, vStore, time);
             }
             vChain = new BlockChain(params, vStore);
             vPeerGroup = createPeerGroup();
