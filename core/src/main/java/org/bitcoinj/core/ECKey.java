@@ -401,6 +401,11 @@ public class ECKey implements EncryptableItem, Serializable {
         return priv != null;
     }
 
+    /** Returns true if this key is watch only, meaning it has a public key but no private key. */
+    public boolean isWatching() {
+        return isPubKeyOnly() && !isEncrypted();
+    }
+
     /**
      * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the Bitcoin reference
      * implementation in its wallet storage format.

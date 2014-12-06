@@ -47,6 +47,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
     @Nullable private final KeyCrypter keyCrypter;
+    private boolean isWatching;
 
     private final CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
 
@@ -167,6 +168,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     private void importKeyLocked(ECKey key) {
+        if (hashToKeys.isEmpty()) {
+            isWatching = key.isWatching();
+        } else {
+            if (key.isWatching() && !isWatching)
+                throw new IllegalArgumentException("Key is watching but chain is not");
+            if (!key.isWatching() && isWatching)
+                throw new IllegalArgumentException("Key is not watching but chain is");
+        }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
         checkState(previousKey == null);
@@ -219,6 +228,21 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public int numKeys() {
         return pubkeyToKeys.size();
+    }
+
+    /**
+     * Returns whether this chain consists entirely of watching keys (unencrypted keys with no private part). Mixed
+     * chains are forbidden. Null means the chain is empty.
+     */
+    public Boolean isWatching() {
+        lock.lock();
+        try {
+            if (hashToKeys.isEmpty())
+                return null;
+            return isWatching;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

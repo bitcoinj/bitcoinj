@@ -628,6 +628,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return getKeyByPath(ACCOUNT_ZERO_PATH);
     }
 
+    /** Returns true if this chain is watch only, meaning it has public keys but no private key. */
+    public boolean isWatching() {
+        DeterministicKey key = getKeyByPath(ACCOUNT_ZERO_PATH);
+        return key.isWatching();
+    }
+
     @Override
     public int numKeys() {
         // We need to return here the total number of keys including the lookahead zone, not the number of keys we

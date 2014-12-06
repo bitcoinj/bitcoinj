@@ -751,6 +751,23 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Returns whether this wallet consists entirely of watching keys (unencrypted keys with no private part). Mixed
+     * wallets are forbidden.
+     * 
+     * @throws IllegalStateException
+     *             if there are no keys, or if there is a mix between watching and non-watching keys.
+     */
+    public boolean isWatching() {
+        keychainLock.lock();
+        try {
+            maybeUpgradeToHD();
+            return keychain.isWatching();
+        } finally {
+            keychainLock.unlock();
+        }
+    }
+
+    /**
      * Return true if we are watching this address.
      */
     public boolean isAddressWatched(Address address) {
