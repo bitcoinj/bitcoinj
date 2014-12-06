@@ -551,6 +551,30 @@ public class KeyChainGroup implements KeyBag {
         return keyCrypter != null;
     }
 
+    /**
+     * Returns whether this chain has only watching keys (unencrypted keys with no private part). Mixed chains are
+     * forbidden.
+     * 
+     * @throws IllegalStateException
+     *             if there are no keys, or if there is a mix between watching and non-watching keys.
+     */
+    public boolean isWatching() {
+        Boolean basicChainIsWatching = basic.isWatching();
+        Boolean deterministicChainIsWatching = !chains.isEmpty() ? getActiveKeyChain().isWatching() : null;
+        if (basicChainIsWatching == null && deterministicChainIsWatching == null)
+            throw new IllegalStateException("No keys");
+        if (basicChainIsWatching == null && deterministicChainIsWatching != null)
+            return deterministicChainIsWatching;
+        if (basicChainIsWatching != null && deterministicChainIsWatching == null)
+            return basicChainIsWatching;
+        if (basicChainIsWatching == deterministicChainIsWatching)
+            return deterministicChainIsWatching;
+        if (basicChainIsWatching && !deterministicChainIsWatching)
+            throw new IllegalStateException("Basic chain is watching, deterministic chain is not");
+        else
+            throw new IllegalStateException("Basic chain is not watching, deterministic chain is");
+    }
+
     /** Returns the key crypter or null if the group is not encrypted. */
     @Nullable public KeyCrypter getKeyCrypter() { return keyCrypter; }
 
