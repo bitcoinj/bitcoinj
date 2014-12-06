@@ -28,6 +28,7 @@
     <build>
         <sourceDirectory>src</sourceDirectory>
         <plugins>
+            <!-- Ensure compilation is done under Java 6 for backwards compatibility -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>

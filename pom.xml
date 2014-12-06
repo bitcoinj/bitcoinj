@@ -65,7 +65,6 @@
   <!-- Common build plugin configuration -->
   <build>
     <plugins>
-      <!-- Ensure compilation is done under Java 6 for backwards compatibility -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
