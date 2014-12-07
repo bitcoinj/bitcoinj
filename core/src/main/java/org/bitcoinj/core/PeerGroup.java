@@ -119,9 +119,6 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private VersionMessage versionMessage;
     // Switch for enabling download of pending transaction dependencies.
     @GuardedBy("lock") private boolean downloadTxDependencies;
-    // A class that tracks recent transactions that have been broadcast across the network, counts how many
-    // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private final TxConfidenceTable confidenceTable;
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
@@ -139,7 +136,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
     private final NetworkParameters params;
-    private final AbstractBlockChain chain;
+    @Nullable private final AbstractBlockChain chain;
     @GuardedBy("lock") private long fastCatchupTimeSecs;
     private final CopyOnWriteArrayList<Wallet> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
@@ -154,7 +151,8 @@ public class PeerGroup implements TransactionBroadcaster {
 
         @Override
         public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
-            final double rate = checkNotNull(chain).getFalsePositiveRate();
+            if (chain == null) return;
+            final double rate = chain.getFalsePositiveRate();
             final double target = bloomFilterMerger.getBloomFilterFPRate() * MAX_FP_RATE_INCREASE;
             if (rate > target) {
                 // TODO: Avoid hitting this path if the remote peer didn't acknowledge applying a new filter yet.
@@ -335,8 +333,6 @@ public class PeerGroup implements TransactionBroadcaster {
 
         downloadTxDependencies = true;
 
-        confidenceTable = chain.getContext().getConfidenceTable();
-
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
             @Override
@@ -450,8 +446,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
             }
 
-            long retryTime = 0;
-            PeerAddress addrToTry = null;
+            long retryTime;
+            PeerAddress addrToTry;
             lock.lock();
             try {
                 if (doDiscovery) {
@@ -521,7 +517,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the confidence pool first.
-                Transaction tx = confidenceTable.get(item.hash);
+                Transaction tx = chain != null ? chain.getContext().getConfidenceTable().get(item.hash) : null;
                 if (tx != null) {
                     transactions.add(tx);
                     it.remove();
@@ -1326,11 +1322,13 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Use {@link org.bitcoinj.core.Context#getConfidenceTable()} instead.
+     * Use {@link org.bitcoinj.core.Context#getConfidenceTable()} instead, which can be retrieved via
+     * {@link org.bitcoinj.core.AbstractBlockChain#getContext()}. Can return null if this peer group was
+     * configured without a block chain object.
      */
-    @Deprecated
-    public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
+    @Deprecated @Nullable
+    public TxConfidenceTable getMemoryPool() {
+        return chain == null ? null : chain.getContext().getConfidenceTable();
     }
 
     /**
@@ -1341,7 +1339,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
         lock.lock();
         try {
-            Preconditions.checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
+            checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
             fastCatchupTimeSecs = secondsSinceEpoch;
             if (downloadPeer != null) {
                 downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilterMerger.getLastFilter() != null);
@@ -1563,7 +1561,8 @@ public class PeerGroup implements TransactionBroadcaster {
      * bringup of the peer group you can lower it.</p>
      */
     public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx, final int minConnections) {
-        final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
+        // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
+        final TransactionBroadcast broadcast = new TransactionBroadcast(this, chain != null ? chain.getContext() : null, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.
         Futures.addCallback(broadcast.future(), new FutureCallback<Transaction>() {

@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -41,6 +42,7 @@ public class TransactionBroadcast {
     private final SettableFuture<Transaction> future = SettableFuture.create();
     private final PeerGroup peerGroup;
     private final Transaction tx;
+    @Nullable private final Context context;
     private int minConnections;
     private int numWaitingFor, numToBroadcastTo;
 
@@ -49,8 +51,10 @@ public class TransactionBroadcast {
     public static Random random = new Random();
     private Transaction pinnedTx;
 
-    public TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
+    // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
+    TransactionBroadcast(PeerGroup peerGroup, @Nullable Context context, Transaction tx) {
         this.peerGroup = peerGroup;
+        this.context = context;
         this.tx = tx;
         this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
     }
@@ -98,7 +102,8 @@ public class TransactionBroadcast {
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
             // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
-            pinnedTx = peerGroup.getConfidenceTable().intern(tx);
+            // TODO: Once confidence state is moved out of Transaction we can kill off this step.
+            pinnedTx = context != null ? context.getConfidenceTable().intern(tx) : pinnedTx;
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
