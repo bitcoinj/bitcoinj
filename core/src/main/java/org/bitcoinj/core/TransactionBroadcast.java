@@ -44,7 +44,7 @@ public class TransactionBroadcast {
     private final Transaction tx;
     @Nullable private final Context context;
     private int minConnections;
-    private int numWaitingFor, numToBroadcastTo;
+    private int numWaitingFor;
 
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
     @VisibleForTesting
@@ -117,7 +117,7 @@ public class TransactionBroadcast {
             // our version message, as SPV nodes cannot relay it doesn't give away any additional information
             // to skip the inv here - we wouldn't send invs anyway.
             int numConnected = peers.size();
-            numToBroadcastTo = (int) Math.max(1, Math.round(Math.ceil(peers.size() / 2.0)));
+            int numToBroadcastTo = (int) Math.max(1, Math.round(Math.ceil(peers.size() / 2.0)));
             numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
             Collections.shuffle(peers, random);
             peers = peers.subList(0, numToBroadcastTo);
