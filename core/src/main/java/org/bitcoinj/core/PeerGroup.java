@@ -413,6 +413,14 @@ public class PeerGroup implements TransactionBroadcaster {
 
         @Override
         public void run() {
+            try {
+                go();
+            } catch (Throwable e) {
+                log.error("Exception when trying to build connections", e);  // The executor swallows exceptions :(
+            }
+        }
+
+        public void go() {
             if (!vRunning) return;
 
             boolean doDiscovery = false;
@@ -825,21 +833,25 @@ public class PeerGroup implements TransactionBroadcaster {
         return executor.submit(new Runnable() {
             @Override
             public void run() {
-                log.info("Starting ...");
-                if (torClient != null) {
-                    log.info("Starting Tor/Orchid ...");
-                    torClient.start();
-                    try {
-                        torClient.waitUntilReady(TOR_TIMEOUT_SECONDS * 1000);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                try {
+                    log.info("Starting ...");
+                    if (torClient != null) {
+                        log.info("Starting Tor/Orchid ...");
+                        torClient.start();
+                        try {
+                            torClient.waitUntilReady(TOR_TIMEOUT_SECONDS * 1000);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        log.info("Tor ready");
                     }
-                    log.info("Tor ready");
+                    channels.startAsync();
+                    channels.awaitRunning();
+                    triggerConnections();
+                    setupPinging();
+                } catch (Throwable e) {
+                    log.error("Exception when starting up", e);  // The executor swallows exceptions :(
                 }
-                channels.startAsync();
-                channels.awaitRunning();
-                triggerConnections();
-                setupPinging();
             }
         });
     }
@@ -861,17 +873,21 @@ public class PeerGroup implements TransactionBroadcaster {
         ListenableFuture future = executor.submit(new Runnable() {
             @Override
             public void run() {
-                log.info("Stopping ...");
-                // Blocking close of all sockets.
-                channels.stopAsync();
-                channels.awaitTerminated();
-                for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-                    peerDiscovery.shutdown();
+                try {
+                    log.info("Stopping ...");
+                    // Blocking close of all sockets.
+                    channels.stopAsync();
+                    channels.awaitTerminated();
+                    for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+                        peerDiscovery.shutdown();
+                    }
+                    if (torClient != null) {
+                        torClient.stop();
+                    }
+                    vRunning = false;
+                } catch (Throwable e) {
+                    log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
                 }
-                if (torClient != null) {
-                    torClient.stop();
-                }
-                vRunning = false;
             }
         });
         executor.shutdown();
@@ -1017,6 +1033,14 @@ public class PeerGroup implements TransactionBroadcaster {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                try {
+                    go();
+                } catch (Throwable e) {
+                    log.error("Exception when trying to recalculate Bloom filter", e);  // The executor swallows exceptions :(
+                }
+            }
+
+            public void go() {
                 checkState(!lock.isHeldByCurrentThread());
                 // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
                 if (chain != null && chain.shouldVerifyTransactions())
@@ -1273,18 +1297,22 @@ public class PeerGroup implements TransactionBroadcaster {
         vPingTask = executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                if (getPingIntervalMsec() <= 0) {
-                    ListenableScheduledFuture<?> task = vPingTask;
-                    if (task != null) {
-                        task.cancel(false);
-                        vPingTask = null;
+                try {
+                    if (getPingIntervalMsec() <= 0) {
+                        ListenableScheduledFuture<?> task = vPingTask;
+                        if (task != null) {
+                            task.cancel(false);
+                            vPingTask = null;
+                        }
+                        return;  // Disabled.
                     }
-                    return;  // Disabled.
-                }
-                for (Peer peer : getConnectedPeers()) {
-                    if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
-                        continue;
-                    peer.ping();
+                    for (Peer peer : getConnectedPeers()) {
+                        if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
+                            continue;
+                        peer.ping();
+                    }
+                } catch (Throwable e) {
+                    log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
                 }
             }
         }, getPingIntervalMsec(), getPingIntervalMsec(), TimeUnit.MILLISECONDS);
