@@ -674,8 +674,11 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(outpoint.toString());
                 final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
                 if (connectedOutput != null) {
-                    s.append(" hash160:");
-                    s.append(Utils.HEX.encode(connectedOutput.getScriptPubKey().getPubKeyHash()));
+                    Script scriptPubKey = connectedOutput.getScriptPubKey();
+                    if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
+                        s.append(" hash160:");
+                        s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                    }
                 }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
