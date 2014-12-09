@@ -252,15 +252,15 @@ public class Script {
     }
 
     /**
-     * If a program matches the standard template DUP HASH160 <pubkey hash> EQUALVERIFY CHECKSIG
+     * <p>If a program matches the standard template DUP HASH160 &lt;pubkey hash&gt; EQUALVERIFY CHECKSIG
      * then this function retrieves the third element.
-     * In this case, this is useful for fetching the destination address of a transaction.
+     * In this case, this is useful for fetching the destination address of a transaction.</p>
      * 
-     * If a program matches the standard template HASH160 <script hash> EQUAL
+     * <p>If a program matches the standard template HASH160 &lt;script hash&gt; EQUAL
      * then this function retrieves the second element.
-     * In this case, this is useful for fetching the hash of the redeem script of a transaction.
+     * In this case, this is useful for fetching the hash of the redeem script of a transaction.</p>
      * 
-     * Otherwise it throws a ScriptException.
+     * <p>Otherwise it throws a ScriptException.</p>
      *
      */
     public byte[] getPubKeyHash() throws ScriptException {
