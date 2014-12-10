@@ -128,6 +128,10 @@ public class ECKey implements EncryptableItem, Serializable {
     private static final long serialVersionUID = -728224901792295832L;
 
     static {
+        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
+        if (Utils.isAndroidRuntime())
+            new LinuxSecureRandom();
+
         // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations. Increasing the width
         // number makes calculations faster, but at a cost of extra memory usage and with decreasing returns. 12 was
         // picked after consulting with the BC team.
