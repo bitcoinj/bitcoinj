@@ -35,8 +35,16 @@ import static com.google.common.base.Preconditions.checkState;
  * deterministic wallet child key generation algorithm.
  */
 public final class HDKeyDerivation {
+    static {
+        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
+        if (Utils.isAndroidRuntime())
+            new LinuxSecureRandom();
+
+        RAND_INT = new BigInteger(256, new SecureRandom());
+    }
+
     // Some arbitrary random number. Doesn't matter what it is.
-    private static final BigInteger RAND_INT = new BigInteger(256, new SecureRandom());
+    private static final BigInteger RAND_INT;
 
     private HDKeyDerivation() { }
 

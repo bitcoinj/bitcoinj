@@ -19,6 +19,7 @@ package org.bitcoinj.crypto;
 import com.google.common.base.Objects;
 import com.google.protobuf.ByteString;
 import com.lambdaworks.crypto.SCrypt;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -52,6 +53,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * the AES symmetric cipher. Eight bytes of salt is used to prevent dictionary attacks.</p>
  */
 public class KeyCrypterScrypt implements KeyCrypter, Serializable {
+
     private static final Logger log = LoggerFactory.getLogger(KeyCrypterScrypt.class);
     private static final long serialVersionUID = 949662512049152670L;
 
@@ -71,7 +73,15 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
      */
     public static final int SALT_LENGTH = 8;
 
-    private static final transient SecureRandom secureRandom = new SecureRandom();
+    static {
+        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
+        if (Utils.isAndroidRuntime())
+            new LinuxSecureRandom();
+
+        secureRandom = new SecureRandom();
+    }
+
+    private static final transient SecureRandom secureRandom;
 
     private static byte[] randomSalt() {
         byte[] salt = new byte[SALT_LENGTH];

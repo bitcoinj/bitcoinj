@@ -21,6 +21,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.LinuxSecureRandom;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.UnreadableWalletException;
@@ -64,6 +65,13 @@ import static com.google.common.base.Preconditions.*;
  * class docs for {@link DeterministicKeyChain} for more information on this topic.</p>
  */
 public class KeyChainGroup implements KeyBag {
+
+    static {
+        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
+        if (Utils.isAndroidRuntime())
+            new LinuxSecureRandom();
+    }
+
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
 
     private BasicKeyChain basic;
