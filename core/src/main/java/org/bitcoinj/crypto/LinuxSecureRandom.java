@@ -25,6 +25,9 @@ import java.security.Provider;
 import java.security.SecureRandomSpi;
 import java.security.Security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A SecureRandom implementation that is able to override the standard JVM provided implementation, and which simply
  * serves random numbers by reading /dev/urandom. That is, it delegates to the kernel on UNIX systems and is unusable on
@@ -41,6 +44,8 @@ public class LinuxSecureRandom extends SecureRandomSpi {
         }
     }
 
+    private static final Logger log = LoggerFactory.getLogger(LinuxSecureRandom.class);
+
     static {
         try {
             File file = new File("/dev/urandom");
@@ -48,9 +53,16 @@ public class LinuxSecureRandom extends SecureRandomSpi {
                 // This stream is deliberately leaked.
                 urandom = new FileInputStream(file);
                 // Now override the default SecureRandom implementation with this one.
-                Security.insertProviderAt(new LinuxSecureRandomProvider(), 1);
+                int position = Security.insertProviderAt(new LinuxSecureRandomProvider(), 1);
+
+                if (position != -1)
+                    log.info("Secure randomness will be read from {} only.", file);
+                else
+                    log.info("Randomness is already secure.");
             } else {
                 urandom = null;
+
+                log.info("Does not exist: {}", file);
             }
         } catch (FileNotFoundException e) {
             // Should never happen.
