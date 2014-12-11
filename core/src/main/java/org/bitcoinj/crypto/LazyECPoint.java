@@ -18,11 +18,11 @@ public class LazyECPoint {
     // If curve is set, bits is also set. If curve is unset, point is set and bits is unset. Point can be set along
     // with curve and bits when the cached form has been accessed and thus must have been converted.
 
-    // These fields are all effectively final - once set they won't change again. However they can be set after
-    // construction.
-    private ECCurve curve;
-    private byte[] bits;
+    private final ECCurve curve;
+    private final byte[] bits;
 
+    // This field is effectively final - once set it won't change again. However it can be set after
+    // construction.
     @Nullable
     private ECPoint point;
 
@@ -33,6 +33,8 @@ public class LazyECPoint {
 
     public LazyECPoint(ECPoint point) {
         this.point = checkNotNull(point);
+        this.curve = null;
+        this.bits = null;
     }
 
     public ECPoint get() {
