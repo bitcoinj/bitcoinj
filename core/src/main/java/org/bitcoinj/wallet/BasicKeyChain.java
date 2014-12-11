@@ -167,8 +167,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     private void importKeyLocked(ECKey key) {
-        pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
+        ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+        checkState(previousKey == null);
     }
 
     private void importKeysLocked(List<ECKey> keys) {
