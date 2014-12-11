@@ -199,7 +199,6 @@ public class ChildKeyDerivationTest {
 
         // Creation time can't survive the xpub serialization format unfortunately.
         key1.setCreationTimeSeconds(0);
-        key2.setCreationTimeSeconds(0);
         NetworkParameters params = MainNetParams.get();
 
         {

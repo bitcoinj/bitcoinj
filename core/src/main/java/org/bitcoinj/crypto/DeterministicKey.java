@@ -442,6 +442,18 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree.
+     * Thus, setting the creation time on a leaf is forbidden.
+     */
+    @Override
+    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+        if (parent != null)
+            throw new IllegalStateException("Creation time can only be set on root keys.");
+        else
+            super.setCreationTimeSeconds(newCreationTimeSeconds);
+    }
+
+    /**
      * Verifies equality of all fields but NOT the parent pointer (thus the same key derived in two separate heirarchy
      * objects will equal each other.
      */
