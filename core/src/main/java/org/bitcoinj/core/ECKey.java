@@ -1174,6 +1174,7 @@ public class ECKey implements EncryptableItem, Serializable {
         if (includePrivate)
             helper.add("encryptedPrivateKey", encryptedPrivateKey);
         helper.add("isEncrypted", isEncrypted());
+        helper.add("isPubKeyOnly", isPubKeyOnly());
         return helper.toString();
     }
 
