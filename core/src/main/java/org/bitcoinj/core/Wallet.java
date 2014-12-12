@@ -1144,6 +1144,28 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return getEncryptionType() != EncryptionType.UNENCRYPTED;
     }
 
+    /** Changes wallet encryption password, this is atomic operation. */
+    public void changeEncryptionPassword(CharSequence currentPassword, CharSequence newPassword){
+        keychainLock.lock();
+        try {
+            decrypt(currentPassword);
+            encrypt(newPassword);
+        } finally {
+            keychainLock.unlock();
+        }
+    }
+
+    /** Changes wallet AES encryption key, this is atomic operation. */
+    public void changeEncryptionKey(KeyCrypter keyCrypter, KeyParameter currentAesKey, KeyParameter newAesKey){
+        keychainLock.lock();
+        try {
+            decrypt(currentAesKey);
+            encrypt(keyCrypter, newAesKey);
+        } finally {
+            keychainLock.unlock();
+        }
+    }
+
     //endregion
 
     /******************************************************************************************************************/
