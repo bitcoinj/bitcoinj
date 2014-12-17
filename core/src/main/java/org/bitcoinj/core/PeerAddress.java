@@ -155,9 +155,6 @@ public class PeerAddress extends ChildMessage {
         port = ((0xFF & payload[cursor++]) << 8) | (0xFF & payload[cursor++]);
     }
 
-    /* (non-Javadoc)
-      * @see Message#getMessageSize()
-      */
     @Override
     public int getMessageSize() {
         // The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
@@ -165,72 +162,51 @@ public class PeerAddress extends ChildMessage {
         return length;
     }
 
-    /**
-     * @return the addr
-     */
     public InetAddress getAddr() {
         maybeParse();
         return addr;
     }
 
+    public InetSocketAddress getSocketAddress() {
+        return new InetSocketAddress(getAddr(), getPort());
+    }
 
-    /**
-     * @param addr the addr to set
-     */
     public void setAddr(InetAddress addr) {
         unCache();
         this.addr = addr;
     }
 
 
-    /**
-     * @return the port
-     */
     public int getPort() {
         maybeParse();
         return port;
     }
 
 
-    /**
-     * @param port the port to set
-     */
     public void setPort(int port) {
         unCache();
         this.port = port;
     }
 
 
-    /**
-     * @return the services
-     */
     public BigInteger getServices() {
         maybeParse();
         return services;
     }
 
 
-    /**
-     * @param services the services to set
-     */
     public void setServices(BigInteger services) {
         unCache();
         this.services = services;
     }
 
 
-    /**
-     * @return the time
-     */
     public long getTime() {
         maybeParse();
         return time;
     }
 
 
-    /**
-     * @param time the time to set
-     */
     public void setTime(long time) {
         unCache();
         this.time = time;
