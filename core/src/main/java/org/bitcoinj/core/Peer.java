@@ -132,6 +132,7 @@ public class Peer extends PeerSocketHandler {
         SettableFuture future;
     }
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
+    @GuardedBy("getAddrFutures") private final LinkedList<SettableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock lastPingTimesLock = new ReentrantLock();
@@ -207,6 +208,7 @@ public class Peer extends PeerSocketHandler {
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
         this.eventListeners = new CopyOnWriteArrayList<PeerListenerRegistration>();
+        this.getAddrFutures = new LinkedList<SettableFuture<AddressMessage>>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
@@ -355,6 +357,7 @@ public class Peer extends PeerSocketHandler {
             // We don't care about addresses of the network right now. But in future,
             // we should save them in the wallet so we don't put too much load on the seed nodes and can
             // properly explore the network.
+            processAddressMessage((AddressMessage) m);
         } else if (m instanceof HeadersMessage) {
             processHeaders((HeadersMessage) m);
         } else if (m instanceof AlertMessage) {
@@ -397,6 +400,16 @@ public class Peer extends PeerSocketHandler {
         } else {
             log.warn("Received unhandled message: {}", m);
         }
+    }
+
+    private void processAddressMessage(AddressMessage m) {
+        SettableFuture<AddressMessage> future;
+        synchronized (getAddrFutures) {
+            future = getAddrFutures.poll();
+            if (future == null)  // Not an addr message we are waiting for.
+                return;
+        }
+        future.set(m);
     }
 
     private void processVersionMessage(VersionMessage m) throws ProtocolException {
@@ -1171,6 +1184,16 @@ public class Peer extends PeerSocketHandler {
         getDataFutures.add(req);
         sendMessage(getdata);
         return req.future;
+    }
+
+    /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
+    public ListenableFuture<AddressMessage> getAddr() {
+        SettableFuture<AddressMessage> future = SettableFuture.create();
+        synchronized (getAddrFutures) {
+            getAddrFutures.add(future);
+        }
+        sendMessage(new GetAddrMessage(params));
+        return future;
     }
 
     /**
