@@ -69,7 +69,7 @@ public class BitcoindComparisonTool {
         blockFile.deleteOnExit();
 
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
-        final RuleList blockList = generator.getBlocksToTest(true, runExpensiveTests, blockFile);
+        final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<Sha256Hash, Block>();
         final Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
 
@@ -210,7 +210,7 @@ public class BitcoindComparisonTool {
         bitcoindChainHead = params.getGenesisBlock().getHash();
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        new NioClient(new InetSocketAddress(InetAddress.getLocalHost(), args.length > 2 ? Integer.parseInt(args[2]) : params.getPort()), bitcoind, 1000);
+        new NioClient(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), args.length > 2 ? Integer.parseInt(args[2]) : params.getPort()), bitcoind, 1000);
 
         connectedFuture.get();
 
@@ -342,6 +342,19 @@ public class BitcoindComparisonTool {
                     rulesSinceFirstFail++;
                 }
                 mostRecentInv = null;
+            } else if (rule instanceof UTXORule) {
+                if (bitcoind.getPeerVersionMessage().isGetUTXOsSupported()) {
+                    UTXORule r = (UTXORule) rule;
+                    UTXOsMessage result = bitcoind.getUTXOs(r.query).get();
+                    if (!result.equals(r.result)) {
+                        log.error("utxo result was not what we expected.");
+                        log.error("Wanted  {}", r.result);
+                        log.error("but got {}", result);
+                        rulesSinceFirstFail++;
+                    } else {
+                        log.info("Successful utxo query {}: {}", r.ruleName, result);
+                    }
+                }
             } else {
                 throw new RuntimeException("Unknown rule");
             }
