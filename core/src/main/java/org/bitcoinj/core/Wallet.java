@@ -240,6 +240,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return new Wallet(params, new KeyChainGroup(params, watchKey));
     }
 
+    /**
+     * Creates a wallet containing a given set of keys. All further keys will be derived from the oldest key.
+     */
+    public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
+        for (ECKey key : keys)
+            checkArgument(!(key instanceof DeterministicKey));
+
+        KeyChainGroup group = new KeyChainGroup(params);
+        group.importKeys(keys);
+        return new Wallet(params, group);
+    }
+
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
