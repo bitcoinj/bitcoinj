@@ -14255,7 +14255,8 @@ public final class Protos {
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
-     * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+     * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+     * A version that's higher than the default is considered from the future.
      * </pre>
      */
     boolean hasVersion();
@@ -14264,7 +14265,8 @@ public final class Protos {
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
-     * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+     * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+     * A version that's higher than the default is considered from the future.
      * </pre>
      */
     int getVersion();
@@ -15013,7 +15015,8 @@ public final class Protos {
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
-     * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+     * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+     * A version that's higher than the default is considered from the future.
      * </pre>
      */
     public boolean hasVersion() {
@@ -15024,7 +15027,8 @@ public final class Protos {
      *
      * <pre>
      * The version number of the wallet - used to detect wallets that were produced in the future
-     * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+     * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+     * A version that's higher than the default is considered from the future.
      * </pre>
      */
     public int getVersion() {
@@ -17126,7 +17130,8 @@ public final class Protos {
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
-       * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+       * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+       * A version that's higher than the default is considered from the future.
        * </pre>
        */
       public boolean hasVersion() {
@@ -17137,7 +17142,8 @@ public final class Protos {
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
-       * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+       * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+       * A version that's higher than the default is considered from the future.
        * </pre>
        */
       public int getVersion() {
@@ -17148,7 +17154,8 @@ public final class Protos {
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
-       * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+       * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+       * A version that's higher than the default is considered from the future.
        * </pre>
        */
       public Builder setVersion(int value) {
@@ -17162,7 +17169,8 @@ public final class Protos {
        *
        * <pre>
        * The version number of the wallet - used to detect wallets that were produced in the future
-       * (i.e the wallet may contain some future format this protobuf/ code does not know about)
+       * (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+       * A version that's higher than the default is considered from the future.
        * </pre>
        */
       public Builder clearVersion() {
