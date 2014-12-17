@@ -150,20 +150,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         }
     }
 
-    /**
-     * Get the {@link Script} from the script bytes.
-     * @param scriptBytes The script bytes.
-     * @return The script.
-     */
+    /** Get the {@link Script} from the script bytes or null if it doesn't parse. */
     @Nullable
     private Script getScript(byte[] scriptBytes) {
-        Script script = null;
         try {
-            script = new Script(scriptBytes);
+            return new Script(scriptBytes);
         } catch (Exception e) {
-            log.warn("Unable to parse script");
+            return null;
         }
-        return script;
     }
 
     /**
