@@ -213,8 +213,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     @Nullable volatile private UTXOProvider vUTXOProvider;
 
     /**
-     * Creates a new, empty wallet with no keys and no transactions. If you want to restore a wallet from disk instead,
-     * see loadFromFile.
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
      */
     public Wallet(NetworkParameters params) {
         this(params, new KeyChainGroup(params));
