@@ -89,7 +89,7 @@ public class Peer extends PeerSocketHandler {
     private final AtomicInteger blocksAnnounced = new AtomicInteger();
     // A class that tracks recent transactions that have been broadcast across the network, counts how many
     // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    private final TxConfidenceTable confidenceTable;
+    @Nullable private final TxConfidenceTable confidenceTable;
     // Each wallet added to the peer will be notified of downloaded transaction data.
     private final CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
@@ -203,7 +203,7 @@ public class Peer extends PeerSocketHandler {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
-        this.vDownloadTxDependencies = downloadTxDependencies;
+        this.vDownloadTxDependencies = chain != null && downloadTxDependencies;
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
@@ -213,7 +213,7 @@ public class Peer extends PeerSocketHandler {
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.confidenceTable = chain.getContext().getConfidenceTable();
+        this.confidenceTable = chain != null ? chain.getContext().getConfidenceTable() : null;
     }
 
     /**
