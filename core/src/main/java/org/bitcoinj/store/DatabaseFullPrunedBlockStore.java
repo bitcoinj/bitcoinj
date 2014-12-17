@@ -503,9 +503,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 ResultSet results = ps.executeQuery();
                 results.close();
             } catch (SQLException ex) {
-                String message = "Database block store is not compatible with the current release.  " +
-                        "See bitcoinj release notes for further information.";
-                throw new BlockStoreException(message);
+                throw new BlockStoreException("Database block store is not compatible with the current release.  " +
+                        "See bitcoinj release notes for further information: " + ex.getMessage());
             } finally {
                 if (ps != null && !ps.isClosed()) {
                     ps.close();
