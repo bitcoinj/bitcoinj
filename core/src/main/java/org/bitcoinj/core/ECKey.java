@@ -1204,6 +1204,8 @@ public class ECKey implements EncryptableItem, Serializable {
         builder.append(address.toString());
         builder.append("  hash160:");
         builder.append(Utils.HEX.encode(getPubKeyHash()));
+        if (creationTimeSeconds > 0)
+            builder.append("  creationTimeSeconds:").append(creationTimeSeconds);
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
