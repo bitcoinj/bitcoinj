@@ -860,7 +860,7 @@ public class WalletTool {
         try {
             setup();
             int startTransactions = wallet.getTransactions(true).size();
-            DownloadListener listener = new DownloadListener();
+            DownloadProgressTracker listener = new DownloadProgressTracker();
             peers.start();
             peers.startBlockChainDownload(listener);
             try {

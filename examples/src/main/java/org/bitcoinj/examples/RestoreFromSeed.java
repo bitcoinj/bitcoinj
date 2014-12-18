@@ -50,7 +50,7 @@ public class RestoreFromSeed {
         chain.addWallet(wallet);
         peers.addWallet(wallet);
 
-        DownloadListener bListener = new DownloadListener() {
+        DownloadProgressTracker bListener = new DownloadProgressTracker() {
             @Override
             public void doneDownload() {
                 System.out.println("blockchain downloaded");

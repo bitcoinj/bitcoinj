@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -1221,13 +1220,13 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Download the blockchain from peers. Convenience that uses a {@link DownloadListener} for you.<p>
+     * Download the blockchain from peers. Convenience that uses a {@link DownloadProgressTracker} for you.<p>
      * 
      * This method waits until the download is complete.  "Complete" is defined as downloading
      * from at least one peer all the blocks that are in that peer's inventory.
      */
     public void downloadBlockChain() {
-        DownloadListener listener = new DownloadListener();
+        DownloadProgressTracker listener = new DownloadProgressTracker();
         startBlockChainDownload(listener);
         try {
             listener.await();

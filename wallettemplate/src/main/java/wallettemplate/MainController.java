@@ -1,7 +1,7 @@
 package wallettemplate;
 
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.DownloadListener;
+import org.bitcoinj.core.DownloadProgressTracker;
 import org.bitcoinj.utils.MonetaryFormat;
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;
@@ -121,7 +121,7 @@ public class MainController {
         group.play();
     }
 
-    public DownloadListener progressBarUpdater() {
-        return model.getDownloadListener();
+    public DownloadProgressTracker progressBarUpdater() {
+        return model.getDownloadProgressTracker();
     }
 }

@@ -23,15 +23,13 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
-// TODO: Rename this to DownloadProgressTracker or something more appropriate.
-
 /**
  * <p>An implementation of {@link AbstractPeerEventListener} that listens to chain download events and tracks progress
  * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
  * progress method to update a GUI instead.</p>
  */
-public class DownloadListener extends AbstractPeerEventListener {
-    private static final Logger log = LoggerFactory.getLogger(DownloadListener.class);
+public class DownloadProgressTracker extends AbstractPeerEventListener {
+    private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
     private Semaphore done = new Semaphore(0);

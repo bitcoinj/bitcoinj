@@ -129,7 +129,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * If you want to learn about the sync process, you can provide a listener here. For instance, a
-     * {@link DownloadListener} is a good choice. This has no effect unless setBlockingStartup(false) has been called
+     * {@link org.bitcoinj.core.DownloadProgressTracker} is a good choice. This has no effect unless setBlockingStartup(false) has been called
      * too, due to some missing implementation code.
      */
     public WalletAppKit setDownloadListener(PeerEventListener listener) {
@@ -305,7 +305,7 @@ public class WalletAppKit extends AbstractIdleService {
                 completeExtensionInitiations(vPeerGroup);
 
                 // TODO: Be able to use the provided download listener when doing a blocking startup.
-                final DownloadListener listener = new DownloadListener();
+                final DownloadProgressTracker listener = new DownloadProgressTracker();
                 vPeerGroup.startBlockChainDownload(listener);
                 listener.await();
             } else {
@@ -313,7 +313,7 @@ public class WalletAppKit extends AbstractIdleService {
                     @Override
                     public void onSuccess(@Nullable Object result) {
                         completeExtensionInitiations(vPeerGroup);
-                        final PeerEventListener l = downloadListener == null ? new DownloadListener() : downloadListener;
+                        final PeerEventListener l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
                         vPeerGroup.startBlockChainDownload(l);
                     }
 
