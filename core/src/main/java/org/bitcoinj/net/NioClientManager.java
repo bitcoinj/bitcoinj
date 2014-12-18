@@ -69,7 +69,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                     parser.connectionOpened();
                     data.future.set(data.address);
                 } else {
-                    log.error("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
+                    log.warn("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
                     handler.closeConnection(); // Failed to connect for some reason
                     data.future.setException(new ConnectException("Unknown reason"));
                     data.future = null;
@@ -79,7 +79,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 // may cause this. Otherwise it may be any arbitrary kind of connection failure.
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
                 Throwable cause = Throwables.getRootCause(e);
-                log.error("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage());
+                log.warn("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage());
                 handler.closeConnection();
                 data.future.setException(cause);
                 data.future = null;
@@ -111,7 +111,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                         SelectionKey key = conn.sc.register(selector, SelectionKey.OP_CONNECT);
                         key.attach(conn);
                     } catch (ClosedChannelException e) {
-                        log.info("SocketChannel was closed before it could be registered");
+                        log.warn("SocketChannel was closed before it could be registered");
                     }
                 }
 
@@ -125,14 +125,14 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 }
             }
         } catch (Exception e) {
-            log.error("Error trying to open/read from connection: ", e);
+            log.warn("Error trying to open/read from connection: ", e);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
                 try {
                     key.channel().close();
                 } catch (IOException e) {
-                    log.error("Error closing channel", e);
+                    log.warn("Error closing channel", e);
                 }
                 key.cancel();
                 if (key.attachment() instanceof ConnectionHandler)
@@ -141,7 +141,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             try {
                 selector.close();
             } catch (IOException e) {
-                log.error("Error closing client manager selector", e);
+                log.warn("Error closing client manager selector", e);
             }
         }
     }
