@@ -16,6 +16,8 @@
 
 package org.bitcoinj.net;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -47,6 +49,7 @@ public class BlockingClient implements MessageWriteTarget {
     private final ByteBuffer dbuf;
     private Socket socket;
     private volatile boolean vCloseRequested = false;
+    private SettableFuture<SocketAddress> connectFuture;
 
     /**
      * <p>Creates a new client to the given server address using the given {@link StreamParser} to decode the data.
@@ -62,6 +65,7 @@ public class BlockingClient implements MessageWriteTarget {
      */
     public BlockingClient(final SocketAddress serverAddress, final StreamParser parser,
                           final int connectTimeoutMillis, final SocketFactory socketFactory, @Nullable final Set<BlockingClient> clientSet) throws IOException {
+        connectFuture = SettableFuture.create();
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesnt get too large or have to call read too often.
         dbuf = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
@@ -73,9 +77,9 @@ public class BlockingClient implements MessageWriteTarget {
                 if (clientSet != null)
                     clientSet.add(BlockingClient.this);
                 try {
-                    InetSocketAddress iServerAddress = (InetSocketAddress)serverAddress;
                     socket.connect(serverAddress, connectTimeoutMillis);
                     parser.connectionOpened();
+                    connectFuture.set(serverAddress);
                     InputStream stream = socket.getInputStream();
                     byte[] readBuff = new byte[dbuf.capacity()];
 
@@ -97,8 +101,10 @@ public class BlockingClient implements MessageWriteTarget {
                         dbuf.compact();
                     }
                 } catch (Exception e) {
-                    if (!vCloseRequested)
+                    if (!vCloseRequested) {
                         log.error("Error trying to open/read from connection: " + serverAddress, e);
+                        connectFuture.setException(e);
+                    }
                 } finally {
                     try {
                         socket.close();
@@ -142,5 +148,10 @@ public class BlockingClient implements MessageWriteTarget {
             closeConnection();
             throw e;
         }
+    }
+
+    /** Returns a future that completes once connection has occurred at the socket level or with an exception if failed to connect. */
+    public ListenableFuture<SocketAddress> getConnectFuture() {
+        return connectFuture;
     }
 }

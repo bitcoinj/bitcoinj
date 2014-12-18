@@ -16,6 +16,7 @@
 
 package org.bitcoinj.net;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
 import java.net.SocketAddress;
@@ -31,7 +32,7 @@ public interface ClientConnectionManager extends Service {
     /**
      * Creates a new connection to the given address, with the given parser used to handle incoming data.
      */
-    void openConnection(SocketAddress serverAddress, StreamParser parser);
+    ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamParser parser);
 
     /** Gets the number of connected peers */
     int getConnectedClientCount();
