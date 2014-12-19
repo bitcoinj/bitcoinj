@@ -681,11 +681,11 @@ public class ECKey implements EncryptableItem, Serializable {
     /**
      * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
      *
-     * @param data      Hash of the data to verify.
+     * @param hash      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
      */
-    public boolean verify(byte[] data, byte[] signature) {
-        return ECKey.verify(data, signature, getPubKey());
+    public boolean verify(byte[] hash, byte[] signature) {
+        return ECKey.verify(hash, signature, getPubKey());
     }
 
     /**
