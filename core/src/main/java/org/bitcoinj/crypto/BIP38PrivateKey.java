@@ -153,7 +153,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
             BigInteger seedFactor = new BigInteger(1, Sha256Hash.createDouble(seed).getBytes());
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
-            BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE_PARAMS.getN());
+            BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());
 
             return ECKey.fromPrivate(priv, compressed);
         } catch (GeneralSecurityException x) {
