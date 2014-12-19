@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.*;
 import com.subgraph.orchid.TorClient;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
+import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.protocols.channels.StoredPaymentChannelClientStates;
 import org.bitcoinj.protocols.channels.StoredPaymentChannelServerStates;
 import org.bitcoinj.store.BlockStoreException;
@@ -90,6 +91,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected String userAgent, version;
     protected WalletProtobufSerializer.WalletFactory walletFactory;
     @Nullable protected DeterministicSeed restoreFromSeed;
+    @Nullable protected PeerDiscovery discovery;
 
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
         this.params = checkNotNull(params);
@@ -199,6 +201,14 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * Sets the peer discovery class to use. If none is provided then DNS is used, which is a reasonable default.
+     */
+    public WalletAppKit setDiscovery(@Nullable PeerDiscovery discovery) {
+        this.discovery = discovery;
+        return this;
+    }
+
+    /**
      * <p>Override this to return wallet extensions if any are necessary.</p>
      *
      * <p>When this is called, chain(), store(), and peerGroup() will return the created objects, however they are not
@@ -292,7 +302,7 @@ public class WalletAppKit extends AbstractIdleService {
                 vPeerGroup.setMaxConnections(peerAddresses.length);
                 peerAddresses = null;
             } else {
-                vPeerGroup.addPeerDiscovery(new DnsDiscovery(params));
+                vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
             }
             vChain.addWallet(vWallet);
             vPeerGroup.addWallet(vWallet);
