@@ -1,0 +1,26 @@
+package org.bitcoin.crawler;
+
+//
+// A simple protocol for describing signed sets of IP addresses. Intended to be distributed via HTTP[S] or in files.
+//
+
+option java_package = "org.bitcoin.crawler";
+option java_outer_classname = "PeerSeedProtos";
+
+message PeerSeedData {
+    required string ip_address = 1;
+    required uint32 port = 2;
+    required uint32 services = 3;
+}
+
+message PeerSeeds {
+    repeated PeerSeedData seed = 1;
+    required uint64 timestamp = 2;   // seconds since UNIX epoch
+    required string net = 3;
+}
+
+message SignedPeerSeeds {
+    required bytes peer_seeds = 1;
+    required bytes signature = 2;
+    required bytes pubkey = 3;
+}
