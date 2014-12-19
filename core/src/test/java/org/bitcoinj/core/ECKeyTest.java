@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
@@ -96,11 +97,15 @@ public class ECKeyTest {
         }
         List<ECKey.ECDSASignature> sigs = Futures.allAsList(sigFutures).get();
         for (ECKey.ECDSASignature signature : sigs) {
-            assertTrue(signature.s.compareTo(ECKey.HALF_CURVE_ORDER) <= 0);
+            assertTrue(signature.isCanonical());
         }
-        final ECKey.ECDSASignature duplicate = new ECKey.ECDSASignature(sigs.get(0).r, sigs.get(0).s);
-        assertEquals(sigs.get(0), duplicate);
-        assertEquals(sigs.get(0).hashCode(), duplicate.hashCode());
+        final ECDSASignature first = sigs.get(0);
+        final ECKey.ECDSASignature duplicate = new ECKey.ECDSASignature(first.r, first.s);
+        assertEquals(first, duplicate);
+        assertEquals(first.hashCode(), duplicate.hashCode());
+
+        final ECKey.ECDSASignature highS = new ECKey.ECDSASignature(first.r, ECKey.CURVE.getN().subtract(first.s));
+        assertFalse(highS.isCanonical());
     }
 
     @Test

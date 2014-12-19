@@ -496,6 +496,14 @@ public class ECKey implements EncryptableItem, Serializable {
         }
 
         /**
+         * Returns true if the S component is "low", that means it is below {@link ECKey#HALF_CURVE_ORDER}. See <a
+         * href="https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Low_S_values_in_signatures">BIP62</a>.
+         */
+        public boolean isCanonical() {
+            return s.compareTo(HALF_CURVE_ORDER) <= 0;
+        }
+
+        /**
          * Will automatically adjust the S component to be less than or equal to half the curve order, if necessary.
          * This is required because for every signature (r,s) the signature (r, -s (mod N)) is a valid signature of
          * the same message. However, we dislike the ability to modify the bits of a Bitcoin transaction after it's
@@ -503,7 +511,7 @@ public class ECKey implements EncryptableItem, Serializable {
          * considered legal and the other will be banned.
          */
         public ECDSASignature toCanonicalised() {
-            if (s.compareTo(HALF_CURVE_ORDER) > 0) {
+            if (!isCanonical()) {
                 // The order of the curve is the number of valid points that exist on that curve. If S is in the upper
                 // half of the number of valid points, then bring it back to the lower half. Otherwise, imagine that
                 //    N = 10
