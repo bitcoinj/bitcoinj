@@ -696,6 +696,26 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     /**
+     * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key, and throws an exception
+     * if the signature doesn't match
+     * @throws java.security.SignatureException if the signature does not match.
+     */
+    public void verifyOrThrow(byte[] hash, byte[] signature) throws SignatureException {
+        if (!verify(hash, signature))
+            throw new SignatureException();
+    }
+
+    /**
+     * Verifies the given R/S pair (signature) against a hash using the public key, and throws an exception
+     * if the signature doesn't match
+     * @throws java.security.SignatureException if the signature does not match.
+     */
+    public void verifyOrThrow(Sha256Hash sigHash, ECDSASignature signature) throws SignatureException {
+        if (!ECKey.verify(sigHash.getBytes(), signature, getPubKey()))
+            throw new SignatureException();
+    }
+
+    /**
      * Returns true if the given pubkey is canonical, i.e. the correct length taking into account compression.
      */
     public static boolean isPubKeyCanonical(byte[] pubkey) {
