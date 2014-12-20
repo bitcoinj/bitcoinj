@@ -18,12 +18,15 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Wallet;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +114,8 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         VERSION,
         DUST,
         SHORTEST_POSSIBLE_PUSHDATA,
-        NONEMPTY_STACK  // Not yet implemented (for post 0.12)
+        NONEMPTY_STACK, // Not yet implemented (for post 0.12)
+        SIGNATURE_CANONICAL_ENCODING
     }
 
     /**
@@ -168,6 +172,19 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
             if (chunk.data != null && !chunk.isShortestPossiblePushData())
                 return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
+            if (chunk.isPushData()) {
+                ECDSASignature signature;
+                try {
+                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.data);
+                } catch (RuntimeException x) {
+                    // Doesn't look like a signature.
+                    signature = null;
+                }
+                if (signature != null) {
+                    if (!TransactionSignature.isEncodingCanonical(chunk.data))
+                        return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
+                }
+            }
         }
         return RuleViolation.NONE;
     }

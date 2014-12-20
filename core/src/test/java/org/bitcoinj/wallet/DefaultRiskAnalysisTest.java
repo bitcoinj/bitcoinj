@@ -17,14 +17,17 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
+import java.util.Arrays;
 import org.bitcoinj.core.*;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import com.google.common.collect.ImmutableList;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis;
+import org.bitcoinj.wallet.DefaultRiskAnalysis.RuleViolation;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -160,6 +163,22 @@ public class DefaultRiskAnalysisTest {
         assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
         tx.addOutput(new TransactionOutput(params, null, COIN, nonStandardScript));
         assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
+    }
+
+    @Test
+    public void canonicalSignature() {
+        TransactionSignature sig = TransactionSignature.dummy();
+        Script scriptOk = ScriptBuilder.createInputScript(sig);
+        assertEquals(RuleViolation.NONE,
+                DefaultRiskAnalysis.isInputStandard(new TransactionInput(params, null, scriptOk.getProgram())));
+
+        byte[] sigBytes = sig.encodeToBitcoin();
+        // Appending a zero byte makes the signature uncanonical without violating DER encoding.
+        Script scriptUncanonicalEncoding = new ScriptBuilder().data(Arrays.copyOf(sigBytes, sigBytes.length + 1))
+                .build();
+        assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING,
+                DefaultRiskAnalysis.isInputStandard(new TransactionInput(params, null, scriptUncanonicalEncoding
+                        .getProgram())));
     }
 
     @Test
