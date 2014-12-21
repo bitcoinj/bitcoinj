@@ -36,6 +36,7 @@ public class WatchMempool {
             @Override
             public void onTransaction(Peer peer, Transaction tx) {
                 try {
+                    log.info("tx {}", tx.getHash());
                     if (tx.getOutputs().size() != 1) return;
                     if (!tx.getOutput(0).getScriptPubKey().isSentToRawPubKey()) return;
                     log.info("Saw raw pay to pubkey {}", tx);

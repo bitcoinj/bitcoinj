@@ -1251,7 +1251,6 @@ public class PeerGroup implements TransactionBroadcaster {
             // aren't relevant to our wallet. We may still receive some false positives, which is
             // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
             if (bloomFilterMerger.getLastFilter() != null) peer.setBloomFilter(bloomFilterMerger.getLastFilter());
-            // Link the peer to the memory pool so broadcast transactions have their confidence levels updated.
             peer.setDownloadData(false);
             // TODO: The peer should calculate the fast catchup time from the added wallets here.
             for (Wallet wallet : wallets)
@@ -1320,15 +1319,8 @@ public class PeerGroup implements TransactionBroadcaster {
     private void setDownloadPeer(@Nullable Peer peer) {
         lock.lock();
         try {
-            if (downloadPeer == peer) {
+            if (downloadPeer == peer)
                 return;
-            }
-            if (chain == null) {
-                // PeerGroup creator did not want us to download any data. We still track the download peer for
-                // informational purposes.
-                downloadPeer = peer;
-                return;
-            }
             if (downloadPeer != null) {
                 log.info("Unsetting download peer: {}", downloadPeer);
                 if (downloadListener != null)
@@ -1341,7 +1333,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (downloadListener != null)
                     peer.addEventListener(downloadListener, Threading.SAME_THREAD);
                 downloadPeer.setDownloadData(true);
-                downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilterMerger.getLastFilter() != null);
+                if (chain != null)
+                    downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilterMerger.getLastFilter() != null);
             }
         } finally {
             lock.unlock();
