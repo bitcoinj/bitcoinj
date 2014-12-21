@@ -51,7 +51,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     protected final Transaction tx;
     protected final List<Transaction> dependencies;
-    protected final Wallet wallet;
+    protected final @Nullable Wallet wallet;
 
     private Transaction nonStandard;
     protected Transaction nonFinal;
@@ -69,16 +69,19 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         analyzed = true;
 
         Result result = analyzeIsFinal();
-        if (result != Result.OK)
+        if (result != null && result != Result.OK)
             return result;
 
         return analyzeIsStandard();
     }
 
-    private Result analyzeIsFinal() {
+    private @Nullable Result analyzeIsFinal() {
         // Transactions we create ourselves are, by definition, not at risk of double spending against us.
         if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
             return Result.OK;
+
+        if (wallet == null)
+            return null;
 
         final int height = wallet.getLastBlockSeenHeight();
         final long time = wallet.getLastBlockSeenTimeSecs();
@@ -172,7 +175,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     private Result analyzeIsStandard() {
         // The IsStandard rules don't apply on testnet, because they're just a safety mechanism and we don't want to
         // crush innovation with valueless test coins.
-        if (!wallet.getNetworkParameters().getId().equals(NetworkParameters.ID_MAINNET))
+        if (wallet != null && !wallet.getNetworkParameters().getId().equals(NetworkParameters.ID_MAINNET))
             return Result.OK;
 
         RuleViolation ruleViolation = isStandard(tx);

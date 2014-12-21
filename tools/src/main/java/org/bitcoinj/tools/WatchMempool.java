@@ -17,35 +17,73 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.*;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.bitcoinj.core.AbstractPeerEventListener;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.wallet.RiskAnalysis.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
 public class WatchMempool {
     private static Logger log = LoggerFactory.getLogger(WatchMempool.class);
+    private static final NetworkParameters PARAMS = MainNetParams.get();
+    private static final ImmutableList<Transaction> NO_DEPS = ImmutableList.of();
+    private static final Map<String, Integer> counters = new HashMap<String, Integer>();
+    private static final String TOTAL_KEY = "TOTAL";
+    private static final long START_MS = System.currentTimeMillis();
+    private static final long STATISTICS_FREQUENCY_MS = 1000 * 5;
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
-        NetworkParameters params = MainNetParams.get();
-        PeerGroup peerGroup = new PeerGroup(params);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+        PeerGroup peerGroup = new PeerGroup(PARAMS);
+        peerGroup.setMaxConnections(32);
+        peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS));
         peerGroup.addEventListener(new AbstractPeerEventListener() {
             @Override
             public void onTransaction(Peer peer, Transaction tx) {
-                try {
-                    log.info("tx {}", tx.getHash());
-                    if (tx.getOutputs().size() != 1) return;
-                    if (!tx.getOutput(0).getScriptPubKey().isSentToRawPubKey()) return;
-                    log.info("Saw raw pay to pubkey {}", tx);
-                } catch (ScriptException e) {
-                    e.printStackTrace();
-                }
+                Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
+                incrementCounter(TOTAL_KEY);
+                log.info("tx {} result {}", tx.getHash(), result);
+                incrementCounter(result.name());
+                if (result == Result.NON_STANDARD)
+                    incrementCounter(Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx));
             }
         });
         peerGroup.start();
-        Thread.sleep(Long.MAX_VALUE);
+
+        while (true) {
+            Thread.sleep(STATISTICS_FREQUENCY_MS);
+            printCounters();
+        }
+    }
+
+    private synchronized static void incrementCounter(String name) {
+        Integer count = counters.get(name);
+        if (count == null)
+            count = 0;
+        count++;
+        counters.put(name, count);
+    }
+
+    private synchronized static void printCounters() {
+        System.out.printf("Runtime: %d minutes\n", (System.currentTimeMillis() - START_MS) / 1000 / 60);
+        Integer total = counters.get(TOTAL_KEY);
+        if (total == null)
+            return;
+        for (Map.Entry<String, Integer> counter : counters.entrySet()) {
+            System.out.printf("  %-40s%6d  (%d%% of total)\n", counter.getKey(), counter.getValue(),
+                    (int) counter.getValue() * 100 / total);
+        }
     }
 }
