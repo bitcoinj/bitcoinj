@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public class WatchMempool {
     private static Logger log = LoggerFactory.getLogger(WatchMempool.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
         NetworkParameters params = MainNetParams.get();
         PeerGroup peerGroup = new PeerGroup(params);
@@ -44,6 +44,7 @@ public class WatchMempool {
                 }
             }
         });
-        peerGroup.startAsync();
+        peerGroup.start();
+        Thread.sleep(Long.MAX_VALUE);
     }
 }
