@@ -2475,6 +2475,25 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Prepares the wallet for a blockchain replay. Removes all transactions (as they would get in the way of the
+     * replay) and makes the wallet think it has never seen a block. {@link WalletEventListener#onWalletChanged()} will
+     * be fired.
+     */
+    public void reset() {
+        lock.lock();
+        try {
+            clearTransactions();
+            lastBlockSeenHash = null;
+            lastBlockSeenHeight = -1; // Magic value for 'never'.
+            lastBlockSeenTimeSecs = 0;
+            saveLater();
+            maybeQueueOnWalletChanged();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Deletes transactions which appeared above the given block height from the wallet, but does not touch the keys.
      * This is useful if you have some keys and wish to replay the block chain into the wallet in order to pick them up.
      * Triggers auto saving.
@@ -2483,11 +2502,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             if (fromHeight == 0) {
-                unspent.clear();
-                spent.clear();
-                pending.clear();
-                dead.clear();
-                transactions.clear();
+                clearTransactions();
                 saveLater();
             } else {
                 throw new UnsupportedOperationException();
@@ -2495,6 +2510,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         } finally {
             lock.unlock();
         }
+    }
+
+    private void clearTransactions() {
+        unspent.clear();
+        spent.clear();
+        pending.clear();
+        dead.clear();
+        transactions.clear();
     }
 
     /**
