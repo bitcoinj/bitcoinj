@@ -192,7 +192,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         List<DeterministicKeyChain> followingKeyChains = Lists.newArrayList();
 
         for (DeterministicKey key : followingAccountKeys) {
-            checkArgument(key.getPath().size() == 1, "Following keys have to be account keys");
+            checkArgument(key.getPath().size() == getAccountPath().size(), "Following keys have to be account keys");
             DeterministicKeyChain chain = DeterministicKeyChain.watchAndFollow(key);
             if (lookaheadSize >= 0)
                 chain.setLookaheadSize(lookaheadSize);

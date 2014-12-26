@@ -17,11 +17,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.ChildNumber;
-import org.bitcoinj.crypto.DeterministicHierarchy;
-import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.BriefLogFormatter;

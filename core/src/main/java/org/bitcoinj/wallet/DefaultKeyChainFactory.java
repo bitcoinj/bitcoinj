@@ -16,8 +16,9 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.crypto.KeyCrypter;
+import com.google.common.collect.ImmutableList;
+import org.bitcoinj.crypto.*;
+import org.bitcoinj.store.UnreadableWalletException;
 
 /**
  * Default factory for creating keychains while de-serializing.
@@ -34,7 +35,11 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
     }
 
     @Override
-    public DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried) {
+    public DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey,
+                                                      boolean isFollowingKey, boolean isMarried) throws UnreadableWalletException {
+        if (!accountKey.getPath().equals(DeterministicKeyChain.ACCOUNT_ZERO_PATH))
+            throw new UnreadableWalletException("Expecting account key but found key with path: " +
+                    HDUtils.formatPath(accountKey.getPath()));
         DeterministicKeyChain chain;
         if (isMarried)
             chain = new MarriedKeyChain(accountKey);

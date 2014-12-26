@@ -3078,7 +3078,8 @@ public class WalletTest extends TestWithWallet {
             public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
                 assertEquals(propTx.partialTx.getInputs().size(), propTx.keyPaths.size());
                 List<ChildNumber> externalZeroLeaf = ImmutableList.<ChildNumber>builder()
-                                                        .addAll(DeterministicKeyChain.EXTERNAL_PATH).add(ChildNumber.ZERO).build();
+                        .addAll(DeterministicKeyChain.ACCOUNT_ZERO_PATH)
+                        .addAll(DeterministicKeyChain.EXTERNAL_SUBPATH).add(ChildNumber.ZERO).build();
                 for (TransactionInput input : propTx.partialTx.getInputs()) {
                     List<ChildNumber> keypath = propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey());
                     assertNotNull(keypath);

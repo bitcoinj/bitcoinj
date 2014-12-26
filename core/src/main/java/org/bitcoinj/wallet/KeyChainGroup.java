@@ -764,14 +764,14 @@ public class KeyChainGroup implements KeyBag {
         // kinds of KeyPurpose are introduced.
         if (activeChain.getIssuedExternalKeys() > 0) {
             DeterministicKey currentExternalKey = activeChain.getKeyByPath(
-                    ImmutableList.of(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1))
+                    Lists.newArrayList(ImmutableList.<ChildNumber>builder().addAll(activeChain.getAccountPath()).add(ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1)).build())
             );
             currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
         }
 
         if (activeChain.getIssuedInternalKeys() > 0) {
             DeterministicKey currentInternalKey = activeChain.getKeyByPath(
-                    ImmutableList.of(ChildNumber.ZERO_HARDENED, new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1))
+                    Lists.newArrayList(ImmutableList.<ChildNumber>builder().addAll(activeChain.getAccountPath()).add(new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1)).build())
             );
             currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
         }
