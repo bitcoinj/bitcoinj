@@ -31,7 +31,7 @@ import com.google.common.base.Objects;
  * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
  * dumpprivkey command.</p>
  */
-public class VersionedChecksummedBytes implements Serializable {
+public class VersionedChecksummedBytes implements Serializable, Cloneable {
     protected final int version;
     protected byte[] bytes;
 
@@ -82,6 +82,19 @@ public class VersionedChecksummedBytes implements Serializable {
     /**
      * Returns the "version" or "header" byte: the first byte of the data. This is used to disambiguate what the
      * contents apply to, for example, which network the key or address is valid on.
+     * {@inheritDoc}
+     *
+     * This implementation narrows the return type to <code>VersionedChecksummedBytes</code>
+     * and allows subclasses to throw <code>CloneNotSupportedException</code> even though it
+     * is never thrown by this implementation.
+     */
+    @Override
+    public VersionedChecksummedBytes clone() throws CloneNotSupportedException {
+        return (VersionedChecksummedBytes) super.clone();
+    }
+
+
+    /**
      *
      * @return A positive number between 0 and 255.
      */

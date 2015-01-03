@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,4 +39,15 @@ public class DumpedPrivateKeyTest {
                 .readObject();
         assertEquals(key, keyCopy);
     }
+
+    @Test
+    public void cloning() throws Exception {
+        DumpedPrivateKey a = new DumpedPrivateKey(MainNetParams.get(), new ECKey().getPrivKeyBytes(), true);
+        // TODO: Consider overriding clone() in DumpedPrivateKey to narrow the type
+        DumpedPrivateKey b = (DumpedPrivateKey) a.clone();
+
+        assertEquals(a, b);
+        assertNotSame(a, b);
+    }
+
 }

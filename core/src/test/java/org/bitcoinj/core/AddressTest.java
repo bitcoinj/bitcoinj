@@ -168,4 +168,14 @@ public class AddressTest {
         Address address = Address.fromP2SHScript(mainParams, p2shScript);
         assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
+
+    @Test
+    public void cloning() throws Exception {
+        Address a = new Address(testParams, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        Address b = a.clone();
+
+        assertEquals(a, b);
+        assertNotSame(a, b);
+    }
+
 }
