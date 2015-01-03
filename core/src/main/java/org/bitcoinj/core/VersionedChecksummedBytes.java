@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import com.google.common.base.Objects;
+import com.google.common.primitives.UnsignedBytes;
 
 /**
  * <p>In Bitcoin the following format is often used to represent some type of key:</p>
@@ -31,7 +32,7 @@ import com.google.common.base.Objects;
  * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
  * dumpprivkey command.</p>
  */
-public class VersionedChecksummedBytes implements Serializable, Cloneable {
+public class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
     protected final int version;
     protected byte[] bytes;
 
@@ -80,8 +81,6 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable {
     }
 
     /**
-     * Returns the "version" or "header" byte: the first byte of the data. This is used to disambiguate what the
-     * contents apply to, for example, which network the key or address is valid on.
      * {@inheritDoc}
      *
      * This implementation narrows the return type to <code>VersionedChecksummedBytes</code>
@@ -93,8 +92,25 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable {
         return (VersionedChecksummedBytes) super.clone();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * This implementation uses an optimized Google Guava method to compare <code>bytes</code>.
+     */
+    @Override
+    public int compareTo(VersionedChecksummedBytes o) {
+        int versionCompare = Integer.valueOf(this.version).compareTo(Integer.valueOf(o.version));  // JDK 6 way
+        if (versionCompare == 0) {
+            // Would there be a performance benefit to caching the comparator?
+            return UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
+        } else {
+            return versionCompare;
+        }
+    }
 
     /**
+     * Returns the "version" or "header" byte: the first byte of the data. This is used to disambiguate what the
+     * contents apply to, for example, which network the key or address is valid on.
      *
      * @return A positive number between 0 and 255.
      */
