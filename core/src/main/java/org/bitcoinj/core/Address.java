@@ -168,4 +168,12 @@ public class Address extends VersionedChecksummedBytes {
         }
         return false;
     }
+
+    /**
+     * This implementation narrows the return type to <code>Address</code>.
+     */
+    @Override
+    public Address clone() throws CloneNotSupportedException {
+        return (Address) super.clone();
+    }
 }
