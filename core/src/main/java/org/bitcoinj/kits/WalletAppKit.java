@@ -375,7 +375,7 @@ public class WalletAppKit extends AbstractIdleService {
                 serializer = new WalletProtobufSerializer();
             wallet = serializer.readWallet(params, extArray, proto);
             if (shouldReplayWallet)
-                wallet.clearTransactions(0);
+                wallet.reset();
         } finally {
             walletStream.close();
         }
