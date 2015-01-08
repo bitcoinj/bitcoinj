@@ -64,6 +64,7 @@ public abstract class NetworkParameters implements Serializable {
     public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
     /** The string used by the payment protocol to represent unit testing (note that this is non-standard). */
     public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
+    public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
 
     // TODO: Seed nodes should be here as well.
 
@@ -228,6 +229,8 @@ public abstract class NetworkParameters implements Serializable {
             return TestNet3Params.get();
         } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
             return UnitTestParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
+            return RegTestParams.get();
         } else {
             return null;
         }
