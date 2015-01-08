@@ -23,7 +23,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 public class GetUTXOsMessage extends Message {
-    public static final int MIN_PROTOCOL_VERSION = 70003;
+    public static final int MIN_PROTOCOL_VERSION = 70002;
 
     private boolean includeMempool;
     private ImmutableList<TransactionOutPoint> outPoints;
