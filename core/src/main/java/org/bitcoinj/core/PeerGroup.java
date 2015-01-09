@@ -1657,9 +1657,8 @@ public class PeerGroup implements TransactionBroadcaster {
 
             @Override
             public void onFailure(Throwable throwable) {
-                // This can't happen with the current code, but just in case one day that changes ...
+                // This can happen if we get a reject message from a peer.
                 runningBroadcasts.remove(broadcast);
-                throw new RuntimeException(throwable);
             }
         });
         // Keep a reference to the TransactionBroadcast object. This is important because otherwise, the entire tree
