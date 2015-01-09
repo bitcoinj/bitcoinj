@@ -699,6 +699,31 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
+    public void waitForPeersWithServiceFlags() throws Exception {
+        ListenableFuture<List<Peer>> future = peerGroup.waitForPeersWithServiceMask(2, 3);
+
+        VersionMessage ver1 = new VersionMessage(params, 10);
+        ver1.clientVersion = 70000;
+        ver1.localServices = VersionMessage.NODE_NETWORK;
+        VersionMessage ver2 = new VersionMessage(params, 10);
+        ver2.clientVersion = 70000;
+        ver2.localServices = VersionMessage.NODE_NETWORK | 2;
+        peerGroup.start();
+        assertFalse(future.isDone());
+        connectPeer(1, ver1);
+        assertTrue(peerGroup.findPeersWithServiceMask(3).isEmpty());
+        assertFalse(future.isDone());
+        connectPeer(2, ver2);
+        assertFalse(future.isDone());
+        assertEquals(1, peerGroup.findPeersWithServiceMask(3).size());
+        assertTrue(peerGroup.waitForPeersWithServiceMask(1, 0x3).isDone());   // Immediate completion.
+        connectPeer(3, ver2);
+        future.get();
+        assertTrue(future.isDone());
+        peerGroup.stop();
+    }
+
+    @Test
     public void preferLocalPeer() throws IOException {
         // Because we are using the same port (8333 or 18333) that is used by Satoshi client
         // We have to consider 2 cases:

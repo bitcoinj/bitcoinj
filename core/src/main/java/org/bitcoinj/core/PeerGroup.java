@@ -1501,7 +1501,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns a mutable array list of peers that implement the given protocol version or better.
+     * Returns an array list of peers that implement the given protocol version or better.
      */
     public List<Peer> findPeersOfAtLeastVersion(long protocolVersion) {
         lock.lock();
@@ -1509,6 +1509,48 @@ public class PeerGroup implements TransactionBroadcaster {
             ArrayList<Peer> results = new ArrayList<Peer>(peers.size());
             for (Peer peer : peers)
                 if (peer.getPeerVersionMessage().clientVersion >= protocolVersion)
+                    results.add(peer);
+            return results;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns a future that is triggered when there are at least the requested number of connected peers that support
+     * the given protocol version or higher. To block immediately, just call get() on the result.
+     *
+     * @param numPeers How many peers to wait for.
+     * @param mask An integer representing a bit mask that will be ANDed with the peers advertised service masks.
+     * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher >= numPeers
+     */
+    public ListenableFuture<List<Peer>> waitForPeersWithServiceMask(final int numPeers, final int mask) {
+        List<Peer> foundPeers = findPeersWithServiceMask(mask);
+        if (foundPeers.size() >= numPeers)
+            return Futures.immediateFuture(foundPeers);
+        final SettableFuture<List<Peer>> future = SettableFuture.create();
+        addEventListener(new AbstractPeerEventListener() {
+            @Override
+            public void onPeerConnected(Peer peer, int peerCount) {
+                final List<Peer> peers = findPeersWithServiceMask(mask);
+                if (peers.size() >= numPeers) {
+                    future.set(peers);
+                    removeEventListener(this);
+                }
+            }
+        });
+        return future;
+    }
+
+    /**
+     * Returns an array list of peers that match the requested service bit mask.
+     */
+    public List<Peer> findPeersWithServiceMask(int mask) {
+        lock.lock();
+        try {
+            ArrayList<Peer> results = new ArrayList<Peer>(peers.size());
+            for (Peer peer : peers)
+                if ((peer.getPeerVersionMessage().localServices & mask) == mask)
                     results.add(peer);
             return results;
         } finally {
