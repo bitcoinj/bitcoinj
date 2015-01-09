@@ -884,6 +884,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         torClient.stop();
                     }
                     vRunning = false;
+                    log.info("Stopped.");
                 } catch (Throwable e) {
                     log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
                 }
@@ -897,6 +898,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void stop() {
         try {
             stopAsync();
+            log.info("Awaiting PeerGroup shutdown ...");
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -1525,21 +1527,26 @@ public class PeerGroup implements TransactionBroadcaster {
      * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher >= numPeers
      */
     public ListenableFuture<List<Peer>> waitForPeersWithServiceMask(final int numPeers, final int mask) {
-        List<Peer> foundPeers = findPeersWithServiceMask(mask);
-        if (foundPeers.size() >= numPeers)
-            return Futures.immediateFuture(foundPeers);
-        final SettableFuture<List<Peer>> future = SettableFuture.create();
-        addEventListener(new AbstractPeerEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                final List<Peer> peers = findPeersWithServiceMask(mask);
-                if (peers.size() >= numPeers) {
-                    future.set(peers);
-                    removeEventListener(this);
+        lock.lock();
+        try {
+            List<Peer> foundPeers = findPeersWithServiceMask(mask);
+            if (foundPeers.size() >= numPeers)
+                return Futures.immediateFuture(foundPeers);
+            final SettableFuture<List<Peer>> future = SettableFuture.create();
+            addEventListener(new AbstractPeerEventListener() {
+                @Override
+                public void onPeerConnected(Peer peer, int peerCount) {
+                    final List<Peer> peers = findPeersWithServiceMask(mask);
+                    if (peers.size() >= numPeers) {
+                        future.set(peers);
+                        removeEventListener(this);
+                    }
                 }
-            }
-        });
-        return future;
+            });
+            return future;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
