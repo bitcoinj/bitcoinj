@@ -52,7 +52,7 @@ public class BuildCheckpoints {
     private static final File TEXTUAL_CHECKPOINTS_FILE = new File("checkpoints.txt");
 
     public static void main(String[] args) throws Exception {
-        BriefLogFormatter.init();
+        BriefLogFormatter.initWithSilentBitcoinJ();
 
         // Sorted map of block height to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
