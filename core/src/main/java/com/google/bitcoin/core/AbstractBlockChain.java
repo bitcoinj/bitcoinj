@@ -115,10 +115,15 @@ public abstract class AbstractBlockChain {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
             Preconditions.checkArgument((block.transactions == null && filtered)
                                         || (block.transactions != null && !filtered));
-            if (!shouldVerifyTransactions())
-                this.block = block.cloneAsHeader();
-            else
-                this.block = block;
+
+            // BitGo doesn't verify transactions, but if we prune out the actual blocks here,
+            // we can't replay the transactions when the orphan block is later reconnected.
+            this.block = block;
+
+            //if (!shouldVerifyTransactions())
+            //    this.block = block.cloneAsHeader();
+            //else
+            //    this.block = block;
             this.filteredTxHashes = filteredTxHashes;
             this.filteredTxn = filteredTxn;
         }
