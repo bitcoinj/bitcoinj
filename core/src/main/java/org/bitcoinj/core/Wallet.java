@@ -3583,9 +3583,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 req.tx.shuffleOutputs();
 
             // Now sign the inputs, thus proving that we are entitled to redeem the connected outputs.
-            if (req.signInputs) {
+            if (req.signInputs)
                 signTransaction(req);
-            }
 
             // Check size.
             int size = req.tx.bitcoinSerialize().length;
@@ -3593,9 +3592,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 throw new ExceededMaxTransactionSize();
 
             final Coin calculatedFee = req.tx.getFee();
-            if (calculatedFee != null) {
+            if (calculatedFee != null)
                 log.info("  with a fee of {}", calculatedFee.toFriendlyString());
-            }
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
