@@ -116,7 +116,7 @@ public class Threading {
         @Override
         public void execute(Runnable command) {
             final int size = tasks.size();
-            if (size > WARNING_THRESHOLD) {
+            if (size == WARNING_THRESHOLD) {
                 log.warn(
                     "User thread has {} pending tasks, memory exhaustion may occur.\n" +
                     "If you see this message, check your memory consumption and see if it's problematic or excessively spikey.\n" +
