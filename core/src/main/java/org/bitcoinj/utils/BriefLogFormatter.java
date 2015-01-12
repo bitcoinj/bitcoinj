@@ -49,6 +49,11 @@ public class BriefLogFormatter extends Formatter {
         logger.log(Level.FINE, "test");
     }
 
+    public static void initWithSilentBitcoinJ() {
+        init();
+        Logger.getLogger("org.bitcoinj").setLevel(Level.SEVERE);
+    }
+
     @Override
     public String format(LogRecord logRecord) {
         Object[] arguments = new Object[6];
