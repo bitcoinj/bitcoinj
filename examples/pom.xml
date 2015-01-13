@@ -46,5 +46,11 @@
             <artifactId>h2</artifactId>
             <version>1.3.167</version>
         </dependency>
+        <dependency>
+            <groupId>org.fusesource.leveldbjni</groupId>
+            <artifactId>leveldbjni-all</artifactId>
+            <version>1.8</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 </project>
