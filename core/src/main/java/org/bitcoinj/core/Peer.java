@@ -57,7 +57,7 @@ public class Peer extends PeerSocketHandler {
     protected final ReentrantLock lock = Threading.lock("peer");
 
     private final NetworkParameters params;
-    private final AbstractBlockChain blockChain;
+    private final Context context;
 
     // onPeerDisconnected should not be called directly by Peers when a PeerGroup is involved (we don't know the total
     // number of connected peers), thus we use a wrapper that PeerGroup can use to register listeners that wont get
@@ -150,7 +150,7 @@ public class Peer extends PeerSocketHandler {
     @Nullable private SettableFuture<UTXOsMessage> utxosFuture;
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain.</p>
+     * <p>Construct a peer that reads/writes from the block chain of the given context.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
@@ -161,13 +161,33 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
-        this(params, ver, remoteAddress, chain);
+    public Peer(NetworkParameters params, VersionMessage ver, Context context, PeerAddress remoteAddress) {
+        this(params, ver, remoteAddress, context);
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
-     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
+     * <p>Construct a peer that reads/writes from the block chain of the given context.
+     * Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
+     * the transaction is valid.</p>
+     *
+     * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
+     * connection. If you want to create a one-off connection, create a Peer and pass it to
+     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
+     * or
+     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
+     *
+     * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
+     * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
+     */
+    public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress, Context context) {
+        this(params, ver, remoteAddress, context, true);
+    }
+
+    /**
+     * <p>Construct a peer that reads/writes from the block chain of the given context.
+     * Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
@@ -180,32 +200,13 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain) {
-        this(params, ver, remoteAddress, chain, true);
-    }
-
-    /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
-     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
-     * the transaction is valid.</p>
-     *
-     * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
-     * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
-     * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
-     *
-     * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
-     * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
-     */
-    public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain, boolean downloadTxDependencies) {
+                Context context, boolean downloadTxDependencies) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
-        this.vDownloadTxDependencies = chain != null && downloadTxDependencies;
-        this.blockChain = chain;  // Allowed to be null.
-        this.vDownloadData = chain != null;
+        this.vDownloadTxDependencies = context.getBlockChain() != null && downloadTxDependencies;
+        this.context = context;
+        this.vDownloadData = context.getBlockChain() != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
         this.eventListeners = new CopyOnWriteArrayList<PeerListenerRegistration>();
         this.getAddrFutures = new LinkedList<SettableFuture<AddressMessage>>();
@@ -213,11 +214,12 @@ public class Peer extends PeerSocketHandler {
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.confidenceTable = chain != null ? chain.getContext().getConfidenceTable() : null;
+        this.confidenceTable = context.getConfidenceTable();
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given chain. Automatically creates a VersionMessage for you from
+     * <p>Construct a peer that reads/writes from the chain of the given context.
+     * Automatically creates a VersionMessage for you from
      * the given software name/version strings, which should be something like "MySimpleTool", "1.0" and which will tell
      * the remote node to relay transaction inv messages before it has received a filter.</p>
      *
@@ -230,8 +232,9 @@ public class Peer extends PeerSocketHandler {
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
-    public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
-        this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
+    public Peer(NetworkParameters params, Context context, PeerAddress peerAddress,
+                String thisSoftwareName, String thisSoftwareVersion) {
+        this(params, new VersionMessage(params, context.getBlockChain().getBestChainHeight()), context, peerAddress);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
@@ -503,7 +506,7 @@ public class Peer extends PeerSocketHandler {
 
         lock.lock();
         try {
-            if (blockChain == null) {
+            if (context.getBlockChain() == null) {
                 // Can happen if we are receiving unrequested data, or due to programmer error.
                 log.warn("Received headers when Peer is not configured with a chain.");
                 return;
@@ -522,14 +525,14 @@ public class Peer extends PeerSocketHandler {
                 // of the chain - always process the last block as a full/filtered block to kick us out of the
                 // fast catchup mode (in which we ignore new blocks).
                 boolean passedTime = header.getTimeSeconds() >= fastCatchupTimeSecs;
-                boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight;
+                boolean reachedTop = context.getBlockChain().getBestChainHeight() >= vPeerVersionMessage.bestHeight;
                 if (!passedTime && !reachedTop) {
                     if (!vDownloadData) {
                         // Not download peer anymore, some other peer probably became better.
                         log.info("Lost download peer status, throwing away downloaded headers.");
                         return;
                     }
-                    if (blockChain.add(header)) {
+                    if (context.getBlockChain().add(header)) {
                         // The block was successfully linked into the chain. Notify the user of our progress.
                         invokeOnBlocksDownloaded(header);
                     } else {
@@ -824,7 +827,7 @@ public class Peer extends PeerSocketHandler {
         }
         // Was this block requested by getBlock()?
         if (maybeHandleRequestedData(m)) return;
-        if (blockChain == null) {
+        if (context.getBlockChain() == null) {
             log.warn("Received block but was not configured with an AbstractBlockChain");
             return;
         }
@@ -836,7 +839,7 @@ public class Peer extends PeerSocketHandler {
         pendingBlockDownloads.remove(m.getHash());
         try {
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
-            if (blockChain.add(m)) {
+            if (context.getBlockChain().add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m);
             } else {
@@ -861,7 +864,7 @@ public class Peer extends PeerSocketHandler {
                 lock.lock();
                 try {
                     if (downloadBlockBodies) {
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                        final Block orphanRoot = checkNotNull(context.getBlockChain().getOrphanRoot(m.getHash()));
                         blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         log.info("Did not start chain download on solved block due to in-flight header download.");
@@ -887,7 +890,7 @@ public class Peer extends PeerSocketHandler {
             log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHash().toString());
             return;
         }
-        if (blockChain == null) {
+        if (context.getBlockChain() == null) {
             log.warn("Received filtered block but was not configured with an AbstractBlockChain");
             return;
         }
@@ -933,14 +936,14 @@ public class Peer extends PeerSocketHandler {
                     log.info("Bloom filter exhausted whilst processing block {}, discarding", m.getHash());
                     awaitingFreshFilter = new LinkedList<Sha256Hash>();
                     awaitingFreshFilter.add(m.getHash());
-                    awaitingFreshFilter.addAll(blockChain.drainOrphanBlocks());
+                    awaitingFreshFilter.addAll(context.getBlockChain().drainOrphanBlocks());
                     return;   // Chain download process is restarted via a call to setBloomFilter.
                 }
             } finally {
                 lock.unlock();
             }
 
-            if (blockChain.add(m)) {
+            if (context.getBlockChain().add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
                 invokeOnBlocksDownloaded(m.getBlockHeader());
             } else {
@@ -961,7 +964,7 @@ public class Peer extends PeerSocketHandler {
                 // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
                 lock.lock();
                 try {
-                    final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                    final Block orphanRoot = checkNotNull(context.getBlockChain().getOrphanRoot(m.getHash()));
                     blockChainDownloadLocked(orphanRoot.getHash());
                 } finally {
                     lock.unlock();
@@ -1004,7 +1007,8 @@ public class Peer extends PeerSocketHandler {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
+        final int blocksLeft =
+            Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(context.getBlockChain()).getBestChainHeight());
         for (final ListenerRegistration<PeerEventListener> registration : eventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
@@ -1042,8 +1046,8 @@ public class Peer extends PeerSocketHandler {
             // (the block chain download protocol is very implicit and not well thought out). If we're not downloading
             // the chain then this probably means a new block was solved and the peer believes it connects to the best
             // chain, so count it. This way getBestChainHeight() can be accurate.
-            if (downloadData && blockChain != null) {
-                if (!blockChain.isOrphan(blocks.get(0).hash)) {
+            if (downloadData && context.getBlockChain() != null) {
+                if (!context.getBlockChain().isOrphan(blocks.get(0).hash)) {
                     blocksAnnounced.incrementAndGet();
                 }
             } else {
@@ -1086,15 +1090,15 @@ public class Peer extends PeerSocketHandler {
 
         lock.lock();
         try {
-            if (blocks.size() > 0 && downloadData && blockChain != null) {
+            if (blocks.size() > 0 && downloadData && context.getBlockChain() != null) {
                 // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
                 // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
                 // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
                 for (InventoryItem item : blocks) {
-                    if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
+                    if (context.getBlockChain().isOrphan(item.hash) && downloadBlockBodies) {
                         // If an orphan was re-advertised, ask for more blocks unless we are not currently downloading
                         // full block data because we have a getheaders outstanding.
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(item.hash));
+                        final Block orphanRoot = checkNotNull(context.getBlockChain().getOrphanRoot(item.hash));
                         blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         // Don't re-request blocks we already requested. Normally this should not happen. However there is
@@ -1208,7 +1212,7 @@ public class Peer extends PeerSocketHandler {
     public void setDownloadParameters(long secondsSinceEpoch, boolean useFilteredBlocks) {
         lock.lock();
         try {
-            Preconditions.checkNotNull(blockChain);
+            Preconditions.checkNotNull(context.getBlockChain());
             if (secondsSinceEpoch == 0) {
                 fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
                 downloadBlockBodies = true;
@@ -1216,7 +1220,7 @@ public class Peer extends PeerSocketHandler {
                 fastCatchupTimeSecs = secondsSinceEpoch;
                 // If the given time is before the current chains head block time, then this has no effect (we already
                 // downloaded everything we need).
-                if (fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds()) {
+                if (fastCatchupTimeSecs > context.getBlockChain().getChainHead().getHeader().getTimeSeconds()) {
                     downloadBlockBodies = false;
                 }
             }
@@ -1290,8 +1294,8 @@ public class Peer extends PeerSocketHandler {
         // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
         // 100 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
         // must always put the genesis block as the first entry.
-        BlockStore store = checkNotNull(blockChain).getBlockStore();
-        StoredBlock chainHead = blockChain.getChainHead();
+        BlockStore store = checkNotNull(context.getBlockChain()).getBlockStore();
+        StoredBlock chainHead = context.getBlockChain().getChainHead();
         Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
         if (Objects.equal(lastGetBlocksBegin, chainHeadHash) && Objects.equal(lastGetBlocksEnd, toHash)) {
@@ -1472,14 +1476,14 @@ public class Peer extends PeerSocketHandler {
      * behind the peer, or negative if the peer is ahead of us.
      */
     public int getPeerBlockHeightDifference() {
-        checkNotNull(blockChain, "No block chain configured");
+        checkNotNull(context.getBlockChain(), "No block chain configured");
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) getBestHeight();
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
         checkState(params.allowEmptyPeerChain() || chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
-        return chainHeight - blockChain.getBestChainHeight();
+        return chainHeight - context.getBlockChain().getBestChainHeight();
     }
 
     private boolean isNotFoundMessageSupported() {

@@ -42,7 +42,7 @@ public class TransactionBroadcast {
     private final SettableFuture<Transaction> future = SettableFuture.create();
     private final PeerGroup peerGroup;
     private final Transaction tx;
-    @Nullable private final Context context;
+    private final Context context;
     private int minConnections;
     private int numWaitingFor;
 
@@ -51,12 +51,16 @@ public class TransactionBroadcast {
     public static Random random = new Random();
     private Transaction pinnedTx;
 
-    // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
-    TransactionBroadcast(PeerGroup peerGroup, @Nullable Context context, Transaction tx) {
+    @Deprecated
+    TransactionBroadcast(PeerGroup peerGroup, Context context, Transaction tx) {
         this.peerGroup = peerGroup;
         this.context = context;
         this.tx = tx;
         this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
+    }
+
+    TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
+        this(peerGroup, peerGroup.getContext(), tx);
     }
 
     public ListenableFuture<Transaction> future() {

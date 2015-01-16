@@ -1,15 +1,20 @@
 package org.bitcoinj.core;
 
+import javax.annotation.Nullable;
+
 /**
  * The Context object holds various objects that are scoped to a specific instantiation of bitcoinj for a specific
- * network. You can get an instance of this class through {@link AbstractBlockChain#getContext()}. At the momemnt it
+ * network. You can get an instance of this class through {@link PeerGroup#getContext()}. At the momemnt it
  * only contains a {@link org.bitcoinj.core.TxConfidenceTable} but in future it will likely contain file paths and
  * other global configuration of use.
  */
 public class Context {
     protected TxConfidenceTable confidenceTable;
+    private AbstractBlockChain chain;
 
-    protected Context() {
+    // The only reason this constructor is not protected is so TestWithNetworkConections can use it.
+    public Context(@Nullable AbstractBlockChain chain) {
+        this.chain = chain;
         confidenceTable = new TxConfidenceTable();
     }
 
@@ -21,5 +26,12 @@ public class Context {
      */
     public TxConfidenceTable getConfidenceTable() {
         return confidenceTable;
+    }
+
+    /**
+     * Returns the BlockChain associated with this Context, or null.
+     */
+    public AbstractBlockChain getBlockChain() {
+        return chain;
     }
 }
