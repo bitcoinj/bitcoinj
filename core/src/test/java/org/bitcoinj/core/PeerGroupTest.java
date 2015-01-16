@@ -239,7 +239,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     
     @Test
-    public void receiveTxBroadcastOnAddeweldWallet() throws Exception {
+    public void receiveTxBroadcastOnAddedWallet() throws Exception {
         // Check that when we receive transactions on all our peers, we do the right thing.
         peerGroup.start();
 
