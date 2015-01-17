@@ -83,7 +83,8 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
 
     private static final transient SecureRandom secureRandom;
 
-    private static byte[] randomSalt() {
+    /** Returns SALT_LENGTH (8) bytes of random data */
+    public static byte[] randomSalt() {
         byte[] salt = new byte[SALT_LENGTH];
         secureRandom.nextBytes(salt);
         return salt;
