@@ -153,8 +153,8 @@ public class FakeTxBuilder {
         doubleSpends.t2.addOutput(o2);
 
         try {
-            doubleSpends.t1 = new Transaction(params, doubleSpends.t1.bitcoinSerialize());
-            doubleSpends.t2 = new Transaction(params, doubleSpends.t2.bitcoinSerialize());
+            doubleSpends.t1 = doubleSpends.t1.cloneTransaction();
+            doubleSpends.t2 = doubleSpends.t2.cloneTransaction();
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         }

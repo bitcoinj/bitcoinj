@@ -24,6 +24,8 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
+
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -169,6 +171,9 @@ public class Transaction extends ChildMessage implements Serializable {
     @Nullable
     private String memo;
 
+    @Nullable
+    private Context context;
+
     public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
@@ -178,16 +183,46 @@ public class Transaction extends ChildMessage implements Serializable {
         length = 8; // 8 for std fields
     }
 
+    public Transaction(Context context) {
+        this(context.getParams());
+        this.context = context;
+    }
+
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
+    public Transaction(Context context, byte[] payloadBytes) throws ProtocolException {
+        super(context.getParams(), payloadBytes, 0);
+        this.context = context;
+    }
+
+    /**
+     * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
+     */
+    @Deprecated
     public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
+        // This constructor is not deprecated because it's useful in cloning
         super(params, payloadBytes, 0);
+    }
+
+    /**
+     * Clones a transaction.
+     *
+     * <p>Does not supply a Context to the cloned transaction, so confidence will always be UNKNOWN.</p>
+     */
+    public Transaction cloneTransaction() {
+        try {
+            //noinspection deprecation
+            return new Transaction(params, bitcoinSerialize());
+        } catch (ProtocolException e) {
+            throw Throwables.propagate(e);
+        }
     }
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
+    @Deprecated
     public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
         // inputs/outputs will be created in parse()
@@ -195,7 +230,16 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
-     * @param params NetworkParameters object.
+     */
+    public Transaction(Context context, byte[] payload, int offset) throws ProtocolException {
+        super(context.getParams(), payload, offset);
+        // inputs/outputs will be created in parse()
+        this.context = context;
+    }
+
+    /**
+     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     * @param context Context object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
@@ -206,6 +250,35 @@ public class Transaction extends ChildMessage implements Serializable {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
+    public Transaction(Context context, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+            throws ProtocolException {
+        super(context.getParams(), payload, offset, parent, parseLazy, parseRetain, length);
+        this.context = context;
+    }
+
+    /**
+     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     */
+    public Transaction(Context context, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+            throws ProtocolException {
+        super(context.getParams(), payload, 0, parent, parseLazy, parseRetain, length);
+        this.context = context;
+    }
+
+    /**
+     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     * @param params NetworkParameters object.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.
+     * If true and the backing byte array is invalidated due to modification of a field then
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
+    @Deprecated
     public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, payload, offset, parent, parseLazy, parseRetain, length);
@@ -214,6 +287,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      */
+    @Deprecated
     public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, payload, 0, parent, parseLazy, parseRetain, length);
@@ -1129,10 +1203,18 @@ public class Transaction extends ChildMessage implements Serializable {
         return outputs.get((int)index);
     }
 
-    /** Returns the confidence object that is owned by this transaction object. */
+    /**
+     * Returns the confidence object for this transaction object.
+     *
+     * <p>If no Context was supplied in the constructor, the confidence will always be UNKNOWN.
+     * Transactions received from the network always have a context.</p>
+     */
     public synchronized TransactionConfidence getConfidence() {
-        if (confidence == null) {
+        if (context == null) {
+            // Without a context, we return an UNKNOWN confidence that will never change
             confidence = new TransactionConfidence(getHash());
+        } else if (confidence == null) {
+            confidence = context.getConfidenceTable().getConfidence(getHash(), true);
         }
         return confidence;
     }

@@ -150,7 +150,7 @@ public abstract class AbstractBlockChain {
         this.params = params;
         this.listeners = new CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>>();
         for (BlockChainListener l : listeners) addListener(l, Threading.SAME_THREAD);
-        context = new Context();
+        context = new Context(this.params);
     }
 
     public Context getContext() {
@@ -547,7 +547,7 @@ public abstract class AbstractBlockChain {
         if (filteredTxHashList != null) falsePositives.addAll(filteredTxHashList);
         for (final ListenerRegistration<BlockChainListener> registration : listeners) {
             if (registration.executor == Threading.SAME_THREAD) {
-                informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
+                informListenerForNewTransactions(context, block, newBlockType, filteredTxHashList, filteredTxn,
                         newStoredBlock, first, registration.listener, falsePositives);
                 if (newBlockType == NewBlockType.BEST_CHAIN)
                     registration.listener.notifyNewBestBlock(newStoredBlock);
@@ -560,7 +560,7 @@ public abstract class AbstractBlockChain {
                         try {
                             // We can't do false-positive handling when executing on another thread
                             Set<Sha256Hash> ignoredFalsePositives = Sets.newHashSet();
-                            informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
+                            informListenerForNewTransactions(context, block, newBlockType, filteredTxHashList, filteredTxn,
                                     newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
                             if (newBlockType == NewBlockType.BEST_CHAIN)
                                 registration.listener.notifyNewBestBlock(newStoredBlock);
@@ -579,7 +579,8 @@ public abstract class AbstractBlockChain {
         trackFalsePositives(falsePositives.size());
     }
 
-    private static void informListenerForNewTransactions(Block block, NewBlockType newBlockType,
+    private static void informListenerForNewTransactions(Context context,
+                                                         Block block, NewBlockType newBlockType,
                                                          @Nullable List<Sha256Hash> filteredTxHashList,
                                                          @Nullable Map<Sha256Hash, Transaction> filteredTxn,
                                                          StoredBlock newStoredBlock, boolean first,
@@ -591,7 +592,7 @@ public abstract class AbstractBlockChain {
             // is relevant to both of them, they don't end up accidentally sharing the same object (which can
             // result in temporary in-memory corruption during re-orgs). See bug 257. We only duplicate in
             // the case of multiple wallets to avoid an unnecessary efficiency hit in the common case.
-            sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.transactions,
+            sendTransactionsToListener(context, newStoredBlock, newBlockType, listener, 0, block.transactions,
                     !first, falsePositives);
         } else if (filteredTxHashList != null) {
             checkNotNull(filteredTxn);
@@ -602,7 +603,7 @@ public abstract class AbstractBlockChain {
             for (Sha256Hash hash : filteredTxHashList) {
                 Transaction tx = filteredTxn.get(hash);
                 if (tx != null) {
-                    sendTransactionsToListener(newStoredBlock, newBlockType, listener, relativityOffset,
+                    sendTransactionsToListener(context, newStoredBlock, newBlockType, listener, relativityOffset,
                             Arrays.asList(tx), !first, falsePositives);
                 } else {
                     if (listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType, relativityOffset)) {
@@ -769,7 +770,8 @@ public abstract class AbstractBlockChain {
         SIDE_CHAIN
     }
 
-    private static void sendTransactionsToListener(StoredBlock block, NewBlockType blockType,
+    private static void sendTransactionsToListener(Context context,
+                                                   StoredBlock block, NewBlockType blockType,
                                                    BlockChainListener listener,
                                                    int relativityOffset,
                                                    List<Transaction> transactions,
@@ -780,7 +782,7 @@ public abstract class AbstractBlockChain {
                 if (listener.isTransactionRelevant(tx)) {
                     falsePositives.remove(tx.getHash());
                     if (clone)
-                        tx = new Transaction(tx.params, tx.bitcoinSerialize());
+                        tx = new Transaction(context, tx.bitcoinSerialize());
                     listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
                 }
             } catch (ScriptException e) {
