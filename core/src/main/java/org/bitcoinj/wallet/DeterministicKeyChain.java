@@ -162,6 +162,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected long seedCreationTimeSecs;
         protected byte[] entropy;
         protected DeterministicSeed seed;
+        protected DeterministicKey watchingKey;
 
         protected Builder() {
         }
@@ -214,6 +215,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
+        public T watchingKey(DeterministicKey watchingKey) {
+            this.watchingKey = watchingKey;
+            return self();
+        }
+
         /** The passphrase to use with the generated mnemonic, or null if you would like to use the default empty string. Currently must be the empty string. */
         public T passphrase(String passphrase) {
             // FIXME support non-empty passphrase
@@ -223,7 +229,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
 
         public DeterministicKeyChain build() {
-            checkState(random != null || entropy != null || seed != null, "Must provide either entropy or random");
+            checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkState(passphrase == null || seed == null, "Passphrase must not be specified with seed");
             DeterministicKeyChain chain;
 
@@ -232,8 +238,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 chain = new DeterministicKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs);
             } else if (entropy != null) {
                 chain = new DeterministicKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
-            } else {
+            } else if (seed != null) {
                 chain = new DeterministicKeyChain(seed);
+            } else {
+                chain = new DeterministicKeyChain(watchingKey, seedCreationTimeSecs);
             }
 
             return chain;
