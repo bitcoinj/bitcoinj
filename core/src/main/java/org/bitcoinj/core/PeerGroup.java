@@ -80,7 +80,13 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class PeerGroup implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
-    private static final int DEFAULT_CONNECTIONS = 4;
+    /**
+     * The default number of connections to the p2p network the library will try to build. This is set to 12 empirically.
+     * It used to be 4, but because we divide the connection pool in two for broadcasting transactions, that meant we
+     * were only sending transactions to two peers and sometimes this wasn't reliable enough: transactions wouldn't
+     * get through.
+     */
+    public static final int DEFAULT_CONNECTIONS = 12;
     private static final int TOR_TIMEOUT_SECONDS = 60;
     private int vMaxPeersToDiscoverCount = 100;
 
@@ -1575,7 +1581,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Returns the number of connections that are required before transactions will be broadcast. If there aren't
      * enough, {@link PeerGroup#broadcastTransaction(Transaction)} will wait until the minimum number is reached so
      * propagation across the network can be observed. If no value has been set using
-     * {@link PeerGroup#setMinBroadcastConnections(int)} a default of half of whatever
+     * {@link PeerGroup#setMinBroadcastConnections(int)} a default of 80% of whatever
      * {@link org.bitcoinj.core.PeerGroup#getMaxConnections()} returns is used.
      */
     public int getMinBroadcastConnections() {
@@ -1586,7 +1592,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (max <= 1)
                     return max;
                 else
-                    return (int) Math.round(getMaxConnections() / 2.0);
+                    return (int) Math.round(getMaxConnections() * 0.8);
             }
             return minBroadcastConnections;
         } finally {
