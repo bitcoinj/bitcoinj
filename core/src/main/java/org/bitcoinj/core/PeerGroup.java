@@ -1411,7 +1411,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
             PeerAddress address = peer.getAddress();
 
-            log.info("{}: Peer died", address);
+            log.info("{}: Peer died      ({} connected, {} pending, {} max)", address, peers.size(), pendingPeers.size(), maxConnections);
             if (peer == downloadPeer) {
                 log.info("Download peer died. Picking a new one.");
                 setDownloadPeer(null);
