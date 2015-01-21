@@ -277,6 +277,14 @@ public class Peer extends PeerSocketHandler {
     }
 
     @Override
+    protected void timeoutOccurred() {
+        super.timeoutOccurred();
+        if (!connectionOpenFuture.isDone()) {
+            connectionClosed();  // Invoke the event handlers to tell listeners e.g. PeerGroup that we never managed to connect.
+        }
+    }
+
+    @Override
     public void connectionClosed() {
         for (final PeerListenerRegistration registration : eventListeners) {
             if (registration.callOnDisconnect)
