@@ -30,7 +30,8 @@ import java.net.SocketAddress;
  */
 public interface ClientConnectionManager extends Service {
     /**
-     * Creates a new connection to the given address, with the given parser used to handle incoming data.
+     * Creates a new connection to the given address, with the given parser used to handle incoming data. Any errors
+     * that occur during connection will be returned in the given future, including errors that can occur immediately.
      */
     ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamParser parser);
 

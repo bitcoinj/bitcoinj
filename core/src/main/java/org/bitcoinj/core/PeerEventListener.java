@@ -65,7 +65,8 @@ public interface PeerEventListener {
     /**
      * Called when a peer is disconnected. Note that this won't be called if the listener is registered on a
      * {@link PeerGroup} and the group is in the process of shutting down. If this listener is registered to a
-     * {@link Peer} instead of a {@link PeerGroup}, peerCount will always be 0.
+     * {@link Peer} instead of a {@link PeerGroup}, peerCount will always be 0. This handler can be called without
+     * a corresponding invocation of onPeerConnected if the initial connection is never successful.
      *
      * @param peer
      * @param peerCount the total number of connected peers

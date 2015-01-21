@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -1169,10 +1170,15 @@ public class PeerGroup implements TransactionBroadcaster {
         pendingPeers.add(peer);
 
         try {
-            channels.openConnection(address.toSocketAddress(), peer);
-        } catch (Exception e) {
-            log.warn("Failed to connect to " + address + ": " + e.getMessage());
-            handlePeerDeath(peer, e);
+            log.info("Attempting connection to {}     ({} connected, {} pending, {} max)", address,
+                    peers.size(), pendingPeers.size(), maxConnections);
+            ListenableFuture<SocketAddress> future = channels.openConnection(address.toSocketAddress(), peer);
+            if (future.isDone())
+                Uninterruptibles.getUninterruptibly(future);
+        } catch (ExecutionException e) {
+            Throwable cause = Throwables.getRootCause(e);
+            log.warn("Failed to connect to " + address + ": " + cause.getMessage());
+            handlePeerDeath(peer, cause);
             return null;
         }
         peer.setSocketTimeout(connectTimeoutMillis);
@@ -1245,10 +1251,10 @@ public class PeerGroup implements TransactionBroadcaster {
             backoffMap.get(peer.getAddress()).trackSuccess();
 
             // Sets up the newly connected peer so it can do everything it needs to.
-            log.info("{}: New peer", peer);
             pendingPeers.remove(peer);
             peers.add(peer);
             newSize = peers.size();
+            log.info("{}: New peer      ({} connected, {} pending, {} max)", peer, newSize, pendingPeers.size(), maxConnections);
             // Give the peer a filter that can be used to probabilistically drop transactions that
             // aren't relevant to our wallet. We may still receive some false positives, which is
             // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
@@ -1386,7 +1392,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    protected void handlePeerDeath(final Peer peer, @Nullable Exception exception) {
+    protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) {
         // Peer deaths can occur during startup if a connect attempt after peer discovery aborts immediately.
         if (!isRunning()) return;
 
@@ -1417,7 +1423,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
             groupBackoff.trackFailure();
 
-            if (!(exception instanceof NoRouteToHostException)) {
+            if (exception instanceof NoRouteToHostException) {
                 if (address.getAddr() instanceof Inet6Address && !ipv6Unreachable) {
                     ipv6Unreachable = true;
                     log.warn("IPv6 peer connect failed due to routing failure, ignoring IPv6 addresses from now on");
