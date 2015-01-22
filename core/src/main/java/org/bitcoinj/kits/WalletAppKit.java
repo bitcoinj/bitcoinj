@@ -40,6 +40,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.FileLock;
+import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -275,8 +276,7 @@ public class WalletAppKit extends AbstractIdleService {
                         if (chainFileExists) {
                             log.info("Deleting the chain file in preparation from restore.");
                             vStore.close();
-                            if (!chainFile.delete())
-                                throw new Exception("Failed to delete chain file in preparation for restore.");
+                            Files.delete(chainFile.toPath());
                             vStore = new SPVBlockStore(params, chainFile);
                         }
                     } else {
@@ -286,8 +286,7 @@ public class WalletAppKit extends AbstractIdleService {
                 } else if (chainFileExists) {
                     log.info("Deleting the chain file in preparation from restore.");
                     vStore.close();
-                    if (!chainFile.delete())
-                        throw new Exception("Failed to delete chain file in preparation for restore.");
+                    Files.delete(chainFile.toPath());
                     vStore = new SPVBlockStore(params, chainFile);
                 }
             }
