@@ -144,7 +144,7 @@ public class BlockChainTest {
         b1.setMerkleRoot(Sha256Hash.ZERO_HASH);
         try {
             chain.add(b1);
-            // fail();
+            fail();
         } catch (VerificationException e) {
             // Expected.
             b1.setMerkleRoot(hash);
