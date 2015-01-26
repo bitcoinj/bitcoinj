@@ -166,6 +166,7 @@ public class WalletTool {
         ADD_KEY,
         ADD_ADDR,
         DELETE_KEY,
+        CURRENT_RECEIVE_ADDR,
         SYNC,
         RESET,
         SEND,
@@ -342,6 +343,7 @@ public class WalletTool {
             case ADD_KEY: addKey(); break;
             case ADD_ADDR: addAddr(); break;
             case DELETE_KEY: deleteKey(); break;
+            case CURRENT_RECEIVE_ADDR: currentReceiveAddr(); break;
             case RESET: reset(); break;
             case SYNC: syncChain(); break;
             case SEND:
@@ -1072,6 +1074,11 @@ public class WalletTool {
             return;
         }
         wallet.removeKey(key);
+    }
+
+    private static void currentReceiveAddr() {
+        ECKey key = wallet.currentReceiveKey();
+        System.out.println(key.toAddress(params) + " " + key);
     }
 
     private static void dumpWallet() throws BlockStoreException {

@@ -21,6 +21,8 @@ Usage: wallet-tool --flags action-name
                        If --lookahead-size is specified, pre-generate at least this many keys ahead of where we are.
   add-addr             Requires --addr to be specified, and adds it as a watching address.
   delete-key           Removes the key specified by --pubkey or --addr from the wallet.
+  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are
+                       independent of addresses derived with the add-key action.
   sync                 Sync the wallet with the latest block chain (download new transactions).
                        If the chain file does not exist this will RESET the wallet.
   reset                Deletes all transactions from the wallet, for if you want to replay the chain.
