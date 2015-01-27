@@ -35,7 +35,7 @@ public class SeedPeersTest {
     @Test
     public void getPeer_all() throws Exception{
         SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
-        for(int i = 0; i < SeedPeers.seedAddrs.length; ++i){
+        for(int i = 0; i < MainNetParams.get().getAddrSeeds().length; ++i){
             assertThat("Failed on index: "+i, seedPeers.getPeer(), notNullValue());
         }
         assertThat(seedPeers.getPeer(), equalTo(null));
@@ -45,6 +45,6 @@ public class SeedPeersTest {
     public void getPeers_length() throws Exception{
         SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
         InetSocketAddress[] addresses = seedPeers.getPeers(0, TimeUnit.SECONDS);
-        assertThat(addresses.length, equalTo(SeedPeers.seedAddrs.length));
+        assertThat(addresses.length, equalTo(MainNetParams.get().getAddrSeeds().length));
     }
 }
