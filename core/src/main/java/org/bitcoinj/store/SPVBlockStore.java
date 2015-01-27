@@ -17,26 +17,19 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.utils.Threading;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import javax.annotation.Nullable;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.*;
+import java.io.*;
+import java.nio.*;
+import java.nio.channels.*;
+import java.util.*;
+import java.util.concurrent.locks.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
+
+// TODO: Lose the mmap in this class. There are too many platform bugs that require odd workarounds.
 
 /**
  * An SPVBlockStore holds a limited number of block headers in a memory mapped ring buffer. With such a store, you
@@ -269,6 +262,10 @@ public class SPVBlockStore implements BlockStore {
     public void close() throws BlockStoreException {
         try {
             buffer.force();
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                log.info("Windows mmap hack: Forcing buffer cleaning");
+                WindowsMMapHack.forceRelease(buffer);
+            }
             buffer = null;  // Allow it to be GCd and the underlying file mapping to go away.
             randomAccessFile.close();
         } catch (IOException e) {
