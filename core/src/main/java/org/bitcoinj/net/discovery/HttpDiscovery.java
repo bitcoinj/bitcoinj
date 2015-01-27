@@ -38,6 +38,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * This is not currently in use by the Bitcoin community, but rather, is here for experimentation.
  */
 public class HttpDiscovery implements PeerDiscovery {
+    private static final int TIMEOUT_SECS = 20;
+
     private final ECKey pubkey;
     private final URI uri;
     private final NetworkParameters params;
@@ -57,6 +59,8 @@ public class HttpDiscovery implements PeerDiscovery {
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
             HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
+            conn.setReadTimeout(TIMEOUT_SECS * 1000);
+            conn.setConnectTimeout(TIMEOUT_SECS * 1000);
             conn.setRequestProperty("User-Agent", "bitcoinj " + VersionMessage.BITCOINJ_VERSION);
             InputStream stream = conn.getInputStream();
             GZIPInputStream zip = new GZIPInputStream(stream);
