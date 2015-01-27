@@ -1434,6 +1434,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     ipv6Unreachable = true;
                     log.warn("IPv6 peer connect failed due to routing failure, ignoring IPv6 addresses from now on");
                 }
+            } else {
                 backoffMap.get(address).trackFailure();
                 // Put back on inactive list
                 inactives.offer(address);
