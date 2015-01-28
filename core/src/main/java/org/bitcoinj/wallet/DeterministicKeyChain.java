@@ -220,6 +220,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
+        public T seedCreationTimeSecs(long seedCreationTimeSecs) {
+            this.seedCreationTimeSecs = seedCreationTimeSecs;
+            return self();
+        }
+
         /** The passphrase to use with the generated mnemonic, or null if you would like to use the default empty string. Currently must be the empty string. */
         public T passphrase(String passphrase) {
             // FIXME support non-empty passphrase
