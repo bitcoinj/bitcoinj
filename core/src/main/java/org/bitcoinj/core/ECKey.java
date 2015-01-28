@@ -182,6 +182,11 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        if (priv != null) {
+            // Try and catch buggy callers or bad key imports, etc.
+            checkArgument(!priv.equals(BigInteger.ZERO));
+            checkArgument(!priv.equals(BigInteger.ONE));
+        }
         this.priv = priv;
         this.pub = new LazyECPoint(checkNotNull(pub));
     }
