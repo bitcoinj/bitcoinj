@@ -17,10 +17,7 @@
 package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -29,7 +26,7 @@ import java.net.SocketAddress;
 import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 /**
  * A class which manages a set of client connections. Uses Java NIO to select network events and processes them in a
@@ -184,5 +181,17 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             if (handler != null)
                 handler.closeConnection(); // Removes handler from connectedHandlers before returning
         }
+    }
+
+    @Override
+    protected Executor executor() {
+        return new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                Thread thread = new Thread(command, "NioClientManager");
+                thread.setDaemon(true);
+                thread.start();
+            }
+        };
     }
 }
