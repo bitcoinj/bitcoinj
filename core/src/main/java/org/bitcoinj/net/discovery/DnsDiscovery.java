@@ -17,11 +17,10 @@
 
 package org.bitcoinj.net.discovery;
 
-import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.*;
+import org.bitcoinj.utils.*;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -61,6 +60,16 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         for (String seed : seeds)
             discoveries.add(new DnsSeedDiscovery(params, seed));
         return discoveries;
+    }
+
+    @Override
+    protected ExecutorService createExecutor() {
+        // Attempted workaround for reported bugs on Linux in which gethostbyname does not appear to be properly
+        // thread safe and can cause segfaults on some libc versions.
+        if (System.getProperty("os.name").toLowerCase().contains("linux"))
+            return Executors.newSingleThreadExecutor(new DaemonThreadFactory());
+        else
+            return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory());
     }
 
     /** Implements discovery from a single DNS host. */

@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * MultiplexingDiscovery queries multiple PeerDiscovery objects, shuffles their responses and then returns the results,
  * thus selecting randomly between them and reducing the influence of any particular seed. Any that don't respond
- * within the timeout are ignored. Backends are queried in parallel. Backends may block
+ * within the timeout are ignored. Backends are queried in parallel. Backends may block.
  */
 public class MultiplexingDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(MultiplexingDiscovery.class);
@@ -53,7 +53,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     @Override
     public InetSocketAddress[] getPeers(final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
-        vThreadPool = Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory());
+        vThreadPool = createExecutor();
         try {
             List<Callable<InetSocketAddress[]>> tasks = Lists.newArrayList();
             for (final PeerDiscovery seed : seeds) {
@@ -91,6 +91,10 @@ public class MultiplexingDiscovery implements PeerDiscovery {
         } finally {
             vThreadPool.shutdown();
         }
+    }
+
+    protected ExecutorService createExecutor() {
+        return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory());
     }
 
     @Override
