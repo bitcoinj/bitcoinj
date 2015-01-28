@@ -3092,7 +3092,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = java.lang.IllegalStateException.class)
     public void sendCoinsNoBroadcasterTest() throws InsufficientMoneyException {
-        ECKey key = ECKey.fromPrivate(BigInteger.ONE);
+        ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         Address notMyAddr = key.toAddress(params);
         SendRequest req = SendRequest.to(notMyAddr.getParameters(), key, SATOSHI.multiply(12));
         wallet.sendCoins(req);
@@ -3100,7 +3100,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void sendCoinsWithBroadcasterTest() throws InsufficientMoneyException {
-        ECKey key = ECKey.fromPrivate(BigInteger.ONE);
+        ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         Address notMyAddr = key.toAddress(params);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
