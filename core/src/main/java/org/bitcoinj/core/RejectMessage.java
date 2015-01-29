@@ -72,8 +72,13 @@ public class RejectMessage extends Message {
         super(params, payload, 0);
     }
 
-    public RejectMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        super(params, payload, 0, parseLazy, parseRetain, length);
+    /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
+    public RejectMessage(NetworkParameters params, RejectCode code, Sha256Hash hash, String message, String reason) throws ProtocolException {
+        super(params);
+        this.code = code;
+        this.messageHash = hash;
+        this.message = message;
+        this.reason = reason;
     }
 
     @Override
@@ -102,7 +107,7 @@ public class RejectMessage extends Message {
         stream.write(new VarInt(reasonBytes.length).encode());
         stream.write(reasonBytes);
         if (message.equals("block") || message.equals("tx"))
-            stream.write(messageHash.getBytes());
+            stream.write(Utils.reverseBytes(messageHash.getBytes()));
     }
 
     /**
