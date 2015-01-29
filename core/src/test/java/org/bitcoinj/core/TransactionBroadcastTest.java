@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
+import java.util.concurrent.*;
 
 import static org.bitcoinj.core.Coin.*;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -95,6 +96,27 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         // FIXME flaky test - future is not handled on user thread
         assertTrue(future.isDone());
+    }
+
+    @Test
+    public void rejectHandling() throws Exception {
+        InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
+        Transaction tx = new Transaction(params);
+        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, blockChain.getContext(), tx);
+        ListenableFuture<Transaction> future = broadcast.broadcast();
+        // 0 and 3 are randomly selected to receive the broadcast.
+        assertEquals(tx, outbound(channels[1]));
+        assertEquals(tx, outbound(channels[2]));
+        assertEquals(tx, outbound(channels[4]));
+        RejectMessage reject = new RejectMessage(params, RejectMessage.RejectCode.DUST, tx.getHash(), "tx", "dust");
+        inbound(channels[1], reject);
+        inbound(channels[4], reject);
+        try {
+            future.get();
+            fail();
+        } catch (ExecutionException e) {
+            assertEquals(RejectedTransactionException.class, e.getCause().getClass());
+        }
     }
 
     @Test

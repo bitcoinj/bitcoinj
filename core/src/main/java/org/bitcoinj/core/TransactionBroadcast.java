@@ -16,18 +16,14 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.utils.Threading;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.annotations.*;
+import com.google.common.base.*;
+import com.google.common.util.concurrent.*;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import javax.annotation.*;
+import java.util.*;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
@@ -49,7 +45,11 @@ public class TransactionBroadcast {
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
     @VisibleForTesting
     public static Random random = new Random();
+
     private Transaction pinnedTx;
+
+    // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
+    private Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
     // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
     TransactionBroadcast(PeerGroup peerGroup, @Nullable Context context, Transaction tx) {
@@ -73,8 +73,14 @@ public class TransactionBroadcast {
             if (m instanceof RejectMessage) {
                 RejectMessage rejectMessage = (RejectMessage)m;
                 if (tx.getHash().equals(rejectMessage.getRejectedObjectHash())) {
-                    future.setException(new RejectedTransactionException(tx, rejectMessage));
-                    peerGroup.removeEventListener(this);
+                    rejects.put(peer, rejectMessage);
+                    int size = rejects.size();
+                    long threshold = Math.round(numWaitingFor / 2.0);
+                    if (size > threshold) {
+                        log.warn("Threshold for considering broadcast rejected has been reached ({}/{})", size, threshold);
+                        future.setException(new RejectedTransactionException(tx, rejectMessage));
+                        peerGroup.removeEventListener(this);
+                    }
                 }
             }
             return m;
@@ -147,7 +153,7 @@ public class TransactionBroadcast {
         @Override
         public void onConfidenceChanged(TransactionConfidence conf, ChangeReason reason) {
             // The number of peers that announced this tx has gone up.
-            int numSeenPeers = conf.numBroadcastPeers();
+            int numSeenPeers = conf.numBroadcastPeers() + rejects.size();
             boolean mined = tx.getAppearsInHashes() != null;
             log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
                     numSeenPeers, mined ? " and mined" : "");
