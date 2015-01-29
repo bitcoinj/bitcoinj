@@ -507,7 +507,8 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private void triggerConnections() {
         // Run on a background thread due to the need to potentially retry and back off in the background.
-        executor.execute(triggerConnectionsJob);
+        if (!executor.isShutdown())
+            executor.execute(triggerConnectionsJob);
     }
 
     /** The maximum number of connections that we will create to peers. */
