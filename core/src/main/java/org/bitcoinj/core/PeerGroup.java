@@ -142,7 +142,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
     private final NetworkParameters params;
-    @Nullable private final AbstractBlockChain chain;
+    private final Context context;
     @GuardedBy("lock") private long fastCatchupTimeSecs;
     private final CopyOnWriteArrayList<Wallet> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
@@ -157,8 +157,8 @@ public class PeerGroup implements TransactionBroadcaster {
 
         @Override
         public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
-            if (chain == null) return;
-            final double rate = chain.getFalsePositiveRate();
+            if (context.getBlockChain() == null) return;
+            final double rate = context.getBlockChain().getFalsePositiveRate();
             final double target = bloomFilterMerger.getBloomFilterFPRate() * MAX_FP_RATE_INCREASE;
             if (rate > target) {
                 // TODO: Avoid hitting this path if the remote peer didn't acknowledge applying a new filter yet.
@@ -319,7 +319,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     private PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
         this.params = checkNotNull(params);
-        this.chain = chain;
+        this.context = new Context(chain);
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();
         peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
@@ -359,6 +359,10 @@ public class PeerGroup implements TransactionBroadcaster {
         peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -531,7 +535,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the confidence pool first.
-                Transaction tx = chain != null ? chain.getContext().getConfidenceTable().get(item.hash) : null;
+                Transaction tx = context.getConfidenceTable().get(item.hash);
                 if (tx != null) {
                     transactions.add(tx);
                     it.remove();
@@ -590,7 +594,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
-        int height = chain == null ? 0 : chain.getBestChainHeight();
+        int height = context.getBlockChain() == null ? 0 : context.getBlockChain().getBestChainHeight();
         VersionMessage ver = new VersionMessage(params, height);
         ver.relayTxesBeforeFilter = false;
         updateVersionMessageRelayTxesBeforeFilter(ver);
@@ -605,7 +609,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // Note that the default here means that no tx invs will be received if no wallet is ever added
         lock.lock();
         try {
-            boolean spvMode = chain != null && !chain.shouldVerifyTransactions();
+            boolean spvMode = context.getBlockChain() != null && !context.getBlockChain().shouldVerifyTransactions();
             boolean willSendFilter = spvMode && peerFilterProviders.size() > 0;
             ver.relayTxesBeforeFilter = !willSendFilter;
         } finally {
@@ -827,7 +831,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public ListenableFuture startAsync() {
         // This is run in a background thread by the Service implementation.
-        if (chain == null) {
+        if (context.getBlockChain() == null) {
             // Just try to help catch what might be a programming error.
             log.warn("Starting up with no attached block chain. Did you forget to pass one to the constructor?");
         }
@@ -1051,7 +1055,7 @@ public class PeerGroup implements TransactionBroadcaster {
             public void go() {
                 checkState(!lock.isHeldByCurrentThread());
                 // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-                if (chain != null && chain.shouldVerifyTransactions())
+                if (context.getBlockChain() != null && context.getBlockChain().shouldVerifyTransactions())
                     return;
                 // We only ever call bloomFilterMerger.calculate on jobQueue, so we cannot be calculating two filters at once.
                 FilterMerger.Result result = bloomFilterMerger.calculate(ImmutableList.copyOf(peerFilterProviders /* COW */));
@@ -1078,8 +1082,8 @@ public class PeerGroup implements TransactionBroadcaster {
                     }
                     // Reset the false positive estimate so that we don't send a flood of filter updates
                     // if the estimate temporarily overshoots our threshold.
-                    if (chain != null)
-                        chain.resetFalsePositiveEstimate();
+                    if (context.getBlockChain() != null)
+                        context.getBlockChain().resetFalsePositiveEstimate();
                 }
                 // Do this last so that bloomFilter is already set when it gets called.
                 setFastCatchupTimeSecs(result.earliestKeyTimeSecs);
@@ -1167,10 +1171,10 @@ public class PeerGroup implements TransactionBroadcaster {
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
-        ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
+        ver.bestHeight = context.getBlockChain() == null ? 0 : context.getBlockChain().getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
 
-        Peer peer = new Peer(params, ver, address, chain, downloadTxDependencies);
+        Peer peer = new Peer(params, ver, address, context, downloadTxDependencies);
         peer.addEventListener(startupListener, Threading.SAME_THREAD);
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
@@ -1273,7 +1277,7 @@ public class PeerGroup implements TransactionBroadcaster {
             Peer newDownloadPeer = selectDownloadPeer(peers);
             if (downloadPeer != newDownloadPeer) {
                 setDownloadPeer(newDownloadPeer);
-                boolean shouldDownloadChain = downloadListener != null && chain != null;
+                boolean shouldDownloadChain = downloadListener != null && context.getBlockChain() != null;
                 if (shouldDownloadChain) {
                     startBlockChainDownloadFromPeer(downloadPeer);
                 }
@@ -1347,7 +1351,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (downloadListener != null)
                     peer.addEventListener(downloadListener, Threading.SAME_THREAD);
                 downloadPeer.setDownloadData(true);
-                if (chain != null)
+                if (context.getBlockChain() != null)
                     downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilterMerger.getLastFilter() != null);
             }
         } finally {
@@ -1357,12 +1361,11 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Use {@link org.bitcoinj.core.Context#getConfidenceTable()} instead, which can be retrieved via
-     * {@link org.bitcoinj.core.AbstractBlockChain#getContext()}. Can return null if this peer group was
-     * configured without a block chain object.
+     * {@link getContext()}.
      */
-    @Deprecated @Nullable
+    @Deprecated
     public TxConfidenceTable getMemoryPool() {
-        return chain == null ? null : chain.getContext().getConfidenceTable();
+        return context.getConfidenceTable();
     }
 
     /**
@@ -1373,7 +1376,8 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
         lock.lock();
         try {
-            checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
+            checkState(context.getBlockChain() == null || !context.getBlockChain().shouldVerifyTransactions(),
+                       "Fast catchup is incompatible with fully verifying");
             fastCatchupTimeSecs = secondsSinceEpoch;
             if (downloadPeer != null) {
                 downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilterMerger.getLastFilter() != null);
@@ -1643,8 +1647,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * bringup of the peer group you can lower it.</p>
      */
     public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx, final int minConnections) {
-        // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
-        final TransactionBroadcast broadcast = new TransactionBroadcast(this, chain != null ? chain.getContext() : null, tx);
+        final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.
         Futures.addCallback(broadcast.future(), new FutureCallback<Transaction>() {
