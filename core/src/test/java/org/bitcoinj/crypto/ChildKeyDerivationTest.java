@@ -244,6 +244,40 @@ public class ChildKeyDerivationTest {
         assertEquals(DeterministicKey.deserialize(params, key4.serializePrivate(params)).getPath().size(), 1);
     }
 
+    /** Reserializing a deserialized key should yield the original input */
+    @Test
+    public void reserialization() {
+        // This is the public encoding of the key with path m/0H/1/2H from BIP32 published test vector 1:
+        // https://en.bitcoin.it/wiki/BIP_0032_TestVectors
+        String encoded =
+            "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5";
+        DeterministicKey key = DeterministicKey.deserializeB58(encoded, MainNetParams.get());
+        assertEquals("Reserialized parentless private HD key is wrong", key.serializePubB58(MainNetParams.get()), encoded);
+        assertEquals("Depth of deserialized parentless public HD key is wrong", key.getDepth(), 3);
+        assertEquals("Path size of deserialized parentless public HD key is wrong", key.getPath().size(), 1);
+        assertEquals("Parent fingerprint of deserialized parentless public HD key is wrong",
+                          key.getParentFingerprint(), 0xbef5a2f9);
+
+        // This encoding is the same key but including its private data:
+        encoded =
+            "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM";
+        key = DeterministicKey.deserializeB58(encoded, MainNetParams.get());
+        assertEquals("Reserialized parentless private HD key is wrong", key.serializePrivB58(MainNetParams.get()), encoded);
+        assertEquals("Depth of deserialized parentless private HD key is wrong", key.getDepth(), 3);
+        assertEquals("Path size of deserialized parentless private HD key is wrong", key.getPath().size(), 1);
+        assertEquals("Parent fingerprint of deserialized parentless private HD key is wrong",
+                          key.getParentFingerprint(), 0xbef5a2f9);
+
+        // These encodings are of the the root key of that hierarchy
+        assertEquals("Parent fingerprint of root node public HD key should be zero",
+                          DeterministicKey.deserializeB58("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB", MainNetParams.get()).getParentFingerprint(),
+                          0);
+        assertEquals("Parent fingerprint of root node private HD key should be zero",
+                          DeterministicKey.deserializeB58("xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U", MainNetParams.get()).getParentFingerprint(),
+                          0);
+
+    }
+
     private static String hexEncodePub(DeterministicKey pubKey) {
         return HEX.encode(pubKey.getPubKey());
     }
