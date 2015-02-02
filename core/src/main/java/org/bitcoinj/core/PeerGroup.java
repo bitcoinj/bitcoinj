@@ -1039,7 +1039,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 return inFlightRecalculations.get(mode);
             inFlightRecalculations.put(mode, future);
         }
-        executor.execute(new Runnable() {
+        Runnable command = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -1089,7 +1089,12 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
                 future.set(result.filter);
             }
-        });
+        };
+        try {
+            executor.execute(command);
+        } catch (RejectedExecutionException e) {
+            // Can happen during shutdown.
+        }
         return future;
     }
     
