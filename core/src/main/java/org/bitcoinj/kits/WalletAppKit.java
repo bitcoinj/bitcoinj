@@ -113,6 +113,17 @@ public class WalletAppKit extends AbstractIdleService {
         }
     }
 
+    //TODO: Need to check for valid IPs
+    public WalletAppKit connectToRemoteHost(String ip) {
+        try {
+            final InetAddress remoteHost = InetAddress.getByName(ip);
+            return setPeerNodes(new PeerAddress(remoteHost, params.getPort()));
+        } catch (UnknownHostException e) {
+            // Borked machine with no loopback adapter configured properly.
+            throw new RuntimeException(e);
+        }
+    }
+
     /** If true, the wallet will save itself to disk automatically whenever it changes. */
     public WalletAppKit setAutoSave(boolean value) {
         checkState(state() == State.NEW, "Cannot call after startup");
