@@ -961,8 +961,14 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * <p>Note that this should be done before chain download commences because if you add a listener with keys earlier
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
+     *
+     * <p>This method invokes {@link PeerGroup#recalculateFastCatchupAndFilter(FilterRecalculateMode)}.
+     * The return value of this method is the <code>ListenableFuture</code> returned by that invocation.</p>
+     *
+     * @return a future that completes once each <code>Peer</code> in this group has had its
+     *         <code>BloomFilter</code> (re)set.
      */
-    public void addPeerFilterProvider(PeerFilterProvider provider) {
+    public ListenableFuture<BloomFilter> addPeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
         try {
             checkNotNull(provider);
@@ -981,8 +987,9 @@ public class PeerGroup implements TransactionBroadcaster {
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+            ListenableFuture<BloomFilter> future = recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+            return future;
         } finally {
             lock.unlock();
         }
