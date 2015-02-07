@@ -70,13 +70,12 @@ import static com.google.common.base.Preconditions.checkState;
  * <p>The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
  * also handle download of the blockchain from peers, restarting the process when peers die.</p>
  *
- * <p>PeerGroup implements the {@link Service} interface. This means before it will do anything,
- * you must call the {@link com.google.common.util.concurrent.Service#start()} method (which returns
- * a future) or {@link com.google.common.util.concurrent.Service#startAndWait()} method, which will block
- * until peer discovery is completed and some outbound connections have been initiated (it will return
- * before handshaking is done, however). You should call {@link com.google.common.util.concurrent.Service#stop()}
- * when finished. Note that not all methods of PeerGroup are safe to call from a UI thread as some may do
- * network IO, but starting and stopping the service should be fine.</p>
+ * <p>A PeerGroup won't do anything until you call the {@link PeerGroup#start()} method 
+ * which will block until peer discovery is completed and some outbound connections 
+ * have been initiated (it will return before handshaking is done, however). 
+ * You should call {@link PeerGroup#stop()} when finished. Note that not all methods
+ * of PeerGroup are safe to call from a UI thread as some may do network IO, 
+ * but starting and stopping the service should be fine.</p>
  */
 public class PeerGroup implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
