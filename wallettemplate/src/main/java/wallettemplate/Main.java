@@ -1,14 +1,13 @@
 package wallettemplate;
 
-import com.aquafx_project.AquaFx;
-import com.google.bitcoin.core.NetworkParameters;
-import com.google.bitcoin.kits.WalletAppKit;
-import com.google.bitcoin.params.MainNetParams;
-import com.google.bitcoin.params.RegTestParams;
-import com.google.bitcoin.store.BlockStoreException;
-import com.google.bitcoin.utils.BriefLogFormatter;
-import com.google.bitcoin.utils.Threading;
-import com.google.common.base.Throwables;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.DeterministicSeed;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -17,9 +16,11 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -29,44 +30,52 @@ import static wallettemplate.utils.GuiUtils.*;
 public class Main extends Application {
     public static String APP_NAME = "WalletTemplate";
 
-    public static NetworkParameters params = MainNetParams.get();
+    public static NetworkParameters params = TestNet3Params.get();
     public static WalletAppKit bitcoin;
     public static Main instance;
 
     private StackPane uiStack;
     private Pane mainUI;
+    public MainController controller;
+    public NotificationBarPane notificationBar;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
-        instance = this;
-        // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
-        GuiUtils.handleCrashesOnThisThread();
         try {
-            init(mainWindow);
-        } catch (Throwable t) {
-            // Nicer message for the case where the block store file is locked.
-            if (Throwables.getRootCause(t) instanceof BlockStoreException) {
-                GuiUtils.informationalAlert("Already running", "This application is already running and cannot be started twice.");
-            } else {
-                throw t;
-            }
+            realStart(mainWindow);
+        } catch (Throwable e) {
+            GuiUtils.crashAlert(e);
+            throw e;
         }
     }
 
-    private void init(Stage mainWindow) throws IOException {
+    private void realStart(Stage mainWindow) throws IOException {
+        instance = this;
+        // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
+        GuiUtils.handleCrashesOnThisThread();
+
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-            AquaFx.style();
+            // We could match the Mac Aqua style here, except that (a) Modena doesn't look that bad, and (b)
+            // the date picker widget is kinda broken in AquaFx and I can't be bothered fixing it.
+            // AquaFx.style();
         }
-        // Load the GUI. The Controller class will be automagically created and wired up.
+
+        // Load the GUI. The MainController class will be automagically created and wired up.
         URL location = getClass().getResource("main.fxml");
         FXMLLoader loader = new FXMLLoader(location);
         mainUI = loader.load();
-        Controller controller = loader.getController();
-        // Configure the window with a StackPane so we can overlay things on top of the main UI.
-        uiStack = new StackPane(mainUI);
+        controller = loader.getController();
+        // Configure the window with a StackPane so we can overlay things on top of the main UI, and a
+        // NotificationBarPane so we can slide messages and progress bars in from the bottom. Note that
+        // ordering of the construction and connection matters here, otherwise we get (harmless) CSS error
+        // spew to the logs.
+        notificationBar = new NotificationBarPane(mainUI);
         mainWindow.setTitle(APP_NAME);
-        final Scene scene = new Scene(uiStack);
+        uiStack = new StackPane();
+        Scene scene = new Scene(uiStack);
         TextFieldValidator.configureScene(scene);   // Add CSS that we need.
+        scene.getStylesheets().add(getClass().getResource("wallet.css").toString());
+        uiStack.getChildren().add(notificationBar);
         mainWindow.setScene(scene);
 
         // Make log output concise.
@@ -77,7 +86,35 @@ public class Main extends Application {
         // a future version.
         Threading.USER_THREAD = Platform::runLater;
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
-        bitcoin = new WalletAppKit(params, new File("."), APP_NAME);
+        setupWalletKit(null);
+
+        if (bitcoin.isChainFileLocked()) {
+            informationalAlert("Already running", "This application is already running and cannot be started twice.");
+            Platform.exit();
+            return;
+        }
+
+        mainWindow.show();
+
+        bitcoin.startAsync();
+    }
+
+    public void setupWalletKit(@Nullable DeterministicSeed seed) {
+        // If seed is non-null it means we are restoring from backup.
+        bitcoin = new WalletAppKit(params, new File("."), APP_NAME) {
+            @Override
+            protected void onSetupCompleted() {
+                // Don't make the user wait for confirmations for now, as the intention is they're sending it
+                // their own money!
+                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
+                if (params != RegTestParams.get())
+                    bitcoin.peerGroup().setMaxConnections(11);
+                bitcoin.peerGroup().setBloomFilterFalsePositiveRate(0.00001);
+                Platform.runLater(controller::onBitcoinSetup);
+            }
+        };
+        // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
+        // or progress widget to keep the user engaged whilst we initialise, but we don't.
         if (params == RegTestParams.get()) {
             bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         } else if (params == MainNetParams.get()) {
@@ -86,21 +123,19 @@ public class Main extends Application {
             // Checkpoint files are made using the BuildCheckpoints tool and usually we have to download the
             // last months worth or more (takes a few seconds).
             bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints"));
+        } else if (params == TestNet3Params.get()) {
+            bitcoin.setCheckpoints(getClass().getResourceAsStream("checkpoints.testnet"));
+            // As an example!
+            bitcoin.useTor();
         }
-
-        // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
-        // or progress widget to keep the user engaged whilst we initialise, but we don't.
         bitcoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
-               .setUserAgent(APP_NAME, "1.0")
-               .startAndWait();
-        // Don't make the user wait for confirmations for now, as the intention is they're sending it their own money!
-        bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-        bitcoin.peerGroup().setMaxConnections(11);
-        System.out.println(bitcoin.wallet());
-        controller.onBitcoinSetup();
-        mainWindow.show();
+               .setUserAgent(APP_NAME, "1.0");
+        if (seed != null)
+            bitcoin.restoreWalletFromSeed(seed);
     }
+
+    private Node stopClickPane = new Pane();
 
     public class OverlayUI<T> {
         public Node ui;
@@ -112,26 +147,53 @@ public class Main extends Application {
         }
 
         public void show() {
-            blurOut(mainUI);
-            uiStack.getChildren().add(ui);
-            fadeIn(ui);
+            checkGuiThread();
+            if (currentOverlay == null) {
+                uiStack.getChildren().add(stopClickPane);
+                uiStack.getChildren().add(ui);
+                blurOut(mainUI);
+                //darken(mainUI);
+                fadeIn(ui);
+                zoomIn(ui);
+            } else {
+                // Do a quick transition between the current overlay and the next.
+                // Bug here: we don't pay attention to changes in outsideClickDismisses.
+                explodeOut(currentOverlay.ui);
+                fadeOutAndRemove(uiStack, currentOverlay.ui);
+                uiStack.getChildren().add(ui);
+                ui.setOpacity(0.0);
+                fadeIn(ui, 100);
+                zoomIn(ui, 100);
+            }
+            currentOverlay = this;
+        }
+
+        public void outsideClickDismisses() {
+            stopClickPane.setOnMouseClicked((ev) -> done());
         }
 
         public void done() {
             checkGuiThread();
-            fadeOutAndRemove(ui, uiStack);
+            if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+            explodeOut(ui);
+            fadeOutAndRemove(uiStack, ui, stopClickPane);
             blurIn(mainUI);
+            //undark(mainUI);
             this.ui = null;
             this.controller = null;
+            currentOverlay = null;
         }
     }
+
+    @Nullable
+    private OverlayUI currentOverlay;
 
     public <T> OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
         OverlayUI<T> pair = new OverlayUI<T>(node, controller);
-        // Auto-magically set the overlayUi member, if it's there.
+        // Auto-magically set the overlayUI member, if it's there.
         try {
-            controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
+            controller.getClass().getField("overlayUI").set(controller, pair);
         } catch (IllegalAccessException | NoSuchFieldException ignored) {
         }
         pair.show();
@@ -143,15 +205,17 @@ public class Main extends Application {
         try {
             checkGuiThread();
             // Load the UI from disk.
-            URL location = getClass().getResource(name);
+            URL location = GuiUtils.getResource(name);
             FXMLLoader loader = new FXMLLoader(location);
             Pane ui = loader.load();
             T controller = loader.getController();
             OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
-            // Auto-magically set the overlayUi member, if it's there.
+            // Auto-magically set the overlayUI member, if it's there.
             try {
-                controller.getClass().getDeclaredField("overlayUi").set(controller, pair);
+                if (controller != null)
+                    controller.getClass().getField("overlayUI").set(controller, pair);
             } catch (IllegalAccessException | NoSuchFieldException ignored) {
+                ignored.printStackTrace();
             }
             pair.show();
             return pair;
@@ -162,8 +226,10 @@ public class Main extends Application {
 
     @Override
     public void stop() throws Exception {
-        bitcoin.stopAndWait();
-        super.stop();
+        bitcoin.stopAsync();
+        bitcoin.awaitTerminated();
+        // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
+        Runtime.getRuntime().exit(0);
     }
 
     public static void main(String[] args) {

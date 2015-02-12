@@ -1,0 +1,240 @@
+Design of deterministic wallets support
+---------------------------------------
+
+Goals:
+- Wallets to derive new keys deterministically using the BIP32 algorithm.
+- Seamless/silent upgrade of old wallets to use the new scheme
+- Support watching a key tree without knowing the private key
+- Integrate with existing features like key rotation, encryption and bloom filtering
+- Clean up and reduce the size of the Wallet class
+- Continue to allow import and usage of arbitrary external keys
+- Make it easier to support external HD wallet devices like Trezor
+
+Non-goals:
+- Expose multiple accounts or "wallets within a wallet" via the API.
+- Optional support for HD:   all wallets after the change will be HD by default, even though they may have
+  non-HD keys imported into them.
+- Actual support for hardware wallets
+
+
+API design
+-----------
+
+Create a new KeyChain interface and provide BasicKeyChain, DeterministicKeyChain implementations.
+
+Wallets may contain multiple key chains. However only the last one is "active" in the sense that it will be used to
+create new keys. There's no way to change that.
+
+The Wallet class has most key handling code refactored out into KeyChainGroup, which handles multiplexing a
+BasicKeyChain (for random keys, if any), and zero or more DeterministicKeyChain. Wallet ends up just forwarding method
+calls to this class most of the time. Thus in this section where the Wallet API is discussed, it can be assumed that
+KeyChainGroup has the same API. Although individual key chain objects have their own locks and are expected to be thread
+safe, KeyChainGroup itself is not and is not exposed directly by Wallet: it's an implementation detail, and locked under
+the Wallet lock.
+
+The Wallet API changes to have an importKey method that works like addKey does today, and forwards to the BasicKeyChain.
+There's also a freshKey method that forwards to the active HD chain and requests a key for a specific purpose,
+specified by an enum parameter. The freshKey method supports requesting keys for the following purposes:
+
+ - CHANGE
+ - RECEIVE_FUNDS
+
+and may in future also have additional purposes like for micropayment channels, etc. These map to the notion of
+"accounts" as defined in the BIP32 spec, but otherwise should not be exposed in any user interfaces. freshKey is
+guaranteed to return a freshly generated key: it will not return the same key repeatedly. There is also a currentKey
+method that returns a stable key suitable for display in the user interface: it will be changed automatically when
+it's observed being used in a transaction.
+
+There can be multiple key chains. There is always:
+
+* 1 basic key chain, though it may be empty.
+* >=0 deterministic key chains
+
+Thus it's possible to have more than one deterministic key chain, but not more than one basic key chain.
+
+Multiple deterministic key chains become relevant when key rotation happens. Individual keys in a deterministic
+heirarchy do not rotate. Instead the rotation time is applied only to the seed. Either the whole key chain rotates or
+none of it does. This reflects the fact that a hierarchy only has one real secret and in the case of a wallet
+compromise, all keys derived from that secret must also be rotated.
+
+Multiple key chains within a wallet are NOT intended to support the following use cases:
+
+- Watching wallets
+- Hardware wallets
+
+From a user interface design perspective, it does not make much sense to have a wallet that can have multiple
+"subwallets", as it would rapidly get confusing especially when trying to spend money from multiple kinds of
+hierarchy at once. Key rotation is a special case because it is expected that (a) the private key material is always
+available on a rotating chain and (b) the only spends crafted for keys in these chains will be created internally by
+bitcoinj and thus there is virtually no added complexity to the API or UI to handle it.
+
+When chains are encrypted, they must all be encrypted under exactly the same key. This is also true of rotating chains.
+The API will not support the case of multiple keychains in the same wallet that have a different password, as this would
+make the API and wallet apps too confusing.
+
+For hardware/watching wallets, where the private key/seed material is not available, the correct approach is to create
+an entirely separate Wallet object with a single deterministic key chain that does not have access to the seed. Special
+support can be added to the wallet code later to handle "external signing" which would be a separate/new feature.
+External signing can be done today already of course by manually building a transaction and using hashForSignature, but
+it's less convenient than an integrated solution would be.
+
+Chain structure
+---------------
+
+We follow the suggested chain structure outlined in BIP32 in which there is the notion of a top-level account, though
+in bitcoinj this will always be zero as it won't be exposed in the API for now. Under the account are two keys, one
+for receiving of funds (i.e. exposed to the use) and one which is used for "internal purposes", typically change keys
+though it may also be used for things like micropayment channels and, in future, de/refragmentation.
+
+In the most obvious implementation, a standard key chain would have all private or all pubkey only nodes. However,
+this will not be the case in bitcoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
+
+1) When a chain is encrypted, the private key/seed bytes are not available, yet the chain still needs to be extended
+   on demand. In this sense an encrypted wallet is somewhat like a watching wallet.
+2) Private keys can be derived from their parent extremely fast, as it merely involves a single bigint modular addition.
+3) We would like to hold as many keys in RAM as possible, and so throwing away and rederiving private key bytes on the
+   fly seems to be a good way to make some savings. This is important because RAM on Android devices can be extremely
+   tight and there is no swap file on those platforms.
+
+When synchronizing, the system may need to extend the key heirarchy without access to the seed or master private keys,
+due to the need to calculate public keys in the gap.
+
+Because it would be complicated and confusing to have some user-exposed keys that have an encrypted private part and
+others that are missing it entirely, and because private key derivation is fast, we use the following arrangement for
+an encrypted deterministic key chain:
+
+- The root seed is encrypted. We keep it around even after the master private key is derived from it, because wallet
+  apps may wish to show it to users so they can opt to write it down later.
+- The private keys at the top of the heirarchy M, M/0, M/0/0, M/0/1 are precalculated when the heirarchy is initialized
+  and stored in the wallet encrypted.
+- Keys that hang off the external/internal parent keys only have their public keys stored. The private key is always
+  derived on the fly. The ECKey API already allows an AES key/password to be specified when signing, and this operation
+  will be extended to decrypting not the current key but the parent key and then rederiving.
+
+
+Bloom filtering
+---------------
+
+Each key chain is responsible for implementing PeerFilterProvider, the wallet multiplexes all implementors together.
+The code that currently does this multiplexing (between Wallets) would be extracted and reused, resulting in what is
+internally a hierarchy of filter providers whose outputs are combined to result in a single Bloom filter and earliest
+key time, calculated by the PeerGroup.
+
+When a wallet is informed about a transaction, it compiles a list of what pubkeys were seen and sends those lists
+to each key chain. The basic key chain ignores this and does nothing. The deterministic key chain examines each key
+to see if it's within the "gap", which is defined as a set of keys that have been pre-generated but not yet used by
+the wallet for change or returned to the user.
+
+The purpose of the gap is to ensure that if a wallet is synchronized from an old backup, keys that were vended by the
+wallet "in the future" are recognized and added to the Bloom filters. The gap must be sized so that there's no chance
+that more than that number of keys will be consumed in a single block (or more accurately, in a single getdata run).
+For version one of this system, the gap will be manually sized to be appropriate for desktop wallets in typical use
+cases: web servers that are tracking very high traffic addresses might be at risk of exhausting the gap, and that would
+be treated as a fatal error. If the gap is exhausted before the key chain is asked to recalculate a new Bloom filter,
+an exception is sent to the user-provided exception handler, which wallets should be treated as fatal and cause a
+crash (the user would not be able to sync beyond that point and would need help). In future, the gap should be resized
+on the fly and blocks re-downloaded if traffic seems to be higher than expected, but that's more complex and can be
+handled by future work.
+
+When the deterministic key chain is informed that a key has been observed, it finds its offset in the gap list, and
+then extends the gap by that amount of keys. Thus if a key is seen that is 10 keys in the future, the gap would be
+extended by 10 keys, where "extended" means the BIP32 algorithm is run to derive more keys and they would become
+persisted to disk/held in memory. Extension does not automatically result in recalculation of the bloom filter (see
+above), rather the PeerGroup will be changed to re-request filters from all wallets every time a getdata request is
+made.
+
+
+Efficiency considerations
+-------------------------
+
+Elliptic curve maths can be slow, especially on cheap phones that run Android Gingerbread, which has only a basic
+tracing JIT compiler. Thus, we try to avoid it as much as possible. Public keys that are derived from the
+root seed are stored in memory and on disk. They are not recalculated at any point. Extending the tree takes place
+only when the gap gets too small or the API user requests it. It may or may not be useful to use a thread pool for
+this, experimentation would be required to determine this.
+
+To reduce memory consumption and disk usage, and because private key derivation only requires hashing, we don't store
+the private keys in memory except for the top levels. Instead leaf private keys are recalculated on demand.
+
+BIP70 allows for requests to expire. We should use this feature to keep memory in check for HD wallets when generating
+new keys. Unfortunately, for non BIP70 payments it's harder to do: we can't know when an address will stop being
+reused so we must keep it in RAM forever.
+
+Encryption
+----------
+
+bitcoinj allows private keys to be encrypted under an AES key derived from a password using scrypt. We need to keep
+this function working for deterministic wallets. Also, to achieve the goal of silent/automatic upgrade, we need to
+perform the upgrade once the AES key is provided by the user and keep it synchronizable in the previous state until
+then.
+
+BasicKeyChain will also support encrypted keys (it's not really basic but rather "the functionality that was supported
+before"). Deterministic wallets must also support encryption, which requires encrypting both the seed value and any
+private keys derived from it.
+
+Because there are no seeds or private keys, watching/hardware wallets do not support encryption. An attempt to encrypt
+a wallet that contains both a basic key chain and a key heirarchy without a seed/private keys will throw an exception
+to avoid the case where a wallet is "half encrypted".
+
+Serialization
+-------------
+
+The serialization format will be extended in the following manner: two new key types will be introduced,
+DETERMINISTIC_SEED and DETERMINISTIC_KEY. The wallet major version will be incremented so old apps will
+refuse to read wallets that use the new key types.
+
+A DETERMINISTIC_SEED entry is always followed by one or more DETERMINISTIC_KEY entries. However the inverse does not
+hold, in the case where a wallet is watching a key hierarchy. ORIGINAL/ENCRYPTED type keys (basic) always come first.
+
+A DETERMINISTIC_SEED is represented as a key with that type, with private key bytes set to the seed and the public
+key bytes missing. If the seed entry is encrypted, then private key bytes are also missing and the encrypted_private_key
+field is set, as for an encrypted regular/basic private key. The creation time is set appropriately.
+
+A DETERMINISTIC_KEY is represented in the same way as a regular/basic key, including encryption, but with a different
+type code. Additionally, a new DeterministicKey structure is added that contains the "chain code" and path. The chain
+code is opaque bytes that are used as part of the BIP32 derivation algorithm. Without the chain code, you cannot derive
+new keys. The path indicates a path through the key tree, rooted at the seed. It consists of a series of numbers
+that encode the index of each child as the tree is traversed downwards, with the high bit set to indicate public or
+private derivation (see the BIP32 spec for more information on this).
+
+
+Upgrade
+-------
+
+HD wallets are strictly superior to old random wallets, thus by default all new wallets will be HD. The deterministic
+key chain will be created on demand by the KeyChainGroup, which allows the default parameters like lookahead size to
+be configured after construction of the wallet but before the DeterministicKeyChain is constructed.
+
+For old wallets that contain random keys, attempts to use any methods that rely on an HD chain being present will
+either automatically upgrade the wallet to HD, or if encrypted, throw an unchecked exception until the API user invokes
+an upgrade method that takes the users encryption key. The upgrade will select the oldest non-rotating private key,
+truncate it to 128 bits and use that as the seed for the new HD chain. We truncate and thus lose entropy because
+128 bits is more than enough, and people like to write down their seeds on paper. 128 bit seeds using the BIP 39
+mnemonic code specification yields 12 words, which is a convenient size.
+
+As part of migrating to deterministic wallets, if the wallet is encrypted the wallet author is expected to test
+after load whether the wallet needs an upgrade, and call the upgrade method explicitly with the password.
+Note that attempting to create a spend will fail if the wallet is not upgraded, because it will attempt to retrieve a
+change key which is done deterministically in the new version of the code: thus an non-upgraded wallet is not very
+useful for more than viewing (unless the API caller explicitly overrides the change address behaviour using the
+relevant field in SendRequest of course).
+
+Test plan
+---------
+
+Basic:
+[ ] Create an empty wallet with wallet-tool. Dump: check is empty.
+[ ] Add a couple of keys. Dump: check keys were pre-genned and the correct addresses were returned.
+[ ] Send some money to the wallet. Check that it's found in the mempool correctly.
+[ ] Generate a block. Check that it's found in the block correctly.
+[ ] Send half back. Check that the change address is properly generated and the first key can be spent from.
+[ ] Send another half back. Check that the change output is being properly signed for and can be spent from.
+[ ] Encrypt the wallet.
+[ ] Attempt to decrypt with the wrong password.
+[ ] Send another half back. Check that we can send from an encrypted wallet.
+[ ] Receive another coin. Check we can receive to an encrypted wallet.
+[ ] Decrypt the wallet. Dump: check it's the same as the first wallet, modulo a few pregenned public keys.
+[ ] Send another half coin back. Check we can send from a decrypted wallet.
+[ ] Send another half coin back. Check we can send from the change in a decrypted wallet.
+
+

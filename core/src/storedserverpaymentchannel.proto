@@ -24,7 +24,7 @@
 
 package paymentchannels;
 
-option java_package = "com.google.bitcoin.protocols.channels";
+option java_package = "org.bitcoinj.protocols.channels";
 option java_outer_classname = "ServerState";
 
 

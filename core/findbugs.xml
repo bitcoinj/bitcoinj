@@ -38,7 +38,7 @@
     <!-- The code is correct but findbugs can't analyze it properly -->
     <Match>
         <Bug code="SF"/>
-        <Class name="com.google.bitcoin.core.BloomFilter"/>
+        <Class name="org.bitcoinj.core.BloomFilter"/>
     </Match>
 
     <!-- fb doesn't like the odd API this class has -->

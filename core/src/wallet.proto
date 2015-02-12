@@ -1,0 +1,399 @@
+/** Copyright 2013 Google Inc.
+ *  Copyright 2014 Andreas Schildbach
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Authors: Jim Burton, Miron Cuperman, Andreas Schildbach
+ */
+ 
+/* Notes:
+ * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian
+ * - To regenerate after editing, run: mvn generate-sources -DupdateProtobuf
+ */
+
+package wallet;
+
+option java_package = "org.bitcoinj.wallet";
+option java_outer_classname = "Protos";
+
+message PeerAddress {
+  required bytes ip_address = 1;
+  required uint32 port = 2;
+  required uint64 services = 3;
+}
+
+message EncryptedData {
+  required bytes initialisation_vector = 1;       // The initialisation vector for the AES encryption (16 bytes)
+  required bytes encrypted_private_key = 2;       // The encrypted private key
+}
+
+/**
+ * Data attached to a Key message that defines the data needed by the BIP32 deterministic key hierarchy algorithm.
+ */
+message DeterministicKey {
+  // Random data that allows us to extend a key. Without this, we can't figure out the next key in the chain and
+  // should just treat it as a regular ORIGINAL type key.
+  required bytes chain_code = 1;
+
+  // The path through the key tree. Each number is encoded in the standard form: high bit set for private derivation
+  // and high bit unset for public derivation.
+  repeated uint32 path = 2;
+
+  // How many children of this key have been issued, that is, given to the user when they requested a fresh key?
+  // For the parents of keys being handed out, this is always less than the true number of children: the difference is
+  // called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
+  // this wallet - for instance when restoring from backup or if the seed was shared between devices.
+  //
+  // If this field is missing it means we're not issuing subkeys of this key to users.
+  optional uint32 issued_subkeys = 3;
+  optional uint32 lookahead_size = 4;
+
+  /**
+   * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
+   * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
+   * a single P2SH multisignature address
+   */
+  optional bool isFollowing = 5;
+}
+
+/**
+ * A key used to control Bitcoin spending.
+ *
+ * Either the private key, the public key or both may be present.  It is recommended that
+ * if the private key is provided that the public key is provided too because deriving it is slow.
+ *
+ * If only the public key is provided, the key can only be used to watch the blockchain and verify
+ * transactions, and not for spending.
+ */
+message Key {
+  enum Type {
+    /** Unencrypted - Original bitcoin secp256k1 curve */
+    ORIGINAL = 1;
+
+    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    ENCRYPTED_SCRYPT_AES = 2;
+
+    /**
+    * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
+    * The label and public_key fields are missing. Creation timestamp will exist.
+    */
+    DETERMINISTIC_MNEMONIC = 3;
+
+    /**
+     * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
+     * wallet, for the case of watching wallets. A deterministic key may or may not have the private key bytes present.
+     * However the public key bytes and the deterministic_key field are guaranteed to exist. In a wallet where there
+     * is a path from this key up to a key that has (possibly encrypted) private bytes, it's expected that the private
+     * key can be rederived on the fly.
+     */
+    DETERMINISTIC_KEY = 4;
+  }
+  required Type type = 1;
+
+  // Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
+  // If the secret is encrypted, or this is a "watching entry" then this is missing.
+  optional bytes secret_bytes = 2;
+
+  // If the secret data is encrypted, then secret_bytes is missing and this field is set.
+  optional EncryptedData encrypted_data = 6;
+
+  // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
+  // do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
+  optional bytes public_key = 3;
+
+  // User-provided label associated with the key.
+  optional string label = 4;
+
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
+  // optional is that some very old wallets don't have this data.
+  optional int64 creation_timestamp = 5;
+
+  optional DeterministicKey deterministic_key = 7;
+
+  // The seed for a deterministic key hierarchy.  Derived from the mnemonic,
+  // but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
+  optional bytes deterministic_seed = 8;
+
+  // Encrypted version of the seed
+  optional EncryptedData encrypted_deterministic_seed = 9;
+}
+
+message Script {
+  required bytes program = 1;
+
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
+  // when watching for scripts on the blockchain.
+  required int64 creation_timestamp = 2;
+}
+
+message TransactionInput {
+  // Hash of the transaction this input is using.
+  required bytes transaction_out_point_hash = 1;
+  // Index of transaction output used by this input.
+  required uint32 transaction_out_point_index = 2;
+  // Script that contains the signatures/pubkeys.
+  required bytes script_bytes = 3;
+  // Sequence number. Currently unused, but intended for contracts in future.
+  optional uint32 sequence = 4;
+  // Value of connected output, if known
+  optional int64 value = 5;
+}
+
+message TransactionOutput {
+  required int64 value = 1;
+  required bytes script_bytes = 2;    // script of transaction output
+  // If spent, the hash of the transaction doing the spend.
+  optional bytes spent_by_transaction_hash = 3;
+  // If spent, the index of the transaction input of the transaction doing the spend.
+  optional int32 spent_by_transaction_index = 4;
+}
+
+/**
+ * A description of the confidence we have that a transaction cannot be reversed in the future.
+ *
+ * Parsing should be lenient, since this could change for different applications yet we should
+ * maintain backward compatibility.
+ */
+message TransactionConfidence {
+  enum Type {
+    UNKNOWN = 0;
+    BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
+    PENDING = 2; // Unconfirmed and sitting in the networks memory pools, waiting to be included in the chain.
+    NOT_IN_BEST_CHAIN = 3; // Deprecated: equivalent to PENDING.
+    DEAD = 4; // Either if overriding_transaction is present or transaction is dead coinbase
+  }
+
+  // This is optional in case we add confidence types to prevent parse errors - backwards compatible.
+  optional Type type = 1;
+
+  // If type == BUILDING then this is the chain height at which the transaction was included.
+  optional int32 appeared_at_height = 2;
+
+  // If set, hash of the transaction that double spent this one into oblivion. A transaction can be double spent by
+  // multiple transactions in the case of several inputs being re-spent by several transactions but we don't
+  // bother to track them all, just the first. This only makes sense if type = DEAD.
+  optional bytes overriding_transaction = 3;
+
+  // If type == BUILDING then this is the depth of the transaction in the blockchain.
+  // Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
+  optional int32 depth = 4;
+
+  // deprecated - do not recycle this numeric identifier
+  // optional int64 work_done = 5;
+
+  repeated PeerAddress broadcast_by = 6;
+
+  // Where did we get this transaction from? Knowing the source may help us to risk analyze pending transactions.
+  enum Source {
+    SOURCE_UNKNOWN = 0;  // We don't know where it came from, or this is a wallet from the future.
+    SOURCE_NETWORK = 1;  // We received it from a network broadcast. This is the normal way to get payments.
+    SOURCE_SELF = 2;     // We made it ourselves, so we know it should be valid.
+    // In future:
+    // - direct from trusted counterparty, eg via bluetooth/wifi direct
+    // - direct from untrusted counterparty
+    // - from a wallet that uses trusted computing/secure hardware that won't create double spends
+  }
+  optional Source source = 7;
+}
+
+/** A bitcoin transaction */
+
+message Transaction {
+  /**
+   * This is a bitfield oriented enum, with the following bits:
+   * 
+   * bit 0 - spent
+   * bit 1 - appears in alt chain
+   * bit 2 - appears in best chain
+   * bit 3 - double-spent
+   * bit 4 - pending (we would like the tx to go into the best chain)
+   * 
+   * Not all combinations are interesting, just the ones actually used in the enum.
+   */
+  enum Pool {
+    UNSPENT = 4; // In best chain, not all outputs spent
+    SPENT = 5; // In best chain, all outputs spent
+    INACTIVE = 2; // In non-best chain, not our transaction
+    DEAD = 10; // Double-spent by a transaction in the best chain
+    PENDING = 16; // Our transaction, not in any chain
+    PENDING_INACTIVE = 18; // In non-best chain, our transaction
+  }
+
+  // See Wallet.java for detailed description of pool semantics
+  required int32 version = 1;
+  required bytes hash = 2;
+
+  // If pool is not present, that means either:
+  //  - This Transaction is either not in a wallet at all (the proto is re-used elsewhere)
+  //  - Or it is stored but for other purposes, for example, because it is the overriding transaction of a double spend.
+  //  - Or the Pool enum got a new value which your software is too old to parse.
+  optional Pool pool = 3;
+
+  optional uint32 lock_time = 4; // The nLockTime field is useful for contracts.
+  optional int64 updated_at = 5; // millis since epoch the transaction was last updated
+
+  repeated TransactionInput transaction_input = 6;
+  repeated TransactionOutput transaction_output = 7;
+
+  // A list of blocks in which the transaction has been observed (on any chain). Also, a number used to disambiguate
+  // ordering within a block.
+  repeated bytes block_hash = 8;
+  repeated int32 block_relativity_offsets = 11;
+
+  // Data describing where the transaction is in the chain.
+  optional TransactionConfidence confidence = 9;
+
+  // For what purpose the transaction was created.
+  enum Purpose {
+    // Old wallets or the purpose genuinely is a mystery (e.g. imported from some external source).
+    UNKNOWN = 0;
+    // Created in response to a user request for payment. This is the normal case.
+    USER_PAYMENT = 1;
+    // Created automatically to move money from rotated keys.
+    KEY_ROTATION = 2;
+    // Stuff used by Lighthouse.
+    ASSURANCE_CONTRACT_CLAIM = 3;
+    ASSURANCE_CONTRACT_PLEDGE = 4;
+    ASSURANCE_CONTRACT_STUB = 5;
+    // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
+  }
+  optional Purpose purpose = 10 [default = UNKNOWN];
+
+  // Exchange rate that was valid when the transaction was sent.
+  optional ExchangeRate exchange_rate = 12;
+
+  // Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+  // transaction.
+  optional string memo = 13;
+
+  // Next tag: 14
+}
+
+/** The parameters used in the scrypt key derivation function.
+ *  The default values are taken from http://www.tarsnap.com/scrypt/scrypt-slides.pdf.
+ *  They can be increased - n is the number of iterations performed and
+ *  r and p can be used to tweak the algorithm - see:
+ *  http://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors
+ */
+message ScryptParameters {
+  required bytes salt = 1;                        // Salt to use in generation of the wallet password (8 bytes)
+  optional int64 n = 2 [default = 16384];         // CPU/ memory cost parameter
+  optional int32 r = 3 [default = 8];             // Block size parameter
+  optional int32 p = 4 [default = 1];             // Parallelisation parameter
+}
+
+/** An extension to the wallet */
+message Extension {
+  required string id = 1;   // like org.whatever.foo.bar
+  required bytes data = 2;
+  // If we do not understand a mandatory extension, abort to prevent data loss.
+  // For example, this could be applied to a new type of holding, such as a contract, where
+  // dropping of an extension in a read/write cycle could cause loss of value.
+  required bool mandatory = 3;
+}
+
+/**
+ * A simple key->value mapping that has no interpreted content at all. A bit like the extensions mechanism except
+ * an extension is keyed by the ID of a piece of code that's loaded with the given data, and has the concept of
+ * being mandatory if that code isn't found. Whereas this is just a blind key/value store.
+ */
+message Tag {
+    required string tag = 1;
+    required bytes data = 2;
+}
+
+/**
+ * Data required to reconstruct TransactionSigner.
+ */
+message TransactionSigner {
+	// fully qualified class name of TransactionSigner implementation
+	required string class_name = 1;
+	// arbitrary data required for signer to function
+	optional bytes data = 2;
+}
+
+/** A bitcoin wallet */
+message Wallet {
+  /**
+   * The encryption type of the wallet.
+   *
+   * The encryption type is UNENCRYPTED for wallets where the wallet does not support encryption - wallets prior to
+   * encryption support are grandfathered in as this wallet type.
+   * When a wallet is ENCRYPTED_SCRYPT_AES the keys are either encrypted with the wallet password or are unencrypted.
+   */
+  enum EncryptionType {
+    UNENCRYPTED = 1;                 // All keys in the wallet are unencrypted
+    ENCRYPTED_SCRYPT_AES = 2;        // All keys are encrypted with a passphrase based KDF of scrypt and AES encryption
+  }
+
+  required string network_identifier = 1; // the network used by this wallet
+  // org.bitcoin.production = production network (Satoshi genesis block)
+  // org.bitcoin.test = test network (Andresen genesis block)
+
+  // The SHA256 hash of the head of the best chain seen by this wallet.
+  optional bytes last_seen_block_hash = 2;
+  // The height in the chain of the last seen block.
+  optional uint32 last_seen_block_height = 12;
+  optional int64 last_seen_block_time_secs = 14;
+
+  repeated Key key = 3;
+  repeated Transaction transaction = 4;
+  repeated Script watched_script = 15;
+
+  optional EncryptionType encryption_type = 5 [default=UNENCRYPTED];
+  optional ScryptParameters encryption_parameters = 6;
+
+  // The version number of the wallet - used to detect wallets that were produced in the future
+  // (i.e the wallet may contain some future format this protobuf/ code does not know about)
+  optional int32 version = 7 [default = 1];
+
+  // deprecated - do not recycle this numeric identifier
+  // optional int32 minor_version = 8;
+
+  repeated Extension extension = 10;
+
+  // A UTF8 encoded text description of the wallet that is intended for end user provided text.
+  optional string description = 11;
+
+  // (The field number 12 is used by last_seen_block_height)
+
+  // UNIX time in seconds since the epoch. If set, then any keys created before this date are assumed to be no longer
+  // wanted. Money sent to them will be re-spent automatically to the first key that was created after this time. It
+  // can be used to recover a compromised wallet, or just as part of preventative defence-in-depth measures.
+  optional uint64 key_rotation_time = 13;
+
+  repeated Tag tags = 16;
+
+  // transaction signers added to the wallet
+  repeated TransactionSigner transaction_signers = 17;
+
+  // Number of signatures required to spend. This field is needed only for married wallets to reconstruct KeyChainGroup
+  // and represents the N value from N-of-M CHECKMULTISIG script. For regular single wallets it will always be 1.
+  optional uint32 sigsRequiredToSpend = 18 [default = 1];
+
+  // Next tag: 19
+}
+
+/** An exchange rate between Bitcoin and some fiat currency. */
+message ExchangeRate {
+  // This much of satoshis (1E-8 fractions)…
+  required int64 coin_value = 1;
+  // …is worth this much of fiat (1E-4 fractions).
+  required int64 fiat_value = 2;
+  // ISO 4217 currency code (if available) of the fiat currency.
+  required string fiat_currency_code = 3;
+
+  // Next tag: 4
+}

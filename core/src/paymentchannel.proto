@@ -83,6 +83,7 @@ message TwoWayChannelMessage {
     optional ReturnRefund return_refund = 6;
     optional ProvideContract provide_contract = 7;
     optional UpdatePayment update_payment = 8;
+    optional PaymentAck payment_ack = 11;
     optional Settlement settlement = 9;
 
     optional Error error = 10;
@@ -99,6 +100,10 @@ message ClientVersion {
     // responds with a SERVER_VERSION and then immediately sends a CHANNEL_OPEN, it otherwise
     // follows SERVER_VERSION with an Initiate representing a new channel
     optional bytes previous_channel_contract_hash = 3;
+
+    // How many seconds should the channel be open, only used when a new channel is created.
+    // Defaults to 24 h minus 60 seconds, 24*60*60 - 60
+    optional uint64 time_window_secs = 4 [default = 86340];
 }
 
 // Send by secondary to primary upon receiving the ClientVersion message. If it is willing to
@@ -209,6 +214,15 @@ message UpdatePayment {
     // the primary's refund output and thus the secondary is free to do what they wish with their
     // part of the multisig output.
     required bytes signature = 2;
+    // Information about this update. Used to extend this protocol.
+    optional bytes info =  3;
+
+}
+
+// This message is sent as an acknowledgement of an UpdatePayment message
+message PaymentAck {
+    // Information about this update. Used to extend this protocol
+    optional bytes info = 1;
 }
 
 message Settlement {
@@ -222,18 +236,18 @@ message Settlement {
 // closing the socket (unless they just received an ERROR or a CLOSE)
 message Error {
     enum ErrorCode {
-        TIMEOUT = 1;                 // Protocol timeout occurred (one party hung).
-        SYNTAX_ERROR = 2;            // Generic error indicating some message was not properly
-                                     // formatted or was out of order.
-        NO_ACCEPTABLE_VERSION = 3;   // We don't speak the version the other side asked for.
-        BAD_TRANSACTION = 4;         // A provided transaction was not in the proper structure
-                                     // (wrong inputs/outputs, sequence, lock time, signature,
-                                     // etc)
-        TIME_WINDOW_TOO_LARGE = 5;   // The expire time specified by the secondary was too large
-                                     // for the primary
-        CHANNEL_VALUE_TOO_LARGE = 6; // The minimum channel value specified by the secondary was
-                                     // too large for the primary
-        MIN_PAYMENT_TOO_LARGE = 7;   // The min "dust limit" specified by the server was too large for the client.
+        TIMEOUT = 1;                   // Protocol timeout occurred (one party hung).
+        SYNTAX_ERROR = 2;              // Generic error indicating some message was not properly
+                                       // formatted or was out of order.
+        NO_ACCEPTABLE_VERSION = 3;     // We don't speak the version the other side asked for.
+        BAD_TRANSACTION = 4;           // A provided transaction was not in the proper structure
+                                       // (wrong inputs/outputs, sequence, lock time, signature,
+                                       // etc)
+        TIME_WINDOW_UNACCEPTABLE = 5;  // The expire time specified by the secondary was unacceptable
+                                       // for the primary
+        CHANNEL_VALUE_TOO_LARGE = 6;   // The minimum channel value specified by the secondary was
+                                       // too large for the primary
+        MIN_PAYMENT_TOO_LARGE = 7;     // The min "dust limit" specified by the server was too large for the client.
 
         OTHER = 8;
     };
