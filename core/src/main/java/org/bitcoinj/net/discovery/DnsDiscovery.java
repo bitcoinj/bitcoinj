@@ -98,5 +98,10 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         @Override
         public void shutdown() {
         }
+
+        @Override
+        public String toString() {
+            return hostname;
+        }
     }
 }
