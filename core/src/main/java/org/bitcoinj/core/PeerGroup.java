@@ -17,44 +17,30 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.annotations.*;
 import com.google.common.base.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.net.InetAddresses;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
+import com.google.common.collect.*;
+import com.google.common.net.*;
+import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
-import com.subgraph.orchid.TorClient;
-import net.jcip.annotations.GuardedBy;
-import org.bitcoinj.crypto.DRMWorkaround;
-import org.bitcoinj.net.BlockingClientManager;
-import org.bitcoinj.net.ClientConnectionManager;
-import org.bitcoinj.net.FilterMerger;
-import org.bitcoinj.net.NioClientManager;
-import org.bitcoinj.net.discovery.PeerDiscovery;
-import org.bitcoinj.net.discovery.PeerDiscoveryException;
-import org.bitcoinj.net.discovery.TorDiscovery;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.utils.DaemonThreadFactory;
-import org.bitcoinj.utils.ExponentialBackoff;
-import org.bitcoinj.utils.ListenerRegistration;
+import com.subgraph.orchid.*;
+import net.jcip.annotations.*;
+import org.bitcoinj.crypto.*;
+import org.bitcoinj.net.*;
+import org.bitcoinj.net.discovery.*;
+import org.bitcoinj.script.*;
+import org.bitcoinj.utils.*;
 import org.bitcoinj.utils.Threading;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
+import javax.annotation.*;
+import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
@@ -1281,10 +1267,9 @@ public class PeerGroup implements TransactionBroadcaster {
             // TODO: The peer should calculate the fast catchup time from the added wallets here.
             for (Wallet wallet : wallets)
                 peer.addWallet(wallet);
-            // Re-evaluate download peers.
-            Peer newDownloadPeer = selectDownloadPeer(peers);
-            if (downloadPeer != newDownloadPeer) {
-                setDownloadPeer(newDownloadPeer);
+            if (downloadPeer == null) {
+                // Kick off chain download if we aren't already doing it.
+                setDownloadPeer(selectDownloadPeer(peers));
                 boolean shouldDownloadChain = downloadListener != null && chain != null;
                 if (shouldDownloadChain) {
                     startBlockChainDownloadFromPeer(downloadPeer);
@@ -1781,7 +1766,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // Characteristics to select for in order of importance:
         //  - Chain height is reasonable (majority of nodes)
         //  - High enough protocol version for the features we want (but we'll settle for less)
-        //  - Ping time.
+        //  - Randomly, to try and spread the load.
         if (peers.isEmpty())
             return null;
         // Make sure we don't select a peer that is behind/synchronizing itself.
@@ -1801,23 +1786,14 @@ public class PeerGroup implements TransactionBroadcaster {
             highestVersion = Math.max(peer.getPeerVersionMessage().clientVersion, highestVersion);
             preferredVersion = Math.min(highestVersion, PREFERRED_VERSION);
         }
-        List<PeerAndPing> candidates2 = new ArrayList<PeerAndPing>();
+        ArrayList<Peer> candidates2 = new ArrayList<Peer>(candidates.size());
         for (Peer peer : candidates) {
             if (peer.getPeerVersionMessage().clientVersion >= preferredVersion) {
-                PeerAndPing pap = new PeerAndPing();
-                pap.peer = peer;
-                pap.pingTime = peer.getPingTime();
-                candidates2.add(pap);
+                candidates2.add(peer);
             }
         }
-        // Sort by ping time.
-        Collections.sort(candidates2, new Comparator<PeerAndPing>() {
-            @Override
-            public int compare(PeerAndPing peerAndPing, PeerAndPing peerAndPing2) {
-                return Longs.compare(peerAndPing.pingTime, peerAndPing2.pingTime);
-            }
-        });
-        return candidates2.get(0).peer;
+        int index = (int) (Math.random() * candidates2.size());
+        return candidates2.get(index);
     }
 
     /**
