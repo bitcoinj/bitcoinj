@@ -486,9 +486,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(a, peerGroup.getDownloadPeer());  // No change yet.
         connectPeer(4, versionMessage3);
         assertEquals(3, peerGroup.getMostCommonChainHeight());
-        assertEquals(c, peerGroup.getDownloadPeer());  // Switch to first peer advertising new height.
+        assertEquals(a, peerGroup.getDownloadPeer());  // Still no change.
+
         // New peer with a higher protocol version but same chain height.
-        //TODO: When PeerGroup.selectDownloadPeer.PREFERRED_VERSION is not equal to vMinRequiredProtocolVersion,
+        // TODO: When PeerGroup.selectDownloadPeer.PREFERRED_VERSION is not equal to vMinRequiredProtocolVersion,
         // reenable this test
         /*VersionMessage versionMessage4 = new VersionMessage(params, 3);
         versionMessage4.clientVersion = 100000;

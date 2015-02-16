@@ -100,7 +100,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     // The peer that has been selected for the purposes of downloading announced data.
     @GuardedBy("lock") private Peer downloadPeer;
-    // Callback for events related to chain download
+    // Callback for events related to chain download.
     @Nullable @GuardedBy("lock") private PeerEventListener downloadListener;
     // Callbacks for events related to peer connection/disconnection
     private final CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>> peerEventListeners;
@@ -1461,10 +1461,46 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
+    private class ChainDownloadSpeedCalculator extends AbstractPeerEventListener implements Runnable {
+        private int blocksInLastSecond, stallWarning;
+
+        @Override
+        public synchronized void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+            blocksInLastSecond++;
+        }
+
+        @Override
+        public synchronized void run() {
+            if (blocksInLastSecond > 1) {
+                log.info("{} blocks per second", blocksInLastSecond);
+                stallWarning = 0;
+            }
+            if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond == 0 && stallWarning > -1) {
+                stallWarning++;
+                final int STALL_PERIOD_SECONDS = 3;
+                if (stallWarning == STALL_PERIOD_SECONDS) {
+                    stallWarning = -1;
+                    log.warn("Chain download stalled: no progress for {} seconds", STALL_PERIOD_SECONDS);
+                    // TODO: Consider disconnecting the stalled peer here.
+                }
+            }
+            blocksInLastSecond = 0;
+        }
+    }
+    @Nullable private ChainDownloadSpeedCalculator chainDownloadSpeedCalculator;
+
     private void startBlockChainDownloadFromPeer(Peer peer) {
         lock.lock();
         try {
             setDownloadPeer(peer);
+
+            if (chainDownloadSpeedCalculator == null) {
+                // Every second, run the calculator which will log how fast we are downloading the chain.
+                chainDownloadSpeedCalculator = new ChainDownloadSpeedCalculator();
+                executor.scheduleAtFixedRate(chainDownloadSpeedCalculator, 1, 1, TimeUnit.SECONDS);
+                peer.addEventListener(chainDownloadSpeedCalculator, Threading.SAME_THREAD);
+            }
+
             // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();
         } finally {
