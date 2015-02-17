@@ -16,9 +16,8 @@
 
 package org.bitcoinj.core;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Set;
+import javax.annotation.*;
+import java.util.*;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
@@ -34,16 +33,19 @@ public interface PeerEventListener {
      */
     public void onPeersDiscovered(Set<PeerAddress> peerAddresses);
 
+    // TODO: Fix the Block/FilteredBlock type hierarchy so we can avoid the stupid typeless API here.
     /**
-     * Called on a Peer thread when a block is received.<p>
+     * <p>Called on a Peer thread when a block is received.</p>
      *
-     * The block may have transactions or may be a header only once getheaders is implemented.
+     * <p>The block may be a Block object that contains transactions, a Block object that is only a header when
+     * fast catchup is being used. If set, filteredBlock can be used to retrieve the list of associated transactions.</p>
      *
      * @param peer       the peer receiving the block
      * @param block      the downloaded block
+     * @param filteredBlock if non-null, the object that wraps the block header passed as the block param.
      * @param blocksLeft the number of blocks left to download
      */
-    public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft);
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft);
 
     /**
      * Called when a download is started with the initial number of blocks to be downloaded.

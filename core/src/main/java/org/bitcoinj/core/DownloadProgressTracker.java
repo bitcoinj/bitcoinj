@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.*;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -54,7 +55,7 @@ public class DownloadProgressTracker extends AbstractPeerEventListener {
     }
 
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
         if (caughtUp)
             return;
 

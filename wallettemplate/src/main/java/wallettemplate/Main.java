@@ -1,6 +1,7 @@
 package wallettemplate;
 
 import com.google.common.util.concurrent.*;
+import javafx.scene.input.*;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.*;
@@ -102,6 +103,8 @@ public class Main extends Application {
             }
         }, Platform::runLater);
         bitcoin.startAsync();
+
+        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {

@@ -539,7 +539,7 @@ public class Peer extends PeerSocketHandler {
                     }
                     if (blockChain.add(header)) {
                         // The block was successfully linked into the chain. Notify the user of our progress.
-                        invokeOnBlocksDownloaded(header);
+                        invokeOnBlocksDownloaded(header, null);
                     } else {
                         // This block is unconnected - we don't know how to get from it back to the genesis block yet.
                         // That must mean that the peer is buggy or malicious because we specifically requested for
@@ -846,7 +846,7 @@ public class Peer extends PeerSocketHandler {
             // Otherwise it's a block sent to us because the peer thought we needed it, so add it to the block chain.
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
-                invokeOnBlocksDownloaded(m);
+                invokeOnBlocksDownloaded(m, null);
             } else {
                 // This block is an orphan - we don't know how to get from it back to the genesis block yet. That
                 // must mean that there are blocks we are missing, so do another getblocks with a new block locator
@@ -950,7 +950,7 @@ public class Peer extends PeerSocketHandler {
 
             if (blockChain.add(m)) {
                 // The block was successfully linked into the chain. Notify the user of our progress.
-                invokeOnBlocksDownloaded(m.getBlockHeader());
+                invokeOnBlocksDownloaded(m.getBlockHeader(), m);
             } else {
                 // This block is an orphan - we don't know how to get from it back to the genesis block yet. That
                 // must mean that there are blocks we are missing, so do another getblocks with a new block locator
@@ -1008,7 +1008,7 @@ public class Peer extends PeerSocketHandler {
         return found;
     }
 
-    private void invokeOnBlocksDownloaded(final Block m) {
+    private void invokeOnBlocksDownloaded(final Block block, @Nullable final FilteredBlock fb) {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
@@ -1017,7 +1017,7 @@ public class Peer extends PeerSocketHandler {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onBlocksDownloaded(Peer.this, m, blocksLeft);
+                    registration.listener.onBlocksDownloaded(Peer.this, block, fb, blocksLeft);
                 }
             });
         }

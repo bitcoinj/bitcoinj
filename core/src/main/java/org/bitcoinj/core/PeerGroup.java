@@ -141,7 +141,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
 
         @Override
-        public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+        public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             if (chain == null) return;
             final double rate = chain.getFalsePositiveRate();
             final double target = bloomFilterMerger.getBloomFilterFPRate() * MAX_FP_RATE_INCREASE;
@@ -1462,17 +1462,24 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     private class ChainDownloadSpeedCalculator extends AbstractPeerEventListener implements Runnable {
-        private int blocksInLastSecond, stallWarning;
+        private int blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, stallWarning;
 
         @Override
-        public synchronized void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+        public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             blocksInLastSecond++;
+            // This whole area of the type hierarchy is a mess.
+            List<Transaction> blockTransactions = block.getTransactions();
+            int txCount = (blockTransactions != null ? blockTransactions.size() : 0) +
+                          (filteredBlock != null ? filteredBlock.getAssociatedTransactions().size() : 0);
+            txnsInLastSecond = txnsInLastSecond + txCount;
+            if (filteredBlock != null)
+                origTxnsInLastSecond += filteredBlock.getTransactionCount();
         }
 
         @Override
         public synchronized void run() {
             if (blocksInLastSecond > 1) {
-                log.info("{} blocks per second", blocksInLastSecond);
+                log.info("{} blocks/sec, {} tx/sec, {} pre-filtered tx/sec", blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond);
                 stallWarning = 0;
             }
             if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond == 0 && stallWarning > -1) {
@@ -1485,6 +1492,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
             }
             blocksInLastSecond = 0;
+            txnsInLastSecond = 0;
+            origTxnsInLastSecond = 0;
         }
     }
     @Nullable private ChainDownloadSpeedCalculator chainDownloadSpeedCalculator;
@@ -1498,8 +1507,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 // Every second, run the calculator which will log how fast we are downloading the chain.
                 chainDownloadSpeedCalculator = new ChainDownloadSpeedCalculator();
                 executor.scheduleAtFixedRate(chainDownloadSpeedCalculator, 1, 1, TimeUnit.SECONDS);
-                peer.addEventListener(chainDownloadSpeedCalculator, Threading.SAME_THREAD);
             }
+            peer.addEventListener(chainDownloadSpeedCalculator, Threading.SAME_THREAD);
 
             // startBlockChainDownload will setDownloadData(true) on itself automatically.
             peer.startBlockChainDownload();

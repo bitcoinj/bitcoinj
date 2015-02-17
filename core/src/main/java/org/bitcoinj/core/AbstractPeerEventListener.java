@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import javax.annotation.*;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ public class AbstractPeerEventListener implements PeerEventListener {
     }
 
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
     }
 
     @Override
