@@ -65,6 +65,10 @@ import static com.google.common.base.Preconditions.*;
  */
 public class PeerGroup implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
+
+    // All members in this class should be marked with final, volatile, @GuardedBy or a mix as appropriate to define
+    // their thread safety semantics. Volatile requires a Hungarian-style v prefix.
+
     /**
      * The default number of connections to the p2p network the library will try to build. This is set to 12 empirically.
      * It used to be 4, but because we divide the connection pool in two for broadcasting transactions, that meant we
@@ -73,7 +77,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public static final int DEFAULT_CONNECTIONS = 12;
     private static final int TOR_TIMEOUT_SECONDS = 60;
-    private int vMaxPeersToDiscoverCount = 100;
+    private volatile int vMaxPeersToDiscoverCount = 100;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
@@ -118,7 +122,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
     public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
-    private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
+    @GuardedBy("lock") private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
 
     @GuardedBy("lock") private boolean useLocalhostPeerWhenPossible = true;
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
@@ -198,7 +202,7 @@ public class PeerGroup implements TransactionBroadcaster {
     };
 
     // Exponential backoff for peers starts at 1 second and maxes at 10 minutes.
-    private ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(1000, 1.5f, 10 * 60 * 1000);
+    private final ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(1000, 1.5f, 10 * 60 * 1000);
     // Tracks failures globally in case of a network failure.
     @GuardedBy("lock") private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(1000, 1.5f, 10 * 1000));
 
@@ -220,8 +224,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    @VisibleForTesting
-    PeerEventListener startupListener = new PeerStartupListener();
+    private final PeerEventListener startupListener = new PeerStartupListener();
 
     /**
      * <p>A reasonable default for the bloom filter false positive rate on mainnet. FP rates are values between 0.0 and 1.0
