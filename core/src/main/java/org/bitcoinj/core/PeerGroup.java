@@ -116,9 +116,6 @@ public class PeerGroup implements TransactionBroadcaster {
     // Minimum protocol version we will allow ourselves to connect to: require Bloom filtering.
     private volatile int vMinRequiredProtocolVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
 
-    // Runs a background thread that we use for scheduling pings to our peers, so we can measure their performance
-    // and network latency. We ping peers every pingIntervalMsec milliseconds.
-    private volatile Timer vPingTimer;
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
     public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
     private long pingIntervalMsec = DEFAULT_PING_INTERVAL_MSEC;
