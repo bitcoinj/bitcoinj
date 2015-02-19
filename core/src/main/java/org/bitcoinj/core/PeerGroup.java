@@ -243,6 +243,9 @@ public class PeerGroup implements TransactionBroadcaster {
     /** The default timeout between when a connection attempt begins and version message exchange completes */
     public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
     private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
+    
+    /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
+    private volatile boolean vBloomFilteringEnabled = true;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -587,12 +590,12 @@ public class PeerGroup implements TransactionBroadcaster {
     // Updates the relayTxesBeforeFilter flag of ver
     private void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
         // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
-        // iff chain == null || !chain.shouldVerifyTransactions() and a wallet is added
+        // if chain == null || !chain.shouldVerifyTransactions() and a wallet is added and bloom filters are enabled
         // Note that the default here means that no tx invs will be received if no wallet is ever added
         lock.lock();
         try {
             boolean spvMode = chain != null && !chain.shouldVerifyTransactions();
-            boolean willSendFilter = spvMode && peerFilterProviders.size() > 0;
+            boolean willSendFilter = spvMode && peerFilterProviders.size() > 0 && vBloomFilteringEnabled;
             ver.relayTxesBeforeFilter = !willSendFilter;
         } finally {
             lock.unlock();
@@ -1044,7 +1047,7 @@ public class PeerGroup implements TransactionBroadcaster {
             public void go() {
                 checkState(!lock.isHeldByCurrentThread());
                 // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-                if (chain != null && chain.shouldVerifyTransactions())
+                if ((chain != null && chain.shouldVerifyTransactions()) || !vBloomFilteringEnabled)
                     return;
                 // We only ever call bloomFilterMerger.calculate on jobQueue, so we cannot be calculating two filters at once.
                 FilterMerger.Result result = bloomFilterMerger.calculate(ImmutableList.copyOf(peerFilterProviders /* COW */));
@@ -1908,5 +1911,13 @@ public class PeerGroup implements TransactionBroadcaster {
 
     public boolean isRunning() {
         return vRunning;
+    }
+    
+    public void setBloomFilteringEnabled(boolean bloomFilteringEnabled) {
+        this.vBloomFilteringEnabled = bloomFilteringEnabled;
+    }
+    
+    public boolean isBloomFilteringEnabled() {
+        return vBloomFilteringEnabled;
     }
 }
