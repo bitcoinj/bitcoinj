@@ -369,7 +369,7 @@ public class ECKey implements EncryptableItem, Serializable {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
             // a special marker byte.
             // TODO: This is probably not a useful API and may be confusing.
-            this.pub = new LazyECPoint(CURVE.getCurve().decodePoint(pubKey));
+            this.pub = new LazyECPoint(CURVE.getCurve(), pubKey);
         }
     }
 
