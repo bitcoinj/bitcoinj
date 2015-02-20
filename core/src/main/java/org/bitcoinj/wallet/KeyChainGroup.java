@@ -152,7 +152,6 @@ public class KeyChainGroup implements KeyBag {
      * Useful for adding a complex pre-configured keychain, such as a married wallet.
      */
     public void addAndActivateHDChain(DeterministicKeyChain chain) {
-        log.info("Creating and activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
         if (lookaheadSize >= 0)
