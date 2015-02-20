@@ -495,8 +495,7 @@ public class DeterministicKey extends ECKey {
         buffer.get(data);
         checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
         if (pub) {
-            ECPoint point = ECKey.CURVE.getCurve().decodePoint(data);
-            return new DeterministicKey(path, chainCode, new LazyECPoint(point), parent, depth, parentFingerprint);
+            return new DeterministicKey(path, chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), data), parent, depth, parentFingerprint);
         } else {
             return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent, depth, parentFingerprint);
         }
