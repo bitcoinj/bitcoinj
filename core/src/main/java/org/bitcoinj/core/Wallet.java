@@ -3067,8 +3067,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public static class SendResult {
         /** The Bitcoin transaction message that moves the money. */
         public Transaction tx;
-        /** A future that will complete once the tx message has been successfully broadcast to the network. */
+        /** A future that will complete once the tx message has been successfully broadcast to the network. This is just the result of calling broadcast.future() */
         public ListenableFuture<Transaction> broadcastComplete;
+        /** The broadcast object returned by the linked TransactionBroadcaster */
+        public TransactionBroadcast broadcast;
     }
 
     /**
@@ -3423,7 +3425,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
         // txConfidenceListener which will in turn invoke the wallets event listener onTransactionConfidenceChanged
         // method.
-        result.broadcastComplete = broadcaster.broadcastTransaction(tx);
+        result.broadcast = broadcaster.broadcastTransaction(tx);
+        result.broadcastComplete = result.broadcast.future();
         return result;
     }
 
@@ -4674,7 +4677,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         for (Transaction tx : txns) {
             try {
-                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx);
+                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
                 futures.add(future);
                 Futures.addCallback(future, new FutureCallback<Transaction>() {
                     @Override

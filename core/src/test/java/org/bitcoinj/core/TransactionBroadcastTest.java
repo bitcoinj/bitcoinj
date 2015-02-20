@@ -17,12 +17,12 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.util.concurrent.*;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,8 +74,16 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(params);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, blockChain.getContext(), tx);
+        final AtomicDouble lastProgress = new AtomicDouble();
+        broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
+            @Override
+            public void onBroadcastProgress(double progress) {
+                lastProgress.set(progress);
+            }
+        });
         ListenableFuture<Transaction> future = broadcast.broadcast();
         assertFalse(future.isDone());
+        assertEquals(0.0, lastProgress.get(), 0.0);
         // We expect two peers to receive a tx message, and at least one of the others must announce for the future to
         // complete successfully.
         Message[] messages = {
@@ -91,11 +99,13 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertNull(messages[2]);
         Threading.waitForUserCode();
         assertFalse(future.isDone());
+        assertEquals(0.0, lastProgress.get(), 0.0);
         inbound(channels[1], InventoryMessage.with(tx));
         pingAndWait(channels[1]);
         Threading.waitForUserCode();
         // FIXME flaky test - future is not handled on user thread
         assertTrue(future.isDone());
+        assertEquals(1.0, lastProgress.get(), 0.0);
     }
 
     @Test

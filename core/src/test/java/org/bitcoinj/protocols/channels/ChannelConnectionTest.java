@@ -58,7 +58,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     private static final TransactionBroadcaster failBroadcaster = new TransactionBroadcaster() {
         @Override
-        public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+        public TransactionBroadcast broadcastTransaction(Transaction tx) {
             fail();
             return null;
         }
@@ -85,12 +85,12 @@ public class ChannelConnectionTest extends TestWithWallet {
         broadcastTxPause = new Semaphore(0);
         mockBroadcaster = new TransactionBroadcaster() {
             @Override
-            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+            public TransactionBroadcast broadcastTransaction(Transaction tx) {
                 broadcastTxPause.acquireUninterruptibly();
                 SettableFuture<Transaction> future = SettableFuture.create();
                 future.set(tx);
                 broadcasts.add(tx);
-                return future;
+                return TransactionBroadcast.createMockBroadcast(tx, future);
             }
         };
 

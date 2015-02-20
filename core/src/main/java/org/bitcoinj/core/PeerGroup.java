@@ -1660,13 +1660,14 @@ public class PeerGroup implements TransactionBroadcaster {
      * of connections to wait for before commencing broadcast.
      */
     @Override
-    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx) {
+    public TransactionBroadcast broadcastTransaction(final Transaction tx) {
         return broadcastTransaction(tx, Math.max(1, getMinBroadcastConnections()));
     }
 
     /**
      * <p>Given a transaction, sends it un-announced to one peer and then waits for it to be received back from other
-     * peers. Once all connected peers have announced the transaction, the future will be completed. If anything goes
+     * peers. Once all connected peers have announced the transaction, the future available via the
+     * {@link org.bitcoinj.core.TransactionBroadcast#future()} method will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
      * {@link ListenableFuture}. This method returns immediately, so if you want it to block just call get() on the
      * result.</p>
@@ -1674,17 +1675,14 @@ public class PeerGroup implements TransactionBroadcaster {
      * <p>Note that if the PeerGroup is limited to only one connection (discovery is not activated) then the future
      * will complete as soon as the transaction was successfully written to that peer.</p>
      *
-     * <p>Other than for sending your own transactions, this method is useful if you have received a transaction from
-     * someone and want to know that it's valid. It's a bit of a weird hack because the current version of the Bitcoin
-     * protocol does not inform you if you send an invalid transaction. Because sending bad transactions counts towards
-     * your DoS limit, be careful with relaying lots of unknown transactions. Otherwise you might get kicked off the
-     * network.</p>
-     *
      * <p>The transaction won't be sent until there are at least minConnections active connections available.
      * A good choice for proportion would be between 0.5 and 0.8 but if you want faster transmission during initial
      * bringup of the peer group you can lower it.</p>
+     *
+     * <p>The returned {@link org.bitcoinj.core.TransactionBroadcast} object can be used to get progress feedback,
+     * which is calculated by watching the transaction propagate across the network and be announced by peers.</p>
      */
-    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx, final int minConnections) {
+    public TransactionBroadcast broadcastTransaction(final Transaction tx, final int minConnections) {
         // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
         final TransactionBroadcast broadcast = new TransactionBroadcast(this, chain != null ? chain.getContext() : null, tx);
         broadcast.setMinConnections(minConnections);
@@ -1722,7 +1720,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // at all.
         runningBroadcasts.add(broadcast);
         broadcast.broadcast();
-        return broadcast.future();
+        return broadcast;
     }
 
     /**

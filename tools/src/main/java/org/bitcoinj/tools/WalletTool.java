@@ -588,7 +588,7 @@ public class WalletTool {
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
-            peers.broadcastTransaction(t).get();
+            peers.broadcastTransaction(t).future().get();
             // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
             List<Peer> peerList = peers.getConnectedPeers();
             if (peerList.size() == 1)
@@ -701,7 +701,7 @@ public class WalletTool {
             if (future == null) {
                 // No payment_url for submission so, broadcast and wait.
                 peers.start();
-                peers.broadcastTransaction(req.tx).get();
+                peers.broadcastTransaction(req.tx).future().get();
             } else {
                 PaymentProtocol.Ack ack = future.get();
                 wallet.commitTx(req.tx);

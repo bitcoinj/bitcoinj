@@ -236,7 +236,7 @@ public class PaymentChannelServerState {
         log.info("Broadcasting multisig contract: {}", multisigContract);
         state = State.WAITING_FOR_MULTISIG_ACCEPTANCE;
         final SettableFuture<PaymentChannelServerState> future = SettableFuture.create();
-        Futures.addCallback(broadcaster.broadcastTransaction(multisigContract), new FutureCallback<Transaction>() {
+        Futures.addCallback(broadcaster.broadcastTransaction(multisigContract).future(), new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("Successfully broadcast multisig contract {}. Channel now open.", transaction.getHashAsString());
                 try {
@@ -418,7 +418,7 @@ public class PaymentChannelServerState {
         state = State.CLOSING;
         log.info("Closing channel, broadcasting tx {}", tx);
         // The act of broadcasting the transaction will add it to the wallet.
-        ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx);
+        ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
         Futures.addCallback(future, new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
                 log.info("TX {} propagated, channel successfully closed.", transaction.getHash());

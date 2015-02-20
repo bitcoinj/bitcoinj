@@ -16,13 +16,11 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
  * A general interface which declares the ability to broadcast transactions. This is implemented
  * by {@link org.bitcoinj.core.PeerGroup}.
  */
 public interface TransactionBroadcaster {
     /** Broadcast the given transaction on the network */
-    public ListenableFuture<Transaction> broadcastTransaction(final Transaction tx);
+    public TransactionBroadcast broadcastTransaction(final Transaction tx);
 }

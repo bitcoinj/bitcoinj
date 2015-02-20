@@ -64,7 +64,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         super.setUp();
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, new TransactionBroadcaster() {
             @Override
-            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+            public TransactionBroadcast broadcastTransaction(Transaction tx) {
                 fail();
                 return null;
             }
@@ -79,10 +79,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         broadcasts = new LinkedBlockingQueue<TxFuturePair>();
         mockBroadcaster = new TransactionBroadcaster() {
             @Override
-            public ListenableFuture<Transaction> broadcastTransaction(Transaction tx) {
+            public TransactionBroadcast broadcastTransaction(Transaction tx) {
                 SettableFuture<Transaction> future = SettableFuture.create();
                 broadcasts.add(new TxFuturePair(tx, future));
-                return future;
+                return TransactionBroadcast.createMockBroadcast(tx, future);
             }
         };
     }

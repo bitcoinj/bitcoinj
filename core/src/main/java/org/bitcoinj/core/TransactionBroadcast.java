@@ -24,6 +24,9 @@ import org.slf4j.*;
 
 import javax.annotation.*;
 import java.util.*;
+import java.util.concurrent.*;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
@@ -57,6 +60,28 @@ public class TransactionBroadcast {
         this.context = context;
         this.tx = tx;
         this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
+    }
+
+    // Only for mock broadcasts.
+    private TransactionBroadcast(Transaction tx) {
+        this.peerGroup = null;
+        this.context = null;
+        this.tx = tx;
+    }
+
+    @VisibleForTesting
+    public static TransactionBroadcast createMockBroadcast(Transaction tx, final SettableFuture<Transaction> future) {
+        return new TransactionBroadcast(tx) {
+            @Override
+            public ListenableFuture<Transaction> broadcast() {
+                return future;
+            }
+
+            @Override
+            public ListenableFuture<Transaction> future() {
+                return future;
+            }
+        };
     }
 
     public ListenableFuture<Transaction> future() {
@@ -157,6 +182,10 @@ public class TransactionBroadcast {
             boolean mined = tx.getAppearsInHashes() != null;
             log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
                     numSeenPeers, mined ? " and mined" : "");
+
+            // Progress callback on the requested thread.
+            invokeProgressCallback(numSeenPeers, mined);
+
             if (numSeenPeers >= numWaitingFor || mined) {
                 // We've seen the min required number of peers announce the transaction, or it was included
                 // in a block. Normally we'd expect to see it fully propagate before it gets mined, but
@@ -177,5 +206,65 @@ public class TransactionBroadcast {
                 future.set(pinnedTx);  // RE-ENTRANCY POINT
             }
         }
+    }
+
+    private void invokeProgressCallback(int numSeenPeers, boolean mined) {
+        final ProgressCallback callback;
+        Executor executor;
+        synchronized (this) {
+            callback = this.callback;
+            executor = this.progressCallbackExecutor;
+        }
+        if (callback != null) {
+            final double progress = Math.min(1.0, mined ? 1.0 : numSeenPeers / (double) numWaitingFor);
+            checkState(progress >= 0.0 && progress <= 1.0, progress);
+            try {
+                if (executor == null)
+                    callback.onBroadcastProgress(progress);
+                else
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onBroadcastProgress(progress);
+                        }
+                    });
+            } catch (Throwable e) {
+                log.error("Exception during progress callback", e);
+            }
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** An interface for receiving progress information on the propagation of the tx, from 0.0 to 1.0 */
+    public interface ProgressCallback {
+        /**
+         * onBroadcastProgress will be invoked on the provided executor when the progress of the transaction
+         * broadcast has changed, because the transaction has been announced by another peer or because the transaction
+         * was found inside a mined block (in this case progress will go to 1.0 immediately). Any exceptions thrown
+         * by this callback will be logged and ignored.
+         */
+        void onBroadcastProgress(double progress);
+    }
+
+    @Nullable private ProgressCallback callback;
+    @Nullable private Executor progressCallbackExecutor;
+
+    /**
+     * Sets the given callback for receiving progress values, which will run on the user thread. See
+     * {@link org.bitcoinj.utils.Threading} for details.
+     */
+    public void setProgressCallback(ProgressCallback callback) {
+        setProgressCallback(callback, Threading.USER_THREAD);
+    }
+
+    /**
+     * Sets the given callback for receiving progress values, which will run on the given executor. If the executor
+     * is null then the callback will run on a network thread and may be invoked multiple times in parallel. You
+     * probably want to provide your UI thread or Threading.USER_THREAD for the second parameter.
+     */
+    public synchronized void setProgressCallback(ProgressCallback callback, @Nullable Executor executor) {
+        this.callback = callback;
+        this.progressCallbackExecutor = executor;
     }
 }

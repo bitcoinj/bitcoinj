@@ -58,7 +58,7 @@ public class TestFeeLevel {
         kit.wallet().completeTx(request);
         log.info("Fee paid is {}", request.fee);
         log.info("TX is {}", request.tx);
-        kit.peerGroup().broadcastTransaction(request.tx).get();
+        kit.peerGroup().broadcastTransaction(request.tx).future().get();
         log.info("Send complete, waiting for confirmation");
         request.tx.getConfidence().getDepthFuture(1).get();
 
