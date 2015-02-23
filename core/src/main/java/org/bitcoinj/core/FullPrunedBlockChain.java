@@ -38,11 +38,11 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A FullPrunedBlockChain works in conjunction with a {@link FullPrunedBlockStore} to verify all the rules of the
- * Bitcoin system, with the downside being a larg cost in system resources. Fully verifying means all unspent transaction
- * outputs are stored. Once a transaction output is spent and that spend is buried deep enough, the data related to it
- * is deleted to ensure disk space usage doesn't grow forever. For this reason a pruning node cannot serve the full
- * block chain to other clients, but it nevertheless provides the same security guarantees as a regular Satoshi
- * client does.</p>
+ * Bitcoin system, with the downside being a large cost in system resources. Fully verifying means all unspent
+ * transaction outputs are stored. Once a transaction output is spent and that spend is buried deep enough, the data
+ * related to it is deleted to ensure disk space usage doesn't grow forever. For this reason a pruning node cannot
+ * serve the full block chain to other clients, but it nevertheless provides the same security guarantees as a regular
+ * Satoshi client does.</p>
  */
 public class FullPrunedBlockChain extends AbstractBlockChain {    
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChain.class);
