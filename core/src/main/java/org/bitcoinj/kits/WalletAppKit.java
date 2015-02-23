@@ -356,7 +356,6 @@ public class WalletAppKit extends AbstractIdleService {
         FileInputStream walletStream = new FileInputStream(vWalletFile);
         try {
             List<WalletExtension> extensions = provideWalletExtensions();
-            wallet = new Wallet(params);
             WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
             final WalletProtobufSerializer serializer;
