@@ -235,7 +235,7 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
  * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link org.bitcoinj.core.UTXO}s in memory.
  * Used primarily for unit testing.
  */
-public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore, UTXOProvider {
+public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     protected static class StoredBlockAndWasUndoableFlag {
         public StoredBlock block;
         public boolean wasUndoable;
