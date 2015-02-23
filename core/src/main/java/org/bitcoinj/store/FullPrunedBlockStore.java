@@ -22,7 +22,7 @@ import org.bitcoinj.core.*;
 /**
  * <p>An implementor of FullPrunedBlockStore saves StoredBlock objects to some storage mechanism.</p>
  * 
- * <p>In addition to keeping tack of a chain using {@link StoredBlock}s, it should also keep track of a second
+ * <p>In addition to keeping track of a chain using {@link StoredBlock}s, it should also keep track of a second
  * copy of the chain which holds {@link StoredUndoableBlock}s. In this way, an application can perform a
  * headers-only initial sync and then use that information to more efficiently download a locally verified
  * full copy of the block chain.</p>
