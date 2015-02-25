@@ -18,7 +18,7 @@ package org.bitcoinj.net.discovery;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.utils.DaemonThreadFactory;
+import org.bitcoinj.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     }
 
     protected ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory());
+        return Executors.newFixedThreadPool(seeds.size(), new ContextPropagatingThreadFactory("Multiplexing discovery"));
     }
 
     @Override

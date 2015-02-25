@@ -16,44 +16,22 @@
 
 package org.bitcoinj.net.discovery;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import org.bitcoinj.core.NetworkParameters;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.subgraph.orchid.Circuit;
-import com.subgraph.orchid.RelayCell;
-import com.subgraph.orchid.Router;
-import com.subgraph.orchid.TorClient;
-import com.subgraph.orchid.circuits.path.CircuitPathChooser;
-import com.subgraph.orchid.data.HexDigest;
-import com.subgraph.orchid.data.exitpolicy.ExitTarget;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import com.subgraph.orchid.*;
+import com.subgraph.orchid.circuits.path.*;
+import com.subgraph.orchid.data.*;
+import com.subgraph.orchid.data.exitpolicy.*;
+import org.bitcoinj.core.*;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import org.bitcoinj.utils.DaemonThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.Collections.singleton;
+import static com.google.common.base.Preconditions.*;
+import static java.util.Collections.*;
 
 /**
  * <p>Supports peer discovery through Tor.</p>
@@ -254,7 +232,7 @@ public class TorDiscovery implements PeerDiscovery {
 
     private synchronized void createThreadPool(int size) {
         threadPool = MoreExecutors.listeningDecorator(
-                Executors.newFixedThreadPool(size, new DaemonThreadFactory()));
+                Executors.newFixedThreadPool(size, new ContextPropagatingThreadFactory("Tor DNS discovery")));
     }
 
     private InetAddress lookup(Circuit circuit, String seed) throws UnknownHostException {

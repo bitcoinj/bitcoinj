@@ -67,9 +67,9 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         // Attempted workaround for reported bugs on Linux in which gethostbyname does not appear to be properly
         // thread safe and can cause segfaults on some libc versions.
         if (System.getProperty("os.name").toLowerCase().contains("linux"))
-            return Executors.newSingleThreadExecutor(new DaemonThreadFactory());
+            return Executors.newSingleThreadExecutor(new ContextPropagatingThreadFactory("DNS seed lookups"));
         else
-            return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory());
+            return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory("DNS seed lookups"));
     }
 
     /** Implements discovery from a single DNS host. */

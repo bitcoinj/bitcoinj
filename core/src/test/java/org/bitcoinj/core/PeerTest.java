@@ -78,7 +78,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
 
-        confidenceTable = blockChain.getContext().getConfidenceTable();
+        confidenceTable = Context.get().getConfidenceTable();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
         peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain);
@@ -601,7 +601,6 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(t3.getHash(), getdata.getItems().get(1).hash);
         assertEquals(someHash, getdata.getItems().get(2).hash);
         assertEquals(anotherHash, getdata.getItems().get(3).hash);
-        long nonce = -1;
         // For some random reason, t4 is delivered at this point before it's needed - perhaps it was a Bloom filter
         // false positive. We do this to check that the mempool is being checked for seen transactions before
         // requesting them.

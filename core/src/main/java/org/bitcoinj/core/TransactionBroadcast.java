@@ -41,7 +41,6 @@ public class TransactionBroadcast {
     private final SettableFuture<Transaction> future = SettableFuture.create();
     private final PeerGroup peerGroup;
     private final Transaction tx;
-    @Nullable private final Context context;
     private int minConnections;
     private int numWaitingFor;
 
@@ -54,10 +53,8 @@ public class TransactionBroadcast {
     // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
     private Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
-    // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
-    TransactionBroadcast(PeerGroup peerGroup, @Nullable Context context, Transaction tx) {
+    TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
         this.peerGroup = peerGroup;
-        this.context = context;
         this.tx = tx;
         this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
     }
@@ -65,7 +62,6 @@ public class TransactionBroadcast {
     // Only for mock broadcasts.
     private TransactionBroadcast(Transaction tx) {
         this.peerGroup = null;
-        this.context = null;
         this.tx = tx;
     }
 
@@ -134,7 +130,7 @@ public class TransactionBroadcast {
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
             // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
             // TODO: Once confidence state is moved out of Transaction we can kill off this step.
-            pinnedTx = context != null ? context.getConfidenceTable().intern(tx) : tx;
+            pinnedTx = Context.get().getConfidenceTable().intern(tx);
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
