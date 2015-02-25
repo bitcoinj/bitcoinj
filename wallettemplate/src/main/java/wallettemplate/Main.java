@@ -96,6 +96,8 @@ public class Main extends Application {
 
         mainWindow.show();
 
+        WalletSetPasswordController.estimateKeyDerivationTimeMsec();
+
         bitcoin.addListener(new Service.Listener() {
             @Override
             public void failed(Service.State from, Throwable failure) {
