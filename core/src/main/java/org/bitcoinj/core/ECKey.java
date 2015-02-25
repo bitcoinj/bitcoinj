@@ -203,7 +203,13 @@ public class ECKey implements EncryptableItem, Serializable {
      * See the ECKey class docs for a discussion of point compression.
      */
     public static ECPoint compressPoint(ECPoint point) {
-        return point.isCompressed() ? point : CURVE.getCurve().decodePoint(point.getEncoded(true));
+        if (point.isCompressed())
+            return point;
+        // TODO consider maintaining the point in normalized form
+        ECPoint normalizedPoint = point.normalize();
+        // TODO perform our own compression handling to get rid of deprecation warning
+        return CURVE.getCurve().createPoint(normalizedPoint.getAffineXCoord().toBigInteger(),
+                normalizedPoint.getAffineYCoord().toBigInteger(), true);
     }
 
     public static LazyECPoint compressPoint(LazyECPoint point) {
@@ -215,7 +221,13 @@ public class ECKey implements EncryptableItem, Serializable {
      * See the ECKey class docs for a discussion of point compression.
      */
     public static ECPoint decompressPoint(ECPoint point) {
-        return !point.isCompressed() ? point : CURVE.getCurve().decodePoint(point.getEncoded(false));
+        if (!point.isCompressed())
+            return point;
+        // TODO consider maintaining the point in normalized form
+        ECPoint normalizedPoint = point.normalize();
+        // TODO perform our own compression handling to get rid of deprecation warning
+        return CURVE.getCurve().createPoint(normalizedPoint.getAffineXCoord().toBigInteger(),
+                normalizedPoint.getAffineYCoord().toBigInteger(), false);
     }
 
     public static LazyECPoint decompressPoint(LazyECPoint point) {
