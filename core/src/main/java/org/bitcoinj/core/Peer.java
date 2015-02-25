@@ -58,6 +58,7 @@ public class Peer extends PeerSocketHandler {
 
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
+    private final Context context;
 
     // onPeerDisconnected should not be called directly by Peers when a PeerGroup is involved (we don't know the total
     // number of connected peers), thus we use a wrapper that PeerGroup can use to register listeners that wont get
@@ -87,9 +88,6 @@ public class Peer extends PeerSocketHandler {
     // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
     private final AtomicInteger blocksAnnounced = new AtomicInteger();
-    // A class that tracks recent transactions that have been broadcast across the network, counts how many
-    // peers announced them and updates the transaction confidence data. It is passed to each Peer.
-    @Nullable private final TxConfidenceTable confidenceTable;
     // Each wallet added to the peer will be notified of downloaded transaction data.
     private final CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
@@ -213,7 +211,7 @@ public class Peer extends PeerSocketHandler {
         this.isAcked = false;
         this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
         this.wallets = new CopyOnWriteArrayList<Wallet>();
-        this.confidenceTable = chain != null ? chain.getContext().getConfidenceTable() : null;
+        this.context = Context.get();
     }
 
     /**
@@ -604,11 +602,8 @@ public class Peer extends PeerSocketHandler {
         lock.lock();
         try {
             log.debug("{}: Received tx {}", getAddress(), tx.getHashAsString());
-            if (confidenceTable != null) {
-                // We may get back a different transaction object.
-                tx = confidenceTable.seen(tx, getAddress());
-            }
-            fTx = tx;
+            // We may get back a different transaction object.
+            fTx = context.getConfidenceTable().seen(tx, getAddress());
             // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
             // etc). This helps the wallet decide how to risk analyze it later.
             fTx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -707,7 +702,6 @@ public class Peer extends PeerSocketHandler {
      * <p>Note that dependencies downloaded this way will not trigger the onTransaction method of event listeners.</p>
      */
     public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
-        checkNotNull(confidenceTable, "Must have a configured TxConfidenceTable object to download dependencies.");
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
@@ -733,7 +727,6 @@ public class Peer extends PeerSocketHandler {
     private ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
                                                                   final Object marker,
                                                                   final List<Transaction> results) {
-        checkNotNull(confidenceTable, "Must have a configured TxConfidenceTable object to download dependencies.");
         final SettableFuture<Object> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getHash();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
@@ -748,7 +741,7 @@ public class Peer extends PeerSocketHandler {
         for (TransactionInput input : tx.getInputs()) {
             // There may be multiple inputs that connect to the same transaction.
             Sha256Hash hash = input.getOutpoint().getHash();
-            Transaction dep = confidenceTable.get(hash);
+            Transaction dep = context.getConfidenceTable().get(hash);
             if (dep == null) {
                 needToRequest.add(hash);
             } else {
@@ -1064,28 +1057,21 @@ public class Peer extends PeerSocketHandler {
         Iterator<InventoryItem> it = transactions.iterator();
         while (it.hasNext()) {
             InventoryItem item = it.next();
-            if (confidenceTable == null) {
-                if (downloadData) {
-                    // If there's no memory pool only download transactions if we're configured to.
-                    getdata.addItem(item);
-                }
+            // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
+            // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
+            // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
+            // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
+            // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
+            // sending us the transaction: currently we'll never try to re-fetch after a timeout.
+            if (context.getConfidenceTable().maybeWasSeen(item.hash)) {
+                // Some other peer already announced this so don't download.
+                it.remove();
             } else {
-                // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
-                // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
-                // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
-                // peers run at different speeds. However to conserve bandwidth on mobile devices we try to only download a
-                // transaction once. This means we can miss broadcasts if the peer disconnects between sending us an inv and
-                // sending us the transaction: currently we'll never try to re-fetch after a timeout.
-                if (confidenceTable.maybeWasSeen(item.hash)) {
-                    // Some other peer already announced this so don't download.
-                    it.remove();
-                } else {
-                    log.debug("{}: getdata on tx {}", getAddress(), item.hash);
-                    getdata.addItem(item);
-                }
-                // This can trigger transaction confidence listeners.
-                confidenceTable.seen(item.hash, this.getAddress());
+                log.debug("{}: getdata on tx {}", getAddress(), item.hash);
+                getdata.addItem(item);
             }
+            // This can trigger transaction confidence listeners.
+            context.getConfidenceTable().seen(item.hash, this.getAddress());
         }
 
         // If we are requesting filteredblocks we have to send a ping after the getdata so that we have a clear
@@ -1559,7 +1545,7 @@ public class Peer extends PeerSocketHandler {
      * unset a filter, though the underlying p2p protocol does support it.</p>
      */
     public void setBloomFilter(BloomFilter filter) {
-        setBloomFilter(filter, confidenceTable != null || vDownloadData);
+        setBloomFilter(filter, true);
     }
 
     /**

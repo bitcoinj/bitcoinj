@@ -81,6 +81,7 @@ public class TestWithNetworkConnections {
         BriefLogFormatter.init();
 
         unitTestParams = UnitTestParams.get();
+        new Context();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.

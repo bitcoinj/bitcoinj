@@ -81,6 +81,10 @@ public class PeerGroup implements TransactionBroadcaster {
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
+    private final NetworkParameters params;
+    private final Context context;
+    @Nullable private final AbstractBlockChain chain;
+
     // This executor is used to queue up jobs: it's used when we don't want to use locks for mutual exclusion,
     // typically because the job might call in to user provided code that needs/wants the freedom to use the API
     // however it wants, or because a job needs to be ordered relative to other jobs like that.
@@ -127,8 +131,6 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean useLocalhostPeerWhenPossible = true;
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
-    private final NetworkParameters params;
-    @Nullable private final AbstractBlockChain chain;
     @GuardedBy("lock") private long fastCatchupTimeSecs;
     private final CopyOnWriteArrayList<Wallet> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
@@ -304,6 +306,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     private PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
         this.params = checkNotNull(params);
+        this.context = Context.getOrCreate();
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();
@@ -350,7 +353,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     protected ListeningScheduledExecutorService createPrivateExecutor() {
         ListeningScheduledExecutorService result = MoreExecutors.listeningDecorator(
-                new ScheduledThreadPoolExecutor(1, new DaemonThreadFactory("PeerGroup Thread"))
+                new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup Thread"))
         );
         // Hack: jam the executor so jobs just queue up until the user calls start() on us. For example, adding a wallet
         // results in a bloom filter recalc being queued, but we don't want to do that until we're actually started.
@@ -517,7 +520,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the confidence pool first.
-                Transaction tx = chain != null ? chain.getContext().getConfidenceTable().get(item.hash) : null;
+                Transaction tx = chain != null ? Context.get().getConfidenceTable().get(item.hash) : null;
                 if (tx != null) {
                     transactions.add(tx);
                     it.remove();
@@ -1352,14 +1355,10 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    /**
-     * Use {@link org.bitcoinj.core.Context#getConfidenceTable()} instead, which can be retrieved via
-     * {@link org.bitcoinj.core.AbstractBlockChain#getContext()}. Can return null if this peer group was
-     * configured without a block chain object.
-     */
+    /** Use "Context.get().getConfidenceTable()" instead */
     @Deprecated @Nullable
     public TxConfidenceTable getMemoryPool() {
-        return chain == null ? null : chain.getContext().getConfidenceTable();
+        return Context.get().getConfidenceTable();
     }
 
     /**
@@ -1684,7 +1683,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public TransactionBroadcast broadcastTransaction(final Transaction tx, final int minConnections) {
         // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
-        final TransactionBroadcast broadcast = new TransactionBroadcast(this, chain != null ? chain.getContext() : null, tx);
+        final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.
         Futures.addCallback(broadcast.future(), new FutureCallback<Transaction>() {

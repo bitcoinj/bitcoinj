@@ -25,7 +25,7 @@ import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import com.google.common.base.Preconditions;
-import org.bitcoinj.utils.DaemonThreadFactory;
+import org.bitcoinj.utils.*;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.*;
@@ -98,7 +98,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         return new PeerGroup(unitTestParams, blockChain, manager) {
             @Override
             protected ListeningScheduledExecutorService createPrivateExecutor() {
-                return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new DaemonThreadFactory("PeerGroup test thread")) {
+                return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {
                     @Override
                     public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
                         if (!blockJobs)
