@@ -7,7 +7,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * The Context object holds various objects that are scoped to a specific instantiation of bitcoinj for a specific
- * network. You can get an instance of this class through {@link AbstractBlockChain#getContext()}. At the momemnt it
+ * network. You can get an instance of this class through calling {@link #get()}. At the moment it
  * only contains a {@link org.bitcoinj.core.TxConfidenceTable} but in future it will likely contain file paths and
  * other global configuration of use.
  */
