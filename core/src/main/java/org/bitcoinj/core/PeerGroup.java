@@ -519,20 +519,13 @@ public class PeerGroup implements TransactionBroadcaster {
             Iterator<InventoryItem> it = items.iterator();
             while (it.hasNext()) {
                 InventoryItem item = it.next();
-                // Check the confidence pool first.
-                Transaction tx = chain != null ? Context.get().getConfidenceTable().get(item.hash) : null;
-                if (tx != null) {
+                // Check the wallets.
+                for (Wallet w : wallets) {
+                    Transaction tx = w.getTransaction(item.hash);
+                    if (tx == null) continue;
                     transactions.add(tx);
                     it.remove();
-                } else {
-                    // Check the wallets.
-                    for (Wallet w : wallets) {
-                        tx = w.getTransaction(item.hash);
-                        if (tx == null) continue;
-                        transactions.add(tx);
-                        it.remove();
-                        break;
-                    }
+                    break;
                 }
             }
             return transactions;

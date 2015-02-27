@@ -47,9 +47,7 @@ public class TransactionBroadcast {
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
     @VisibleForTesting
     public static Random random = new Random();
-
-    private Transaction pinnedTx;
-
+    
     // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
     private Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
@@ -128,13 +126,10 @@ public class TransactionBroadcast {
             // be seen, 4 peers is probably too little - it doesn't taken many broken peers for tx propagation to have
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
-            // We intern the tx here so we are using a canonical version of the object (as it's unfortunately mutable).
-            // TODO: Once confidence state is moved out of Transaction we can kill off this step.
-            pinnedTx = Context.get().getConfidenceTable().intern(tx);
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
-                pinnedTx.getConfidence().addEventListener(new ConfidenceChange());
+                tx.getConfidence().addEventListener(new ConfidenceChange());
             // Satoshis code sends an inv in this case and then lets the peer request the tx data. We just
             // blast out the TX here for a couple of reasons. Firstly it's simpler: in the case where we have
             // just a single connection we don't have to wait for getdata to be received and handled before
@@ -152,7 +147,7 @@ public class TransactionBroadcast {
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Joiner.on(",").join(peers));
             for (Peer peer : peers) {
                 try {
-                    peer.sendMessage(pinnedTx);
+                    peer.sendMessage(tx);
                     // We don't record the peer as having seen the tx in the memory pool because we want to track only
                     // how many peers announced to us.
                 } catch (Exception e) {
@@ -165,7 +160,7 @@ public class TransactionBroadcast {
             // any peer discovery source and the user just calls connectTo() once.
             if (minConnections == 1) {
                 peerGroup.removeEventListener(rejectionListener);
-                future.set(pinnedTx);
+                future.set(tx);
             }
         }
     }
@@ -176,7 +171,7 @@ public class TransactionBroadcast {
             // The number of peers that announced this tx has gone up.
             int numSeenPeers = conf.numBroadcastPeers() + rejects.size();
             boolean mined = tx.getAppearsInHashes() != null;
-            log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, pinnedTx.getHashAsString(),
+            log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, tx.getHashAsString(),
                     numSeenPeers, mined ? " and mined" : "");
 
             // Progress callback on the requested thread.
@@ -196,10 +191,10 @@ public class TransactionBroadcast {
                 //
                 // We're done! It's important that the PeerGroup lock is not held (by this thread) at this
                 // point to avoid triggering inversions when the Future completes.
-                log.info("broadcastTransaction: {} complete", pinnedTx.getHashAsString());
+                log.info("broadcastTransaction: {} complete", tx.getHash());
                 peerGroup.removeEventListener(rejectionListener);
                 conf.removeEventListener(this);
-                future.set(pinnedTx);  // RE-ENTRANCY POINT
+                future.set(tx);  // RE-ENTRANCY POINT
             }
         }
     }

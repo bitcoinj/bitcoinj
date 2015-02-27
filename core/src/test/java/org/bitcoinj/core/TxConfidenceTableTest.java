@@ -16,64 +16,51 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.junit.Before;
-import org.junit.Test;
+import org.bitcoinj.params.*;
+import org.bitcoinj.testing.*;
+import org.bitcoinj.utils.*;
+import org.junit.*;
 
-import java.net.InetAddress;
+import java.net.*;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.bitcoinj.core.Coin.*;
+import static org.junit.Assert.*;
 
-public class MemoryPoolTest {
+public class TxConfidenceTableTest {
     private NetworkParameters params = UnitTestParams.get();
     private Transaction tx1, tx2;
     private PeerAddress address1, address2, address3;
+    private TxConfidenceTable table;
 
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        tx1 = FakeTxBuilder.createFakeTx(params, COIN, new ECKey().toAddress(params));
-        tx2 = new Transaction(params, tx1.bitcoinSerialize());
+        table = Context.getOrCreate().getConfidenceTable();
+
+        Address to = new ECKey().toAddress(params);
+        Address change = new ECKey().toAddress(params);
+
+        tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(params, COIN, to, change);
+        tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(params, COIN, to, change);
+        assertEquals(tx1.getHash(), tx2.getHash());
 
         address1 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
         address2 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
         address3 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
     }
-
-    @Test
-    public void canonicalInstance() throws Exception {
-        TxConfidenceTable table = new TxConfidenceTable();
-        // Check that if we repeatedly send it the same transaction but with different objects, we get back the same
-        // canonical instance with the confidences update.
-        assertEquals(0, table.numBroadcastPeers(tx1.getHash()));
-        assertEquals(tx1, table.seen(tx1, address1));
-        assertEquals(1, tx1.getConfidence().numBroadcastPeers());
-        assertEquals(1, table.numBroadcastPeers(tx1.getHash()));
-        assertEquals(tx1, table.seen(tx2, address2));
-        assertEquals(2, tx1.getConfidence().numBroadcastPeers());
-        assertEquals(2, table.numBroadcastPeers(tx1.getHash()));
-        assertEquals(tx1, table.get(tx1.getHash()));
-    }
     
     @Test
     public void invAndDownload() throws Exception {
-        TxConfidenceTable table = new TxConfidenceTable();
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
         assertEquals(0, table.numBroadcastPeers(tx1.getHash()));
         table.seen(tx1.getHash(), address1);
         assertEquals(1, table.numBroadcastPeers(tx1.getHash()));
-        assertTrue(table.maybeWasSeen(tx1.getHash()));
         table.seen(tx1.getHash(), address2);
         assertEquals(2, table.numBroadcastPeers(tx1.getHash()));
-        Transaction t = table.seen(tx1,  address1);
-        assertEquals(2, t.getConfidence().numBroadcastPeers());
+        assertEquals(2, tx2.getConfidence().numBroadcastPeers());
         // And now we see another inv.
         table.seen(tx1.getHash(), address3);
-        assertEquals(3, t.getConfidence().numBroadcastPeers());
+        assertEquals(3, tx2.getConfidence().numBroadcastPeers());
         assertEquals(3, table.numBroadcastPeers(tx1.getHash()));
     }
 }

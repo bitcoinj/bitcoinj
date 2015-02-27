@@ -159,6 +159,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // A list of scripts watched by this wallet.
     private Set<Script> watchedScripts;
 
+    protected final Context context;
     protected final NetworkParameters params;
 
     @Nullable private Sha256Hash lastBlockSeenHash;
@@ -256,6 +257,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
+        this.context = Context.getOrCreate();
         this.params = checkNotNull(params);
         this.keychain = checkNotNull(keyChainGroup);
         if (params == UnitTestParams.get())
@@ -2064,7 +2066,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         while (!work.isEmpty()) {
             final Transaction tx = work.poll();
             log.warn("TX {} killed{}", tx.getHashAsString(),
-                    overridingTx != null ? "by " + overridingTx.getHashAsString() : "");
+                    overridingTx != null ? " by " + overridingTx.getHashAsString() : "");
             log.warn("Disconnecting each input and moving connected transactions.");
             // TX could be pending (finney attack), or in unspent/spent (coinbase killed by reorg).
             pending.remove(tx.getHash());

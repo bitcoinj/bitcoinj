@@ -375,8 +375,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Peer 2 advertises the tx but does not receive it yet.
         inbound(p2, inv);
         assertTrue(outbound(p2) instanceof GetDataMessage);
-        assertEquals(0, tx.getConfidence().numBroadcastPeers());
-        assertTrue(Context.get().getConfidenceTable().maybeWasSeen(tx.getHash()));
+        assertEquals(1, tx.getConfidence().numBroadcastPeers());
         assertNull(event[0]);
         // Peer 1 advertises the tx, we don't do anything as it's already been requested.
         inbound(p1, inv);

@@ -1131,15 +1131,14 @@ public class Transaction extends ChildMessage implements Serializable {
 
     /** Returns the confidence object that is owned by this transaction object. */
     public synchronized TransactionConfidence getConfidence() {
-        if (confidence == null) {
-            confidence = new TransactionConfidence(getHash());
-        }
+        if (confidence == null)
+            confidence = Context.get().getConfidenceTable().getOrCreate(getHash()) ;
         return confidence;
     }
 
     /** Check if the transaction has a known confidence */
     public synchronized boolean hasConfidence() {
-        return confidence != null && confidence.getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
+        return getConfidence().getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }
 
     @Override
