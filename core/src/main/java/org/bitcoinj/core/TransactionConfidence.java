@@ -17,18 +17,14 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Sets;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import org.bitcoinj.utils.*;
 
-import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
+import javax.annotation.*;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -261,8 +257,7 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called by a {@link Peer} when a transaction is pending and announced by a peer. The more peers announce the
      * transaction, the more peers have validated it (assuming your internet connection is not being intercepted).
-     * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}. Listeners will be
-     * invoked in this case.
+     * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}.
      *
      * @param address IP address of the peer, used as a proxy for identity.
      */

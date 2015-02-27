@@ -292,7 +292,7 @@ public class PeerTest extends TestWithNetworkConnections {
         GetDataMessage message = (GetDataMessage)outbound(writeTarget);
         assertEquals(1, message.getItems().size());
         assertEquals(tx.getHash(), message.getItems().get(0).hash);
-        assertTrue(confidenceTable.maybeWasSeen(tx.getHash()));
+        assertNotEquals(0, tx.getConfidence().numBroadcastPeers());
 
         // Advertising to peer2 results in no getdata message.
         inbound(writeTarget2, inv);
@@ -554,7 +554,7 @@ public class PeerTest extends TestWithNetworkConnections {
             }
         }, Threading.SAME_THREAD);
 
-        // Make the some fake transactions in the following graph:
+        // Make some fake transactions in the following graph:
         //   t1 -> t2 -> [t5]
         //      -> t3 -> t4 -> [t6]
         //      -> [t7]
@@ -601,10 +601,6 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(t3.getHash(), getdata.getItems().get(1).hash);
         assertEquals(someHash, getdata.getItems().get(2).hash);
         assertEquals(anotherHash, getdata.getItems().get(3).hash);
-        // For some random reason, t4 is delivered at this point before it's needed - perhaps it was a Bloom filter
-        // false positive. We do this to check that the mempool is being checked for seen transactions before
-        // requesting them.
-        inbound(writeTarget, t4);
         // Deliver the requested transactions.
         inbound(writeTarget, t2);
         inbound(writeTarget, t3);
@@ -621,6 +617,10 @@ public class PeerTest extends TestWithNetworkConnections {
         notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t5));
         inbound(writeTarget, notFound);
         assertFalse(futures.isDone());
+        // Request t4 ...
+        getdata = (GetDataMessage) outbound(writeTarget);
+        assertEquals(t4.getHash(), getdata.getItems().get(0).hash);
+        inbound(writeTarget, t4);
         // Continue to explore the t4 branch and ask for t6, which is in the chain.
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(t6, getdata.getItems().get(0).hash);

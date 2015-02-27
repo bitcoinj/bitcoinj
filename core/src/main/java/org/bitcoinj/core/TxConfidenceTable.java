@@ -16,22 +16,15 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.utils.Threading;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import javax.annotation.Nullable;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.*;
+import java.lang.ref.*;
+import java.util.*;
+import java.util.concurrent.locks.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Tracks transactions that are being announced across the network. Typically one is created for you by a
@@ -48,38 +41,21 @@ public class TxConfidenceTable {
     private static final Logger log = LoggerFactory.getLogger(TxConfidenceTable.class);
     protected ReentrantLock lock = Threading.lock("txconfidencetable");
 
-    // For each transaction we may have seen:
-    //   - only its hash in an inv packet
-    //   - the full transaction itself, if we asked for it to be sent to us (or a peer sent it regardless), or if we
-    //     sent it.
-    //
-    // Before we see the full transaction, we need to track how many peers advertised it, so we can estimate its
-    // confidence pre-chain inclusion assuming an un-tampered with network connection. After we see the full transaction
-    // we need to switch from tracking that data in the Entry to tracking it in the TransactionConfidence object itself.
-    private static class WeakTransactionReference extends WeakReference<Transaction> {
+    private static class WeakConfidenceReference extends WeakReference<TransactionConfidence> {
         public Sha256Hash hash;
-        public WeakTransactionReference(Transaction tx, ReferenceQueue<Transaction> queue) {
-            super(tx, queue);
-            hash = tx.getHash();
+        public WeakConfidenceReference(TransactionConfidence confidence, ReferenceQueue<TransactionConfidence> queue) {
+            super(confidence, queue);
+            hash = confidence.getTransactionHash();
         }
     }
-    private static class Entry {
-        // Invariants: one of the two fields must be null, to indicate which is used.
-        Set<PeerAddress> addresses;
-        // We keep a weak reference to the transaction. This means that if no other bit of code finds the transaction
-        // worth keeping around it will drop out of memory and we will, at some point, forget about it, which means
-        // both addresses and tx.get() will be null. When this happens the WeakTransactionReference appears in the queue
-        // allowing us to delete the associated entry (the tx itself has already gone away).
-        WeakTransactionReference tx;
-    }
-    private LinkedHashMap<Sha256Hash, Entry> table;
+    private LinkedHashMap<Sha256Hash, WeakConfidenceReference> table;
 
     // This ReferenceQueue gets entries added to it when they are only weakly reachable, ie, the TxConfidenceTable is the
-    // only thing that is tracking the transaction anymore. We check it from time to time and delete table entries
+    // only thing that is tracking the confidence data anymore. We check it from time to time and delete table entries
     // corresponding to expired transactions. In this way memory usage of the system is in line with however many
     // transactions you actually care to track the confidence of. We can still end up with lots of hashes being stored
     // if our peers flood us with invs but the MAX_SIZE param caps this.
-    private ReferenceQueue<Transaction> referenceQueue;
+    private ReferenceQueue<TransactionConfidence> referenceQueue;
 
     /** The max size of a table created with the no-args constructor. */
     public static final int MAX_SIZE = 1000;
@@ -90,15 +66,15 @@ public class TxConfidenceTable {
      * @param size Max number of transactions to track. The table will fill up to this size then stop growing.
      */
     public TxConfidenceTable(final int size) {
-        table = new LinkedHashMap<Sha256Hash, Entry>() {
+        table = new LinkedHashMap<Sha256Hash, WeakConfidenceReference>() {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, TxConfidenceTable.Entry> entry) {
+            protected boolean removeEldestEntry(Map.Entry<Sha256Hash, WeakConfidenceReference> entry) {
                 // An arbitrary choice to stop the memory used by tracked transactions getting too huge in the event
                 // of some kind of DoS attack.
                 return size() > size;
             }
         };
-        referenceQueue = new ReferenceQueue<Transaction>();
+        referenceQueue = new ReferenceQueue<TransactionConfidence>();
     }
 
     /**
@@ -118,10 +94,10 @@ public class TxConfidenceTable {
     private void cleanTable() {
         lock.lock();
         try {
-            Reference<? extends Transaction> ref;
+            Reference<? extends TransactionConfidence> ref;
             while ((ref = referenceQueue.poll()) != null) {
                 // Find which transaction got deleted by the GC.
-                WeakTransactionReference txRef = (WeakTransactionReference) ref;
+                WeakConfidenceReference txRef = (WeakConfidenceReference) ref;
                 // And remove the associated map entry so the other bits of memory can also be reclaimed.
                 table.remove(txRef.hash);
             }
@@ -137,25 +113,17 @@ public class TxConfidenceTable {
         lock.lock();
         try {
             cleanTable();
-            Entry entry = table.get(txHash);
+            WeakConfidenceReference entry = table.get(txHash);
             if (entry == null) {
-                // No such TX known.
-                return 0;
-            } else if (entry.tx == null) {
-                // We've seen at least one peer announce with an inv.
-                checkNotNull(entry.addresses);
-                return entry.addresses.size();
+                return 0;  // No such TX known.
             } else {
-                final Transaction tx = entry.tx.get();
-                if (tx == null) {
-                    // We previously downloaded this transaction, but nothing cared about it so the garbage collector threw
-                    // it away. We also deleted the set that tracked which peers had seen it. Treat this case as a zero and
-                    // just delete it from the map.
+                TransactionConfidence confidence = entry.get();
+                if (confidence == null) {
+                    // Such a TX hash was seen, but nothing seemed to care so we ended up throwing away the data.
                     table.remove(txHash);
                     return 0;
                 } else {
-                    checkState(entry.addresses == null);
-                    return tx.getConfidence().numBroadcastPeers();
+                    return confidence.numBroadcastPeers();
                 }
             }
         } finally {
@@ -164,153 +132,62 @@ public class TxConfidenceTable {
     }
 
     /**
-     * Puts the tx into the table and returns either it, or a different Transaction object that has the same hash.
-     * Unlike seen and the other methods, this one does not imply that a tx has been announced by a peer and does
-     * not mark it as such.
+     * Called by peers when they see a transaction advertised in an "inv" message. It passes the data on to the relevant
+     * {@link org.bitcoinj.core.TransactionConfidence} object, creating it if needed.
+     *
+     * @return the number of peers that have now announced this hash (including the caller)
      */
-    public Transaction intern(Transaction tx) {
+    public TransactionConfidence seen(Sha256Hash hash, PeerAddress byPeer) {
+        TransactionConfidence confidence;
         lock.lock();
-        try {
+        {
             cleanTable();
-            Entry entry = table.get(tx.getHash());
-            if (entry != null) {
-                // This TX or its hash have been previously interned.
-                if (entry.tx != null) {
-                    // We already interned it (but may have thrown it away).
-                    checkState(entry.addresses == null);
-                    // We only want one canonical object instance for a transaction no matter how many times it is
-                    // deserialized.
-                    Transaction transaction = entry.tx.get();
-                    if (transaction != null) {
-                        // We saw it before and kept it around. Hand back the canonical copy.
-                        tx = transaction;
-                    }
-                    return tx;
-                } else {
-                    // We received a transaction that we have previously seen announced but not downloaded until now.
-                    checkNotNull(entry.addresses);
-                    entry.tx = new WeakTransactionReference(tx, referenceQueue);
-                    Set<PeerAddress> addrs = entry.addresses;
-                    entry.addresses = null;
-                    TransactionConfidence confidence = tx.getConfidence();
-                    log.debug("Adding tx [{}] {} to the confidence table",
-                            confidence.numBroadcastPeers(), tx.getHashAsString());
-                    for (PeerAddress a : addrs) {
-                        markBroadcast(a, tx);
-                    }
-                    return tx;
-                }
-            } else {
-                // This often happens when we are downloading a Bloom filtered chain, or recursively downloading
-                // dependencies of a relevant transaction (see Peer.downloadDependencies).
-                log.debug("Provided with a downloaded transaction we didn't see announced yet: {}", tx.getHashAsString());
-                entry = new Entry();
-                entry.tx = new WeakTransactionReference(tx, referenceQueue);
-                table.put(tx.getHash(), entry);
-                return tx;
-            }
-        } finally {
-            lock.unlock();
+            confidence = getOrCreate(hash);
+            confidence.markBroadcastBy(byPeer);
         }
+        lock.unlock();
+        confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
+        return confidence;
     }
 
     /**
-     * Called by peers when they receive a "tx" message containing a valid serialized transaction.
-     * @param tx The TX deserialized from the wire.
-     * @param byPeer The Peer that received it.
-     * @return An object that is semantically the same TX but may be a different object instance.
+     * Returns the {@link TransactionConfidence} for the given hash if we have downloaded it, or null if that tx hash
+     * is unknown to the system at this time.
      */
-    public Transaction seen(Transaction tx, PeerAddress byPeer) {
+    public TransactionConfidence getOrCreate(Sha256Hash hash) {
+        checkNotNull(hash);
         lock.lock();
         try {
-            final Transaction interned = intern(tx);
-            markBroadcast(byPeer, interned);
-            return interned;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Called by peers when they see a transaction advertised in an "inv" message. It either will increase the
-     * confidence of the pre-existing transaction or will just keep a record of the address for future usage.
-     */
-    public void seen(Sha256Hash hash, PeerAddress byPeer) {
-        lock.lock();
-        try {
-            cleanTable();
-            Entry entry = table.get(hash);
-            if (entry != null) {
-                // This TX or its hash have been previously announced.
-                if (entry.tx != null) {
-                    checkState(entry.addresses == null);
-                    Transaction tx = entry.tx.get();
-                    if (tx != null) {
-                        markBroadcast(byPeer, tx);
-                        log.debug("{}: Peer announced transaction we have seen before [{}] {}",
-                                byPeer, tx.getConfidence().numBroadcastPeers(), tx.getHashAsString());
-                    } else {
-                        // The inv is telling us about a transaction that we previously downloaded, and threw away
-                        // because nothing found it interesting enough to keep around. So do nothing.
-                    }
-                } else {
-                    checkNotNull(entry.addresses);
-                    entry.addresses.add(byPeer);
-                    log.debug("{}: Peer announced transaction we have seen announced before [{}] {}",
-                            byPeer, entry.addresses.size(), hash);
-                }
-            } else {
-                // This TX has never been seen before.
-                entry = new Entry();
-                // TODO: Using hashsets here is inefficient compared to just having an array.
-                entry.addresses = new HashSet<PeerAddress>();
-                entry.addresses.add(byPeer);
-                table.put(hash, entry);
-                log.info("{}: Peer announced new transaction [1] {}", byPeer, hash);
+            WeakConfidenceReference reference = table.get(hash);
+            if (reference != null) {
+                TransactionConfidence confidence = reference.get();
+                if (confidence != null)
+                    return confidence;
             }
+            TransactionConfidence newConfidence = new TransactionConfidence(hash);
+            table.put(hash, new WeakConfidenceReference(newConfidence, referenceQueue));
+            return newConfidence;
         } finally {
             lock.unlock();
         }
     }
 
-    private void markBroadcast(PeerAddress byPeer, Transaction tx) {
-        checkState(lock.isHeldByCurrentThread());
-        final TransactionConfidence confidence = tx.getConfidence();
-        if (confidence.markBroadcastBy(byPeer))
-            confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
-    }
-
     /**
-     * Returns the {@link Transaction} for the given hash if we have downloaded it, or null if that hash is unknown or
-     * we only saw advertisements for it yet or it has been downloaded but garbage collected due to nowhere else
-     * holding a reference to it.
+     * Returns the {@link TransactionConfidence} for the given hash if we have downloaded it, or null if that tx hash
+     * is unknown to the system at this time.
      */
     @Nullable
-    public Transaction get(Sha256Hash hash) {
+    public TransactionConfidence get(Sha256Hash hash) {
         lock.lock();
         try {
-            Entry entry = table.get(hash);
-            if (entry == null) return null;  // Unknown.
-            if (entry.tx == null) return null;  // Seen but only in advertisements.
-            if (entry.tx.get() == null) return null;  // Was downloaded but garbage collected.
-            Transaction tx = entry.tx.get();
-            checkNotNull(tx);
-            return tx;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns true if the TX identified by hash has been seen before (ie, in an inv). Note that a transaction that
-     * was broadcast, downloaded and nothing kept a reference to it will eventually be cleared out by the garbage
-     * collector and wasSeen() will return false - it does not keep a permanent record of every hash ever broadcast.
-     */
-    public boolean maybeWasSeen(Sha256Hash hash) {
-        lock.lock();
-        try {
-            Entry entry = table.get(hash);
-            return entry != null;
+            WeakConfidenceReference ref = table.get(hash);
+            if (ref == null)
+                return null;
+            TransactionConfidence confidence = ref.get();
+            if (confidence != null)
+                return confidence;
+            else
+                return null;
         } finally {
             lock.unlock();
         }
