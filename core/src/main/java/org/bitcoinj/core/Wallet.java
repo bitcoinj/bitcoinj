@@ -1883,7 +1883,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             setLastBlockSeenHash(newBlockHash);
             setLastBlockSeenHeight(block.getHeight());
             setLastBlockSeenTimeSecs(block.getHeader().getTimeSeconds());
-            // TODO: Clarify the code below.
             // Notify all the BUILDING transactions of the new block.
             // This is so that they can update their depth.
             Set<Transaction> transactions = getTransactions(true);
@@ -1892,9 +1891,20 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     // tx was already processed in receive() due to it appearing in this block, so we don't want to
                     // increment the tx confidence depth twice, it'd result in miscounting.
                     ignoreNextNewBlock.remove(tx.getHash());
-                } else if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                    tx.getConfidence().incrementDepthInBlocks();
-                    confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
+                } else {
+                    TransactionConfidence confidence = tx.getConfidence();
+                    if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
+                        // Erase the set of seen peers once the tx is so deep that it seems unlikely to ever go
+                        // pending again. We could clear this data the moment a tx is seen in the block chain, but
+                        // in cases where the chain re-orgs, this would mean that wallets would perceive a newly
+                        // pending tx has zero confidence at all, which would not be right: we expect it to be
+                        // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
+                        // but this way is backwards compatible with existing software, and the new state probably
+                        // wouldn't mean anything different to just remembering peers anyway.
+                        if (confidence.incrementDepthInBlocks() > 100)
+                            confidence.clearBroadcastBy();
+                        confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
+                    }
                 }
             }
 

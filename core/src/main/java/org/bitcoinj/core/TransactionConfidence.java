@@ -339,9 +339,11 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called by the wallet when the tx appears on the best chain and a new block is added to the top. Updates the
      * internal counter that tracks how deeply buried the block is.
+     *
+     * @return the new depth
      */
-    public synchronized void incrementDepthInBlocks() {
-        this.depth++;
+    public synchronized int incrementDepthInBlocks() {
+        return ++this.depth;
     }
 
     /**
@@ -363,6 +365,15 @@ public class TransactionConfidence implements Serializable {
      */
     public synchronized void setDepthInBlocks(int depth) {
         this.depth = depth;
+    }
+
+    /**
+     * Erases the set of broadcast/seen peers. This cannot be called whilst the confidence is PENDING. It is useful
+     * for saving memory and wallet space once a tx is buried so deep it doesn't seem likely to go pending again.
+     */
+    public void clearBroadcastBy() {
+        checkState(getConfidenceType() != ConfidenceType.PENDING);
+        broadcastBy.clear();
     }
 
     /**
