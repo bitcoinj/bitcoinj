@@ -35,7 +35,8 @@ public class TxConfidenceTableTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        table = Context.getOrCreate().getConfidenceTable();
+        Context context = new Context();
+        table = context.getConfidenceTable();
 
         Address to = new ECKey().toAddress(params);
         Address change = new ECKey().toAddress(params);
@@ -48,7 +49,26 @@ public class TxConfidenceTableTest {
         address2 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
         address3 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
     }
-    
+
+    @Test
+    public void pinHandlers() throws Exception {
+        Transaction tx = new Transaction(params, tx1.bitcoinSerialize());
+        Sha256Hash hash = tx.getHash();
+        table.seen(hash, address1);
+        assertEquals(1, tx.getConfidence().numBroadcastPeers());
+        final int[] seen = new int[1];
+        tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            @Override
+            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+                seen[0] = confidence.numBroadcastPeers();
+            }
+        }, Threading.SAME_THREAD);
+        tx = null;
+        System.gc();
+        table.seen(hash, address2);
+        assertEquals(2, seen[0]);
+    }
+
     @Test
     public void invAndDownload() throws Exception {
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
