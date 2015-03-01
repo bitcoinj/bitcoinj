@@ -174,6 +174,15 @@ public class TransactionConfidence implements Serializable {
         public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason);
     }
 
+    // This is used to ensure that confidence objects which aren't referenced from anywhere but which have an event
+    // listener set on them don't become eligible for garbage collection. Otherwise the TxConfidenceTable, which only
+    // has weak references to these objects, would not be enough to keep the event listeners working as transactions
+    // propagate around the network - it cannot know directly if the API user is interested in the object, so it uses
+    // heap reachability as a proxy for interest.
+    //
+    // We add ourselves to this set when a listener is added and remove ourselves when the listener list is empty.
+    private static final Set<TransactionConfidence> pinnedConfidenceObjects = Collections.synchronizedSet(new HashSet<TransactionConfidence>());
+
     /**
      * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
      * is likely to be invoked on a peer thread.</p>
@@ -186,6 +195,7 @@ public class TransactionConfidence implements Serializable {
     public void addEventListener(Listener listener, Executor executor) {
         checkNotNull(listener);
         listeners.addIfAbsent(new ListenerRegistration<Listener>(listener, executor));
+        pinnedConfidenceObjects.add(this);
     }
 
     /**
@@ -204,7 +214,10 @@ public class TransactionConfidence implements Serializable {
 
     public boolean removeEventListener(Listener listener) {
         checkNotNull(listener);
-        return ListenerRegistration.removeFromList(listener, listeners);
+        boolean removed = ListenerRegistration.removeFromList(listener, listeners);
+        if (listeners.isEmpty())
+            pinnedConfidenceObjects.remove(this);
+        return removed;
     }
 
     /**
