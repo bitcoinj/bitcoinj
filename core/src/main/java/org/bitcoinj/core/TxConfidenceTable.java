@@ -139,14 +139,16 @@ public class TxConfidenceTable {
      */
     public TransactionConfidence seen(Sha256Hash hash, PeerAddress byPeer) {
         TransactionConfidence confidence;
+        boolean fresh = false;
         lock.lock();
         {
             cleanTable();
             confidence = getOrCreate(hash);
-            confidence.markBroadcastBy(byPeer);
+            fresh = confidence.markBroadcastBy(byPeer);
         }
         lock.unlock();
-        confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
+        if (fresh)
+            confidence.queueListeners(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS);
         return confidence;
     }
 
