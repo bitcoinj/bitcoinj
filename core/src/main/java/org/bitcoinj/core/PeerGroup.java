@@ -309,7 +309,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     private PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
         this.params = checkNotNull(params);
-        this.context = Context.getOrCreate();
+        this.context = Context.getOrCreate(params);
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();

@@ -67,11 +67,13 @@ public class BlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+        Context testNetContext = new Context(testNet);
+        testNetChain = new BlockChain(testNet, new Wallet(testNetContext), new MemoryBlockStore(testNet));
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
 
         unitTestParams = UnitTestParams.get();
-        wallet = new Wallet(unitTestParams) {
+        Context context = new Context(unitTestParams);
+        wallet = new Wallet(context) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {

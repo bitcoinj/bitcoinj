@@ -46,7 +46,7 @@ public class BlockChain extends AbstractBlockChain {
      */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
-        Context.getOrCreate();
+        Context.getOrCreate(params);
         if (wallet != null)
             addWallet(wallet);
     }

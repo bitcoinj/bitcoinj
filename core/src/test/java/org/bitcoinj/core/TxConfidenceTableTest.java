@@ -35,7 +35,7 @@ public class TxConfidenceTableTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        Context context = new Context();
+        Context context = new Context(params);
         table = context.getConfidenceTable();
 
         Address to = new ECKey().toAddress(params);

@@ -212,6 +212,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         this(params, new KeyChainGroup(params));
     }
 
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     */
+    public Wallet(Context context) {
+        this(context, new KeyChainGroup(context.getParams()));
+    }
+
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
     }
@@ -244,11 +253,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return new Wallet(params, group);
     }
 
+    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
+        this(Context.getOrCreate(params), keyChainGroup);
+    }
+
     // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
     /** For internal use only. */
-    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this.context = Context.getOrCreate();
-        this.params = checkNotNull(params);
+    public Wallet(Context context, KeyChainGroup keyChainGroup) {
+        this.context = context;
+        this.params = context.getParams();
         this.keychain = checkNotNull(keyChainGroup);
         if (params == UnitTestParams.get())
             this.keychain.setLookaheadSize(5);  // Cut down excess computation for unit tests.

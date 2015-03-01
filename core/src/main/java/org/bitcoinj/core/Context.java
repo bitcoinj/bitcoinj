@@ -13,14 +13,17 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
+
     private TxConfidenceTable confidenceTable;
+    private NetworkParameters params;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
      * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
      */
-    public Context() {
-        confidenceTable = new TxConfidenceTable();
+    public Context(NetworkParameters params) {
+        this.confidenceTable = new TxConfidenceTable();
+        this.params = params;
         lastConstructed = this;
         // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
         slot.set(this);
@@ -58,14 +61,18 @@ public class Context {
     }
 
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
-    static Context getOrCreate() {
+    static Context getOrCreate(NetworkParameters params) {
+        Context context;
         try {
-            return get();
+            context = get();
         } catch (IllegalStateException e) {
             log.warn("Implicitly creating context. This is a migration step and this message will eventually go away.");
-            new Context();
-            return slot.get();
+            context = new Context(params);
+            return context;
         }
+        if (context.getParams() != params)
+            throw new IllegalStateException("Context does not match implicit network params: " + context.getParams() + " vs " + params);
+        return context;
     }
 
     /**
@@ -89,5 +96,14 @@ public class Context {
      */
     public TxConfidenceTable getConfidenceTable() {
         return confidenceTable;
+    }
+
+    /**
+     * Returns the {@link org.bitcoinj.core.NetworkParameters} specified when this context was (auto) created. The
+     * network parameters defines various hard coded constants for a specific instance of a Bitcoin network, such as
+     * main net, testnet, etc.
+     */
+    public NetworkParameters getParams() {
+        return params;
     }
 }
