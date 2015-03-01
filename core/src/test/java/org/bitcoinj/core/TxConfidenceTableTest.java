@@ -70,6 +70,22 @@ public class TxConfidenceTableTest {
     }
 
     @Test
+    public void events() throws Exception {
+        final TransactionConfidence.Listener.ChangeReason[] run = new TransactionConfidence.Listener.ChangeReason[1];
+        tx1.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+            @Override
+            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+                run[0] = reason;
+            }
+        }, Threading.SAME_THREAD);
+        table.seen(tx1.getHash(), address1);
+        assertEquals(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS, run[0]);
+        run[0] = null;
+        table.seen(tx1.getHash(), address1);
+        assertNull(run[0]);
+    }
+
+    @Test
     public void invAndDownload() throws Exception {
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
         assertEquals(0, table.numBroadcastPeers(tx1.getHash()));

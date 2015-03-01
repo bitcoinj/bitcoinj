@@ -270,9 +270,10 @@ public class TransactionConfidence implements Serializable {
     /**
      * Called by a {@link Peer} when a transaction is pending and announced by a peer. The more peers announce the
      * transaction, the more peers have validated it (assuming your internet connection is not being intercepted).
-     * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}.
+     * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}. Does not run listeners.
      *
      * @param address IP address of the peer, used as a proxy for identity.
+     * @return true if marked, false if this address was already seen (no-op)
      */
     public synchronized boolean markBroadcastBy(PeerAddress address) {
         if (!broadcastBy.addIfAbsent(address))
