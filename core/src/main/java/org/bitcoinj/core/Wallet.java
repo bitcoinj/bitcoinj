@@ -1914,7 +1914,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                         // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
                         // but this way is backwards compatible with existing software, and the new state probably
                         // wouldn't mean anything different to just remembering peers anyway.
-                        if (confidence.incrementDepthInBlocks() > 100)
+                        if (confidence.incrementDepthInBlocks() > context.getEventHorizon())
                             confidence.clearBroadcastBy();
                         confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                     }

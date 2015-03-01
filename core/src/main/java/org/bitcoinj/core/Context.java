@@ -16,10 +16,13 @@ public class Context {
 
     private TxConfidenceTable confidenceTable;
     private NetworkParameters params;
+    private int eventHorizon = 100;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
      * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
+     *
+     * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
         this.confidenceTable = new TxConfidenceTable();
@@ -27,6 +30,18 @@ public class Context {
         lastConstructed = this;
         // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
         slot.set(this);
+    }
+
+    /**
+     * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
+     * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
+     *
+     * @param params The network parameters that will be associated with this context.
+     * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs (see {@link #getEventHorizon()}.
+     */
+    public Context(NetworkParameters params, int eventHorizon) {
+        this(params);
+        this.eventHorizon = eventHorizon;
     }
 
     private static volatile Context lastConstructed;
@@ -105,5 +120,14 @@ public class Context {
      */
     public NetworkParameters getParams() {
         return params;
+    }
+
+    /**
+     * The event horizon is the number of blocks after which various bits of the library consider a transaction to be
+     * so confirmed that it's safe to delete data. Re-orgs larger than the event horizon will not be correctly
+     * processed, so the default value is high (100).
+     */
+    public int getEventHorizon() {
+        return eventHorizon;
     }
 }

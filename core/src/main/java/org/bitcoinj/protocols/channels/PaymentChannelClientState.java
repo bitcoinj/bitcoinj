@@ -69,7 +69,6 @@ import static com.google.common.base.Preconditions.*;
  */
 public class PaymentChannelClientState {
     private static final Logger log = LoggerFactory.getLogger(PaymentChannelClientState.class);
-    private static final int CONFIRMATIONS_FOR_DELETE = 3;
 
     private final Wallet wallet;
     // Both sides need a key (private in our case, public for the server) in order to manage the multisig contract
@@ -193,11 +192,12 @@ public class PaymentChannelClientState {
     }
 
     private void watchCloseConfirmations() {
-        // When we see the close transaction get a few confirmations, we can just delete the record
+        // When we see the close transaction get enough confirmations, we can just delete the record
         // of this channel along with the refund tx from the wallet, because we're not going to need
         // any of that any more.
         final TransactionConfidence confidence = storedChannel.close.getConfidence();
-        ListenableFuture<TransactionConfidence> future = confidence.getDepthFuture(CONFIRMATIONS_FOR_DELETE, Threading.SAME_THREAD);
+        int numConfirms = Context.get().getEventHorizon();
+        ListenableFuture<TransactionConfidence> future = confidence.getDepthFuture(numConfirms, Threading.SAME_THREAD);
         Futures.addCallback(future, new FutureCallback<TransactionConfidence>() {
             @Override
             public void onSuccess(TransactionConfidence result) {
