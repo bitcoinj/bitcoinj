@@ -51,6 +51,7 @@ public class ChainSplitTest {
     private Address coinsTo2;
     private Address someOtherGuy;
     private MemoryBlockStore blockStore;
+    private Context context;
 
     @Before
     public void setUp() throws Exception {
@@ -58,8 +59,9 @@ public class ChainSplitTest {
         Utils.setMockClock(); // Use mock clock
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         unitTestParams = UnitTestParams.get();
+        context = new Context(unitTestParams);
         blockStore = new MemoryBlockStore(unitTestParams);
-        wallet = new Wallet(unitTestParams);
+        wallet = new Wallet(context);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         chain = new BlockChain(unitTestParams, wallet, blockStore);

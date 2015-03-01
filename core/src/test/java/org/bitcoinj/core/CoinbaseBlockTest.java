@@ -65,8 +65,8 @@ public class CoinbaseBlockTest {
         // Create a wallet contain the miner's key that receives a spend from a coinbase.
         ECKey miningKey = (new DumpedPrivateKey(params, MINING_PRIVATE_KEY)).getKey();
         assertNotNull(miningKey);
-
-        Wallet wallet = new Wallet(params);
+        Context context = new Context(params);
+        Wallet wallet = new Wallet(context);
         wallet.importKey(miningKey);
 
         // Initial balance should be zero by construction.

@@ -28,6 +28,8 @@ import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.*;
 
+// TODO: Modify the getDepthInBlocks method to require the chain height to be specified, in preparation for ceasing to touch every tx on every block.
+
 /**
  * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
  * It also contains some pre-canned rules for common scenarios: if you aren't really sure what level of confidence
