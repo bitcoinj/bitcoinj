@@ -71,7 +71,8 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        serverWallet = new Wallet(params);
+        Context context = new Context(params, 3);  // Shorter event horizon for unit tests.
+        serverWallet = new Wallet(context);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
