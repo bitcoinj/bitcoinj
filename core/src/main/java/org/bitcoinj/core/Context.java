@@ -5,11 +5,21 @@ import org.slf4j.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+// TODO: Finish adding Context c'tors to all the different objects so we can start deprecating the versions that take NetworkParameters.
+// TODO: Add a working directory notion to Context and make various subsystems that want to use files default to that directory (eg. Orchid, block stores, wallet, etc).
+// TODO: Auto-register the block chain object here, and then use it in the (newly deprecated) TransactionConfidence.getDepthInBlocks() method: the new version should take an AbstractBlockChain specifically.
+// TODO: Stash anything else that resembles global library configuration in here and use it to clean up the rest of the API without breaking people.
+
 /**
- * The Context object holds various objects that are scoped to a specific instantiation of bitcoinj for a specific
- * network. You can get an instance of this class through calling {@link #get()}. At the moment it
- * only contains a {@link org.bitcoinj.core.TxConfidenceTable} but in future it will likely contain file paths and
- * other global configuration of use.
+ * <p>The Context object holds various objects and pieces of configuration that are scoped to a specific instantiation of
+ * bitcoinj for a specific network. You can get an instance of this class through calling {@link #get()}.</p>
+ *
+ * <p>Context is new in 0.13 and the library is currently in a transitional period: you should create a Context that
+ * wraps your chosen network parameters before using the rest of the library. However if you don't, things will still
+ * work as a Context will be created for you and stashed in thread local storage. The context is then propagated between
+ * library created threads as needed. This automagical propagation and creation is a temporary mechanism: one day it
+ * will be removed to avoid confusing edge cases that could occur if the developer does not fully understand it e.g.
+ * in the case where multiple instances of the library are in use simultaneously.</p>
  */
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
