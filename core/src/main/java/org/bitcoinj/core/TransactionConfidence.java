@@ -275,11 +275,13 @@ public class TransactionConfidence implements Serializable {
      * @param address IP address of the peer, used as a proxy for identity.
      * @return true if marked, false if this address was already seen (no-op)
      */
-    public synchronized boolean markBroadcastBy(PeerAddress address) {
+    public boolean markBroadcastBy(PeerAddress address) {
         if (!broadcastBy.addIfAbsent(address))
             return false;  // Duplicate.
-        if (getConfidenceType() == ConfidenceType.UNKNOWN) {
-            this.confidenceType = ConfidenceType.PENDING;
+        synchronized (this) {
+            if (getConfidenceType() == ConfidenceType.UNKNOWN) {
+                this.confidenceType = ConfidenceType.PENDING;
+            }
         }
         return true;
     }
@@ -390,16 +392,15 @@ public class TransactionConfidence implements Serializable {
     }
 
     /** Returns a copy of this object. Event listeners are not duplicated. */
-    public synchronized TransactionConfidence duplicate() {
+    public TransactionConfidence duplicate() {
         TransactionConfidence c = new TransactionConfidence(hash);
-        // There is no point in this sync block, it's just to help FindBugs.
-        synchronized (c) {
-            c.broadcastBy.addAll(broadcastBy);
+        c.broadcastBy.addAll(broadcastBy);
+        synchronized (this) {
             c.confidenceType = confidenceType;
             c.overridingTransaction = overridingTransaction;
             c.appearedAtChainHeight = appearedAtChainHeight;
-            return c;
         }
+        return c;
     }
 
     /**
