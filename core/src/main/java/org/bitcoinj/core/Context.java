@@ -13,7 +13,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
-    protected TxConfidenceTable confidenceTable;
+    private TxConfidenceTable confidenceTable;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
