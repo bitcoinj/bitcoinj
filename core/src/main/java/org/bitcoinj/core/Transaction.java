@@ -116,7 +116,7 @@ public class Transaction extends ChildMessage implements Serializable {
     private transient Sha256Hash hash;
 
     // Data about how confirmed this tx is. Serialized, may be null. 
-    private TransactionConfidence confidence;
+    @Nullable private TransactionConfidence confidence;
 
     // Records a map of which blocks the transaction has appeared in (keys) to an index within that block (values).
     // The "index" is not a real index, instead the values are only meaningful relative to each other. For example,
@@ -1120,15 +1120,33 @@ public class Transaction extends ChildMessage implements Serializable {
         return outputs.get((int)index);
     }
 
-    /** Returns the confidence object that is owned by this transaction object. */
-    public synchronized TransactionConfidence getConfidence() {
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     * referenced by the implicit {@link Context}.
+     */
+    public TransactionConfidence getConfidence() {
+        return getConfidence(Context.get());
+    }
+
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     * referenced by the given {@link Context}.
+     */
+    public TransactionConfidence getConfidence(Context context) {
+        return getConfidence(context.getConfidenceTable());
+    }
+
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     */
+    public TransactionConfidence getConfidence(TxConfidenceTable table) {
         if (confidence == null)
-            confidence = Context.get().getConfidenceTable().getOrCreate(getHash()) ;
+            confidence = table.getOrCreate(getHash()) ;
         return confidence;
     }
 
     /** Check if the transaction has a known confidence */
-    public synchronized boolean hasConfidence() {
+    public boolean hasConfidence() {
         return getConfidence().getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }
 
