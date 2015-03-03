@@ -3029,6 +3029,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     // Runs any balance futures in the user code thread.
+    @SuppressWarnings("FieldAccessNotGuarded")
     private void checkBalanceFuturesLocked(@Nullable Coin avail) {
         checkState(lock.isHeldByCurrentThread());
         Coin estimated = null;
