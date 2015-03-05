@@ -21,6 +21,7 @@ import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
 import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -245,6 +246,6 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     public int hashCode() {
-        return getHash().hashCode();
+        return getHash().hashCode() + (int)getIndex();
     }
 }
