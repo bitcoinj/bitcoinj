@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.ByteStreams;
+import com.google.common.primitives.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -115,7 +116,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     @Override
     public int hashCode() {
         // Use the last 4 bytes, not the first 4 which are often zeros in Bitcoin.
-        return (bytes[31] & 0xFF) | ((bytes[30] & 0xFF) << 8) | ((bytes[29] & 0xFF) << 16) | ((bytes[28] & 0xFF) << 24);
+        return Ints.fromBytes(bytes[28], bytes[29], bytes[30], bytes[31]);
     }
 
     @Override
