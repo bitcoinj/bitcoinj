@@ -87,7 +87,7 @@ public class ECKeyTest {
         List<ListenableFuture<ECKey.ECDSASignature>> sigFutures = Lists.newArrayList();
         final ECKey key = new ECKey();
         for (byte i = 0; i < ITERATIONS; i++) {
-            final Sha256Hash hash = Sha256Hash.create(new byte[]{i});
+            final Sha256Hash hash = Sha256Hash.hash(new byte[]{i});
             sigFutures.add(executor.submit(new Callable<ECKey.ECDSASignature>() {
                 @Override
                 public ECKey.ECDSASignature call() throws Exception {
@@ -247,7 +247,7 @@ public class ECKeyTest {
     public void keyRecovery() throws Exception {
         ECKey key = new ECKey();
         String message = "Hello World!";
-        Sha256Hash hash = Sha256Hash.create(message.getBytes());
+        Sha256Hash hash = Sha256Hash.hash(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
         key = ECKey.fromPublicOnly(key.getPubKeyPoint());
         boolean found = false;
@@ -346,7 +346,7 @@ public class ECKeyTest {
         ECKey encryptedKey = unencryptedKey.encrypt(keyCrypter, aesKey);
 
         String message = "Goodbye Jupiter!";
-        Sha256Hash hash = Sha256Hash.create(message.getBytes());
+        Sha256Hash hash = Sha256Hash.hash(message.getBytes());
         ECKey.ECDSASignature sig = encryptedKey.sign(hash, aesKey);
         unencryptedKey = ECKey.fromPublicOnly(unencryptedKey.getPubKeyPoint());
         boolean found = false;

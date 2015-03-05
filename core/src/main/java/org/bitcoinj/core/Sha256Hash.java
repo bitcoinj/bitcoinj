@@ -54,10 +54,16 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         this.bytes = Utils.HEX.decode(hexString);
     }
 
-    /**
-     * Calculates the (one-time) hash of contents and returns it as a new wrapped hash.
-     */
+    /** Use Sha256Hash.hash(byte[]) instead: this old name is ambiguous */
+    @Deprecated
     public static Sha256Hash create(byte[] contents) {
+        return hash(contents);
+    }
+
+    /**
+     * Calculates the (one-time) hash of contents and returns it.
+     */
+    public static Sha256Hash hash(byte[] contents) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return new Sha256Hash(digest.digest(contents));
@@ -66,10 +72,16 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         }
     }
 
+    /** Use hashTwice(byte[]) instead: this old name is ambiguous. */
+    @Deprecated
+    public static Sha256Hash createDouble(byte[] contents) {
+        return hashTwice(contents);
+    }
+
     /**
      * Calculates the hash of the hash of the contents. This is a standard operation in Bitcoin.
      */
-    public static Sha256Hash createDouble(byte[] contents) {
+    public static Sha256Hash hashTwice(byte[] contents) {
         return new Sha256Hash(Utils.doubleDigest(contents));
     }
 
@@ -81,7 +93,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     public static Sha256Hash hashFileContents(File f) throws IOException {
         FileInputStream in = new FileInputStream(f);
         try {
-            return create(ByteStreams.toByteArray(in));
+            return hash(ByteStreams.toByteArray(in));
         } finally {
             in.close();
         }
@@ -96,9 +108,9 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     }
 
     /**
-     * Hash code of the byte array as calculated by {@link Arrays#hashCode()}. Note the difference between a SHA256
-     * secure bytes and the type of quick/dirty bytes used by the Java hashCode method which is designed for use in
-     * bytes tables.
+     * Returns the last four bytes of the wrapped hash. This should be unique enough to be a suitable hash code even for
+     * blocks, where the goal is to try and get the first bytes to be zeros (i.e. the value as a big integer lower
+     * than the target value).
      */
     @Override
     public int hashCode() {
@@ -118,12 +130,11 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         return new BigInteger(1, bytes);
     }
 
+    /**
+     * Returns the internal byte array, without defensively copying. Therefore do NOT modify the returned array.
+     */
     public byte[] getBytes() {
         return bytes;
-    }
-
-    public Sha256Hash duplicate() {
-        return new Sha256Hash(bytes);
     }
 
     @Override

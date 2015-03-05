@@ -562,13 +562,13 @@ public class Block extends Message {
         maybeParseHeader();
         Block block = new Block(params);
         block.nonce = nonce;
-        block.prevBlockHash = prevBlockHash.duplicate();
-        block.merkleRoot = getMerkleRoot().duplicate();
+        block.prevBlockHash = prevBlockHash;
+        block.merkleRoot = getMerkleRoot();
         block.version = version;
         block.time = time;
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
-        block.hash = getHash().duplicate();
+        block.hash = getHash();
         return block;
     }
 

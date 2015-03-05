@@ -33,7 +33,7 @@ public class PaymentChannelClientTest {
         wallet = createMock(Wallet.class);
         ecKey = createMock(ECKey.class);
         maxValue = Coin.COIN;
-        serverHash = Sha256Hash.create("serverId".getBytes());
+        serverHash = Sha256Hash.hash("serverId".getBytes());
         connection = createMock(IPaymentChannelClient.ClientConnection.class);
         clientVersionCapture = new Capture<TwoWayChannelMessage>();
     }

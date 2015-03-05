@@ -22,7 +22,6 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import com.google.common.collect.ImmutableList;
-import org.bitcoinj.wallet.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -65,7 +64,7 @@ public class KeyChainGroupTest {
     }
 
     private MarriedKeyChain createMarriedKeyChain() {
-        byte[] entropy = Sha256Hash.create("don't use a seed like this in real life".getBytes()).getBytes();
+        byte[] entropy = Sha256Hash.hash("don't use a seed like this in real life".getBytes()).getBytes();
         DeterministicSeed seed = new DeterministicSeed(entropy, "", MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .seed(seed)

@@ -101,7 +101,7 @@ public class PaymentChannelClientConnection {
             throws IOException, ValueOutOfRangeException {
         // Glue the object which vends/ingests protobuf messages in order to manage state to the network object which
         // reads/writes them to the wire in length prefixed form.
-        channelClient = new PaymentChannelClient(wallet, myKey, maxValue, Sha256Hash.create(serverId.getBytes()), timeWindow,
+        channelClient = new PaymentChannelClient(wallet, myKey, maxValue, Sha256Hash.hash(serverId.getBytes()), timeWindow,
                 userKeySetup, new PaymentChannelClient.ClientConnection() {
             @Override
             public void sendToServer(Protos.TwoWayChannelMessage msg) {

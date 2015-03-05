@@ -292,7 +292,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Utils.rollMockClock(60 * 60 * 2 + 60 * 5);
 
         // Now store the client state in a stored state object which handles the rebroadcasting
-        clientState.doStoreChannelInWallet(Sha256Hash.create(new byte[]{}));
+        clientState.doStoreChannelInWallet(Sha256Hash.hash(new byte[]{}));
         TxFuturePair clientBroadcastedMultiSig = broadcasts.take();
         TxFuturePair broadcastRefund = broadcasts.take();
         assertEquals(clientBroadcastedMultiSig.tx.getHash(), multisigContract.getHash());

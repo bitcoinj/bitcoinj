@@ -708,7 +708,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t2 = new Transaction(unitTestParams);
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
-        Sha256Hash t3 = Sha256Hash.create("abc".getBytes(Charset.forName("UTF-8")));
+        Sha256Hash t3 = Sha256Hash.hash("abc".getBytes(Charset.forName("UTF-8")));
         t2.addInput(new TransactionInput(unitTestParams, t2, new byte[]{}, new TransactionOutPoint(unitTestParams, 0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(COIN, new ECKey());
@@ -842,9 +842,9 @@ public class PeerTest extends TestWithNetworkConnections {
             @Override
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 // Add some hashes.
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 1 })));
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 2 })));
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.create(new byte[] { 3 })));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{1})));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{2})));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{3})));
 
                 // Write out a copy that's truncated in the middle.
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

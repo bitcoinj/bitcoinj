@@ -981,7 +981,7 @@ public class FullBlockTestGenerator {
         NewBlock b49 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
         byte[] b49MerkleHash = Sha256Hash.ZERO_HASH.getBytes().clone();
         b49MerkleHash[1] = (byte) 0xDE;
-        b49.block.setMerkleRoot(Sha256Hash.create(b49MerkleHash));
+        b49.block.setMerkleRoot(Sha256Hash.hash(b49MerkleHash));
         b49.solve();
         blocks.add(new BlockAndValidity(b49, false, true, b44.getHash(), chainHeadHeight + 15, "b49"));
 

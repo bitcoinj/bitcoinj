@@ -157,7 +157,7 @@ public class ChildKeyDerivationTest {
         assertFalse(decryptedKey2.isEncrypted());
         assertEquals(key2, decryptedKey2);
 
-        Sha256Hash hash = Sha256Hash.create("the mainstream media won't cover it. why is that?".getBytes());
+        Sha256Hash hash = Sha256Hash.hash("the mainstream media won't cover it. why is that?".getBytes());
         try {
             derivedKey2.sign(hash);
             fail();

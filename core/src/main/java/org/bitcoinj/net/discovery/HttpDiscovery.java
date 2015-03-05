@@ -77,7 +77,7 @@ public class HttpDiscovery implements PeerDiscovery {
         if (pubkey != null) {
             if (!Arrays.equals(proto.getPubkey().toByteArray(), pubkey.getPubKey()))
                 throw new PeerDiscoveryException("Public key mismatch");
-            Sha256Hash hash = Sha256Hash.create(proto.getPeerSeeds().toByteArray());
+            Sha256Hash hash = Sha256Hash.hash(proto.getPeerSeeds().toByteArray());
             pubkey.verifyOrThrow(hash.getBytes(), proto.getSignature().toByteArray());
         }
         PeerSeedProtos.PeerSeeds seeds = PeerSeedProtos.PeerSeeds.parseFrom(proto.getPeerSeeds());

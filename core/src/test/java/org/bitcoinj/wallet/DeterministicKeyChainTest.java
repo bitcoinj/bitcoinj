@@ -25,10 +25,6 @@ import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import com.google.common.collect.Lists;
-import org.bitcoinj.wallet.AbstractKeyChainEventListener;
-import org.bitcoinj.wallet.DeterministicKeyChain;
-import org.bitcoinj.wallet.KeyChain;
-import org.bitcoinj.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -42,7 +38,7 @@ import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
-    private final byte[] ENTROPY = Sha256Hash.create("don't use a string seed like this in real life".getBytes()).getBytes();
+    private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes()).getBytes();
 
     @Before
     public void setup() {
