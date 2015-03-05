@@ -1216,7 +1216,6 @@ public class Peer extends PeerSocketHandler {
     public void setDownloadParameters(long secondsSinceEpoch, boolean useFilteredBlocks) {
         lock.lock();
         try {
-            Preconditions.checkNotNull(blockChain);
             if (secondsSinceEpoch == 0) {
                 fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
                 downloadBlockBodies = true;
@@ -1224,9 +1223,8 @@ public class Peer extends PeerSocketHandler {
                 fastCatchupTimeSecs = secondsSinceEpoch;
                 // If the given time is before the current chains head block time, then this has no effect (we already
                 // downloaded everything we need).
-                if (fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds()) {
+                if (blockChain != null && fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds())
                     downloadBlockBodies = false;
-                }
             }
             this.useFilteredBlocks = useFilteredBlocks;
         } finally {
