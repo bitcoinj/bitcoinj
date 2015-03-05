@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
-    private byte[] bytes;
+    private final byte[] bytes;
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
     /**
