@@ -277,6 +277,20 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * A deterministic key is considered to be 'public key only' if it hasn't got a private key part and it cannot be
+     * rederived.
+     */
+    @Override
+    public boolean isPubKeyOnly() {
+        if (!super.isPubKeyOnly())
+            return false;
+        if (parent != null)
+            return parent.isPubKeyOnly();
+        else
+            return true;
+    }
+
+    /**
      * A deterministic key is considered to be encrypted if it has access to encrypted private key bytes, OR if its
      * parent does. The reason is because the parent would be encrypted under the same key and this key knows how to
      * rederive its own private key bytes from the parent, if needed.

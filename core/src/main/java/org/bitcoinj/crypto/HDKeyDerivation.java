@@ -133,7 +133,7 @@ public final class HDKeyDerivation {
      * if the resulting derived key is invalid (eg. private key == 0).
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
-        if (parent.isPubKeyOnly()) {
+        if (!parent.hasPrivKey()) {
             RawKeyBytes rawKey = deriveChildKeyBytesFromPublic(parent, childNumber, PublicDeriveMode.NORMAL);
             return new DeterministicKey(
                     HDUtils.append(parent.getPath(), childNumber),
