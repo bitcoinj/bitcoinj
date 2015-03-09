@@ -171,9 +171,15 @@ public class ChildKeyDerivationTest {
     @Test
     public void pubOnlyDerivation() throws Exception {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        assertFalse(key1.isPubKeyOnly());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+        assertFalse(key2.isPubKeyOnly());
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
-        DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(key2.getPubOnly(), ChildNumber.ZERO);
+        assertFalse(key3.isPubKeyOnly());
+        DeterministicKey pubkey2 = key2.getPubOnly();
+        assertTrue(pubkey2.isPubKeyOnly());
+        DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(pubkey2, ChildNumber.ZERO);
+        assertTrue(pubkey3.isPubKeyOnly());
         assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
     }
 
