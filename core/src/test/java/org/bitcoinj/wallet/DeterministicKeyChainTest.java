@@ -54,7 +54,9 @@ public class DeterministicKeyChainTest {
     @Test
     public void derive() throws Exception {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(key1.isPubKeyOnly());
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(key2.isPubKeyOnly());
 
         final Address address = new Address(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
@@ -63,10 +65,13 @@ public class DeterministicKeyChainTest {
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
+        assertFalse(key1.isPubKeyOnly());
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertFalse(key3.isPubKeyOnly());
         assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
+        assertFalse(key3.isPubKeyOnly());
     }
 
     @Test
