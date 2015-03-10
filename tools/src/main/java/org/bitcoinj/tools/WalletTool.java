@@ -826,7 +826,7 @@ public class WalletTool {
             chain = new FullPrunedBlockChain(params, wallet, s);
         }
         // This will ensure the wallet is saved when it changes.
-        wallet.autosaveToFile(walletFile, 200, TimeUnit.MILLISECONDS, null);
+        wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
         if (options.has("tor")) {
             try {
                 peers = PeerGroup.newWithTor(params, chain, new TorClient());

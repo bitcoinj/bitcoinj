@@ -346,7 +346,7 @@ public class WalletAppKit extends AbstractIdleService {
             wallet.saveToFile(vWalletFile);
         }
 
-        if (useAutoSave) wallet.autosaveToFile(vWalletFile, 200, TimeUnit.MILLISECONDS, null);
+        if (useAutoSave) wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
 
         return wallet;
     }
