@@ -16,18 +16,13 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.KeyBag;
-import org.bitcoinj.wallet.RedeemData;
+import org.bitcoinj.script.*;
+import org.bitcoinj.wallet.*;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import javax.annotation.*;
+import java.io.*;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * This message is a reference or pointer to an output of a different transaction.
@@ -233,6 +228,6 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     public int hashCode() {
-        return getHash().hashCode();
+        return 31 * hash.hashCode() + (int) (index ^ (index >>> 32));
     }
 }
