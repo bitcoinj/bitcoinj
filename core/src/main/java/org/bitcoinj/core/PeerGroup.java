@@ -1464,6 +1464,10 @@ public class PeerGroup implements TransactionBroadcaster {
     private class ChainDownloadSpeedCalculator extends AbstractPeerEventListener implements Runnable {
         private int blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, stallWarning;
 
+        private static final int STALL_PERIOD_SECONDS = 6;
+        private static final int STALL_MIN_SPEED = 10;
+
+
         @Override
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             blocksInLastSecond++;
@@ -1480,15 +1484,16 @@ public class PeerGroup implements TransactionBroadcaster {
         public synchronized void run() {
             if (blocksInLastSecond > 1) {
                 log.info("{} blocks/sec, {} tx/sec, {} pre-filtered tx/sec", blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond);
-                stallWarning = 0;
+                if (blocksInLastSecond > STALL_MIN_SPEED)
+                    stallWarning = 0;
             }
-            if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond == 0 && stallWarning > -1) {
+            if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond < STALL_MIN_SPEED && stallWarning > -1) {
                 stallWarning++;
-                final int STALL_PERIOD_SECONDS = 3;
                 if (stallWarning == STALL_PERIOD_SECONDS) {
                     stallWarning = -1;
-                    log.warn("Chain download stalled: no progress for {} seconds", STALL_PERIOD_SECONDS);
-                    // TODO: Consider disconnecting the stalled peer here.
+                    Peer peer = getDownloadPeer();
+                    log.warn("Chain download stalled: no progress for {} seconds, disconnecting {}", STALL_PERIOD_SECONDS, peer);
+                    peer.close();
                 }
             }
             blocksInLastSecond = 0;
