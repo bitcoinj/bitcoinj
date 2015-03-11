@@ -105,9 +105,9 @@ public class Wallet extends BaseTaggableObject
     // The various pools below give quick access to wallet-relevant transactions by the state they're in:
     //
     // Pending:  Transactions that didn't make it into the best chain yet. Pending transactions can be killed if a
-    //           double-spend against them appears in the best chain, in which case they move to the dead pool.
-    //           If a double-spend appears in the pending state as well, currently we just ignore the second
-    //           and wait for the miners to resolve the race.
+    //           double spend against them appears in the best chain, in which case they move to the dead pool.
+    //           If a double spend appears in the pending state as well, we update the confidence type
+    //           of all txns in conflict to IN_CONFLICT and wait for the miners to resolve the race.
     // Unspent:  Transactions that appeared in the best chain and have outputs we can spend. Note that we store the
     //           entire transaction in memory even though for spending purposes we only really need the outputs, the
     //           reason being that this simplifies handling of re-orgs. It would be worth fixing this in future.
@@ -1692,6 +1692,7 @@ public class Wallet extends BaseTaggableObject
             // We only care about transactions that:
             //   - Send us coins
             //   - Spend our coins
+            //   - Double spend a tx in our wallet
             if (!isTransactionRelevant(tx)) {
                 log.debug("Received tx that isn't relevant to this wallet, discarding.");
                 return false;
@@ -1715,41 +1716,64 @@ public class Wallet extends BaseTaggableObject
         try {
             return tx.getValueSentFromMe(this).signum() > 0 ||
                    tx.getValueSentToMe(this).signum() > 0 ||
-                   checkForDoubleSpendAgainstPending(tx, false);
+                   !findDoubleSpendsAgainst(tx, transactions).isEmpty();
         } finally {
             lock.unlock();
         }
     }
 
     /**
-     * Checks if "tx" is spending any inputs of pending transactions. Not a general check, but it can work even if
+     * Finds transactions in the specified candidates that double spend "tx". Not a general check, but it can work even if
      * the double spent inputs are not ours.
+     * @return The set of transactions that double spend "tx".
      */
-    private boolean checkForDoubleSpendAgainstPending(Transaction tx, boolean takeAction) {
+    private Set<Transaction> findDoubleSpendsAgainst(Transaction tx, Map<Sha256Hash, Transaction> candidates) {
         checkState(lock.isHeldByCurrentThread());
+        if (tx.isCoinBase()) return Sets.newHashSet();
         // Compile a set of outpoints that are spent by tx.
         HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
         for (TransactionInput input : tx.getInputs()) {
             outpoints.add(input.getOutpoint());
         }
         // Now for each pending transaction, see if it shares any outpoints with this tx.
-        LinkedList<Transaction> doubleSpentTxns = Lists.newLinkedList();
-        for (Transaction p : pending.values()) {
+        Set<Transaction> doubleSpendTxns = Sets.newHashSet();
+        for (Transaction p : candidates.values()) {
             for (TransactionInput input : p.getInputs()) {
                 // This relies on the fact that TransactionOutPoint equality is defined at the protocol not object
                 // level - outpoints from two different inputs that point to the same output compare the same.
                 TransactionOutPoint outpoint = input.getOutpoint();
                 if (outpoints.contains(outpoint)) {
-                    // It does, it's a double spend against the pending pool, which makes it relevant.
-                    if (!doubleSpentTxns.isEmpty() && doubleSpentTxns.getLast() == p) continue;
-                    doubleSpentTxns.add(p);
+                    // It does, it's a double spend against the candidates, which makes it relevant.
+                    doubleSpendTxns.add(p);
                 }
             }
         }
-        if (takeAction && !doubleSpentTxns.isEmpty()) {
-            killTx(tx, doubleSpentTxns);
+        return doubleSpendTxns;
+    }
+
+    /**
+     * Adds to txSet all the txns in txPool spending outputs of txns in txSet,
+     * and all txns spending the outputs of those txns, recursively.
+     */
+    void addTransactionsDependingOn(Set<Transaction> txSet, Set<Transaction> txPool) {
+        Map<Sha256Hash, Transaction> txQueue = new LinkedHashMap<Sha256Hash, Transaction>();
+        for (Transaction tx : txSet) {
+            txQueue.put(tx.getHash(), tx);
         }
-        return !doubleSpentTxns.isEmpty();
+        while(!txQueue.isEmpty()) {
+            Transaction tx = txQueue.remove(txQueue.keySet().iterator().next());
+            for (Transaction anotherTx : txPool) {
+                if (anotherTx.equals(tx)) continue;
+                for (TransactionInput input : anotherTx.getInputs()) {
+                    if (input.getOutpoint().getHash().equals(tx.getHash())) {
+                        if (txQueue.get(anotherTx.getHash()) == null) {
+                            txQueue.put(anotherTx.getHash(), anotherTx);
+                            txSet.add(anotherTx);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1824,6 +1848,9 @@ public class Wallet extends BaseTaggableObject
             log.info("  <-pending");
 
         if (bestChain) {
+            boolean wasDead = dead.remove(txHash) != null;
+            if (wasDead)
+                log.info("  <-dead");
             if (wasPending) {
                 // Was pending and is now confirmed. Disconnect the outputs in case we spent any already: they will be
                 // re-connected by processTxFromBestChain below.
@@ -1835,7 +1862,7 @@ public class Wallet extends BaseTaggableObject
                     }
                 }
             }
-            processTxFromBestChain(tx, wasPending);
+            processTxFromBestChain(tx, wasPending || wasDead);
         } else {
             checkState(sideChain);
             // Transactions that appear in a side chain will have that appearance recorded below - we assume that
@@ -1849,7 +1876,7 @@ public class Wallet extends BaseTaggableObject
                 // Ignore the case where a tx appears on a side chain at the same time as the best chain (this is
                 // quite normal and expected).
                 Sha256Hash hash = tx.getHash();
-                if (!unspent.containsKey(hash) && !spent.containsKey(hash)) {
+                if (!unspent.containsKey(hash) && !spent.containsKey(hash) && !dead.containsKey(hash)) {
                     // Otherwise put it (possibly back) into pending.
                     // Committing it updates the spent flags and inserts into the pool as well.
                     commitTx(tx);
@@ -1866,6 +1893,22 @@ public class Wallet extends BaseTaggableObject
                 // this method has been called by BlockChain for all relevant transactions. Otherwise we'd double
                 // count.
                 ignoreNextNewBlock.add(txHash);
+
+                // When a tx is received from the best chain, if other txns that spend this tx are IN_CONFLICT,
+                // change its confidence to PENDING (Unless they are also spending other txns IN_CONFLICT).
+                // Consider dependency chains.
+                Set<Transaction> currentTxDependencies = Sets.newHashSet(tx);
+                addTransactionsDependingOn(currentTxDependencies, getTransactions(true));
+                currentTxDependencies.remove(tx);
+                List<Transaction> currentTxDependenciesSorted = sortTxnsByDependency(currentTxDependencies);
+                for (Transaction txDependency : currentTxDependenciesSorted) {
+                    if (txDependency.getConfidence().getConfidenceType().equals(ConfidenceType.IN_CONFLICT)) {
+                        if (isNotSpendingTxnsInConfidenceType(txDependency, ConfidenceType.IN_CONFLICT)) {
+                            txDependency.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                            confidenceChanged.put(txDependency, TransactionConfidence.Listener.ChangeReason.TYPE);
+                        }
+                    }
+                }
             }
         }
 
@@ -1907,6 +1950,53 @@ public class Wallet extends BaseTaggableObject
         // Optimization for the case where a block has tons of relevant transactions.
         saveLater();
         hardSaveOnNextBlock = true;
+    }
+
+    /** Finds if tx is NOT spending other txns which are in the specified confidence type */
+    private boolean isNotSpendingTxnsInConfidenceType(Transaction tx, ConfidenceType confidenceType) {
+        for (TransactionInput txInput : tx.getInputs()) {
+            Transaction connectedTx = this.getTransaction(txInput.getOutpoint().getHash());
+            if (connectedTx != null && connectedTx.getConfidence().getConfidenceType().equals(confidenceType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Creates and returns a new List with the same txns as inputSet
+     * but txns are sorted by depencency (a topological sort).
+     * If tx B spends tx A, then tx A should be before tx B on the returned List.
+     * Several invocations to this method with the same inputSet could result in lists with txns in different order,
+     * as there is no guarantee on the order of the returned txns besides what was already stated.
+     */
+    List<Transaction> sortTxnsByDependency(Set<Transaction> inputSet) {
+        ArrayList<Transaction> result = new ArrayList<Transaction>(inputSet);
+        for (int i = 0; i < result.size()-1; i++) {
+            boolean txAtISpendsOtherTxInTheList;
+            do {
+                txAtISpendsOtherTxInTheList = false;
+                for (int j = i+1; j < result.size(); j++) {
+                    if (spends(result.get(i), result.get(j))) {
+                        Transaction transactionAtI = result.remove(i);
+                        result.add(j, transactionAtI);
+                        txAtISpendsOtherTxInTheList = true;
+                        break;
+                    }
+                }
+            } while (txAtISpendsOtherTxInTheList);
+        }
+        return result;
+    }
+
+    /** Finds whether txA spends txB */
+    boolean spends(Transaction txA, Transaction txB) {
+        for (TransactionInput txInput : txA.getInputs()) {
+            if (txInput.getOutpoint().getHash().equals(txB.getHash())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void informConfidenceListenersIfNotReorganizing() {
@@ -2032,7 +2122,12 @@ public class Wallet extends BaseTaggableObject
             addWalletTransaction(Pool.SPENT, tx);
         }
 
-        checkForDoubleSpendAgainstPending(tx, true);
+        // Kill txns in conflict with this tx
+        Set<Transaction> doubleSpendTxns = findDoubleSpendsAgainst(tx, pending);
+        if (!doubleSpendTxns.isEmpty()) {
+            // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
+            killTxns(doubleSpendTxns, tx);
+        }
     }
 
     /**
@@ -2078,7 +2173,7 @@ public class Wallet extends BaseTaggableObject
                     // Can be:
                     // (1) We already marked this output as spent when we saw the pending transaction (most likely).
                     //     Now it's being confirmed of course, we cannot mark it as spent again.
-                    // (2) A double spend from chain: this will be handled later by checkForDoubleSpendAgainstPending.
+                    // (2) A double spend from chain: this will be handled later by findDoubleSpendsAgainst()/killTxns().
                     //
                     // In any case, nothing to do here.
                 } else {
@@ -2137,8 +2232,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     // Updates the wallet when a double spend occurs. overridingTx can be null for the case of coinbases
-    private void killTx(@Nullable Transaction overridingTx, List<Transaction> killedTx) {
-        LinkedList<Transaction> work = new LinkedList<Transaction>(killedTx);
+    private void killTxns(Set<Transaction> txnsToKill, @Nullable Transaction overridingTx) {
+        LinkedList<Transaction> work = new LinkedList<Transaction>(txnsToKill);
         while (!work.isEmpty()) {
             final Transaction tx = work.poll();
             log.warn("TX {} killed{}", tx.getHashAsString(),
@@ -2152,7 +2247,7 @@ public class Wallet extends BaseTaggableObject
             for (TransactionInput deadInput : tx.getInputs()) {
                 Transaction connected = deadInput.getOutpoint().fromTx;
                 if (connected == null) continue;
-                if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD) {
+                if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD && deadInput.getConnectedOutput().getSpentBy() != null && deadInput.getConnectedOutput().getSpentBy().equals(deadInput)) {
                     checkState(myUnspents.add(deadInput.getConnectedOutput()));
                     log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(), deadInput.getConnectedOutput().getParentTransaction().getHash());
                 }
@@ -2240,12 +2335,42 @@ public class Wallet extends BaseTaggableObject
             // move any transactions that are now fully spent to the spent map so we can skip them when creating future
             // spends.
             updateForSpends(tx, false);
-            // Add to the pending pool. It'll be moved out once we receive this transaction on the best chain.
-            // This also registers txConfidenceListener so wallet listeners get informed.
-            log.info("->pending: {}", tx.getHashAsString());
-            tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-            confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
-            addWalletTransaction(Pool.PENDING, tx);
+
+            Set<Transaction> doubleSpendPendingTxns = findDoubleSpendsAgainst(tx, pending);
+            Set<Transaction> doubleSpendUnspentTxns = findDoubleSpendsAgainst(tx, unspent);
+            Set<Transaction> doubleSpendSpentTxns = findDoubleSpendsAgainst(tx, spent);
+
+            if (!doubleSpendUnspentTxns.isEmpty() ||
+                !doubleSpendSpentTxns.isEmpty() ||
+                !isNotSpendingTxnsInConfidenceType(tx, ConfidenceType.DEAD)) {
+                // tx is a double spend against a tx already in the best chain or spends outputs of a DEAD tx.
+                // Add tx to the dead pool and schedule confidence listener notifications.
+                log.info("->dead: {}", tx.getHashAsString());
+                tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
+                confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
+                addWalletTransaction(Pool.DEAD, tx);
+            } else if (!doubleSpendPendingTxns.isEmpty() ||
+                !isNotSpendingTxnsInConfidenceType(tx, ConfidenceType.IN_CONFLICT)) {
+                // tx is a double spend against a pending tx or spends outputs of a tx already IN_CONFLICT.
+                // Add tx to the pending pool. Update the confidence type of tx, the txns in conflict with tx and all
+                // their dependencies to IN_CONFLICT and schedule confidence listener notifications.
+                log.info("->pending (IN_CONFLICT): {}", tx.getHashAsString());
+                addWalletTransaction(Pool.PENDING, tx);
+                doubleSpendPendingTxns.add(tx);
+                addTransactionsDependingOn(doubleSpendPendingTxns, getTransactions(true));
+                for (Transaction doubleSpendTx : doubleSpendPendingTxns) {
+                    doubleSpendTx.getConfidence().setConfidenceType(ConfidenceType.IN_CONFLICT);
+                    confidenceChanged.put(doubleSpendTx, TransactionConfidence.Listener.ChangeReason.TYPE);
+                }
+            } else {
+                // No conflict detected.
+                // Add to the pending pool and schedule confidence listener notifications.
+                log.info("->pending: {}", tx.getHashAsString());
+                tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
+                addWalletTransaction(Pool.PENDING, tx);
+            }
+
             // Mark any keys used in the outputs as "used", this allows wallet UI's to auto-advance the current key
             // they are showing to the user in qr codes etc.
             markKeysAsUsed(tx);
@@ -2494,10 +2619,10 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    private static void addWalletTransactionsToSet(Set<WalletTransaction> txs,
+    private static void addWalletTransactionsToSet(Set<WalletTransaction> txns,
                                                    Pool poolType, Collection<Transaction> pool) {
         for (Transaction tx : pool) {
-            txs.add(new WalletTransaction(poolType, tx));
+            txns.add(new WalletTransaction(poolType, tx));
         }
     }
 
@@ -4274,7 +4399,7 @@ public class Wallet extends BaseTaggableObject
                         // this coinbase tx. Some can just go pending forever, like the Satoshi client. However we
                         // can do our best.
                         log.warn("Coinbase killed by re-org: {}", tx.getHashAsString());
-                        killTx(null, ImmutableList.of(tx));
+                        killTxns(ImmutableSet.of(tx), null);
                     } else {
                         for (TransactionOutput output : tx.getOutputs()) {
                             TransactionInput input = output.getSpentBy();
@@ -4299,6 +4424,7 @@ public class Wallet extends BaseTaggableObject
                 // there's another re-org.
                 if (tx.isCoinBase()) continue;
                 log.info("  ->pending {}", tx.getHash());
+
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);  // Wipe height/depth/work data.
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);

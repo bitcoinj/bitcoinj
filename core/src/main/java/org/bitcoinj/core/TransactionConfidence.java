@@ -97,6 +97,15 @@ public class TransactionConfidence {
         DEAD(4),
 
         /**
+         * If IN_CONFLICT, then it means there is another transaction (or several other transactions) spending one
+         * (or several) of its inputs but nor this transaction nor the other/s transaction/s are included in the best chain.
+         * The other/s transaction/s should be IN_CONFLICT too.
+         * IN_CONFLICT can be thought as an intermediary state between a) PENDING and BUILDING or b) PENDING and DEAD.
+         * Another common name for this situation is "double spend".
+         */
+        IN_CONFLICT(5),
+
+        /**
          * If a transaction hasn't been broadcast yet, or there's no record of it, its confidence is UNKNOWN.
          */
         UNKNOWN(0);
@@ -260,7 +269,7 @@ public class TransactionConfidence {
         if (confidenceType != ConfidenceType.DEAD) {
             overridingTransaction = null;
         }
-        if (confidenceType == ConfidenceType.PENDING) {
+        if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
             depth = 0;
             appearedAtChainHeight = -1;
         }
@@ -323,6 +332,9 @@ public class TransactionConfidence {
             case PENDING:
                 builder.append("Pending/unconfirmed.");
                 break;
+            case IN_CONFLICT:
+                builder.append("In conflict.");
+                break;
             case BUILDING:
                 builder.append(String.format("Appeared in best chain at height %d, depth %d.",
                         getAppearedAtChainHeight(), getDepthInBlocks()));
@@ -377,12 +389,12 @@ public class TransactionConfidence {
      * store this information.
      *
      * @return the transaction that double spent this one
-     * @throws IllegalStateException if confidence type is not OVERRIDDEN_BY_DOUBLE_SPEND.
+     * @throws IllegalStateException if confidence type is not DEAD.
      */
     public synchronized Transaction getOverridingTransaction() {
         if (getConfidenceType() != ConfidenceType.DEAD)
             throw new IllegalStateException("Confidence type is " + getConfidenceType() +
-                                            ", not OVERRIDDEN_BY_DOUBLE_SPEND");
+                                            ", not DEAD");
         return overridingTransaction;
     }
 
