@@ -6766,6 +6766,14 @@ public final class Protos {
        * </pre>
        */
       DEAD(4, 4),
+      /**
+       * <code>IN_CONFLICT = 5;</code>
+       *
+       * <pre>
+       * There is another transaction spending one of this transaction inputs.
+       * </pre>
+       */
+      IN_CONFLICT(5, 5),
       ;
 
       /**
@@ -6815,6 +6823,7 @@ public final class Protos {
           case 2: return PENDING;
           case 3: return NOT_IN_BEST_CHAIN;
           case 4: return DEAD;
+          case 5: return IN_CONFLICT;
           default: return null;
         }
       }
