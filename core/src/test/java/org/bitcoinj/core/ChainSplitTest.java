@@ -547,7 +547,7 @@ public class ChainSplitTest {
         chain.add(b2);
         chain.add(b3);
 
-        // And verify that the balance is as expected. Because signatures are currently non-deterministic if the order
+        // And verify that the balance is as expected. Because new ECKey() is non-deterministic, if the order
         // isn't being stored correctly this should fail 50% of the time.
         assertEquals(coins0point98, wallet.getBalance());
     }
