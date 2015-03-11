@@ -461,6 +461,10 @@ public class TransactionOutput extends ChildMessage implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31 * (int) value + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
+        int result = (int) (value ^ (value >>> 32));
+        result = 31 * result + Arrays.hashCode(scriptBytes);
+        if (parent != null)
+            result *= parent.getHash().hashCode() + getIndex();
+        return result;
     }
 }
