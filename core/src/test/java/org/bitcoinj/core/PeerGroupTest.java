@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -524,7 +525,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(!peerConnectedFuture.isDone() && peerDisconnectedFuture.isDone());
     }
 
-    //@Test  - disabled for now as this test is too flaky.
+    @Test
+    @Ignore("disabled for now as this test is too flaky")
     public void peerPriority() throws Exception {
         final List<InetSocketAddress> addresses = Lists.newArrayList(
                 new InetSocketAddress("localhost", 2000),
