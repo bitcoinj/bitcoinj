@@ -402,27 +402,6 @@ public class Transaction extends ChildMessage implements Serializable {
         return fee;
     }
 
-    boolean disconnectInputs() {
-        boolean disconnected = false;
-        maybeParse();
-        for (TransactionInput input : inputs) {
-            disconnected |= input.disconnect();
-        }
-        return disconnected;
-    }
-
-    /**
-     * Returns true if every output is marked as spent.
-     */
-    public boolean isEveryOutputSpent() {
-        maybeParse();
-        for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending())
-                return false;
-        }
-        return true;
-    }
-
     /**
      * Returns true if any of the outputs is marked as spent.
      */

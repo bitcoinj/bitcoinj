@@ -138,6 +138,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
 
+    // All the TransactionOutput objects that we could spend (ignoring whether we have the private key or not).
+    // Used to speed up various calculations.
+    protected final HashSet<TransactionOutput> myUnspents = Sets.newHashSet();
+
     // Transactions that were dropped by the risk analysis system. These are not in any pools and not serialized
     // to disk. We have to keep them around because if we ignore a tx because we think it will never confirm, but
     // then it actually does confirm and does so within the same network session, remote peers will not resend us
@@ -1781,7 +1785,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 // re-connected by processTxFromBestChain below.
                 for (TransactionOutput output : tx.getOutputs()) {
                     final TransactionInput spentBy = output.getSpentBy();
-                    if (spentBy != null) spentBy.disconnect();
+                    if (spentBy != null) {
+                        checkState(myUnspents.add(output));
+                        spentBy.disconnect();
+                    }
                 }
             }
             processTxFromBestChain(tx, wasPending);
@@ -2003,6 +2010,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 }
             }
 
+            TransactionOutput output = checkNotNull(input.getConnectedOutput());
             if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
                 if (fromChain) {
                     // Can be:
@@ -2018,7 +2026,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
                     log.warn("{}: {}", tx.getHash(), Utils.HEX.encode(tx.unsafeBitcoinSerialize()));
-                    Transaction other = input.getConnectedOutput().getSpentBy().getParentTransaction();
+                    Transaction other = output.getSpentBy().getParentTransaction();
                     log.warn("{}: {}", other.getHash(), Utils.HEX.encode(tx.unsafeBitcoinSerialize()));
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
@@ -2028,6 +2036,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 Transaction connected = checkNotNull(input.getOutpoint().fromTx);
                 log.info("  marked {} as spent", input.getOutpoint());
                 maybeMovePool(connected, "prevtx");
+                // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
+                if (output.isMineOrWatched(this)) {
+                    checkState(myUnspents.remove(output));
+                }
             }
         }
         // Now check each output and see if there is a pending transaction which spends it. This shouldn't normally
@@ -2047,6 +2059,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 if (result == TransactionInput.ConnectionResult.SUCCESS) {
                     log.info("Connected pending tx input {}:{}",
                             pendingTx.getHashAsString(), pendingTx.getInputs().indexOf(input));
+                    // The unspents map might not have it if we never saw this tx until it was included in the chain
+                    // and thus becomes spent the moment we become aware of it.
+                    if (myUnspents.remove(input.getConnectedOutput()))
+                        log.info("Removed from UNSPENTS: {}", input.getConnectedOutput());
                 }
             }
         }
@@ -2074,6 +2090,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             for (TransactionInput deadInput : tx.getInputs()) {
                 Transaction connected = deadInput.getOutpoint().fromTx;
                 if (connected == null) continue;
+                checkState(myUnspents.add(deadInput.getConnectedOutput()));
+                log.info("Adding to UNSPENTS: {}", deadInput.getConnectedOutput());
                 deadInput.disconnect();
                 maybeMovePool(connected, "kill");
             }
@@ -2095,10 +2113,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 maybeMovePool(input.getOutpoint().fromTx, "kill");
+                myUnspents.add(input.getConnectedOutput());
+                log.info("Adding to UNSPENTS: {}", input.getConnectedOutput());
             } else {
                 result = input.connect(spent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
                 if (result == TransactionInput.ConnectionResult.SUCCESS) {
                     maybeMovePool(input.getOutpoint().fromTx, "kill");
+                    myUnspents.add(input.getConnectedOutput());
+                    log.info("Adding to UNSPENTS: {}", input.getConnectedOutput());
                 }
             }
         }
@@ -2142,6 +2164,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             log.info("commitTx of {}", tx.getHashAsString());
             Coin balance = getBalance();
             tx.setUpdateTime(Utils.now());
+            // Put any outputs that are sending money back to us into the unspents map, and calculate their total value.
+            Coin valueSentToMe = Coin.ZERO;
+            for (TransactionOutput o : tx.getOutputs()) {
+                if (!o.isMineOrWatched(this)) continue;
+                valueSentToMe = valueSentToMe.add(o.getValue());
+            }
             // Mark the outputs we're spending as spent so we won't try and use them in future creations. This will also
             // move any transactions that are now fully spent to the spent map so we can skip them when creating future
             // spends.
@@ -2157,7 +2185,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             markKeysAsUsed(tx);
             try {
                 Coin valueSentFromMe = tx.getValueSentFromMe(this);
-                Coin valueSentToMe = tx.getValueSentToMe(this);
                 Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
                     checkBalanceFuturesLocked(null);
@@ -2394,6 +2421,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         default:
             throw new RuntimeException("Unknown wallet transaction type " + pool);
         }
+        if (pool == Pool.UNSPENT || pool == Pool.PENDING) {
+            for (TransactionOutput output : tx.getOutputs()) {
+                if (output.isAvailableForSpending() && output.isMineOrWatched(this))
+                    myUnspents.add(output);
+            }
+        }
         // This is safe even if the listener has been added before, as TransactionConfidence ignores duplicate
         // registration requests. That makes the code in the wallet simpler.
         tx.getConfidence().addEventListener(txConfidenceListener, Threading.SAME_THREAD);
@@ -2561,7 +2594,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 if (isTransactionRisky(tx, null) && !acceptRiskyTransactions) {
                     log.debug("Found risky transaction {} in wallet during cleanup.", tx.getHashAsString());
                     if (!tx.isAnyOutputSpent()) {
-                        tx.disconnectInputs();
+                        // Sync myUnspents with the change.
+                        for (TransactionInput input : tx.getInputs()) {
+                            TransactionOutput output = input.getConnectedOutput();
+                            if (output == null) continue;
+                            myUnspents.add(output);
+                            input.disconnect();
+                        }
+                        for (TransactionOutput output : tx.getOutputs())
+                            myUnspents.remove(output);
+
                         i.remove();
                         transactions.remove(tx.getHash());
                         dirty = true;
@@ -2619,6 +2661,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     return dead.size();
             }
             throw new RuntimeException("Unreachable");
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** Returns a copy of the internal unspent outputs list */
+    List<TransactionOutput> getUnspents() {
+        lock.lock();
+        try {
+            return new ArrayList<TransactionOutput>(myUnspents);
         } finally {
             lock.unlock();
         }
@@ -3994,9 +4046,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     } else {
                         for (TransactionOutput output : tx.getOutputs()) {
                             TransactionInput input = output.getSpentBy();
-                            if (input != null) input.disconnect();
+                            if (input != null) {
+                                if (output.isMineOrWatched(this))
+                                    checkState(myUnspents.add(output));
+                                input.disconnect();
+                            }
                         }
-                        tx.disconnectInputs();
                         oldChainTxns.add(tx);
                         unspent.remove(txHash);
                         spent.remove(txHash);
@@ -4086,14 +4141,36 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     //region Bloom filtering
 
+    // keychainLock isn't semantically correct but happens to be the most convenient to use.
+    @GuardedBy("keychainLock") private ArrayList<TransactionOutPoint> bloomOutPoints = new ArrayList<TransactionOutPoint>();
+
     @Override
     public void beginBloomFilterCalculation() {
         lock.lock();
         keychainLock.lock();
+        calcBloomOutPoints();
     }
 
-    @Override
+    @GuardedBy("keychainLock")
+    private void calcBloomOutPoints() {
+        // TODO: This could be done once and then kept up to date.
+        bloomOutPoints.clear();
+        for (Transaction tx : getTransactions(false)) {
+            for (TransactionOutput out : tx.getOutputs()) {
+                try {
+                    if (isTxOutputBloomFilterable(out))
+                        bloomOutPoints.add(out.getOutPointFor());
+                } catch (ScriptException e) {
+                    // If it is ours, we parsed the script correctly, so this shouldn't happen.
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    @Override @GuardedBy("keychainLock")
     public void endBloomFilterCalculation() {
+        bloomOutPoints.clear();
         keychainLock.unlock();
         lock.unlock();
     }
@@ -4104,20 +4181,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     @Override
     public int getBloomFilterElementCount() {
-        int size = 0;
-        for (Transaction tx : getTransactions(false)) {
-            for (TransactionOutput out : tx.getOutputs()) {
-                try {
-                    if (isTxOutputBloomFilterable(out))
-                        size++;
-                } catch (ScriptException e) {
-                    // If it is ours, we parsed the script correctly, so this shouldn't happen.
-                    throw new RuntimeException(e);
-                }
-            }
-        }
         keychainLock.lock();
         try {
+            if (bloomOutPoints.isEmpty())
+                calcBloomOutPoints();
+            int size = bloomOutPoints.size();
             size += keychain.getBloomFilterElementCount();
             // Some scripts may have more than one bloom element.  That should normally be okay, because under-counting
             // just increases false-positive rate.
@@ -4183,19 +4251,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                     }
                 }
             }
-            for (Transaction tx : getTransactions(false)) {
-                for (int i = 0; i < tx.getOutputs().size(); i++) {
-                    TransactionOutput out = tx.getOutputs().get(i);
-                    try {
-                        if (isTxOutputBloomFilterable(out)) {
-                            TransactionOutPoint outPoint = new TransactionOutPoint(params, i, tx);
-                            filter.insert(outPoint.bitcoinSerialize());
-                        }
-                    } catch (ScriptException e) {
-                        throw new RuntimeException(e); // If it is ours, we parsed the script correctly, so this shouldn't happen
-                    }
-                }
-            }
+            if (bloomOutPoints.isEmpty())
+                calcBloomOutPoints();
+            for (TransactionOutPoint point : bloomOutPoints)
+                filter.insert(point.bitcoinSerialize());
             return filter;
         } finally {
             keychainLock.unlock();
@@ -4203,10 +4262,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
+    // Returns true if the output is one that won't be selected by a data element matching in the scriptSig.
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
-        boolean isScriptTypeSupported = out.getScriptPubKey().isSentToRawPubKey() || out.getScriptPubKey().isPayToScriptHash();
-        return (out.isMine(this) && isScriptTypeSupported) ||
-                out.isWatched(this);
+        Script script = out.getScriptPubKey();
+        boolean isScriptTypeSupported = script.isSentToRawPubKey() || script.isPayToScriptHash();
+        return (isScriptTypeSupported && myUnspents.contains(out)) || watchedScripts.contains(script);
     }
 
     /**
