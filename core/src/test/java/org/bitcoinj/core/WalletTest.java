@@ -1204,8 +1204,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
         StoredBlock b3 = createFakeBlock(blockStore, t1).storedBlock;
         wallet.receiveFromBlock(t1, b3, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT, wallet.getWatchedBalance());
+        assertEquals(CENT, wallet.getBalance());
 
         // We can't spend watched balances
         Address notMyAddr = new ECKey().toAddress(params);
