@@ -92,7 +92,7 @@ public class Script {
     public Script(byte[] programBytes) throws ScriptException {
         program = programBytes;
         parse(programBytes);
-        creationTimeSeconds = Utils.currentTimeSeconds();
+        creationTimeSeconds = 0;
     }
 
     public Script(byte[] programBytes, long creationTimeSeconds) throws ScriptException {
