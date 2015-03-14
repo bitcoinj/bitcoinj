@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +153,10 @@ public class Threading {
     public static CycleDetectingLockFactory factory;
 
     public static ReentrantLock lock(String name) {
-        return factory.newReentrantLock(name);
+        if (Utils.isAndroidRuntime())
+            return new ReentrantLock(true);
+        else
+            return factory.newReentrantLock(name);
     }
 
     public static void warnOnLockCycles() {
