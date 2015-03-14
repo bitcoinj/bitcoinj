@@ -575,9 +575,13 @@ public class Utils {
         }
     }
 
+    private static int isAndroid = -1;
     public static boolean isAndroidRuntime() {
-        final String runtime = System.getProperty("java.runtime.name");
-        return runtime != null && runtime.equals("Android Runtime");
+        if (isAndroid == -1) {
+            final String runtime = System.getProperty("java.runtime.name");
+            isAndroid = (runtime != null && runtime.equals("Android Runtime")) ? 1 : 0;
+        }
+        return isAndroid == 1;
     }
 
     private static class Pair implements Comparable<Pair> {
