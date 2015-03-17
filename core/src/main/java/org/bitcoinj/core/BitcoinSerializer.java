@@ -45,6 +45,7 @@ import static org.bitcoinj.core.Utils.*;
 public class BitcoinSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
     private static final int COMMAND_LEN = 12;
+    private Context context;
 
     private NetworkParameters params;
     private boolean parseLazy = false;
@@ -78,6 +79,8 @@ public class BitcoinSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
+     * <p>Transactions deserialized by this have no Context and therefore UNKNOWN confidence</p>
+     *
      * @param params           networkParams used to create Messages instances and termining packetMagic
      */
     public BitcoinSerializer(NetworkParameters params) {
@@ -87,6 +90,8 @@ public class BitcoinSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
+     * <p>Transactions deserialized by this have no Context and therefore UNKNOWN confidence</p>
+     *
      * @param params           networkParams used to create Messages instances and termining packetMagic
      * @param parseLazy        deserialize messages in lazy mode.
      * @param parseRetain      retain the backing byte array of a message for fast reserialization.
@@ -95,6 +100,11 @@ public class BitcoinSerializer {
         this.params = params;
         this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
+    }
+
+    public BitcoinSerializer(Context context) {
+        this(context.getParams());
+        this.context = context;
     }
 
     /**
@@ -202,7 +212,10 @@ public class BitcoinSerializer {
         } else if (command.equals("inv")) {
             message = new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("block")) {
-            message = new Block(params, payloadBytes, parseLazy, parseRetain, length);
+            if (context != null)
+                message = new Block(context, payloadBytes, parseLazy, parseRetain, length);
+            else
+                message = new Block(params, payloadBytes, parseLazy, parseRetain, length);
         } else if (command.equals("merkleblock")) {
             message = new FilteredBlock(params, payloadBytes);
         } else if (command.equals("getdata")) {

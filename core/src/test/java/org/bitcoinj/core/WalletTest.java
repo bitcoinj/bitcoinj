@@ -618,7 +618,7 @@ public class WalletTest extends TestWithWallet {
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 10));
         // Reserialize.
-        Transaction send2 = new Transaction(params, send1.bitcoinSerialize());
+        Transaction send2 = new Transaction(context, send1.bitcoinSerialize());
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
         assertEquals(ZERO.subtract(valueOf(0, 10)), send2.getValue(wallet));
     }
@@ -635,7 +635,7 @@ public class WalletTest extends TestWithWallet {
 
         assertTrue("Wallet is not consistent", wallet.isConsistent());
 
-        Transaction txClone = new Transaction(params, tx.bitcoinSerialize());
+        Transaction txClone = new Transaction(context, tx.bitcoinSerialize());
         try {
             wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.BEST_CHAIN, 0);
             fail("Illegal argument not thrown when it should have been.");
@@ -731,7 +731,7 @@ public class WalletTest extends TestWithWallet {
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), valueOf(2, 90));
         // Create a double spend of just the first one.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), COIN);
-        send2 = new Transaction(params, send2.bitcoinSerialize());
+        send2 = new Transaction(context, send2.bitcoinSerialize());
         // Broadcast send1, it's now pending.
         wallet.commitTx(send1);
         assertEquals(ZERO, wallet.getBalance());
@@ -759,7 +759,7 @@ public class WalletTest extends TestWithWallet {
         Transaction send2 = checkNotNull(wallet.createSend(address, value2));
         byte[] buf = send1.bitcoinSerialize();
         buf[43] = 0;  // Break the signature: bitcoinj won't check in SPV mode and this is easier than other mutations.
-        send1 = new Transaction(params, buf);
+        send1 = new Transaction(context, buf);
         wallet.commitTx(send2);
         wallet.allowSpendingUnconfirmedTransactions();
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
@@ -824,7 +824,7 @@ public class WalletTest extends TestWithWallet {
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 50));
         // Create a double spend.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 50));
-        send2 = new Transaction(params, send2.bitcoinSerialize());
+        send2 = new Transaction(context, send2.bitcoinSerialize());
         // Broadcast send1.
         wallet.commitTx(send1);
         assertEquals(send1, received.getOutput(0).getSpentBy().getParentTransaction());
@@ -906,7 +906,7 @@ public class WalletTest extends TestWithWallet {
         wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
         Threading.waitForUserCode();
         assertNull(reasons[0]);
-        final Transaction t1Copy = new Transaction(params, t1.bitcoinSerialize());
+        final Transaction t1Copy = new Transaction(context, t1.bitcoinSerialize());
         sendMoneyToWallet(t1Copy, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Threading.waitForUserCode();
         assertFalse(flags[0]);

@@ -1407,11 +1407,7 @@ public class Script {
                                 Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
-        try {
-            txContainingThis = new Transaction(txContainingThis.getParams(), txContainingThis.bitcoinSerialize());
-        } catch (ProtocolException e) {
-            throw new RuntimeException(e);   // Should not happen unless we were given a totally broken transaction.
-        }
+        txContainingThis = txContainingThis.cloneTransaction();
         if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
         

@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import static org.bitcoinj.core.Utils.doubleDigest;
 import static org.bitcoinj.core.Utils.doubleDigestTwoBuffers;
@@ -100,6 +101,7 @@ public class Block extends Message {
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
     private transient int optimalEncodingMessageSize;
+    Context context;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
@@ -114,8 +116,15 @@ public class Block extends Message {
     }
 
     /** Constructs a block object from the Bitcoin wire format. */
+    @Deprecated
     public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0, false, false, payloadBytes.length);
+    }
+
+    /** Constructs a block object from the Bitcoin wire format. */
+    public Block(Context context, byte[] payloadBytes) throws ProtocolException {
+        super(context.getParams(), payloadBytes, 0, false, false, payloadBytes.length);
+        this.context = context;
     }
 
     /**
@@ -129,11 +138,29 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
+    @Deprecated
     public Block(NetworkParameters params, byte[] payloadBytes, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
         super(params, payloadBytes, 0, parseLazy, parseRetain, length);
     }
 
+    /**
+     * Contruct a block object from the Bitcoin wire format.
+     * @param context Context object.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.
+     * If true and the backing byte array is invalidated due to modification of a field then
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
+    @Deprecated
+    public Block(Context context, byte[] payloadBytes, boolean parseLazy, boolean parseRetain, int length)
+            throws ProtocolException {
+        super(context.getParams(), payloadBytes, 0, parseLazy, parseRetain, length);
+        this.context = context;
+    }
 
     /**
      * Construct a block initialized with all the given fields.
@@ -157,6 +184,31 @@ public class Block extends Message {
         this.nonce = nonce;
         this.transactions = new LinkedList<Transaction>();
         this.transactions.addAll(transactions);
+    }
+
+    /**
+     * Construct a block initialized with all the given fields.
+     * @param context Context object.
+     * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
+     * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
+     * @param merkleRoot The root of the merkle tree formed by the transactions.
+     * @param time UNIX time when the block was mined.
+     * @param difficultyTarget Number which this block hashes lower than.
+     * @param nonce Arbitrary number to make the block hash lower than the target.
+     * @param transactions List of transactions including the coinbase.
+     */
+    public Block(Context context, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+                 long difficultyTarget, long nonce, List<Transaction> transactions) {
+        super(context.getParams());
+        this.version = version;
+        this.prevBlockHash = prevBlockHash;
+        this.merkleRoot = merkleRoot;
+        this.time = time;
+        this.difficultyTarget = difficultyTarget;
+        this.nonce = nonce;
+        this.transactions = new LinkedList<Transaction>();
+        this.transactions.addAll(transactions);
+        this.context = context;
     }
 
 
@@ -199,6 +251,7 @@ public class Block extends Message {
     }
 
     private void parseTransactions() throws ProtocolException {
+        checkNotNull(context);
         if (transactionsParsed)
             return;
 
@@ -215,7 +268,7 @@ public class Block extends Message {
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
         transactions = new ArrayList<Transaction>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
+            Transaction tx = new Transaction(context, payload, cursor, this, parseLazy, parseRetain, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
@@ -424,7 +477,7 @@ public class Block extends Message {
     public byte[] bitcoinSerialize() {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
-            Preconditions.checkNotNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
+            checkNotNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
             if (length == payload.length) {
                 return payload;
             } else {
@@ -970,7 +1023,7 @@ public class Block extends Message {
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
-        Transaction coinbase = new Transaction(params);
+        Transaction coinbase = new Transaction(context);
         // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
         // transactions are distinguished by every TX output going to a different key.
         //
@@ -1006,12 +1059,13 @@ public class Block extends Message {
     Block createNextBlock(@Nullable Address to, @Nullable TransactionOutPoint prevOut, long time,
                           byte[] pubKey, Coin coinbaseValue) {
         Block b = new Block(params);
+        b.context = context;
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
+            Transaction t = new Transaction(context);
             t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
@@ -1042,6 +1096,7 @@ public class Block extends Message {
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
+        b.context = context;
         return b;
     }
 

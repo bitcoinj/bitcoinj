@@ -58,13 +58,25 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     private Lock lock = Threading.lock("PeerSocketHandler");
 
+    @Deprecated
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
         serializer = new BitcoinSerializer(checkNotNull(params));
         this.peerAddress = new PeerAddress(remoteIp);
     }
 
+    @Deprecated
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
         serializer = new BitcoinSerializer(checkNotNull(params));
+        this.peerAddress = checkNotNull(peerAddress);
+    }
+
+    public PeerSocketHandler(Context context, InetSocketAddress remoteIp) {
+        serializer = new BitcoinSerializer(checkNotNull(context));
+        this.peerAddress = new PeerAddress(remoteIp);
+    }
+
+    public PeerSocketHandler(Context context, PeerAddress peerAddress) {
+        serializer = new BitcoinSerializer(checkNotNull(context));
         this.peerAddress = checkNotNull(peerAddress);
     }
 

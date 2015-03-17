@@ -280,6 +280,23 @@ public abstract class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
+    /**
+     * <p>Genesis block for this chain.</p>
+     *
+     * <p>The first block in every chain is a well known constant shared between all Bitcoin implemenetations. For a
+     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+     * prevBlockHash pointers in the block headers.</p>
+     *
+     * <p>The genesis blocks for both test and main networks contain the timestamp of when they were created,
+     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+     * bailout for banks"</i>.</p>
+     */
+    public Block getGenesisBlock(Context context) {
+        Block block = genesisBlock.cloneAsHeader();
+        block.context = context;
+        return block;
+    }
+
     /** Default TCP port on which to connect to nodes. */
     public int getPort() {
         return port;

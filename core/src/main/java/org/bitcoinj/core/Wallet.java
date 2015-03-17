@@ -2476,7 +2476,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Prepares the wallet for a blockchain replay. Removes all transactions (as they would get in the way of the
-     * replay) and makes the wallet think it has never seen a block. {@link WalletEventListener#onWalletChanged()} will
+     * replay) and makes the wallet think it has never seen a block. {@link WalletEventListener#onWalletChanged(Wallet)} will
      * be fired.
      */
     public void reset() {

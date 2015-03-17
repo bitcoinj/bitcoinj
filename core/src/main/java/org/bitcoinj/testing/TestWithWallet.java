@@ -44,6 +44,7 @@ public class TestWithWallet {
     protected Wallet wallet;
     protected BlockChain chain;
     protected BlockStore blockStore;
+    protected Context context;
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
@@ -53,6 +54,7 @@ public class TestWithWallet {
         myAddress = myKey.toAddress(params);
         blockStore = new MemoryBlockStore(params);
         chain = new BlockChain(params, wallet, blockStore);
+        context = chain.getContext();
     }
 
     public void tearDown() throws Exception {

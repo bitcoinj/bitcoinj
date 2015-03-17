@@ -7,9 +7,11 @@ package org.bitcoinj.core;
  * other global configuration of use.
  */
 public class Context {
-    protected TxConfidenceTable confidenceTable;
+    protected final NetworkParameters params;
+    protected final TxConfidenceTable confidenceTable;
 
-    protected Context() {
+    protected Context(NetworkParameters parameters) {
+        this.params = parameters;
         confidenceTable = new TxConfidenceTable();
     }
 
@@ -21,5 +23,9 @@ public class Context {
      */
     public TxConfidenceTable getConfidenceTable() {
         return confidenceTable;
+    }
+
+    public NetworkParameters getParams() {
+        return params;
     }
 }
