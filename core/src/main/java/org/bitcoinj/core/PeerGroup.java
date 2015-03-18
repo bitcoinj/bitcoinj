@@ -1912,11 +1912,17 @@ public class PeerGroup implements TransactionBroadcaster {
     public boolean isRunning() {
         return vRunning;
     }
-    
+
+    /**
+     * Can be used to disable Bloom filtering entirely, even in SPV mode. You are very unlikely to need this, it is
+     * an optimisation for rare cases when full validation is not required but it's still more efficient to download
+     * full blocks than filtered blocks.
+     */
     public void setBloomFilteringEnabled(boolean bloomFilteringEnabled) {
         this.vBloomFilteringEnabled = bloomFilteringEnabled;
     }
-    
+
+    /** Returns whether the Bloom filtering protocol optimisation is in use: defaults to true. */
     public boolean isBloomFilteringEnabled() {
         return vBloomFilteringEnabled;
     }
