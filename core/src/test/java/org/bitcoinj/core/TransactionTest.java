@@ -227,19 +227,19 @@ public class TransactionTest {
     @Test
     public void testOptimalEncodingMessageSize() {
 		Transaction sut = new Transaction(PARAMS);
-
+		
 		int length = sut.length;
-    	
+		
 		// add basic transaction input, check the length
 		sut.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
 		length += getCombinedLength(sut.getOutputs());
 		
 		// add basic output, check the length
 		sut.addInput(dummy.getOutput(0));
-    	length += getCombinedLength(sut.getInputs());
-    	
-    	// optimal encoding size should equal the length we just calculated
-    	assertEquals(sut.getOptimalEncodingMessageSize(), length);
+		length += getCombinedLength(sut.getInputs());
+		
+		// optimal encoding size should equal the length we just calculated
+		assertEquals(sut.getOptimalEncodingMessageSize(), length);
     }
     
     private int getCombinedLength(List<? extends Message> list) {
@@ -274,25 +274,25 @@ public class TransactionTest {
     
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-    	Transaction sut = newTransaction();
-    	
-    	TransactionInput input = sut.getInput(0);
-    	input.setSequenceNumber(42);
-    	
-    	int TEST_LOCK_TIME = 20;
-    	sut.setLockTime(TEST_LOCK_TIME);
-    	
-    	Calendar cal = Calendar.getInstance();
-    	cal.set(2085, 10, 4, 17, 53, 21);
-    	cal.set(Calendar.MILLISECOND, 0);
-
-    	BlockChain mockBlockChain = createMock(BlockChain.class);
+		Transaction sut = newTransaction();
+		
+		TransactionInput input = sut.getInput(0);
+		input.setSequenceNumber(42);
+		
+		int TEST_LOCK_TIME = 20;
+		sut.setLockTime(TEST_LOCK_TIME);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.set(2085, 10, 4, 17, 53, 21);
+		cal.set(Calendar.MILLISECOND, 0);
+		
+		BlockChain mockBlockChain = createMock(BlockChain.class);
 		EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
-
+		
 		replay(mockBlockChain);
 		
 		String str = sut.toString(mockBlockChain);
-
+		
 		assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
 		assertEquals(str.contains("estimated to be reached at"), true);
     }
@@ -310,7 +310,7 @@ public class TransactionTest {
     	sut.addInput(ti);
     	
 		String str = sut.toString();
-
+		
 		assertEquals(str.contains("[exception: "), true);
     }
     
@@ -319,7 +319,7 @@ public class TransactionTest {
     	Transaction sut = new Transaction(PARAMS);
 		
 		String str = sut.toString();
-
+		
 		assertEquals(str.contains("No inputs!"), true);
     }
     
