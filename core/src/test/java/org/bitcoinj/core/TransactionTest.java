@@ -15,8 +15,6 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -354,50 +352,6 @@ public class TransactionTest {
     	assertEquals(iterator.hasNext(), false);
     }
 
-//    @Test
-//    public void testAddSignedInput() {
-//    	ECKey key = new ECKey();
-////    	PARAMS.addressHeader = 196;
-//    	Address addr = key.toAddress(PARAMS); 
-//    	
-//    	// Creates a TX sending 1 coin to addr, and (perhaps invalidly?) returning a change of 1.11 coins to an address
-//    	//  the method generates. Output 0 is sending the coin, O-1 is sending the change.
-//    	Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
-//    	
-//    	Transaction sut = new Transaction(PARAMS);
-//    	sut.addOutput(fakeTx.getOutput(0));
-//    	
-//    	// this method checks the script that is returned by the output to see if it isSentToRawPubKey or SentToAddress. 
-//    	//  it determines that by the chunks in the script (returned by Output 0).
-//    	// 
-//    	// output 0, when it is created, its script is created by Scriptbuilder.createoutputscript() which 
-//    	//  checks the address type, and returns a script with OP_DUP (118, 0x76) if its a PAY_TO_PUBKEYHASH
-//    	sut.addSignedInput(fakeTx.getOutput(0), key);
-//    	
-//    	// THE QUESTION: what can we assert about this script to determine whether it went through
-//    	//  the 'isSentToRawPubKey()' or that it went through the 'isSentToAddress' branch?
-//    	
-//    	// well, if we get the script, and then get its chunks, we can inspect the first one, because
-//    	//  ScriptBuilder.createInputScript is called with 'key' for issentoaddress, and without for 
-//    	// the other. so the script will be different.
-//    	
-//    	Script scr = sut.getInput(0).getScriptSig();
-//
-//    	List<ScriptChunk> chunks = scr.getChunks();
-//
-//    	// SOO.. My final thought on what it is we need to do here to be able to verify both of those branches
-//    	//  in the test method.. IS.. that we extract the code which creates the transaction signature into its
-//    	//  own method, and allow this test method to call it. It could then create a script in the same way as
-//    	//  this method, and check to see if what it created is the same as whats in the script for this input, 
-//    	//  and that way determine which branch it had to come through.
-//    	
-//    	// but that means modifying the code, and I read somewhere you're not supposed to do that.. modify the code
-//    	//  for the sole purpose of making a test pass. Dunno. Its not my code anyway, so. stopping for now.
-//    	
-//    	assertEquals(scr.isSentToAddress(), false);
-//    	assertEquals(scr.isSentToRawPubKey(), true);
-//    }
-
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
     	ECKey key = new ECKey();
@@ -419,25 +373,4 @@ public class TransactionTest {
     	
     	sut.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), mockScript, key);
     }
-    
-// **** Cannot test this because the code prevents the creation of a coin with a value larger than MAX_MONEY
-    // Cannot extend Coin, cannot add a satoshi to MAX_MONEY while creating a transaction output.. nothing.
-    // The line we are trying to reach here is covered by unit test in ::exceedsMaxMoney2(). 
-    // The line is unreachable code, because of other code. It should be removed.
-
-//    @Test
-//    public void testVerifyThrowsException_WhenNetworkParamsMAXMONEYIsGreaterThanTransactionValue() {
-//    	Transaction sut = new Transaction(PARAMS);
-//    	sut.addInput(dummy.getOutput(0));
-//    	sut.addOutput(new TransactionOutput(PARAMS, null, PARAMS.MAX_MONEY.add(COIN.SATOSHI), ADDRESS));
-//    	
-//    	try {
-//    		sut.verify();
-//    		fail();
-//    	}
-//    	catch (IllegalArgumentException iae) {
-//    		// expected
-//    	}
-//    }
-    
 }
