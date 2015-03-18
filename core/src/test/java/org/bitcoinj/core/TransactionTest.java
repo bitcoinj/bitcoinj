@@ -1,12 +1,26 @@
 package org.bitcoinj.core;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.testing.FakeTxBuilder;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
@@ -24,10 +38,30 @@ public class TransactionTest {
     @Before
     public void setUp() throws Exception {
         dummy = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
-        tx = new Transaction(PARAMS);
-        tx.addOutput(Coin.COIN, ADDRESS);
-        tx.addInput(dummy.getOutput(0));
+        tx = newTransaction();
     }
+
+    private Transaction newTransaction(boolean newToAddress) {
+    	Address addr = ADDRESS;
+    	
+    	if (newToAddress) {
+			addr = new ECKey().toAddress(PARAMS);
+		}
+    	
+    	return newTransaction(new TransactionOutput(PARAMS, null, Coin.COIN, addr));
+    }
+    
+    private Transaction newTransaction() {
+        return newTransaction(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
+	}
+	
+	private Transaction newTransaction(TransactionOutput to) {
+		Transaction rtn = new Transaction(PARAMS);
+        rtn.addOutput(to);
+        rtn.addInput(dummy.getOutput(0));
+        
+        return rtn;
+	}
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyOutputs() throws Exception {
@@ -54,7 +88,7 @@ public class TransactionTest {
         tx.addInput(input.duplicateDetached());
         tx.verify();
     }
-
+    
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() throws Exception {
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
@@ -89,4 +123,321 @@ public class TransactionTest {
         assertEquals(101, input.getScriptBytes().length);
         tx.verify();
     }
+    
+    @Test
+    public void isConsistentReturnsFalseAsExpected() {
+    	TransactionBag mockTB = createMock(TransactionBag.class);
+    	
+    	TransactionOutput to = createMock(TransactionOutput.class);
+    	EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
+    	EasyMock.expect(to.isMineOrWatched(mockTB)).andReturn(true);
+    	EasyMock.expect(to.getSpentBy()).andReturn(new TransactionInput(PARAMS, null, new byte[0]));
+    	
+    	Transaction sut = newTransaction(to);
+    	
+    	replay(to);
+    	
+		boolean rtn = sut.isConsistent(mockTB, false);
+    	
+    	assertEquals(rtn, false);
+    }
+
+    @Test
+    public void isConsistentReturnsFalseAsExpected_WhenAvailableForSpendingEqualsFalse() {
+    	TransactionOutput to = createMock(TransactionOutput.class);
+    	EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
+    	EasyMock.expect(to.getSpentBy()).andReturn(null);
+    	
+    	Transaction sut = newTransaction(to);
+    	
+    	replay(to);
+    	
+    	boolean rtn = sut.isConsistent(createMock(TransactionBag.class), false);
+    	
+    	assertEquals(rtn, false);
+    }
+    
+    @Test
+    public void testIsEveryOutputSpent_withZeroOutputsAvailableForSpending() {
+    	TransactionOutput to = createMock(TransactionOutput.class);
+    	EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
+    	
+    	Transaction sut = newTransaction(to);
+    	
+    	replay(to);
+    	
+    	boolean rtn = sut.isEveryOutputSpent();
+    	
+    	assertEquals(rtn, true);
+    }
+
+    @Test
+    public void testIsEveryOutputSpent_withOutputsAvailableForSpending() {
+    	TransactionOutput to = createMock(TransactionOutput.class);
+    	EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
+    	
+    	Transaction sut = newTransaction(to);
+    	
+    	replay(to);
+    	
+    	boolean rtn = sut.isEveryOutputSpent();
+    	
+    	assertEquals(rtn, false);
+    }
+    
+    @Test
+    public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
+    	int TEST_LOCK_TIME = 20;
+    	Date now = Calendar.getInstance().getTime();
+    	
+    	BlockChain mockBlockChain = createMock(BlockChain.class);
+    	
+		EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
+		
+    	Transaction sut = newTransaction();
+
+    	sut.setLockTime(TEST_LOCK_TIME); // less than five hundred million 
+    	
+    	replay(mockBlockChain);
+    	
+    	Date estimateLockTime = sut.estimateLockTime(mockBlockChain);
+    	
+    	assertEquals(estimateLockTime, now);
+    }
+    
+    @Test
+    public void testEstimatedLockTime_WhenParameterSignifiesSeconds() {
+    	int TEST_LOCK_TIME = Transaction.LOCKTIME_THRESHOLD + 1;
+    	
+    	BlockChain mockBlockChain = createMock(BlockChain.class);
+    	
+    	Transaction sut = newTransaction();
+
+    	sut.setLockTime(TEST_LOCK_TIME); // more than five hundred million 
+    	
+    	replay(mockBlockChain);
+    	
+    	Date estimateLockTime = sut.estimateLockTime(mockBlockChain);
+    	
+    	Calendar cal = Calendar.getInstance();
+    	cal.set(1985, 10, 4, 17, 53, 21);
+    	cal.set(Calendar.MILLISECOND, 0);
+    	
+    	assertEquals(cal.getTime().equals(estimateLockTime), true);
+    }
+    
+    @Test
+    public void testOptimalEncodingMessageSize() {
+		Transaction sut = new Transaction(PARAMS);
+
+		int length = sut.length;
+    	
+		// add basic transaction input, check the length
+		sut.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
+		length += getCombinedLength(sut.getOutputs());
+		
+		// add basic output, check the length
+		sut.addInput(dummy.getOutput(0));
+    	length += getCombinedLength(sut.getInputs());
+    	
+    	// optimal encoding size should equal the length we just calculated
+    	assertEquals(sut.getOptimalEncodingMessageSize(), length);
+    }
+    
+    private int getCombinedLength(List<? extends Message> list) {
+    	int rtn = 0;
+    	
+    	for (Message m: list) {
+    		rtn += m.getMessageSize() + 1;
+    	}
+
+    	return rtn;
+    }
+    
+    @Test
+    public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
+    	Transaction sut = new Transaction(PARAMS);
+    	sut.addInput(dummy.getOutput(0));
+    	
+    	// make this into a coinbase transaction
+    	TransactionInput input = sut.getInput(0);
+    	input.getOutpoint().setHash(Sha256Hash.ZERO_HASH);
+    	input.getOutpoint().setIndex(-1);
+
+    	sut.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
+    	assertEquals(sut.isMature(), false);
+    	
+    	sut.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+    	assertEquals(sut.isMature(), false);
+    	
+    	sut.getConfidence().setConfidenceType(ConfidenceType.DEAD);
+    	assertEquals(sut.isMature(), false);
+    }
+    
+    @Test
+    public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
+    	Transaction sut = newTransaction();
+    	
+    	TransactionInput input = sut.getInput(0);
+    	input.setSequenceNumber(42);
+    	
+    	int TEST_LOCK_TIME = 20;
+    	sut.setLockTime(TEST_LOCK_TIME);
+    	
+    	Calendar cal = Calendar.getInstance();
+    	cal.set(2085, 10, 4, 17, 53, 21);
+    	cal.set(Calendar.MILLISECOND, 0);
+
+    	BlockChain mockBlockChain = createMock(BlockChain.class);
+		EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
+
+		replay(mockBlockChain);
+		
+		String str = sut.toString(mockBlockChain);
+
+		assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
+		assertEquals(str.contains("estimated to be reached at"), true);
+    }
+    
+    @Test
+    public void testToStringWhenIteratingOverAnInputCatchesAnException() {
+    	Transaction sut = newTransaction();
+    	TransactionInput ti = new TransactionInput(PARAMS, sut, new byte[0]) { 
+    		@Override
+    		public Script getScriptSig() throws ScriptException {
+    			throw new ScriptException("");
+    		}
+    	};
+    	
+    	sut.addInput(ti);
+    	
+		String str = sut.toString();
+
+		assertEquals(str.contains("[exception: "), true);
+    }
+    
+    @Test
+    public void testToStringWhenThereAreZeroInputs() {
+    	Transaction sut = new Transaction(PARAMS);
+		
+		String str = sut.toString();
+
+		assertEquals(str.contains("No inputs!"), true);
+    }
+    
+    @Test
+    public void testTheTXByHeightComparator() {
+    	final boolean USE_UNIQUE_ADDRESS = true;
+    	Transaction sut1 = newTransaction(USE_UNIQUE_ADDRESS);
+    	sut1.getConfidence().setAppearedAtChainHeight(1);
+    	
+    	Transaction sut2 = newTransaction(USE_UNIQUE_ADDRESS);
+    	sut2.getConfidence().setAppearedAtChainHeight(2);
+    	
+    	Transaction sut3 = newTransaction(USE_UNIQUE_ADDRESS);
+    	sut3.getConfidence().setAppearedAtChainHeight(3);
+    	
+    	SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
+    	set.add(sut2);
+    	set.add(sut1);
+    	set.add(sut3);
+    	
+    	Iterator<Transaction> iterator = set.iterator();
+    	
+    	assertEquals(sut1.equals(sut2), false);
+    	assertEquals(sut1.equals(sut3), false);
+    	assertEquals(sut1.equals(sut1), true);
+    	
+    	assertEquals(iterator.next().equals(sut3), true);
+    	assertEquals(iterator.next().equals(sut2), true);
+    	assertEquals(iterator.next().equals(sut1), true);
+    	assertEquals(iterator.hasNext(), false);
+    }
+
+//    @Test
+//    public void testAddSignedInput() {
+//    	ECKey key = new ECKey();
+////    	PARAMS.addressHeader = 196;
+//    	Address addr = key.toAddress(PARAMS); 
+//    	
+//    	// Creates a TX sending 1 coin to addr, and (perhaps invalidly?) returning a change of 1.11 coins to an address
+//    	//  the method generates. Output 0 is sending the coin, O-1 is sending the change.
+//    	Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
+//    	
+//    	Transaction sut = new Transaction(PARAMS);
+//    	sut.addOutput(fakeTx.getOutput(0));
+//    	
+//    	// this method checks the script that is returned by the output to see if it isSentToRawPubKey or SentToAddress. 
+//    	//  it determines that by the chunks in the script (returned by Output 0).
+//    	// 
+//    	// output 0, when it is created, its script is created by Scriptbuilder.createoutputscript() which 
+//    	//  checks the address type, and returns a script with OP_DUP (118, 0x76) if its a PAY_TO_PUBKEYHASH
+//    	sut.addSignedInput(fakeTx.getOutput(0), key);
+//    	
+//    	// THE QUESTION: what can we assert about this script to determine whether it went through
+//    	//  the 'isSentToRawPubKey()' or that it went through the 'isSentToAddress' branch?
+//    	
+//    	// well, if we get the script, and then get its chunks, we can inspect the first one, because
+//    	//  ScriptBuilder.createInputScript is called with 'key' for issentoaddress, and without for 
+//    	// the other. so the script will be different.
+//    	
+//    	Script scr = sut.getInput(0).getScriptSig();
+//
+//    	List<ScriptChunk> chunks = scr.getChunks();
+//
+//    	// SOO.. My final thought on what it is we need to do here to be able to verify both of those branches
+//    	//  in the test method.. IS.. that we extract the code which creates the transaction signature into its
+//    	//  own method, and allow this test method to call it. It could then create a script in the same way as
+//    	//  this method, and check to see if what it created is the same as whats in the script for this input, 
+//    	//  and that way determine which branch it had to come through.
+//    	
+//    	// but that means modifying the code, and I read somewhere you're not supposed to do that.. modify the code
+//    	//  for the sole purpose of making a test pass. Dunno. Its not my code anyway, so. stopping for now.
+//    	
+//    	assertEquals(scr.isSentToAddress(), false);
+//    	assertEquals(scr.isSentToRawPubKey(), true);
+//    }
+
+    @Test(expected = ScriptException.class)
+    public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
+    	ECKey key = new ECKey();
+    	Address addr = key.toAddress(PARAMS);
+    	Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
+    	
+    	Transaction sut = new Transaction(PARAMS);
+    	sut.addOutput(fakeTx.getOutput(0));
+    	
+    	Script mockScript = new Script(new byte[0]) {
+    		public boolean isSentToRawPubKey() {
+    			return false;
+    		}
+    		
+    		public boolean isSentToAddress() {
+    			return false;
+    		}
+    	};
+    	
+    	sut.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), mockScript, key);
+    }
+    
+// **** Cannot test this because the code prevents the creation of a coin with a value larger than MAX_MONEY
+    // Cannot extend Coin, cannot add a satoshi to MAX_MONEY while creating a transaction output.. nothing.
+    // The line we are trying to reach here is covered by unit test in ::exceedsMaxMoney2(). 
+    // The line is unreachable code, because of other code. It should be removed.
+
+//    @Test
+//    public void testVerifyThrowsException_WhenNetworkParamsMAXMONEYIsGreaterThanTransactionValue() {
+//    	Transaction sut = new Transaction(PARAMS);
+//    	sut.addInput(dummy.getOutput(0));
+//    	sut.addOutput(new TransactionOutput(PARAMS, null, PARAMS.MAX_MONEY.add(COIN.SATOSHI), ADDRESS));
+//    	
+//    	try {
+//    		sut.verify();
+//    		fail();
+//    	}
+//    	catch (IllegalArgumentException iae) {
+//    		// expected
+//    	}
+//    }
+    
 }
