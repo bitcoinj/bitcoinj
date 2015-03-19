@@ -243,6 +243,9 @@ public class PeerGroup implements TransactionBroadcaster {
     /** The default timeout between when a connection attempt begins and version message exchange completes */
     public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
     private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
+    
+    /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
+    private volatile boolean vBloomFilteringEnabled = true;
 
     /**
      * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
@@ -587,12 +590,12 @@ public class PeerGroup implements TransactionBroadcaster {
     // Updates the relayTxesBeforeFilter flag of ver
     private void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
         // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
-        // iff chain == null || !chain.shouldVerifyTransactions() and a wallet is added
+        // if chain == null || !chain.shouldVerifyTransactions() and a wallet is added and bloom filters are enabled
         // Note that the default here means that no tx invs will be received if no wallet is ever added
         lock.lock();
         try {
             boolean spvMode = chain != null && !chain.shouldVerifyTransactions();
-            boolean willSendFilter = spvMode && peerFilterProviders.size() > 0;
+            boolean willSendFilter = spvMode && peerFilterProviders.size() > 0 && vBloomFilteringEnabled;
             ver.relayTxesBeforeFilter = !willSendFilter;
         } finally {
             lock.unlock();
@@ -1044,7 +1047,7 @@ public class PeerGroup implements TransactionBroadcaster {
             public void go() {
                 checkState(!lock.isHeldByCurrentThread());
                 // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
-                if (chain != null && chain.shouldVerifyTransactions())
+                if ((chain != null && chain.shouldVerifyTransactions()) || !vBloomFilteringEnabled)
                     return;
                 // We only ever call bloomFilterMerger.calculate on jobQueue, so we cannot be calculating two filters at once.
                 FilterMerger.Result result = bloomFilterMerger.calculate(ImmutableList.copyOf(peerFilterProviders /* COW */));
@@ -1461,11 +1464,32 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
+    @GuardedBy("lock") private int stallPeriodSeconds = 10;
+    @GuardedBy("lock") private int stallMinSpeed = 15;
+
+    /**
+     * Configures the stall speed: the speed at which a peer is considered to be serving us the block chain
+     * unacceptably slowly. Once a peer has served us slower than the given "blocks per second" for the given
+     * number of seconds, it is considered stalled and will be disconnected, forcing the chain download to be
+     * restarted from a different peer. The defaults are chosen to work well for regular wallets and platforms,
+     * but if you are running on a platform that is CPU constrained the default settings may need adjustment to
+     * avoid false stalls.
+     *
+     * @param periodSecs How many seconds the download speed must be below blocksPerSec, defaults to 10.
+     * @param blocksPerSec How many blocks per second the speed must be consistently below, defaults to 10.
+     */
+    public void setStallThreshold(int periodSecs, int blocksPerSec) {
+        lock.lock();
+        try {
+            stallPeriodSeconds = periodSecs;
+            stallMinSpeed = blocksPerSec;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private class ChainDownloadSpeedCalculator extends AbstractPeerEventListener implements Runnable {
         private int blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, stallWarning;
-
-        private static final int STALL_PERIOD_SECONDS = 15;
-        private static final int STALL_MIN_SPEED = 5;
 
         @Override
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
@@ -1480,24 +1504,37 @@ public class PeerGroup implements TransactionBroadcaster {
         }
 
         @Override
-        public synchronized void run() {
-            if (blocksInLastSecond > 0) {
-                log.info("{} blocks/sec, {} tx/sec, {} pre-filtered tx/sec", blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond);
-                if (blocksInLastSecond >= STALL_MIN_SPEED)
-                    stallWarning = 0;
+        public void run() {
+            int period;
+            int minSpeed;
+
+            lock.lock();
+            try {
+                period = stallPeriodSeconds;
+                minSpeed = stallMinSpeed;
+            } finally {
+                lock.unlock();
             }
-            if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond < STALL_MIN_SPEED && stallWarning > -1) {
-                stallWarning++;
-                if (stallWarning == STALL_PERIOD_SECONDS) {
-                    stallWarning = -1;
-                    Peer peer = getDownloadPeer();
-                    log.warn("Chain download stalled: slow progress for {} seconds, disconnecting {}", STALL_PERIOD_SECONDS, peer);
-                    peer.close();
+
+            synchronized (this) {
+                if (blocksInLastSecond > 0) {
+                    log.info("{} blocks/sec, {} tx/sec, {} pre-filtered tx/sec", blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond);
+                    if (blocksInLastSecond >= period)
+                        stallWarning = 0;
                 }
+                if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond < minSpeed && stallWarning > -1) {
+                    stallWarning++;
+                    if (stallWarning == minSpeed) {
+                        stallWarning = -1;
+                        Peer peer = getDownloadPeer();
+                        log.warn("Chain download stalled: slow progress for {} seconds, disconnecting {}", period, peer);
+                        peer.close();
+                    }
+                }
+                blocksInLastSecond = 0;
+                txnsInLastSecond = 0;
+                origTxnsInLastSecond = 0;
             }
-            blocksInLastSecond = 0;
-            txnsInLastSecond = 0;
-            origTxnsInLastSecond = 0;
         }
     }
     @Nullable private ChainDownloadSpeedCalculator chainDownloadSpeedCalculator;
@@ -1908,5 +1945,19 @@ public class PeerGroup implements TransactionBroadcaster {
 
     public boolean isRunning() {
         return vRunning;
+    }
+
+    /**
+     * Can be used to disable Bloom filtering entirely, even in SPV mode. You are very unlikely to need this, it is
+     * an optimisation for rare cases when full validation is not required but it's still more efficient to download
+     * full blocks than filtered blocks.
+     */
+    public void setBloomFilteringEnabled(boolean bloomFilteringEnabled) {
+        this.vBloomFilteringEnabled = bloomFilteringEnabled;
+    }
+
+    /** Returns whether the Bloom filtering protocol optimisation is in use: defaults to true. */
+    public boolean isBloomFilteringEnabled() {
+        return vBloomFilteringEnabled;
     }
 }
