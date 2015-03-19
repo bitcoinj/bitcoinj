@@ -335,7 +335,7 @@ public class TransactionTest {
     	Transaction sut3 = newTransaction(USE_UNIQUE_ADDRESS);
     	sut3.getConfidence().setAppearedAtChainHeight(3);
     	
-    	SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
+    	SortedSet<Transaction> set = new TreeSet<Transaction>(Transaction.SORT_TX_BY_HEIGHT);
     	set.add(sut2);
     	set.add(sut1);
     	set.add(sut3);
