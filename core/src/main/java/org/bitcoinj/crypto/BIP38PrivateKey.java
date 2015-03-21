@@ -87,7 +87,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     public ECKey decrypt(String passphrase) throws BadPassphraseException {
         String normalizedPassphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFC);
         ECKey key = ecMultiply ? decryptEC(normalizedPassphrase) : decryptNoEC(normalizedPassphrase);
-        Sha256Hash hash = Sha256Hash.createDouble(key.toAddress(params).toString().getBytes(Charsets.US_ASCII));
+        Sha256Hash hash = Sha256Hash.hashTwice(key.toAddress(params).toString().getBytes(Charsets.US_ASCII));
         byte[] actualAddressHash = Arrays.copyOfRange(hash.getBytes(), 0, 4);
         if (!Arrays.equals(actualAddressHash, addressHash))
             throw new BadPassphraseException();
@@ -122,7 +122,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
             if (hasLotAndSequence) {
                 byte[] hashBytes = Bytes.concat(passFactorBytes, ownerEntropy);
                 checkState(hashBytes.length == 40);
-                passFactorBytes = Sha256Hash.createDouble(hashBytes).getBytes();
+                passFactorBytes = Sha256Hash.hashTwice(hashBytes).getBytes();
             }
             BigInteger passFactor = new BigInteger(1, passFactorBytes);
             ECKey k = ECKey.fromPrivate(passFactor, true);
@@ -150,7 +150,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
             byte[] seed = Bytes.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
             checkState(seed.length == 24);
-            BigInteger seedFactor = new BigInteger(1, Sha256Hash.createDouble(seed).getBytes());
+            BigInteger seedFactor = new BigInteger(1, Sha256Hash.hashTwice(seed).getBytes());
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
             BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());
