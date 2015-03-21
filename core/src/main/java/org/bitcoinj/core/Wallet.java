@@ -1404,6 +1404,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         return params;
     }
 
+    /** Returns the API context that this wallet was created with. */
+    public Context getContext() {
+        return context;
+    }
+
     /**
      * <p>Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
      * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}</p>
