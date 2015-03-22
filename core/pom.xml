@@ -301,6 +301,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>${surefireArgLine}</argLine> <!-- This is required for code coverage to work. -->
+                    <runOrder>alphabetical</runOrder>
                 </configuration>
             </plugin>
 
