@@ -164,8 +164,10 @@
                                     <!-- Format is URN of groupId:artifactId:version:type:classifier:scope:hash -->
                                     <!-- classifier is "null" if not present -->
                                     <urns>
-                                        <urn>org.bitcoinj:orchid:1.1:jar:null:compile:cc54aa849a4c3f5b3bfda90dd4286205b2a60e87</urn>
                                         <urn>cglib:cglib-nodep:2.2:jar:null:test:59afed7ab65e7ec6585d5bc60556c3cbd203532b</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-annotations:2.4.0:jar:null:test:d6a66c7a5f01cf500377bd669507a08cfeba882a</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-core:2.4.2:jar:null:test:ceb72830d95c512b4b300a38f29febc85bdf6e4b</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-databind:2.4.2:jar:null:test:8e31266a272ad25ac4c089734d93e8d811652c1f</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.5.0:jar:null:compile:a10732c76bfacdbd633a7eb0f7968b1059a65dfa</urn>
@@ -173,31 +175,30 @@
                                         <urn>com.lambdaworks:scrypt:1.4.0:jar:null:compile:906506b74f30c8c20bccd9ed4a11112d8941fe87</urn>
                                         <urn>com.madgag.spongycastle:core:1.51.0.0:jar:null:compile:0f642963312ea0e615ad65f28adc5a5b3a2a0862</urn>
                                         <urn>junit:junit:4.11:jar:null:test:4e031bb61df09069aeb2bffb4019e7a5034a4ee0</urn>
+                                        <urn>mysql:mysql-connector-java:5.1.33:jar:null:compile:8af455a9a3267e6664cafc87ace71a4e4ef02837</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
-                                        <urn>org.apache.maven.plugins:maven-clean-plugin:2.5:maven-plugin:null:runtime:75653decaefa85ca8114ff3a4f869bb2ee6d605d</urn>
-                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.1:maven-plugin:null:runtime:9977a8d04e75609cf01badc4eb6a9c7198c4c5ea</urn>
-                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:2.8:maven-plugin:null:runtime:04c8dedf3d9b2a3f45f3daa93e11ca547d2063ca</urn>
-                                        <urn>org.apache.maven.plugins:maven-deploy-plugin:2.7:maven-plugin:null:runtime:6dadfb75679ca010b41286794f737088ebfe12fd</urn>
-                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.2:maven-plugin:null:runtime:6b755a9a0d618f8f57c0b5c4a0737a012e710a46</urn>
-                                        <urn>org.apache.maven.plugins:maven-install-plugin:2.5.1:maven-plugin:null:runtime:b6f5a4b621b9c26699c8deadb20fdc35ce568e35</urn>
-                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.5:maven-plugin:null:runtime:344d667f5ec8b90d03d698d096a1147672fc522f</urn>
-                                        <urn>org.apache.maven.plugins:maven-javadoc-plugin:2.9.1:maven-plugin:null:runtime:95ea7abf00e37e08bd927bf7e448c1e7fe4c6cb9</urn>
-                                        <urn>org.apache.maven.plugins:maven-resources-plugin:2.6:maven-plugin:null:runtime:dd093ff6a4b680eae7ae83b5ab04310249fc6590</urn>
+                                        <urn>org.apache.maven.plugins:maven-clean-plugin:2.6.1:maven-plugin:null:runtime:bfdf7d6c2f8fc8759457e9d54f458ba56ac7b30f</urn>
+                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.2:maven-plugin:null:runtime:aec10f274ac07fafab8906cb1aa69669d753b2c2</urn>
+                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:2.10:maven-plugin:null:runtime:af87ceeb71c6499147c5d27f74c9317bf707538e</urn>
+                                        <urn>org.apache.maven.plugins:maven-deploy-plugin:2.8.2:maven-plugin:null:runtime:3c2d83ecd387e9843142ae92a0439792c1500319</urn>
+                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.0:maven-plugin:null:runtime:ad032b7593576e9fe9305c73865633e163895b29</urn>
+                                        <urn>org.apache.maven.plugins:maven-install-plugin:2.5.2:maven-plugin:null:runtime:8a67631619fc3c1d1f036e59362ddce71e1e496f</urn>
+                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.6:maven-plugin:null:runtime:618f08d0fcdd3929af846ef1b65503b5904f93e3</urn>
+                                        <urn>org.apache.maven.plugins:maven-javadoc-plugin:2.10.2:maven-plugin:null:runtime:5f391697fa85cecc7e5bac7ce5a6f9d056a58ba3</urn>
+                                        <urn>org.apache.maven.plugins:maven-resources-plugin:2.7:maven-plugin:null:runtime:94af11389943a480ecec7db01b4ded1b9cdf57c5</urn>
                                         <urn>org.apache.maven.plugins:maven-shade-plugin:2.3:maven-plugin:null:runtime:d136adc7abccc9c12adcad6ae7a9bc51b2b7184b</urn>
-                                        <urn>org.apache.maven.plugins:maven-site-plugin:3.3:maven-plugin:null:runtime:77ba1752b1ac4c4339d6f11554800960a56a4ae1</urn>
-                                        <urn>org.apache.maven.plugins:maven-source-plugin:2.1.2:maven-plugin:null:runtime:35154aa8e6e0e84c2b5c10c3d5220d65670ba984</urn>
+                                        <urn>org.apache.maven.plugins:maven-site-plugin:3.4:maven-plugin:null:runtime:659cd5f1dd8bff554cf52603339494cbf7f283c5</urn>
+                                        <urn>org.apache.maven.plugins:maven-source-plugin:2.4:maven-plugin:null:runtime:46f0d7f7823d729ba300d3f8929900c7e9cb5ac0</urn>
                                         <urn>org.apache.maven.plugins:maven-surefire-plugin:2.18.1:maven-plugin:null:runtime:402fd3066fd6d85ea4a1a3e7cd82a7e35037e6e8</urn>
-                                        <urn>org.codehaus.mojo:cobertura-maven-plugin:2.6:maven-plugin:null:runtime:5204735a0642b42f5647d8ec876d4301e328c0d5</urn>
                                         <urn>org.easymock:easymock:3.0:jar:null:test:f28a4c31c330f95c9acbf1108cea19952b5c496f</urn>
+                                        <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
+                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.4.201502262128:maven-plugin:null:runtime:ee12ed04db135c74d0ae99e9c4e4754ee1582edb</urn>
                                         <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
                                         <urn>org.slf4j:slf4j-api:1.7.6:jar:null:compile:562424e36df3d2327e8e9301a76027fca17d54ea</urn>
                                         <urn>org.slf4j:slf4j-jdk14:1.7.6:jar:null:test:1a3301a32ea7d90c3d33e9d60edbfdc9589fc748</urn>
-                                        <url>com.fasterxml.jackson.core:jackson-databind:2.4.2:jar:null:test:8e31266a272ad25ac4c089734d93e8d811652c1f</url>
-                                        <url>com.fasterxml.jackson.core:jackson-core:2.4.2:jar:null:test:ceb72830d95c512b4b300a38f29febc85bdf6e4b</url>
-                                        <url>com.fasterxml.jackson.core:jackson-annotations:2.4.2:jar:null:test:6bb52af09372d5064206d47d7887d41671f00f7d</url>
-                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.2.201409121644:maven-plugin:null:runtime:b2cb310459d082db505fdfa66dbadd4d8bac8e34</urn>
-                                        <urn>org.eluder.coveralls:coveralls-maven-plugin:3.0.1:maven-plugin:null:runtime:3907ee5cf1e5c85af7bb90e486ce4c7b1408a552</urn>
+                                        <urn>org.sonatype.plugins:nexus-staging-maven-plugin:1.6.5:maven-plugin:null:runtime:455ca2aa8cd14a06608f1538bd6a1efd09561563</urn>
+                                        <urn>postgresql:postgresql:9.1-901.jdbc4:jar:null:compile:153f2f92a786f12fc111d0111f709012df87c808</urn>
                                         <!-- A check for the rules themselves -->
                                         <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                                     </urns>
@@ -254,7 +255,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.2.201409121644</version>
+                <version>0.7.4.201502262128</version>
                 <configuration>
                     <excludes>
                         <exclude>**/Protos*.class</exclude> <!-- Exclude generated protobuf classes -->
@@ -307,7 +308,7 @@
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.0</version>
             </plugin>
 
             <!-- Create a bundled executable test jar that runs the regtester/pulltester.
