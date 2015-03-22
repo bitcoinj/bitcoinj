@@ -186,7 +186,7 @@
                                         <urn>org.apache.maven.plugins:maven-shade-plugin:2.3:maven-plugin:null:runtime:d136adc7abccc9c12adcad6ae7a9bc51b2b7184b</urn>
                                         <urn>org.apache.maven.plugins:maven-site-plugin:3.3:maven-plugin:null:runtime:77ba1752b1ac4c4339d6f11554800960a56a4ae1</urn>
                                         <urn>org.apache.maven.plugins:maven-source-plugin:2.1.2:maven-plugin:null:runtime:35154aa8e6e0e84c2b5c10c3d5220d65670ba984</urn>
-                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.12.4:maven-plugin:null:runtime:2b435f7f77777d2e62354fdc690da3f1dc47a26b</urn>
+                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.18.1:maven-plugin:null:runtime:402fd3066fd6d85ea4a1a3e7cd82a7e35037e6e8</urn>
                                         <urn>org.codehaus.mojo:cobertura-maven-plugin:2.6:maven-plugin:null:runtime:5204735a0642b42f5647d8ec876d4301e328c0d5</urn>
                                         <urn>org.easymock:easymock:3.0:jar:null:test:f28a4c31c330f95c9acbf1108cea19952b5c496f</urn>
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
@@ -298,7 +298,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.12.4</version>
                 <configuration>
                     <argLine>${surefireArgLine}</argLine> <!-- This is required for code coverage to work. -->
                 </configuration>

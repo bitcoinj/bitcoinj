@@ -143,6 +143,10 @@
           <artifactId>cobertura-maven-plugin</artifactId>
           <version>2.6</version>
         </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.18.1</version>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
@@ -164,6 +168,10 @@
         <optional>true</optional>
       </dependency>
   </dependencies>
+
+  <prerequisites>
+      <maven>2.2.1</maven>
+  </prerequisites>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
