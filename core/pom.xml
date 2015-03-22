@@ -136,6 +136,7 @@
                         <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
                     </links>
                     <detectJavaApiLink/>
+                    <quiet>true</quiet>
                 </configuration>
             </plugin>
 
