@@ -245,6 +245,15 @@
                 </executions>
             </plugin>
 
+            <!-- Unit tests plugin, to skip runing test add -Dmaven.test.skip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <runOrder>alphabetical</runOrder>
+                </configuration>
+            </plugin>
+
             <!-- Create a bundled executable test jar that runs the regtester/pulltester.
                  The comparison tool is kind of messy and badly needs a seriously refactoring.
                  It depends on classes which are only in the test tree so we must do some
