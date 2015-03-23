@@ -141,6 +141,14 @@ public class TransactionConfidence implements Serializable {
     }
 
     /**
+     * In case the class gets created from a serialised version, we need to recreate the listeners object as it is set as transient and only created in the constructor.
+     */
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
+    }
+
+    /**
      * <p>A confidence listener is informed when the level of {@link TransactionConfidence} is updated by something, like
      * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
      * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
