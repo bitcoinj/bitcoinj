@@ -204,27 +204,6 @@ public class TransactionTest {
     }
     
     @Test
-    public void testEstimatedLockTime_WhenParameterSignifiesSeconds() {
-    	int TEST_LOCK_TIME = Transaction.LOCKTIME_THRESHOLD + 1;
-    	
-    	BlockChain mockBlockChain = createMock(BlockChain.class);
-    	
-    	Transaction sut = newTransaction();
-
-    	sut.setLockTime(TEST_LOCK_TIME); // more than five hundred million 
-    	
-    	replay(mockBlockChain);
-    	
-    	Date estimateLockTime = sut.estimateLockTime(mockBlockChain);
-    	
-    	Calendar cal = Calendar.getInstance();
-    	cal.set(1985, 10, 4, 17, 53, 21);
-    	cal.set(Calendar.MILLISECOND, 0);
-    	
-    	assertEquals(cal.getTime().equals(estimateLockTime), true);
-    }
-    
-    @Test
     public void testOptimalEncodingMessageSize() {
 		Transaction sut = new Transaction(PARAMS);
 		
