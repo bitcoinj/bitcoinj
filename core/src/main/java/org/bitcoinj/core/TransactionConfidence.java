@@ -141,7 +141,8 @@ public class TransactionConfidence implements Serializable {
     }
 
     /**
-     * In case the class gets created from a serialised version, we need to recreate the listeners object as it is set as transient and only created in the constructor.
+     * In case the class gets created from a serialised version, we need to recreate the listeners object as it is set 
+     * as transient and only created in the constructor.
      */
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
