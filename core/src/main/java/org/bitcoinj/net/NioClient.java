@@ -17,14 +17,20 @@
 
 package org.bitcoinj.net;
 
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
+import com.google.common.base.*;
+import com.google.common.util.concurrent.*;
+import org.slf4j.*;
+
+import java.io.*;
+import java.net.*;
+import java.nio.*;
 
 /**
  * Creates a simple connection to a server using a {@link StreamParser} to process data.
  */
 public class NioClient implements MessageWriteTarget {
+    private static final Logger log = LoggerFactory.getLogger(NioClient.class);
+
     private final Handler handler;
     private final NioClientManager manager = new NioClientManager();
 
@@ -96,7 +102,16 @@ public class NioClient implements MessageWriteTarget {
         manager.startAsync();
         manager.awaitRunning();
         handler = new Handler(parser, connectTimeoutMillis);
-        manager.openConnection(serverAddress, handler);
+        Futures.addCallback(manager.openConnection(serverAddress, handler), new FutureCallback<SocketAddress>() {
+            @Override
+            public void onSuccess(SocketAddress result) {
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t));
+            }
+        });
     }
 
     @Override

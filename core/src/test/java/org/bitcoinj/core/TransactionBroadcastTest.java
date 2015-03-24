@@ -73,7 +73,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     public void fourPeers() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(params);
-        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, blockChain.getContext(), tx);
+        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
         broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
             @Override
@@ -102,9 +102,8 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(0.0, lastProgress.get(), 0.0);
         inbound(channels[1], InventoryMessage.with(tx));
         pingAndWait(channels[1]);
+        future.get();
         Threading.waitForUserCode();
-        // FIXME flaky test - future is not handled on user thread
-        assertTrue(future.isDone());
         assertEquals(1.0, lastProgress.get(), 0.0);
     }
 
@@ -112,7 +111,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     public void rejectHandling() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(params);
-        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, blockChain.getContext(), tx);
+        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         ListenableFuture<Transaction> future = broadcast.broadcast();
         // 0 and 3 are randomly selected to receive the broadcast.
         assertEquals(tx, outbound(channels[1]));

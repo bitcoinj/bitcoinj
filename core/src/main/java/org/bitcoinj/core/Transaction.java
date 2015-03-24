@@ -116,7 +116,7 @@ public class Transaction extends ChildMessage implements Serializable {
     private transient Sha256Hash hash;
 
     // Data about how confirmed this tx is. Serialized, may be null. 
-    private TransactionConfidence confidence;
+    @Nullable private TransactionConfidence confidence;
 
     // Records a map of which blocks the transaction has appeared in (keys) to an index within that block (values).
     // The "index" is not a real index, instead the values are only meaningful relative to each other. For example,
@@ -376,11 +376,23 @@ public class Transaction extends ChildMessage implements Serializable {
         return v;
     }
 
+    @Nullable private Coin cachedValue;
+    @Nullable private TransactionBag cachedForBag;
+
     /**
      * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
      */
     public Coin getValue(TransactionBag wallet) throws ScriptException {
-        return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
+        // FIXME: TEMP PERF HACK FOR ANDROID - this crap can go away once we have a real payments API.
+        boolean isAndroid = Utils.isAndroidRuntime();
+        if (isAndroid && cachedValue != null && cachedForBag == wallet)
+            return cachedValue;
+        Coin result = getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
+        if (isAndroid) {
+            cachedValue = result;
+            cachedForBag = wallet;
+        }
+        return result;
     }
 
     /**
@@ -400,27 +412,6 @@ public class Transaction extends ChildMessage implements Serializable {
             fee = fee.subtract(output.getValue());
         }
         return fee;
-    }
-
-    boolean disconnectInputs() {
-        boolean disconnected = false;
-        maybeParse();
-        for (TransactionInput input : inputs) {
-            disconnected |= input.disconnect();
-        }
-        return disconnected;
-    }
-
-    /**
-     * Returns true if every output is marked as spent.
-     */
-    public boolean isEveryOutputSpent() {
-        maybeParse();
-        for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending())
-                return false;
-        }
-        return true;
     }
 
     /**
@@ -1129,17 +1120,34 @@ public class Transaction extends ChildMessage implements Serializable {
         return outputs.get((int)index);
     }
 
-    /** Returns the confidence object that is owned by this transaction object. */
-    public synchronized TransactionConfidence getConfidence() {
-        if (confidence == null) {
-            confidence = new TransactionConfidence(getHash());
-        }
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     * referenced by the implicit {@link Context}.
+     */
+    public TransactionConfidence getConfidence() {
+        return getConfidence(Context.get());
+    }
+
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     * referenced by the given {@link Context}.
+     */
+    public TransactionConfidence getConfidence(Context context) {
+        return getConfidence(context.getConfidenceTable());
+    }
+
+    /**
+     * Returns the confidence object for this transaction from the {@link org.bitcoinj.core.TxConfidenceTable}
+     */
+    public TransactionConfidence getConfidence(TxConfidenceTable table) {
+        if (confidence == null)
+            confidence = table.getOrCreate(getHash()) ;
         return confidence;
     }
 
     /** Check if the transaction has a known confidence */
-    public synchronized boolean hasConfidence() {
-        return confidence != null && confidence.getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
+    public boolean hasConfidence() {
+        return getConfidence().getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }
 
     @Override

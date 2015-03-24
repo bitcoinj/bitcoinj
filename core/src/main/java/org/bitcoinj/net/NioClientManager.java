@@ -18,6 +18,7 @@ package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.*;
+import org.bitcoinj.utils.*;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -188,9 +189,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
         return new Executor() {
             @Override
             public void execute(Runnable command) {
-                Thread thread = new Thread(command, "NioClientManager");
-                thread.setDaemon(true);
-                thread.start();
+                new ContextPropagatingThreadFactory("NioClientManager").newThread(command).start();
             }
         };
     }

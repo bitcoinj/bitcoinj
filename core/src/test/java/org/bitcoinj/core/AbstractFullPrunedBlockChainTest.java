@@ -43,13 +43,13 @@ import static org.junit.Assert.*;
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
-public abstract class AbstractFullPrunedBlockChainTest
-{
+public abstract class AbstractFullPrunedBlockChainTest {
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
     protected NetworkParameters params;
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
+    protected Context context;
 
     @Before
     public void setUp() throws Exception {
@@ -59,6 +59,7 @@ public abstract class AbstractFullPrunedBlockChainTest
                 return 10000;
             }
         };
+        context = new Context(params);
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)

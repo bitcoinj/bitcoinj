@@ -352,11 +352,16 @@ public class WalletTest extends TestWithWallet {
         basicSanityChecks(wallet, t2, destination);
 
         // Broadcast the transaction and commit.
+        List<TransactionOutput> unspents1 = wallet.getUnspents();
+        assertEquals(1, unspents1.size());
         broadcastAndCommit(wallet, t2);
+        List<TransactionOutput> unspents2 = wallet.getUnspents();
+        assertNotEquals(unspents1, unspents2.size());
 
         // Now check that we can spend the unconfirmed change, with a new change address of our own selection.
         // (req.aesKey is null for unencrypted / the correct aesKey for encrypted.)
-        spendUnconfirmedChange(wallet, t2, req.aesKey);
+        wallet = spendUnconfirmedChange(wallet, t2, req.aesKey);
+        assertNotEquals(unspents2, wallet.getUnspents());
     }
 
     private void receiveATransaction(Wallet wallet, Address toAddress) throws Exception {
@@ -422,7 +427,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, txns.size());
     }
 
-    private void spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
+    private Wallet spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
         if (wallet.getTransactionSigners().size() == 1)   // don't bother reconfiguring the p2sh wallet
             wallet = roundTrip(wallet);
         Coin v3 = valueOf(0, 49);
@@ -444,6 +449,7 @@ public class WalletTest extends TestWithWallet {
         wallet.receiveFromBlock(t3, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         wallet.notifyNewBestBlock(bp.storedBlock);
         assertTrue(wallet.isConsistent());
+        return wallet;
     }
 
     @Test
@@ -1198,8 +1204,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
         StoredBlock b3 = createFakeBlock(blockStore, t1).storedBlock;
         wallet.receiveFromBlock(t1, b3, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT, wallet.getWatchedBalance());
+        assertEquals(CENT, wallet.getBalance());
 
         // We can't spend watched balances
         Address notMyAddr = new ECKey().toAddress(params);

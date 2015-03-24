@@ -84,8 +84,15 @@ public class WalletAppKit extends AbstractIdleService {
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected PeerDiscovery discovery;
 
+    protected volatile Context context;
+
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this.params = checkNotNull(params);
+        this(Context.getOrCreate(params), directory, filePrefix);
+    }
+
+    public WalletAppKit(Context context, File directory, String filePrefix) {
+        this.context = context;
+        this.params = checkNotNull(context.getParams());
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
         if (!Utils.isAndroidRuntime()) {
@@ -241,6 +248,7 @@ public class WalletAppKit extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
+        Context.propagate(context);
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());

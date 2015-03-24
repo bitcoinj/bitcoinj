@@ -33,6 +33,7 @@ public class ListenerRegistration<T> {
         this.executor = checkNotNull(executor);
     }
 
+    /** Returns true if the listener was removed, else false. */
     public static <T> boolean removeFromList(T listener, List<? extends ListenerRegistration<T>> list) {
         checkNotNull(listener);
 

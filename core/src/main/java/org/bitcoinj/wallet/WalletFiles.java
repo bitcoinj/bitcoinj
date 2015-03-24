@@ -17,7 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.core.*;
 import org.bitcoinj.utils.Threading;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
@@ -88,6 +88,7 @@ public class WalletFiles {
 
         this.saver = new Callable<Void>() {
             @Override public Void call() throws Exception {
+                Context.propagate(wallet.getContext());
                 // Runs in an auto save thread.
                 if (!savePending.getAndSet(false)) {
                     // Some other scheduled request already beat us to it.

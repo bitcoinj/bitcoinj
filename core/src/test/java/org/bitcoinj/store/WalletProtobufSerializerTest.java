@@ -64,6 +64,7 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
+        Context ctx = new Context(params);
         myWatchedKey = new ECKey();
         myWallet = new Wallet(params);
         myKey = new ECKey();

@@ -147,7 +147,7 @@ public class LazyECPoint {
     }
 
     public ECFieldElement getY() {
-        return get().getY();
+        return this.normalize().getYCoord();
     }
 
     public ECPoint twice() {
@@ -163,7 +163,7 @@ public class LazyECPoint {
     }
 
     public ECFieldElement getX() {
-        return get().getX();
+        return this.normalize().getXCoord();
     }
 
     @Override
