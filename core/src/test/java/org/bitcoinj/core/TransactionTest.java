@@ -156,34 +156,6 @@ public class TransactionTest {
     }
     
     @Test
-    public void testIsEveryOutputSpent_withZeroOutputsAvailableForSpending() {
-        TransactionOutput to = createMock(TransactionOutput.class);
-        EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
-        
-        Transaction sut = newTransaction(to);
-        
-        replay(to);
-        
-        boolean rtn = sut.isEveryOutputSpent();
-        
-        assertEquals(rtn, true);
-    }
-
-    @Test
-    public void testIsEveryOutputSpent_withOutputsAvailableForSpending() {
-        TransactionOutput to = createMock(TransactionOutput.class);
-        EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
-        
-        Transaction sut = newTransaction(to);
-        
-        replay(to);
-        
-        boolean rtn = sut.isEveryOutputSpent();
-        
-        assertEquals(rtn, false);
-    }
-    
-    @Test
     public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
         int TEST_LOCK_TIME = 20;
         Date now = Calendar.getInstance().getTime();
