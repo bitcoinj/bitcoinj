@@ -140,6 +140,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
                         processMessage(serializer.deserializePayload(header, ByteBuffer.wrap(largeReadBuffer)));
                         largeReadBuffer = null;
                         header = null;
+                        firstMessage = false;
                     } else // ...or just returning if we don't have enough bytes yet
                         return buff.position();
                 }
