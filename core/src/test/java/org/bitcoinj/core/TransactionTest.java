@@ -1,8 +1,17 @@
 package org.bitcoinj.core;
 
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.junit.Before;
+import org.junit.Test;
+import org.easymock.EasyMock;
+
+import static org.junit.Assert.assertEquals;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -10,15 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.testing.FakeTxBuilder;
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
@@ -86,7 +86,7 @@ public class TransactionTest {
         tx.addInput(input.duplicateDetached());
         tx.verify();
     }
-    
+
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() throws Exception {
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
