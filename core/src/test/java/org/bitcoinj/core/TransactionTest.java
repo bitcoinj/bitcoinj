@@ -159,7 +159,7 @@ public class TransactionTest {
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
         Transaction tx = newTransaction();
-        tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million 
+        tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
 
@@ -237,7 +237,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = newTransaction();
-        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) { 
+        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException("");
