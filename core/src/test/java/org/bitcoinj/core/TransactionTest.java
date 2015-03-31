@@ -40,12 +40,7 @@ public class TransactionTest {
     }
 
     private Transaction newTransaction(boolean newToAddress) {
-        Address addr = ADDRESS;
-
-        if (newToAddress) {
-            addr = new ECKey().toAddress(PARAMS);
-        }
-
+        Address addr = newToAddress ? new ECKey().toAddress(PARAMS): ADDRESS;
         return newTransaction(new TransactionOutput(PARAMS, null, Coin.COIN, addr));
     }
 
@@ -54,11 +49,11 @@ public class TransactionTest {
     }
 
     private Transaction newTransaction(TransactionOutput to) {
-        Transaction rtn = new Transaction(PARAMS);
-        rtn.addOutput(to);
-        rtn.addInput(dummy.getOutput(0));
+        Transaction newTx = new Transaction(PARAMS);
+        newTx.addOutput(to);
+        newTx.addInput(dummy.getOutput(0));
 
-        return rtn;
+        return newTx;
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
@@ -131,13 +126,13 @@ public class TransactionTest {
         EasyMock.expect(to.isMineOrWatched(mockTB)).andReturn(true);
         EasyMock.expect(to.getSpentBy()).andReturn(new TransactionInput(PARAMS, null, new byte[0]));
 
-        Transaction sut = newTransaction(to);
+        Transaction tx = newTransaction(to);
 
         replay(to);
 
-        boolean rtn = sut.isConsistent(mockTB, false);
+        boolean isConsistent = tx.isConsistent(mockTB, false);
 
-        assertEquals(rtn, false);
+        assertEquals(isConsistent, false);
     }
 
     @Test
@@ -146,13 +141,13 @@ public class TransactionTest {
         EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
         EasyMock.expect(to.getSpentBy()).andReturn(null);
 
-        Transaction sut = newTransaction(to);
+        Transaction tx = newTransaction(to);
 
         replay(to);
 
-        boolean rtn = sut.isConsistent(createMock(TransactionBag.class), false);
+        boolean isConsistent = tx.isConsistent(createMock(TransactionBag.class), false);
 
-        assertEquals(rtn, false);
+        assertEquals(isConsistent, false);
     }
 
     @Test
@@ -161,77 +156,68 @@ public class TransactionTest {
         Date now = Calendar.getInstance().getTime();
 
         BlockChain mockBlockChain = createMock(BlockChain.class);
-
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
-        Transaction sut = newTransaction();
-
-        sut.setLockTime(TEST_LOCK_TIME); // less than five hundred million 
+        Transaction tx = newTransaction();
+        tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million 
 
         replay(mockBlockChain);
 
-        Date estimateLockTime = sut.estimateLockTime(mockBlockChain);
-
-        assertEquals(estimateLockTime, now);
+        assertEquals(tx.estimateLockTime(mockBlockChain), now);
     }
 
     @Test
     public void testOptimalEncodingMessageSize() {
-        Transaction sut = new Transaction(PARAMS);
+        Transaction tx = new Transaction(PARAMS);
 
-        int length = sut.length;
+        int length = tx.length;
 
         // add basic transaction input, check the length
-        sut.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
-        length += getCombinedLength(sut.getOutputs());
+        tx.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
+        length += getCombinedLength(tx.getOutputs());
 
         // add basic output, check the length
-        sut.addInput(dummy.getOutput(0));
-        length += getCombinedLength(sut.getInputs());
+        tx.addInput(dummy.getOutput(0));
+        length += getCombinedLength(tx.getInputs());
 
         // optimal encoding size should equal the length we just calculated
-        assertEquals(sut.getOptimalEncodingMessageSize(), length);
+        assertEquals(tx.getOptimalEncodingMessageSize(), length);
     }
 
     private int getCombinedLength(List<? extends Message> list) {
-        int rtn = 0;
-
-        for (Message m: list) {
-            rtn += m.getMessageSize() + 1;
-        }
-
-        return rtn;
+        int sumOfAllMsgSizes = 0;
+        for (Message m: list) { sumOfAllMsgSizes += m.getMessageSize() + 1; }
+        return sumOfAllMsgSizes;
     }
 
     @Test
     public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Transaction sut = new Transaction(PARAMS);
-        sut.addInput(dummy.getOutput(0));
+        Transaction tx = new Transaction(PARAMS);
+        tx.addInput(dummy.getOutput(0));
 
         // make this into a coinbase transaction
-        TransactionInput input = sut.getInput(0);
+        TransactionInput input = tx.getInput(0);
         input.getOutpoint().setHash(Sha256Hash.ZERO_HASH);
         input.getOutpoint().setIndex(-1);
 
-        sut.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertEquals(sut.isMature(), false);
+        tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
+        assertEquals(tx.isMature(), false);
 
-        sut.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertEquals(sut.isMature(), false);
+        tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+        assertEquals(tx.isMature(), false);
 
-        sut.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertEquals(sut.isMature(), false);
+        tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
+        assertEquals(tx.isMature(), false);
     }
 
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction sut = newTransaction();
-
-        TransactionInput input = sut.getInput(0);
+        Transaction tx = newTransaction();
+        TransactionInput input = tx.getInput(0);
         input.setSequenceNumber(42);
 
         int TEST_LOCK_TIME = 20;
-        sut.setLockTime(TEST_LOCK_TIME);
+        tx.setLockTime(TEST_LOCK_TIME);
 
         Calendar cal = Calendar.getInstance();
         cal.set(2085, 10, 4, 17, 53, 21);
@@ -242,7 +228,7 @@ public class TransactionTest {
 
         replay(mockBlockChain);
 
-        String str = sut.toString(mockBlockChain);
+        String str = tx.toString(mockBlockChain);
 
         assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
         assertEquals(str.contains("estimated to be reached at"), true);
@@ -250,56 +236,50 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction sut = newTransaction();
-        TransactionInput ti = new TransactionInput(PARAMS, sut, new byte[0]) { 
+        Transaction tx = newTransaction();
+        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) { 
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException("");
             }
         };
 
-        sut.addInput(ti);
-
-        String str = sut.toString();
-
-        assertEquals(str.contains("[exception: "), true);
+        tx.addInput(ti);
+        assertEquals(tx.toString().contains("[exception: "), true);
     }
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction sut = new Transaction(PARAMS);
-
-        String str = sut.toString();
-
-        assertEquals(str.contains("No inputs!"), true);
+        Transaction tx = new Transaction(PARAMS);
+        assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
     @Test
     public void testTheTXByHeightComparator() {
         final boolean USE_UNIQUE_ADDRESS = true;
-        Transaction sut1 = newTransaction(USE_UNIQUE_ADDRESS);
-        sut1.getConfidence().setAppearedAtChainHeight(1);
+        Transaction tx1 = newTransaction(USE_UNIQUE_ADDRESS);
+        tx1.getConfidence().setAppearedAtChainHeight(1);
 
-        Transaction sut2 = newTransaction(USE_UNIQUE_ADDRESS);
-        sut2.getConfidence().setAppearedAtChainHeight(2);
+        Transaction tx2 = newTransaction(USE_UNIQUE_ADDRESS);
+        tx2.getConfidence().setAppearedAtChainHeight(2);
 
-        Transaction sut3 = newTransaction(USE_UNIQUE_ADDRESS);
-        sut3.getConfidence().setAppearedAtChainHeight(3);
+        Transaction tx3 = newTransaction(USE_UNIQUE_ADDRESS);
+        tx3.getConfidence().setAppearedAtChainHeight(3);
 
         SortedSet<Transaction> set = new TreeSet<Transaction>(Transaction.SORT_TX_BY_HEIGHT);
-        set.add(sut2);
-        set.add(sut1);
-        set.add(sut3);
+        set.add(tx2);
+        set.add(tx1);
+        set.add(tx3);
 
         Iterator<Transaction> iterator = set.iterator();
 
-        assertEquals(sut1.equals(sut2), false);
-        assertEquals(sut1.equals(sut3), false);
-        assertEquals(sut1.equals(sut1), true);
+        assertEquals(tx1.equals(tx2), false);
+        assertEquals(tx1.equals(tx3), false);
+        assertEquals(tx1.equals(tx1), true);
 
-        assertEquals(iterator.next().equals(sut3), true);
-        assertEquals(iterator.next().equals(sut2), true);
-        assertEquals(iterator.next().equals(sut1), true);
+        assertEquals(iterator.next().equals(tx3), true);
+        assertEquals(iterator.next().equals(tx2), true);
+        assertEquals(iterator.next().equals(tx1), true);
         assertEquals(iterator.hasNext(), false);
     }
 
@@ -309,19 +289,11 @@ public class TransactionTest {
         Address addr = key.toAddress(PARAMS);
         Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
 
-        Transaction sut = new Transaction(PARAMS);
-        sut.addOutput(fakeTx.getOutput(0));
+        Transaction tx = new Transaction(PARAMS);
+        tx.addOutput(fakeTx.getOutput(0));
 
-        Script mockScript = new Script(new byte[0]) {
-            public boolean isSentToRawPubKey() {
-                return false;
-            }
+        Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
 
-            public boolean isSentToAddress() {
-                return false;
-            }
-        };
-
-        sut.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), mockScript, key);
+        tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), script, key);
     }
 }
