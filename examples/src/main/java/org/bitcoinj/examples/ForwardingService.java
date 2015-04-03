@@ -17,20 +17,29 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.File;
+
+import org.bitcoinj.core.AbstractWalletEventListener;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.Wallet;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.TransactionUtils;
+
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
-
-import java.io.File;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -84,7 +93,7 @@ public class ForwardingService {
                 // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
                 //
                 // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-                Coin value = tx.getValueSentToMe(w);
+                Coin value = TransactionUtils.getValueSentToTx(tx, w);
                 System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
                 System.out.println("Transaction will be forwarded after it confirms.");
                 // Wait until it's made it into the block chain (may run immediately if it's already there).
@@ -119,7 +128,7 @@ public class ForwardingService {
 
     private static void forwardCoins(Transaction tx) {
         try {
-            Coin value = tx.getValueSentToMe(kit.wallet());
+            Coin value = TransactionUtils.getValueSentToTx(tx, kit.wallet());
             System.out.println("Forwarding " + value.toFriendlyString());
             // Now send the coins back! Send with a small fee attached to ensure rapid confirmation.
             final Coin amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);

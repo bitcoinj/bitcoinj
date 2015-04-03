@@ -17,26 +17,36 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.util.concurrent.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Coin.valueOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Random;
+import java.util.concurrent.ExecutionException;
+
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.utils.TransactionUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Random;
-import java.util.concurrent.*;
-
-import static org.bitcoinj.core.Coin.*;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.*;
+import com.google.common.util.concurrent.AtomicDouble;
+import com.google.common.util.concurrent.ListenableFuture;
 
 @RunWith(value = Parameterized.class)
 public class TransactionBroadcastTest extends TestWithPeerGroup {
@@ -210,7 +220,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         }
         assertNotNull(t1);
         // 49 BTC in change.
-        assertEquals(valueOf(49, 0), t1.getValueSentToMe(wallet));
+        assertEquals(valueOf(49, 0), TransactionUtils.getValueSentToTx(t1, wallet));
         // The future won't complete until it's heard back from the network on p2.
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(t1);

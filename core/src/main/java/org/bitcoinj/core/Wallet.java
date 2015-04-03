@@ -1455,14 +1455,14 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
 
             for (Transaction tx : unspent.values()) {
-                if (!tx.isConsistent(this, false)) {
+                if (!TransactionUtils.isTransactionUnspent(tx, this)) {
                     success = false;
                     log.error("Inconsistent unspent tx {}", tx.getHashAsString());
                 }
             }
 
             for (Transaction tx : spent.values()) {
-                if (!tx.isConsistent(this, true)) {
+                if (!TransactionUtils.isTransactionSpent(tx, this)) {
                     success = false;
                     log.error("Inconsistent spent tx {}", tx.getHashAsString());
                 }
@@ -1580,8 +1580,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
                 return;
             }
-            Coin valueSentToMe = tx.getValueSentToMe(this);
-            Coin valueSentFromMe = tx.getValueSentFromMe(this);
+            Coin valueSentToMe = TransactionUtils.getValueSentToTx(tx, this);
+            Coin valueSentFromMe = TransactionUtils.getValueSentFromTx(tx, this);
             if (log.isInfoEnabled()) {
                 log.info(String.format("Received a pending transaction %s that spends %s from our own wallet," +
                         " and sends us %s", tx.getHashAsString(), valueSentFromMe.toFriendlyString(),
@@ -1681,8 +1681,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public boolean isTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
-            return tx.getValueSentFromMe(this).signum() > 0 ||
-                   tx.getValueSentToMe(this).signum() > 0 ||
+            return TransactionUtils.getValueSentFromTx(tx, this).signum() > 0 ||
+                   TransactionUtils.getValueSentToTx(tx, this).signum() > 0 ||
                    checkForDoubleSpendAgainstPending(tx, false);
         } finally {
             lock.unlock();
@@ -1759,8 +1759,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         boolean bestChain = blockType == BlockChain.NewBlockType.BEST_CHAIN;
         boolean sideChain = blockType == BlockChain.NewBlockType.SIDE_CHAIN;
 
-        Coin valueSentFromMe = tx.getValueSentFromMe(this);
-        Coin valueSentToMe = tx.getValueSentToMe(this);
+        Coin valueSentFromMe = TransactionUtils.getValueSentFromTx(tx, this);
+        Coin valueSentToMe = TransactionUtils.getValueSentToTx(tx, this);
         Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         log.info("Received tx{} for {}: {} [{}] in block {}", sideChain ? " on a side chain" : "",
@@ -1966,17 +1966,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // Now make sure it ends up in the right pool. Also, handle the case where this TX is double-spending
         // against our pending transactions. Note that a tx may double spend our pending transactions and also send
         // us money/spend our money.
-        boolean hasOutputsToMe = tx.getValueSentToMe(this, true).signum() > 0;
+        boolean hasOutputsToMe = TransactionUtils.getValueSentToTx(tx, this, true).signum() > 0;
         if (hasOutputsToMe) {
             // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
-            if (tx.isEveryOwnedOutputSpent(this)) {
+            if (TransactionUtils.isEveryOwnedOutputSpent(tx, this)) {
                 log.info("  tx {} ->spent (by pending)", tx.getHashAsString());
                 addWalletTransaction(Pool.SPENT, tx);
             } else {
                 log.info("  tx {} ->unspent", tx.getHashAsString());
                 addWalletTransaction(Pool.UNSPENT, tx);
             }
-        } else if (tx.getValueSentFromMe(this).signum() > 0) {
+        } else if (TransactionUtils.getValueSentFromTx(tx, this).signum() > 0) {
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  tx {} ->spent", tx.getHashAsString());
             addWalletTransaction(Pool.SPENT, tx);
@@ -2152,7 +2152,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     private void maybeMovePool(Transaction tx, String context) {
         checkState(lock.isHeldByCurrentThread());
-        if (tx.isEveryOwnedOutputSpent(this)) {
+        if (TransactionUtils.isEveryOwnedOutputSpent(tx, this)) {
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {
@@ -2204,7 +2204,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // they are showing to the user in qr codes etc.
             markKeysAsUsed(tx);
             try {
-                Coin valueSentFromMe = tx.getValueSentFromMe(this);
+                Coin valueSentFromMe = TransactionUtils.getValueSentFromTx(tx, this);
                 Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
                     checkBalanceFuturesLocked(null);
@@ -2793,9 +2793,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         for (Transaction tx : txns) {
             try {
                 builder.append("Sends ");
-                builder.append(tx.getValueSentFromMe(this).toFriendlyString());
+                builder.append(TransactionUtils.getValueSentFromTx(tx, this).toFriendlyString());
                 builder.append(" and receives ");
-                builder.append(tx.getValueSentToMe(this).toFriendlyString());
+                builder.append(TransactionUtils.getValueSentToTx(tx, this).toFriendlyString());
                 builder.append(", total value ");
                 builder.append(tx.getValue(this).toFriendlyString());
                 builder.append(".\n");
