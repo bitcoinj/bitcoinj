@@ -214,12 +214,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testFirst100KBlocks() throws Exception {
         NetworkParameters params = MainNetParams.get();
+        Context context = new Context(params);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
         
         store = createStore(params, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(params, store);
+        chain = new FullPrunedBlockChain(context, store);
         for (Block block : loader)
             chain.add(block);
         try {

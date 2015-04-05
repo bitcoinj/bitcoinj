@@ -209,7 +209,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * {@link #loadFromFile}.
      */
     public Wallet(NetworkParameters params) {
-        this(params, new KeyChainGroup(params));
+        this(Context.getOrCreate(params));
     }
 
     /**

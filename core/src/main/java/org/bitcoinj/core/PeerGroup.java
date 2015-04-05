@@ -249,24 +249,36 @@ public class PeerGroup implements TransactionBroadcaster {
     /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
     private volatile boolean vBloomFilteringEnabled = true;
 
-    /**
-     * Creates a PeerGroup with the given parameters. No chain is provided so this node will report its chain height
-     * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
-     * in downloading block data.
-     *
-     * @param params Network parameters
-     */
-
+    /** See {@link #PeerGroup(Context)} */
     public PeerGroup(NetworkParameters params) {
         this(params, null);
     }
 
     /**
-     * Creates a PeerGroup for the given network and chain. Blocks will be passed to the chain as they are broadcast
+     * Creates a PeerGroup with the given context. No chain is provided so this node will report its chain height
+     * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
+     * in downloading block data.
+     */
+    public PeerGroup(Context context) {
+        this(context, null);
+    }
+
+    /** See {@link #PeerGroup(Context, AbstractBlockChain)} */
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
+        this(Context.getOrCreate(params), chain, new NioClientManager());
+    }
+
+    /**
+     * Creates a PeerGroup for the given context and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
      */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
-        this(params, chain, new NioClientManager());
+    public PeerGroup(Context context, @Nullable AbstractBlockChain chain) {
+        this(context, chain, new NioClientManager());
+    }
+
+    /** See {@link #newWithTor(Context, AbstractBlockChain, TorClient)} */
+    public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
+        return newWithTor(Context.getOrCreate(params), chain, torClient);
     }
 
     /**
@@ -283,33 +295,38 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @throws java.util.concurrent.TimeoutException if Tor fails to start within 20 seconds.
      */
-    public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
+    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
         checkNotNull(torClient);
         DRMWorkaround.maybeDisableExportControls();
         BlockingClientManager manager = new BlockingClientManager(torClient.getSocketFactory());
         final int CONNECT_TIMEOUT_MSEC = TOR_TIMEOUT_SECONDS * 1000;
         manager.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
-        PeerGroup result = new PeerGroup(params, chain, manager, torClient);
+        PeerGroup result = new PeerGroup(context, chain, manager, torClient);
         result.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
-        result.addPeerDiscovery(new TorDiscovery(params, torClient));
+        result.addPeerDiscovery(new TorDiscovery(context.getParams(), torClient));
         return result;
     }
 
-    /**
-     * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
-     * connections and keep track of existing ones.
-     */
+    /** See {@link #PeerGroup(Context, AbstractBlockChain, ClientConnectionManager)} */
     public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(params, chain, connectionManager, null);
+        this(Context.getOrCreate(params), chain, connectionManager, null);
     }
 
     /**
      * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
      * connections and keep track of existing ones.
      */
-    private PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
-        this.params = checkNotNull(params);
-        this.context = Context.getOrCreate(params);
+    public PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
+        this(context, chain, connectionManager, null);
+    }
+
+    /**
+     * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
+     * connections and keep track of existing ones.
+     */
+    private PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
+        this.context = checkNotNull(context);
+        this.params = context.getParams();
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();

@@ -25,11 +25,12 @@ import org.bitcoinj.store.BlockStoreException;
 import java.util.ArrayList;
 import java.util.List;
 
+// TODO: Rename this class to SPVBlockChain at some point.
+
 /**
- * <p>A BlockChain implements the <i>simplified payment verification</i> mode of the Bitcoin protocol. It is the right
+ * A BlockChain implements the <i>simplified payment verification</i> mode of the Bitcoin protocol. It is the right
  * choice to use for programs that have limited resources as it won't verify transactions signatures or attempt to store
  * all of the block chain. Really, this class should be called SPVBlockChain but for backwards compatibility it is not.
- * </p>
  */
 public class BlockChain extends AbstractBlockChain {
     /** Keeps a map of block hashes to StoredBlocks. */
@@ -44,17 +45,25 @@ public class BlockChain extends AbstractBlockChain {
      * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
+    public BlockChain(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<BlockChainListener>(), blockStore);
+        addWallet(wallet);
+    }
+
+    /** See {@link #BlockChain(Context, Wallet, BlockStore)}} */
     public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<BlockChainListener>(), blockStore);
-        Context.getOrCreate(params);
-        if (wallet != null)
-            addWallet(wallet);
+        this(Context.getOrCreate(params), wallet, blockStore);
     }
 
     /**
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
+    public BlockChain(Context context, BlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<BlockChainListener>(), blockStore);
+    }
+
+    /** See {@link #BlockChain(Context, BlockStore)} */
     public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
         this(params, new ArrayList<BlockChainListener>(), blockStore);
     }
@@ -62,10 +71,14 @@ public class BlockChain extends AbstractBlockChain {
     /**
      * Constructs a BlockChain connected to the given list of listeners and a store.
      */
-    public BlockChain(NetworkParameters params, List<BlockChainListener> wallets,
-                      BlockStore blockStore) throws BlockStoreException {
+    public BlockChain(Context params, List<BlockChainListener> wallets, BlockStore blockStore) throws BlockStoreException {
         super(params, wallets, blockStore);
         this.blockStore = blockStore;
+    }
+
+    /** See {@link #BlockChain(Context, List, BlockStore)} */
+    public BlockChain(NetworkParameters params, List<BlockChainListener> wallets, BlockStore blockStore) throws BlockStoreException {
+        this(Context.getOrCreate(params), wallets, blockStore);
     }
 
     @Override

@@ -137,16 +137,21 @@ public abstract class AbstractBlockChain {
     private double falsePositiveTrend;
     private double previousFalsePositiveRate;
 
+    /** See {@link #AbstractBlockChain(Context, List, BlockStore)} */
+    public AbstractBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
+                              BlockStore blockStore) throws BlockStoreException {
+        this(Context.getOrCreate(params), listeners, blockStore);
+    }
 
     /**
      * Constructs a BlockChain connected to the given list of listeners (eg, wallets) and a store.
      */
-    public AbstractBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
+    public AbstractBlockChain(Context context, List<BlockChainListener> listeners,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
-        this.params = params;
+        this.params = context.getParams();
         this.listeners = new CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>>();
         for (BlockChainListener l : listeners) addListener(l, Threading.SAME_THREAD);
     }

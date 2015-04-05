@@ -396,7 +396,7 @@ public class BlockChainTest {
     @Test
     public void estimatedBlockTime() throws Exception {
         NetworkParameters params = MainNetParams.get();
-        BlockChain prod = new BlockChain(params, new MemoryBlockStore(params));
+        BlockChain prod = new BlockChain(new Context(params), new MemoryBlockStore(params));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).parse("2012-10-23T08:35:05.000-0700"), d);

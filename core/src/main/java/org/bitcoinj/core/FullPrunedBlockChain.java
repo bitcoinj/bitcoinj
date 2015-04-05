@@ -54,32 +54,46 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     private boolean runScripts = true;
 
     /**
-     * Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
+     */
+    public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<BlockChainListener>(), blockStore);
+        addWallet(wallet);
+    }
+
+    /**
+     * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using {@link Wallet#loadFromFile(java.io.File)}
      */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<BlockChainListener>(), blockStore);
-        if (wallet != null)
-            addWallet(wallet);
+        this(Context.getOrCreate(params), wallet, blockStore);
     }
 
-    /**
-     * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
-     * and receiving coins but rather, just want to explore the network data structures.
-     */
+    /** Constructs a block chain connected to the given store. */
+    public FullPrunedBlockChain(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<BlockChainListener>(), blockStore);
+    }
+
+    /** See {@link #FullPrunedBlockChain(Context, Wallet, FullPrunedBlockStore)} */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<BlockChainListener>(), blockStore);
+        this(Context.getOrCreate(params), blockStore);
     }
 
     /**
-     * Constructs a BlockChain connected to the given list of wallets and a store.
+     * Constructs a block chain  connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
-                                FullPrunedBlockStore blockStore) throws BlockStoreException {
-        super(params, listeners, blockStore);
+    public FullPrunedBlockChain(Context context, List<BlockChainListener> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        super(context, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now
         this.chainHead = blockStore.getVerifiedChainHead();
+    }
+
+    /** See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)} */
+    public FullPrunedBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
+                                FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(Context.getOrCreate(params), listeners, blockStore);
     }
 
     @Override
