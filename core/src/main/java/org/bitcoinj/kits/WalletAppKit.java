@@ -86,10 +86,16 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected volatile Context context;
 
+    /**
+     * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     */
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(Context.getOrCreate(params), directory, filePrefix);
+        this(new Context(params), directory, filePrefix);
     }
 
+    /**
+     * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
+     */
     public WalletAppKit(Context context, File directory, String filePrefix) {
         this.context = context;
         this.params = checkNotNull(context.getParams());
@@ -454,6 +460,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
+            Context.propagate(context);
             vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
