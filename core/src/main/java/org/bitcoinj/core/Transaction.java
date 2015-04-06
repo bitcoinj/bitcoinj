@@ -17,25 +17,42 @@
 
 package org.bitcoinj.core;
 
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.core.Utils.doubleDigest;
+import static org.bitcoinj.core.Utils.reverseBytes;
+import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.annotation.Nullable;
+
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.utils.ExchangeRate;
+import org.bitcoinj.utils.TransactionUtils;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
-import java.io.*;
-import java.util.*;
-
-import static org.bitcoinj.core.Utils.*;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -246,52 +263,6 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
-     * include spent outputs or not.
-     */
-    Coin getValueSentToMe(TransactionBag transactionBag, boolean includeSpent) {
-        maybeParse();
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            if (!includeSpent && !o.isAvailableForSpending()) continue;
-            v = v.add(o.getValue());
-        }
-        return v;
-    }
-
-    /*
-     * If isSpent - check that all my outputs spent, otherwise check that there at least
-     * one unspent.
-     */
-    boolean isConsistent(TransactionBag transactionBag, boolean isSpent) {
-        boolean isActuallySpent = true;
-        for (TransactionOutput o : outputs) {
-            if (o.isAvailableForSpending()) {
-                if (o.isMineOrWatched(transactionBag)) isActuallySpent = false;
-                if (o.getSpentBy() != null) {
-                    log.error("isAvailableForSpending != spentBy");
-                    return false;
-                }
-            } else {
-                if (o.getSpentBy() == null) {
-                    log.error("isAvailableForSpending != spentBy");
-                    return false;
-                }
-            }
-        }
-        return isActuallySpent == isSpent;
-    }
-
-    /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
-     */
-    public Coin getValueSentToMe(TransactionBag transactionBag) {
-        return getValueSentToMe(transactionBag, true);
-    }
-
-    /**
      * Returns a map of block [hashes] which contain the transaction mapped to relativity counters, or null if this
      * transaction doesn't have that data because it's not stored in the wallet or because it has never appeared in a
      * block.
@@ -346,48 +317,18 @@ public class Transaction extends ChildMessage implements Serializable {
         appearsInHashes.put(blockHash, relativityOffset);
     }
 
-    /**
-     * Calculates the sum of the inputs that are spending coins with keys in the wallet. This requires the
-     * transactions sending coins to those keys to be in the wallet. This method will not attempt to download the
-     * blocks containing the input transactions if the key is in the wallet but the transactions are not.
-     *
-     * @return sum of the inputs that are spending coins with keys in the wallet
-     */
-    public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
-        maybeParse();
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionInput input : inputs) {
-            // This input is taking value from a transaction in our wallet. To discover the value,
-            // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
-            if (connected == null)
-                continue;
-            // The connected output may be the change to the sender of a previous input sent to this wallet. In this
-            // case we ignore it.
-            if (!connected.isMineOrWatched(wallet))
-                continue;
-            v = v.add(connected.getValue());
-        }
-        return v;
-    }
-
     @Nullable private Coin cachedValue;
     @Nullable private TransactionBag cachedForBag;
 
     /**
-     * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
+     * Returns the difference of {@link TransactionUtils#getValueSentToTx(TransactionBag)} and {@link TransactionUtils#getValueSentFromTx(TransactionBag)}.
      */
     public Coin getValue(TransactionBag wallet) throws ScriptException {
         // FIXME: TEMP PERF HACK FOR ANDROID - this crap can go away once we have a real payments API.
         boolean isAndroid = Utils.isAndroidRuntime();
         if (isAndroid && cachedValue != null && cachedForBag == wallet)
             return cachedValue;
-        Coin result = getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
+        Coin result = TransactionUtils.getValueSentToTx(this, wallet).subtract(TransactionUtils.getValueSentFromTx(this, wallet));
         if (isAndroid) {
             cachedValue = result;
             cachedForBag = wallet;
@@ -424,19 +365,6 @@ public class Transaction extends ChildMessage implements Serializable {
                 return true;
         }
         return false;
-    }
-
-    /**
-     * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
-     * otherwise.
-     */
-    public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
-        maybeParse();
-        for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
-                return false;
-        }
-        return true;
     }
 
     /**
@@ -1080,26 +1008,6 @@ public class Transaction extends ChildMessage implements Serializable {
     public List<TransactionOutput> getOutputs() {
         maybeParse();
         return Collections.unmodifiableList(outputs);
-    }
-
-    /**
-     * <p>Returns the list of transacion outputs, whether spent or unspent, that match a wallet by address or that are
-     * watched by a wallet, i.e., transaction outputs whose script's address is controlled by the wallet and transaction
-     * outputs whose script is watched by the wallet.</p>
-     *
-     * @param transactionBag The wallet that controls addresses and watches scripts.
-     * @return linked list of outputs relevant to the wallet in this transaction
-     */
-    public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
-        maybeParse();
-        List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
-        Coin v = Coin.ZERO;
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            walletOutputs.add(o);
-        }
-
-        return walletOutputs;
     }
 
     /** Randomly re-orders the transaction outputs: good for privacy */

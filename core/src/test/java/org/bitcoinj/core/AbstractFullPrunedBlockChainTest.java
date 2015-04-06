@@ -17,7 +17,17 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.List;
+
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -25,19 +35,14 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.TransactionUtils;
 import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.junit.Assert.*;
+import com.google.common.collect.Lists;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
@@ -329,7 +334,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         assertEquals("Wrong number of PENDING.4", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
         Coin totalPendingTxAmount = Coin.ZERO;
         for (Transaction tx : wallet.getPendingTransactions()) {
-            totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
+            totalPendingTxAmount = totalPendingTxAmount.add(TransactionUtils.getValueSentToTx(tx, wallet));
         }
 
         // The availbale balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
