@@ -135,8 +135,10 @@ public class Peer extends PeerSocketHandler {
         Sha256Hash hash;
         SettableFuture future;
     }
+    // TODO: The types/locking should be rationalised a bit.
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
     @GuardedBy("getAddrFutures") private final LinkedList<SettableFuture<AddressMessage>> getAddrFutures;
+    @Nullable @GuardedBy("lock") private LinkedList<SettableFuture<UTXOsMessage>> getutxoFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock lastPingTimesLock = new ReentrantLock();
@@ -150,8 +152,6 @@ public class Peer extends PeerSocketHandler {
     // A settable future which completes (with this) when the connection is open
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
     private final SettableFuture<Peer> versionHandshakeFuture = SettableFuture.create();
-    // A future representing the results of doing a getUTXOs call.
-    @Nullable private SettableFuture<UTXOsMessage> utxosFuture;
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain.</p>
@@ -402,10 +402,10 @@ public class Peer extends PeerSocketHandler {
                 close();
             }
         } else if (m instanceof UTXOsMessage) {
-            if (utxosFuture != null) {
-                SettableFuture<UTXOsMessage> future = utxosFuture;
-                utxosFuture = null;
-                future.set((UTXOsMessage)m);
+            if (getutxoFutures != null) {
+                SettableFuture<UTXOsMessage> future = getutxoFutures.pollFirst();
+                if (future != null)
+                    future.set((UTXOsMessage) m);
             }
         } else if (m instanceof RejectMessage) {
             log.error("{} {}: Received {}", this, getPeerVersionMessage().subVer, m);
@@ -1619,16 +1619,30 @@ public class Peer extends PeerSocketHandler {
      * Sends a query to the remote peer asking for the unspent transaction outputs (UTXOs) for the given outpoints,
      * with the memory pool included. The result should be treated only as a hint: it's possible for the returned
      * outputs to be fictional and not exist in any transaction, and it's possible for them to be spent the moment
-     * after the query returns.
+     * after the query returns. <b>Most peers do not support this request. You will need to connect to Bitcoin XT
+     * peers if you want this to work.</b>
+     *
+     * @throws ProtocolException if this peer doesn't support the protocol.
      */
     public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
-        if (utxosFuture != null)
-            throw new IllegalStateException("Already fetching UTXOs, wait for previous query to complete first.");
-        if (getPeerVersionMessage().clientVersion < GetUTXOsMessage.MIN_PROTOCOL_VERSION)
-            throw new IllegalStateException("Peer does not support getutxos protocol version");
-        utxosFuture = SettableFuture.create();
-        sendMessage(new GetUTXOsMessage(params, outPoints, true));
-        return utxosFuture;
+        lock.lock();
+        try {
+            VersionMessage peerVer = getPeerVersionMessage();
+            if (peerVer.clientVersion < GetUTXOsMessage.MIN_PROTOCOL_VERSION)
+                throw new ProtocolException("Peer does not support getutxos protocol version");
+            if ((peerVer.localServices & GetUTXOsMessage.SERVICE_FLAGS_REQUIRED) != GetUTXOsMessage.SERVICE_FLAGS_REQUIRED)
+                throw new ProtocolException("Peer does not support getutxos protocol flag: find Bitcoin XT nodes.");
+            SettableFuture<UTXOsMessage> future = SettableFuture.create();
+            // Add to the list of in flight requests.
+            if (getutxoFutures == null)
+                getutxoFutures = new LinkedList<SettableFuture<UTXOsMessage>>();
+            getutxoFutures.add(future);
+            sendMessage(new GetUTXOsMessage(params, outPoints, true));
+            return future;
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     /**

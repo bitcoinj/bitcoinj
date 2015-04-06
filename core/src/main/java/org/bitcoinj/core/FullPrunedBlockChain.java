@@ -81,7 +81,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     /**
-     * Constructs a block chain  connected to the given list of wallets and a store.
+     * Constructs a block chain connected to the given list of wallets and a store.
      */
     public FullPrunedBlockChain(Context context, List<BlockChainListener> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(context, listeners, blockStore);

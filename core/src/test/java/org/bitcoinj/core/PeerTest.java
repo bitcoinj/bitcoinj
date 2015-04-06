@@ -16,12 +16,12 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.collect.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -93,13 +93,13 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     private void connect() throws Exception {
-        connectWithVersion(70001);
+        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
     }
 
-    private void connectWithVersion(int version) throws Exception {
+    private void connectWithVersion(int version, int flags) throws Exception {
         VersionMessage peerVersion = new VersionMessage(unitTestParams, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = version;
-        peerVersion.localServices = VersionMessage.NODE_NETWORK;
+        peerVersion.localServices = flags;
         writeTarget = connect(peer, peerVersion);
     }
 
@@ -542,7 +542,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void recursiveDependencyDownload() throws Exception {
         // Using ping or notfound?
-        connectWithVersion(70001);
+        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
         // Check that we can download all dependencies of an unconfirmed relevant transaction from the mempool.
         ECKey to = new ECKey();
 
@@ -638,7 +638,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void timeLockedTransactionNew() throws Exception {
-        connectWithVersion(70001);
+        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
         // Test that if we receive a relevant transaction that has a lock time, it doesn't result in a notification
         // until we explicitly opt in to seeing those.
         Wallet wallet = new Wallet(unitTestParams);
@@ -691,7 +691,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     private void checkTimeLockedDependency(boolean shouldAccept) throws Exception {
         // Initial setup.
-        connectWithVersion(70001);
+        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
         Wallet wallet = new Wallet(unitTestParams);
         ECKey key = wallet.freshReceiveKey();
         wallet.setAcceptRiskyTransactions(shouldAccept);
@@ -760,7 +760,7 @@ public class PeerTest extends TestWithNetworkConnections {
                 disconnectedFuture.set(null);
             }
         });
-        connectWithVersion(500);
+        connectWithVersion(500, VersionMessage.NODE_NETWORK);
         // We must wait uninterruptibly here because connect[WithVersion] generates a peer that interrupts the current
         // thread when it disconnects.
         Uninterruptibles.getUninterruptibly(connectedFuture);
@@ -813,6 +813,40 @@ public class PeerTest extends TestWithNetworkConnections {
         Threading.waitForUserCode();
         assertTrue(throwables[0] instanceof NullPointerException);
         Threading.uncaughtExceptionHandler = null;
+    }
+
+    @Test
+    public void getUTXOs() throws Exception {
+        // Basic test of support for BIP 64: getutxos support. The Lighthouse unit tests exercise this stuff more
+        // thoroughly.
+        connectWithVersion(GetUTXOsMessage.MIN_PROTOCOL_VERSION, VersionMessage.NODE_NETWORK | VersionMessage.NODE_GETUTXOS);
+        Sha256Hash hash1 = Sha256Hash.hash("foo".getBytes());
+        TransactionOutPoint op1 = new TransactionOutPoint(unitTestParams, 1, hash1);
+        Sha256Hash hash2 = Sha256Hash.hash("bar".getBytes());
+        TransactionOutPoint op2 = new TransactionOutPoint(unitTestParams, 2, hash1);
+
+        ListenableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
+        ListenableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
+
+        GetUTXOsMessage msg1 = (GetUTXOsMessage) outbound(writeTarget);
+        GetUTXOsMessage msg2 = (GetUTXOsMessage) outbound(writeTarget);
+
+        assertEquals(op1, msg1.getOutPoints().get(0));
+        assertEquals(op2, msg2.getOutPoints().get(0));
+        assertEquals(1, msg1.getOutPoints().size());
+
+        assertFalse(future1.isDone());
+
+        ECKey key = new ECKey();
+        TransactionOutput out1 = new TransactionOutput(unitTestParams, null, Coin.CENT, key);
+        UTXOsMessage response1 = new UTXOsMessage(unitTestParams, ImmutableList.of(out1), new long[]{-1}, Sha256Hash.ZERO_HASH, 1234);
+        inbound(writeTarget, response1);
+        assertEquals(future1.get(), response1);
+
+        TransactionOutput out2 = new TransactionOutput(unitTestParams, null, Coin.FIFTY_COINS, key);
+        UTXOsMessage response2 = new UTXOsMessage(unitTestParams, ImmutableList.of(out2), new long[]{-1}, Sha256Hash.ZERO_HASH, 1234);
+        inbound(writeTarget, response2);
+        assertEquals(future1.get(), response2);
     }
 
     @Test

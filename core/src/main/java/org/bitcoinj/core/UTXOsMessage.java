@@ -21,7 +21,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Message representing a list of unspent transaction outputs, returned in response to sending a GetUTXOsMessage. */
+/**
+ * <p>Message representing a list of unspent transaction outputs ("utxos"), returned in response to sending a
+ * {@link GetUTXOsMessage} ("getutxos"). Note that both this message and the query that generates it are not
+ * supported by Bitcoin Core. An implementation is available in <a href="https://github.com/bitcoinxt/bitcoinxt">Bitcoin XT</a>,
+ * a patch set on top of Core. Thus if you want to use it, you must find some XT peers to connect to. This can be done
+ * using a {@link org.bitcoinj.net.discovery.HttpDiscovery} class combined with an HTTP/Cartographer seed.</p>
+ *
+ * <p>The getutxos/utxos protocol is defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP 65</a>.
+ * In that document you can find a discussion of the security of this protocol (briefly, there is none). Because the
+ * data found in this message is not authenticated it should be used carefully. Places where it can be useful are if
+ * you're querying your own trusted node, if you're comparing answers from multiple nodes simultaneously and don't
+ * believe there is a MITM on your connection, or if you're only using the returned data as a UI hint and it's OK
+ * if the data is occasionally wrong. Bear in mind that the answer can be wrong even in the absence of malicious intent
+ * just through the nature of querying an ever changing data source: the UTXO set may be updated by a new transaction
+ * immediately after this message is returned.</p>
+ */
 public class UTXOsMessage extends Message {
     private long height;
     private Sha256Hash chainHead;
@@ -65,10 +80,9 @@ public class UTXOsMessage extends Message {
         stream.write(hits);
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput output : outputs) {
-            // TODO: Allow these to be specified, if one day we care about sending this message ourselves
-            // (currently it's just used for unit testing).
-            Utils.uint32ToByteStreamLE(0L, stream);  // Version
-            Utils.uint32ToByteStreamLE(0L, stream);  // Height
+            Transaction tx = output.getParentTransaction();
+            Utils.uint32ToByteStreamLE(tx != null ? tx.getVersion() : 0L, stream);  // Version
+            Utils.uint32ToByteStreamLE(height, stream);  // Height
             output.bitcoinSerializeToStream(stream);
         }
     }
@@ -112,14 +126,19 @@ public class UTXOsMessage extends Message {
         // Not used.
     }
 
+    /**
+     * Returns a bit map indicating which of the queried outputs were found in the UTXO set.
+     */
     public byte[] getHitMap() {
         return Arrays.copyOf(hits, hits.length);
     }
 
+    /** Returns the list of outputs that matched the query. */
     public List<TransactionOutput> getOutputs() {
         return new ArrayList<TransactionOutput>(outputs);
     }
 
+    /** Returns the block heights of each output returned in getOutputs(), or MEMPOOL_HEIGHT if not confirmed yet. */
     public long[] getHeights() { return Arrays.copyOf(heights, heights.length); }
 
     @Override
