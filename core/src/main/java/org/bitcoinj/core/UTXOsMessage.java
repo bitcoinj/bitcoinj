@@ -79,10 +79,11 @@ public class UTXOsMessage extends Message {
         stream.write(new VarInt(hits.length).encode());
         stream.write(hits);
         stream.write(new VarInt(outputs.size()).encode());
-        for (TransactionOutput output : outputs) {
+        for (int i = 0; i < outputs.size(); i++) {
+            TransactionOutput output = outputs.get(i);
             Transaction tx = output.getParentTransaction();
             Utils.uint32ToByteStreamLE(tx != null ? tx.getVersion() : 0L, stream);  // Version
-            Utils.uint32ToByteStreamLE(height, stream);  // Height
+            Utils.uint32ToByteStreamLE(heights[i], stream);  // Height
             output.bitcoinSerializeToStream(stream);
         }
     }

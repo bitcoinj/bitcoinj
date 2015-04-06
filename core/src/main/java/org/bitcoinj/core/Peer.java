@@ -402,16 +402,25 @@ public class Peer extends PeerSocketHandler {
                 close();
             }
         } else if (m instanceof UTXOsMessage) {
-            if (getutxoFutures != null) {
-                SettableFuture<UTXOsMessage> future = getutxoFutures.pollFirst();
-                if (future != null)
-                    future.set((UTXOsMessage) m);
-            }
+            processUTXOMessage((UTXOsMessage) m);
         } else if (m instanceof RejectMessage) {
             log.error("{} {}: Received {}", this, getPeerVersionMessage().subVer, m);
         } else {
             log.warn("{}: Received unhandled message: {}", this, m);
         }
+    }
+
+    private void processUTXOMessage(UTXOsMessage m) {
+        SettableFuture<UTXOsMessage> future = null;
+        lock.lock();
+        try {
+            if (getutxoFutures != null)
+                future = getutxoFutures.pollFirst();
+        } finally {
+            lock.unlock();
+        }
+        if (future != null)
+            future.set(m);
     }
 
     private void processAddressMessage(AddressMessage m) {

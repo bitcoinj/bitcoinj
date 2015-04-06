@@ -57,7 +57,6 @@ public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
     private InboundMessageQueuer writeTarget;
     private static final int OTHER_PEER_CHAIN_HEIGHT = 110;
-    private TxConfidenceTable confidenceTable;
     private final AtomicBoolean fail = new AtomicBoolean(false);
 
 
@@ -77,8 +76,6 @@ public class PeerTest extends TestWithNetworkConnections {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-
-        confidenceTable = Context.get().getConfidenceTable();
         VersionMessage ver = new VersionMessage(unitTestParams, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
         peer = new Peer(unitTestParams, ver, new PeerAddress(address), blockChain);
@@ -820,10 +817,8 @@ public class PeerTest extends TestWithNetworkConnections {
         // Basic test of support for BIP 64: getutxos support. The Lighthouse unit tests exercise this stuff more
         // thoroughly.
         connectWithVersion(GetUTXOsMessage.MIN_PROTOCOL_VERSION, VersionMessage.NODE_NETWORK | VersionMessage.NODE_GETUTXOS);
-        Sha256Hash hash1 = Sha256Hash.hash("foo".getBytes());
-        TransactionOutPoint op1 = new TransactionOutPoint(unitTestParams, 1, hash1);
-        Sha256Hash hash2 = Sha256Hash.hash("bar".getBytes());
-        TransactionOutPoint op2 = new TransactionOutPoint(unitTestParams, 2, hash1);
+        TransactionOutPoint op1 = new TransactionOutPoint(unitTestParams, 1, Sha256Hash.hash("foo".getBytes()));
+        TransactionOutPoint op2 = new TransactionOutPoint(unitTestParams, 2, Sha256Hash.hash("bar".getBytes()));
 
         ListenableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
         ListenableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
@@ -839,14 +834,14 @@ public class PeerTest extends TestWithNetworkConnections {
 
         ECKey key = new ECKey();
         TransactionOutput out1 = new TransactionOutput(unitTestParams, null, Coin.CENT, key);
-        UTXOsMessage response1 = new UTXOsMessage(unitTestParams, ImmutableList.of(out1), new long[]{-1}, Sha256Hash.ZERO_HASH, 1234);
+        UTXOsMessage response1 = new UTXOsMessage(unitTestParams, ImmutableList.of(out1), new long[]{UTXOsMessage.MEMPOOL_HEIGHT}, Sha256Hash.ZERO_HASH, 1234);
         inbound(writeTarget, response1);
         assertEquals(future1.get(), response1);
 
         TransactionOutput out2 = new TransactionOutput(unitTestParams, null, Coin.FIFTY_COINS, key);
-        UTXOsMessage response2 = new UTXOsMessage(unitTestParams, ImmutableList.of(out2), new long[]{-1}, Sha256Hash.ZERO_HASH, 1234);
+        UTXOsMessage response2 = new UTXOsMessage(unitTestParams, ImmutableList.of(out2), new long[]{1000}, Sha256Hash.ZERO_HASH, 1234);
         inbound(writeTarget, response2);
-        assertEquals(future1.get(), response2);
+        assertEquals(future2.get(), response2);
     }
 
     @Test
