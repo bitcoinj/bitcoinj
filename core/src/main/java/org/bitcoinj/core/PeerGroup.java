@@ -1474,75 +1474,137 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     @GuardedBy("lock") private int stallPeriodSeconds = 10;
-    @GuardedBy("lock") private int stallMinSpeed = 15;
+    @GuardedBy("lock") private int stallMinSpeed = 30;
 
     /**
      * Configures the stall speed: the speed at which a peer is considered to be serving us the block chain
-     * unacceptably slowly. Once a peer has served us slower than the given "blocks per second" for the given
-     * number of seconds, it is considered stalled and will be disconnected, forcing the chain download to be
-     * restarted from a different peer. The defaults are chosen to work well for regular wallets and platforms,
-     * but if you are running on a platform that is CPU constrained the default settings may need adjustment to
+     * unacceptably slowly. Once a peer has served us data slower than the given data rate for the given
+     * number of seconds, it is considered stalled and will be disconnected, forcing the chain download to continue
+     * from a different peer. The defaults are chosen conservatively, but if you are running on a platform that is
+     * CPU constrained or on a very slow network e.g. EDGE, the default settings may need adjustment to
      * avoid false stalls.
      *
      * @param periodSecs How many seconds the download speed must be below blocksPerSec, defaults to 10.
-     * @param blocksPerSec How many blocks per second the speed must be consistently below, defaults to 10.
+     * @param kilobytesPerSecond Download speed (only blocks/txns count) must be consistently below this for a stall, defaults to 30.
      */
-    public void setStallThreshold(int periodSecs, int blocksPerSec) {
+    public void setStallThreshold(int periodSecs, int kilobytesPerSecond) {
         lock.lock();
         try {
             stallPeriodSeconds = periodSecs;
-            stallMinSpeed = blocksPerSec;
+            stallMinSpeed = kilobytesPerSecond;
         } finally {
             lock.unlock();
         }
     }
 
     private class ChainDownloadSpeedCalculator extends AbstractPeerEventListener implements Runnable {
-        private int blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, stallWarning;
+        private int blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond;
+        private long bytesInLastSecond;
+
+        // If we take more stalls than this, we assume we're on some kind of terminally slow network and the
+        // stall threshold just isn't set properly. We give up on stall disconnects after that.
+        private int maxStalls = 3;
+
+        // How many seconds the peer has until we start measuring its speed.
+        private int warmupSeconds = -1;
+
+        // Used to calculate a moving average.
+        private long[] samples;
+        private int cursor;
 
         @Override
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             blocksInLastSecond++;
-            // This whole area of the type hierarchy is a mess.
+            bytesInLastSecond += 80;  // For the header.
             List<Transaction> blockTransactions = block.getTransactions();
-            int txCount = (blockTransactions != null ? blockTransactions.size() : 0) +
-                          (filteredBlock != null ? filteredBlock.getAssociatedTransactions().size() : 0);
+            // This whole area of the type hierarchy is a mess.
+            int txCount = (blockTransactions != null ? countAndMeasureSize(blockTransactions) : 0) +
+                          (filteredBlock != null ? countAndMeasureSize(filteredBlock.getAssociatedTransactions().values()) : 0);
             txnsInLastSecond = txnsInLastSecond + txCount;
             if (filteredBlock != null)
                 origTxnsInLastSecond += filteredBlock.getTransactionCount();
         }
 
+        private int countAndMeasureSize(Collection<Transaction> transactions) {
+            for (Transaction transaction : transactions)
+                bytesInLastSecond += transaction.getMessageSize();
+            return transactions.size();
+        }
+
         @Override
         public void run() {
+            try {
+                calculate();
+            } catch (Exception e) {
+                log.error("Error in speed calculator", e);
+            }
+        }
+
+        private void calculate() {
+            int minSpeedBytesPerSec;
             int period;
-            int minSpeed;
 
             lock.lock();
             try {
+                minSpeedBytesPerSec = stallMinSpeed * 1024;
                 period = stallPeriodSeconds;
-                minSpeed = stallMinSpeed;
             } finally {
                 lock.unlock();
             }
 
             synchronized (this) {
-                if (blocksInLastSecond > 0) {
-                    log.info("{} blocks/sec, {} tx/sec, {} pre-filtered tx/sec", blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond);
-                    if (blocksInLastSecond >= period)
-                        stallWarning = 0;
+                if (samples == null || samples.length != period) {
+                    samples = new long[period];
+                    // *2 because otherwise a single low sample could cause an immediate disconnect which is too harsh.
+                    Arrays.fill(samples, minSpeedBytesPerSec * 2);
+                    warmupSeconds = 15;
                 }
-                if (chain != null && chain.getBestChainHeight() < getMostCommonChainHeight() && blocksInLastSecond < minSpeed && stallWarning > -1) {
-                    stallWarning++;
-                    if (stallWarning == minSpeed) {
-                        stallWarning = -1;
-                        Peer peer = getDownloadPeer();
-                        log.warn("Chain download stalled: slow progress for {} seconds, disconnecting {}", period, peer);
-                        peer.close();
+
+                boolean inChainSync = chain != null && chain.getBestChainHeight() < getMostCommonChainHeight();
+                if (inChainSync) {
+                    if (warmupSeconds < 0) {
+                        // Calculate the moving average.
+                        samples[cursor++] = bytesInLastSecond;
+                        if (cursor == samples.length) cursor = 0;
+                        long average = 0;
+                        for (long sample : samples) average += sample;
+                        average /= samples.length;
+
+                        log.info(String.format("%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, avg/last %.2f/%.2f kilobytes per sec (stall threshold <%.2f KB/sec for %d seconds)",
+                                blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, average / 1024.0, bytesInLastSecond / 1024.0,
+                                minSpeedBytesPerSec / 1024.0, samples.length));
+
+                        if (average < minSpeedBytesPerSec && maxStalls > 0) {
+                            maxStalls--;
+                            if (maxStalls == 0) {
+                                // We could consider starting to drop the Bloom filtering FP rate at this point, because
+                                // we tried a bunch of peers and no matter what we don't seem to be able to go any faster.
+                                // This implies we're bandwidth bottlenecked and might want to start using bandwidth
+                                // more effectively. Of course if there's a MITM that is deliberately throttling us,
+                                // this is a good way to make us take away all the FPs from our Bloom filters ... but
+                                // as they don't give us a whole lot of privacy either way that's not inherently a big
+                                // deal.
+                                log.warn("This network seems to be slower than the requested stall threshold - won't do stall disconnects any more.");
+                            } else {
+                                Peer peer = getDownloadPeer();
+                                log.warn(String.format("Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s", average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer));
+                                peer.close();
+                                // Reset the sample buffer and give the next peer time to get going.
+                                samples = null;
+                                warmupSeconds = period;
+                            }
+                        }
+                    } else {
+                        warmupSeconds--;
+                        if (bytesInLastSecond > 0)
+                            log.info(String.format("%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, last %.2f kilobytes per sec",
+                                    blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, bytesInLastSecond / 1024.0));
                     }
                 }
                 blocksInLastSecond = 0;
                 txnsInLastSecond = 0;
                 origTxnsInLastSecond = 0;
+                bytesInLastSecond = 0;
             }
         }
     }
