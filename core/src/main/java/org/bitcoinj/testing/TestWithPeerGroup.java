@@ -16,22 +16,17 @@
 
 package org.bitcoinj.testing;
 
+import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.*;
-import org.bitcoinj.net.BlockingClientManager;
-import org.bitcoinj.net.ClientConnectionManager;
-import org.bitcoinj.net.NioClientManager;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
-import com.google.common.base.Preconditions;
+import org.bitcoinj.net.*;
+import org.bitcoinj.store.*;
 import org.bitcoinj.utils.*;
 
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.util.concurrent.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * You can derive from this class and call peerGroup.start() in your tests to get a functional PeerGroup that can be
@@ -39,7 +34,6 @@ import static com.google.common.base.Preconditions.checkState;
  * mock, but means unit tests cannot be run simultaneously.
  */
 public class TestWithPeerGroup extends TestWithNetworkConnections {
-    protected static final NetworkParameters params = UnitTestParams.get();
     protected PeerGroup peerGroup;
 
     protected VersionMessage remoteVersionMessage;
@@ -61,7 +55,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 
-        remoteVersionMessage = new VersionMessage(unitTestParams, 1);
+        remoteVersionMessage = new VersionMessage(params, 1);
         remoteVersionMessage.localServices = VersionMessage.NODE_NETWORK;
         remoteVersionMessage.clientVersion = NotFoundMessage.MIN_PROTOCOL_VERSION;
         blockJobs = false;
@@ -95,7 +89,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected final Semaphore jobBlocks = new Semaphore(0);
 
     private PeerGroup createPeerGroup(final ClientConnectionManager manager) {
-        return new PeerGroup(unitTestParams, blockChain, manager) {
+        return new PeerGroup(params, blockChain, manager) {
             @Override
             protected ListeningScheduledExecutorService createPrivateExecutor() {
                 return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {

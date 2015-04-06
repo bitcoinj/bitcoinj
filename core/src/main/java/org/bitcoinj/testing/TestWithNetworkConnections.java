@@ -44,7 +44,8 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
-    protected NetworkParameters unitTestParams;
+    protected final NetworkParameters params = UnitTestParams.get();
+    protected Context context;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
@@ -80,16 +81,16 @@ public class TestWithNetworkConnections {
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
 
-        unitTestParams = UnitTestParams.get();
-        new Context(unitTestParams);
+        context = new Context(params);
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
-        if (wallet == null)
-            wallet = new Wallet(unitTestParams);
-        key = wallet.freshReceiveKey();
-        address = key.toAddress(unitTestParams);
-        blockChain = new BlockChain(unitTestParams, wallet, blockStore);
+        if (wallet == null) {
+            wallet = new Wallet(params);
+            key = wallet.freshReceiveKey();
+            address = key.toAddress(params);
+        }
+        blockChain = new BlockChain(params, wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -111,7 +112,7 @@ public class TestWithNetworkConnections {
             @Nullable
             @Override
             public StreamParser getNewParser(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(unitTestParams) {
+                return new InboundMessageQueuer(params) {
                     @Override
                     public void connectionClosed() {
                     }

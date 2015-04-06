@@ -18,30 +18,21 @@
 package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.testing.InboundMessageQueuer;
-import org.bitcoinj.testing.TestWithPeerGroup;
-import org.bitcoinj.utils.Threading;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.bitcoinj.testing.*;
+import org.bitcoinj.utils.*;
+import org.junit.*;
+import org.junit.runner.*;
+import org.junit.runners.*;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 
+import static com.google.common.base.Preconditions.*;
 import static org.bitcoinj.core.Coin.*;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 @RunWith(value = Parameterized.class)
 public class TransactionBroadcastTest extends TestWithPeerGroup {
-    static final NetworkParameters params = UnitTestParams.get();
-
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
         return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
