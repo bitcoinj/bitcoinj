@@ -17,16 +17,12 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
-import org.junit.Test;
-import org.spongycastle.crypto.params.KeyParameter;
+import org.bitcoinj.core.*;
+import org.bitcoinj.params.*;
+import org.junit.*;
+import org.spongycastle.crypto.params.*;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.core.Utils.*;
 import static org.junit.Assert.*;
 
 /**
@@ -113,27 +109,27 @@ public class ChildKeyDerivationTest {
             DeterministicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
 //            ExtendedHierarchicKey ekpub_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4294967295L);
 
-            assertEquals(hexEncodePub(ekprv.getPubOnly()), hexEncodePub(ekpub));
-            assertEquals(hexEncodePub(ekprv_0.getPubOnly()), hexEncodePub(ekpub_0));
-            assertEquals(hexEncodePub(ekprv_1.getPubOnly()), hexEncodePub(ekpub_1));
-            assertEquals(hexEncodePub(ekprv_0_IN.getPubOnly()), hexEncodePub(ekpub_0_IN));
-            assertEquals(hexEncodePub(ekprv_0_IN_0.getPubOnly()), hexEncodePub(ekpub_0_IN_0));
-            assertEquals(hexEncodePub(ekprv_0_IN_1.getPubOnly()), hexEncodePub(ekpub_0_IN_1));
-            assertEquals(hexEncodePub(ekprv_0_IN_2.getPubOnly()), hexEncodePub(ekpub_0_IN_2));
-            assertEquals(hexEncodePub(ekprv_0_EX_0.getPubOnly()), hexEncodePub(ekpub_0_EX_0));
-            assertEquals(hexEncodePub(ekprv_0_EX_1.getPubOnly()), hexEncodePub(ekpub_0_EX_1));
-            assertEquals(hexEncodePub(ekprv_0_EX_2.getPubOnly()), hexEncodePub(ekpub_0_EX_2));
-            assertEquals(hexEncodePub(ekprv_1_IN.getPubOnly()), hexEncodePub(ekpub_1_IN));
-            assertEquals(hexEncodePub(ekprv_1_IN_4095.getPubOnly()), hexEncodePub(ekpub_1_IN_4095));
-            //assertEquals(hexEncodePub(ekprv_1_IN_4bil.getPubOnly()), hexEncodePub(ekpub_1_IN_4bil));
+            assertEquals(hexEncodePub(ekprv.dropPrivateBytes().dropParent()), hexEncodePub(ekpub));
+            assertEquals(hexEncodePub(ekprv_0.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0));
+            assertEquals(hexEncodePub(ekprv_1.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_1));
+            assertEquals(hexEncodePub(ekprv_0_IN.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_IN));
+            assertEquals(hexEncodePub(ekprv_0_IN_0.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_IN_0));
+            assertEquals(hexEncodePub(ekprv_0_IN_1.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_IN_1));
+            assertEquals(hexEncodePub(ekprv_0_IN_2.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_IN_2));
+            assertEquals(hexEncodePub(ekprv_0_EX_0.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_EX_0));
+            assertEquals(hexEncodePub(ekprv_0_EX_1.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_EX_1));
+            assertEquals(hexEncodePub(ekprv_0_EX_2.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_EX_2));
+            assertEquals(hexEncodePub(ekprv_1_IN.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_1_IN));
+            assertEquals(hexEncodePub(ekprv_1_IN_4095.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_1_IN_4095));
+            //assertEquals(hexEncodePub(ekprv_1_IN_4bil.dropPrivateBytes()), hexEncodePub(ekpub_1_IN_4bil));
         }
     }
 
     @Test
     public void inverseEqualsNormal() throws Exception {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
-        HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.getPubOnly(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
-        HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.getPubOnly(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
+        HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
+        HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
         assertArrayEquals(key2.keyBytes, key3.keyBytes);
         assertArrayEquals(key2.chainCode, key3.chainCode);
     }
@@ -176,8 +172,14 @@ public class ChildKeyDerivationTest {
         assertFalse(key2.isPubKeyOnly());
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
         assertFalse(key3.isPubKeyOnly());
-        DeterministicKey pubkey2 = key2.getPubOnly();
-        assertTrue(pubkey2.isPubKeyOnly());
+
+        key2 = key2.dropPrivateBytes();
+        assertFalse(key2.isPubKeyOnly());   // still got private key bytes from the parents!
+
+        // pubkey2 got its cached private key bytes (if any) dropped, and now it'll lose its parent too, so now it
+        // becomes a true pubkey-only object.
+        DeterministicKey pubkey2 = key2.dropParent();
+
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(pubkey2, ChildNumber.ZERO);
         assertTrue(pubkey3.isPubKeyOnly());
         assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
