@@ -31,7 +31,6 @@ import com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -309,7 +308,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
      */
     public DeterministicKeyChain(DeterministicKey watchingKey, long creationTimeSeconds) {
-        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported");
+        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         checkArgument(watchingKey.getPath().size() == 1, "You can only watch an account key currently");
         basicKeyChain = new BasicKeyChain();
         this.creationTimeSeconds = creationTimeSeconds;
@@ -402,7 +401,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             if (key.getPath().size() != 3) continue; // Not a leaf key.
             DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new encrypted hierarchy.
-            key = new DeterministicKey(key.getPubOnly(), parent);
+            key = new DeterministicKey(key.dropPrivateBytes(), parent);
             hierarchy.putKey(key);
             basicKeyChain.importKey(key);
         }
@@ -616,13 +615,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * <p>An alias for <code>getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).getPubOnly()</code>.
-     * Use this when you would like to create a watching key chain that follows this one, but can't spend money from it.
+     * <p>An alias for <code>getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH)</code>.</p>
+     *
+     * <p>Use this when you would like to create a watching key chain that follows this one, but can't spend money from it.
      * The returned key can be serialized and then passed into {@link #watch(org.bitcoinj.crypto.DeterministicKey)}
      * on another system to watch the hierarchy.</p>
+     *
+     * <p>Note that the returned key is not pubkey only unless this key chain already is: the returned key can still
+     * be used for signing etc if the private key bytes are available.</p>
      */
     public DeterministicKey getWatchingKey() {
-        return getKeyByPath(ACCOUNT_ZERO_PATH).getPubOnly();
+        return getKeyByPath(ACCOUNT_ZERO_PATH);
     }
 
     @Override
@@ -969,7 +972,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             checkState(key.isEncrypted());
             DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new decrypted hierarchy.
-            key = new DeterministicKey(key.getPubOnly(), parent);
+            key = new DeterministicKey(key.dropPrivateBytes(), parent);
             chain.hierarchy.putKey(key);
             chain.basicKeyChain.importKey(key);
         }
@@ -1143,7 +1146,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int nextChild = numChildren;
         for (int i = 0; i < needed; i++) {
             DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
-            key = key.getPubOnly();
+            key = key.dropPrivateBytes();
             hierarchy.putKey(key);
             result.add(key);
             nextChild = key.getChildNumber().num() + 1;

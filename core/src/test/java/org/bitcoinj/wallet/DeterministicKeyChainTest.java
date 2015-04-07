@@ -273,7 +273,7 @@ public class DeterministicKeyChainTest {
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
-        chain = DeterministicKeyChain.watch(accountKey.getPubOnly());
+        chain = DeterministicKeyChain.watch(accountKey.dropPrivateBytes().dropParent());
         chain = chain.toEncrypted("this doesn't make any sense");
     }
 
@@ -303,7 +303,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)
             keys[i] = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        chain = DeterministicKeyChain.watch(chain.getWatchingKey());
+        chain = DeterministicKeyChain.watch(chain.getWatchingKey().dropPrivateBytes().dropParent());
         int e = chain.numBloomFilterEntries();
         BloomFilter filter = chain.getFilter(e, 0.001, 1);
         for (DeterministicKey key : keys)
