@@ -1058,7 +1058,18 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public void setLockTime(long lockTime) {
         unCache();
-        // TODO: Consider checking that at least one input has a non-final sequence number.
+        boolean seqNumSet = false;
+        for (TransactionInput input : inputs) {
+            if (input.getSequenceNumber() != TransactionInput.NO_SEQUENCE) {
+                seqNumSet = true;
+                break;
+            }
+        }
+        if (!seqNumSet || inputs.isEmpty()) {
+            // At least one input must have a non-default sequence number for lock times to have any effect.
+            // For instance one of them can be set to zero to make this feature work.
+            log.warn("You are setting the lock time on a transaction but none of the inputs have non-default sequence numbers. This will not do what you expect!");
+        }
         this.lockTime = lockTime;
     }
 
