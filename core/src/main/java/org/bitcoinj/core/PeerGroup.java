@@ -1795,7 +1795,11 @@ public class PeerGroup implements TransactionBroadcaster {
      * which is calculated by watching the transaction propagate across the network and be announced by peers.</p>
      */
     public TransactionBroadcast broadcastTransaction(final Transaction tx, final int minConnections) {
-        // TODO: Context being owned by BlockChain isn't right w.r.t future intentions so it shouldn't really be optional here.
+        // If we don't have a record of where this tx came from already, set it to be ourselves so Peer doesn't end up
+        // redownloading it from the network redundantly.
+        if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
+            tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+        }
         final TransactionBroadcast broadcast = new TransactionBroadcast(this, tx);
         broadcast.setMinConnections(minConnections);
         // Send the TX to the wallet once we have a successful broadcast.

@@ -64,6 +64,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     public void fourPeers() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = new Transaction(params);
+        tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
         broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
@@ -92,10 +93,11 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertFalse(future.isDone());
         assertEquals(0.0, lastProgress.get(), 0.0);
         inbound(channels[1], InventoryMessage.with(tx));
-        pingAndWait(channels[1]);
         future.get();
         Threading.waitForUserCode();
         assertEquals(1.0, lastProgress.get(), 0.0);
+        // There is no response from the Peer as it has nothing to do.
+        assertNull(outbound(channels[1]));
     }
 
     @Test

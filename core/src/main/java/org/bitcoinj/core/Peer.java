@@ -1073,6 +1073,9 @@ public class Peer extends PeerSocketHandler {
             if (conf.numBroadcastPeers() > 1) {
                 // Some other peer already announced this so don't download.
                 it.remove();
+            } else if (conf.getSource().equals(TransactionConfidence.Source.SELF)) {
+                // We created this transaction ourselves, so don't download.
+                it.remove();
             } else {
                 log.debug("{}: getdata on tx {}", getAddress(), item.hash);
                 getdata.addItem(item);
