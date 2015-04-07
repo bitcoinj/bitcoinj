@@ -101,8 +101,8 @@ public class FilteredBlock extends Message {
     }
     
     /**
-     * Provide this FilteredBlock with a transaction which is in its merkle tree
-     * @returns false if the tx is not relevant to this FilteredBlock
+     * Provide this FilteredBlock with a transaction which is in its Merkle tree.
+     * @return false if the tx is not relevant to this FilteredBlock
      */
     public boolean provideTransaction(Transaction tx) throws VerificationException {
         Sha256Hash hash = tx.getHash();
@@ -112,7 +112,12 @@ public class FilteredBlock extends Message {
         } else
             return false;
     }
-    
+
+    /** Returns the {@link PartialMerkleTree} object that provides the mathematical proof of transaction inclusion in the block. */
+    public PartialMerkleTree getPartialMerkleTree() {
+        return merkleTree;
+    }
+
     /** Gets the set of transactions which were provided using provideTransaction() which match in getTransactionHashes() */
     public Map<Sha256Hash, Transaction> getAssociatedTransactions() {
         return Collections.unmodifiableMap(associatedTransactions);
