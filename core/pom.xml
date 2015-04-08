@@ -166,9 +166,9 @@
                                     <!-- classifier is "null" if not present -->
                                     <urns>
                                         <urn>cglib:cglib-nodep:2.2:jar:null:test:59afed7ab65e7ec6585d5bc60556c3cbd203532b</urn>
-                                        <urn>com.fasterxml.jackson.core:jackson-annotations:2.4.0:jar:null:test:d6a66c7a5f01cf500377bd669507a08cfeba882a</urn>
-                                        <urn>com.fasterxml.jackson.core:jackson-core:2.4.2:jar:null:test:ceb72830d95c512b4b300a38f29febc85bdf6e4b</urn>
-                                        <urn>com.fasterxml.jackson.core:jackson-databind:2.4.2:jar:null:test:8e31266a272ad25ac4c089734d93e8d811652c1f</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-annotations:2.5.0:jar:null:test:a2a55a3375bc1cef830ca426d68d2ea22961190e</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-core:2.5.1:jar:null:test:e2a00ad1d7e540ec395e9296a34da484c8888d4d</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-databind:2.5.2:jar:null:test:2b4dd13fbe6f8c6b146d4c3b7fd70862f136802d</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.5.0:jar:null:compile:a10732c76bfacdbd633a7eb0f7968b1059a65dfa</urn>
@@ -413,7 +413,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.4.2</version>
+            <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
