@@ -115,8 +115,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
     public static final ImmutableList<ChildNumber> EXTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ONE);
+    public static final ImmutableList<ChildNumber> EXTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, EXTERNAL_SUBPATH);
+    public static final ImmutableList<ChildNumber> INTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, INTERNAL_SUBPATH);
     // m / 44' / 0' / 0'
-    public static final ImmutableList<ChildNumber> BIP44_ACCOUNT_ZERO_PATH = ImmutableList.of(new ChildNumber(44, true), ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
+    public static final ImmutableList<ChildNumber> BIP44_ACCOUNT_ZERO_PATH =
+            ImmutableList.of(new ChildNumber(44, true), ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
@@ -381,7 +384,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // rest of the setup (loading the root key).
     }
 
-    // For use in encryption.
+    /**
+     * For use in encryption when {@link #toEncrypted(KeyCrypter, KeyParameter)} is called, so that
+     * subclasses can override that method and create an instance of the right class.
+     *
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed)}
+     */
     protected DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
         checkNotNull(chain.rootKey);
@@ -406,8 +414,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             encryptNonLeaf(aesKey, chain, rootKey, getAccountPath().subList(0, i));
         }
         DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, getAccountPath());
-        externalKey = encryptNonLeaf(aesKey, chain, account, ImmutableList.<ChildNumber>builder().addAll(getAccountPath()).addAll(EXTERNAL_SUBPATH).build());
-        internalKey = encryptNonLeaf(aesKey, chain, account, ImmutableList.<ChildNumber>builder().addAll(getAccountPath()).addAll(INTERNAL_SUBPATH).build());
+        externalKey = encryptNonLeaf(aesKey, chain, account, HDUtils.concat(getAccountPath(), EXTERNAL_SUBPATH));
+        internalKey = encryptNonLeaf(aesKey, chain, account, HDUtils.concat(getAccountPath(), INTERNAL_SUBPATH));
 
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to encrypt.
@@ -969,7 +977,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
-        DeterministicKeyChain chain = makeDecryptedKeyChain(decSeed);
+        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
             throw new KeyCrypterException("Provided AES key is wrong");
@@ -991,8 +999,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return chain;
     }
 
-    protected DeterministicKeyChain makeDecryptedKeyChain(DeterministicSeed decSeed) {
-        return new DeterministicKeyChain(decSeed);
+    /**
+     * Factory method to create a key chain from a seed.
+     * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
+     * This is used in encryption/decryption.
+     */
+
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed) {
+        return new DeterministicKeyChain(seed);
     }
 
     @Override
