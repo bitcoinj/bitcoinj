@@ -112,6 +112,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // is somewhat arbitrary but can be useful for audits. The first number is the "account number" but we don't use
     // that feature yet. In future we might hand out different accounts for cases where we wish to hand payers
     // a payment request that can generate lots of addresses independently.
+    // The account path may be overridden by subclasses.
     public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
     public static final ImmutableList<ChildNumber> EXTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ONE);
@@ -366,6 +367,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return new DeterministicKeyChain(accountKey, seedCreationTimeSecs);
     }
 
+    /**
+     * For use in {@link KeyChainFactory} during deserialization.
+     */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
@@ -430,6 +434,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    /** Override in subclasses to use a different account derivation path */
     protected ImmutableList<ChildNumber> getAccountPath() {
         return ACCOUNT_ZERO_PATH;
     }
@@ -1004,7 +1009,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-
     protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed) {
         return new DeterministicKeyChain(seed);
     }
