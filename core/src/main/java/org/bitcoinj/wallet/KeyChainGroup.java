@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDUtils;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.LinuxSecureRandom;
 import org.bitcoinj.script.Script;
@@ -746,15 +747,17 @@ public class KeyChainGroup implements KeyBag {
         // kinds of KeyPurpose are introduced.
         if (activeChain.getIssuedExternalKeys() > 0) {
             DeterministicKey currentExternalKey = activeChain.getKeyByPath(
-                    Lists.newArrayList(ImmutableList.<ChildNumber>builder().addAll(activeChain.getAccountPath()).add(ChildNumber.ZERO, new ChildNumber(activeChain.getIssuedExternalKeys() - 1)).build())
-            );
+                    HDUtils.append(
+                            HDUtils.concat(activeChain.getAccountPath(), DeterministicKeyChain.EXTERNAL_SUBPATH),
+                            new ChildNumber(activeChain.getIssuedExternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
         }
 
         if (activeChain.getIssuedInternalKeys() > 0) {
             DeterministicKey currentInternalKey = activeChain.getKeyByPath(
-                    Lists.newArrayList(ImmutableList.<ChildNumber>builder().addAll(activeChain.getAccountPath()).add(new ChildNumber(1), new ChildNumber(activeChain.getIssuedInternalKeys() - 1)).build())
-            );
+                    HDUtils.append(
+                            HDUtils.concat(activeChain.getAccountPath(), DeterministicKeyChain.INTERNAL_SUBPATH),
+                            new ChildNumber(activeChain.getIssuedInternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
         }
         return currentKeys;
