@@ -86,12 +86,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void deriveAccountOne() throws Exception {
         long secs = 1389353062L;
-        DeterministicKeyChain chain1 = new DeterministicKeyChain(ENTROPY, "", secs) {
-            @Override
-            protected ImmutableList<ChildNumber> getAccountPath() {
-                return ImmutableList.of(ChildNumber.ONE);
-            }
-        };
+        DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
