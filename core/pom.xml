@@ -197,8 +197,8 @@
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
                                         <urn>org.jacoco:jacoco-maven-plugin:0.7.4.201502262128:maven-plugin:null:runtime:ee12ed04db135c74d0ae99e9c4e4754ee1582edb</urn>
                                         <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
-                                        <urn>org.slf4j:slf4j-api:1.7.6:jar:null:compile:562424e36df3d2327e8e9301a76027fca17d54ea</urn>
-                                        <urn>org.slf4j:slf4j-jdk14:1.7.6:jar:null:test:1a3301a32ea7d90c3d33e9d60edbfdc9589fc748</urn>
+                                        <urn>org.slf4j:slf4j-api:1.7.7:jar:null:compile:2b8019b6249bb05d81d3a3094e468753e2b21311</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.7.7:jar:null:test:25d160723ea37a6cb84e87cd70773ff02997e857</urn>
                                         <urn>org.sonatype.plugins:nexus-staging-maven-plugin:1.6.5:maven-plugin:null:runtime:455ca2aa8cd14a06608f1538bd6a1efd09561563</urn>
                                         <urn>postgresql:postgresql:9.1-901.jdbc4:jar:null:compile:153f2f92a786f12fc111d0111f709012df87c808</urn>
                                         <!-- A check for the rules themselves -->
@@ -407,7 +407,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.6</version>
+            <version>1.7.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
