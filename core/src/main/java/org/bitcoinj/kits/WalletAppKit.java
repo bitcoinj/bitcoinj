@@ -65,7 +65,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected final String filePrefix;
     protected final NetworkParameters params;
     protected volatile BlockChain vChain;
-    protected volatile SPVBlockStore vStore;
+    protected volatile BlockStore vStore;
     protected volatile Wallet vWallet;
     protected volatile PeerGroup vPeerGroup;
 
@@ -223,6 +223,13 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * Override this to use a {@link BlockStore} that isn't the default of {@link SPVBlockStore}.
+     */
+    protected BlockStore provideBlockStore(File file) throws BlockStoreException {
+        return new SPVBlockStore(params, file);
+    }
+
+    /**
      * This method is invoked on a background thread after all objects are initialised, but before the peer group
      * or block chain download is started. You can tweak the objects configuration here.
      */
@@ -269,7 +276,7 @@ public class WalletAppKit extends AbstractIdleService {
             vWallet = createOrLoadWallet(shouldReplayWallet);
 
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
-            vStore = new SPVBlockStore(params, chainFile);
+            vStore = provideBlockStore(chainFile);
             if (!chainFileExists || restoreFromSeed != null) {
                 if (checkpoints != null) {
                     // Initialize the chain file with a checkpoint to speed up first-run sync.
@@ -483,7 +490,7 @@ public class WalletAppKit extends AbstractIdleService {
         return vChain;
     }
 
-    public SPVBlockStore store() {
+    public BlockStore store() {
         checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
         return vStore;
     }
