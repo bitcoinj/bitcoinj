@@ -67,10 +67,17 @@ public final class HDUtils {
         return bytes;
     }
 
+    /** Append a derivation level to an existing path */
     public static ImmutableList<ChildNumber> append(List<ChildNumber> path, ChildNumber childNumber) {
         return ImmutableList.<ChildNumber>builder().addAll(path).add(childNumber).build();
     }
 
+    /** Concatenate two derivation paths */
+    public static ImmutableList<ChildNumber> concat(List<ChildNumber> path, List<ChildNumber> path2) {
+        return ImmutableList.<ChildNumber>builder().addAll(path).addAll(path2).build();
+    }
+
+    /** Convert to a string path, starting with "M/" */
     public static String formatPath(List<ChildNumber> path) {
         return PATH_JOINER.join(Iterables.concat(Collections.singleton("M"), path));
     }
