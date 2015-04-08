@@ -175,8 +175,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Third-party dependencies -->
-    <junit.version>4.8.2</junit.version>
     <generated.sourceDirectory>gen</generated.sourceDirectory>
   </properties>
 
