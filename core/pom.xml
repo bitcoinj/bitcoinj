@@ -191,7 +191,7 @@
                                         <urn>org.apache.maven.plugins:maven-site-plugin:3.4:maven-plugin:null:runtime:659cd5f1dd8bff554cf52603339494cbf7f283c5</urn>
                                         <urn>org.apache.maven.plugins:maven-source-plugin:2.4:maven-plugin:null:runtime:46f0d7f7823d729ba300d3f8929900c7e9cb5ac0</urn>
                                         <urn>org.apache.maven.plugins:maven-surefire-plugin:2.18.1:maven-plugin:null:runtime:402fd3066fd6d85ea4a1a3e7cd82a7e35037e6e8</urn>
-                                        <urn>org.easymock:easymock:3.0:jar:null:test:f28a4c31c330f95c9acbf1108cea19952b5c496f</urn>
+                                        <urn>org.easymock:easymock:3.2:jar:null:test:00c82f7fa3ef377d8954b1db25123944b5af2ba4</urn>
                                         <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
                                         <urn>org.fusesource.leveldbjni:leveldbjni-all:1.8:jar:null:compile:707350a2eeb1fa2ed77a32ddb3893ed308e941db</urn>
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
@@ -398,7 +398,7 @@
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
-            <version>3.0</version>
+            <version>3.2</version>
             <scope>test</scope>
         </dependency>
         <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
