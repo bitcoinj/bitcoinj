@@ -38,6 +38,7 @@ public class Main extends Application {
     private Pane mainUI;
     public MainController controller;
     public NotificationBarPane notificationBar;
+    public Stage mainWindow;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
@@ -50,6 +51,7 @@ public class Main extends Application {
     }
 
     private void realStart(Stage mainWindow) throws IOException {
+        this.mainWindow = mainWindow;
         instance = this;
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
