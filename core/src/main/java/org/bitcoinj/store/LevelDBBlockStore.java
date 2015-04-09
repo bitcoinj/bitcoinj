@@ -18,7 +18,7 @@ public class LevelDBBlockStore implements BlockStore {
     private static final byte[] CHAIN_HEAD_KEY = "chainhead".getBytes();
 
     private final Context context;
-    private final DB db;
+    private DB db;
     private final ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
     private final File path;
 
@@ -35,14 +35,23 @@ public class LevelDBBlockStore implements BlockStore {
         options.createIfMissing();
 
         try {
-            db = dbFactory.open(directory, options);
-            initStoreIfNeeded();
+            tryOpen(directory, dbFactory, options);
         } catch (IOException e) {
-            throw new BlockStoreException(e);
+            try {
+                dbFactory.repair(directory, options);
+                tryOpen(directory, dbFactory, options);
+            } catch (IOException e1) {
+                throw new BlockStoreException(e1);
+            }
         }
     }
 
-    private void initStoreIfNeeded() throws BlockStoreException {
+    private synchronized void tryOpen(File directory, DBFactory dbFactory, Options options) throws IOException, BlockStoreException {
+        db = dbFactory.open(directory, options);
+        initStoreIfNeeded();
+    }
+
+    private synchronized void initStoreIfNeeded() throws BlockStoreException {
         if (db.get(CHAIN_HEAD_KEY) != null)
             return;   // Already initialised.
         Block genesis = context.getParams().getGenesisBlock().cloneAsHeader();

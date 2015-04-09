@@ -238,13 +238,15 @@ public class WalletAppKit extends AbstractIdleService {
     /**
      * Tests to see if the spvchain file has an operating system file lock on it. Useful for checking if your app
      * is already running. If another copy of your app is running and you start the appkit anyway, an exception will
-     * be thrown during the startup process. Returns false if the chain file does not exist.
+     * be thrown during the startup process. Returns false if the chain file does not exist or is a directory.
      */
     public boolean isChainFileLocked() throws IOException {
         RandomAccessFile file2 = null;
         try {
             File file = new File(directory, filePrefix + ".spvchain");
             if (!file.exists())
+                return false;
+            if (file.isDirectory())
                 return false;
             file2 = new RandomAccessFile(file, "rw");
             FileLock lock = file2.getChannel().tryLock();
