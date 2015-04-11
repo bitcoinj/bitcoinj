@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.*;
 /**
  * Parameters for the main production network on which people trade goods and services.
  */
-public class MainNetParams extends NetworkParameters {
+public class MainNetParams extends AbstractBitcoinNetParams {
     public MainNetParams() {
         super();
         interval = INTERVAL;

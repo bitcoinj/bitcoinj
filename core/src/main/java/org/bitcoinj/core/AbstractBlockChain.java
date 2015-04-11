@@ -829,9 +829,11 @@ public abstract class AbstractBlockChain {
     private static final Date testnetDiffDate = new Date(1329264000000L);
 
     /**
-     * Throws an exception if the blocks difficulty is not correct.
+     * Throws an exception if the block's difficulty is not correct.
+     *
+     * @throws VerificationException if the block's difficulty is not correct.
      */
-    private void checkDifficultyTransitions(StoredBlock storedPrev, Block nextBlock) throws BlockStoreException, VerificationException {
+    protected void checkDifficultyTransitions(StoredBlock storedPrev, Block nextBlock) throws BlockStoreException, VerificationException {
         checkState(lock.isHeldByCurrentThread());
         Block prev = storedPrev.getHeader();
         

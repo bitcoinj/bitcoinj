@@ -17,7 +17,6 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -26,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Parameters for the testnet, a separate public instance of Bitcoin that has relaxed rules suitable for development
  * and testing of applications and new Bitcoin versions.
  */
-public class TestNet3Params extends NetworkParameters {
+public class TestNet3Params extends AbstractBitcoinNetParams {
     public TestNet3Params() {
         super();
         id = ID_TESTNET;
