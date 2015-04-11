@@ -22,6 +22,10 @@ import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.MonetaryFormat;
+
 import javax.annotation.*;
 import java.io.*;
 import java.math.*;
@@ -374,4 +378,34 @@ public abstract class NetworkParameters implements Serializable {
     public int getBip32HeaderPriv() {
         return bip32HeaderPriv;
     }
+
+    /**
+     * Returns the number of coins that will be produced in total, on this
+     * network. Where not applicable, a very large number of coins is returned
+     * instead (i.e. the main coin issue for Dogecoin).
+     */
+    public abstract Coin getMaxMoney();
+
+    /**
+     * Any standard (ie pay-to-address) output smaller than this value will
+     * most likely be rejected by the network.
+     */
+    public abstract Coin getMinNonDustOutput();
+
+    /**
+     * The monetary object for this currency.
+     */
+    public abstract MonetaryFormat getMonetaryFormat();
+
+    /**
+     * Scheme part for URIs, for example "bitcoin".
+     */
+    public abstract String getUriScheme();
+
+    /**
+     * Returns whether this network has a maximum number of coins (finite supply) or
+     * not. Always returns true for Bitcoin, but exists to be overriden for other
+     * networks.
+     */
+    public abstract boolean hasMaxMoney();
 }
