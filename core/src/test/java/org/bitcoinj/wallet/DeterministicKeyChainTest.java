@@ -54,7 +54,9 @@ public class DeterministicKeyChainTest {
     @Test
     public void derive() throws Exception {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(key1.isPubKeyOnly());
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(key2.isPubKeyOnly());
 
         final Address address = new Address(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
@@ -63,10 +65,13 @@ public class DeterministicKeyChainTest {
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
+        assertFalse(key1.isPubKeyOnly());
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertFalse(key3.isPubKeyOnly());
         assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
+        assertFalse(key3.isPubKeyOnly());
     }
 
     @Test
@@ -268,7 +273,7 @@ public class DeterministicKeyChainTest {
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
-        chain = DeterministicKeyChain.watch(accountKey.getPubOnly());
+        chain = DeterministicKeyChain.watch(accountKey.dropPrivateBytes().dropParent());
         chain = chain.toEncrypted("this doesn't make any sense");
     }
 
@@ -298,7 +303,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)
             keys[i] = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        chain = DeterministicKeyChain.watch(chain.getWatchingKey());
+        chain = DeterministicKeyChain.watch(chain.getWatchingKey().dropPrivateBytes().dropParent());
         int e = chain.numBloomFilterEntries();
         BloomFilter filter = chain.getFilter(e, 0.001, 1);
         for (DeterministicKey key : keys)
