@@ -368,4 +368,25 @@ public abstract class NetworkParameters implements Serializable {
     public int getBip32HeaderPriv() {
         return bip32HeaderPriv;
     }
+
+    /** Returns the number of coins that will be produced in total, on this
+      * network.
+      *
+      * @return the number of coins that will be produced in total, on this
+      * network. Where not applicable, a very large number of coins is returned
+      * instead (i.e. the main mining issue for Dogecoin).
+      */
+    public abstract Coin getMaxMoney();
+
+    /**
+     * Any standard (ie pay-to-address) output smaller than this value will
+     * most likely be rejected by the network.
+     */
+    public abstract Coin getMinNonDustOutput();
+
+    /** Returns whether this network has a maximum number of coins (finite supply) or
+     * not. Always returns true for Bitcoin, but exists to be overriden for other
+     * networks.
+     */
+    public abstract boolean hasMaxMoney();
 }

@@ -24,7 +24,7 @@ import java.math.BigInteger;
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link org.bitcoinj.core.Block#solve()} by setting difficulty to the easiest possible.
  */
-public class UnitTestParams extends NetworkParameters {
+public class UnitTestParams extends AbstractBitcoinNetParams {
     // A simple static key/address for re-use in unit tests, to speed things up.
     public static ECKey TEST_KEY = new ECKey();
     public static Address TEST_ADDRESS;

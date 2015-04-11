@@ -3080,7 +3080,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         try {
             checkNotNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
-            CoinSelection selection = selector.select(NetworkParameters.MAX_MONEY, candidates);
+            CoinSelection selection = selector.select(params.getMaxMoney(), candidates);
             return selection.valueGathered;
         } finally {
             lock.unlock();
@@ -3663,7 +3663,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
                 checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select(NetworkParameters.MAX_MONEY, candidates);
+                bestCoinSelection = selector.select(params.getMaxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
                 log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
