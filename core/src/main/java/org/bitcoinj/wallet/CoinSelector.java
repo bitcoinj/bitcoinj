@@ -6,7 +6,7 @@ import org.bitcoinj.core.TransactionOutput;
 import java.util.List;
 
 /**
- * A CoinSelector is responsible for picking some outputs to spend, from the list of all spendable outputs. It
+ * A CoinSelector is responsible for picking some outputs to spend, from the list of all possible outputs. It
  * allows you to customize the policies for creation of transactions to suit your needs. The select operation
  * may return a {@link CoinSelection} that has a valueGathered lower than the requested target, if there's not
  * enough money in the wallet.
