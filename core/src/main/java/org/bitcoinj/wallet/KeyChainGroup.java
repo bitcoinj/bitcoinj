@@ -17,31 +17,21 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.base.*;
+import com.google.common.collect.*;
+import com.google.protobuf.*;
 import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.ChildNumber;
-import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.crypto.KeyCrypter;
-import org.bitcoinj.crypto.LinuxSecureRandom;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.store.UnreadableWalletException;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
+import org.bitcoinj.crypto.*;
+import org.bitcoinj.script.*;
+import org.bitcoinj.store.*;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
+import org.spongycastle.crypto.params.*;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.protobuf.ByteString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.security.SecureRandom;
+import javax.annotation.*;
+import java.security.*;
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -555,24 +545,28 @@ public class KeyChainGroup implements KeyBag {
      * Returns whether this chain has only watching keys (unencrypted keys with no private part). Mixed chains are
      * forbidden.
      * 
-     * @throws IllegalStateException
-     *             if there are no keys, or if there is a mix between watching and non-watching keys.
+     * @throws IllegalStateException if there are no keys, or if there is a mix between watching and non-watching keys.
      */
     public boolean isWatching() {
-        Boolean basicChainIsWatching = basic.isWatching();
-        Boolean deterministicChainIsWatching = !chains.isEmpty() ? getActiveKeyChain().isWatching() : null;
-        if (basicChainIsWatching == null && deterministicChainIsWatching == null)
-            throw new IllegalStateException("No keys");
-        if (basicChainIsWatching == null && deterministicChainIsWatching != null)
-            return deterministicChainIsWatching;
-        if (basicChainIsWatching != null && deterministicChainIsWatching == null)
-            return basicChainIsWatching;
-        if (basicChainIsWatching == deterministicChainIsWatching)
-            return deterministicChainIsWatching;
-        if (basicChainIsWatching && !deterministicChainIsWatching)
-            throw new IllegalStateException("Basic chain is watching, deterministic chain is not");
-        else
-            throw new IllegalStateException("Basic chain is not watching, deterministic chain is");
+        BasicKeyChain.State basicState = basic.isWatching();
+        BasicKeyChain.State activeState = BasicKeyChain.State.EMPTY;
+        if (!chains.isEmpty()) {
+            if (getActiveKeyChain().isWatching())
+                activeState = BasicKeyChain.State.WATCHING;
+            else
+                activeState = BasicKeyChain.State.REGULAR;
+        }
+        if (basicState == BasicKeyChain.State.EMPTY) {
+            if (activeState == BasicKeyChain.State.EMPTY)
+                throw new IllegalStateException("Empty key chain group: cannot answer isWatching() query");
+            return activeState == BasicKeyChain.State.WATCHING;
+        } else if (activeState == BasicKeyChain.State.EMPTY)
+            return basicState == BasicKeyChain.State.WATCHING;
+        else {
+            if (activeState != basicState)
+                throw new IllegalStateException("Mix of watching and non-watching keys in wallet");
+            return activeState == BasicKeyChain.State.WATCHING;
+        }
     }
 
     /** Returns the key crypter or null if the group is not encrypted. */

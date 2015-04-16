@@ -230,16 +230,23 @@ public class BasicKeyChain implements EncryptableKeyChain {
         return pubkeyToKeys.size();
     }
 
+    /** Whether this basic key chain is empty, full of regular (usable for signing) keys, or full of watching keys. */
+    public enum State {
+        EMPTY,
+        WATCHING,
+        REGULAR
+    }
+
     /**
-     * Returns whether this chain consists entirely of watching keys (unencrypted keys with no private part). Mixed
-     * chains are forbidden. Null means the chain is empty.
+     * Returns whether this chain consists of pubkey only (watching) keys, regular keys (usable for signing), or
+     * has no keys in it yet at all (thus we cannot tell).
      */
-    public Boolean isWatching() {
+    public State isWatching() {
         lock.lock();
         try {
             if (hashToKeys.isEmpty())
-                return null;
-            return isWatching;
+                return State.EMPTY;
+            return isWatching ? State.WATCHING : State.REGULAR;
         } finally {
             lock.unlock();
         }
