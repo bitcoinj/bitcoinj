@@ -26,6 +26,8 @@ import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
+import org.bitcoinj.wallet.DefaultKeyChainFactory;
+import org.bitcoinj.wallet.KeyChainFactory;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.WalletTransaction;
 import com.google.common.collect.Lists;
@@ -84,6 +86,7 @@ public class WalletProtobufSerializer {
     }
 
     private final WalletFactory factory;
+    private KeyChainFactory keyChainFactory;
 
     public WalletProtobufSerializer() {
         this(new WalletFactory() {
@@ -97,6 +100,11 @@ public class WalletProtobufSerializer {
     public WalletProtobufSerializer(WalletFactory factory) {
         txMap = new HashMap<ByteString, Transaction>();
         this.factory = factory;
+        this.keyChainFactory = new DefaultKeyChainFactory();
+    }
+
+    public void setKeyChainFactory(KeyChainFactory keyChainFactory) {
+        this.keyChainFactory = keyChainFactory;
     }
 
     /**
@@ -415,9 +423,9 @@ public class WalletProtobufSerializer {
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter);
+            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter, keyChainFactory);
         } else {
-            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList());
+            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
         }
         Wallet wallet = factory.create(params, chain);
 
