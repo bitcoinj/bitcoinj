@@ -61,18 +61,9 @@ public class RedeemData {
      * Returns the first key that has private bytes
      */
     public ECKey getFullKey() {
-        for (ECKey key : keys) {
-            //TODO: don't use exception catching here to test. It's better to use hasPrivKey, but currently it's not working
-            // as expected for DeterministicKeys (it doesn't test if it's possible to derive private key)
-            try {
-                if (key.getPrivKey() != null)
-                    return key;
-            } catch (IllegalStateException e) {
-                // no private bytes. Proceed to the next key
-            } catch (ECKey.MissingPrivateKeyException e) {
-
-            }
-        }
+        for (ECKey key : keys)
+            if (key.hasPrivKey())
+                return key;
         return null;
     }
 }

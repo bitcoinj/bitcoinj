@@ -304,6 +304,18 @@ public class DeterministicKey extends ECKey {
         return super.isPubKeyOnly() && (parent == null || parent.isPubKeyOnly());
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean hasPrivKey() {
+        return findOrDerivePrivateKey() != null;
+    }
+
+    @Nullable
+    @Override
+    public byte[] getSecretBytes() {
+        return priv != null ? getPrivKeyBytes() : null;
+    }
+
     /**
      * A deterministic key is considered to be encrypted if it has access to encrypted private key bytes, OR if its
      * parent does. The reason is because the parent would be encrypted under the same key and this key knows how to
