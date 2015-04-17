@@ -297,16 +297,11 @@ public class DeterministicKey extends ECKey {
 
     /**
      * A deterministic key is considered to be 'public key only' if it hasn't got a private key part and it cannot be
-     * rederived.
+     * rederived. If the hierarchy is encrypted this returns true.
      */
     @Override
     public boolean isPubKeyOnly() {
-        if (!super.isPubKeyOnly())
-            return false;
-        if (parent != null)
-            return parent.isPubKeyOnly();
-        else
-            return true;
+        return super.isPubKeyOnly() && (parent == null || parent.isPubKeyOnly());
     }
 
     /**
