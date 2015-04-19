@@ -1161,12 +1161,13 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isWatching());
     }
 
-    @Test(expected = ECKey.MissingPrivateKeyException.class)
+    @Test
     public void watchingWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(params);
-        watchKey = DeterministicKey.deserializeB58(null, serialized, params);
-        Wallet watchingWallet = Wallet.fromWatchingKey(params, watchKey);
+
+        // Construct watching wallet.
+        Wallet watchingWallet = Wallet.fromWatchingKey(params, DeterministicKey.deserializeB58(null, serialized, params));
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -1174,7 +1175,17 @@ public class WalletTest extends TestWithWallet {
         key2 = watchingWallet.freshKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key, key2);
         key.sign(Sha256Hash.ZERO_HASH);
-        key2.sign(Sha256Hash.ZERO_HASH);
+        try {
+            key2.sign(Sha256Hash.ZERO_HASH);
+            fail();
+        } catch (ECKey.MissingPrivateKeyException e) {
+            // Expected
+        }
+
+        receiveATransaction(watchingWallet, myKey.toAddress(params));
+        assertEquals(COIN, watchingWallet.getBalance());
+        assertEquals(COIN, watchingWallet.getBalance(Wallet.BalanceType.AVAILABLE));
+        assertEquals(ZERO, watchingWallet.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE));
     }
 
     @Test(expected = ECKey.MissingPrivateKeyException.class)
@@ -2826,8 +2837,14 @@ public class WalletTest extends TestWithWallet {
 
     @Test (expected = ECKey.MissingPrivateKeyException.class)
     public void completeTxPartiallySignedThrows() throws Exception {
-        byte[] emptySig = new byte[]{};
-        completeTxPartiallySigned(Wallet.MissingSigsMode.THROW, emptySig);
+        sendMoneyToWallet(wallet, CENT, wallet.freshReceiveKey(), AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        SendRequest req = SendRequest.emptyWallet(new ECKey().toAddress(params));
+        wallet.completeTx(req);
+        // Delete the sigs
+        for (TransactionInput input : req.tx.getInputs())
+            input.setScriptBytes(new byte[]{});
+        Wallet watching = Wallet.fromWatchingKey(params, wallet.getWatchingKey().dropParent().dropPrivateBytes());
+        watching.completeTx(Wallet.SendRequest.forTx(req.tx));
     }
 
     @Test

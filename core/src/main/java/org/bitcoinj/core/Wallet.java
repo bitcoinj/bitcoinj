@@ -2984,12 +2984,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * <p>It's possible to calculate a wallets balance from multiple points of view. This enum selects which
-     * getBalance() should use.</p>
+     * {@link #getBalance(BalanceType)} should use.</p>
      *
      * <p>Consider a real-world example: you buy a snack costing $5 but you only have a $10 bill. At the start you have
      * $10 viewed from every possible angle. After you order the snack you hand over your $10 bill. From the
      * perspective of your wallet you have zero dollars (AVAILABLE). But you know in a few seconds the shopkeeper
      * will give you back $5 change so most people in practice would say they have $5 (ESTIMATED).</p>
+     *
+     * <p>The fact that the wallet can track transactions which are not spendable by itself ("watching wallets") adds
+     * another type of balance to the mix. Although the wallet won't do this by default, advanced use cases that
+     * override the relevancy checks can end up with a mix of spendable and unspendable transactions.</p>
      */
     public enum BalanceType {
         /**
@@ -2999,11 +3003,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         ESTIMATED,
 
         /**
-         * Balance that can be safely used to create new spends. This is whatever the default coin selector would
-         * make available, which by default means transaction outputs with at least 1 confirmation and pending
-         * transactions created by our own wallet which have been propagated across the network.
+         * Balance that could be safely used to create new spends, if we had all the needed private keys. This is
+         * whatever the default coin selector would make available, which by default means transaction outputs with at
+         * least 1 confirmation and pending transactions created by our own wallet which have been propagated across
+         * the network. Whether we <i>actually</i> have the private keys or not is irrelevant for this balance type.
          */
-        AVAILABLE
+        AVAILABLE,
+
+        /** Same as ESTIMATED but only for outputs we have the private keys for and can sign ourselves. */
+        ESTIMATED_SPENDABLE,
+        /** Same as AVAILABLE but only for outputs we have the private keys for and can sign ourselves. */
+        AVAILABLE_SPENDABLE
     }
 
     /**
@@ -3020,10 +3030,12 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public Coin getBalance(BalanceType balanceType) {
         lock.lock();
         try {
-            if (balanceType == BalanceType.AVAILABLE) {
-                return getBalance(coinSelector);
-            } else if (balanceType == BalanceType.ESTIMATED) {
-                List<TransactionOutput> all = calculateAllSpendCandidates(false);
+            if (balanceType == BalanceType.AVAILABLE || balanceType == BalanceType.AVAILABLE_SPENDABLE) {
+                List<TransactionOutput> candidates = calculateAllSpendCandidates(true, balanceType == BalanceType.AVAILABLE_SPENDABLE);
+                CoinSelection selection = coinSelector.select(NetworkParameters.MAX_MONEY, candidates);
+                return selection.valueGathered;
+            } else if (balanceType == BalanceType.ESTIMATED || balanceType == BalanceType.ESTIMATED_SPENDABLE) {
+                List<TransactionOutput> all = calculateAllSpendCandidates(false, balanceType == BalanceType.ESTIMATED_SPENDABLE);
                 Coin value = Coin.ZERO;
                 for (TransactionOutput out : all) value = value.add(out.getValue());
                 return value;
@@ -3036,14 +3048,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Returns the balance that would be considered spendable by the given coin selector. Just asks it to select
-     * as many coins as possible and returns the total.
+     * Returns the balance that would be considered spendable by the given coin selector, including watched outputs
+     * (i.e. balance includes outputs we don't have the private keys for). Just asks it to select as many coins as
+     * possible and returns the total.
      */
     public Coin getBalance(CoinSelector selector) {
         lock.lock();
         try {
             checkNotNull(selector);
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(true);
+            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
             CoinSelection selection = selector.select(NetworkParameters.MAX_MONEY, candidates);
             return selection.valueGathered;
         } finally {
@@ -3610,13 +3623,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
             // with the actual outputs that'll be used to gather the required amount of value. In this way, users
-            // can customize coin selection policies.
-            //
-            // Note that this code is poorly optimized: the spend candidates only alter when transactions in the wallet
-            // change - it could be pre-calculated and held in RAM, and this is probably an optimization worth doing.
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(true);
-
-            eraseCandidatesWithoutKeys(candidates);
+            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
+            // we don't have the keys for.
+            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
 
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
@@ -3686,27 +3695,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             log.info("  completed: {}", req.tx);
         } finally {
             lock.unlock();
-        }
-    }
-
-    private void eraseCandidatesWithoutKeys(List<TransactionOutput> candidates) {
-        ListIterator<TransactionOutput> it = candidates.listIterator();
-        while (it.hasNext()) {
-            TransactionOutput output = it.next();
-            try {
-                Script script = output.getScriptPubKey();
-                if (script.isSentToAddress()) {
-                    if (findKeyFromPubHash(script.getPubKeyHash()) == null)
-                        it.remove();
-                } else if (script.isPayToScriptHash()) {
-                    if (findRedeemDataFromScriptHash(script.getPubKeyHash()) == null)
-                        it.remove();
-                }
-            } catch (ScriptException e) {
-                // If this happens it means an output script in a wallet tx could not be understood. That should never
-                // happen, if it does it means the wallet has got into an inconsistent state.
-                throw new IllegalStateException(e);
-            }
         }
     }
 
@@ -3780,17 +3768,35 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Returns a list of all possible outputs we could possibly spend, potentially even including immature coinbases
-     * (which the protocol may forbid us from spending). In other words, return all outputs that this wallet holds
-     * keys for and which are not already marked as spent.
+     * Returns a list of the outputs that can potentially be spent, i.e. that we have the keys for and are unspent
+     * according to our knowledge of the block chain.
      */
+    public List<TransactionOutput> calculateAllSpendCandidates() {
+        return calculateAllSpendCandidates(true, true);
+    }
+
+    /** @deprecated Use {@link #calculateAllSpendCandidates(boolean, boolean)} or the zero-parameter form instead. */
+    @Deprecated
     public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
+        return calculateAllSpendCandidates(excludeImmatureCoinbases, true);
+    }
+
+    /**
+     * Returns a list of all outputs that are being tracked by this wallet either from the {@link UTXOProvider}
+     * (in this case the existence or not of private keys is ignored), or the wallets internal storage (the default)
+     * taking into account the flags.
+     *
+     * @param excludeImmatureCoinbases Whether to ignore coinbase outputs that we will be able to spend in future once they mature.
+     * @param excludeUnsignable Whether to ignore outputs that we are tracking but don't have the keys to sign for.
+     */
+    public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases, boolean excludeUnsignable) {
         lock.lock();
         try {
             List<TransactionOutput> candidates;
             if (vUTXOProvider == null) {
                 candidates = new ArrayList<TransactionOutput>(myUnspents.size());
                 for (TransactionOutput output : myUnspents) {
+                    if (excludeUnsignable && !canSignFor(output.getScriptPubKey())) continue;
                     Transaction transaction = checkNotNull(output.getParentTransaction());
                     if (excludeImmatureCoinbases && !transaction.isMature())
                         continue;
@@ -3806,10 +3812,35 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
+     * Returns true if this wallet has at least one of the private keys needed to sign for this scriptPubKey. Returns
+     * false if the form of the script is not known or if the script is OP_RETURN.
+     */
+    public boolean canSignFor(Script script) {
+        if (script.isSentToRawPubKey()) {
+            byte[] pubkey = script.getPubKey();
+            ECKey key = findKeyFromPubKey(pubkey);
+            return key != null && (key.isEncrypted() || key.hasPrivKey());
+        } if (script.isPayToScriptHash()) {
+            RedeemData data = findRedeemDataFromScriptHash(script.getPubKeyHash());
+            return data != null && canSignFor(data.redeemScript);
+        } else if (script.isSentToAddress()) {
+            ECKey key = findKeyFromPubHash(script.getPubKeyHash());
+            return key != null && (key.isEncrypted() || key.hasPrivKey());
+        } else if (script.isSentToMultiSig()) {
+            for (ECKey pubkey : script.getPubKeys()) {
+                ECKey key = findKeyFromPubKey(pubkey.getPubKey());
+                if (key != null && (key.isEncrypted() || key.hasPrivKey()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
      * @return The list of candidates.
      */
-    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases){
+    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
         LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
@@ -3829,7 +3860,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         // We need to handle the pending transactions that we know about.
         for (Transaction tx : pending.values()) {
             // Remove the spent outputs.
-            for(TransactionInput input : tx.getInputs()) {
+            for (TransactionInput input : tx.getInputs()) {
                 if (input.getConnectedOutput().isMine(this)) {
                     candidates.remove(input.getConnectedOutput());
                 }
@@ -4865,7 +4896,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             for (Transaction other : others)
                 selector.excludeOutputsSpentBy(other);
             // TODO: Make this use the standard SendRequest.
-            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates(true));
+            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
             if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
             maybeUpgradeToHD(aesKey);
             Transaction rekeyTx = new Transaction(params);

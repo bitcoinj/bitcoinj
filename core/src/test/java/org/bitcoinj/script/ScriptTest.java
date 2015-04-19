@@ -82,7 +82,11 @@ public class ScriptTest {
     public void testMultiSig() throws Exception {
         List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
         assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
-        assertTrue(ScriptBuilder.createMultiSigOutputScript(3, keys).isSentToMultiSig());
+        Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
+        assertTrue(script.isSentToMultiSig());
+        List<ECKey> pubkeys = new ArrayList<ECKey>(3);
+        for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key.getPubKeyPoint()));
+        assertEquals(script.getPubKeys(), pubkeys);
         assertFalse(ScriptBuilder.createOutputScript(new ECKey()).isSentToMultiSig());
         try {
             // Fail if we ask for more signatures than keys.

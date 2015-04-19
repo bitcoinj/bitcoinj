@@ -17,22 +17,15 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.testing.TestWithWallet;
-import org.bitcoinj.wallet.CoinSelection;
-import org.bitcoinj.wallet.DefaultCoinSelector;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.bitcoinj.params.*;
+import org.bitcoinj.testing.*;
+import org.junit.*;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.net.*;
+import java.util.*;
 
+import static com.google.common.base.Preconditions.*;
 import static org.bitcoinj.core.Coin.*;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
 public class DefaultCoinSelectorTest extends TestWithWallet {
@@ -80,7 +73,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
 
         // Check we selected just the oldest one.
         DefaultCoinSelector selector = new DefaultCoinSelector();
-        CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates(true));
+        CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates());
         assertTrue(selection.gathered.contains(t1.getOutputs().get(0)));
         assertEquals(COIN, selection.valueGathered);
 
