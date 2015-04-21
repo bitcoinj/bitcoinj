@@ -1912,11 +1912,6 @@ public class PeerGroup implements TransactionBroadcaster {
         return Utils.maxOfMostFreq(heights);
     }
 
-    private static class PeerAndPing {
-        Peer peer;
-        long pingTime;
-    }
-
     /**
      * Given a list of Peers, return a Peer to be used as the download peer. If you don't want PeerGroup to manage
      * download peer statuses for you, just override this and always return null.
