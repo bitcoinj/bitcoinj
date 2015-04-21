@@ -3024,6 +3024,18 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         AVAILABLE_SPENDABLE
     }
 
+    /** @deprecated Use {@link #getBalance()} instead as including watched balances is now the default behaviour */
+    @Deprecated
+    public Coin getWatchedBalance() {
+        return getBalance();
+    }
+
+    /** @deprecated Use {@link #getBalance(CoinSelector)} instead as including watched balances is now the default behaviour */
+    @Deprecated
+    public Coin getWatchedBalance(CoinSelector selector) {
+        return getBalance(selector);
+    }
+
     /**
      * Returns the AVAILABLE balance of this wallet. See {@link BalanceType#AVAILABLE} for details on what this
      * means.
