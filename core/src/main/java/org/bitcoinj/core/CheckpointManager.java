@@ -216,6 +216,9 @@ public class CheckpointManager {
 
         time -= 86400 * 7;
 
+        checkArgument(time > 0);
+        log.info("Attempting to initialize a new block store with a checkpoint for time {}", time);
+
         BufferedInputStream stream = new BufferedInputStream(checkpoints);
         CheckpointManager manager = new CheckpointManager(params, stream);
         StoredBlock checkpoint = manager.getCheckpointBefore(time);

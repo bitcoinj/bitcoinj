@@ -823,6 +823,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         try {
             for (final Script script : scripts) {
                 if (watchedScripts.contains(script)) continue;
+                if (script.getCreationTimeSeconds() == 0)
+                    log.warn("Adding a script to the wallet with a creation time of zero, this will disable the checkpointing optimization!    {}", script);
                 watchedScripts.add(script);
                 added++;
             }

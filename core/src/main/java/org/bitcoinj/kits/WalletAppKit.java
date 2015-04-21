@@ -295,7 +295,10 @@ public class WalletAppKit extends AbstractIdleService {
                     } else {
                         time = vWallet.getEarliestKeyCreationTime();
                     }
-                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                    if (time > 0)
+                        CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                    else
+                        log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
                 } else if (chainFileExists) {
                     log.info("Deleting the chain file in preparation from restore.");
                     vStore.close();
