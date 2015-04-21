@@ -229,15 +229,16 @@ public class PeerGroup implements TransactionBroadcaster {
     private final PeerEventListener startupListener = new PeerStartupListener();
 
     /**
-     * <p>A reasonable default for the bloom filter false positive rate on mainnet. FP rates are values between 0.0 and 1.0
-     * where 1.0 is "all transactions" i.e. 100%.</p>
-     *
-     * <p>Users for which low data usage is of utmost concern, 0.0001 may be better, for users
-     * to whom anonymity is of utmost concern, 0.001 (0.1%) should provide very good privacy.</p>
+     * The default Bloom filter false positive rate, which is selected to be extremely low such that you hardly ever
+     * download false positives. This provides maximum performance. Although this default can be overridden to push
+     * the FP rate higher, due to <a href="https://groups.google.com/forum/#!msg/bitcoinj/Ys13qkTwcNg/9qxnhwnkeoIJ">
+     * various complexities</a> there are still ways a remote peer can deanonymize the users wallet. This is why the
+     * FP rate is chosen for performance rather than privacy. If a future version of bitcoinj fixes the known
+     * de-anonymization attacks this FP rate may rise again (or more likely, become expressed as a bandwidth allowance).
      */
-    public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.0005;
+    public static final double DEFAULT_BLOOM_FILTER_FP_RATE = 0.00001;
     /** Maximum increase in FP rate before forced refresh of the bloom filter */
-    public static final double MAX_FP_RATE_INCREASE = 2.0f;
+    public static final double MAX_FP_RATE_INCREASE = 10.0f;
     // An object that calculates bloom filters given a list of filter providers, whilst tracking some state useful
     // for privacy purposes.
     private final FilterMerger bloomFilterMerger;
