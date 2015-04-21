@@ -1536,7 +1536,7 @@ public class PeerGroup implements TransactionBroadcaster {
         public void run() {
             try {
                 calculate();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("Error in speed calculator", e);
             }
         }
