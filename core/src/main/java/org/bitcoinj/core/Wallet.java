@@ -812,8 +812,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     }
 
     /**
-     * Adds the given output scripts to the wallet to be watched. Outputs can be retrieved
-     * by {@link #getWatchedOutputs(boolean)}.
+     * Adds the given output scripts to the wallet to be watched. Outputs can be retrieved by {@link #getWatchedOutputs(boolean)}.
+     * If a script is already being watched, the object is replaced with the one in the given list. As {@link Script}
+     * equality is defined in terms of program bytes only this lets you update metadata such as creation time. Note that
+     * you should be careful not to add scripts with a creation time of zero (the default!) because otherwise it will
+     * disable the important wallet checkpointing optimisation.
      *
      * @return how many scripts were added successfully
      */
@@ -822,7 +825,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         keychainLock.lock();
         try {
             for (final Script script : scripts) {
-                if (watchedScripts.contains(script)) continue;
+                // Script.equals/hashCode() only takes into account the program bytes, so this step lets the user replace
+                // a script in the wallet with an incorrect creation time.
+                if (watchedScripts.contains(script))
+                    watchedScripts.remove(script);
                 if (script.getCreationTimeSeconds() == 0)
                     log.warn("Adding a script to the wallet with a creation time of zero, this will disable the checkpointing optimization!    {}", script);
                 watchedScripts.add(script);
