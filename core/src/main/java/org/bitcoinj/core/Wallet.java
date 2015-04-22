@@ -148,7 +148,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     @GuardedBy("keychainLock") protected KeyChainGroup keychain;
 
     // A list of scripts watched by this wallet.
-    private Set<Script> watchedScripts;
+    @GuardedBy("keychainLock") private Set<Script> watchedScripts;
 
     protected final Context context;
     protected final NetworkParameters params;
@@ -2739,6 +2739,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
                            @Nullable AbstractBlockChain chain) {
         lock.lock();
+        keychainLock.lock();
         try {
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
@@ -2800,6 +2801,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             return builder.toString();
         } finally {
+            keychainLock.unlock();
             lock.unlock();
         }
     }
