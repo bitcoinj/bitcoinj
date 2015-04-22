@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
+import com.google.common.base.*;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.*;
 import com.google.common.collect.*;
@@ -4457,7 +4458,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
     /**
      * Deserialize the wallet extension with the supplied data and then install it, replacing any existing extension
-     * that may have existed with the same ID.
+     * that may have existed with the same ID. If an exception is thrown then the extension is removed from the wallet,
+     * if already present.
      */
     public void deserializeExtension(WalletExtension extension, byte[] data) throws Exception {
         lock.lock();
@@ -4465,6 +4467,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // This method exists partly to establish a lock ordering of wallet > extension.
             extension.deserializeWalletExtension(this, data);
             extensions.put(extension.getWalletExtensionID(), extension);
+        } catch (Throwable throwable) {
+            log.error("Error during extension deserialization", throwable);
+            extensions.remove(extension.getWalletExtensionID());
+            Throwables.propagate(throwable);
         } finally {
             lock.unlock();
         }

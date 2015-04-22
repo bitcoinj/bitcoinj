@@ -519,10 +519,8 @@ public class WalletProtobufSerializer {
                     wallet.deserializeExtension(extension, extProto.getData().toByteArray());
                 } catch (Exception e) {
                     if (extProto.getMandatory() && requireMandatoryExtensions) {
-                        log.error("Error whilst reading extension {}, failing to read wallet", id, e);
+                        log.error("Error whilst reading mandatory extension {}, failing to read wallet", id);
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
-                    } else {
-                        log.error("Error whilst reading extension {}, ignoring", id, e);
                     }
                 }
             }
