@@ -165,6 +165,9 @@ public class TransactionBroadcast {
         }
     }
 
+    private int numSeemPeers;
+    private boolean mined;
+
     private class ConfidenceChange implements TransactionConfidence.Listener {
         @Override
         public void onConfidenceChanged(TransactionConfidence conf, ChangeReason reason) {
@@ -175,7 +178,7 @@ public class TransactionBroadcast {
                     numSeenPeers, mined ? " and mined" : "");
 
             // Progress callback on the requested thread.
-            invokeProgressCallback(numSeenPeers, mined);
+            invokeAndRecord(numSeenPeers, mined);
 
             if (numSeenPeers >= numWaitingFor || mined) {
                 // We've seen the min required number of peers announce the transaction, or it was included
@@ -197,6 +200,14 @@ public class TransactionBroadcast {
                 future.set(tx);  // RE-ENTRANCY POINT
             }
         }
+    }
+
+    private void invokeAndRecord(int numSeenPeers, boolean mined) {
+        synchronized (this) {
+            this.numSeemPeers = numSeenPeers;
+            this.mined = mined;
+        }
+        invokeProgressCallback(numSeenPeers, mined);
     }
 
     private void invokeProgressCallback(int numSeenPeers, boolean mined) {
@@ -243,7 +254,8 @@ public class TransactionBroadcast {
 
     /**
      * Sets the given callback for receiving progress values, which will run on the user thread. See
-     * {@link org.bitcoinj.utils.Threading} for details.
+     * {@link org.bitcoinj.utils.Threading} for details.  If the broadcast has already started then the callback will
+     * be invoked immediately with the current progress.
      */
     public void setProgressCallback(ProgressCallback callback) {
         setProgressCallback(callback, Threading.USER_THREAD);
@@ -252,10 +264,21 @@ public class TransactionBroadcast {
     /**
      * Sets the given callback for receiving progress values, which will run on the given executor. If the executor
      * is null then the callback will run on a network thread and may be invoked multiple times in parallel. You
-     * probably want to provide your UI thread or Threading.USER_THREAD for the second parameter.
+     * probably want to provide your UI thread or Threading.USER_THREAD for the second parameter. If the broadcast
+     * has already started then the callback will be invoked immediately with the current progress.
      */
-    public synchronized void setProgressCallback(ProgressCallback callback, @Nullable Executor executor) {
-        this.callback = callback;
-        this.progressCallbackExecutor = executor;
+    public void setProgressCallback(ProgressCallback callback, @Nullable Executor executor) {
+        boolean shouldInvoke;
+        int num;
+        boolean mined;
+        synchronized (this) {
+            this.callback = callback;
+            this.progressCallbackExecutor = executor;
+            num = this.numSeemPeers;
+            mined = this.mined;
+            shouldInvoke = numWaitingFor > 0;
+        }
+        if (shouldInvoke)
+            invokeProgressCallback(num, mined);
     }
 }

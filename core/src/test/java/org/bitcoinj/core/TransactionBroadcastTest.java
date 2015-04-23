@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
+import org.bitcoinj.params.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
 import org.junit.*;
@@ -98,6 +99,27 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(1.0, lastProgress.get(), 0.0);
         // There is no response from the Peer as it has nothing to do.
         assertNull(outbound(channels[1]));
+    }
+
+    @Test
+    public void lateProgressCallback() throws Exception {
+        // Check that if we register a progress callback on a broadcast after the broadcast has started, it's invoked
+        // immediately with the latest state. This avoids API users writing accidentally racy code when they use
+        // a convenience method like peerGroup.broadcastTransaction.
+        InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
+        Transaction tx = FakeTxBuilder.createFakeTx(params, CENT, UnitTestParams.TEST_ADDRESS);
+        tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+        TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
+        inbound(channels[1], InventoryMessage.with(tx));
+        pingAndWait(channels[1]);
+        final AtomicDouble p = new AtomicDouble();
+        broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
+            @Override
+            public void onBroadcastProgress(double progress) {
+                p.set(progress);
+            }
+        }, Threading.SAME_THREAD);
+        assertEquals(1.0, p.get(), 0.01);
     }
 
     @Test
