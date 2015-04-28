@@ -25,7 +25,7 @@ public class OrchidSocketImpl extends SocketImpl {
 	}
 
 	public void setOption(int optID, Object value) throws SocketException {
-		throw new UnsupportedOperationException();
+		// Ignored.
 	}
 
 	public Object getOption(int optID) throws SocketException {
