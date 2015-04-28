@@ -100,7 +100,7 @@ public class BlockingClient implements MessageWriteTarget {
                     }
                 } catch (Exception e) {
                     if (!vCloseRequested) {
-                        log.error("Error trying to open/read from connection: " + serverAddress, e);
+                        log.error("Error trying to open/read from connection: {}: {}", serverAddress, e.getMessage());
                         connectFuture.setException(e);
                     }
                 } finally {
