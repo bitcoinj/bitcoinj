@@ -17,15 +17,14 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.params.*;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptOpCodes;
 import com.google.common.base.Objects;
+import org.bitcoinj.net.discovery.*;
+import org.bitcoinj.params.*;
+import org.bitcoinj.script.*;
 
-import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.Serializable;
-import java.math.BigInteger;
+import javax.annotation.*;
+import java.io.*;
+import java.math.*;
 import java.util.*;
 
 import static org.bitcoinj.core.Coin.*;
@@ -95,6 +94,7 @@ public abstract class NetworkParameters implements Serializable {
     
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
+    protected HttpDiscovery.Details[] httpSeeds = new HttpDiscovery.Details[] {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
     protected NetworkParameters() {
@@ -263,6 +263,11 @@ public abstract class NetworkParameters implements Serializable {
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
     public String[] getDnsSeeds() {
         return dnsSeeds;
+    }
+
+    /** Returns discovery objects for seeds implementing the Cartographer protocol. See {@link org.bitcoinj.net.discovery.HttpDiscovery} for more info. */
+    public HttpDiscovery.Details[] getHttpSeeds() {
+        return httpSeeds;
     }
 
     /**

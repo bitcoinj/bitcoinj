@@ -16,11 +16,13 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import com.google.common.io.*;
+import org.bitcoinj.core.*;
+import org.bitcoinj.net.discovery.*;
 
-import static com.google.common.base.Preconditions.checkState;
+import java.net.*;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Parameters for the main production network on which people trade goods and services.
@@ -66,6 +68,15 @@ public class MainNetParams extends NetworkParameters {
                 "dnsseed.bitcoin.dashjr.org",  // Luke Dashjr
                 "seed.bitcoinstats.com",       // Chris Decker
                 "seed.bitnodes.io",            // Addy Yeow
+        };
+        httpSeeds = new HttpDiscovery.Details[] {
+                new HttpDiscovery.Details(
+                        ECKey.fromPublicOnly(BaseEncoding.base16().decode(
+                                "027a79143a4de36341494d21b6593015af6b2500e720ad2eda1c0b78165f4f38c4".toUpperCase()
+                        )),
+
+                        URI.create("http://main.seed.vinumeris.com/peers")
+                )
         };
     }
 

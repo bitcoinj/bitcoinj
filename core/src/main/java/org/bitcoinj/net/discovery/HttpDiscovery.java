@@ -15,22 +15,21 @@
  */
 package org.bitcoinj.net.discovery;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.bitcoin.crawler.PeerSeedProtos;
+import com.google.common.annotations.*;
+import com.google.protobuf.*;
+import com.squareup.okhttp.*;
+import org.bitcoin.crawler.*;
 import org.bitcoinj.core.*;
 
-import javax.annotation.Nullable;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.security.SignatureException;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
+import javax.annotation.*;
+import java.io.*;
+import java.net.*;
+import java.security.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.zip.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * A class that knows how to read signed sets of seeds over HTTP, using a simple protobuf based protocol. See the
@@ -40,33 +39,56 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class HttpDiscovery implements PeerDiscovery {
     private static final int TIMEOUT_SECS = 20;
 
-    private final ECKey pubkey;
-    private final URI uri;
+    public static class Details {
+        @Nullable public final ECKey pubkey;
+        public final URI uri;
+
+        public Details(@Nullable ECKey pubkey, URI uri) {
+            this.pubkey = pubkey;
+            this.uri = uri;
+        }
+    }
+
+    private final Details details;
     private final NetworkParameters params;
+    private final OkHttpClient client;
 
     /**
      * Constructs a discovery object that will read data from the given HTTP[S] URI and, if a public key is provided,
      * will check the signature using that key.
      */
     public HttpDiscovery(NetworkParameters params, URI uri, @Nullable ECKey pubkey) {
-        checkArgument(uri.getScheme().startsWith("http"));
-        this.uri = uri;
-        this.pubkey = pubkey;
+        this(params, new Details(pubkey, uri));
+    }
+
+    /**
+     * Constructs a discovery object that will read data from the given HTTP[S] URI and, if a public key is provided,
+     * will check the signature using that key.
+     */
+    public HttpDiscovery(NetworkParameters params, Details details) {
+        this(params, details, new OkHttpClient());
+    }
+
+    public HttpDiscovery(NetworkParameters params, Details details,  OkHttpClient client) {
+        checkArgument(details.uri.getScheme().startsWith("http"));
+        this.details = details;
         this.params = params;
+        this.client = client;
     }
 
     @Override
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
-            HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-            conn.setReadTimeout(TIMEOUT_SECS * 1000);
-            conn.setConnectTimeout(TIMEOUT_SECS * 1000);
-            conn.setRequestProperty("User-Agent", "bitcoinj " + VersionMessage.BITCOINJ_VERSION);
-            InputStream stream = conn.getInputStream();
+            Response response = client.newCall(new Request.Builder().url(details.uri.toURL()).build()).execute();
+            if (!response.isSuccessful())
+                throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
+            InputStream stream = response.body().byteStream();
             GZIPInputStream zip = new GZIPInputStream(stream);
             PeerSeedProtos.SignedPeerSeeds proto = PeerSeedProtos.SignedPeerSeeds.parseDelimitedFrom(zip);
             stream.close();
             return protoToAddrs(proto);
+        } catch (PeerDiscoveryException e1) {
+            throw e1;
         } catch (Exception e) {
             throw new PeerDiscoveryException(e);
         }
@@ -74,11 +96,11 @@ public class HttpDiscovery implements PeerDiscovery {
 
     @VisibleForTesting
     public InetSocketAddress[] protoToAddrs(PeerSeedProtos.SignedPeerSeeds proto) throws PeerDiscoveryException, InvalidProtocolBufferException, SignatureException {
-        if (pubkey != null) {
-            if (!Arrays.equals(proto.getPubkey().toByteArray(), pubkey.getPubKey()))
+        if (details.pubkey != null) {
+            if (!Arrays.equals(proto.getPubkey().toByteArray(), details.pubkey.getPubKey()))
                 throw new PeerDiscoveryException("Public key mismatch");
             Sha256Hash hash = Sha256Hash.hash(proto.getPeerSeeds().toByteArray());
-            pubkey.verifyOrThrow(hash.getBytes(), proto.getSignature().toByteArray());
+            details.pubkey.verifyOrThrow(hash.getBytes(), proto.getSignature().toByteArray());
         }
         PeerSeedProtos.PeerSeeds seeds = PeerSeedProtos.PeerSeeds.parseFrom(proto.getPeerSeeds());
         if (seeds.getTimestamp() < Utils.currentTimeSeconds() - (60 * 60 * 24))

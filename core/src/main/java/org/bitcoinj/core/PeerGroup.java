@@ -23,6 +23,7 @@ import com.google.common.collect.*;
 import com.google.common.net.*;
 import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
+import com.squareup.okhttp.*;
 import com.subgraph.orchid.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.crypto.*;
@@ -304,7 +305,17 @@ public class PeerGroup implements TransactionBroadcaster {
         manager.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
         PeerGroup result = new PeerGroup(context, chain, manager, torClient);
         result.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
-        result.addPeerDiscovery(new TorDiscovery(context.getParams(), torClient));
+
+        NetworkParameters params = context.getParams();
+        HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
+        if (httpSeeds.length > 0) {
+            // Use HTTP discovery when Tor is active and there is a Cartographer seed, for a much needed speed boost.
+            OkHttpClient client = new OkHttpClient();
+            client.setSocketFactory(torClient.getSocketFactory());
+            result.addPeerDiscovery(new HttpDiscovery(params, httpSeeds[0], client));
+        } else {
+            result.addPeerDiscovery(new TorDiscovery(params, torClient));
+        }
         return result;
     }
 
