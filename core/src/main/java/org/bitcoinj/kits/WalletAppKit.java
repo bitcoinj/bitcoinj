@@ -318,7 +318,7 @@ public class WalletAppKit extends AbstractIdleService {
                 for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
                 vPeerGroup.setMaxConnections(peerAddresses.length);
                 peerAddresses = null;
-            } else if (params != RegTestParams.get()) {
+            } else if (params != RegTestParams.get() && !useTor) {
                 vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
             }
             vChain.addWallet(vWallet);
