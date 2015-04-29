@@ -33,29 +33,40 @@ public class UTXO implements Serializable {
     private static final long serialVersionUID = -8744924157056340509L;
 
     /**
-     *  A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
-     *  this output.
+     * A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
+     * this output.
      */
     private Coin value;
     private Script script;
 
-    /** Hash of the transaction to which we refer. */
+    /**
+     * Hash of the transaction to which we refer.
+     */
     private Sha256Hash hash;
-    /** Which output of that transaction we are talking about. */
+    /**
+     * Which output of that transaction we are talking about.
+     */
     private long index;
-    /** The height of the tx of this output */
+    /**
+     * The height of the tx of this output
+     */
     private int height;
-    /** If this output is from a coinbase tx */
+    /**
+     * If this output is from a coinbase tx
+     */
     private boolean coinbase;
-    /** The address of this output */
+    /**
+     * The address of this output
+     */
     private String address;
 
     /**
      * Creates a stored transaction output.
-     * @param hash The hash of the containing transaction.
-     * @param index The outpoint.
-     * @param value The value available.
-     * @param height The height this output was created in.
+     *
+     * @param hash     The hash of the containing transaction.
+     * @param index    The outpoint.
+     * @param value    The value available.
+     * @param height   The height this output was created in.
      * @param coinbase The coinbase flag.
      */
     public UTXO(Sha256Hash hash,
@@ -75,12 +86,13 @@ public class UTXO implements Serializable {
 
     /**
      * Creates a stored transaction output.
-     * @param hash The hash of the containing transaction.
-     * @param index The outpoint.
-     * @param value The value available.
-     * @param height The height this output was created in.
+     *
+     * @param hash     The hash of the containing transaction.
+     * @param index    The outpoint.
+     * @param value    The value available.
+     * @param height   The height this output was created in.
      * @param coinbase The coinbase flag.
-     * @param address The address.
+     * @param address  The address.
      */
     public UTXO(Sha256Hash hash,
                 long index,
@@ -134,6 +146,7 @@ public class UTXO implements Serializable {
 
     /**
      * The value which this Transaction output holds.
+     *
      * @return the value.
      */
     public Coin getValue() {
@@ -142,6 +155,7 @@ public class UTXO implements Serializable {
 
     /**
      * The Script object which you can use to get address, script bytes or script type.
+     *
      * @return the script.
      */
     public Script getScript() {
@@ -150,6 +164,7 @@ public class UTXO implements Serializable {
 
     /**
      * The hash of the transaction which holds this output.
+     *
      * @return the hash.
      */
     public Sha256Hash getHash() {
@@ -158,6 +173,7 @@ public class UTXO implements Serializable {
 
     /**
      * The index of this output in the transaction which holds it.
+     *
      * @return the index.
      */
     public long getIndex() {
@@ -166,6 +182,7 @@ public class UTXO implements Serializable {
 
     /**
      * Gets the height of the block that created this output.
+     *
      * @return The height.
      */
     public int getHeight() {
@@ -174,6 +191,7 @@ public class UTXO implements Serializable {
 
     /**
      * Gets the flag of whether this was created by a coinbase tx.
+     *
      * @return The coinbase flag.
      */
     public boolean isCoinbase() {
@@ -182,6 +200,7 @@ public class UTXO implements Serializable {
 
     /**
      * The address of this output.
+     *
      * @return The address.
      */
     public String getAddress() {
