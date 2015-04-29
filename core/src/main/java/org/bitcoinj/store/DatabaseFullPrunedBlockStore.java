@@ -19,6 +19,7 @@ package org.bitcoinj.store;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.*;
+import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -929,15 +930,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] scriptBytes = results.getBytes(3);
             boolean coinbase = results.getBoolean(4);
             String address = results.getString(5);
-            int addressType = results.getInt(6);
             UTXO txout = new UTXO(hash,
                     index,
                     value,
                     height,
                     coinbase,
-                    scriptBytes,
-                    address,
-                    addressType);
+                    new Script(scriptBytes),
+                    address);
             return txout;
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -963,9 +962,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setInt(2, (int) out.getIndex());
             s.setInt(3, out.getHeight());
             s.setLong(4, out.getValue().value);
-            s.setBytes(5, out.getScriptBytes());
+            s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
-            s.setInt(7, out.getAddressType());
+            s.setInt(7, out.getScript().getScriptType().ordinal());
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();
@@ -1173,15 +1172,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     int index = rs.getInt(5);
                     boolean coinbase = rs.getBoolean(6);
                     String toAddress = rs.getString(7);
-                    int addressType = rs.getInt(8);
                     UTXO output = new UTXO(hash,
                             index,
                             amount,
                             height,
                             coinbase,
-                            scriptBytes,
-                            toAddress,
-                            addressType);
+                            new Script(scriptBytes),
+                            toAddress);
                     outputs.add(output);
                 }
             }

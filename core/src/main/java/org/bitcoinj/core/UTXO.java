@@ -1,12 +1,12 @@
 /**
  * Copyright 2012 Matt Corallo.
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class UTXO implements Serializable {
      *  this output.
      */
     private Coin value;
-    private byte[] scriptBytes;
+    private Script script;
 
     /** Hash of the transaction to which we refer. */
     private Sha256Hash hash;
@@ -48,8 +49,6 @@ public class UTXO implements Serializable {
     private boolean coinbase;
     /** The address of this output */
     private String address;
-    /** The type of this address */
-    private int addressType;
 
     /**
      * Creates a stored transaction output.
@@ -58,22 +57,20 @@ public class UTXO implements Serializable {
      * @param value The value available.
      * @param height The height this output was created in.
      * @param coinbase The coinbase flag.
-     * @param scriptBytes The script bytes.
      */
     public UTXO(Sha256Hash hash,
                 long index,
                 Coin value,
                 int height,
                 boolean coinbase,
-                byte[] scriptBytes) {
+                Script script) {
         this.hash = hash;
         this.index = index;
         this.value = value;
         this.height = height;
-        this.scriptBytes = scriptBytes;
+        this.script = script;
         this.coinbase = coinbase;
         this.address = "";
-        this.addressType = 0;
     }
 
     /**
@@ -83,21 +80,17 @@ public class UTXO implements Serializable {
      * @param value The value available.
      * @param height The height this output was created in.
      * @param coinbase The coinbase flag.
-     * @param scriptBytes The script bytes.
      * @param address The address.
-     * @param addressType The address type.
      */
     public UTXO(Sha256Hash hash,
                 long index,
                 Coin value,
                 int height,
                 boolean coinbase,
-                byte[] scriptBytes,
-                String address,
-                int addressType) {
-        this(hash, index, value, height, coinbase, scriptBytes);
+                Script script,
+                String address) {
+        this(hash, index, value, height, coinbase, script);
         this.address = address;
-        this.addressType = addressType;
     }
 
     public UTXO(InputStream in) throws IOException {
@@ -110,9 +103,10 @@ public class UTXO implements Serializable {
                 ((in.read() & 0xFF) << 8) |
                 ((in.read() & 0xFF) << 16) |
                 ((in.read() & 0xFF) << 24);
-        scriptBytes = new byte[scriptBytesLength];
+        byte[] scriptBytes = new byte[scriptBytesLength];
         if (in.read(scriptBytes) != scriptBytesLength)
             throw new EOFException();
+        script = new Script(scriptBytes);
 
         byte[] hashBytes = new byte[32];
         if (in.read(hashBytes) != 32)
@@ -147,11 +141,11 @@ public class UTXO implements Serializable {
     }
 
     /**
-     * The backing script bytes which can be turned into a Script object.
-     * @return the scriptBytes.
+     * The Script object which you can use to get address, script bytes or script type.
+     * @return the script.
      */
-    public byte[] getScriptBytes() {
-        return scriptBytes;
+    public Script getScript() {
+        return script;
     }
 
     /**
@@ -191,15 +185,7 @@ public class UTXO implements Serializable {
      * @return The address.
      */
     public String getAddress() {
-       return address;
-    }
-
-    /**
-     * The type of the address.
-     * @return The address type.
-     */
-    public int getAddressType() {
-        return addressType;
+        return address;
     }
 
     @Override
@@ -209,7 +195,7 @@ public class UTXO implements Serializable {
 
     @Override
     public int hashCode() {
-        return hash.hashCode() + (int)index;
+        return hash.hashCode() + (int) index;
     }
 
     @Override
@@ -224,6 +210,7 @@ public class UTXO implements Serializable {
     public void serializeToStream(OutputStream bos) throws IOException {
         Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.value), bos);
 
+        byte[] scriptBytes = script.getProgram();
         bos.write(0xFF & scriptBytes.length >> 0);
         bos.write(0xFF & scriptBytes.length >> 8);
         bos.write(0xFF & (scriptBytes.length >> 16));
@@ -239,7 +226,7 @@ public class UTXO implements Serializable {
         bos.write(0xFF & (height >> 24));
 
         byte[] coinbaseByte = new byte[1];
-        if(coinbase) {
+        if (coinbase) {
             coinbaseByte[0] = 1;
         } else {
             coinbaseByte[0] = 0;

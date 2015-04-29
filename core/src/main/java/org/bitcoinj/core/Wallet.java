@@ -4006,7 +4006,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          * @param output The stored output (free standing).
          */
         public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
-            super(params, null, output.getValue(), output.getScriptBytes());
+            super(params, null, output.getValue(), output.getScript().getProgram());
             this.output = output;
             this.chainHeight = chainHeight;
         }
