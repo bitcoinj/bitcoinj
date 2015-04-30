@@ -3977,7 +3977,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      *
      * @param vUTXOProvider The UTXO provider.
      */
-    public void setUTXOProvider(@Nullable FullPrunedBlockStore vUTXOProvider) {
+    public void setUTXOProvider(@Nullable UTXOProvider vUTXOProvider) {
         lock.lock();
         try {
             checkArgument(vUTXOProvider == null ? true : vUTXOProvider.getParams().equals(params));
