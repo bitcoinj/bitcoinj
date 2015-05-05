@@ -1524,6 +1524,8 @@ public class PeerGroup implements TransactionBroadcaster {
         private long[] samples;
         private int cursor;
 
+        private boolean syncDone;
+
         @Override
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             blocksInLastSecond++;
@@ -1572,8 +1574,10 @@ public class PeerGroup implements TransactionBroadcaster {
                     warmupSeconds = 15;
                 }
 
-                boolean inChainSync = chain != null && chain.getBestChainHeight() < getMostCommonChainHeight();
-                if (inChainSync) {
+                boolean behindPeers = chain != null && chain.getBestChainHeight() < getMostCommonChainHeight();
+                if (!behindPeers)
+                    syncDone = true;
+                if (!syncDone) {
                     if (warmupSeconds < 0) {
                         // Calculate the moving average.
                         samples[cursor++] = bytesInLastSecond;
