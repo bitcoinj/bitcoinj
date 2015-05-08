@@ -16,12 +16,12 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.*;
+import com.google.common.base.Objects;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -126,6 +126,7 @@ public class Peer extends PeerSocketHandler {
     // Once the tx is downloaded (by some peer), the Transaction object that is created will have a reference to
     // the confidence object held inside it, and it's then up to the event listeners that receive the Transaction
     // to keep it pinned to the root set if they care about this data.
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final HashSet<TransactionConfidence> pendingTxDownloads = new HashSet<TransactionConfidence>();
     // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
     private volatile int vMinProtocolVersion = Pong.MIN_PROTOCOL_VERSION;
@@ -1297,7 +1298,10 @@ public class Peer extends PeerSocketHandler {
         Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
         if (Objects.equal(lastGetBlocksBegin, chainHeadHash) && Objects.equal(lastGetBlocksEnd, toHash)) {
-            log.info("blockChainDownloadLocked({}): ignoring duplicated request", toHash.toString());
+            log.info("blockChainDownloadLocked({}): ignoring duplicated request: {}", toHash, chainHeadHash);
+            for (Sha256Hash hash : pendingBlockDownloads)
+                log.info("Pending block download: {}", hash);
+            log.info(Throwables.getStackTraceAsString(new Throwable()));
             return;
         }
         if (log.isDebugEnabled())
