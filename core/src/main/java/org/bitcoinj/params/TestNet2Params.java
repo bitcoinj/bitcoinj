@@ -16,7 +16,6 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -25,7 +24,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Parameters for the old version 2 testnet. This is not useful to you - it exists only because some unit tests are
  * based on it.
  */
-public class TestNet2Params extends NetworkParameters {
+public class TestNet2Params extends AbstractBitcoinNetParams {
     public TestNet2Params() {
         super();
         id = ID_TESTNET;
