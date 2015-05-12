@@ -18,9 +18,14 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -244,6 +249,13 @@ public abstract class NetworkParameters implements Serializable {
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }
+
+    /**
+     * Throws an exception if the block's difficulty is not correct.
+     *
+     * @throws VerificationException if the block's difficulty is not correct.
+     */
+    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, Block next, final BlockStore blockStore) throws VerificationException, BlockStoreException;
 
     /**
      * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
