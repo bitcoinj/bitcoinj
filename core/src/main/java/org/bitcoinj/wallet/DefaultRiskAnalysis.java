@@ -103,10 +103,10 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
             }
         }
         
-//        //Lets make sure this is not a crazy large transaction
-//        if(tx.bitcoinSerialize().length > Transaction.MAX_STANDARD_TX_SIZE) {
-//        	return Result.NON_STANDARD;
-//        }
+        //Lets make sure this is not a crazy large transaction
+        if(tx.bitcoinSerialize().length > Transaction.MAX_STANDARD_TX_SIZE) {
+        	return Result.NON_STANDARD;
+        }
         
         return Result.OK;
     }
