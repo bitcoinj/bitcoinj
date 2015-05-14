@@ -142,6 +142,20 @@ public class DefaultRiskAnalysisTest {
         edgeCaseTx.addOutput(DefaultRiskAnalysis.MIN_ANALYSIS_NONDUST_OUTPUT, key1); // Dust threshold
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
     }
+    
+    @Test
+    public void nonStandardExceedSize() {
+        Transaction nonStandardTx = new Transaction(params);
+        nonStandardTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        
+        //Our non-standard transaction is 100021 bytes
+        for (int i=0; i<2272; i++) {
+            nonStandardTx.addOutput(MILLICOIN.divide(4), key1);
+        }
+        
+        assertEquals(RiskAnalysis.Result.NON_STANDARD, DefaultRiskAnalysis.FACTORY.create(wallet, nonStandardTx, NO_DEPS).analyze());
+
+    }
 
     @Test
     public void nonShortestPossiblePushData() {
