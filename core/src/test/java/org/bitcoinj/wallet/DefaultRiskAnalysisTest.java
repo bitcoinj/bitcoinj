@@ -149,7 +149,7 @@ public class DefaultRiskAnalysisTest {
         nonStandardTx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
         
         //Our non-standard transaction is 100021 bytes
-        for(int i=0; i<2272; i++) {
+        for (int i=0; i<2272; i++) {
             nonStandardTx.addOutput(MILLICOIN.divide(4), key1);
         }
         
