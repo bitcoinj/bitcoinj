@@ -32,17 +32,17 @@ public class VersionMessageTest {
         VersionMessage ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f0004000000"));
         assertTrue(!ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 1024);
-        assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
+        assertTrue(ver.subVer.equals("/"+CoinDefinition.coinName+"J:0.7-SNAPSHOT/"));
         
         ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f00040000"));
         assertTrue(ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 1024);
-        assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
+        assertTrue(ver.subVer.equals("/"+CoinDefinition.coinName+"J:0.7-SNAPSHOT/"));
         
         ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f"));
         assertTrue(ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 0);
-        assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
+        assertTrue(ver.subVer.equals("/"+CoinDefinition.coinName+"J:0.7-SNAPSHOT/"));
         
         ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000"));
         assertTrue(ver.relayTxesBeforeFilter);

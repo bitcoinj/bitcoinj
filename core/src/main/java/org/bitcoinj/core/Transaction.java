@@ -90,20 +90,20 @@ public class Transaction extends ChildMessage implements Serializable {
      * If fee is lower than this value (in satoshis), a default reference client will treat it as if there were no fee.
      * Currently this is 1000 satoshis.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1000);
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = CoinDefinition.DEFAULT_MIN_TX_FEE;
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
      * {@link TransactionOutput#getMinNonDustValue(Coin)}. Currently it's 546 satoshis.
      */
-    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546);
+    public static final Coin MIN_NONDUST_OUTPUT = CoinDefinition.DUST_LIMIT;
 
     // These are serialized in both bitcoin and java serialization.
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
-
+    private byte[] data;
     private long lockTime;
 
     // This is either the time the transaction was broadcast as measured from the local clock, or the time from the
@@ -532,7 +532,11 @@ public class Transaction extends ChildMessage implements Serializable {
             cursor += scriptLen + varint.getOriginalSizeInBytes();
         }
         // 4 = length of lock_time field (uint32)
-        return cursor - offset + 4;
+        cursor += 4;
+        varint = new VarInt(buf, cursor);
+        long dataCount = varint.value + 1;
+        cursor += (varint.getOriginalSizeInBytes()*dataCount);
+        return cursor - offset;
     }
 
     @Override
@@ -570,6 +574,7 @@ public class Transaction extends ChildMessage implements Serializable {
         }
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
+        data = readByteArray();
         length = cursor - offset;
     }
 
@@ -684,6 +689,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 s.append(scriptPubKey);
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
+                s.append(" "+ CoinDefinition.coinTicker);
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }
@@ -715,7 +721,11 @@ public class Transaction extends ChildMessage implements Serializable {
         // You wanted to reserialize, right?
         this.length = this.bitcoinSerialize().length;
     }
-
+    public void setData(byte[] dataBytes) {
+        unCache();
+        data = dataBytes.clone();
+        this.length = this.bitcoinSerialize().length;
+    }
     /**
      * Adds an input to this transaction that imports value from the given output. Note that this input is NOT
      * complete and after every input is added with addInput() and every output is added with addOutput(),
@@ -1036,6 +1046,10 @@ public class Transaction extends ChildMessage implements Serializable {
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
         uint32ToByteStreamLE(lockTime, stream);
+        if(data != null) {
+            stream.write(new VarInt(data.length).encode());
+            stream.write(data);
+        }
     }
 
 

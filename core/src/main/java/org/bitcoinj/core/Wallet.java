@@ -1609,9 +1609,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             Coin valueSentToMe = tx.getValueSentToMe(this);
             Coin valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
-                log.info(String.format("Received a pending transaction %s that spends %s from our own wallet," +
-                        " and sends us %s", tx.getHashAsString(), valueSentFromMe.toFriendlyString(),
-                        valueSentToMe.toFriendlyString()));
+                log.info(String.format("Received a pending transaction %s that spends %s %s from our own wallet," +
+                                " and sends us %s %s", tx.getHashAsString(), valueSentFromMe.toFriendlyString(), CoinDefinition.coinTicker,
+                        valueSentToMe.toFriendlyString(),CoinDefinition.coinTicker));
             }
             if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
                 log.warn("Wallet received transaction with an unknown source. Consider tagging it!");
@@ -1789,8 +1789,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         Coin valueSentToMe = tx.getValueSentToMe(this);
         Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
-        log.info("Received tx{} for {}: {} [{}] in block {}", sideChain ? " on a side chain" : "",
-                valueDifference.toFriendlyString(), tx.getHashAsString(), relativityOffset,
+        log.info("Received tx{} for {} {}: {} [{}] in block {}", sideChain ? " on a side chain" : "",
+                valueDifference.toFriendlyString(), CoinDefinition.coinTicker, tx.getHashAsString(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
 
         // Inform the key chains that the issued keys were observed in a transaction, so they know to
@@ -2744,8 +2744,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE);
-            builder.append(String.format("Wallet containing %s BTC (available: %s BTC) in:%n",
-                    estimatedBalance.toPlainString(), availableBalance.toPlainString()));
+            builder.append(String.format("Wallet containing %s %s (available: %s %s) in:%n",
+                    estimatedBalance.toPlainString(), CoinDefinition.coinTicker, availableBalance.toPlainString()));
             builder.append(String.format("  %d pending transactions%n", pending.size()));
             builder.append(String.format("  %d unspent transactions%n", unspent.size()));
             builder.append(String.format("  %d spent transactions%n", spent.size()));

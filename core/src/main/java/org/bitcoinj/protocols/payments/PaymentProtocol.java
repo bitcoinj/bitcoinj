@@ -47,9 +47,9 @@ import java.util.List;
 public class PaymentProtocol {
 
     // MIME types as defined in BIP71.
-    public static final String MIMETYPE_PAYMENTREQUEST = "application/bitcoin-paymentrequest";
-    public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
-    public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
+    public static final String MIMETYPE_PAYMENTREQUEST = "application/" + CoinDefinition.coinName + "-paymentrequest";
+    public static final String MIMETYPE_PAYMENT = "application/" + CoinDefinition.coinName + "-payment";
+    public static final String MIMETYPE_PAYMENTACK = "application/" + CoinDefinition.coinName + "-paymentack";
 
     /**
      * Create a payment request with one standard pay to address output. You may want to sign the request using

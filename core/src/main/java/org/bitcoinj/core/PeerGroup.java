@@ -158,7 +158,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     };
 
-    private int minBroadcastConnections = 0;
+    private int minBroadcastConnections = CoinDefinition.minBroadcastConnections;
     private final AbstractWalletEventListener walletEventListener = new AbstractWalletEventListener() {
         @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
