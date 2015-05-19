@@ -18,16 +18,15 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
-import org.bitcoinj.net.discovery.*;
+import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.params.*;
-import org.bitcoinj.script.*;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
-import java.util.*;
-
-import static org.bitcoinj.core.Coin.*;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -41,21 +40,22 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * The protocol version this library implements.
      */
-    public static final int PROTOCOL_VERSION = 70001;
+    public static final int PROTOCOL_VERSION = CoinDefinition.PROTOCOL_VERSION;
 
     /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
      */
-    public static final byte[] SATOSHI_KEY = Utils.HEX.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+    public static final byte[] SATOSHI_KEY = Utils.HEX.decode(CoinDefinition.SATOSHI_KEY); //Hex.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
 
     /** The string returned by getId() for the main, production network where people trade things. */
-    public static final String ID_MAINNET = "org.bitcoin.production";
+    public static final String ID_MAINNET = CoinDefinition.ID_MAINNET; //"org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
-    public static final String ID_TESTNET = "org.bitcoin.test";
-    /** The string returned by getId() for regtest mode. */
-    public static final String ID_REGTEST = "org.bitcoin.regtest";
+    public static final String ID_TESTNET = CoinDefinition.ID_TESTNET; //"org.bitcoin.test";
     /** Unit test network. */
-    public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
+    public static final String ID_UNITTESTNET = CoinDefinition.ID_UNITTESTNET;
+
+    /** The string returned by getId() for regtest mode. */
+    public static final String ID_REGTEST = CoinDefinition.ID_REGTEST;
 
     /** The string used by the payment protocol to represent the main net. */
     public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
@@ -94,7 +94,6 @@ public abstract class NetworkParameters implements Serializable {
     
     protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
-    protected int[] addrSeeds;
     protected HttpDiscovery.Details[] httpSeeds = new HttpDiscovery.Details[] {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
 
@@ -102,6 +101,15 @@ public abstract class NetworkParameters implements Serializable {
         alertSigningKey = SATOSHI_KEY;
         genesisBlock = createGenesis(this);
     }
+      /**
+     * The maximum number of coins to be generated
+     */
+    public static final long MAX_COINS = CoinDefinition.MAX_COINS;
+
+    /**
+     * The maximum money to be generated
+     */
+    public static final Coin MAX_MONEY = CoinDefinition.MAX_MONEY;
 
     private static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n);
@@ -109,15 +117,12 @@ public abstract class NetworkParameters implements Serializable {
         try {
             // A script containing the difficulty bits and the following message:
             //
-            //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
-            byte[] bytes = Utils.HEX.decode
-                    ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
+            //   "NASA: Humans Will Prove ‘We Are Not Alone In The Universe’ Within 20 Years"
+            byte[] bytes = Utils.HEX.decode(CoinDefinition.genesisTxInBytes);
             t.addInput(new TransactionInput(n, t, bytes));
+            t.setData(CoinDefinition.genesisDataBytes);
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
-            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
-                    ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
-            scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+            t.addOutput(new TransactionOutput(n, t, CoinDefinition.genesisBlockValue, scriptPubKeyBytes.toByteArray()));
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);
@@ -126,26 +131,16 @@ public abstract class NetworkParameters implements Serializable {
         return genesisBlock;
     }
 
-    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
-    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
-    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-    
+    public static final int TARGET_TIMESPAN = CoinDefinition.TARGET_TIMESPAN;
+    public static final int TARGET_SPACING = CoinDefinition.TARGET_SPACING;
+    public static final int INTERVAL = CoinDefinition.INTERVAL;
     /**
      * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script hash". This BIP changed the
      * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
      * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
      */
     public static final int BIP16_ENFORCE_TIME = 1333238400;
-    
-    /**
-     * The maximum number of coins to be generated
-     */
-    public static final long MAX_COINS = 21000000;
 
-    /**
-     * The maximum money to be generated
-     */
-    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** Alias for TestNet3Params.get(), use that instead. */
     @Deprecated
@@ -264,11 +259,6 @@ public abstract class NetworkParameters implements Serializable {
     /** Returns DNS names that when resolved, give IP addresses of active peers. */
     public String[] getDnsSeeds() {
         return dnsSeeds;
-    }
-
-    /** Returns IP address of active peers. */
-    public int[] getAddrSeeds() {
-        return addrSeeds;
     }
 
     /** Returns discovery objects for seeds implementing the Cartographer protocol. See {@link org.bitcoinj.net.discovery.HttpDiscovery} for more info. */

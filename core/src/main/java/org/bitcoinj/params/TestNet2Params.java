@@ -16,8 +16,10 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.core.CoinDefinition;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.net.discovery.HttpDiscovery;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -29,24 +31,27 @@ public class TestNet2Params extends NetworkParameters {
     public TestNet2Params() {
         super();
         id = ID_TESTNET;
-        packetMagic = 0xfabfb5daL;
-        port = 18333;
-        addressHeader = 111;
-        p2shHeader = 196;
+        packetMagic = CoinDefinition.testnetPacketMagic;
+        port = CoinDefinition.TestPort;
+        addressHeader = CoinDefinition.testnetAddressHeader;
+        p2shHeader = CoinDefinition.testnetp2shHeader;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(0x1d0fffffL);
-        dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d07fff8L);
-        genesisBlock.setNonce(384568319);
-        spendableCoinbaseDepth = 100;
-        subsidyDecreaseBlockCount = 210000;
+        maxTarget = CoinDefinition.proofOfWorkLimit;
+        dumpedPrivateKeyHeader = 128 + CoinDefinition.testnetAddressHeader;
+        genesisBlock.setTime(CoinDefinition.testnetGenesisBlockTime);
+        genesisBlock.setDifficultyTarget(CoinDefinition.testnetGenesisBlockDifficultyTarget);
+        genesisBlock.setNonce(CoinDefinition.testnetGenesisBlockNonce);
+        spendableCoinbaseDepth = CoinDefinition.spendableCoinbaseDepth;
+
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
-        dnsSeeds = null;
-        addrSeeds = null;
+        checkState(genesisHash.equals(CoinDefinition.testnetGenesisHash));
+        CoinDefinition.initCheckpoints(checkpoints);
+
+        dnsSeeds = CoinDefinition.testnetDnsSeeds;
+        httpSeeds = new HttpDiscovery.Details[]{};
+        alertSigningKey = Utils.HEX.decode(CoinDefinition.TESTNET_SATOSHI_KEY);
         bip32HeaderPub = 0x043587CF;
         bip32HeaderPriv = 0x04358394;
     }

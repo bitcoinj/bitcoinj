@@ -210,6 +210,8 @@ public class CheckpointManager {
      */
     public static void checkpoint(NetworkParameters params, InputStream checkpoints, BlockStore store, long time)
             throws IOException, BlockStoreException {
+        if(!CoinDefinition.checkpointFileSupport)
+            return;
         checkNotNull(params);
         checkNotNull(store);
         checkArgument(!(store instanceof FullPrunedBlockStore), "You cannot use checkpointing with a full store.");

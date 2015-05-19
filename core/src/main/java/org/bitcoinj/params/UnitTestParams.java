@@ -47,7 +47,6 @@ public class UnitTestParams extends NetworkParameters {
         spendableCoinbaseDepth = 5;
         subsidyDecreaseBlockCount = 100;
         dnsSeeds = null;
-        addrSeeds = null;
         bip32HeaderPub = 0x043587CF;
         bip32HeaderPriv = 0x04358394;
     }

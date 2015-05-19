@@ -25,6 +25,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
+import com.lambdaworks.crypto.SCrypt;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayOutputStream;
@@ -60,7 +61,7 @@ public class Utils {
     }
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
-    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
+    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = CoinDefinition.coinName + " Signed Message:\n";
     public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
     private static BlockingQueue<Boolean> mockSleepQueue;
@@ -182,7 +183,13 @@ public class Utils {
             return digest.digest(first);
         }
     }
-
+    public static byte[] scryptDigest(byte[] input) {
+        try {
+            return SCrypt.scrypt(input, input, 1024, 1, 1, 32);
+        } catch (Exception e) {
+            return null;
+        }
+    }
     /**
      * Work around lack of unsigned types in Java.
      */
