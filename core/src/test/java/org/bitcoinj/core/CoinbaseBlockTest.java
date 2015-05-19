@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.params.MainNetParams;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -43,6 +44,11 @@ public class CoinbaseBlockTest {
     private static final int BLOCK_LENGTH_AS_HEX = 37357;
     private static final long BLOCK_NONCE = 3973947400L;
     private static final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
+
+    @Before
+    public void setUp() throws Exception {
+        Context context = new Context(params);
+    }
 
     @Test
     public void testReceiveCoinbaseTransaction() throws Exception {
