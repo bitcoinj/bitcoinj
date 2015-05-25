@@ -180,7 +180,7 @@ public class Block extends Message {
         hash = null;
     }
 
-    private void parseHeader() throws ProtocolException {
+    protected void parseHeader() throws ProtocolException {
         if (headerParsed)
             return;
 
@@ -198,7 +198,7 @@ public class Block extends Message {
         headerBytesValid = parseRetain;
     }
 
-    private void parseTransactions() throws ProtocolException {
+    protected void parseTransactions() throws ProtocolException {
         if (transactionsParsed)
             return;
 
@@ -561,6 +561,12 @@ public class Block extends Message {
     public Block cloneAsHeader() {
         maybeParseHeader();
         Block block = new Block(params);
+        copyBitcoinHeaderTo(block);
+        return block;
+    }
+
+    /** Copy the block without transactions into the provided empty block. */
+    protected final void copyBitcoinHeaderTo(final Block block) {
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
@@ -569,7 +575,6 @@ public class Block extends Message {
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
         block.hash = getHash();
-        return block;
     }
 
     /**
