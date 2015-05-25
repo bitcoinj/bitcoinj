@@ -177,7 +177,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     /**
-     * Get the {@link Script} from the script bytes or null if it doesn't parse.
+     * Get the {@link Script} from the script bytes or return Script of empty byte array.
      */
     private Script getScript(byte[] scriptBytes) {
         try {
