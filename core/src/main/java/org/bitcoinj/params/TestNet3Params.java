@@ -51,8 +51,8 @@ public class TestNet3Params extends NetworkParameters {
 
         dnsSeeds = new String[] {
                 "46.4.28.150",// Andreas Schildbach IP if DNS not working with IPv6 issues
-                "testnet-seed.bitcoin.schildbach.de", // Andreas Schildbach
-                "testnet-seed.bitcoin.petertodd.org"  // Peter Todd
+                "testnet-seed.bitcoin.petertodd.org",  // Peter Todd
+                "testnet-seed.bitcoin.schildbach.de" // Andreas Schildbach
         };
         bip32HeaderPub = 0x043587CF;
         bip32HeaderPriv = 0x04358394;
