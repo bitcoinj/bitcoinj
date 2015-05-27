@@ -62,7 +62,9 @@ public class BuildCheckpoints {
         final BlockStore store = new MemoryBlockStore(PARAMS);
         final BlockChain chain = new BlockChain(PARAMS, store);
         final PeerGroup peerGroup = new PeerGroup(PARAMS, chain);
-        peerGroup.addAddress(InetAddress.getLocalHost());
+        final InetAddress peerAddress = InetAddress.getLocalHost();
+        System.out.println("Connecting to " + peerAddress + "...");
+        peerGroup.addAddress(peerAddress);
         long now = new Date().getTime() / 1000;
         peerGroup.setFastCatchupTimeSecs(now);
 
