@@ -96,12 +96,19 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
             nonFinal = tx;
             return Result.NON_FINAL;
         }
+        
         for (Transaction dep : dependencies) {
             if (!dep.isFinal(adjustedHeight, time)) {
                 nonFinal = dep;
                 return Result.NON_FINAL;
             }
         }
+
+        //Lets make sure this is not a crazy large transaction
+        if (tx.bitcoinSerialize().length > Transaction.MAX_STANDARD_TX_SIZE) {
+            return Result.NON_STANDARD;
+        }
+        
         return Result.OK;
     }
 
