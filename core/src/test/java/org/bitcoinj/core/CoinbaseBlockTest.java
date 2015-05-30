@@ -59,7 +59,7 @@ public class CoinbaseBlockTest {
         byte[] blockAsBytes = getBytes(getClass().getResourceAsStream("block169482.dat"));
 
         // Create block 169482.
-        Block block = new Block(params, blockAsBytes);
+        Block block = params.getDefaultSerializer().makeBlock(blockAsBytes);
 
         // Check block.
         assertNotNull(block);

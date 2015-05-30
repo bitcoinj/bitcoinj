@@ -209,17 +209,17 @@ public class Transaction extends ChildMessage {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
-        super(params, payload, offset, parent, parseLazy, parseRetain, length);
+        super(params, payload, offset, parent, setSerializer, length);
     }
 
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
-        super(params, payload, 0, parent, parseLazy, parseRetain, length);
+        super(params, payload, 0, parent, setSerializer, length);
     }
 
     /**
@@ -483,7 +483,7 @@ public class Transaction extends ChildMessage {
     protected void parseLite() throws ProtocolException {
 
         //skip this if the length has been provided i.e. the tx is not part of a block
-        if (parseLazy && length == UNKNOWN_LENGTH) {
+        if (serializer.isParseLazyMode() && length == UNKNOWN_LENGTH) {
             //If length hasn't been provided this tx is probably contained within a block.
             //In parseRetain mode the block needs to know how long the transaction is
             //unfortunately this requires a fairly deep (though not total) parse.
@@ -554,7 +554,7 @@ public class Transaction extends ChildMessage {
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<TransactionInput>((int) numInputs);
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload, cursor, parseLazy, parseRetain);
+            TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
             long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
             optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
@@ -565,7 +565,7 @@ public class Transaction extends ChildMessage {
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<TransactionOutput>((int) numOutputs);
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, payload, cursor, parseLazy, parseRetain);
+            TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
             long scriptLen = readVarInt(8);
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;

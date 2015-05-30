@@ -116,17 +116,12 @@ public class TransactionInput extends ChildMessage {
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset,
-                            boolean parseLazy, boolean parseRetain)
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, offset, parentTransaction, parseLazy, parseRetain, UNKNOWN_LENGTH);
+        super(params, payload, offset, parentTransaction, serializer, UNKNOWN_LENGTH);
         this.value = null;
     }
 
@@ -140,7 +135,7 @@ public class TransactionInput extends ChildMessage {
 
     @Override
     void parse() throws ProtocolException {
-        outpoint = new TransactionOutPoint(params, payload, cursor, this, parseLazy, parseRetain);
+        outpoint = new TransactionOutPoint(params, payload, cursor, this, serializer);
         cursor += outpoint.getMessageSize();
         int scriptLen = (int) readVarInt();
         scriptBytes = readBytes(scriptLen);

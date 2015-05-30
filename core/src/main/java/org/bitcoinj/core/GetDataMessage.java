@@ -30,17 +30,14 @@ public class GetDataMessage extends ListMessage {
      * Deserializes a 'getdata' message.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param serializer the serializer to use for this message.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public GetDataMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain, int length)
+    public GetDataMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length)
             throws ProtocolException {
-        super(params, payload, parseLazy, parseRetain, length);
+        super(params, payload, serializer, length);
     }
 
     public GetDataMessage(NetworkParameters params) {

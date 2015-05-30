@@ -150,7 +150,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
-                    nextBlock = new Block(params, bytes);
+                    nextBlock = params.getDefaultSerializer().makeBlock(bytes);
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;

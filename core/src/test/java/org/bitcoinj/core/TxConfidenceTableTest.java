@@ -52,7 +52,7 @@ public class TxConfidenceTableTest {
 
     @Test
     public void pinHandlers() throws Exception {
-        Transaction tx = new Transaction(params, tx1.bitcoinSerialize());
+        Transaction tx = params.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
         Sha256Hash hash = tx.getHash();
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());

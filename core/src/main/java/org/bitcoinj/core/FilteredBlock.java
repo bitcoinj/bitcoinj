@@ -60,7 +60,7 @@ public class FilteredBlock extends Message {
     void parse() throws ProtocolException {
         byte[] headerBytes = new byte[Block.HEADER_SIZE];
         System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
-        header = new Block(params, headerBytes);
+        header = params.getDefaultSerializer().makeBlock(headerBytes);
         
         merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
         

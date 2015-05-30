@@ -116,7 +116,7 @@ public class FakeTxBuilder {
      */
     public static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) {
         try {
-            BitcoinSerializer bs = new BitcoinSerializer(params);
+            MessageSerializer bs = params.getDefaultSerializer();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bs.serialize(tx, bos);
             return (Transaction) bs.deserialize(ByteBuffer.wrap(bos.toByteArray()));
@@ -153,8 +153,8 @@ public class FakeTxBuilder {
         doubleSpends.t2.addOutput(o2);
 
         try {
-            doubleSpends.t1 = new Transaction(params, doubleSpends.t1.bitcoinSerialize());
-            doubleSpends.t2 = new Transaction(params, doubleSpends.t2.bitcoinSerialize());
+            doubleSpends.t1 = params.getDefaultSerializer().makeTransaction(doubleSpends.t1.bitcoinSerialize());
+            doubleSpends.t2 = params.getDefaultSerializer().makeTransaction(doubleSpends.t2.bitcoinSerialize());
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         }

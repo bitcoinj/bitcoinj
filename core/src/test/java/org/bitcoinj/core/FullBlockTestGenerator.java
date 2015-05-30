@@ -1058,7 +1058,7 @@ public class FullBlockTestGenerator {
 
         Block b56;
         try {
-            b56 = new Block(params, b57.block.bitcoinSerialize());
+            b56 = params.getDefaultSerializer().makeBlock(b57.block.bitcoinSerialize());
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1099,7 +1099,7 @@ public class FullBlockTestGenerator {
 
         Block b56p2;
         try {
-            b56p2 = new Block(params, b57p2.block.bitcoinSerialize());
+            b56p2 = params.getDefaultSerializer().makeBlock(b57p2.block.bitcoinSerialize());
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1218,7 +1218,7 @@ public class FullBlockTestGenerator {
 
             for (Transaction transaction : b64Original.block.getTransactions())
                 transaction.bitcoinSerialize(stream);
-            b64 = new Block(params, stream.toByteArray(), false, true, stream.size());
+            b64 = params.getSerializer(false, true).makeBlock(stream.toByteArray(), stream.size());
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
@@ -1346,7 +1346,7 @@ public class FullBlockTestGenerator {
         }
         b72.solve();
 
-        Block b71 = new Block(params, b72.block.bitcoinSerialize());
+        Block b71 = params.getDefaultSerializer().makeBlock(b72.block.bitcoinSerialize());
         b71.addTransaction(b72.block.getTransactions().get(2));
         checkState(b71.getHash().equals(b72.getHash()));
         blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), chainHeadHeight + 21, "b71"));
