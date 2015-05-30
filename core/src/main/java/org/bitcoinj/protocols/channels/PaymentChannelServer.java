@@ -295,7 +295,7 @@ public class PaymentChannelServer {
 
         Protos.ProvideRefund providedRefund = msg.getProvideRefund();
         state = new PaymentChannelServerState(broadcaster, wallet, myKey, expireTime);
-        byte[] signature = state.provideRefundTransaction(new Transaction(wallet.getParams(), providedRefund.getTx().toByteArray()),
+        byte[] signature = state.provideRefundTransaction(wallet.getParams().getDefaultSerializer().makeTransaction(providedRefund.getTx().toByteArray()),
                 providedRefund.getMultisigKey().toByteArray());
 
         step = InitStep.WAITING_ON_CONTRACT;
@@ -349,7 +349,7 @@ public class PaymentChannelServer {
         final Protos.ProvideContract providedContract = msg.getProvideContract();
 
         //TODO notify connection handler that timeout should be significantly extended as we wait for network propagation?
-        final Transaction multisigContract = new Transaction(wallet.getParams(), providedContract.getTx().toByteArray());
+        final Transaction multisigContract = wallet.getParams().getDefaultSerializer().makeTransaction(providedContract.getTx().toByteArray());
         step = InitStep.WAITING_ON_MULTISIG_ACCEPTANCE;
         state.provideMultiSigContract(multisigContract)
                 .addListener(new Runnable() {

@@ -104,6 +104,7 @@ public abstract class NetworkParameters {
     protected int[] addrSeeds;
     protected HttpDiscovery.Details[] httpSeeds = {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<Integer, Sha256Hash>();
+    protected transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
         alertSigningKey = SATOSHI_KEY;
@@ -417,4 +418,31 @@ public abstract class NetworkParameters {
      * networks.
      */
     public abstract boolean hasMaxMoney();
+
+    /**
+     * Return the default serializer for this network. This is a shared serializer.
+     * @return 
+     */
+    public final MessageSerializer getDefaultSerializer() {
+        // Construct a default serializer if we don't have one
+        if (null == this.defaultSerializer) {
+            // Don't grab a lock unless we absolutely need it
+            synchronized(this) {
+                // Now we have a lock, double check there's still no serializer
+                // and create one if so.
+                if (null == this.defaultSerializer) {
+                    // As the serializers are intended to be immutable, creating
+                    // two due to a race condition should not be a problem, however
+                    // to be safe we ensure only one exists for each network.
+                    this.defaultSerializer = getSerializer(false, false);
+                }
+            }
+        }
+        return defaultSerializer;
+    }
+
+    /**
+     * Construct and return a custom serializer.
+     */
+    public abstract BitcoinSerializer getSerializer(boolean parseLazy, boolean parseRetain);
 }

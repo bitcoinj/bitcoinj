@@ -138,7 +138,7 @@ public class StoredBlock {
         int height = buffer.getInt();  // +4 bytes
         byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
         buffer.get(header, 0, Block.HEADER_SIZE);
-        return new StoredBlock(new Block(params, header), chainWork, height);
+        return new StoredBlock(params.getDefaultSerializer().makeBlock(header), chainWork, height);
     }
 
     @Override

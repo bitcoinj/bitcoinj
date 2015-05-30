@@ -373,7 +373,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     private void receiveClose(Protos.TwoWayChannelMessage msg) throws VerificationException {
         checkState(lock.isHeldByCurrentThread());
         if (msg.hasSettlement()) {
-            Transaction settleTx = new Transaction(wallet.getParams(), msg.getSettlement().getTx().toByteArray());
+            Transaction settleTx = wallet.getParams().getDefaultSerializer().makeTransaction(msg.getSettlement().getTx().toByteArray());
             log.info("CLOSE message received with settlement tx {}", settleTx.getHash());
             // TODO: set source
             if (state != null && state().isSettlementTransaction(settleTx)) {

@@ -80,14 +80,11 @@ public class TransactionOutPoint extends ChildMessage {
      * Deserializes the message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
      * @param offset The location of the first payload byte within the array.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, boolean parseLazy, boolean parseRetain) throws ProtocolException {
-        super(params, payload, offset, parent, parseLazy, parseRetain, MESSAGE_LENGTH);
+    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, offset, parent, serializer, MESSAGE_LENGTH);
     }
 
     @Override

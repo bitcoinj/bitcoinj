@@ -41,15 +41,15 @@ import static org.bitcoinj.core.Utils.*;
  * <li>Message.bitcoinSerializeToStream() needs to be properly subclassed</li>
  * </ul>
  */
-public class BitcoinSerializer {
+public class BitcoinSerializer implements MessageSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
     private static final int COMMAND_LEN = 12;
 
-    private NetworkParameters params;
-    private boolean parseLazy = false;
-    private boolean parseRetain = false;
+    private final NetworkParameters params;
+    private final boolean parseLazy;
+    private final boolean parseRetain;
 
-    private static Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
+    private static final Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
 
     static {
         names.put(VersionMessage.class, "version");
@@ -75,12 +75,19 @@ public class BitcoinSerializer {
     }
 
     /**
-     * Constructs a BitcoinSerializer with the given behavior.
-     *
-     * @param params           networkParams used to create Messages instances and termining packetMagic
+     * Constructs a partial BitcoinSerializer with the given behavior. This is
+     * intended for use by messages which do not understand the network they
+     * belong to.
+     * 
+     * @param parseLazy        deserialize messages in lazy mode.
+     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
+     * @deprecated use BitcoinSerializer(NetworkParameters, boolean, boolean) instead.
      */
-    public BitcoinSerializer(NetworkParameters params) {
-        this(params, false, false);
+    @Deprecated
+    BitcoinSerializer(boolean parseLazy, boolean parseRetain) {
+        this.params = null;
+        this.parseLazy = parseLazy;
+        this.parseRetain = parseRetain;
     }
 
     /**
@@ -99,6 +106,7 @@ public class BitcoinSerializer {
     /**
      * Writes message to to the output stream.
      */
+    @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
         uint32ToByteArrayBE(params.getPacketMagic(), header, 0);
@@ -123,6 +131,7 @@ public class BitcoinSerializer {
     /**
      * Writes message to to the output stream.
      */
+    @Override
     public void serialize(Message message, OutputStream out) throws IOException {
         String name = names.get(message.getClass());
         if (name == null) {
@@ -134,6 +143,7 @@ public class BitcoinSerializer {
     /**
      * Reads a message from the given ByteBuffer and returns it.
      */
+    @Override
     public Message deserialize(ByteBuffer in) throws ProtocolException, IOException {
         // A Bitcoin protocol message has the following format.
         //
@@ -159,6 +169,7 @@ public class BitcoinSerializer {
      * Deserializes only the header in case packet meta data is needed before decoding
      * the payload. This method assumes you have already called seekPastMagicBytes()
      */
+    @Override
     public BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, IOException {
         return new BitcoinPacketHeader(in);
     }
@@ -167,6 +178,7 @@ public class BitcoinSerializer {
      * Deserialize payload only.  You must provide a header, typically obtained by calling
      * {@link BitcoinSerializer#deserializeHeader}.
      */
+    @Override
     public Message deserializePayload(BitcoinPacketHeader header, ByteBuffer in) throws ProtocolException, BufferUnderflowException {
         byte[] payloadBytes = new byte[header.size];
         in.get(payloadBytes, 0, header.size);
@@ -198,25 +210,22 @@ public class BitcoinSerializer {
         Message message;
         if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
-        } else if (command.equals("inv")) {
-            message = new InventoryMessage(params, payloadBytes, parseLazy, parseRetain, length);
+        } else if (command.equals("inv")) { 
+            message = makeInventoryMessage(payloadBytes, length);
         } else if (command.equals("block")) {
-            message = new Block(params, payloadBytes, parseLazy, parseRetain, length);
+            message = makeBlock(payloadBytes, length);
         } else if (command.equals("merkleblock")) {
-            message = new FilteredBlock(params, payloadBytes);
+            message = makeFilteredBlock(payloadBytes);
         } else if (command.equals("getdata")) {
-            message = new GetDataMessage(params, payloadBytes, parseLazy, parseRetain, length);
+            message = new GetDataMessage(params, payloadBytes, this, length);
         } else if (command.equals("getblocks")) {
             message = new GetBlocksMessage(params, payloadBytes);
         } else if (command.equals("getheaders")) {
             message = new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
-            Transaction tx = new Transaction(params, payloadBytes, null, parseLazy, parseRetain, length);
-            if (hash != null)
-                tx.setHash(Sha256Hash.wrapReversed(hash));
-            message = tx;
+            message = makeTransaction(payloadBytes, 0, length, hash);
         } else if (command.equals("addr")) {
-            message = new AddressMessage(params, payloadBytes, parseLazy, parseRetain, length);
+            message = makeAddressMessage(payloadBytes, length);
         } else if (command.equals("ping")) {
             message = new Ping(params, payloadBytes);
         } else if (command.equals("pong")) {
@@ -226,9 +235,9 @@ public class BitcoinSerializer {
         } else if (command.equals("headers")) {
             return new HeadersMessage(params, payloadBytes);
         } else if (command.equals("alert")) {
-            return new AlertMessage(params, payloadBytes);
+            return makeAlertMessage(payloadBytes);
         } else if (command.equals("filterload")) {
-            return new BloomFilter(params, payloadBytes);
+            return makeBloomFilter(payloadBytes);
         } else if (command.equals("notfound")) {
             return new NotFoundMessage(params, payloadBytes);
         } else if (command.equals("mempool")) {
@@ -246,6 +255,100 @@ public class BitcoinSerializer {
         return message;
     }
 
+    /**
+     * Get the network parameters for this serializer.
+     */
+    public NetworkParameters getParameters() {
+        return params;
+    }
+
+    /**
+     * Make an address message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException {
+        return new AddressMessage(params, payloadBytes, this, length);
+    }
+
+    /**
+     * Make an alert message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public Message makeAlertMessage(byte[] payloadBytes) throws ProtocolException {
+        return new AlertMessage(params, payloadBytes);
+    }
+
+    /**
+     * Make a block from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public Block makeBlock(byte[] payloadBytes) throws ProtocolException {
+        return new Block(params, payloadBytes, this, payloadBytes.length);
+    }
+
+    /**
+     * Make a block from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public Block makeBlock(byte[] payloadBytes, int length) throws ProtocolException {
+        return new Block(params, payloadBytes, this, length);
+    }
+
+    /**
+     * Make an filter message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException {
+        return new BloomFilter(params, payloadBytes);
+    }
+
+    /**
+     * Make a filtered block from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException {
+        return new FilteredBlock(params, payloadBytes);
+    }
+
+    /**
+     * Make an inventory message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException {
+        return new InventoryMessage(params, payloadBytes, this, length);
+    }
+
+    /**
+     * Make a transaction from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public Transaction makeTransaction(byte[] payloadBytes, int offset,
+        int length, byte[] hash) throws ProtocolException {
+        Transaction tx = new Transaction(params, payloadBytes, offset, null, this, length);
+        if (hash != null)
+            tx.setHash(Sha256Hash.wrapReversed(hash));
+        return tx;
+    }
+
+    @Override
+    public Transaction makeTransaction(byte[] payloadBytes) throws ProtocolException {
+        return makeTransaction(payloadBytes, 0, payloadBytes.length, null);
+    }
+
+    @Override
+    public Transaction makeTransaction(byte[] payloadBytes, int offset) throws ProtocolException {
+        return makeTransaction(payloadBytes, offset, payloadBytes.length, null);
+    }
+
+    @Override
     public void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException {
         int magicCursor = 3;  // Which byte of the magic we're looking for currently.
         while (true) {
@@ -270,6 +373,7 @@ public class BitcoinSerializer {
     /**
      * Whether the serializer will produce lazy parse mode Messages
      */
+    @Override
     public boolean isParseLazyMode() {
         return parseLazy;
     }
@@ -277,6 +381,7 @@ public class BitcoinSerializer {
     /**
      * Whether the serializer will produce cached mode Messages
      */
+    @Override
     public boolean isParseRetainMode() {
         return parseRetain;
     }

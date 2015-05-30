@@ -31,6 +31,9 @@ import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.core.BitcoinSerializer;
+
 /**
  * Parameters for Bitcoin-like networks.
  */
@@ -131,6 +134,11 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     @Override
     public MonetaryFormat getMonetaryFormat() {
         return new MonetaryFormat();
+    }
+
+    @Override
+    public BitcoinSerializer getSerializer(boolean parseLazy, boolean parseRetain) {
+        return new BitcoinSerializer(this, parseLazy, parseRetain);
     }
 
     @Override

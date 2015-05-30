@@ -749,7 +749,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
             BigInteger chainWork = new BigInteger(results.getBytes(1));
             int height = results.getInt(2);
-            Block b = new Block(params, results.getBytes(3));
+            Block b = params.getDefaultSerializer().makeBlock(results.getBytes(3));
             b.verifyHeader();
             StoredBlock stored = new StoredBlock(b, chainWork, height);
             return stored;
@@ -811,7 +811,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         ((transactions[offset++] & 0xFF) << 24);
                 List<Transaction> transactionList = new LinkedList<Transaction>();
                 for (int i = 0; i < numTxn; i++) {
-                    Transaction tx = new Transaction(params, transactions, offset);
+                    Transaction tx = params.getDefaultSerializer().makeTransaction(transactions, offset);
                     transactionList.add(tx);
                     offset += tx.getMessageSize();
                 }

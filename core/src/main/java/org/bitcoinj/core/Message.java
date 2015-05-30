@@ -54,8 +54,7 @@ public abstract class Message {
 
     protected boolean parsed = false;
     protected boolean recached = false;
-    protected final boolean parseLazy;
-    protected final boolean parseRetain;
+    protected MessageSerializer serializer;
 
     protected int protocolVersion;
 
@@ -63,19 +62,17 @@ public abstract class Message {
 
     protected Message() {
         parsed = true;
-        parseLazy = false;
-        parseRetain = false;
+        serializer = DummySerializer.DEFAULT;
     }
 
     Message(NetworkParameters params) {
         this.params = params;
         parsed = true;
-        parseLazy = false;
-        parseRetain = false;
+        serializer = params.getDefaultSerializer();
     }
 
     Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
-        this(params, payload, offset, protocolVersion, false, false, UNKNOWN_LENGTH);
+        this(params, payload, offset, protocolVersion, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     /**
@@ -84,23 +81,19 @@ public abstract class Message {
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
      * @param protocolVersion Bitcoin protocol version.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param serializer the serializer to use for this message.
      * @param length The length of message payload if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        this.parseLazy = parseLazy;
-        this.parseRetain = parseRetain;
+    Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion, MessageSerializer serializer, int length) throws ProtocolException {
+        this.serializer = serializer;
         this.protocolVersion = protocolVersion;
         this.params = params;
         this.payload = payload;
         this.cursor = this.offset = offset;
         this.length = length;
-        if (parseLazy) {
+        if (serializer.isParseLazyMode()) {
             parseLite();
         } else {
             parseLite();
@@ -111,13 +104,13 @@ public abstract class Message {
         if (this.length == UNKNOWN_LENGTH)
             checkState(false, "Length field has not been set in constructor for %s after %s parse. " +
                               "Refer to Message.parseLite() for detail of required Length field contract.",
-                       getClass().getSimpleName(), parseLazy ? "lite" : "full");
+                       getClass().getSimpleName(), serializer.isParseLazyMode() ? "lite" : "full");
         
         if (SELF_CHECK) {
             selfCheck(payload, offset);
         }
         
-        if (parseRetain || !parsed)
+        if (serializer.isParseRetainMode() || !parsed)
             return;
         this.payload = null;
     }
@@ -136,11 +129,11 @@ public abstract class Message {
     }
 
     Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, false, false, UNKNOWN_LENGTH);
+        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
-    Message(NetworkParameters params, byte[] payload, int offset, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, parseLazy, parseRetain, length);
+    Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
+        this(params, payload, offset, NetworkParameters.PROTOCOL_VERSION, serializer, length);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
@@ -172,7 +165,7 @@ public abstract class Message {
         try {
             parse();
             parsed = true;
-            if (!parseRetain)
+            if (!serializer.isParseRetainMode())
                 payload = null;
         } catch (ProtocolException e) {
             throw new LazyParseException("ProtocolException caught during lazy parse.  For safe access to fields call ensureParsed before attempting read or write access", e);
@@ -297,7 +290,7 @@ public abstract class Message {
             // Cannot happen, we are serializing to a memory stream.
         }
 
-        if (parseRetain) {
+        if (serializer.isParseRetainMode()) {
             // A free set of steak knives!
             // If there happens to be a call to this method we gain an opportunity to recache
             // the byte array and in this case it contains no bytes from parent messages.
@@ -443,6 +436,17 @@ public abstract class Message {
     /** Network parameters this message was created with. */
     public NetworkParameters getParams() {
         return params;
+    }
+
+    /**
+     * Set the serializer for this message when deserialized by Java.
+     */
+    private void readObject(java.io.ObjectInputStream in)
+        throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        if (null != params) {
+            this.serializer = params.getDefaultSerializer();
+        }
     }
 
     public static class LazyParseException extends RuntimeException {

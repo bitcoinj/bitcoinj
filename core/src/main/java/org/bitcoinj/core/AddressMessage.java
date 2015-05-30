@@ -28,31 +28,28 @@ public class AddressMessage extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    AddressMessage(NetworkParameters params, byte[] payload, int offset, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        super(params, payload, offset, parseLazy, parseRetain, length);
+    AddressMessage(NetworkParameters params, byte[] payload, int offset, MessageSerializer setSerializer, int length) throws ProtocolException {
+        super(params, payload, offset, setSerializer, length);
     }
 
     /**
      * Contruct a new 'addr' message.
      * @param params NetworkParameters object.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param serializer the serializer to use for this block.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    AddressMessage(NetworkParameters params, byte[] payload, boolean parseLazy, boolean parseRetain, int length) throws ProtocolException {
-        super(params, payload, 0, parseLazy, parseRetain, length);
+    AddressMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length) throws ProtocolException {
+        super(params, payload, 0, serializer, length);
     }
 
     AddressMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset, false, false, UNKNOWN_LENGTH);
+        super(params, payload, offset, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     AddressMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0, false, false, UNKNOWN_LENGTH);
+        super(params, payload, 0, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     @Override
@@ -67,7 +64,7 @@ public class AddressMessage extends Message {
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<PeerAddress>((int) numAddresses);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, payload, cursor, protocolVersion, this, parseLazy, parseRetain);
+            PeerAddress addr = new PeerAddress(params, payload, cursor, protocolVersion, this, serializer);
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }

@@ -342,7 +342,7 @@ public class PaymentProtocol {
             Protos.Payment paymentMessage) {
         final List<Transaction> transactions = new ArrayList<Transaction>(paymentMessage.getTransactionsCount());
         for (final ByteString transaction : paymentMessage.getTransactionsList())
-            transactions.add(new Transaction(params, transaction.toByteArray()));
+            transactions.add(params.getDefaultSerializer().makeTransaction(transaction.toByteArray()));
         return transactions;
     }
 

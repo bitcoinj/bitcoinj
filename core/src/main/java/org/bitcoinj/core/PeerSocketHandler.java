@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.*;
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamParser {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
 
-    private final BitcoinSerializer serializer;
+    private final MessageSerializer serializer;
     protected PeerAddress peerAddress;
     // If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away.
     private boolean closePending = false;
@@ -59,12 +59,14 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     private Lock lock = Threading.lock("PeerSocketHandler");
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
-        serializer = new BitcoinSerializer(checkNotNull(params));
+        checkNotNull(params);
+        serializer = params.getDefaultSerializer();
         this.peerAddress = new PeerAddress(remoteIp);
     }
 
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
-        serializer = new BitcoinSerializer(checkNotNull(params));
+        checkNotNull(params);
+        serializer = params.getDefaultSerializer();
         this.peerAddress = checkNotNull(peerAddress);
     }
 

@@ -232,7 +232,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             NetworkParameters params = containingWallet.getParams();
             for (ServerState.StoredServerPaymentChannel storedState : states.getChannelsList()) {
                 StoredServerChannel channel = new StoredServerChannel(null,
-                        new Transaction(params, storedState.getContractTransaction().toByteArray()),
+                        params.getDefaultSerializer().makeTransaction(storedState.getContractTransaction().toByteArray()),
                         new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0),
                         storedState.getRefundTransactionUnlockTimeSecs(),
                         ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
