@@ -90,16 +90,16 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private transient Sha256Hash hash;
 
-    private transient boolean headerParsed;
-    private transient boolean transactionsParsed;
+    protected transient boolean headerParsed;
+    protected transient boolean transactionsParsed;
 
-    private transient boolean headerBytesValid;
-    private transient boolean transactionBytesValid;
+    protected transient boolean headerBytesValid;
+    protected transient boolean transactionBytesValid;
     
     // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
-    private transient int optimalEncodingMessageSize;
+    protected transient int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
@@ -134,6 +134,28 @@ public class Block extends Message {
         super(params, payloadBytes, 0, parseLazy, parseRetain, length);
     }
 
+
+    /**
+     * Construct a block object from the Bitcoin wire format. Used in the case of a block
+     * contained within another message (i.e. for AuxPoW header).
+     *
+     * @param params NetworkParameters object.
+     * @param payloadBytes Bitcoin protocol formatted byte array containing message content.
+     * @param offset The location of the first payload byte within the array.
+     * @param parent The message element which contains this block, maybe null for no parent.
+     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
+     * If true and the backing byte array is invalidated due to modification of a field then 
+     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
+    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
+            throws ProtocolException {
+        // TODO: Keep the parent
+        super(params, payloadBytes, offset, parseLazy, parseRetain, length);
+    }
 
     /**
      * Construct a block initialized with all the given fields.
@@ -199,10 +221,21 @@ public class Block extends Message {
     }
 
     protected void parseTransactions() throws ProtocolException {
+        parseTransactions(offset + HEADER_SIZE);
+    }
+
+    /**
+     * Parse transactions from the block.
+     * 
+     * @param transactionsOffset Offset of the transactions within the block.
+     * Useful for non-Bitcoin chains where the block header may not be a fixed
+     * size.
+     */
+    protected void parseTransactions(final int transactionsOffset) throws ProtocolException {
         if (transactionsParsed)
             return;
 
-        cursor = offset + HEADER_SIZE;
+        cursor = transactionsOffset;
         optimalEncodingMessageSize = HEADER_SIZE;
         if (payload.length == cursor) {
             // This message is just a header, it has no transactions.
