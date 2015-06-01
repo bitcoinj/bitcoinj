@@ -473,7 +473,7 @@ public class PaymentChannelServerState {
             storedServerChannel.updateValueToMe(bestValueToMe, bestValueSignature);
             StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                     wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
-            wallet.addOrUpdateExtension(channels);
+            channels.updatedChannel(storedServerChannel);
         }
     }
 
@@ -500,6 +500,5 @@ public class PaymentChannelServerState {
         if (connectedHandler != null)
             checkState(storedServerChannel.setConnectedHandler(connectedHandler, false) == connectedHandler);
         channels.putChannel(storedServerChannel);
-        wallet.addOrUpdateExtension(channels);
     }
 }
