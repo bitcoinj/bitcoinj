@@ -4465,6 +4465,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public void deserializeExtension(WalletExtension extension, byte[] data) throws Exception {
         lock.lock();
+        keychainLock.lock();
         try {
             // This method exists partly to establish a lock ordering of wallet > extension.
             extension.deserializeWalletExtension(this, data);
@@ -4474,6 +4475,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             extensions.remove(extension.getWalletExtensionID());
             Throwables.propagate(throwable);
         } finally {
+            keychainLock.unlock();
             lock.unlock();
         }
     }
