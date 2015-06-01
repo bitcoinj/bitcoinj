@@ -42,7 +42,6 @@ import java.util.List;
 public class ExamplePaymentChannelServer implements PaymentChannelServerListener.HandlerFactory {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ExamplePaymentChannelServer.class);
 
-    private StoredPaymentChannelServerStates storedStates;
     private WalletAppKit appKit;
 
     public static void main(String[] args) throws Exception {
@@ -88,6 +87,8 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 // Try to get the state object from the stored state set in our wallet
                 PaymentChannelServerState state = null;
                 try {
+                    StoredPaymentChannelServerStates storedStates = (StoredPaymentChannelServerStates)
+                            appKit.wallet().getExtensions().get(StoredPaymentChannelServerStates.class.getName());
                     state = storedStates.getChannel(channelId).getOrCreateState(appKit.wallet(), appKit.peerGroup());
                 } catch (VerificationException e) {
                     // This indicates corrupted data, and since the channel was just opened, cannot happen
