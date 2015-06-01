@@ -116,7 +116,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             }
             channel.state = null;
         }
-        wallet.addOrUpdateExtension(this);
+        updatedChannel(channel);
     }
 
     /**
@@ -150,6 +150,15 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     }
 
     /**
+     * Notifies the set of stored states that a channel has been updated. Use to notify the wallet of an update to this
+     * wallet extension.
+     */
+    public void updatedChannel(final StoredServerChannel channel) {
+        log.info("Stored server channel {} was updated", channel.hashCode());
+        wallet.addOrUpdateExtension(this);
+    }
+
+    /**
      * <p>Puts the given channel in the channels map and automatically closes it 2 hours before its refund transaction
      * becomes spendable.</p>
      *
@@ -174,6 +183,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         } finally {
             lock.unlock();
         }
+        updatedChannel(channel);
     }
 
     @Override

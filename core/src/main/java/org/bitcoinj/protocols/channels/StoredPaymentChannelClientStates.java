@@ -180,6 +180,15 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     }
 
     /**
+     * Notifies the set of stored states that a channel has been updated. Use to notify the wallet of an update to this
+     * wallet extension.
+     */
+    void updatedChannel(final StoredClientChannel channel) {
+        log.info("Stored client channel {} was updated", channel.hashCode());
+        containingWallet.addOrUpdateExtension(this);
+    }
+
+    /**
      * Adds the given channel to this set of stored states, broadcasting the contract and refund transactions when the
      * channel expires and notifies the wallet of an update to this wallet extension
      */
@@ -206,7 +215,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             lock.unlock();
         }
         if (updateWallet)
-            containingWallet.addOrUpdateExtension(this);
+            updatedChannel(channel);
     }
 
     /**
@@ -242,7 +251,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         } finally {
             lock.unlock();
         }
-        containingWallet.addOrUpdateExtension(this);
+        updatedChannel(channel);
     }
 
     @Override
