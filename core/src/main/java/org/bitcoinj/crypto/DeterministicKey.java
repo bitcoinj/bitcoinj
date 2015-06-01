@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Comparator;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static com.google.common.base.Preconditions.*;
@@ -38,6 +39,17 @@ import static com.google.common.base.Preconditions.*;
  * one of these, you can call {@link HDKeyDerivation#createMasterPrivateKey(byte[])}.
  */
 public class DeterministicKey extends ECKey {
+
+    /** Sorts deterministic keys in the order of their child number. That's <i>usually</i> the order used to derive them. */
+    public static final Comparator<ECKey> CHILDNUM_ORDER = new Comparator<ECKey>() {
+        @Override
+        public int compare(ECKey k1, ECKey k2) {
+            ChildNumber cn1 = ((DeterministicKey) k1).getChildNumber();
+            ChildNumber cn2 = ((DeterministicKey) k2).getChildNumber();
+            return cn1.compareTo(cn2);
+        }
+    };
+
     private static final long serialVersionUID = 1L;
 
     private final DeterministicKey parent;
