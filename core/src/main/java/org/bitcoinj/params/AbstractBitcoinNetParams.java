@@ -21,7 +21,6 @@ import java.math.BigInteger;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
@@ -31,8 +30,6 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Parameters for Bitcoin-like networks.
@@ -49,13 +46,22 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         super();
     }
 
+    /** 
+     * Checks if we are at a difficulty transition point. 
+     * @param storedPrev The previous stored block 
+     * @return If this is a difficulty transition point 
+     */
+    protected boolean isDifficultyTransitionPoint(StoredBlock storedPrev) {
+        return ((storedPrev.getHeight() + 1) % this.getInterval()) == 0;
+    }
+
     @Override
     public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
     	final BlockStore blockStore) throws VerificationException, BlockStoreException {
         Block prev = storedPrev.getHeader();
 
         // Is this supposed to be a difficulty transition point?
-        if ((storedPrev.getHeight() + 1) % this.getInterval() != 0) {
+        if (!isDifficultyTransitionPoint(storedPrev)) {
 
             // No ... so check the difficulty didn't actually change.
             if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
