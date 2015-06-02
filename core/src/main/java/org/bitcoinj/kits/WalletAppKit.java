@@ -369,7 +369,12 @@ public class WalletAppKit extends AbstractIdleService {
             for (WalletExtension e : provideWalletExtensions()) {
                 wallet.addExtension(e);
             }
+
+            // Currently the only way we can be sure that an extension is aware of its containing wallet is by
+            // deserializing the extension (see WalletExtension#deserializeWalletExtension(Wallet, byte[]))
+            // Hence, we first save and then load wallet to ensure any extensions are correctly initialized.
             wallet.saveToFile(vWalletFile);
+            wallet = loadWallet(false);
         }
 
         if (useAutoSave) wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
