@@ -78,7 +78,7 @@ public class KeyChainGroupTest {
     public void freshCurrentKeys() throws Exception {
         int numKeys = ((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
                 + 1  // keys issued
-                + 3  /* account key + int/ext parent keys */;
+                + group.getActiveKeyChain().getAccountPath().size() + 2  /* account key + int/ext parent keys */;
         assertEquals(numKeys, group.numKeys());
         assertEquals(2 * numKeys, group.getBloomFilterElementCount());
         ECKey r1 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -186,7 +186,7 @@ public class KeyChainGroupTest {
         group.getBloomFilterElementCount();
         assertEquals(((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
                 + (2 - group.getLookaheadThreshold())  // keys issued
-                + 4  /* master, account, int, ext */, group.numKeys());
+                + group.getActiveKeyChain().getAccountPath().size() + 3  /* master, account, int, ext */, group.numKeys());
 
         Address a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a2, a3);
@@ -409,26 +409,27 @@ public class KeyChainGroupTest {
 
     @Test
     public void serialization() throws Exception {
-        assertEquals(INITIAL_KEYS + 1 /* for the seed */, group.serializeToProtobuf().size());
+        int initialKeys = INITIAL_KEYS + group.getActiveKeyChain().getAccountPath().size() - 1;
+        assertEquals(initialKeys + 1 /* for the seed */, group.serializeToProtobuf().size());
         group = KeyChainGroup.fromProtobufUnencrypted(params, group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
         group.getBloomFilterElementCount();
         List<Protos.Key> protoKeys1 = group.serializeToProtobuf();
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 1, protoKeys1.size());
+        assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 1, protoKeys1.size());
         group.importKeys(new ECKey());
         List<Protos.Key> protoKeys2 = group.serializeToProtobuf();
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
+        assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
 
         group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys1);
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1)  * 2)  + 1 /* for the seed */ + 1, protoKeys1.size());
+        assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1)  * 2)  + 1 /* for the seed */ + 1, protoKeys1.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
         assertEquals(key2, group.currentKey(KeyChain.KeyPurpose.CHANGE));
         assertEquals(key1, group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS));
         group = KeyChainGroup.fromProtobufUnencrypted(params, protoKeys2);
-        assertEquals(INITIAL_KEYS + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
+        assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
 
