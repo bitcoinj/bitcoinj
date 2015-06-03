@@ -20,6 +20,7 @@ import com.google.protobuf.*;
 import com.squareup.okhttp.*;
 import org.bitcoin.crawler.*;
 import org.bitcoinj.core.*;
+import org.slf4j.*;
 
 import javax.annotation.*;
 import java.io.*;
@@ -37,7 +38,7 @@ import static com.google.common.base.Preconditions.*;
  * This is not currently in use by the Bitcoin community, but rather, is here for experimentation.
  */
 public class HttpDiscovery implements PeerDiscovery {
-    private static final int TIMEOUT_SECS = 20;
+    private static final Logger log = LoggerFactory.getLogger(HttpDiscovery.class);
 
     public static class Details {
         @Nullable public final ECKey pubkey;
@@ -79,6 +80,7 @@ public class HttpDiscovery implements PeerDiscovery {
     @Override
     public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
+            log.info("Requesting seeds from {}", details.uri);
             Response response = client.newCall(new Request.Builder().url(details.uri.toURL()).build()).execute();
             if (!response.isSuccessful())
                 throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
