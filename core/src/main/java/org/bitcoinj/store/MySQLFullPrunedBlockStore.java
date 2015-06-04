@@ -35,28 +35,28 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" +
             "    name varchar(32) NOT NULL,\n" +
             "    value blob,\n" +
-            "    CONSTRAINT `setting_pk` PRIMARY KEY (name)\n" +
+            "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" +
             ")\n";
 
     private static final String CREATE_HEADERS_TABLE = "CREATE TABLE headers (\n" +
-            "    hash blob NOT NULL,\n" +
-            "    chainwork mediumblob NOT NULL,\n" +
+            "    hash binary(28) NOT NULL,\n" +
+            "    chainwork binary(12) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
-            "    header blob NOT NULL,\n" +
+            "    header binary(80) NOT NULL,\n" +
             "    wasundoable tinyint(1) NOT NULL,\n" +
-            "    CONSTRAINT `headers_pk` PRIMARY KEY (hash(28)) USING btree\n" +
+            "    CONSTRAINT headers_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")";
 
     private static final String CREATE_UNDOABLE_TABLE = "CREATE TABLE undoableblocks (\n" +
-            "    hash blob NOT NULL,\n" +
+            "    hash binary(28) NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
             "    txoutchanges mediumblob,\n" +
             "    transactions mediumblob,\n" +
-            "    CONSTRAINT `undoableblocks_pk` PRIMARY KEY (hash(28)) USING btree\n" +
+            "    CONSTRAINT undoableblocks_pk PRIMARY KEY (hash) USING BTREE \n" +
             ")\n";
 
     private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
-            "    hash blob NOT NULL,\n" +
+            "    hash binary(32) NOT NULL,\n" +
             "    `index` integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
             "    value bigint NOT NULL,\n" +
@@ -64,20 +64,20 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    toaddress varchar(35),\n" +
             "    addresstargetable tinyint(1),\n" +
             "    coinbase boolean,\n" +
-            "    CONSTRAINT `openoutputs_pk` PRIMARY KEY (hash(32),`index`) USING btree\n" +
+            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash, `index`) USING BTREE \n" +
             ")\n";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash(32), `index`, height, toaddress) USING btree";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX              = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, `index`, height, toaddress) USING btree";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX                  = "CREATE INDEX openoutputs_toaddress_idx ON openoutputs (toaddress) USING btree";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX          = "CREATE INDEX openoutputs_addresstargetable_idx ON openoutputs (addresstargetable) USING btree";
-    private static final String CREATE_OUTPUTS_HASH_INDEX                       = "CREATE INDEX openoutputs_hash_idx ON openoutputs (hash(32)) USING btree";
+    private static final String CREATE_OUTPUTS_HASH_INDEX                       = "CREATE INDEX openoutputs_hash_idx ON openoutputs (hash) USING btree";
     private static final String CREATE_UNDOABLE_TABLE_INDEX                     = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks (height) USING btree";
 
     // SQL involving index column (table openOutputs) overridden as it is a reserved word and must be back ticked in MySQL.
     private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase, toaddress, addresstargetable FROM openOutputs WHERE hash = ? AND `index` = ?";
     private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openOutputs (hash, `index`, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND `index` = ?";
+    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND `index`= ?";
 
     private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT hash, value, scriptBytes, height, `index`, coinbase, toaddress, addresstargetable FROM openOutputs where toaddress = ?";
 
