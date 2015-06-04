@@ -66,18 +66,18 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openOutputs ("
             + "hash BINARY(32) NOT NULL,"
-            + "index INT NOT NULL,"
+            + "output_index INT NOT NULL,"
             + "height INT NOT NULL,"
             + "value BIGINT NOT NULL,"
             + "scriptBytes BLOB NOT NULL,"
             + "toaddress VARCHAR(35),"
             + "addresstargetable TINYINT,"
             + "coinbase BOOLEAN,"
-            + "PRIMARY KEY (hash, index),"
+            + "PRIMARY KEY (hash, output_index),"
             + ")";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX      = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, index, height, toaddress)";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX      = "CREATE INDEX openoutputs_hash_index_height_toaddress_idx ON openoutputs (hash, output_index, height, toaddress)";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX          = "CREATE INDEX openoutputs_toaddress_idx ON openoutputs (toaddress)";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX  = "CREATE INDEX openoutputs_addresstargetable_idx ON openoutputs (addresstargetable)";
     private static final String CREATE_OUTPUTS_HASH_INDEX               = "CREATE INDEX openoutputs_hash_idx ON openoutputs (hash)";
