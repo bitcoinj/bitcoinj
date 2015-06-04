@@ -74,7 +74,7 @@ import java.util.*;
  * <table>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
- *     <tr><td>index</td><td>integer</td></tr>
+ *     <tr><td>output_index</td><td>integer</td></tr>
  *     <tr><td>height</td><td>integer</td></tr>
  *     <tr><td>value</td><td>integer</td></tr>
  *     <tr><td>scriptbytes</td><td>binary</td></tr>
@@ -112,10 +112,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String UPDATE_UNDOABLEBLOCKS_SQL                       = "UPDATE undoableBlocks SET txOutChanges=?, transactions=? WHERE hash = ?";
     private static final String DELETE_UNDOABLEBLOCKS_SQL                       = "DELETE FROM undoableBlocks WHERE height <= ?";
 
-    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase, toaddress, addresstargetable FROM openOutputs WHERE hash = ? AND index = ?";
+    private static final String SELECT_OPENOUTPUTS_SQL                          = "SELECT height, value, scriptBytes, coinbase, toaddress, addresstargetable FROM openOutputs WHERE hash = ? AND output_index = ?";
     private static final String SELECT_OPENOUTPUTS_COUNT_SQL                    = "SELECT COUNT(*) FROM openOutputs WHERE hash = ?";
-    private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openOutputs (hash, index, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND index = ?";
+    private static final String INSERT_OPENOUTPUTS_SQL                          = "INSERT INTO openOutputs (hash, output_index, height, value, scriptBytes, toAddress, addressTargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String DELETE_OPENOUTPUTS_SQL                          = "DELETE FROM openOutputs WHERE hash = ? AND output_index = ?";
 
     // Dump table SQL (this is just for data sizing statistics).
     private static final String SELECT_DUMP_SETTINGS_SQL                        = "SELECT name, value FROM settings";
@@ -123,10 +123,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     private static final String SELECT_DUMP_UNDOABLEBLOCKS_SQL                  = "SELECT txOutChanges, transactions FROM undoableBlocks";
     private static final String SELECT_DUMP_OPENOUTPUTS_SQL                     = "SELECT value, scriptBytes FROM openOutputs";
 
-    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT hash, value, scriptBytes, height, index, coinbase, toaddress, addresstargetable FROM openOutputs where toaddress = ?";
+    private static final String SELECT_TRANSACTION_OUTPUTS_SQL                  = "SELECT hash, value, scriptBytes, height, output_index, coinbase, toaddress, addresstargetable FROM openOutputs WHERE toaddress = ?";
 
     // Select the balance of an address SQL.
-    private static final String SELECT_BALANCE_SQL                              = "select sum(value) from openoutputs where toaddress = ?";
+    private static final String SELECT_BALANCE_SQL                              = "select sum(value) FROM openoutputs WHERE toaddress = ?";
 
     // Tables exist SQL.
     private static final String SELECT_CHECK_TABLES_EXIST_SQL                   = "SELECT * FROM settings WHERE 1 = 2";
