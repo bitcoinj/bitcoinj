@@ -1,29 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.lang.*?>
-<?import java.util.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.effect.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.SendMoneyController">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.SendMoneyController">
   <children>
-    <VBox alignment="CENTER" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+    <VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
       <children>
-        <Label fx:id="titleLabel" text="Send all money to ...">
-          <font>
-            <Font size="25.0" />
-          </font>
-        </Label>
-        <TextField fx:id="address" prefWidth="354.0" promptText="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ">
-          <VBox.margin>
-            <Insets left="40.0" right="40.0" />
-          </VBox.margin>
-        </TextField>
-        <HBox alignment="CENTER" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="50.0" VBox.vgrow="NEVER">
+            <HBox fx:id="topHBox" alignment="CENTER_LEFT" spacing="15.0">
+               <children>
+              <Label fx:id="titleLabel" text="Send">
+                <font>
+                  <Font size="25.0" />
+                </font>
+              </Label>
+                  <TextField fx:id="amountEdit" />
+                  <Label fx:id="btcLabel" text="BTC">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="15.0">
+               <children>
+                  <Label text="to">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+              <TextField fx:id="address" maxWidth="1.7976931348623157E308" promptText="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ" HBox.hgrow="ALWAYS">
+                <VBox.margin>
+                  <Insets />
+                </VBox.margin>
+              </TextField>
+               </children>
+            </HBox>
+        <HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
           <children>
             <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="Cancel" />
             <Button fx:id="sendBtn" defaultButton="true" mnemonicParsing="false" onAction="#send" prefWidth="79.0" text="Send" />
@@ -33,6 +50,9 @@
       <effect>
         <DropShadow />
       </effect>
+         <padding>
+            <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+         </padding>
     </VBox>
   </children>
 </AnchorPane>

@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -14,6 +13,7 @@ import com.subgraph.orchid.ConsensusDocument;
 import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryDownloader;
 import com.subgraph.orchid.KeyCertificate;
+import com.subgraph.orchid.Threading;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.TorConfig.AutoBoolValue;
 import com.subgraph.orchid.crypto.TorRandom;
@@ -31,7 +31,7 @@ public class DirectoryDownloadTask implements Runnable {
 	private final TorRandom random;
 	private final DescriptorProcessor descriptorProcessor;
 
-	private final ExecutorService executor = Executors.newCachedThreadPool();
+	private final ExecutorService executor = Threading.newPool("DirectoryDownloadTask worker");
 
 	private volatile boolean isDownloadingCertificates;
 	private volatile boolean isDownloadingConsensus;

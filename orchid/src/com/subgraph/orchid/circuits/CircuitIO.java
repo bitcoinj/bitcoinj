@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ import com.subgraph.orchid.Connection;
 import com.subgraph.orchid.ConnectionIOException;
 import com.subgraph.orchid.RelayCell;
 import com.subgraph.orchid.Stream;
+import com.subgraph.orchid.Threading;
 import com.subgraph.orchid.TorException;
 import com.subgraph.orchid.circuits.cells.CellImpl;
 import com.subgraph.orchid.circuits.cells.RelayCellImpl;
@@ -36,8 +38,9 @@ public class CircuitIO implements DashboardRenderable {
 	private final BlockingQueue<RelayCell> relayCellResponseQueue;
 	private final BlockingQueue<Cell> controlCellResponseQueue;
 	private final Map<Integer, StreamImpl> streamMap;
-	private final Object relaySendLock = new Object();
-	
+	private final ReentrantLock streamLock = Threading.lock("stream");
+	private final ReentrantLock relaySendLock = Threading.lock("relaySend");
+
 	private boolean isMarkedForClose;
 	private boolean isClosed;
 	
@@ -169,7 +172,8 @@ public class CircuitIO implements DashboardRenderable {
 			}
 		}
 
-		synchronized(streamMap) {
+		streamLock.lock();
+		try {
 			final StreamImpl stream = streamMap.get(cell.getStreamId());
 			// It's not unusual for the stream to not be found.  For example, if a RELAY_CONNECTED arrives after
 			// the client has stopped waiting for it, the stream will never be tracked and eventually the edge node
@@ -177,6 +181,8 @@ public class CircuitIO implements DashboardRenderable {
 			if(stream != null) {
 				stream.addInputCell(cell);
 			}
+		} finally {
+			streamLock.unlock();
 		}
 	}
 	
@@ -185,7 +191,8 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	void sendRelayCellTo(RelayCell cell, CircuitNode targetNode) {
-		synchronized(relaySendLock) {
+		relaySendLock.lock();
+		try {
 			logRelayCell("Sending:     ", cell);
 			cell.setLength();
 			targetNode.updateForwardDigest(cell);
@@ -198,6 +205,8 @@ public class CircuitIO implements DashboardRenderable {
 				targetNode.waitForSendWindowAndDecrement();
 			
 			sendCell(cell);
+		} finally {
+			relaySendLock.unlock();
 		}
 	}
 	
@@ -233,19 +242,28 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	void markForClose() {
-		synchronized (streamMap) {
+		boolean shouldClose;
+		streamLock.lock();
+		try {
 			if(isMarkedForClose) {
 				return;
 			}
 			isMarkedForClose = true;
-			if(streamMap.isEmpty()) {
-				closeCircuit();
-			}
+			shouldClose = streamMap.isEmpty();
+		} finally {
+			streamLock.unlock();
 		}
+		if(shouldClose)
+			closeCircuit();
 	}
 
 	boolean isMarkedForClose() {
-		return isMarkedForClose;
+		streamLock.lock();
+		try {
+			return isMarkedForClose;
+		} finally {
+			streamLock.unlock();
+		}
 	}
 
 	private void closeCircuit() {
@@ -271,7 +289,8 @@ public class CircuitIO implements DashboardRenderable {
 	}
 
 	void destroyCircuit() {
-		synchronized(streamMap) {
+		streamLock.lock();
+		try {
 			if(isClosed) {
 				return;
 			}
@@ -282,30 +301,42 @@ public class CircuitIO implements DashboardRenderable {
 				s.close();
 			}
 			isClosed = true;
+		} finally {
+			streamLock.unlock();
 		}
 	}
 	
 	StreamImpl createNewStream(boolean autoclose) {
-		synchronized(streamMap) {
+		streamLock.lock();
+		try {
 			final int streamId = circuit.getStatus().nextStreamId();
 			final StreamImpl stream = new StreamImpl(circuit, circuit.getFinalCircuitNode(), streamId, autoclose);
 			streamMap.put(streamId, stream);
 			return stream;
+		} finally {
+			streamLock.unlock();
 		}
 	}
 
 	void removeStream(StreamImpl stream) {
-		synchronized(streamMap) {
+		boolean shouldClose;
+		streamLock.lock();
+		try {
 			streamMap.remove(stream.getStreamId());
-			if(streamMap.isEmpty() && isMarkedForClose) {
-				closeCircuit();
-			}
+			shouldClose = streamMap.isEmpty() && isMarkedForClose;
+		} finally {
+			streamLock.unlock();
 		}
+		if(shouldClose)
+			closeCircuit();
 	}
 	
 	List<Stream> getActiveStreams() {
-		synchronized (streamMap) {
+		streamLock.lock();
+		try {
 			return new ArrayList<Stream>(streamMap.values());
+		} finally {
+			streamLock.unlock();
 		}
 	}
 

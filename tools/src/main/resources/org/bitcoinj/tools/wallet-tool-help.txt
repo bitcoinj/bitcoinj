@@ -1,0 +1,85 @@
+WalletTool: print and manipulate wallets
+
+Usage: wallet-tool --flags action-name
+       wallet-tool action-name --flags
+
+>>> ACTIONS
+  dump                 Loads and prints the given wallet in textual form to stdout. Private keys are only printed
+                       if --dump-privkeys is specified.
+  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.
+  create               Makes a new wallet in the file specified by --wallet.
+                       Will complain and require --force if the wallet already exists.
+                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.
+  marry                Makes the wallet married with other parties, requiring multisig to spend funds.
+                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).
+  add-key              Adds a new key to the wallet, either specified or freshly generated.
+                       If --date is specified, that's the creation date.
+                       If --unixtime is specified, that's the creation time and it overrides --date.
+                       If --privkey is specified, use as a hex/base58 encoded private key.
+                       Don't specify --pubkey in that case, it will be derived automatically.
+                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.
+                       If --lookahead-size is specified, pre-generate at least this many keys ahead of where we are.
+  add-addr             Requires --addr to be specified, and adds it as a watching address.
+  delete-key           Removes the key specified by --pubkey or --addr from the wallet.
+  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are
+                       independent of addresses derived with the add-key action.
+  sync                 Sync the wallet with the latest block chain (download new transactions).
+                       If the chain file does not exist this will RESET the wallet.
+  reset                Deletes all transactions from the wallet, for if you want to replay the chain.
+  send                 Creates and broadcasts a transaction from the given wallet.
+                       Requires either --output or --payment-request to be specified.
+                       If --output is specified, a transaction is created from the provided output
+                       from this wallet and broadcasted, e.g.:
+                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245
+                       You can repeat --output=address:value multiple times.
+                       There is a magic value ALL which empties the wallet to that address, e.g.:
+                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL
+                       If the output destination starts with 04 and is 65 or 33 bytes long it will be
+                       treated as a public key instead of an address and the send will use
+                       <key> CHECKSIG as the script.
+                       If --payment-request is specified, a transaction will be created using the provided
+                       payment request. A payment request can be a local file, a bitcoin uri, or url to
+                       download the payment request, e.g.:
+                         --payment-request=/path/to/my.bitcoinpaymentrequest
+                         --payment-request=bitcoin:?r=http://merchant.com/pay.php?123
+                         --payment-request=http://merchant.com/pay.php?123
+
+                       Other options include:
+                          --fee=0.01  sets the tx fee
+                          --locktime=1234  sets the lock time to block 1234
+                          --locktime=2013/01/01  sets the lock time to 1st Jan 2013
+                          --allow-unconfirmed will let you create spends of pending non-change outputs.
+                          --no-pki disables pki verification for payment requests.
+  encrypt              Requires --password and uses it to encrypt the wallet in place.
+  decrypt              Requires --password and uses it to decrypt the wallet in place.
+  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains
+                       created before this date will be re-spent to a key (from an HD tree) that was created after it.
+                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree
+                       will be created from a new random seed.
+
+>>> GENERAL OPTIONS
+  --debuglog           Enables logging from the core library.
+  --net=XXX            Which network to connect to, defaults to MAIN, can also be TEST or REGTEST.
+  --mode=FULL/SPV      Whether to do full verification of the chain or just light mode.
+  --wallet=<file>      Specifies what wallet file to load and save.
+  --chain=<file>       Specifies the name of the file that stores the block chain.
+  --force              Overrides any safety checks on the requested action.
+  --date               Provide a date in form YYYY/MM/DD to any action that requires one.
+  --peers=1.2.3.4      Comma separated IP addresses/domain names for connections instead of peer discovery.
+  --offline            If specified when sending, don't try and connect, just write the tx to the wallet.
+  --condition=...      Allows you to specify a numeric condition for other commands. The format is
+                       one of the following operators = < > <= >= immediately followed by a number.
+                       For example --condition=\">5.10\" or --condition=\"<=1\"
+  --password=...       For an encrypted wallet, the password is provided here.
+  --ignore-mandatory-extensions   If a wallet has unknown required extensions that would otherwise cause
+                       load failures, this overrides that.
+
+>>> WAITING
+You can wait for the condition specified by the --waitfor flag to become true. Transactions and new
+blocks will be processed during this time. When the waited for condition is met, the tx/block hash
+will be printed. Waiting occurs after the --action is performed, if any is specified.\n
+
+  --waitfor=EVER       Never quit.
+  --waitfor=WALLET_TX  Any transaction that sends coins to or from the wallet.
+  --waitfor=BLOCK      A new block that builds on the best chain.
+  --waitfor=BALANCE    Waits until the wallets balance meets the --condition.\n";

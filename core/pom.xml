@@ -20,19 +20,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.google</groupId>
+        <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.13-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bitcoinj</artifactId>
+    <artifactId>bitcoinj-core</artifactId>
 
     <name>bitcoinj</name>
     <description>A Java Bitcoin library</description>
 
     <packaging>jar</packaging>
 
-    <url>https://code.google.com/p/bitcoinj</url>
+    <url>https://bitcoinj.github.io</url>
 
     <licenses>
         <license>
@@ -88,7 +88,6 @@
                             </execution>
                         </executions>
                     </plugin>
-
                 </plugins>
             </build>
         </profile>
@@ -96,19 +95,19 @@
 
     <build>
         <plugins>
+            <!-- Ensure compilation is done under Java 6 for backwards compatibility -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.0</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
             </plugin>
 
+            <!-- Generate source and javadoc jars: Maven Central requires this -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -120,13 +119,33 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <detectLinks/>
+                    <links>
+                        <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
+                    </links>
+                    <detectJavaApiLink/>
+                    <quiet>true</quiet>
+                </configuration>
+            </plugin>
+
             <!-- Verify the dependency chain: see https://github.com/gary-rowe/BitcoinjEnforcerRules for
                more information on this.
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.2</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -136,6 +155,7 @@
                         </goals>
                         <configuration>
                             <rules>
+                                <DependencyConvergence/>
                                 <digestRule implementation="uk.co.froot.maven.enforcer.DigestRule">
 
                                     <!-- Create a snapshot to build the list of URNs below -->
@@ -145,15 +165,44 @@
                                     <!-- Format is URN of groupId:artifactId:version:type:classifier:scope:hash -->
                                     <!-- classifier is "null" if not present -->
                                     <urns>
-                                        <urn>com.google.code.findbugs:jsr305:1.3.9:jar:null:compile:40719ea6961c0cb6afaeb6a921eaa1f6afd4cfdf</urn>
+                                        <urn>cglib:cglib-nodep:2.2:jar:null:test:59afed7ab65e7ec6585d5bc60556c3cbd203532b</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-annotations:2.5.0:jar:null:test:a2a55a3375bc1cef830ca426d68d2ea22961190e</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-core:2.5.1:jar:null:test:e2a00ad1d7e540ec395e9296a34da484c8888d4d</urn>
+                                        <urn>com.fasterxml.jackson.core:jackson-databind:2.5.2:jar:null:test:2b4dd13fbe6f8c6b146d4c3b7fd70862f136802d</urn>
+                                        <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
                                         <urn>com.google.guava:guava:16.0.1:jar:null:compile:5fa98cd1a63c99a44dd8d3b77e4762b066a5d0c5</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.5.0:jar:null:compile:a10732c76bfacdbd633a7eb0f7968b1059a65dfa</urn>
                                         <urn>com.h2database:h2:1.3.167:jar:null:compile:d3867d586f087e53eb12fc65e5693d8ee9a5da17</urn>
                                         <urn>com.lambdaworks:scrypt:1.4.0:jar:null:compile:906506b74f30c8c20bccd9ed4a11112d8941fe87</urn>
-                                        <urn>com.madgag.spongycastle:core:1.50.0.0:jar:null:compile:13e93b00ec9790315debd61fa25ab6a47d3a1c52</urn>
+                                        <urn>com.madgag.spongycastle:core:1.51.0.0:jar:null:compile:0f642963312ea0e615ad65f28adc5a5b3a2a0862</urn>
+                                        <urn>junit:junit:4.12:jar:null:test:2973d150c0dc1fefe998f834810d68f278ea58ec</urn>
+                                        <urn>mysql:mysql-connector-java:5.1.33:jar:null:compile:8af455a9a3267e6664cafc87ace71a4e4ef02837</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
-                                        <urn>org.slf4j:slf4j-api:1.7.6:jar:null:compile:562424e36df3d2327e8e9301a76027fca17d54ea</urn>
-                                        <urn>org.slf4j:slf4j-jdk14:1.7.6:jar:null:runtime:1a3301a32ea7d90c3d33e9d60edbfdc9589fc748</urn>
+                                        <urn>org.apache.maven.plugins:maven-clean-plugin:2.6.1:maven-plugin:null:runtime:bfdf7d6c2f8fc8759457e9d54f458ba56ac7b30f</urn>
+                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.2:maven-plugin:null:runtime:aec10f274ac07fafab8906cb1aa69669d753b2c2</urn>
+                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:2.10:maven-plugin:null:runtime:af87ceeb71c6499147c5d27f74c9317bf707538e</urn>
+                                        <urn>org.apache.maven.plugins:maven-deploy-plugin:2.8.2:maven-plugin:null:runtime:3c2d83ecd387e9843142ae92a0439792c1500319</urn>
+                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.0:maven-plugin:null:runtime:ad032b7593576e9fe9305c73865633e163895b29</urn>
+                                        <urn>org.apache.maven.plugins:maven-install-plugin:2.5.2:maven-plugin:null:runtime:8a67631619fc3c1d1f036e59362ddce71e1e496f</urn>
+                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.6:maven-plugin:null:runtime:618f08d0fcdd3929af846ef1b65503b5904f93e3</urn>
+                                        <urn>org.apache.maven.plugins:maven-javadoc-plugin:2.10.2:maven-plugin:null:runtime:5f391697fa85cecc7e5bac7ce5a6f9d056a58ba3</urn>
+                                        <urn>org.apache.maven.plugins:maven-resources-plugin:2.7:maven-plugin:null:runtime:94af11389943a480ecec7db01b4ded1b9cdf57c5</urn>
+                                        <urn>org.apache.maven.plugins:maven-shade-plugin:2.3:maven-plugin:null:runtime:d136adc7abccc9c12adcad6ae7a9bc51b2b7184b</urn>
+                                        <urn>org.apache.maven.plugins:maven-site-plugin:3.4:maven-plugin:null:runtime:659cd5f1dd8bff554cf52603339494cbf7f283c5</urn>
+                                        <urn>org.apache.maven.plugins:maven-source-plugin:2.4:maven-plugin:null:runtime:46f0d7f7823d729ba300d3f8929900c7e9cb5ac0</urn>
+                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.18.1:maven-plugin:null:runtime:402fd3066fd6d85ea4a1a3e7cd82a7e35037e6e8</urn>
+                                        <urn>org.easymock:easymock:3.2:jar:null:test:00c82f7fa3ef377d8954b1db25123944b5af2ba4</urn>
+                                        <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
+                                        <urn>org.fusesource.leveldbjni:leveldbjni-all:1.8:jar:null:compile:707350a2eeb1fa2ed77a32ddb3893ed308e941db</urn>
+                                        <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
+                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.4.201502262128:maven-plugin:null:runtime:ee12ed04db135c74d0ae99e9c4e4754ee1582edb</urn>
+                                        <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
+                                        <urn>com.squareup.okhttp:okhttp:2.2.0:jar:null:runtime:959c454243581fdf730abfd4f4745441724bcf2c</urn>
+                                        <urn>com.squareup.okio:okio:1.2.0:jar:null:runtime:c0b52915a48fa91b1b94a28d4a2997bac5f524df</urn>
+                                        <urn>org.slf4j:slf4j-api:1.7.7:jar:null:compile:2b8019b6249bb05d81d3a3094e468753e2b21311</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.7.7:jar:null:test:25d160723ea37a6cb84e87cd70773ff02997e857</urn>
+                                        <urn>org.sonatype.plugins:nexus-staging-maven-plugin:1.6.5:maven-plugin:null:runtime:455ca2aa8cd14a06608f1538bd6a1efd09561563</urn>
+                                        <urn>postgresql:postgresql:9.1-901.jdbc4:jar:null:compile:153f2f92a786f12fc111d0111f709012df87c808</urn>
                                         <!-- A check for the rules themselves -->
                                         <urn>uk.co.froot.maven.enforcer:digest-enforcer-rules:0.0.1:jar:null:runtime:16a9e04f3fe4bb143c42782d07d5faf65b32106f</urn>
                                     </urns>
@@ -177,30 +226,163 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>1.6</version>
-                <configuration>
-                    <minimizeJar>false</minimizeJar>
-                    <filters>
-                        <filter>
-                            <!-- exclude signatures, the bundling process breaks them for some reason -->
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                </configuration>
                 <executions>
+                    <!-- Create the bundled JAR, it's easier for some people -->
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <minimizeJar>false</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <!-- exclude signatures, the bundling process breaks them for some reason -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>bundled</shadedClassifierName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Code coverage plugin, generates coverage report to target/site/jacoco/
+                To skip coverage generation add -Djacoco.skip=true
+             -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.4.201502262128</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/Protos*.class</exclude> <!-- Exclude generated protobuf classes -->
+                        <exclude>org/bitcoinj/jni/*</exclude> <!-- Exclude JNI classes -->
+                        <exclude>org/bitcoin/*</exclude> <!-- Exclude native classes -->
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <destFile>${project.build.directory}/coverage-reports/jacoco.exec</destFile>
+                            <propertyName>surefireArgLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/coverage-reports/jacoco.exec</dataFile>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Unit tests plugin, to skip runing test add -Dmaven.test.skip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>${surefireArgLine}</argLine> <!-- This is required for code coverage to work. -->
+                    <runOrder>alphabetical</runOrder>
+                </configuration>
+            </plugin>
+
+            <!-- Coveralls is a online code coverage tool, you can track code coverage here: https://coveralls.io/r/bitcoinj/bitcoinj -->
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>3.1.0</version>
+            </plugin>
+
+            <!-- Create a bundled executable test jar that runs the regtester/pulltester.
+                 The comparison tool is kind of messy and badly needs a seriously refactoring.
+                 It depends on classes which are only in the test tree so we must do some
+                 Maven kung fu here to create a bundle of it, as I couldn't make Maven Shade
+                 do bundling on the test jar for some reason. Maven kind of sucks ...
+              -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unzip-lib</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <artifactItems>
+                                <artifactItem>
+                                    <outputDirectory>target/test-classes/</outputDirectory>
+                                    <groupId>org.bitcoinj</groupId>
+                                    <artifactId>bitcoinj-core</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unzip-deps</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/test-classes/</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>org.bitcoinj.core.BitcoindComparisonTool</mainClass>
+                                    <addClasspath>false</addClasspath>
+                                </manifest>
+                            </archive>
+                            <finalName>pull</finalName>    <!-- becomes pull-tests.jar on disk (hacky) -->
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
@@ -212,13 +394,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
-            <version>3.0</version>
+            <version>3.2</version>
             <scope>test</scope>
         </dependency>
         <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
@@ -227,7 +409,13 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.6</version>
+            <version>1.7.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -239,7 +427,7 @@
         <dependency>
             <groupId>com.madgag.spongycastle</groupId>
             <artifactId>core</artifactId>
-            <version>1.50.0.0</version>
+            <version>1.51.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -254,7 +442,7 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
-            <version>1.3.9</version>
+            <version>2.0.1</version>
         </dependency>
         <dependency>
             <groupId>net.jcip</groupId>
@@ -266,19 +454,37 @@
             <artifactId>scrypt</artifactId>
             <version>1.4.0</version>
         </dependency>
-
-        <!-- Add in to test/use Postgres blockstore -->
-        <!--
+        <!-- Note this is an optional dependency: Postgres blockstore -->
+        <!-- To Test remove optional -->
         <dependency>
           <groupId>postgresql</groupId>
           <artifactId>postgresql</artifactId>
           <version>9.1-901.jdbc4</version>
+          <optional>true</optional>
         </dependency>
-        -->
+        <!-- Note this is an optional dependency: MySQL blockstore -->
+        <!-- To Test remove optional -->
         <dependency>
-            <groupId>com.subgraph</groupId>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.33</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.fusesource.leveldbjni</groupId>
+            <artifactId>leveldbjni-all</artifactId>
+            <version>1.8</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.bitcoinj</groupId>
             <artifactId>orchid</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>2.2.0</version>
         </dependency>
     </dependencies>
 

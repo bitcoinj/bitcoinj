@@ -1,11 +1,13 @@
 package wallettemplate.controls;
 
-import com.google.bitcoin.uri.BitcoinURI;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
-import javafx.beans.property.StringProperty;
+import javafx.beans.binding.StringExpression;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ContextMenu;
@@ -30,14 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 
-// This control can be used with Scene Builder as long as we don't use any Java 8 features yet. Once Oracle release
-// a new Scene Builder compiled against Java 8, we'll be able to use lambdas and so on here. Until that day comes,
-// this file specifically must be recompiled against Java 7 for main.fxml to be editable visually.
-//
-// From the java directory:
-//
-// javac -cp $HOME/.m2/repository/net/glxn/qrgen/1.3/qrgen-1.3.jar:$HOME/.m2/repository/de/jensd/fontawesomefx/8.0.0/fontawesomefx-8.0.0.jar:../../../target/classes:../../../../core/target/bitcoinj-0.12-SNAPSHOT.jar -d ../../../target/classes/ -source 1.7 -target 1.7 wallettemplate/controls/ClickableBitcoinAddress.java
-
+import static javafx.beans.binding.Bindings.convert;
 
 /**
  * A custom control that implements a clickable, copyable Bitcoin address. Clicking it opens a local wallet app. The
@@ -49,6 +44,9 @@ public class ClickableBitcoinAddress extends AnchorPane {
     @FXML protected ContextMenu addressMenu;
     @FXML protected Label copyWidget;
     @FXML protected Label qrCode;
+
+    protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
+    private final StringExpression addressStr;
 
     public ClickableBitcoinAddress() {
         try {
@@ -64,25 +62,28 @@ public class ClickableBitcoinAddress extends AnchorPane {
 
             AwesomeDude.setIcon(qrCode, AwesomeIcon.QRCODE);
             Tooltip.install(qrCode, new Tooltip("Show a barcode scannable with a mobile phone for this address"));
+
+            addressStr = convert(address);
+            addressLabel.textProperty().bind(addressStr);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public String uri() {
-        return BitcoinURI.convertToBitcoinURI(getAddress(), null, Main.APP_NAME, null);
+        return BitcoinURI.convertToBitcoinURI(address.get(), null, Main.APP_NAME, null);
     }
 
-    public String getAddress() {
-        return addressLabel.getText();
+    public Address getAddress() {
+        return address.get();
     }
 
-    public void setAddress(String address) {
-        addressLabel.setText(address);
+    public void setAddress(Address address) {
+        this.address.set(address);
     }
 
-    public StringProperty addressProperty() {
-        return addressLabel.textProperty();
+    public ObjectProperty<Address> addressProperty() {
+        return address;
     }
 
     @FXML
@@ -90,8 +91,8 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // User clicked icon or menu item.
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
-        content.putString(getAddress());
-        content.putHtml(String.format("<a href='%s'>%s</a>", uri(), getAddress()));
+        content.putString(addressStr.get());
+        content.putHtml(String.format("<a href='%s'>%s</a>", uri(), addressStr.get()));
         clipboard.setContent(content);
     }
 
@@ -134,11 +135,6 @@ public class ClickableBitcoinAddress extends AnchorPane {
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
         final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
-        view.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                overlay.done();
-            }
-        });
+        view.setOnMouseClicked(event1 -> overlay.done());
     }
 }

@@ -13,9 +13,8 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 <?import wallettemplate.controls.*?>
-<?import wallettemplate.controls.ClickableBitcoinAddress ?>
 
-<AnchorPane id="AnchorPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="200.0" minWidth="300.0" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="wallettemplate.Controller">
+<AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="451.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.MainController">
   <children>
     <Label layoutX="14.0" layoutY="14.0" text="Balance">
       <font>
@@ -35,20 +34,10 @@
         <Label font="$x1" text="BTC" textFill="$x2" />
       </children>
     </HBox>
-    <VBox fx:id="syncBox" maxHeight="-1.0" prefHeight="46.0" prefWidth="243.0" spacing="10.0" translateY="0.0" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0">
+    <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" layoutY="347.0" minHeight="16.0" prefHeight="36.0" prefWidth="243.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="17.0">
       <children>
-        <Label text="Synchronizing with network ..." />
-        <ProgressBar fx:id="syncProgress" maxWidth="1.7976931348623157E308" prefWidth="200.0" progress="0.0" />
-      </children>
-    </VBox>
-    <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" minHeight="16.0" prefHeight="16.0" prefWidth="205.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="29.0">
-      <children>
-        <Button id="connectBtn" defaultButton="true" mnemonicParsing="false" text="Primary">
-          <HBox.margin>
-            <Insets />
-          </HBox.margin>
-        </Button>
-        <Button mnemonicParsing="false" text="Secondary" />
+        <Button defaultButton="true" mnemonicParsing="false" styleClass="fat-button" text="Primary" />
+        <Button cancelButton="true" mnemonicParsing="false" styleClass="fat-button" text="Secondary" />
       </children>
     </HBox>
     <ImageView fitHeight="243.0" fitWidth="243.0" opacity="0.28" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="-36.0" AnchorPane.rightAnchor="-34.0">
@@ -64,11 +53,16 @@
       </image>
     </ImageView>
     <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />
-    <StackPane id="connectionsListView" layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0">
+    <StackPane layoutX="14.0" layoutY="81.0" prefHeight="249.0" prefWidth="572.0" style="-fx-border-color: lightgrey; -fx-border-style: dashed" AnchorPane.bottomAnchor="70.0" AnchorPane.leftAnchor="15.0" AnchorPane.rightAnchor="15.0" AnchorPane.topAnchor="81.0">
       <children>
         <Label text="Your content goes here" />
       </children>
     </StackPane>
-    <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" text="Send money out" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0" />
+    <HBox spacing="20" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
+       <children>
+           <Button onAction="#settingsClicked" style="-fx-base: white;" styleClass="fat-button" text="Settings" />
+           <Button id="sendMoneyOut" fx:id="sendMoneyOutBtn" alignment="CENTER" mnemonicParsing="false" onAction="#sendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Send money out" />
+       </children>
+    </HBox>
   </children>
 </AnchorPane>

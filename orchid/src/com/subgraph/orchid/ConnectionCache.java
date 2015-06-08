@@ -18,4 +18,6 @@ public interface ConnectionCache {
 	Connection getConnectionTo(Router router, boolean isDirectoryConnection) throws InterruptedException, ConnectionTimeoutException, ConnectionFailedException, ConnectionHandshakeException;
 	
 	void close();
+
+	boolean isClosed();
 }

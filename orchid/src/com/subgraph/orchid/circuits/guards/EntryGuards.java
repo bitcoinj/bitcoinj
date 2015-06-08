@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -15,6 +14,7 @@ import com.subgraph.orchid.Directory;
 import com.subgraph.orchid.DirectoryDownloader;
 import com.subgraph.orchid.GuardEntry;
 import com.subgraph.orchid.Router;
+import com.subgraph.orchid.Threading;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.path.CircuitNodeChooser;
 import com.subgraph.orchid.circuits.path.CircuitNodeChooser.WeightRule;
@@ -47,7 +47,7 @@ public class EntryGuards {
 		this.pendingProbes = new HashSet<GuardEntry>();
 		this.bridges = new Bridges(config, directoryDownloader);
 		this.lock = new Object();
-		this.executor = Executors.newCachedThreadPool();
+		this.executor = Threading.newPool("EntryGuards worker");
 	}
 
 	public boolean isUsingBridges() {

@@ -66,6 +66,10 @@ message DeterministicKey {
    * a single P2SH multisignature address
    */
   optional bool isFollowing = 5;
+
+  // Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
+  // and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+  optional uint32 sigsRequiredToSpend = 6 [default = 1];
 }
 
 /**
@@ -86,10 +90,10 @@ message Key {
     ENCRYPTED_SCRYPT_AES = 2;
 
     /**
-     * Not really a key, but rather contains the seed for a deterministic key hierarchy in the private_key field.
-     * The label and public_key fields are missing. Creation timestamp will exist.
-     */
-    DETERMINISTIC_ROOT_SEED = 3;
+    * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
+    * The label and public_key fields are missing. Creation timestamp will exist.
+    */
+    DETERMINISTIC_MNEMONIC = 3;
 
     /**
      * A key that was derived deterministically. Note that the root seed that created it may NOT be present in the
@@ -105,11 +109,12 @@ message Key {
   // Either the private EC key bytes (without any ASN.1 wrapping), or the deterministic root seed.
   // If the secret is encrypted, or this is a "watching entry" then this is missing.
   optional bytes secret_bytes = 2;
+
   // If the secret data is encrypted, then secret_bytes is missing and this field is set.
   optional EncryptedData encrypted_data = 6;
 
   // The public EC key derived from the private key. We allow both to be stored to avoid mobile clients having to
-  // do lots of slow EC math on startup. For DETERMINISTIC_ROOT_SEED entries this is missing.
+  // do lots of slow EC math on startup. For DETERMINISTIC_MNEMONIC entries this is missing.
   optional bytes public_key = 3;
 
   // User-provided label associated with the key.
@@ -120,6 +125,13 @@ message Key {
   optional int64 creation_timestamp = 5;
 
   optional DeterministicKey deterministic_key = 7;
+
+  // The seed for a deterministic key hierarchy.  Derived from the mnemonic,
+  // but cached here for quick startup.  Only applicable to a DETERMINISTIC_MNEMONIC key entry.
+  optional bytes deterministic_seed = 8;
+
+  // Encrypted version of the seed
+  optional EncryptedData encrypted_deterministic_seed = 9;
 }
 
 message Script {
@@ -182,9 +194,8 @@ message TransactionConfidence {
   // Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
   optional int32 depth = 4;
 
-  // If type == BUILDING then this is the cumulative workDone for the block the transaction appears in, together with
-  // all blocks that bury it.
-  optional int64 work_done = 5;
+  // deprecated - do not recycle this numeric identifier
+  // optional int64 work_done = 5;
 
   repeated PeerAddress broadcast_by = 6;
 
@@ -256,11 +267,22 @@ message Transaction {
     USER_PAYMENT = 1;
     // Created automatically to move money from rotated keys.
     KEY_ROTATION = 2;
+    // Stuff used by Lighthouse.
+    ASSURANCE_CONTRACT_CLAIM = 3;
+    ASSURANCE_CONTRACT_PLEDGE = 4;
+    ASSURANCE_CONTRACT_STUB = 5;
     // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
   }
   optional Purpose purpose = 10 [default = UNKNOWN];
 
-  // Next tag: 12
+  // Exchange rate that was valid when the transaction was sent.
+  optional ExchangeRate exchange_rate = 12;
+
+  // Memo of the transaction. It can be used to record the memo of the payment request that initiated the
+  // transaction.
+  optional string memo = 13;
+
+  // Next tag: 14
 }
 
 /** The parameters used in the scrypt key derivation function.
@@ -296,6 +318,16 @@ message Tag {
     required bytes data = 2;
 }
 
+/**
+ * Data required to reconstruct TransactionSigner.
+ */
+message TransactionSigner {
+	// fully qualified class name of TransactionSigner implementation
+	required string class_name = 1;
+	// arbitrary data required for signer to function
+	optional bytes data = 2;
+}
+
 /** A bitcoin wallet */
 message Wallet {
   /**
@@ -311,7 +343,7 @@ message Wallet {
   }
 
   required string network_identifier = 1; // the network used by this wallet
-  // org.bitcoin.production = production network (Satoshi genesis block)
+  // org.bitcoin.production = main, production network (Satoshi genesis block)
   // org.bitcoin.test = test network (Andresen genesis block)
 
   // The SHA256 hash of the head of the best chain seen by this wallet.
@@ -328,7 +360,8 @@ message Wallet {
   optional ScryptParameters encryption_parameters = 6;
 
   // The version number of the wallet - used to detect wallets that were produced in the future
-  // (i.e the wallet may contain some future format this protobuf/ code does not know about)
+  // (i.e. the wallet may contain some future format this protobuf or parser code does not know about).
+  // A version that's higher than the default is considered from the future.
   optional int32 version = 7 [default = 1];
 
   // deprecated - do not recycle this numeric identifier
@@ -348,5 +381,20 @@ message Wallet {
 
   repeated Tag tags = 16;
 
-  // Next tag: 17
+  // transaction signers added to the wallet
+  repeated TransactionSigner transaction_signers = 17;
+
+  // Next tag: 18
+}
+
+/** An exchange rate between Bitcoin and some fiat currency. */
+message ExchangeRate {
+  // This much of satoshis (1E-8 fractions)…
+  required int64 coin_value = 1;
+  // …is worth this much of fiat (1E-4 fractions).
+  required int64 fiat_value = 2;
+  // ISO 4217 currency code (if available) of the fiat currency.
+  required string fiat_currency_code = 3;
+
+  // Next tag: 4
 }

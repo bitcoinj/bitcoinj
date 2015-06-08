@@ -1,14 +1,14 @@
 package com.subgraph.orchid.circuits;
 
+import com.subgraph.orchid.Tor;
+import com.subgraph.orchid.TorInitializationListener;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.subgraph.orchid.Tor;
-import com.subgraph.orchid.TorInitializationListener;
 
 public class TorInitializationTracker {
 	private final static Logger logger = Logger.getLogger(TorInitializationTracker.class.getName());
@@ -19,8 +19,8 @@ public class TorInitializationTracker {
 		messageMap.put(Tor.BOOTSTRAP_STATUS_CONN_DIR, "Connecting to directory server");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_HANDSHAKE_DIR, "Finishing handshake with directory server");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_ONEHOP_CREATE, "Establishing an encrypted directory connection");
-		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, "Asking for networkstatus consensus"); 
-		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_STATUS, "Loading networkstatus consensus");
+		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_STATUS, "Asking for network status consensus");
+		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_STATUS, "Loading network status consensus");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_KEYS, "Asking for authority key certs");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_LOADING_KEYS, "Loading authority key certs");
 		messageMap.put(Tor.BOOTSTRAP_STATUS_REQUESTING_DESCRIPTORS, "Asking for relay descriptors");

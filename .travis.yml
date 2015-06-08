@@ -1,0 +1,20 @@
+# configuration for https://travis-ci.org/bitcoinj/bitcoinj
+language: java
+jdk: oraclejdk8
+install: true # remove default
+script:
+  - mvn -q clean install
+  - jdk_switcher use openjdk6
+  - cd orchid
+  - mvn -q clean package
+  - cd ../core
+  - mvn -q clean package
+
+after_success:
+  - cd ../core
+  - mvn jacoco:report coveralls:report
+
+notifications:
+  irc:
+    channels: "irc.freenode.net#bitcoinj"
+    skip_join: true

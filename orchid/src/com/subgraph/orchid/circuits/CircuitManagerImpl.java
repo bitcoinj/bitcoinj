@@ -11,8 +11,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.subgraph.orchid.Circuit;
 import com.subgraph.orchid.CircuitBuildHandler;
@@ -29,6 +31,7 @@ import com.subgraph.orchid.OpenFailedException;
 import com.subgraph.orchid.Router;
 import com.subgraph.orchid.Stream;
 import com.subgraph.orchid.StreamConnectFailedException;
+import com.subgraph.orchid.Threading;
 import com.subgraph.orchid.Tor;
 import com.subgraph.orchid.TorConfig;
 import com.subgraph.orchid.circuits.guards.EntryGuards;
@@ -57,11 +60,14 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	private int pendingInternalCircuitCount = 0;
 	private final TorRandom random;
 	private final PendingExitStreams pendingExitStreams;
-	private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService scheduledExecutor = Threading.newSingleThreadScheduledPool("CircuitManager worker");
 	private final CircuitCreationTask circuitCreationTask;
 	private final TorInitializationTracker initializationTracker;
 	private final CircuitPathChooser pathChooser;
 	private final HiddenServiceManager hiddenServiceManager;
+	private final ReentrantLock lock = Threading.lock("circuitManager");
+
+	private boolean isBuilding = false;
 
 	public CircuitManagerImpl(TorConfig config, DirectoryDownloaderImpl directoryDownloader, Directory directory, ConnectionCache connectionCache, TorInitializationTracker initializationTracker) {
 		this.config = config;
@@ -84,14 +90,30 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 	}
 
 	public void startBuildingCircuits() {
-		scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
+		lock.lock();
+		try {
+			isBuilding = true;
+			scheduledExecutor.scheduleAtFixedRate(circuitCreationTask, 0, 1000, TimeUnit.MILLISECONDS);
+		} finally {
+			lock.unlock();
+		}
 	}
 
-	public synchronized void stopBuildingCircuits(boolean killCircuits) {
-		scheduledExecutor.shutdownNow();
-		if(killCircuits) {
-			List<CircuitImpl> circuits = new ArrayList<CircuitImpl>(activeCircuits);
-			for(CircuitImpl c: circuits) {
+	public void stopBuildingCircuits(boolean killCircuits) {
+		lock.lock();
+		try {
+			isBuilding = false;
+			scheduledExecutor.shutdownNow();
+		} finally {
+			lock.unlock();
+		}
+
+		if (killCircuits) {
+			ArrayList<CircuitImpl> circuits;
+			synchronized (activeCircuits) {
+				circuits = new ArrayList<CircuitImpl>(activeCircuits);
+			}
+			for (CircuitImpl c : circuits) {
 				c.destroyCircuit();
 			}
 		}
@@ -106,6 +128,19 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 			activeCircuits.add(circuit);
 			activeCircuits.notifyAll();
 		}
+
+		boolean doDestroy;
+		lock.lock();
+		try {
+			doDestroy = !isBuilding;
+		} finally {
+			lock.unlock();
+		}
+
+		if (doDestroy) {
+			// we were asked to stop since this circuit was started
+			circuit.destroyCircuit();
+		}
 	}
 	
 	void removeActiveCircuit(CircuitImpl circuit) {
@@ -114,8 +149,10 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		}
 	}
 
-	synchronized int getActiveCircuitCount() {
-		return activeCircuits.size();
+	int getActiveCircuitCount() {
+		synchronized (activeCircuits) {
+			return activeCircuits.size();
+		}
 	}
 
 	Set<Circuit> getPendingCircuits() {
@@ -126,17 +163,28 @@ public class CircuitManagerImpl implements CircuitManager, DashboardRenderable {
 		});
 	}
 
-	synchronized int getPendingCircuitCount() {
-		return getPendingCircuits().size();
+	int getPendingCircuitCount() {
+		lock.lock();
+		try {
+			return getPendingCircuits().size();
+		} finally {
+			lock.unlock();
+		}
 	}
 	
 	Set<Circuit> getCircuitsByFilter(CircuitFilter filter) {
 		final Set<Circuit> result = new HashSet<Circuit>();
+		final Set<CircuitImpl> circuits = new HashSet<CircuitImpl>();
+
 		synchronized (activeCircuits) {
-			for(CircuitImpl c: activeCircuits) {
-				if(filter == null || filter.filter(c)) {
-					result.add(c);
-				}
+			// the filter might lock additional objects, causing a deadlock, so don't
+			// call it inside the monitor
+			circuits.addAll(activeCircuits);
+		}
+
+		for(CircuitImpl c: circuits) {
+			if(filter == null || filter.filter(c)) {
+				result.add(c);
 			}
 		}
 		return result;
