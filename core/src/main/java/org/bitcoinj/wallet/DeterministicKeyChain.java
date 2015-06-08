@@ -1249,10 +1249,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * Returns only the keys that have been issued by this chain, lookahead not included.
+     * Returns only the external keys that have been issued by this chain, lookahead not included.
      */
     public List<ECKey> getIssuedReceiveKeys() {
-        return getKeys(false);
+        final List<ECKey> keys = new ArrayList<ECKey>(getKeys(false));
+        for (Iterator<ECKey> i = keys.iterator(); i.hasNext();) {
+            DeterministicKey parent = ((DeterministicKey) i.next()).getParent();
+            if (parent == null || !externalKey.equals(parent))
+                i.remove();
+        }
+        return keys;
     }
 
     /**
