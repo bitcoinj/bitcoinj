@@ -163,10 +163,12 @@ public class BitcoinSerializerTest {
     public void testHeaders1() throws Exception {
         BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
 
-        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(HEX.decode("f9beb4d9686561" +
+        String headersMessageBytesHex = "f9beb4d9686561" +
                 "646572730000000000520000005d4fab8101010000006fe28c0ab6f1b372c1a6a246ae6" +
                 "3f74f931e8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677b" +
-                "a1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e3629900")));
+                "a1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e3629900";
+        byte[] headersMessageBytes = HEX.decode(headersMessageBytesHex);
+        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(HEX.decode(headersMessageBytesHex)));
 
         // The first block after the genesis
         // http://blockexplorer.com/b/1
@@ -178,6 +180,13 @@ public class BitcoinSerializerTest {
 
         assertEquals(Utils.HEX.encode(block.getMerkleRoot().getBytes()),
                 "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098");
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bs.serialize(hm, byteArrayOutputStream);
+        byte[] serializedBytes = byteArrayOutputStream.toByteArray();
+        String serializedBytesHex = new String(HEX.encode(serializedBytes));
+        assertEquals(headersMessageBytes.length, serializedBytes.length);
+        assertEquals(true, Arrays.equals(headersMessageBytes, serializedBytes));
     }
 
 
@@ -188,7 +197,7 @@ public class BitcoinSerializerTest {
     public void testHeaders2() throws Exception {
         BitcoinSerializer bs = new BitcoinSerializer(MainNetParams.get());
 
-        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(HEX.decode("f9beb4d96865616465" +
+        String headersMessageBytesHex = "f9beb4d96865616465" +
                 "72730000000000e701000085acd4ea06010000006fe28c0ab6f1b372c1a6a246ae63f74f931e" +
                 "8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1c" +
                 "db606e857233e0e61bc6649ffff001d01e3629900010000004860eb18bf1b1620e37e9490fc8a" +
@@ -201,7 +210,9 @@ public class BitcoinSerializerTest {
                 "a88d221c8bd6c059da090e88f8a2c99690ee55dbba4e00000000e11c48fecdd9e72510ca84f023" +
                 "370c9a38bf91ac5cae88019bee94d24528526344c36649ffff001d1d03e4770001000000fc33f5" +
                 "96f822a0a1951ffdbf2a897b095636ad871707bf5d3162729b00000000379dfb96a5ea8c81700ea4" +
-                "ac6b97ae9a9312b2d4301a29580e924ee6761a2520adc46649ffff001d189c4c9700")));
+                "ac6b97ae9a9312b2d4301a29580e924ee6761a2520adc46649ffff001d189c4c9700";
+        byte[] headersMessageBytes = HEX.decode(headersMessageBytesHex);
+        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(headersMessageBytes));
 
         int nBlocks = hm.getBlockHeaders().size();
         assertEquals(nBlocks, 6);
@@ -224,6 +235,12 @@ public class BitcoinSerializerTest {
         assertEquals("000000004ebadb55ee9096c9a2f8880e09da59c0d68b1c228da88e48844a1485",
                 thirdBlockHash);
         assertEquals(thirdBlock.getNonce(), 2850094635L);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bs.serialize(hm, byteArrayOutputStream);
+        byte[] serializedBytes = byteArrayOutputStream.toByteArray();
+        assertEquals(headersMessageBytes.length, serializedBytes.length);
+        assertEquals(true, Arrays.equals(headersMessageBytes, serializedBytes));
     }
 
     @Test
