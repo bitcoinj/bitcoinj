@@ -541,7 +541,10 @@ public class WalletProtobufSerializer {
      * wallet file format itself.
      */
     public static Protos.Wallet parseToProto(InputStream input) throws IOException {
-        return Protos.Wallet.parseFrom(input);
+        CodedInputStream codedInput = CodedInputStream.newInstance(input);
+        // JDO: 512 MB
+        codedInput.setSizeLimit(512 * 1024 * 1024);
+        return Protos.Wallet.parseFrom(codedInput);
     }
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) throws UnreadableWalletException {
