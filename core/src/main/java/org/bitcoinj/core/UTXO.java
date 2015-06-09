@@ -16,12 +16,12 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.bitcoinj.script.*;
 
 import java.io.*;
-import java.math.BigInteger;
+import java.math.*;
+
+// TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
 /**
  * A UTXO message contains the information necessary to check a spending transaction.
@@ -29,35 +29,14 @@ import java.math.BigInteger;
  * Useful when working with free standing outputs.
  */
 public class UTXO implements Serializable {
-    private static final Logger log = LoggerFactory.getLogger(UTXO.class);
     private static final long serialVersionUID = -8744924157056340509L;
 
-    /**
-     * A transaction output has some value and a script used for authenticating that the redeemer is allowed to spend
-     * this output.
-     */
     private Coin value;
     private Script script;
-
-    /**
-     * Hash of the transaction to which we refer.
-     */
     private Sha256Hash hash;
-    /**
-     * Which output of that transaction we are talking about.
-     */
     private long index;
-    /**
-     * The height of the tx of this output
-     */
     private int height;
-    /**
-     * If this output is from a coinbase tx
-     */
     private boolean coinbase;
-    /**
-     * The address of this output
-     */
     private String address;
 
     /**
@@ -111,7 +90,7 @@ public class UTXO implements Serializable {
             throw new EOFException();
         value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
 
-        int scriptBytesLength = ((in.read() & 0xFF) << 0) |
+        int scriptBytesLength = ((in.read() & 0xFF)) |
                 ((in.read() & 0xFF) << 8) |
                 ((in.read() & 0xFF) << 16) |
                 ((in.read() & 0xFF) << 24);
@@ -130,79 +109,47 @@ public class UTXO implements Serializable {
             throw new EOFException();
         index = Utils.readUint32(indexBytes, 0);
 
-        height = ((in.read() & 0xFF) << 0) |
+        height = ((in.read() & 0xFF)) |
                 ((in.read() & 0xFF) << 8) |
                 ((in.read() & 0xFF) << 16) |
                 ((in.read() & 0xFF) << 24);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
-        if (coinbaseByte[0] == 1) {
-            coinbase = true;
-        } else {
-            coinbase = false;
-        }
+        coinbase = coinbaseByte[0] == 1;
     }
 
-    /**
-     * The value which this Transaction output holds.
-     *
-     * @return the value.
-     */
+    /** The value which this Transaction output holds. */
     public Coin getValue() {
         return value;
     }
 
-    /**
-     * The Script object which you can use to get address, script bytes or script type.
-     *
-     * @return the script.
-     */
+    /** The Script object which you can use to get address, script bytes or script type. */
     public Script getScript() {
         return script;
     }
 
-    /**
-     * The hash of the transaction which holds this output.
-     *
-     * @return the hash.
-     */
+    /** The hash of the transaction which holds this output. */
     public Sha256Hash getHash() {
         return hash;
     }
 
-    /**
-     * The index of this output in the transaction which holds it.
-     *
-     * @return the index.
-     */
+    /** The index of this output in the transaction which holds it. */
     public long getIndex() {
         return index;
     }
 
-    /**
-     * Gets the height of the block that created this output.
-     *
-     * @return The height.
-     */
+    /** Gets the height of the block that created this output. */
     public int getHeight() {
         return height;
     }
 
-    /**
-     * Gets the flag of whether this was created by a coinbase tx.
-     *
-     * @return The coinbase flag.
-     */
+    /** Gets the flag of whether this was created by a coinbase tx. */
     public boolean isCoinbase() {
         return coinbase;
     }
 
-    /**
-     * The address of this output.
-     *
-     * @return The address.
-     */
+    /** The address of this output, can be the empty string if none was provided at construction time or was deserialized */
     public String getAddress() {
         return address;
     }
@@ -230,7 +177,7 @@ public class UTXO implements Serializable {
         Utils.uint64ToByteStreamLE(BigInteger.valueOf(value.value), bos);
 
         byte[] scriptBytes = script.getProgram();
-        bos.write(0xFF & scriptBytes.length >> 0);
+        bos.write(0xFF & scriptBytes.length);
         bos.write(0xFF & scriptBytes.length >> 8);
         bos.write(0xFF & (scriptBytes.length >> 16));
         bos.write(0xFF & (scriptBytes.length >> 24));
@@ -239,7 +186,7 @@ public class UTXO implements Serializable {
         bos.write(hash.getBytes());
         Utils.uint32ToByteStreamLE(index, bos);
 
-        bos.write(0xFF & (height >> 0));
+        bos.write(0xFF & (height));
         bos.write(0xFF & (height >> 8));
         bos.write(0xFF & (height >> 16));
         bos.write(0xFF & (height >> 24));
