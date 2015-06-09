@@ -3968,20 +3968,17 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     /**
      * Set the {@link UTXOProvider}.
      *
-     * <p>The wallet will query the provider for the spendable candidates.
-     * The spendable candidates are the outputs controlled exclusively
+     * <p>The wallet will query the provider for spendable candidates, i.e. outputs controlled exclusively
      * by private keys contained in the wallet.</p>
      *
      * <p>Note that the associated provider must be reattached after a wallet is loaded from disk.
      * The association is not serialized.</p>
-     *
-     * @param vUTXOProvider The UTXO provider.
      */
-    public void setUTXOProvider(@Nullable UTXOProvider vUTXOProvider) {
+    public void setUTXOProvider(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
-            checkArgument(vUTXOProvider == null ? true : vUTXOProvider.getParams().equals(params));
-            this.vUTXOProvider = vUTXOProvider;
+            checkArgument(provider == null || provider.getParams().equals(params));
+            this.vUTXOProvider = provider;
         } finally {
             lock.unlock();
         }
