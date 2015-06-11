@@ -168,7 +168,7 @@ public class BitcoinSerializerTest {
                 "3f74f931e8365e15a089c68d6190000000000982051fd1e4ba744bbbe680e1fee14677b" +
                 "a1a3c3540bf7b1cdb606e857233e0e61bc6649ffff001d01e3629900";
         byte[] headersMessageBytes = HEX.decode(headersMessageBytesHex);
-        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(HEX.decode(headersMessageBytesHex)));
+        HeadersMessage hm = (HeadersMessage) bs.deserialize(ByteBuffer.wrap(headersMessageBytes));
 
         // The first block after the genesis
         // http://blockexplorer.com/b/1
