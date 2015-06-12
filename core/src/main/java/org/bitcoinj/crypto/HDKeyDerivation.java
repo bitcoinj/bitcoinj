@@ -154,7 +154,7 @@ public final class HDKeyDerivation {
     public static RawKeyBytes deriveChildKeyBytesFromPrivate(DeterministicKey parent,
                                                               ChildNumber childNumber) throws HDDerivationException {
         checkArgument(parent.hasPrivKey(), "Parent key must have private key bytes for this method.");
-        byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
+        byte[] parentPublicKey = parent.getPubKeyPoint().getEncoded(true);
         assert parentPublicKey.length == 33 : parentPublicKey.length;
         ByteBuffer data = ByteBuffer.allocate(37);
         if (childNumber.isHardened()) {
@@ -182,7 +182,7 @@ public final class HDKeyDerivation {
 
     public static RawKeyBytes deriveChildKeyBytesFromPublic(DeterministicKey parent, ChildNumber childNumber, PublicDeriveMode mode) throws HDDerivationException {
         checkArgument(!childNumber.isHardened(), "Can't use private derivation with public keys only.");
-        byte[] parentPublicKey = ECKey.compressPoint(parent.getPubKeyPoint()).getEncoded();
+        byte[] parentPublicKey = parent.getPubKeyPoint().getEncoded(true);
         assert parentPublicKey.length == 33 : parentPublicKey.length;
         ByteBuffer data = ByteBuffer.allocate(37);
         data.put(parentPublicKey);
