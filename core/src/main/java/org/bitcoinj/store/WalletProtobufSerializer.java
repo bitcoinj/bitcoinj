@@ -76,6 +76,8 @@ public class WalletProtobufSerializer {
     private static final Logger log = LoggerFactory.getLogger(WalletProtobufSerializer.class);
     /** Current version used for serializing wallets. A version higher than this is considered from the future. */
     public static final int CURRENT_WALLET_VERSION = Protos.Wallet.getDefaultInstance().getVersion();
+    // 512 MB
+    private static final int WALLET_SIZE_LIMIT = 512 * 1024 * 1024;
     // Used for de-serialization
     protected Map<ByteString, Transaction> txMap;
 
@@ -541,7 +543,9 @@ public class WalletProtobufSerializer {
      * wallet file format itself.
      */
     public static Protos.Wallet parseToProto(InputStream input) throws IOException {
-        return Protos.Wallet.parseFrom(input);
+        CodedInputStream codedInput = CodedInputStream.newInstance(input);
+        codedInput.setSizeLimit(WALLET_SIZE_LIMIT);
+        return Protos.Wallet.parseFrom(codedInput);
     }
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) throws UnreadableWalletException {
