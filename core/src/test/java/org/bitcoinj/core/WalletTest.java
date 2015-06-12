@@ -2893,7 +2893,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue("Only one of the signatures should be missing/dummy", firstSigIsMissing ^ secondSigIsMissing);
         int localSigIndex = firstSigIsMissing ? 2 : 1;
         int length = input.getScriptSig().getChunks().get(localSigIndex).data.length;
-        assertTrue("Local sig should be present: " + length, length > 70);
+        assertTrue("Local sig should be present: " + length, length >= 70);
     }
 
 
