@@ -39,6 +39,7 @@ import org.spongycastle.crypto.signers.ECDSASigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.math.ec.FixedPointUtil;
 import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.spongycastle.util.encoders.Base64;
@@ -243,7 +244,7 @@ public class ECKey implements EncryptableItem, Serializable {
      * compressed or not.
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
-        ECPoint point = CURVE.getG().multiply(privKey);
+        ECPoint point = publicPointFromPrivate(privKey);
         return new ECKey(privKey, compressed ? compressPoint(point) : decompressPoint(point));
     }
 
@@ -361,7 +362,7 @@ public class ECKey implements EncryptableItem, Serializable {
         this.priv = privKey;
         if (pubKey == null) {
             // Derive public from private.
-            ECPoint point = CURVE.getG().multiply(privKey);
+            ECPoint point = publicPointFromPrivate(privKey);
             if (compressed)
                 point = compressPoint(point);
             this.pub = new LazyECPoint(point);
@@ -439,8 +440,23 @@ public class ECKey implements EncryptableItem, Serializable {
      * new BigInteger(1, bytes);</tt>
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
-        ECPoint point = CURVE.getG().multiply(privKey);
+        ECPoint point = publicPointFromPrivate(privKey);
         return point.getEncoded(compressed);
+    }
+
+    /**
+     * Returns public key point from the given private key. To convert a byte array into a BigInteger, use <tt>
+     * new BigInteger(1, bytes);</tt>
+     */
+    public static ECPoint publicPointFromPrivate(BigInteger privKey) {
+        /*
+         * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group order,
+         * but that could change in future versions.
+         */
+        if (privKey.bitLength() > CURVE.getN().bitLength()) {
+            privKey = privKey.mod(CURVE.getN());
+        }
+        return new FixedPointCombMultiplier().multiply(CURVE.getG(), privKey);
     }
 
     /** Gets the hash160 form of the public key (as seen in addresses). */
