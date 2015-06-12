@@ -204,7 +204,7 @@ public class ECKey implements EncryptableItem, Serializable {
      * See the ECKey class docs for a discussion of point compression.
      */
     public static ECPoint compressPoint(ECPoint point) {
-        return point.isCompressed() ? point : CURVE.getCurve().decodePoint(point.getEncoded(true));
+        return getPointWithCompression(point, true);
     }
 
     public static LazyECPoint compressPoint(LazyECPoint point) {
@@ -216,11 +216,20 @@ public class ECKey implements EncryptableItem, Serializable {
      * See the ECKey class docs for a discussion of point compression.
      */
     public static ECPoint decompressPoint(ECPoint point) {
-        return !point.isCompressed() ? point : CURVE.getCurve().decodePoint(point.getEncoded(false));
+        return getPointWithCompression(point, false);
     }
 
     public static LazyECPoint decompressPoint(LazyECPoint point) {
         return !point.isCompressed() ? point : new LazyECPoint(decompressPoint(point.get()));
+    }
+
+    private static ECPoint getPointWithCompression(ECPoint point, boolean compressed) {
+      if (point.isCompressed() == compressed)
+          return point;
+      point = point.normalize();
+      BigInteger x = point.getAffineXCoord().toBigInteger();
+      BigInteger y = point.getAffineYCoord().toBigInteger();
+      return CURVE.getCurve().createPoint(x, y, compressed);
     }
 
     /**
@@ -245,7 +254,7 @@ public class ECKey implements EncryptableItem, Serializable {
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
-        return new ECKey(privKey, compressed ? compressPoint(point) : decompressPoint(point));
+        return new ECKey(privKey, getPointWithCompression(point, compressed));
     }
 
     /**
@@ -351,7 +360,7 @@ public class ECKey implements EncryptableItem, Serializable {
     /**
      * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
      * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
-     * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
+     * the public key already correctly matches the private key. If only the public key is supplied, this ECKey cannot
      * be used for signing.
      * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
      */
@@ -363,8 +372,7 @@ public class ECKey implements EncryptableItem, Serializable {
         if (pubKey == null) {
             // Derive public from private.
             ECPoint point = publicPointFromPrivate(privKey);
-            if (compressed)
-                point = compressPoint(point);
+            point = getPointWithCompression(point, compressed);
             this.pub = new LazyECPoint(point);
         } else {
             // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
