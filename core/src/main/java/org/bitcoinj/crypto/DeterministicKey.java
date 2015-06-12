@@ -88,7 +88,7 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, compressPoint(ECKey.CURVE.getG().multiply(priv)));
+        super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = checkNotNull(childNumberPath);
@@ -156,7 +156,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(priv, compressPoint(ECKey.CURVE.getG().multiply(priv)));
+        super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = checkNotNull(childNumberPath);
