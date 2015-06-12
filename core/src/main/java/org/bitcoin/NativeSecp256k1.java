@@ -25,7 +25,7 @@ import com.google.common.base.Preconditions;
 /**
  * <p>This class holds native methods to handle ECDSA verification.</p>
  *
- * <p>You can find an example library that can be used for this at https://github.com/sipa/secp256k1</p>
+ * <p>You can find an example library that can be used for this at https://github.com/bitcoin/secp256k1</p>
  *
  * <p>To build secp256k1 for use with bitcoinj, run `./configure` and `make libjavasecp256k1.so` then copy
  * libjavasecp256k1.so to your system library path or point the JVM to the folder containing it with -Djava.library.path
