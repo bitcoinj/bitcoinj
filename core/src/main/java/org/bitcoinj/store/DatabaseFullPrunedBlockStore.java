@@ -619,7 +619,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
             s.setInt(3, storedBlock.getHeight());
-            s.setBytes(4, storedBlock.getHeader().unsafeBitcoinSerialize());
+            s.setBytes(4, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
             s.setBoolean(5, wasUndoable);
             s.executeUpdate();
             s.close();
