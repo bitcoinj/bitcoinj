@@ -341,7 +341,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair.server.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(MessageType.CLIENT_VERSION)
                 .setClientVersion(Protos.ClientVersion.newBuilder()
-                        .setPreviousChannelContractHash(ByteString.copyFrom(Sha256Hash.hash(new byte[]{0x03}).getBytes()))
+                        .setPreviousChannelContractHash(ByteString.copyFrom(Utils.singleDigest(new byte[]{0x03})))
                         .setMajor(CLIENT_MAJOR_VERSION).setMinor(42))
                 .build());
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);

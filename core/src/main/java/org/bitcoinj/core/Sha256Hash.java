@@ -65,7 +65,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * Calculates the (one-time) hash of contents and returns it.
      */
     public static Sha256Hash hash(byte[] contents) {
-        return new Sha256Hash(Utils.newSha256Digest().digest(contents));
+        return new Sha256Hash(Utils.singleDigest(contents));
     }
 
     /** Use hashTwice(byte[]) instead: this old name is ambiguous. */

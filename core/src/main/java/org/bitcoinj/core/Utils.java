@@ -151,15 +151,24 @@ public class Utils {
     }
 
     /**
-     * See {@link Utils#doubleDigest(byte[], int, int)}.
+     * Calculates the SHA-256 hash of the given bytes,
+     * and then hashes the resulting hash again.
+     *
+     * @param input the bytes to hash
+     * @return the double-hash (in big-endian order)
      */
     public static byte[] doubleDigest(byte[] input) {
         return doubleDigest(input, 0, input.length);
     }
 
     /**
-     * Calculates the SHA-256 hash of the given byte range, and then hashes the resulting hash again. This is
-     * standard procedure in Bitcoin. The resulting hash is in big endian form.
+     * Calculates the SHA-256 hash of the given byte range,
+     * and then hashes the resulting hash again.
+     *
+     * @param input the array containing the bytes to hash
+     * @param offset the offset within the array of the bytes to hash
+     * @param length the number of bytes to hash
+     * @return the double-hash (in big-endian order)
      */
     public static byte[] doubleDigest(byte[] input, int offset, int length) {
         synchronized (digest) {
@@ -170,12 +179,28 @@ public class Utils {
         }
     }
 
+    /**
+     * Calculates the SHA-256 hash of the given bytes.
+     *
+     * @param input the bytes to hash
+     * @return the hash (in big-endian order)
+     */
+    public static byte[] singleDigest(byte[] input) {
+        return singleDigest(input, 0, input.length);
+    }
+
+    /**
+     * Calculates the SHA-256 hash of the given byte range.
+     *
+     * @param input the array containing the bytes to hash
+     * @param offset the offset within the array of the bytes to hash
+     * @param length the number of bytes to hash
+     * @return the hash (in big-endian order)
+     */
     public static byte[] singleDigest(byte[] input, int offset, int length) {
-        synchronized (digest) {
-            digest.reset();
-            digest.update(input, offset, length);
-            return digest.digest();
-        }
+        MessageDigest digest = newSha256Digest();
+        digest.update(input, offset, length);
+        return digest.digest();
     }
 
     /**
@@ -277,7 +302,7 @@ public class Utils {
      * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
      */
     public static byte[] sha256hash160(byte[] input) {
-        byte[] sha256 = newSha256Digest().digest(input);
+        byte[] sha256 = singleDigest(input);
         RIPEMD160Digest digest = new RIPEMD160Digest();
         digest.update(sha256, 0, sha256.length);
         byte[] out = new byte[20];
