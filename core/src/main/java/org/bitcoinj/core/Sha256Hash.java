@@ -97,10 +97,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Sha256Hash other = (Sha256Hash) o;
-        return Arrays.equals(bytes, other.bytes);
+        return this == o || o != null && getClass() == o.getClass() && Arrays.equals(bytes, ((Sha256Hash)o).bytes);
     }
 
     /**
@@ -135,8 +132,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
     @Override
     public int compareTo(Sha256Hash o) {
-        int thisCode = this.hashCode();
-        int oCode = ((Sha256Hash)o).hashCode();
-        return thisCode > oCode ? 1 : (thisCode == oCode ? 0 : -1);
+        return this.hashCode() - o.hashCode();
     }
 }
