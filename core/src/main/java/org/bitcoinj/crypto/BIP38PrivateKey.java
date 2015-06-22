@@ -122,7 +122,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
             if (hasLotAndSequence) {
                 byte[] hashBytes = Bytes.concat(passFactorBytes, ownerEntropy);
                 checkState(hashBytes.length == 40);
-                passFactorBytes = Sha256Hash.hashTwice(hashBytes).getBytes();
+                passFactorBytes = Utils.doubleDigest(hashBytes);
             }
             BigInteger passFactor = new BigInteger(1, passFactorBytes);
             ECKey k = ECKey.fromPrivate(passFactor, true);
@@ -150,7 +150,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
             byte[] seed = Bytes.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
             checkState(seed.length == 24);
-            BigInteger seedFactor = new BigInteger(1, Sha256Hash.hashTwice(seed).getBytes());
+            BigInteger seedFactor = new BigInteger(1, Utils.doubleDigest(seed));
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
             BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());

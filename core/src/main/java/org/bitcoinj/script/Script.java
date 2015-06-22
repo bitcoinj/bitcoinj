@@ -1223,7 +1223,7 @@ public class Script {
                 case OP_SHA256:
                     if (stack.size() < 1)
                         throw new ScriptException("Attempted OP_SHA256 on an empty stack");
-                    stack.add(Utils.newSha256Digest().digest(stack.pollLast()));
+                    stack.add(Utils.singleDigest(stack.pollLast()));
                     break;
                 case OP_HASH160:
                     if (stack.size() < 1)
