@@ -36,7 +36,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  * map. It also checks that the length is correct and provides a bit more type safety.
  */
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
-    private static final MessageDigest digest = newDigest();
     private final byte[] bytes;
     public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
 
@@ -157,12 +156,9 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return the double-hash (in big-endian order)
      */
     public static byte[] calcDoubleHashBytes(byte[] input, int offset, int length) {
-        synchronized (digest) {
-            digest.reset();
-            digest.update(input, offset, length);
-            byte[] first = digest.digest();
-            return digest.digest(first);
-        }
+        MessageDigest digest = newDigest();
+        digest.update(input, offset, length);
+        return digest.digest(digest.digest());
     }
 
     /**
@@ -170,13 +166,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public static byte[] calcDoubleHashBytes(byte[] input1, int offset1, int length1,
                                              byte[] input2, int offset2, int length2) {
-        synchronized (digest) {
-            digest.reset();
-            digest.update(input1, offset1, length1);
-            digest.update(input2, offset2, length2);
-            byte[] first = digest.digest();
-            return digest.digest(first);
-        }
+        MessageDigest digest = newDigest();
+        digest.update(input1, offset1, length1);
+        digest.update(input2, offset2, length2);
+        return digest.digest(digest.digest());
     }
 
     @Override
