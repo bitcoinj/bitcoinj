@@ -101,7 +101,7 @@ public class BuildCheckpoints {
 
     private static void writeBinaryCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file) throws Exception {
         final FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-        MessageDigest digest = Utils.newSha256Digest();
+        MessageDigest digest = Sha256Hash.newDigest();
         final DigestOutputStream digestOutputStream = new DigestOutputStream(fileOutputStream, digest);
         digestOutputStream.on(false);
         final DataOutputStream dataOutputStream = new DataOutputStream(digestOutputStream);

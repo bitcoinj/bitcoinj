@@ -17,6 +17,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public class MnemonicCode {
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
         BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
         this.wordList = new ArrayList<String>(2048);
-        MessageDigest md = Utils.newSha256Digest();
+        MessageDigest md = Sha256Hash.newDigest();
         String word;
         while ((word = br.readLine()) != null) {
             md.update(word.getBytes());
@@ -173,7 +174,7 @@ public class MnemonicCode {
                     entropy[ii] |= 1 << (7 - jj);
 
         // Take the digest of the entropy.
-        byte[] hash = Utils.singleDigest(entropy);
+        byte[] hash = Sha256Hash.calcHashBytes(entropy);
         boolean[] hashBits = bytesToBits(hash);
 
         // Check all the checksum bits.
@@ -197,7 +198,7 @@ public class MnemonicCode {
         // We take initial entropy of ENT bits and compute its
         // checksum by taking first ENT / 32 bits of its SHA256 hash.
 
-        byte[] hash = Utils.singleDigest(entropy);
+        byte[] hash = Sha256Hash.calcHashBytes(entropy);
         boolean[] hashBits = bytesToBits(hash);
         
         boolean[] entropyBits = bytesToBits(entropy);
