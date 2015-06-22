@@ -38,7 +38,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
@@ -101,7 +100,7 @@ public class CheckpointManager {
     private Sha256Hash readBinary(InputStream inputStream) throws IOException {
         DataInputStream dis = null;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            MessageDigest digest = Utils.newSha256Digest();
             DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
             dis = new DataInputStream(digestInputStream);
             digestInputStream.on(false);
@@ -130,8 +129,6 @@ public class CheckpointManager {
             Sha256Hash dataHash = new Sha256Hash(digest.digest());
             log.info("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
             return dataHash;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Cannot happen.
         } catch (ProtocolException e) {
             throw new IOException(e);
         } finally {

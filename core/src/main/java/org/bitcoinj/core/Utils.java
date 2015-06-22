@@ -50,20 +50,29 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-    private static final MessageDigest digest;
-    static {
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Can't happen.
-        }
-    }
+    private static final MessageDigest digest = newSha256Digest();
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
     public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
     private static BlockingQueue<Boolean> mockSleepQueue;
+
+    /**
+     * Returns a new SHA-256 MessageDigest instance.
+     *
+     * This is a convenience method which wraps the checked
+     * exception that can never occur with a RuntimeException.
+     *
+     * @return a new SHA-256 MessageDigest instance
+     */
+    public static MessageDigest newSha256Digest() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);  // Can't happen.
+        }
+    }
 
     /**
      * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need: it appends a
@@ -268,16 +277,12 @@ public class Utils {
      * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
      */
     public static byte[] sha256hash160(byte[] input) {
-        try {
-            byte[] sha256 = MessageDigest.getInstance("SHA-256").digest(input);
-            RIPEMD160Digest digest = new RIPEMD160Digest();
-            digest.update(sha256, 0, sha256.length);
-            byte[] out = new byte[20];
-            digest.doFinal(out, 0);
-            return out;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        byte[] sha256 = newSha256Digest().digest(input);
+        RIPEMD160Digest digest = new RIPEMD160Digest();
+        digest.update(sha256, 0, sha256.length);
+        byte[] out = new byte[20];
+        digest.doFinal(out, 0);
+        return out;
     }
 
     /**
