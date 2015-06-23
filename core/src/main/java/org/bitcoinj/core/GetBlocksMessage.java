@@ -95,10 +95,10 @@ public class GetBlocksMessage extends Message {
         stream.write(new VarInt(locator.size()).encode());
         for (Sha256Hash hash : locator) {
             // Have to reverse as wire format is little endian.
-            stream.write(Utils.reverseBytes(hash.getBytes()));
+            stream.write(hash.getReversedBytes());
         }
         // Next, a block ID to stop at.
-        stream.write(Utils.reverseBytes(stopHash.getBytes()));
+        stream.write(stopHash.getReversedBytes());
     }
 
     @Override

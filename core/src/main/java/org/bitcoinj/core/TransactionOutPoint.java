@@ -112,7 +112,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(Utils.reverseBytes(hash.getBytes()));
+        stream.write(hash.getReversedBytes());
         Utils.uint32ToByteStreamLE(index, stream);
     }
 

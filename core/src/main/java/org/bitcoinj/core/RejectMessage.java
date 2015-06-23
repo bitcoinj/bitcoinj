@@ -107,7 +107,7 @@ public class RejectMessage extends Message {
         stream.write(new VarInt(reasonBytes.length).encode());
         stream.write(reasonBytes);
         if (message.equals("block") || message.equals("tx"))
-            stream.write(Utils.reverseBytes(messageHash.getBytes()));
+            stream.write(messageHash.getReversedBytes());
     }
 
     /**

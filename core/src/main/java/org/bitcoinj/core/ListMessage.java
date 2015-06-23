@@ -116,7 +116,7 @@ public abstract class ListMessage extends Message {
             // Write out the type code.
             Utils.uint32ToByteStreamLE(i.type.ordinal(), stream);
             // And now the hash.
-            stream.write(Utils.reverseBytes(i.hash.getBytes()));
+            stream.write(i.hash.getReversedBytes());
         }
     }
 

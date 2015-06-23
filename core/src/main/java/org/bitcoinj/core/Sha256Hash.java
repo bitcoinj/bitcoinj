@@ -81,6 +81,18 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
         return wrap(Utils.HEX.decode(hexString));
     }
 
+    /**
+     * Creates a new instance that wraps the given hash value, but with byte order reversed.
+     *
+     * @param rawHashBytes the raw hash bytes to wrap
+     * @return a new instance
+     * @throws IllegalArgumentException if the given array length is not exactly 32
+     */
+    @SuppressWarnings("deprecation") // the constructor will be made private in the future
+    public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
+        return wrap(Utils.reverseBytes(rawHashBytes));
+    }
+
     /** Use {@link #of(byte[])} instead: this old name is ambiguous. */
     @Deprecated
     public static Sha256Hash create(byte[] contents) {
@@ -242,6 +254,13 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public byte[] getBytes() {
         return bytes;
+    }
+
+    /**
+     * Returns a reversed copy of the internal byte array.
+     */
+    public byte[] getReversedBytes() {
+        return Utils.reverseBytes(bytes);
     }
 
     @Override

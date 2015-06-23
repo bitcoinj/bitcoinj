@@ -101,7 +101,7 @@ public class PartialMerkleTree extends Message {
 
         stream.write(new VarInt(hashes.size()).encode());
         for (Sha256Hash hash : hashes)
-            stream.write(reverseBytes(hash.getBytes()));
+            stream.write(hash.getReversedBytes());
 
         stream.write(new VarInt(matchedChildBits.length).encode());
         stream.write(matchedChildBits);
@@ -214,9 +214,9 @@ public class PartialMerkleTree extends Message {
     }
 
     private static Sha256Hash combineLeftRight(byte[] left, byte[] right) {
-        return Sha256Hash.wrap(reverseBytes(Sha256Hash.hashTwice(
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(
             reverseBytes(left), 0, 32,
-            reverseBytes(right), 0, 32)));
+            reverseBytes(right), 0, 32));
     }
 
     /**

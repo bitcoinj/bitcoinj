@@ -226,7 +226,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public Sha256Hash getHash() {
         if (hash == null) {
             byte[] bits = bitcoinSerialize();
-            hash = Sha256Hash.wrap(reverseBytes(Sha256Hash.hashTwice(bits)));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
         }
         return hash;
     }

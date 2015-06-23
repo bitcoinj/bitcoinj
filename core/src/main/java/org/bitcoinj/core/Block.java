@@ -191,7 +191,7 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
 
-        hash = Sha256Hash.wrap(Utils.reverseBytes(Sha256Hash.hashTwice(payload, offset, cursor)));
+        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor));
 
         headerParsed = true;
         headerBytesValid = parseRetain;
@@ -385,8 +385,8 @@ public class Block extends Message {
         // fall back to manual write
         maybeParseHeader();
         Utils.uint32ToByteStreamLE(version, stream);
-        stream.write(Utils.reverseBytes(prevBlockHash.getBytes()));
-        stream.write(Utils.reverseBytes(getMerkleRoot().getBytes()));
+        stream.write(prevBlockHash.getReversedBytes());
+        stream.write(getMerkleRoot().getReversedBytes());
         Utils.uint32ToByteStreamLE(time, stream);
         Utils.uint32ToByteStreamLE(difficultyTarget, stream);
         Utils.uint32ToByteStreamLE(nonce, stream);
@@ -511,7 +511,7 @@ public class Block extends Message {
         try {
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
             writeHeader(bos);
-            return Sha256Hash.wrap(Utils.reverseBytes(Sha256Hash.hashTwice(bos.toByteArray())));
+            return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
         } catch (IOException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
