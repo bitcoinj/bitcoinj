@@ -16,8 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.ImmutableList;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.store.UnreadableWalletException;

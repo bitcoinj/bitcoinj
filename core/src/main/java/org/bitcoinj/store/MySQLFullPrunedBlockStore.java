@@ -16,8 +16,6 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.NetworkParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,8 +27,6 @@ import java.util.List;
  * the quantity of bitcoins controlled by that address.</p>
  */
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
-    private static final Logger log = LoggerFactory.getLogger(MySQLFullPrunedBlockStore.class);
-
     private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
     private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://";

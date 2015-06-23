@@ -21,7 +21,6 @@ import org.bitcoinj.crypto.*;
 import org.bitcoinj.store.UnreadableWalletException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.spongycastle.crypto.params.KeyParameter;
 

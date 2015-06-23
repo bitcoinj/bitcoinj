@@ -784,22 +784,31 @@ public class ECKey implements EncryptableItem, Serializable {
         try {
             ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
             DLSequence seq = (DLSequence) decoder.readObject();
+            checkArgument(decoder.readObject() == null, "Input contains extra bytes");
+            decoder.close();
+
             checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
+
             checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
                     "Input is of wrong version");
-            Object obj = seq.getObjectAt(1);
-            byte[] privbits = ((ASN1OctetString) obj).getOctets();
-            decoder.close();
+
+            byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
             BigInteger privkey = new BigInteger(1, privbits);
-            byte[] pubbits = ((DERBitString)((ASN1TaggedObject)seq.getObjectAt(3)).getObject()).getBytes();
+
+            ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
+            checkArgument(pubkey.getTagNo() == 1, "Input has 'publicKey' with bad tag number");
+            byte[] pubbits = ((DERBitString)pubkey.getObject()).getBytes();
+            checkArgument(pubbits.length == 33 || pubbits.length == 65, "Input has 'publicKey' with invalid length");
+            int encoding = pubbits[0] & 0xFF;
+            // Only allow compressed(2,3) and uncompressed(4), not infinity(0) or hybrid(6,7)
+            checkArgument(encoding >= 2 && encoding <= 4, "Input has 'publicKey' with invalid encoding");
+
             // Now sanity check to ensure the pubkey bytes match the privkey.
-            byte[] compressed = publicKeyFromPrivate(privkey, true);
-            if (Arrays.equals(pubbits, compressed))
-                return new ECKey(privkey, compressed);
-            byte[] uncompressed = publicKeyFromPrivate(privkey, false);
-            if (Arrays.equals(pubbits, uncompressed))
-                return new ECKey(privkey, uncompressed);
-            throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
+            boolean compressed = (pubbits.length == 33);
+            ECKey key = new ECKey(privkey, null, compressed);
+            if (!Arrays.equals(key.getPubKey(), pubbits))
+                throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
+            return key;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
         }

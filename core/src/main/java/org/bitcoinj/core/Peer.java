@@ -1379,12 +1379,12 @@ public class Peer extends PeerSocketHandler {
         }
 
         public void complete() {
-            checkNotNull(future, "Already completed");
-            Long elapsed = Utils.currentTimeMillis() - startTimeMsec;
-            Peer.this.addPingTimeData(elapsed);
-            log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
-            future.set(elapsed);
-            future = null;
+            if (!future.isDone()) {
+                Long elapsed = Utils.currentTimeMillis() - startTimeMsec;
+                Peer.this.addPingTimeData(elapsed);
+                log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
+                future.set(elapsed);
+            }
         }
     }
 

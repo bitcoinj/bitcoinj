@@ -16,8 +16,6 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 
 /**
