@@ -102,7 +102,7 @@ public class UTXO implements Serializable {
         byte[] hashBytes = new byte[32];
         if (in.read(hashBytes) != 32)
             throw new EOFException();
-        hash = new Sha256Hash(hashBytes);
+        hash = Sha256Hash.wrap(hashBytes);
 
         byte[] indexBytes = new byte[4];
         if (in.read(indexBytes) != 4)

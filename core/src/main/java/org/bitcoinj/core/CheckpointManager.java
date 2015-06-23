@@ -126,7 +126,7 @@ public class CheckpointManager {
                 buffer.position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
-            Sha256Hash dataHash = new Sha256Hash(digest.digest());
+            Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
             log.info("Read {} checkpoints, hash is {}", checkpoints.size(), dataHash);
             return dataHash;
         } catch (ProtocolException e) {
@@ -165,7 +165,7 @@ public class CheckpointManager {
             }
             HashCode hash = hasher.hash();
             log.info("Read {} checkpoints, hash is {}", checkpoints.size(), hash);
-            return new Sha256Hash(hash.asBytes());
+            return Sha256Hash.wrap(hash.asBytes());
         } finally {
             if (reader != null) reader.close();
         }

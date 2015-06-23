@@ -77,7 +77,7 @@ public class LevelDBBlockStore implements BlockStore {
 
     @Override
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
-        return get(new Sha256Hash(db.get(CHAIN_HEAD_KEY)));
+        return get(Sha256Hash.wrap(db.get(CHAIN_HEAD_KEY)));
     }
 
     @Override

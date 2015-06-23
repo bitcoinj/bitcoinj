@@ -308,7 +308,7 @@ public class ScriptTest {
             String hash = input.get(0).asText();
             int index = input.get(1).asInt();
             String script = input.get(2).asText();
-            Sha256Hash sha256Hash = new Sha256Hash(HEX.decode(hash));
+            Sha256Hash sha256Hash = Sha256Hash.wrap(HEX.decode(hash));
             scriptPubKeys.put(new TransactionOutPoint(params, index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;

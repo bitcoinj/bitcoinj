@@ -226,7 +226,7 @@ public class PaymentChannelServer {
                 .build());
         ByteString reopenChannelContractHash = clientVersion.getPreviousChannelContractHash();
         if (reopenChannelContractHash != null && reopenChannelContractHash.size() == 32) {
-            Sha256Hash contractHash = new Sha256Hash(reopenChannelContractHash.toByteArray());
+            Sha256Hash contractHash = Sha256Hash.wrap(reopenChannelContractHash.toByteArray());
             log.info("New client that wants to resume {}", contractHash);
             StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                     wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);

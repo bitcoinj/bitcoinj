@@ -587,7 +587,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (!rs.next()) {
             throw new BlockStoreException("corrupt database block store - no chain head pointer");
         }
-        Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
+        Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
         rs.close();
         this.chainHeadBlock = get(hash);
         this.chainHeadHash = hash;
@@ -599,7 +599,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         if (!rs.next()) {
             throw new BlockStoreException("corrupt database block store - no verified chain head pointer");
         }
-        hash = new Sha256Hash(rs.getBytes(1));
+        hash = Sha256Hash.wrap(rs.getBytes(1));
         rs.close();
         ps.close();
         this.verifiedChainHeadBlock = get(hash);
@@ -1165,7 +1165,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 s.setString(1, address.toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
-                    Sha256Hash hash = new Sha256Hash(rs.getBytes(1));
+                    Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
                     Coin amount = Coin.valueOf(rs.getLong(2));
                     byte[] scriptBytes = rs.getBytes(3);
                     int height = rs.getInt(4);

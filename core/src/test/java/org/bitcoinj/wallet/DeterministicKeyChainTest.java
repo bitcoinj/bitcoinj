@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
-    private final byte[] ENTROPY = Sha256Hash.calcHashBytes("don't use a string seed like this in real life".getBytes());
+    private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
 
     @Before
     public void setup() {

@@ -216,7 +216,7 @@ public class Utils {
      * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
      */
     public static byte[] sha256hash160(byte[] input) {
-        byte[] sha256 = Sha256Hash.calcHashBytes(input);
+        byte[] sha256 = Sha256Hash.hash(input);
         RIPEMD160Digest digest = new RIPEMD160Digest();
         digest.update(sha256, 0, sha256.length);
         byte[] out = new byte[20];
