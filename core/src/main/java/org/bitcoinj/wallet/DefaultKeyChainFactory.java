@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.store.UnreadableWalletException;
 

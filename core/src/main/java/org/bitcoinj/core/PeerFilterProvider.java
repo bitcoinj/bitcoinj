@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import java.util.concurrent.locks.Lock;
 
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers.

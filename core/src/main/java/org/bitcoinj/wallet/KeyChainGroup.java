@@ -782,7 +782,6 @@ public class KeyChainGroup implements KeyBag {
 
     private static void extractFollowingKeychains(List<DeterministicKeyChain> chains) {
         // look for following key chains and map them to the watch keys of followed keychains
-        Multimap<DeterministicKey, DeterministicKeyChain> followingKeychains = HashMultimap.create();
         List<DeterministicKeyChain> followingChains = Lists.newArrayList();
         for (Iterator<DeterministicKeyChain> it = chains.iterator(); it.hasNext(); ) {
             DeterministicKeyChain chain = it.next();

@@ -1104,7 +1104,6 @@ public class Transaction extends ChildMessage implements Serializable {
     public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
         maybeParse();
         List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
-        Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
             if (!o.isMineOrWatched(transactionBag)) continue;
             walletOutputs.add(o);

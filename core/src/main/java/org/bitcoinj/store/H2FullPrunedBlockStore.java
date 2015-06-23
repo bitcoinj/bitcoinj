@@ -18,10 +18,7 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,8 +34,6 @@ import java.util.List;
  * decreases the space usage somewhat (to only around 1.3G).
  */
 public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
-    private static final Logger log = LoggerFactory.getLogger(H2FullPrunedBlockStore.class);
-
     private static final String H2_DUPLICATE_KEY_ERROR_CODE = "23505";
     private static final String DATABASE_DRIVER_CLASS = "org.h2.Driver";
     private static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:h2:";

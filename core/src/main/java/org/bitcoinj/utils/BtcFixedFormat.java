@@ -170,19 +170,6 @@ public final class BtcFixedFormat extends BtcFormat {
      */
     @Override
     public String toString() {
-        String label;
-        switch(scale) {
-        case COIN_SCALE:
-            label = "Coin-format";
-            break;
-        case MILLICOIN_SCALE:
-            label = "Millicoin-format";
-            break;
-        case MICROCOIN_SCALE:
-            label = "Microcoin-format";
-            break;
-        default: label = "Fixed (" + String.valueOf(scale) + ") format";
-        }
         return prefixLabel(scale) + "format " + pattern();
     }
 
