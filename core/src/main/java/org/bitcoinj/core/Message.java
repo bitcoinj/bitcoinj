@@ -411,11 +411,10 @@ public abstract class Message implements Serializable {
         try {
             byte[] hash = new byte[32];
             System.arraycopy(payload, cursor, hash, 0, 32);
+            cursor += 32;
             // We have to flip it around, as it's been read off the wire in little endian.
             // Not the most efficient way to do this but the clearest.
-            hash = Utils.reverseBytes(hash);
-            cursor += 32;
-            return Sha256Hash.wrap(hash);
+            return Sha256Hash.wrapReversed(hash);
         } catch (IndexOutOfBoundsException e) {
             throw new ProtocolException(e);
         }
