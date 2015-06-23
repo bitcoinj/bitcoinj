@@ -568,9 +568,9 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t1 = new Transaction(params);
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
-        Sha256Hash someHash = new Sha256Hash("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
+        Sha256Hash someHash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 0, someHash)));
-        Sha256Hash anotherHash = new Sha256Hash("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
+        Sha256Hash anotherHash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 1, anotherHash)));
         t1.addOutput(COIN, to);
         t1 = FakeTxBuilder.roundTripTransaction(params, t1);
@@ -704,7 +704,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t2 = new Transaction(params);
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
-        Sha256Hash t3 = Sha256Hash.hash("abc".getBytes(Charset.forName("UTF-8")));
+        Sha256Hash t3 = Sha256Hash.of("abc".getBytes(Charset.forName("UTF-8")));
         t2.addInput(new TransactionInput(params, t2, new byte[]{}, new TransactionOutPoint(params, 0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(COIN, new ECKey());
@@ -817,8 +817,8 @@ public class PeerTest extends TestWithNetworkConnections {
         // Basic test of support for BIP 64: getutxos support. The Lighthouse unit tests exercise this stuff more
         // thoroughly.
         connectWithVersion(GetUTXOsMessage.MIN_PROTOCOL_VERSION, VersionMessage.NODE_NETWORK | VersionMessage.NODE_GETUTXOS);
-        TransactionOutPoint op1 = new TransactionOutPoint(params, 1, Sha256Hash.hash("foo".getBytes()));
-        TransactionOutPoint op2 = new TransactionOutPoint(params, 2, Sha256Hash.hash("bar".getBytes()));
+        TransactionOutPoint op1 = new TransactionOutPoint(params, 1, Sha256Hash.of("foo".getBytes()));
+        TransactionOutPoint op2 = new TransactionOutPoint(params, 2, Sha256Hash.of("bar".getBytes()));
 
         ListenableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
         ListenableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
@@ -870,9 +870,9 @@ public class PeerTest extends TestWithNetworkConnections {
             @Override
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 // Add some hashes.
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{1})));
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{2})));
-                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.hash(new byte[]{3})));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.of(new byte[]{1})));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.of(new byte[]{2})));
+                addItem(new InventoryItem(InventoryItem.Type.Transaction, Sha256Hash.of(new byte[]{3})));
 
                 // Write out a copy that's truncated in the middle.
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();

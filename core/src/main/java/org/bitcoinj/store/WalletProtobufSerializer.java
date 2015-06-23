@@ -373,7 +373,7 @@ public class WalletProtobufSerializer {
     }
 
     public static Sha256Hash byteStringToHash(ByteString bs) {
-        return new Sha256Hash(bs.toByteArray());
+        return Sha256Hash.wrap(bs.toByteArray());
     }
 
     /**

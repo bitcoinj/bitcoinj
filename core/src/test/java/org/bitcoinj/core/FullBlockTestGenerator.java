@@ -981,7 +981,7 @@ public class FullBlockTestGenerator {
         NewBlock b49 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
         byte[] b49MerkleHash = Sha256Hash.ZERO_HASH.getBytes().clone();
         b49MerkleHash[1] = (byte) 0xDE;
-        b49.block.setMerkleRoot(Sha256Hash.hash(b49MerkleHash));
+        b49.block.setMerkleRoot(Sha256Hash.of(b49MerkleHash));
         b49.solve();
         blocks.add(new BlockAndValidity(b49, false, true, b44.getHash(), chainHeadHeight + 15, "b49"));
 
@@ -1326,7 +1326,7 @@ public class FullBlockTestGenerator {
         {
             Transaction tx = new Transaction(params);
             tx.addOutput(ZERO, OP_TRUE_SCRIPT);
-            tx.addInput(new Sha256Hash("23c70ed7c0506e9178fc1a987f40a33946d4ad4c962b5ae3a52546da53af0c5c"), 0,
+            tx.addInput(Sha256Hash.wrap("23c70ed7c0506e9178fc1a987f40a33946d4ad4c962b5ae3a52546da53af0c5c"), 0,
                     OP_NOP_SCRIPT);
             b70.addTransaction(tx);
         }

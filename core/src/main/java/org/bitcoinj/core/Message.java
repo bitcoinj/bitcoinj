@@ -415,7 +415,7 @@ public abstract class Message implements Serializable {
             // Not the most efficient way to do this but the clearest.
             hash = Utils.reverseBytes(hash);
             cursor += 32;
-            return new Sha256Hash(hash);
+            return Sha256Hash.wrap(hash);
         } catch (IndexOutOfBoundsException e) {
             throw new ProtocolException(e);
         }

@@ -298,14 +298,14 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                 ECKey myKey = (storedState.getMyKey().isEmpty()) ?
                         containingWallet.findKeyFromPubKey(storedState.getMyPublicKey().toByteArray()) :
                         ECKey.fromPrivate(storedState.getMyKey().toByteArray());
-                StoredClientChannel channel = new StoredClientChannel(new Sha256Hash(storedState.getId().toByteArray()),
+                StoredClientChannel channel = new StoredClientChannel(Sha256Hash.wrap(storedState.getId().toByteArray()),
                         new Transaction(params, storedState.getContractTransaction().toByteArray()),
                         refundTransaction,
                         myKey,
                         Coin.valueOf(storedState.getValueToMe()),
                         Coin.valueOf(storedState.getRefundFees()), false);
                 if (storedState.hasCloseTransactionHash()) {
-                    Sha256Hash closeTxHash = new Sha256Hash(storedState.getCloseTransactionHash().toByteArray());
+                    Sha256Hash closeTxHash = Sha256Hash.wrap(storedState.getCloseTransactionHash().toByteArray());
                     channel.close = containingWallet.getTransaction(closeTxHash);
                 }
                 putChannel(channel, false);

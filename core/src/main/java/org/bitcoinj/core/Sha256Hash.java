@@ -37,59 +37,95 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     private final byte[] bytes;
-    public static final Sha256Hash ZERO_HASH = new Sha256Hash(new byte[32]);
+    public static final Sha256Hash ZERO_HASH = wrap(new byte[32]);
 
     /**
-     * Creates a Sha256Hash by wrapping the given byte array. It must be 32 bytes long. Takes ownership!
+     * Use {@link #wrap(byte[])} instead.
      */
+    @Deprecated
     public Sha256Hash(byte[] rawHashBytes) {
         checkArgument(rawHashBytes.length == 32);
         this.bytes = rawHashBytes;
     }
 
     /**
-     * Creates a Sha256Hash by decoding the given hex string. It must be 64 characters long.
+     * Use {@link #wrap(String)} instead.
      */
+    @Deprecated
     public Sha256Hash(String hexString) {
         checkArgument(hexString.length() == 64);
         this.bytes = Utils.HEX.decode(hexString);
     }
 
-    /** Use Sha256Hash.hash(byte[]) instead: this old name is ambiguous */
+    /**
+     * Creates a new instance that wraps the given hash value.
+     *
+     * @param rawHashBytes the raw hash bytes to wrap
+     * @return a new instance
+     * @throws IllegalArgumentException if the given array length is not exactly 32
+     */
+    @SuppressWarnings("deprecation") // the constructor will be made private in the future
+    public static Sha256Hash wrap(byte[] rawHashBytes) {
+        return new Sha256Hash(rawHashBytes);
+    }
+
+    /**
+     * Creates a new instance that wraps the given hash value (represented as a hex string).
+     *
+     * @param hexString a hash value represented as a hex string
+     * @return a new instance
+     * @throws IllegalArgumentException if the given string is not a valid
+     *         hex string, or if it does not represent exactly 32 bytes
+     */
+    public static Sha256Hash wrap(String hexString) {
+        return wrap(Utils.HEX.decode(hexString));
+    }
+
+    /** Use {@link #of(byte[])} instead: this old name is ambiguous. */
     @Deprecated
     public static Sha256Hash create(byte[] contents) {
-        return hash(contents);
+        return of(contents);
     }
 
     /**
-     * Calculates the (one-time) hash of contents and returns it.
+     * Creates a new instance containing the calculated (one-time) hash of the given bytes.
+     *
+     * @param contents the bytes on which the hash value is calculated
+     * @return a new instance containing the calculated (one-time) hash
      */
-    public static Sha256Hash hash(byte[] contents) {
-        return new Sha256Hash(calcHashBytes(contents));
+    public static Sha256Hash of(byte[] contents) {
+        return wrap(hash(contents));
     }
 
-    /** Use hashTwice(byte[]) instead: this old name is ambiguous. */
+    /** Use {@link #twiceOf(byte[])} instead: this old name is ambiguous. */
     @Deprecated
     public static Sha256Hash createDouble(byte[] contents) {
-        return hashTwice(contents);
+        return twiceOf(contents);
     }
 
     /**
-     * Calculates the hash of the hash of the contents. This is a standard operation in Bitcoin.
+     * Creates a new instance containing the hash of the calculated hash of the given bytes.
+     *
+     * @param contents the bytes on which the hash value is calculated
+     * @return a new instance containing the calculated (two-time) hash
      */
-    public static Sha256Hash hashTwice(byte[] contents) {
-        return new Sha256Hash(calcDoubleHashBytes(contents));
+    public static Sha256Hash twiceOf(byte[] contents) {
+        return wrap(hashTwice(contents));
     }
 
     /**
-     * Returns a hash of the given files contents. Reads the file fully into memory before hashing so only use with
-     * small files.
-     * @throws IOException
+     * Creates a new instance containing the calculated (one-time) hash of the given file's contents.
+     *
+     * The file contents are read fully into memory, so this method should only be used with small files.
+     *
+     * @param file the file on which the hash value is calculated
+     * @return a new instance containing the calculated (one-time) hash
+     * @throws IOException if an error occurs while reading the file
      */
-    public static Sha256Hash hashFileContents(File f) throws IOException {
-        FileInputStream in = new FileInputStream(f);
+    public static Sha256Hash of(File file) throws IOException {
+        FileInputStream in = new FileInputStream(file);
         try {
-            return hash(ByteStreams.toByteArray(in));
+            return of(ByteStreams.toByteArray(in));
         } finally {
             in.close();
         }
@@ -117,8 +153,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @param input the bytes to hash
      * @return the hash (in big-endian order)
      */
-    public static byte[] calcHashBytes(byte[] input) {
-        return calcHashBytes(input, 0, input.length);
+    public static byte[] hash(byte[] input) {
+        return hash(input, 0, input.length);
     }
 
     /**
@@ -129,7 +165,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @param length the number of bytes to hash
      * @return the hash (in big-endian order)
      */
-    public static byte[] calcHashBytes(byte[] input, int offset, int length) {
+    public static byte[] hash(byte[] input, int offset, int length) {
         MessageDigest digest = newDigest();
         digest.update(input, offset, length);
         return digest.digest();
@@ -142,8 +178,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @param input the bytes to hash
      * @return the double-hash (in big-endian order)
      */
-    public static byte[] calcDoubleHashBytes(byte[] input) {
-        return calcDoubleHashBytes(input, 0, input.length);
+    public static byte[] hashTwice(byte[] input) {
+        return hashTwice(input, 0, input.length);
     }
 
     /**
@@ -155,17 +191,18 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @param length the number of bytes to hash
      * @return the double-hash (in big-endian order)
      */
-    public static byte[] calcDoubleHashBytes(byte[] input, int offset, int length) {
+    public static byte[] hashTwice(byte[] input, int offset, int length) {
         MessageDigest digest = newDigest();
         digest.update(input, offset, length);
         return digest.digest(digest.digest());
     }
 
     /**
-     * Calculates SHA256(SHA256(byte range 1 + byte range 2)).
+     * Calculates the hash of hash on the given byte ranges. This is equivalent to
+     * concatenating the two ranges and then passing the result to {@link #hashTwice(byte[])}.
      */
-    public static byte[] calcDoubleHashBytes(byte[] input1, int offset1, int length1,
-                                             byte[] input2, int offset2, int length2) {
+    public static byte[] hashTwice(byte[] input1, int offset1, int length1,
+                                   byte[] input2, int offset2, int length2) {
         MessageDigest digest = newDigest();
         digest.update(input1, offset1, length1);
         digest.update(input2, offset2, length2);

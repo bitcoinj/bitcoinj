@@ -291,7 +291,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Tests various aspects of channel resuming.
         Utils.setMockClock();
 
-        final Sha256Hash someServerId = Sha256Hash.hash(new byte[]{});
+        final Sha256Hash someServerId = Sha256Hash.of(new byte[]{});
 
         // Open up a normal channel.
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
@@ -341,7 +341,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair.server.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
             .setType(MessageType.CLIENT_VERSION)
             .setClientVersion(Protos.ClientVersion.newBuilder()
-                .setPreviousChannelContractHash(ByteString.copyFrom(Sha256Hash.calcHashBytes(new byte[] { 0x03 })))
+                .setPreviousChannelContractHash(ByteString.copyFrom(Sha256Hash.hash(new byte[] { 0x03 })))
                 .setMajor(CLIENT_MAJOR_VERSION).setMinor(42))
             .build());
         pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION);
@@ -361,7 +361,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Check the contract hash is sent on the wire correctly.
         final Protos.TwoWayChannelMessage clientVersionMsg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
         assertTrue(clientVersionMsg.getClientVersion().hasPreviousChannelContractHash());
-        assertEquals(contractHash, new Sha256Hash(clientVersionMsg.getClientVersion().getPreviousChannelContractHash().toByteArray()));
+        assertEquals(contractHash, Sha256Hash.wrap(clientVersionMsg.getClientVersion().getPreviousChannelContractHash().toByteArray()));
         server.receiveMessage(clientVersionMsg);
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));

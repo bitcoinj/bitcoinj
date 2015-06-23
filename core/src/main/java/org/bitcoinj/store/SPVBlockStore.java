@@ -234,7 +234,7 @@ public class SPVBlockStore implements BlockStore {
                 byte[] headHash = new byte[32];
                 buffer.position(8);
                 buffer.get(headHash);
-                Sha256Hash hash = new Sha256Hash(headHash);
+                Sha256Hash hash = Sha256Hash.wrap(headHash);
                 StoredBlock block = get(hash);
                 if (block == null)
                     throw new BlockStoreException("Corrupted block store: could not find chain head: " + hash);

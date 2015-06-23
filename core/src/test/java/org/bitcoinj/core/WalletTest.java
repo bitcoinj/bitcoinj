@@ -1360,17 +1360,17 @@ public class WalletTest extends TestWithWallet {
     public void autosaveImmediate() throws Exception {
         // Test that the wallet will save itself automatically when it changes.
         File f = File.createTempFile("bitcoinj-unit-test", null);
-        Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash1 = Sha256Hash.of(f);
         // Start with zero delay and ensure the wallet file changes after adding a key.
         wallet.autosaveToFile(f, 0, TimeUnit.SECONDS, null);
         ECKey key = wallet.freshReceiveKey();
-        Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash2 = Sha256Hash.of(f);
         assertFalse("Wallet not saved after generating fresh key", hash1.equals(hash2));  // File has changed.
 
         Transaction t1 = createFakeTx(params, valueOf(5, 0), key);
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
-        Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash3 = Sha256Hash.of(f);
         assertFalse("Wallet not saved after receivePending", hash2.equals(hash3));  // File has changed again.
     }
 
@@ -1382,7 +1382,7 @@ public class WalletTest extends TestWithWallet {
         final File[] results = new File[2];
         final CountDownLatch latch = new CountDownLatch(3);
         File f = File.createTempFile("bitcoinj-unit-test", null);
-        Sha256Hash hash1 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash1 = Sha256Hash.of(f);
         wallet.autosaveToFile(f, 1, TimeUnit.SECONDS,
                 new WalletFiles.Listener() {
                     @Override
@@ -1398,7 +1398,7 @@ public class WalletTest extends TestWithWallet {
                 }
         );
         ECKey key = wallet.freshReceiveKey();
-        Sha256Hash hash2 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash2 = Sha256Hash.of(f);
         assertFalse(hash1.equals(hash2));  // File has changed immediately despite the delay, as keys are important.
         assertNotNull(results[0]);
         assertEquals(f, results[1]);
@@ -1406,7 +1406,7 @@ public class WalletTest extends TestWithWallet {
 
         Block b0 = createFakeBlock(blockStore).block;
         chain.add(b0);
-        Sha256Hash hash3 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash3 = Sha256Hash.of(f);
         assertEquals(hash2, hash3);  // File has NOT changed yet. Just new blocks with no txns - delayed.
         assertNull(results[0]);
         assertNull(results[1]);
@@ -1414,20 +1414,20 @@ public class WalletTest extends TestWithWallet {
         Transaction t1 = createFakeTx(params, valueOf(5, 0), key);
         Block b1 = createFakeBlock(blockStore, t1).block;
         chain.add(b1);
-        Sha256Hash hash4 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash4 = Sha256Hash.of(f);
         assertFalse(hash3.equals(hash4));  // File HAS changed.
         results[0] = results[1] = null;
 
         // A block that contains some random tx we don't care about.
         Block b2 = b1.createNextBlock(new ECKey().toAddress(params));
         chain.add(b2);
-        assertEquals(hash4, Sha256Hash.hashFileContents(f));  // File has NOT changed.
+        assertEquals(hash4, Sha256Hash.of(f));  // File has NOT changed.
         assertNull(results[0]);
         assertNull(results[1]);
 
         // Wait for an auto-save to occur.
         latch.await();
-        Sha256Hash hash5 = Sha256Hash.hashFileContents(f);
+        Sha256Hash hash5 = Sha256Hash.of(f);
         assertFalse(hash4.equals(hash5));  // File has now changed.
         assertNotNull(results[0]);
         assertEquals(f, results[1]);
@@ -1437,12 +1437,12 @@ public class WalletTest extends TestWithWallet {
         results[0] = results[1] = null;
         ECKey key2 = new ECKey();
         wallet.importKey(key2);
-        assertEquals(hash5, Sha256Hash.hashFileContents(f)); // File has NOT changed.
+        assertEquals(hash5, Sha256Hash.of(f)); // File has NOT changed.
         Transaction t2 = createFakeTx(params, valueOf(5, 0), key2);
         Block b3 = createFakeBlock(blockStore, t2).block;
         chain.add(b3);
         Thread.sleep(2000); // Wait longer than autosave delay. TODO Fix the racyness.
-        assertEquals(hash5, Sha256Hash.hashFileContents(f)); // File has still NOT changed.
+        assertEquals(hash5, Sha256Hash.of(f)); // File has still NOT changed.
         assertNull(results[0]);
         assertNull(results[1]);
     }

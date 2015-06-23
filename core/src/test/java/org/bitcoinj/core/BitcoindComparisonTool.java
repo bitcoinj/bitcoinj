@@ -216,7 +216,7 @@ public class BitcoindComparisonTool {
 
         ArrayList<Sha256Hash> locator = new ArrayList<Sha256Hash>(1);
         locator.add(params.getGenesisBlock().getHash());
-        Sha256Hash hashTo = new Sha256Hash("0000000000000000000000000000000000000000000000000000000000000000");
+        Sha256Hash hashTo = Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000000");
                 
         int rulesSinceFirstFail = 0;
         for (Rule rule : blockList.list) {

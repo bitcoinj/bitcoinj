@@ -283,7 +283,7 @@ public class DeterministicKey extends ECKey {
         int inputLength = input.length;
         byte[] checksummed = new byte[inputLength + 4];
         System.arraycopy(input, 0, checksummed, 0, inputLength);
-        byte[] checksum = Sha256Hash.calcDoubleHashBytes(input);
+        byte[] checksum = Sha256Hash.hashTwice(input);
         System.arraycopy(checksum, 0, checksummed, inputLength, 4);
         return checksummed;
     }
