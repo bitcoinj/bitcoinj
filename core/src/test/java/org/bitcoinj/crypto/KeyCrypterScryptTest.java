@@ -111,11 +111,11 @@ public class KeyCrypterScryptTest {
             stringBuffer.append(i).append(" ").append("The quick brown fox");
         }
 
-        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(stringBuffer.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
-        assertNotNull(encryptedPrivateKey);
+        EncryptedData data = keyCrypter.encrypt(stringBuffer.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
+        assertNotNull(data);
 
         try {
-            keyCrypter.decrypt(encryptedPrivateKey, keyCrypter.deriveKey(WRONG_PASSWORD));
+            keyCrypter.decrypt(data, keyCrypter.deriveKey(WRONG_PASSWORD));
             // TODO: This test sometimes fails due to relying on padding.
             fail("Decrypt with wrong password did not throw exception");
         } catch (KeyCrypterException ede) {
