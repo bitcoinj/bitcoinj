@@ -457,14 +457,7 @@ public abstract class Message implements Serializable {
 
     String readStr() throws ProtocolException {
         long length = readVarInt();
-        if (length == 0) {
-            return ""; // a little optimization
-        }
-        try {
-            return new String(readBytes((int) length), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);  // Cannot happen, UTF-8 is always supported.
-        }
+        return length == 0 ? "" : Utils.toString(readBytes((int) length), "UTF-8"); // optimization for empty strings
     }
 
     Sha256Hash readHash() throws ProtocolException {

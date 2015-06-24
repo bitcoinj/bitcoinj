@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -305,11 +304,7 @@ public class BitcoinSerializer {
             for (; header[cursor] != 0 && cursor < COMMAND_LEN; cursor++) ;
             byte[] commandBytes = new byte[cursor];
             System.arraycopy(header, 0, commandBytes, 0, cursor);
-            try {
-                command = new String(commandBytes, "US-ASCII");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);  // Cannot happen.
-            }
+            command = Utils.toString(commandBytes, "US-ASCII");
             cursor = COMMAND_LEN;
 
             size = (int) readUint32(header, cursor);

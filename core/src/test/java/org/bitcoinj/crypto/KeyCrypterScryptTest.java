@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
@@ -77,10 +76,9 @@ public class KeyCrypterScryptTest {
      * Test with random plain text strings and random passwords.
      * UUIDs are used and hence will only cover hex characters (and the separator hyphen).
      * @throws KeyCrypterException
-     * @throws UnsupportedEncodingException
      */
     @Test
-    public void testKeyCrypterGood2() throws Exception {
+    public void testKeyCrypterGood2() {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         System.out.print("EncrypterDecrypterTest: Trying random UUIDs for plainText and passwords :");

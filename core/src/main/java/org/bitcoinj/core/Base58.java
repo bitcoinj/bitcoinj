@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -84,11 +83,7 @@ public class Base58 {
         }
 
         byte[] output = copyOfRange(temp, j, temp.length);
-        try {
-            return new String(output, "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        return Utils.toString(output, "US-ASCII");
     }
 
     public static byte[] decode(String input) throws AddressFormatException {

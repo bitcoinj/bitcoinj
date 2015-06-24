@@ -17,6 +17,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.store.UnreadableWalletException;
 import com.google.common.base.Charsets;
@@ -25,7 +26,6 @@ import com.google.common.base.Splitter;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -195,17 +195,8 @@ public class DeterministicSeed implements EncryptableItem {
     public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {
         checkState(isEncrypted());
         checkNotNull(encryptedMnemonicCode);
-        List<String> mnemonic = null;
-        byte[] seed = null;
-        try {
-            mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
-            if (encryptedSeed != null) {
-                seed = crypter.decrypt(encryptedSeed, aesKey);
-            }
-        } catch (UnreadableWalletException e) {
-            // TODO what is the best way to handle this exception?
-            throw new RuntimeException(e);
-        }
+        List<String> mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
+        byte[] seed = encryptedSeed == null ? null : crypter.decrypt(encryptedSeed, aesKey);
         return new DeterministicSeed(mnemonic, seed, passphrase, creationTimeSeconds);
     }
 
@@ -255,12 +246,8 @@ public class DeterministicSeed implements EncryptableItem {
         return mnemonicCode;
     }
 
-    private static List<String> decodeMnemonicCode(byte[] mnemonicCode) throws UnreadableWalletException {
-        try {
-            return Splitter.on(" ").splitToList(new String(mnemonicCode, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new UnreadableWalletException(e.toString());
-        }
+    private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
+        return decodeMnemonicCode(Utils.toString(mnemonicCode, "UTF-8"));
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {

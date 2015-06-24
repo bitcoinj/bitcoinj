@@ -237,8 +237,7 @@ public class BitcoinURI {
                         if (valueToken.length() > 0)
                             putWithValidation(nameToken, URLDecoder.decode(valueToken, "UTF-8"));
                     } catch (UnsupportedEncodingException e) {
-                        // Unreachable.
-                        throw new RuntimeException(e);
+                        throw new RuntimeException(e); // can't happen
                     }
                 }
             }
@@ -406,8 +405,7 @@ public class BitcoinURI {
         try {
             return java.net.URLEncoder.encode(stringToEncode, "UTF-8").replace("+", ENCODED_SPACE_CHARACTER);
         } catch (UnsupportedEncodingException e) {
-            // should not happen - UTF-8 is a valid encoding
-            throw new RuntimeException(e);
+            throw new RuntimeException(e); // can't happen
         }
     }
 }
