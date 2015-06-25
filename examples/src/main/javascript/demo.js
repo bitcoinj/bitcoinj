@@ -56,8 +56,7 @@ bcj.utils.BriefLogFormatter.init();
 var PeerGroup = bcj.core.PeerGroup;
 var pg = new PeerGroup(params)
 pg.addPeerDiscovery(new bcj.net.discovery.DnsDiscovery(params));
-pg.startAsync();
-pg.awaitRunning();
+pg.start();
 
 // Wait until we have at least three peers.
 print("Waiting for some peers")
