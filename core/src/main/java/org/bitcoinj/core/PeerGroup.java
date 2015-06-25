@@ -295,9 +295,27 @@ public class PeerGroup implements TransactionBroadcaster {
      * <p>The user does not need any additional software for this: it's all pure Java. As of April 2014 <b>this mode
      * is experimental</b>.</p>
      *
-     * @throws java.util.concurrent.TimeoutException if Tor fails to start within 20 seconds.
+     * @throws TimeoutException if Tor fails to start within 20 seconds.
      */
     public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
+        return newWithTor(context, chain, torClient, true);
+    }
+
+    /**
+     * <p>Creates a PeerGroup that accesses the network via the Tor network. The provided TorClient is used so you can
+     * preconfigure it beforehand. It should not have been already started. You can just use "new TorClient()" if
+     * you don't have any particular configuration requirements.</p>
+     *
+     * <p>If running on the Oracle JDK the unlimited strength jurisdiction checks will also be overridden,
+     * as they no longer apply anyway and can cause startup failures due to the requirement for AES-256.</p>
+     *
+     * <p>The user does not need any additional software for this: it's all pure Java. As of April 2014 <b>this mode
+     * is experimental</b>.</p>
+     *
+     * @params doDiscovery if true, DNS or HTTP peer discovery will be performed via Tor: this is almost always what you want.
+     * @throws java.util.concurrent.TimeoutException if Tor fails to start within 20 seconds.
+     */
+    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockChain chain, TorClient torClient, boolean doDiscovery) throws TimeoutException {
         checkNotNull(torClient);
         DRMWorkaround.maybeDisableExportControls();
         BlockingClientManager manager = new BlockingClientManager(torClient.getSocketFactory());
@@ -306,15 +324,17 @@ public class PeerGroup implements TransactionBroadcaster {
         PeerGroup result = new PeerGroup(context, chain, manager, torClient);
         result.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
 
-        NetworkParameters params = context.getParams();
-        HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
-        if (httpSeeds.length > 0) {
-            // Use HTTP discovery when Tor is active and there is a Cartographer seed, for a much needed speed boost.
-            OkHttpClient client = new OkHttpClient();
-            client.setSocketFactory(torClient.getSocketFactory());
-            result.addPeerDiscovery(new HttpDiscovery(params, httpSeeds[0], client));
-        } else {
-            result.addPeerDiscovery(new TorDiscovery(params, torClient));
+        if (doDiscovery) {
+            NetworkParameters params = context.getParams();
+            HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
+            if (httpSeeds.length > 0) {
+                // Use HTTP discovery when Tor is active and there is a Cartographer seed, for a much needed speed boost.
+                OkHttpClient client = new OkHttpClient();
+                client.setSocketFactory(torClient.getSocketFactory());
+                result.addPeerDiscovery(new HttpDiscovery(params, httpSeeds[0], client));
+            } else {
+                result.addPeerDiscovery(new TorDiscovery(params, torClient));
+            }
         }
         return result;
     }
