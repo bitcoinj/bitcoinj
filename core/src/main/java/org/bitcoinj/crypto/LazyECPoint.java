@@ -168,20 +168,16 @@ public class LazyECPoint {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        LazyECPoint point1 = (LazyECPoint) o;
-        if (bits != null && point1.bits != null)
-            return Arrays.equals(bits, point1.bits);
-        else
-            return get().equals(point1.get());
+        return this == o || o != null && getClass() == o.getClass()
+            && Arrays.equals(getCanonicalEncoding(), ((LazyECPoint)o).getCanonicalEncoding());
     }
 
     @Override
     public int hashCode() {
-        if (bits != null)
-            return Arrays.hashCode(bits);
-        else
-            return get().hashCode();
+        return Arrays.hashCode(getCanonicalEncoding());
+    }
+
+    private byte[] getCanonicalEncoding() {
+        return getEncoded(true);
     }
 }
