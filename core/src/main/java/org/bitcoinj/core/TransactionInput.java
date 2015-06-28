@@ -279,10 +279,8 @@ public class TransactionInput extends ChildMessage implements Serializable {
      */
     @Override
     public String toString() {
-        if (isCoinBase())
-            return "TxIn: COINBASE";
         try {
-            return "TxIn for [" + outpoint + "]: " + getScriptSig();
+            return isCoinBase() ? "TxIn: COINBASE" : "TxIn for [" + outpoint + "]: " + getScriptSig();
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }

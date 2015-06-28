@@ -152,12 +152,8 @@ public class RejectMessage extends Message {
     @Override
     public String toString() {
         Sha256Hash hash = getRejectedObjectHash();
-        if (hash != null)
-            return String.format("Reject: %s %s for reason '%s' (%d)", getRejectedMessage(), getRejectedObjectHash(),
-                getReasonString(), getReasonCode().code);
-        else
-            return String.format("Reject: %s for reason '%s' (%d)", getRejectedMessage(),
-                getReasonString(), getReasonCode().code);
+        return String.format("Reject: %s %s for reason '%s' (%d)", getRejectedMessage(),
+            hash != null ? hash : "", getReasonString(), getReasonCode().code);
     }
 
     @Override

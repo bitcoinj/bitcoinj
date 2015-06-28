@@ -354,8 +354,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
                 buf.append(" to multisig");
             else
                 buf.append(" (unknown type)");
-            buf.append(" script:");
-            buf.append(script);
+            buf.append(" script:").append(script);
             return buf.toString();
         } catch (ScriptException e) {
             throw new RuntimeException(e);

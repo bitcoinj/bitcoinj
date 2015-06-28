@@ -54,6 +54,8 @@ public class Utils {
     public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
     public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
+    private static final Joiner SPACE_JOINER = Joiner.on(" ");
+
     private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**
@@ -405,6 +407,18 @@ public class Utils {
         DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         iso8601.setTimeZone(UTC);
         return iso8601.format(dateTime);
+    }
+
+    /**
+     * Returns a string containing the string representation of the given items,
+     * delimited by a single space character.
+     *
+     * @param items the items to join
+     * @param <T> the item type
+     * @return the joined space-delimited string
+     */
+    public static <T> String join(Iterable<T> items) {
+        return SPACE_JOINER.join(items);
     }
 
     public static byte[] copyOf(byte[] in, int length) {

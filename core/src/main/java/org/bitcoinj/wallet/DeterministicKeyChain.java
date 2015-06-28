@@ -25,7 +25,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.Threading;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
@@ -1333,7 +1332,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             } else if (includePrivateKeys) {
                 final List<String> words = seed.getMnemonicCode();
                 builder2.append(
-                        String.format("Seed as words: %s%nSeed as hex:   %s%n", Joiner.on(' ').join(words),
+                        String.format("Seed as words: %s%nSeed as hex:   %s%n", Utils.join(words),
                                 seed.toHexString())
                 );
             }

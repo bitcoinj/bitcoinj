@@ -273,12 +273,8 @@ public class Peer extends PeerSocketHandler {
     @Override
     public String toString() {
         PeerAddress addr = getAddress();
-        if (addr == null) {
-            // User-provided NetworkConnection object.
-            return "Peer()";
-        } else {
-            return addr.toString();
-        }
+        // if null, it's a user-provided NetworkConnection object
+        return addr == null ? "Peer()" : addr.toString();
     }
 
     @Override
@@ -501,9 +497,9 @@ public class Peer extends PeerSocketHandler {
     private void processAlert(AlertMessage m) {
         try {
             if (m.isSignatureValid()) {
-                log.info("Received alert from peer {}: {}", toString(), m.getStatusBar());
+                log.info("Received alert from peer {}: {}", this, m.getStatusBar());
             } else {
-                log.warn("Received alert with invalid signature from peer {}: {}", toString(), m.getStatusBar());
+                log.warn("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
             }
         } catch (Throwable t) {
             // Signature checking can FAIL on Android platforms before Gingerbread apparently due to bugs in their
@@ -1306,7 +1302,7 @@ public class Peer extends PeerSocketHandler {
         }
         if (log.isDebugEnabled())
             log.debug("{}: blockChainDownloadLocked({}) current head = {}",
-                    toString(), toHash.toString(), chainHead.getHeader().getHashAsString());
+                    this, toHash, chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
             blockLocator.add(cursor.getHeader().getHash());

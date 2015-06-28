@@ -142,13 +142,7 @@ public class AddressMessage extends Message {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("addr: ");
-        for (PeerAddress a : addresses) {
-            builder.append(a.toString());
-            builder.append(" ");
-        }
-        return builder.toString();
+        return "addr: " + Utils.join(addresses);
     }
 
 }

@@ -1157,8 +1157,7 @@ public abstract class BtcFormat extends Format {
      * @throws IllegalArgumentException if the number of fraction places is negative.
      */
     public String format(Object qty, int minDecimals, int... fractionGroups) {
-        return format(qty, new StringBuffer(), new FieldPosition(0), minDecimals, boxAsList(fractionGroups)).
-               toString();
+        return format(qty, new StringBuffer(), new FieldPosition(0), minDecimals, boxAsList(fractionGroups)).toString();
     }
 
     /**
@@ -1542,9 +1541,9 @@ public abstract class BtcFormat extends Format {
      *  returned by this method is localized, any currency signs expressed are literally, and
      *  optional fractional decimal places are shown grouped in parentheses. */
     public String pattern() { synchronized(numberFormat) {
-        StringBuffer groups = new StringBuffer();
+        StringBuilder groups = new StringBuilder();
         for (int group : decimalGroups) {
-            groups.append("(" + Strings.repeat("#",group) + ")");
+            groups.append("(").append(Strings.repeat("#", group)).append(")");
         }
         DecimalFormatSymbols s = numberFormat.getDecimalFormatSymbols();
         String digit = String.valueOf(s.getDigit());

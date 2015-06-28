@@ -193,9 +193,8 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     public String toString() {
-        return hash.toString() + ":" + index;
+        return hash + ":" + index;
     }
-
 
     /**
      * Returns the hash of the transaction this outpoint references/spends/is connected to.

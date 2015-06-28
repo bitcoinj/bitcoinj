@@ -19,7 +19,6 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
-import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +125,7 @@ public class MnemonicCode {
         // used as a pseudo-random function. Desired length of the
         // derived key is 512 bits (= 64 bytes).
         //
-        String pass = Joiner.on(' ').join(words);
+        String pass = Utils.join(words);
         String salt = "mnemonic" + passphrase;
 
         long start = System.currentTimeMillis();

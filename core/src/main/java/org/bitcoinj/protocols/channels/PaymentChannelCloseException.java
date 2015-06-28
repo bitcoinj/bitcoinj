@@ -79,6 +79,6 @@ public class PaymentChannelCloseException extends Exception {
 
     @Override
     public String toString() {
-        return "PaymentChannelCloseException for reason " + getCloseReason().toString();
+        return "PaymentChannelCloseException for reason " + getCloseReason();
     }
 }

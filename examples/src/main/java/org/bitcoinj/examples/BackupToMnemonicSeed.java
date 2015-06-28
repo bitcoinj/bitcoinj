@@ -1,10 +1,10 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.wallet.DeterministicSeed;
-import com.google.common.base.Joiner;
 
 /**
  * The following example shows you how to create a deterministic seed from a hierarchical deterministic wallet represented as a mnemonic code.
@@ -25,6 +25,6 @@ public class BackupToMnemonicSeed {
         System.out.println("seed: " + seed.toString());
 
         System.out.println("creation time: " + seed.getCreationTimeSeconds());
-        System.out.println("mnemonicCode: " + Joiner.on(" ").join(seed.getMnemonicCode()));
+        System.out.println("mnemonicCode: " + Utils.join(seed.getMnemonicCode()));
     }
 }

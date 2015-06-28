@@ -35,13 +35,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
 
     @Override
     public String toString() {
-        StringBuffer b = new StringBuffer();
-        b.append("getheaders: ");
-        for (Sha256Hash hash : locator) {
-            b.append(hash.toString());
-            b.append(" ");
-        }
-        return b.toString();
+        return "getheaders: " + Utils.join(locator);
     }
 
     /**
