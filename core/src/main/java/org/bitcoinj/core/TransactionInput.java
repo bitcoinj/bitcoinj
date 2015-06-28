@@ -57,7 +57,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     private byte[] scriptBytes;
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
-    transient private WeakReference<Script> scriptSig;
+    private transient WeakReference<Script> scriptSig;
     /** Value of the output connected to the input, if known. This field does not participate in equals()/hashCode(). */
     @Nullable
     private Coin value;
@@ -177,7 +177,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
             maybeParse();
             script = new Script(scriptBytes);
             scriptSig = new WeakReference<Script>(script);
-            return script;
         }
         return script;
     }

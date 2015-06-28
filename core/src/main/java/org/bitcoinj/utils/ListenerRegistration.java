@@ -44,11 +44,6 @@ public class ListenerRegistration<T> {
                 break;
             }
         }
-        if (item != null) {
-            list.remove(item);
-            return true;
-        } else {
-            return false;
-        }
+        return item != null && list.remove(item);
     }
 }

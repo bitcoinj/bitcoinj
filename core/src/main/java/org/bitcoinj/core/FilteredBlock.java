@@ -109,8 +109,8 @@ public class FilteredBlock extends Message {
         if (getTransactionHashes().contains(hash)) {
             associatedTransactions.put(hash, tx);
             return true;
-        } else
-            return false;
+        }
+        return false;
     }
 
     /** Returns the {@link PartialMerkleTree} object that provides the mathematical proof of transaction inclusion in the block. */
@@ -152,9 +152,6 @@ public class FilteredBlock extends Message {
 
     @Override
     public String toString() {
-        return "FilteredBlock{" +
-                "merkleTree=" + merkleTree +
-                ", header=" + header +
-                '}';
+        return "FilteredBlock{merkleTree=" + merkleTree + ", header=" + header + '}';
     }
 }

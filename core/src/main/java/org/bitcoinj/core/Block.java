@@ -836,10 +836,8 @@ public class Block extends Message {
     public Sha256Hash getMerkleRoot() {
         maybeParseHeader();
         if (merkleRoot == null) {
-
             //TODO check if this is really necessary.
             unCacheHeader();
-
             merkleRoot = calculateMerkleRoot();
         }
         return merkleRoot;

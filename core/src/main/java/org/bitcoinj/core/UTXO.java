@@ -191,12 +191,6 @@ public class UTXO implements Serializable {
         bos.write(0xFF & (height >> 16));
         bos.write(0xFF & (height >> 24));
 
-        byte[] coinbaseByte = new byte[1];
-        if (coinbase) {
-            coinbaseByte[0] = 1;
-        } else {
-            coinbaseByte[0] = 0;
-        }
-        bos.write(coinbaseByte);
+        bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
     }
 }

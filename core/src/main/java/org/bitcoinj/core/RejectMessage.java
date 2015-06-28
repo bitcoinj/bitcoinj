@@ -157,7 +157,7 @@ public class RejectMessage extends Message {
                 getReasonString(), getReasonCode().code);
         else
             return String.format("Reject: %s for reason '%s' (%d)", getRejectedMessage(),
-                    getReasonString(), getReasonCode().code);
+                getReasonString(), getReasonCode().code);
     }
 
     @Override
