@@ -274,7 +274,8 @@ public class PaymentSession {
      * Returns the payment url where the Payment message should be sent.
      * Returns null if no payment url was provided in the PaymentRequest.
      */
-    public @Nullable String getPaymentUrl() {
+    @Nullable
+    public String getPaymentUrl() {
         if (paymentDetails.hasPaymentUrl())
             return paymentDetails.getPaymentUrl();
         return null;
@@ -311,7 +312,8 @@ public class PaymentSession {
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
      */
-    public @Nullable ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    @Nullable
+    public ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
             throws PaymentProtocolException, VerificationException, IOException {
         Protos.Payment payment = getPayment(txns, refundAddr, memo);
         if (payment == null)
@@ -335,7 +337,8 @@ public class PaymentSession {
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
      */
-    public @Nullable Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    @Nullable
+    public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
             throws IOException, PaymentProtocolException.InvalidNetwork {
         if (paymentDetails.hasPaymentUrl()) {
             for (Transaction tx : txns)

@@ -76,7 +76,6 @@ public class PrivateKeys {
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("First arg should be private key in Base58 format. Second argument should be address " +
                     "to send to.");
-            return;
         }
     }
 }

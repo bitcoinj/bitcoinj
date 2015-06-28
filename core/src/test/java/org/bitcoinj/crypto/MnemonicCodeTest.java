@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 
 public class MnemonicCodeTest {
     // These vectors are from https://github.com/trezor/python-mnemonic/blob/master/vectors.json
-    String vectors[] = {
+    String[] vectors = {
         "00000000000000000000000000000000",
         "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
         "c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04",
@@ -208,11 +208,11 @@ public class MnemonicCodeTest {
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
     public void testEmptyEntropy() throws Exception {
-        byte[] entropy = new byte[]{};
+        byte[] entropy = {};
         mc.toMnemonic(entropy);
     }
 
-    static public List<String> split(String words) {
+    public static List<String> split(String words) {
         return new ArrayList<String>(Arrays.asList(words.split("\\s+")));
     }
 }

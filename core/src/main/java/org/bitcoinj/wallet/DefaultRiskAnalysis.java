@@ -54,7 +54,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     protected final Transaction tx;
     protected final List<Transaction> dependencies;
-    protected final @Nullable Wallet wallet;
+    @Nullable protected final Wallet wallet;
 
     private Transaction nonStandard;
     protected Transaction nonFinal;
@@ -78,7 +78,8 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         return analyzeIsStandard();
     }
 
-    private @Nullable Result analyzeIsFinal() {
+    @Nullable
+    private Result analyzeIsFinal() {
         // Transactions we create ourselves are, by definition, not at risk of double spending against us.
         if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
             return Result.OK;

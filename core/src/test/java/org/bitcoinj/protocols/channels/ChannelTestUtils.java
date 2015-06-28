@@ -62,7 +62,7 @@ public class ChannelTestUtils {
 
     public static class RecordingClientConnection implements PaymentChannelClient.ClientConnection {
         public BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
-        final static int IGNORE_EXPIRE = -1;
+        static final int IGNORE_EXPIRE = -1;
         private final int maxExpireTime;
 
         // An arbitrary sentinel object for equality testing.

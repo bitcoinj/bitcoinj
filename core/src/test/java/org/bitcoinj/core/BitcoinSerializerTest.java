@@ -184,7 +184,7 @@ public class BitcoinSerializerTest {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         bs.serialize(hm, byteArrayOutputStream);
         byte[] serializedBytes = byteArrayOutputStream.toByteArray();
-        String serializedBytesHex = new String(HEX.encode(serializedBytes));
+        String serializedBytesHex = HEX.encode(serializedBytes);
         assertEquals(headersMessageBytes.length, serializedBytes.length);
         assertEquals(true, Arrays.equals(headersMessageBytes, serializedBytes));
     }

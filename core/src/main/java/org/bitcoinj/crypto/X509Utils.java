@@ -48,7 +48,8 @@ public class X509Utils {
      * can also be the org (O) field, org+location+country if withLocation is set, or the email
      * address for S/MIME certificates.
      */
-    public static @Nullable String getDisplayNameFromCertificate(@Nonnull X509Certificate certificate, boolean withLocation) throws CertificateParsingException {
+    @Nullable
+    public static String getDisplayNameFromCertificate(@Nonnull X509Certificate certificate, boolean withLocation) throws CertificateParsingException {
         X500Name name = new X500Name(certificate.getSubjectX500Principal().getName());
         String commonName = null, org = null, location = null, country = null;
         for (RDN rdn : name.getRDNs()) {

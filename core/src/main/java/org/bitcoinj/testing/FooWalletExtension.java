@@ -8,7 +8,7 @@ import java.util.Arrays;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class FooWalletExtension implements WalletExtension {
-    private final byte[] data = new byte[]{1, 2, 3};
+    private final byte[] data = {1, 2, 3};
 
     private final boolean isMandatory;
     private final String id;

@@ -48,7 +48,7 @@ public class PaymentProtocolTest {
     private static final Address TO_ADDRESS = new ECKey().toAddress(NETWORK_PARAMS);
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
-    private static final byte[] MERCHANT_DATA = new byte[] { 0, 1, 2 };
+    private static final byte[] MERCHANT_DATA = { 0, 1, 2 };
 
     private KeyStore caStore;
     private X509Certificate caCert;

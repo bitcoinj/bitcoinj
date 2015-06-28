@@ -27,7 +27,7 @@ import java.util.List;
 public class HDUtilsTest {
     @Test
     public void testHmac() throws Exception {
-        String tv[] = {
+        String[] tv = {
                 "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b" +
                         "0b0b0b0b",
                 "4869205468657265",
@@ -127,7 +127,7 @@ public class HDUtilsTest {
 
     @Test
     public void testFormatPath() {
-        Object tv[] = {
+        Object[] tv = {
                 "M/44H/0H/0H/1/1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
@@ -156,7 +156,7 @@ public class HDUtilsTest {
 
     @Test
     public void testParsePath() {
-        Object tv[] = {
+        Object[] tv = {
                 "M / 44H / 0H / 0H / 1 / 1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),

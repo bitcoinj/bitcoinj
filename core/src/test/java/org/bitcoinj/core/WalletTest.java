@@ -548,8 +548,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void blockChainCatchup() throws Exception {
         // Test that we correctly process transactions arriving from the chain, with callbacks for inbound and outbound.
-        final Coin bigints[] = new Coin[4];
-        final Transaction txn[] = new Transaction[2];
+        final Coin[] bigints = new Coin[4];
+        final Transaction[] txn = new Transaction[2];
         final LinkedList<Transaction> confTxns = new LinkedList<Transaction>();
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
@@ -932,8 +932,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void pending2() throws Exception {
         // Check that if we receive a pending tx we did not send, it updates our spent flags correctly.
-        final Transaction txn[] = new Transaction[1];
-        final Coin bigints[] = new Coin[2];
+        final Transaction[] txn = new Transaction[1];
+        final Coin[] bigints = new Coin[2];
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
@@ -2831,7 +2831,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void completeTxPartiallySignedWithEmptySig() throws Exception {
-        byte[] emptySig = new byte[]{};
+        byte[] emptySig = {};
         completeTxPartiallySigned(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
     }
 
@@ -2855,13 +2855,13 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void completeTxPartiallySignedMarriedWithEmptySig() throws Exception {
-        byte[] emptySig = new byte[]{};
+        byte[] emptySig = {};
         completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
     }
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
     public void completeTxPartiallySignedMarriedThrows() throws Exception {
-        byte[] emptySig = new byte[]{};
+        byte[] emptySig = {};
         completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, emptySig);
     }
 

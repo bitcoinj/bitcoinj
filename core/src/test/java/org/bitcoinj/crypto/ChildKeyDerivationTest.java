@@ -34,7 +34,7 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void testChildKeyDerivation() throws Exception {
-        String ckdTestVectors[] = {
+        String[] ckdTestVectors = {
                 // test case 1:
                 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "04" +  "6a04ab98d9e4774ad806e302dddeb63b" +

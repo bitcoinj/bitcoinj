@@ -541,7 +541,7 @@ public class Block extends Message {
      * The number that is one greater than the largest representable SHA-256
      * hash.
      */
-    static private BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
+    private static BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
 
     /**
      * Returns the work represented by this block.<p>
@@ -941,19 +941,17 @@ public class Block extends Message {
     }
 
     /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
-    public @Nullable List<Transaction> getTransactions() {
+    @Nullable
+    public List<Transaction> getTransactions() {
         maybeParseTransactions();
-        if (transactions == null)
-            return null;
-        else
-            return ImmutableList.copyOf(transactions);
+        return transactions == null ? null : ImmutableList.copyOf(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
     // Unit testing related methods.
 
     // Used to make transactions unique.
-    static private int txCounter;
+    private static int txCounter;
 
     /** Adds a coinbase transaction to the block. This exists for unit tests. */
     @VisibleForTesting
