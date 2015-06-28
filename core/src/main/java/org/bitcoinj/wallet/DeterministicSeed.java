@@ -45,8 +45,8 @@ public class DeterministicSeed implements EncryptableItem {
     public static final int MAX_SEED_ENTROPY_BITS = 512;
 
     @Nullable private final byte[] seed;
-    @Nullable private List<String> mnemonicCode;
-    @Nullable private EncryptedData encryptedMnemonicCode;
+    @Nullable private final List<String> mnemonicCode; // only one of mnemonicCode/encryptedMnemonicCode will be set
+    @Nullable private final EncryptedData encryptedMnemonicCode;
     @Nullable private EncryptedData encryptedSeed;
     private final long creationTimeSeconds;
 
@@ -135,17 +135,13 @@ public class DeterministicSeed implements EncryptableItem {
         if (isEncrypted())
             return "DeterministicSeed [encrypted]";
         else
-            return "DeterministicSeed " + toHexString() +
-                    ((mnemonicCode != null) ? " " + Joiner.on(" ").join(mnemonicCode) : "");
+            return "DeterministicSeed " + toHexString() + " " + Joiner.on(" ").join(mnemonicCode);
     }
 
     /** Returns the seed as hex or null if encrypted. */
     @Nullable
     public String toHexString() {
-        if (seed != null)
-            return HEX.encode(seed);
-        else
-            return null;
+        return seed != null ? HEX.encode(seed) : null;
     }
 
     @Nullable

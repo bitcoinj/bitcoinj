@@ -206,8 +206,9 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      * over the parents list to discover this.
      */
     public int getIndex() {
-        for (int i = 0; i < getParentTransaction().getOutputs().size(); i++) {
-            if (getParentTransaction().getOutputs().get(i) == this)
+        List<TransactionOutput> outputs = getParentTransaction().getOutputs();
+        for (int i = 0; i < outputs.size(); i++) {
+            if (outputs.get(i) == this)
                 return i;
         }
         throw new IllegalStateException("Output linked to wrong parent transaction?");
@@ -256,7 +257,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         availableForSpending = false;
         spentBy = input;
         if (parent != null)
-            if (log.isDebugEnabled()) log.debug("Marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), input);
+            if (log.isDebugEnabled()) log.debug("Marked {}:{} as spent by {}", getParentTransactionHash(), getIndex(), input);
         else
             if (log.isDebugEnabled()) log.debug("Marked floating output as spent by {}", input);
     }
@@ -266,7 +267,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     public void markAsUnspent() {
         if (parent != null)
-            if (log.isDebugEnabled()) log.debug("Un-marked {}:{} as spent by {}", getParentTransaction().getHash(), getIndex(), spentBy);
+            if (log.isDebugEnabled()) log.debug("Un-marked {}:{} as spent by {}", getParentTransactionHash(), getIndex(), spentBy);
         else
             if (log.isDebugEnabled()) log.debug("Un-marked floating output as spent by {}", spentBy);
         availableForSpending = true;
@@ -374,10 +375,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     @Nullable
     public Transaction getParentTransaction() {
-        if(parent != null) {
-            return (Transaction) parent;
-        }
-        return null;
+        return (Transaction)parent;
     }
 
     /**
@@ -385,10 +383,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
      */
     @Nullable
     public Sha256Hash getParentTransactionHash() {
-        if (getParentTransaction() != null) {
-            return getParentTransaction().getHash();
-        }
-        return null;
+        return parent == null ? null : parent.getHash();
     }
 
     /**
