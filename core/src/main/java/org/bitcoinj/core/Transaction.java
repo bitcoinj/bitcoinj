@@ -1278,11 +1278,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
         long time = getLockTime();
-        if (time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds))
-            return true;
-        if (!isTimeLocked())
-            return true;
-        return false;
+        return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
     }
 
     /**

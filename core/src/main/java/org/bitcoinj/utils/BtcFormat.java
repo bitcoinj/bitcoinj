@@ -674,7 +674,8 @@ public abstract class BtcFormat extends Format {
         public Builder pattern(String val) {
             if (localizedPattern != "")
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern()");
-            pattern = val; return this;
+            pattern = val;
+            return this;
         } 
 
         /** Use the given localized-pattern for formatting and parsing.  The format of this
@@ -924,7 +925,7 @@ public abstract class BtcFormat extends Format {
         for (int e : elements) {
             checkArgument(e > 0, "Size of decimal group must be at least one.");
             list.add(e);
-        };
+        }
         return list;
     }
 
@@ -1230,7 +1231,7 @@ public abstract class BtcFormat extends Format {
      *  @return The minimum and maximum fractional places settings that the
      *          formatter had before this change, as an ImmutableList. */
     private static ImmutableList<Integer> setFormatterDigits(DecimalFormat formatter, int min, int max) {
-        ImmutableList<Integer> ante = ImmutableList.<Integer>of(
+        ImmutableList<Integer> ante = ImmutableList.of(
             formatter.getMinimumFractionDigits(),
             formatter.getMaximumFractionDigits()
         );

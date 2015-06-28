@@ -1137,7 +1137,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setString(1, address.toString());
             ResultSet rs = s.executeQuery();
             BigInteger balance = BigInteger.ZERO;
-            while (rs.next()) {
+            if (rs.next()) {
                 return BigInteger.valueOf(rs.getLong(1));
             }
             return balance;

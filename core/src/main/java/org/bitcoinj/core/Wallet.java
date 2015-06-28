@@ -202,7 +202,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     @GuardedBy("lock") private List<TransactionSigner> signers;
 
     // If this is set then the wallet selects spendable candidate outputs from a UTXO provider.
-    @Nullable volatile private UTXOProvider vUTXOProvider;
+    @Nullable private volatile UTXOProvider vUTXOProvider;
 
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient

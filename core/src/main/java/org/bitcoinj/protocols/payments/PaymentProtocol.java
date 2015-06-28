@@ -159,7 +159,8 @@ public class PaymentProtocol {
      * @return verification data, or null if no PKI method was specified in the {@link Protos.PaymentRequest}.
      * @throws PaymentProtocolException if payment request could not be verified.
      */
-    public static @Nullable PkiVerificationData verifyPaymentRequestPki(Protos.PaymentRequest paymentRequest, KeyStore trustStore)
+    @Nullable
+    public static PkiVerificationData verifyPaymentRequestPki(Protos.PaymentRequest paymentRequest, KeyStore trustStore)
             throws PaymentProtocolException {
         List<X509Certificate> certs = null;
         try {
@@ -412,7 +413,7 @@ public class PaymentProtocol {
      * Value object to hold amount/script pairs.
      */
     public static class Output implements Serializable {
-        public final @Nullable Coin amount;
+        @Nullable public final Coin amount;
         public final byte[] scriptData;
 
         public Output(@Nullable Coin amount, byte[] scriptData) {

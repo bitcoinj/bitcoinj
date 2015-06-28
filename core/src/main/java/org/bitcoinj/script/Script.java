@@ -60,7 +60,7 @@ public class Script {
         P2PKH,
         PUB_KEY,
         P2SH
-    };
+    }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}. */
     public enum VerifyFlag {
@@ -150,16 +150,12 @@ public class Script {
         return Collections.unmodifiableList(chunks);
     }
 
-    private static final ScriptChunk STANDARD_TRANSACTION_SCRIPT_CHUNKS[];
-
-    static {
-        STANDARD_TRANSACTION_SCRIPT_CHUNKS = new ScriptChunk[] {
-            new ScriptChunk(ScriptOpCodes.OP_DUP, null, 0),
-            new ScriptChunk(ScriptOpCodes.OP_HASH160, null, 1),
-            new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null, 23),
-            new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null, 24),
-        };
-    }
+    private static final ScriptChunk[] STANDARD_TRANSACTION_SCRIPT_CHUNKS = {
+        new ScriptChunk(ScriptOpCodes.OP_DUP, null, 0),
+        new ScriptChunk(ScriptOpCodes.OP_HASH160, null, 1),
+        new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null, 23),
+        new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null, 24),
+    };
 
     /**
      * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical

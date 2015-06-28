@@ -125,8 +125,8 @@ public class LazyParseByteCacheTest {
     
     @Test
     public void validateSetup() {
-        byte[] b1 = new byte[] {1, 1, 1, 2, 3, 4, 5, 6, 7};
-        byte[] b2 = new byte[] {1, 2, 3};
+        byte[] b1 = {1, 1, 1, 2, 3, 4, 5, 6, 7};
+        byte[] b2 = {1, 2, 3};
         assertTrue(arrayContains(b1, b2));
         assertTrue(arrayContains(txMessage, txMessagePart));
         assertTrue(arrayContains(tx1BytesWithHeader, tx1Bytes));
@@ -308,7 +308,7 @@ public class LazyParseByteCacheTest {
             assertEquals(!lazy, b1.isParsedHeader());
             
             assertEquals(!lazy, tin.isParsed());
-            assertEquals(tin.isParsed() ? retain : true, tin.isCached());    
+            assertEquals(!tin.isParsed() || retain, tin.isCached());
             
             //does it still match ref tx?
             bos.reset();
@@ -338,7 +338,7 @@ public class LazyParseByteCacheTest {
                 //confirm sibling cache status was unaffected
                 if (tx1.getInputs().size() > 1) {
                     boolean parsed = tx1.getInputs().get(1).isParsed();
-                    assertEquals(parsed ? retain : true, tx1.getInputs().get(1).isCached());
+                    assertEquals(!parsed || retain, tx1.getInputs().get(1).isCached());
                     assertEquals(!lazy, parsed);
                 }
                 

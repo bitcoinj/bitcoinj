@@ -222,7 +222,7 @@ public class IrcDiscovery implements PeerDiscovery {
                 continue;
             }
 
-            byte[] ipBytes = new byte[]{addressBytes[0], addressBytes[1], addressBytes[2], addressBytes[3]};
+            byte[] ipBytes = {addressBytes[0], addressBytes[1], addressBytes[2], addressBytes[3]};
             int port = Utils.readUint16BE(addressBytes, 4);
 
             InetAddress ip;

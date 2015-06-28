@@ -55,8 +55,8 @@ public abstract class Message implements Serializable {
 
     protected transient boolean parsed = false;
     protected transient boolean recached = false;
-    protected transient final boolean parseLazy;
-    protected transient final boolean parseRetain;
+    protected final transient boolean parseLazy;
+    protected final transient boolean parseRetain;
 
     protected transient int protocolVersion;
 

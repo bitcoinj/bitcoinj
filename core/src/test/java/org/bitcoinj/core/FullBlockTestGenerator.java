@@ -221,7 +221,7 @@ public class FullBlockTestGenerator {
         {
             Transaction coinbase = b2.block.getTransactions().get(0);
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getHash());
-            long[] heights = new long[] {chainHeadHeight + 2};
+            long[] heights = {chainHeadHeight + 2};
             UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
             utxo1 = new UTXORule("utxo1", outpoint, result);
             blocks.add(utxo1);
@@ -242,7 +242,7 @@ public class FullBlockTestGenerator {
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getHash());
             List<TransactionOutPoint> queries = ImmutableList.of(utxo1.query.get(0), outpoint);
             List<TransactionOutput> results = Lists.asList(null, coinbase.getOutput(0), new TransactionOutput[]{});
-            long[] heights = new long[] {chainHeadHeight + 3};
+            long[] heights = {chainHeadHeight + 3};
             UTXOsMessage result = new UTXOsMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
             UTXORule utxo2 = new UTXORule("utxo2", queries, result);
             blocks.add(utxo2);
@@ -1502,7 +1502,7 @@ public class FullBlockTestGenerator {
         // Check the UTXO query takes mempool into account.
         {
             TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getHash());
-            long[] heights = new long[] { UTXOsMessage.MEMPOOL_HEIGHT };
+            long[] heights = { UTXOsMessage.MEMPOOL_HEIGHT };
             UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
             UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
             blocks.add(utxo3);

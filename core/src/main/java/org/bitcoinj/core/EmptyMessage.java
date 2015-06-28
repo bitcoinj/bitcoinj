@@ -40,7 +40,7 @@ public abstract class EmptyMessage extends Message {
     }
 
     @Override
-    final protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected final void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     }
 
     @Override

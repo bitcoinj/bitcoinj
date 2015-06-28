@@ -68,7 +68,7 @@ public class WatchMempool {
         }
     }
 
-    private synchronized static void incrementCounter(String name) {
+    private static synchronized void incrementCounter(String name) {
         Integer count = counters.get(name);
         if (count == null)
             count = 0;
@@ -76,7 +76,7 @@ public class WatchMempool {
         counters.put(name, count);
     }
 
-    private synchronized static void printCounters() {
+    private static synchronized void printCounters() {
         System.out.printf("Runtime: %d minutes\n", (System.currentTimeMillis() - START_MS) / 1000 / 60);
         Integer total = counters.get(TOTAL_KEY);
         if (total == null)
