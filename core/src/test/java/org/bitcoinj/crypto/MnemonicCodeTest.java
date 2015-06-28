@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Joiner;
+import org.bitcoinj.core.Utils;
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
@@ -171,7 +171,7 @@ public class MnemonicCodeTest {
             byte[] entropy = mc.toEntropy(split(vecCode));
 
             assertEquals(vecData, HEX.encode(entropy));
-            assertEquals(vecCode, Joiner.on(' ').join(code));
+            assertEquals(vecCode, Utils.join(code));
             assertEquals(vecSeed, HEX.encode(seed));
         }
     }

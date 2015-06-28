@@ -68,7 +68,7 @@ class StoredTransactionOutPoint implements Serializable {
     
     @Override
     public String toString() {
-        return "Stored transaction out point: " + hash.toString() + ":" + index;
+        return "Stored transaction out point: " + hash + ":" + index;
     }
 
     @Override

@@ -104,12 +104,12 @@ public class KeyCrypterScryptTest {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         // create a longer encryption string
-        StringBuilder stringBuffer = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
-            stringBuffer.append(i).append(" ").append("The quick brown fox");
+            builder.append(i).append(" The quick brown fox");
         }
 
-        EncryptedData data = keyCrypter.encrypt(stringBuffer.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
+        EncryptedData data = keyCrypter.encrypt(builder.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
         assertNotNull(data);
 
         try {

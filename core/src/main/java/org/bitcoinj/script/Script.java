@@ -125,12 +125,7 @@ public class Script {
      */
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder();
-        for (ScriptChunk chunk : chunks)
-            buf.append(chunk).append(' ');
-        if (buf.length() > 0)
-            buf.setLength(buf.length() - 1);
-        return buf.toString();
+        return Utils.join(chunks);
     }
 
     /** Returns the serialized program as a newly created byte array. */
@@ -297,7 +292,7 @@ public class Script {
             // A large constant followed by an OP_CHECKSIG is the key.
             return chunk0data;
         } else {
-            throw new ScriptException("Script did not match expected form: " + toString());
+            throw new ScriptException("Script did not match expected form: " + this);
         }
     }
 

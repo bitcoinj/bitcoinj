@@ -2768,9 +2768,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
                 for (Script script : watchedScripts) {
-                    builder.append("  ");
-                    builder.append(script.toString());
-                    builder.append("\n");
+                    builder.append("  ").append(script).append("\n");
                 }
             }
 

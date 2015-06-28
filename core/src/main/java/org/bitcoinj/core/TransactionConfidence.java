@@ -322,12 +322,7 @@ public class TransactionConfidence implements Serializable {
         StringBuilder builder = new StringBuilder();
         int peers = numBroadcastPeers();
         if (peers > 0) {
-            builder.append("Seen by ");
-            builder.append(peers);
-            if (peers > 1)
-                builder.append(" peers. ");
-            else
-                builder.append(" peer. ");
+            builder.append("Seen by ").append(peers).append(peers > 1 ? " peers. " : " peer. ");
         }
         switch (getConfidenceType()) {
             case UNKNOWN:

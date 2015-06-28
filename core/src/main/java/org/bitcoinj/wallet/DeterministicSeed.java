@@ -21,7 +21,6 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.store.UnreadableWalletException;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -132,10 +131,9 @@ public class DeterministicSeed implements EncryptableItem {
 
     @Override
     public String toString() {
-        if (isEncrypted())
-            return "DeterministicSeed [encrypted]";
-        else
-            return "DeterministicSeed " + toHexString() + " " + Joiner.on(" ").join(mnemonicCode);
+        return isEncrypted()
+            ? "DeterministicSeed [encrypted]"
+            : "DeterministicSeed " + toHexString() + " " + Utils.join(mnemonicCode);
     }
 
     /** Returns the seed as hex or null if encrypted. */
@@ -185,7 +183,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private byte[] getMnemonicAsBytes() {
-        return Joiner.on(" ").join(mnemonicCode).getBytes(Charsets.UTF_8);
+        return Utils.join(mnemonicCode).getBytes(Charsets.UTF_8);
     }
 
     public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {

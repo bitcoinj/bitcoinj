@@ -47,7 +47,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * <p>All Bitcoin transactions are at risk of being reversed, though the risk is much less than with traditional payment
  * systems. Transactions have <i>confidence levels</i>, which help you decide whether to trust a transaction or not.
- * Whether to trust a transaction is something that needs to be decided on a case by case basis - a rule that makes 
+ * Whether to trust a transaction is something that needs to be decided on a case by case basis - a rule that makes
  * sense for selling MP3s might not make sense for selling cars, or accepting payments from a family member. If you
  * are building a wallet, how to present confidence to your users is something to consider carefully.</p>
  */
@@ -74,7 +74,7 @@ public class Transaction extends ChildMessage implements Serializable {
             final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
             final int heightComparison = -(Ints.compare(height1, height2));
             //If height1==height2, compare by tx hash to make comparator consistent with equals
-            return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());            
+            return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());
         }
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
@@ -115,7 +115,7 @@ public class Transaction extends ChildMessage implements Serializable {
     // This is an in memory helper only.
     private transient Sha256Hash hash;
 
-    // Data about how confirmed this tx is. Serialized, may be null. 
+    // Data about how confirmed this tx is. Serialized, may be null.
     @Nullable private TransactionConfidence confidence;
 
     // Records a map of which blocks the transaction has appeared in (keys) to an index within that block (values).
@@ -199,8 +199,8 @@ public class Transaction extends ChildMessage implements Serializable {
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
      * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.  
-     * If true and the backing byte array is invalidated due to modification of a field then 
+     * @param parseRetain Whether to retain the backing byte array for quick reserialization.
+     * If true and the backing byte array is invalidated due to modification of a field then
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
@@ -318,7 +318,7 @@ public class Transaction extends ChildMessage implements Serializable {
      * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.</p>
      *
      * <p>Sets updatedAt to be the earliest valid block time where this tx was seen.</p>
-     * 
+     *
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
      * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
      * @param relativityOffset A number that disambiguates the order of transactions within a block.
@@ -398,7 +398,7 @@ public class Transaction extends ChildMessage implements Serializable {
     /**
      * The transaction fee is the difference of the value of all inputs and the value of all outputs. Currently, the fee
      * can only be determined for transactions created by us.
-     * 
+     *
      * @return fee, or null if it cannot be determined
      */
     public Coin getFee() {
@@ -647,7 +647,8 @@ public class Transaction extends ChildMessage implements Serializable {
                 script = "???";
                 script2 = "???";
             }
-            s.append("     == COINBASE TXN (scriptSig " + script + ")  (scriptPubKey " + script2 + ")\n");
+            s.append("     == COINBASE TXN (scriptSig ").append(script)
+                .append(")  (scriptPubKey ").append(script2).append(")\n");
             return s.toString();
         }
         for (TransactionInput in : inputs) {

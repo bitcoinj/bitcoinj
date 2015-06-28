@@ -76,13 +76,7 @@ public class GetBlocksMessage extends Message {
 
     @Override
     public String toString() {
-        StringBuffer b = new StringBuffer();
-        b.append("getblocks: ");
-        for (Sha256Hash hash : locator) {
-            b.append(hash.toString());
-            b.append(" ");
-        }
-        return b.toString();
+        return "getblocks: " + Utils.join(locator);
     }
 
     @Override

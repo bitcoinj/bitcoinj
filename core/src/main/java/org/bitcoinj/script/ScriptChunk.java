@@ -139,10 +139,7 @@ public class ScriptChunk {
             buf.append(getOpCodeName(opcode));
         } else if (data != null) {
             // Data chunk
-            buf.append(getPushDataName(opcode));
-            buf.append("[");
-            buf.append(Utils.HEX.encode(data));
-            buf.append("]");
+            buf.append(getPushDataName(opcode)).append("[").append(Utils.HEX.encode(data)).append("]");
         } else {
             // Small num
             buf.append(Script.decodeFromOpN(opcode));

@@ -156,7 +156,7 @@ public class UTXO implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash.toString(), index);
+        return String.format("Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash, index);
     }
 
     @Override

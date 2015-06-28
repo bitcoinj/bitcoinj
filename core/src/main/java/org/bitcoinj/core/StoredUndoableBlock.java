@@ -86,6 +86,6 @@ public class StoredUndoableBlock implements Serializable {
 
     @Override
     public String toString() {
-        return "Undoable Block " + blockHash.toString();
+        return "Undoable Block " + blockHash;
     }
 }

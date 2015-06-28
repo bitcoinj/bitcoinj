@@ -337,7 +337,7 @@ public class BitcoinURI {
             } else {
                 builder.append(",");
             }
-            builder.append("'").append(entry.getKey()).append("'=").append("'").append(entry.getValue().toString()).append("'");
+            builder.append("'").append(entry.getKey()).append("'=").append("'").append(entry.getValue()).append("'");
         }
         builder.append("]");
         return builder.toString();

@@ -585,27 +585,15 @@ public class Block extends Message {
         StringBuilder s = new StringBuilder("v");
         s.append(version);
         s.append(" block: \n");
-        s.append("   previous block: ");
-        s.append(getPrevBlockHash());
-        s.append("\n");
-        s.append("   merkle root: ");
-        s.append(getMerkleRoot());
-        s.append("\n");
-        s.append("   time: [");
-        s.append(time);
-        s.append("] ");
-        s.append(Utils.dateTimeFormat(time * 1000));
-        s.append("\n");
-        s.append("   difficulty target (nBits): ");
-        s.append(difficultyTarget);
-        s.append("\n");
-        s.append("   nonce: ");
-        s.append(nonce);
-        s.append("\n");
+        s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
+        s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
+        s.append("   time: [").append(time).append("] ").append(Utils.dateTimeFormat(time * 1000)).append("\n");
+        s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
+        s.append("   nonce: ").append(nonce).append("\n");
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
             for (Transaction tx : transactions) {
-                s.append(tx.toString());
+                s.append(tx);
             }
         }
         return s.toString();
