@@ -791,7 +791,7 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Removes all the inputs from this transaction.
+     * Removes all the outputs from this transaction.
      * Note that this also invalidates the length attribute
      */
     public void clearOutputs() {
