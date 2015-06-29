@@ -20,14 +20,14 @@ import junit.framework.TestCase;
 
 public class VarIntTest extends TestCase {
     public void testBytes() throws Exception {
-        VarInt a = new VarInt(10);
+        VarInt a = new VarInt(10); // with widening conversion
         assertEquals(1, a.getSizeInBytes());
         assertEquals(1, a.encode().length);
         assertEquals(10, new VarInt(a.encode(), 0).value);
     }
 
     public void testShorts() throws Exception {
-        VarInt a = new VarInt(64000);
+        VarInt a = new VarInt(64000); // with widening conversion
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
         assertEquals(64000, new VarInt(a.encode(), 0).value);
@@ -62,5 +62,10 @@ public class VarIntTest extends TestCase {
         assertEquals(9, a.encode().length);
         byte[] bytes = a.encode();
         assertEquals(0xCAFEBABEDEADBEEFL, new VarInt(bytes, 0).value);
+    }
+
+    public void testSizeOfNegativeInt() throws Exception {
+        // shouldn't normally be passed, but at least stay consistent (bug regression test)
+        assertEquals(VarInt.sizeOf(-1), new VarInt(-1).encode().length);
     }
 }
