@@ -483,8 +483,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void peerTimeoutTest() throws Exception {
+        final int timeout = 100;
         peerGroup.start();
-        peerGroup.setConnectTimeoutMillis(100);
+        peerGroup.setConnectTimeoutMillis(timeout);
 
         final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
         final SettableFuture<Void> peerDisconnectedFuture = SettableFuture.create();
@@ -499,12 +500,20 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 peerDisconnectedFuture.set(null);
             }
         }, Threading.SAME_THREAD);
+        // connect to peer but don't do handshake
         connectPeerWithoutVersionExchange(0);
-        Thread.sleep(50);
-        assertFalse(peerConnectedFuture.isDone() || peerDisconnectedFuture.isDone());
-        Thread.sleep(60);
-        assertTrue(!peerConnectedFuture.isDone());
-        assertTrue(!peerConnectedFuture.isDone() && peerDisconnectedFuture.isDone());
+        long start = System.currentTimeMillis();
+        // wait for disconnect (plus a bit more, in case test server is overloaded)
+        try {
+            peerDisconnectedFuture.get(timeout + 200, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            // the checks below suffice for this case too
+        }
+        // check things after disconnect
+        long end = System.currentTimeMillis();
+        assertFalse(peerConnectedFuture.isDone()); // should never have connected
+        assertTrue(end - start >= timeout); // should not disconnect before timeout
+        assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
     @Test
