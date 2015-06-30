@@ -501,8 +501,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
             }
         }, Threading.SAME_THREAD);
         // connect to peer but don't do handshake
+        long start = System.currentTimeMillis(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);
-        long start = System.currentTimeMillis();
         // wait for disconnect (plus a bit more, in case test server is overloaded)
         try {
             peerDisconnectedFuture.get(timeout + 200, TimeUnit.MILLISECONDS);
