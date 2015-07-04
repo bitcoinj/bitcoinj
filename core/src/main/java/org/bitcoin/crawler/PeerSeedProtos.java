@@ -3,6 +3,7 @@
 
 package org.bitcoin.crawler;
 
+@SuppressWarnings("ALL")
 public final class PeerSeedProtos {
   private PeerSeedProtos() {}
   public static void registerAllExtensions(
