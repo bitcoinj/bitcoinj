@@ -590,7 +590,7 @@ public abstract class AbstractBlockChain {
                 Transaction tx = filteredTxn.get(hash);
                 if (tx != null) {
                     sendTransactionsToListener(newStoredBlock, newBlockType, listener, relativityOffset,
-                            Arrays.asList(tx), !first, falsePositives);
+                            Collections.singletonList(tx), !first, falsePositives);
                 } else {
                     if (listener.notifyTransactionIsInBlock(hash, newStoredBlock, newBlockType, relativityOffset)) {
                         falsePositives.remove(hash);

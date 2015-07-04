@@ -19,7 +19,6 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +53,7 @@ public class RedeemData {
      */
     public static RedeemData of(ECKey key, Script program) {
         checkArgument(program.isSentToAddress() || program.isSentToRawPubKey());
-        return key != null ? new RedeemData(Arrays.asList(key), program) : null;
+        return key != null ? new RedeemData(Collections.singletonList(key), program) : null;
     }
 
     /**
