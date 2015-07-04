@@ -1056,7 +1056,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }        
     }
 
-    public static enum FilterRecalculateMode {
+    public enum FilterRecalculateMode {
         SEND_IF_CHANGED,
         FORCE_SEND_FOR_REFRESH,
         DONT_SEND,

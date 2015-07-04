@@ -28,5 +28,6 @@ public interface StreamParserFactory {
      * @param inetAddress The client's (IP) address
      * @param port The remote port on the client side
      */
-    @Nullable public StreamParser getNewParser(InetAddress inetAddress, int port);
+    @Nullable
+    StreamParser getNewParser(InetAddress inetAddress, int port);
 }

@@ -58,12 +58,13 @@ public class PaymentChannelServerListener {
     /**
      * A factory which generates connection-specific event handlers.
      */
-    public static interface HandlerFactory {
+    public interface HandlerFactory {
         /**
          * Called when a new connection completes version handshake to get a new connection-specific listener.
          * If null is returned, the connection is immediately closed.
          */
-        @Nullable public ServerConnectionEventHandler onNewConnection(SocketAddress clientAddress);
+        @Nullable
+        ServerConnectionEventHandler onNewConnection(SocketAddress clientAddress);
     }
 
     private class ServerHandler {

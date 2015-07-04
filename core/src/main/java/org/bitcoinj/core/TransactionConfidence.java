@@ -160,7 +160,7 @@ public class TransactionConfidence implements Serializable {
      */
     public interface Listener {
         /** An enum that describes why a transaction confidence listener is being invoked (i.e. the class of change). */
-        public enum ChangeReason {
+        enum ChangeReason {
             /**
              * Occurs when the type returned by {@link org.bitcoinj.core.TransactionConfidence#getConfidenceType()}
              * has changed. For example, if a PENDING transaction changes to BUILDING or DEAD, then this reason will
@@ -182,7 +182,7 @@ public class TransactionConfidence implements Serializable {
              */
             SEEN_PEERS,
         }
-        public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason);
+        void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason);
     }
 
     // This is used to ensure that confidence objects which aren't referenced from anywhere but which have an event

@@ -26,17 +26,17 @@ import java.util.Map;
  */
 public interface TransactionBag {
     /** Returns true if this wallet contains a public key which hashes to the given hash. */
-    public boolean isPubKeyHashMine(byte[] pubkeyHash);
+    boolean isPubKeyHashMine(byte[] pubkeyHash);
 
     /** Returns true if this wallet is watching transactions for outputs with the script. */
-    public boolean isWatchedScript(Script script);
+    boolean isWatchedScript(Script script);
 
     /** Returns true if this wallet contains a keypair with the given public key. */
-    public boolean isPubKeyMine(byte[] pubkey);
+    boolean isPubKeyMine(byte[] pubkey);
 
     /** Returns true if this wallet knows the script corresponding to the given hash. */
-    public boolean isPayToScriptHashMine(byte[] payToScriptHash);
+    boolean isPayToScriptHashMine(byte[] payToScriptHash);
 
     /** Returns transactions from a specific pool. */
-    public Map<Sha256Hash, Transaction> getTransactionPool(WalletTransaction.Pool pool);
+    Map<Sha256Hash, Transaction> getTransactionPool(WalletTransaction.Pool pool);
 }

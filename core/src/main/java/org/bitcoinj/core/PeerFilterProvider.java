@@ -28,7 +28,7 @@ public interface PeerFilterProvider {
      * Blocks with timestamps before this time will only have headers downloaded. 0 requires that all blocks be
      * downloaded, and thus this should default to {@link System#currentTimeMillis()}/1000.
      */
-    public long getEarliestKeyCreationTime();
+    long getEarliestKeyCreationTime();
 
     /**
      * Called on all registered filter providers before getBloomFilterElementCount and getBloomFilter are called.
@@ -37,23 +37,23 @@ public interface PeerFilterProvider {
      * all of them will be specified. So the provider must use consistent state. There is guaranteed to be a matching
      * call to endBloomFilterCalculation that can be used to e.g. unlock a lock.
      */
-    public void beginBloomFilterCalculation();
+    void beginBloomFilterCalculation();
 
 
     /**
      * Gets the number of elements that will be added to a bloom filter returned by
      * {@link PeerFilterProvider#getBloomFilter(int, double, long)}
      */
-    public int getBloomFilterElementCount();
+    int getBloomFilterElementCount();
 
     /**
      * Gets a bloom filter that contains all the necessary elements for the listener to receive relevant transactions.
      * Default value should be an empty bloom filter with the given size, falsePositiveRate, and nTweak.
      */
-    public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
+    BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
 
     /** Whether this filter provider depends on the server updating the filter on all matches */
-    public boolean isRequiringUpdateAllBloomFilter();
+    boolean isRequiringUpdateAllBloomFilter();
 
-    public void endBloomFilterCalculation();
+    void endBloomFilterCalculation();
 }

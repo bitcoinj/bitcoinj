@@ -51,11 +51,11 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
      */
     public interface Listener<MessageType extends MessageLite> {
         /** Called when a new protobuf is received from the remote side. */
-        public void messageReceived(ProtobufParser<MessageType> handler, MessageType msg);
+        void messageReceived(ProtobufParser<MessageType> handler, MessageType msg);
         /** Called when the connection is opened and available for writing data to. */
-        public void connectionOpen(ProtobufParser<MessageType> handler);
+        void connectionOpen(ProtobufParser<MessageType> handler);
         /** Called when the connection is closed and no more data should be provided. */
-        public void connectionClosed(ProtobufParser<MessageType> handler);
+        void connectionClosed(ProtobufParser<MessageType> handler);
     }
 
     // The callback listener

@@ -35,9 +35,9 @@ import java.util.concurrent.Executor;
  */
 public interface KeyChain {
     /** Returns true if the given key is in the chain. */
-    public boolean hasKey(ECKey key);
+    boolean hasKey(ECKey key);
 
-    public enum KeyPurpose {
+    enum KeyPurpose {
         RECEIVE_FUNDS,
         CHANGE,
         REFUND,
@@ -45,38 +45,38 @@ public interface KeyChain {
     }
 
     /** Obtains a number of key/s intended for the given purpose. The chain may create new key/s, derive, or re-use an old one. */
-    public List<? extends ECKey> getKeys(KeyPurpose purpose, int numberOfKeys);
+    List<? extends ECKey> getKeys(KeyPurpose purpose, int numberOfKeys);
 
     /** Obtains a key intended for the given purpose. The chain may create a new key, derive one, or re-use an old one. */
-    public ECKey getKey(KeyPurpose purpose);
+    ECKey getKey(KeyPurpose purpose);
 
     /** Returns a list of keys serialized to the bitcoinj protobuf format. */
-    public List<Protos.Key> serializeToProtobuf();
+    List<Protos.Key> serializeToProtobuf();
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
-    public void addEventListener(KeyChainEventListener listener);
+    void addEventListener(KeyChainEventListener listener);
 
     /** Adds a listener for events that are run when keys are added, on the given executor. */
-    public void addEventListener(KeyChainEventListener listener, Executor executor);
+    void addEventListener(KeyChainEventListener listener, Executor executor);
 
     /** Removes a listener for events that are run when keys are added. */
-    public boolean removeEventListener(KeyChainEventListener listener);
+    boolean removeEventListener(KeyChainEventListener listener);
 
     /** Returns the number of keys this key chain manages. */
-    public int numKeys();
+    int numKeys();
 
     /**
      * Returns the number of elements this chain wishes to insert into the Bloom filter. The size passed to
      * {@link #getFilter(int, double, long)} should be at least this large.
      */
-    public int numBloomFilterEntries();
+    int numBloomFilterEntries();
 
     /**
      * <p>Returns the earliest creation time of keys in this chain, in seconds since the epoch. This can return zero
      * if at least one key does not have that data (was created before key timestamping was implemented). If there
      * are no keys in the wallet, {@link Long#MAX_VALUE} is returned.</p>
      */
-    public long getEarliestKeyCreationTime();
+    long getEarliestKeyCreationTime();
 
     /**
      * <p>Gets a bloom filter that contains all of the public keys from this chain, and which will provide the given
@@ -90,5 +90,5 @@ public interface KeyChain {
      * <p>See the docs for {@link org.bitcoinj.core.BloomFilter#BloomFilter(int, double, long)} for a brief
      * explanation of anonymity when using bloom filters, and for the meaning of these parameters.</p>
      */
-    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak);
+    BloomFilter getFilter(int size, double falsePositiveRate, long tweak);
 }

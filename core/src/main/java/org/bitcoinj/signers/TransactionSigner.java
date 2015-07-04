@@ -38,7 +38,7 @@ public interface TransactionSigner {
      * This class wraps transaction proposed to complete keeping a metadata that may be updated, used and effectively
      * shared by transaction signers.
      */
-    public class ProposedTransaction {
+    class ProposedTransaction {
 
         public final Transaction partialTx;
 
@@ -57,7 +57,7 @@ public interface TransactionSigner {
         }
     }
 
-    public static class MissingSignatureException extends RuntimeException {
+    class MissingSignatureException extends RuntimeException {
     }
 
     /**

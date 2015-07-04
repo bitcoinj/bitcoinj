@@ -132,7 +132,7 @@ public interface IPaymentChannelClient {
          * @param expireTime The time, in seconds,  when this channel will be closed by the server. Note this is in absolute time, i.e. seconds since 1970-01-01T00:00:00.
          * @return <code>true</code> if the proposed time is acceptable <code>false</code> otherwise.
          */
-        public boolean acceptExpireTime(long expireTime);
+        boolean acceptExpireTime(long expireTime);
 
         /**
          * <p>Indicates the channel has been successfully opened and

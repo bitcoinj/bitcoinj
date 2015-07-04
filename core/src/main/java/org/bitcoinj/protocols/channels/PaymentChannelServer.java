@@ -75,7 +75,7 @@ public class PaymentChannelServer {
          *
          * <p>Called while holding a lock on the {@link PaymentChannelServer} object - be careful about reentrancy</p>
          */
-        public void sendToClient(Protos.TwoWayChannelMessage msg);
+        void sendToClient(Protos.TwoWayChannelMessage msg);
 
         /**
          * <p>Requests that the connection to the client be closed</p>
@@ -85,7 +85,7 @@ public class PaymentChannelServer {
          * @param reason The reason for the closure, see the individual values for more details.
          *               It is usually safe to ignore this value.
          */
-        public void destroyConnection(CloseReason reason);
+        void destroyConnection(CloseReason reason);
 
         /**
          * <p>Triggered when the channel is opened and payments can begin</p>
@@ -94,7 +94,7 @@ public class PaymentChannelServer {
          *
          * @param contractHash A unique identifier which represents this channel (actually the hash of the multisig contract)
          */
-        public void channelOpen(Sha256Hash contractHash);
+        void channelOpen(Sha256Hash contractHash);
 
         /**
          * <p>Called when the payment in this channel was successfully incremented by the client</p>
@@ -107,7 +107,7 @@ public class PaymentChannelServer {
          * @return A future that completes with the ack message that will be included in the PaymentAck message to the client. Use null for no ack message.
          */
         @Nullable
-        public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
+        ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
     }
     private final ServerConnection conn;
 

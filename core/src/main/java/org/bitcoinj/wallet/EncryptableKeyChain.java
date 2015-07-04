@@ -33,19 +33,19 @@ public interface EncryptableKeyChain extends KeyChain {
      *
      * @return The derived key, in case you wish to cache it for future use.
      */
-    public EncryptableKeyChain toEncrypted(CharSequence password);
+    EncryptableKeyChain toEncrypted(CharSequence password);
 
     /**
      * Returns a new keychain holding identical/cloned keys to this chain, but encrypted under the given key.
      * Old keys and keychains remain valid and so you should ensure you don't accidentally hold references to them.
      */
-    public EncryptableKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey);
+    EncryptableKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey);
 
     /**
      * Decrypts the key chain with the given password. See {@link #toDecrypted(org.spongycastle.crypto.params.KeyParameter)}
      * for details.
      */
-    public EncryptableKeyChain toDecrypted(CharSequence password);
+    EncryptableKeyChain toDecrypted(CharSequence password);
 
     /**
      * Decrypt the key chain with the given AES key and whatever {@link KeyCrypter} is already set. Note that if you
@@ -56,12 +56,12 @@ public interface EncryptableKeyChain extends KeyChain {
      *               create from a password)
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
-    public EncryptableKeyChain toDecrypted(KeyParameter aesKey);
+    EncryptableKeyChain toDecrypted(KeyParameter aesKey);
 
-    public boolean checkPassword(CharSequence password);
-    public boolean checkAESKey(KeyParameter aesKey);
+    boolean checkPassword(CharSequence password);
+    boolean checkAESKey(KeyParameter aesKey);
 
     /** Returns the key crypter used by this key chain, or null if it's not encrypted. */
     @Nullable
-    public KeyCrypter getKeyCrypter();
+    KeyCrypter getKeyCrypter();
 }

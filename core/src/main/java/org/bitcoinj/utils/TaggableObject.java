@@ -32,5 +32,5 @@ public interface TaggableObject {
     void setTag(String tag, ByteString value);
 
     /** Returns a copy of all the tags held by this object. */
-    public Map<String, ByteString> getTags();
+    Map<String, ByteString> getTags();
 }

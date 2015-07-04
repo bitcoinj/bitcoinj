@@ -28,17 +28,17 @@ package org.bitcoinj.core;
  */
 public interface WalletExtension {
     /** Returns a Java package/class style name used to disambiguate this extension from others. */
-    public String getWalletExtensionID();
+    String getWalletExtensionID();
 
     /**
      * If this returns true, the mandatory flag is set when the wallet is serialized and attempts to load it without
      * the extension being in the wallet will throw an exception. This method should not change its result during
      * the objects lifetime.
      */
-    public boolean isWalletExtensionMandatory();
+    boolean isWalletExtensionMandatory();
 
     /** Returns bytes that will be saved in the wallet. */
-    public byte[] serializeWalletExtension();
+    byte[] serializeWalletExtension();
     /** Loads the contents of this object from the wallet. */
-    public void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception;
+    void deserializeWalletExtension(Wallet containingWallet, byte[] data) throws Exception;
 }

@@ -31,7 +31,7 @@ public interface PeerEventListener {
      *
      * @param peerAddresses the set of discovered {@link PeerAddress}es
      */
-    public void onPeersDiscovered(Set<PeerAddress> peerAddresses);
+    void onPeersDiscovered(Set<PeerAddress> peerAddresses);
 
     // TODO: Fix the Block/FilteredBlock type hierarchy so we can avoid the stupid typeless API here.
     /**
@@ -45,7 +45,7 @@ public interface PeerEventListener {
      * @param filteredBlock if non-null, the object that wraps the block header passed as the block param.
      * @param blocksLeft the number of blocks left to download
      */
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft);
+    void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft);
 
     /**
      * Called when a download is started with the initial number of blocks to be downloaded.
@@ -53,7 +53,7 @@ public interface PeerEventListener {
      * @param peer       the peer receiving the block
      * @param blocksLeft the number of blocks left to download
      */
-    public void onChainDownloadStarted(Peer peer, int blocksLeft);
+    void onChainDownloadStarted(Peer peer, int blocksLeft);
 
     /**
      * Called when a peer is connected. If this listener is registered to a {@link Peer} instead of a {@link PeerGroup},
@@ -62,7 +62,7 @@ public interface PeerEventListener {
      * @param peer
      * @param peerCount the total number of connected peers
      */
-    public void onPeerConnected(Peer peer, int peerCount);
+    void onPeerConnected(Peer peer, int peerCount);
 
     /**
      * Called when a peer is disconnected. Note that this won't be called if the listener is registered on a
@@ -73,7 +73,7 @@ public interface PeerEventListener {
      * @param peer
      * @param peerCount the total number of connected peers
      */
-    public void onPeerDisconnected(Peer peer, int peerCount);
+    void onPeerDisconnected(Peer peer, int peerCount);
 
     /**
      * <p>Called when a message is received by a peer, before the message is processed. The returned message is
@@ -84,12 +84,12 @@ public interface PeerEventListener {
      * <p>Note that this will never be called if registered with any executor other than
      * {@link org.bitcoinj.utils.Threading#SAME_THREAD}</p>
      */
-    public Message onPreMessageReceived(Peer peer, Message m);
+    Message onPreMessageReceived(Peer peer, Message m);
 
     /**
      * Called when a new transaction is broadcast over the network.
      */
-    public void onTransaction(Peer peer, Transaction t);
+    void onTransaction(Peer peer, Transaction t);
 
     /**
      * <p>Called when a peer receives a getdata message, usually in response to an "inv" being broadcast. Return as many
@@ -99,5 +99,5 @@ public interface PeerEventListener {
      * {@link org.bitcoinj.utils.Threading#SAME_THREAD}</p>
      */
     @Nullable
-    public List<Message> getData(Peer peer, GetDataMessage m);
+    List<Message> getData(Peer peer, GetDataMessage m);
 }

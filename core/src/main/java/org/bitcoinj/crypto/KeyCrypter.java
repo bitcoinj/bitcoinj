@@ -39,7 +39,7 @@ public interface KeyCrypter extends Serializable {
      * Return the EncryptionType enum value which denotes the type of encryption/ decryption that this KeyCrypter
      * can understand.
      */
-    public EncryptionType getUnderstoodEncryptionType();
+    EncryptionType getUnderstoodEncryptionType();
 
     /**
      * Create a KeyParameter (which typically contains an AES key)
@@ -47,14 +47,14 @@ public interface KeyCrypter extends Serializable {
      * @return KeyParameter The KeyParameter which typically contains the AES key to use for encrypting and decrypting
      * @throws KeyCrypterException
      */
-    public KeyParameter deriveKey(CharSequence password) throws KeyCrypterException;
+    KeyParameter deriveKey(CharSequence password) throws KeyCrypterException;
 
     /**
      * Decrypt the provided encrypted bytes, converting them into unencrypted bytes.
      *
      * @throws KeyCrypterException if decryption was unsuccessful.
      */
-    public byte[] decrypt(EncryptedData encryptedBytesToDecode, KeyParameter aesKey) throws KeyCrypterException;
+    byte[] decrypt(EncryptedData encryptedBytesToDecode, KeyParameter aesKey) throws KeyCrypterException;
 
     /**
      * Encrypt the supplied bytes, converting them into ciphertext.
@@ -62,5 +62,5 @@ public interface KeyCrypter extends Serializable {
      * @return encryptedPrivateKey An encryptedPrivateKey containing the encrypted bytes and an initialisation vector.
      * @throws KeyCrypterException if encryption was unsuccessful
      */
-    public EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException;
+    EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException;
 }

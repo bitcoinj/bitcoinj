@@ -58,12 +58,12 @@ public class WalletFiles {
          * Called on the auto-save thread when a new temporary file is created but before the wallet data is saved
          * to it. If you want to do something here like adjust permissions, go ahead and do so.
          */
-        public void onBeforeAutoSave(File tempFile);
+        void onBeforeAutoSave(File tempFile);
 
         /**
          * Called on the auto-save thread after the newly created temporary file has been filled with data and renamed.
          */
-        public void onAfterAutoSave(File newlySavedFile);
+        void onAfterAutoSave(File newlySavedFile);
     }
 
     public WalletFiles(final Wallet wallet, File file, long delay, TimeUnit delayTimeUnit) {

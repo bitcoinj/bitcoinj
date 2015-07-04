@@ -22,5 +22,5 @@ package org.bitcoinj.core;
  */
 public interface TransactionBroadcaster {
     /** Broadcast the given transaction on the network */
-    public TransactionBroadcast broadcastTransaction(final Transaction tx);
+    TransactionBroadcast broadcastTransaction(final Transaction tx);
 }

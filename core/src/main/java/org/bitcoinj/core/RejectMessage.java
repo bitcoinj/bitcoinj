@@ -26,7 +26,7 @@ public class RejectMessage extends Message {
     private static final long serialVersionUID = -5246995579800334336L;
 
     private String message, reason;
-    public static enum RejectCode {
+    public enum RejectCode {
         /** The message was not able to be parsed */
         MALFORMED((byte) 0x01),
         /** The message described an invalid object */
