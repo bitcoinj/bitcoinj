@@ -83,7 +83,6 @@ public class PeerGroup implements TransactionBroadcaster {
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
     private final NetworkParameters params;
-    private final Context context;
     @Nullable private final AbstractBlockChain chain;
 
     // This executor is used to queue up jobs: it's used when we don't want to use locks for mutual exclusion,
@@ -357,7 +356,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * connections and keep track of existing ones.
      */
     private PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
-        this.context = checkNotNull(context);
+        checkNotNull(context);
         this.params = context.getParams();
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
