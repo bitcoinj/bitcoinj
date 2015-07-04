@@ -195,7 +195,7 @@
                                         <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
                                         <urn>org.fusesource.leveldbjni:leveldbjni-all:1.8:jar:null:compile:707350a2eeb1fa2ed77a32ddb3893ed308e941db</urn>
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
-                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.4.201502262128:maven-plugin:null:runtime:ee12ed04db135c74d0ae99e9c4e4754ee1582edb</urn>
+                                        <urn>org.jacoco:jacoco-maven-plugin:0.7.5.201505241946:maven-plugin:null:runtime:0a5e4dbbcd9b00e5ee42d928e10ab84f6f0b0835</urn>
                                         <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
                                         <urn>com.squareup.okhttp:okhttp:2.2.0:jar:null:runtime:959c454243581fdf730abfd4f4745441724bcf2c</urn>
                                         <urn>com.squareup.okio:okio:1.2.0:jar:null:runtime:c0b52915a48fa91b1b94a28d4a2997bac5f524df</urn>
@@ -259,7 +259,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.4.201502262128</version>
+                <version>0.7.5.201505241946</version>
                 <configuration>
                     <excludes>
                         <exclude>**/Protos*.class</exclude> <!-- Exclude generated protobuf classes -->
