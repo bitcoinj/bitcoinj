@@ -1380,7 +1380,7 @@ public abstract class BtcFormat extends Format {
      */
     protected static void prefixUnitsIndicator(DecimalFormat numberFormat, int scale) {
         assert Thread.holdsLock(numberFormat); // make sure caller intends to reset before changing
-        DecimalFormatSymbols fs = (DecimalFormatSymbols)numberFormat.getDecimalFormatSymbols();
+        DecimalFormatSymbols fs = numberFormat.getDecimalFormatSymbols();
         setSymbolAndCode(numberFormat,
             prefixSymbol(fs.getCurrencySymbol(), scale), prefixCode(fs.getInternationalCurrencySymbol(), scale)
         );

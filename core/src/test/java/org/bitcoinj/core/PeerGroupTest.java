@@ -329,7 +329,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p1, b1);
         // Now we successfully connect to another peer. There should be no messages sent.
         InboundMessageQueuer p2 = connectPeer(2);
-        Message message = (Message)outbound(p2);
+        Message message = outbound(p2);
         assertNull(message == null ? "" : message.toString(), message);
     }
 

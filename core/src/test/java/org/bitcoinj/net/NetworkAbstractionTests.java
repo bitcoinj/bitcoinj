@@ -69,7 +69,7 @@ public class NetworkAbstractionTests {
             channels.openConnection(addr, parser);
             if (parser.writeTarget.get() == null)
                 Thread.sleep(100);
-            return (MessageWriteTarget) parser.writeTarget.get();
+            return parser.writeTarget.get();
         } else if (clientType == 2)
             return new NioClient(addr, parser, 100);
         else if (clientType == 3)

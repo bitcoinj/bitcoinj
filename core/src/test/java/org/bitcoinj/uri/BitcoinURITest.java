@@ -314,7 +314,7 @@ public class BitcoinURITest {
                 + "?aardvark=true");
         assertEquals("BitcoinURI['aardvark'='true','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']", testObject.toString());
 
-        assertEquals("true", (String) testObject.getParameterByName("aardvark"));
+        assertEquals("true", testObject.getParameterByName("aardvark"));
 
         // Unknown not required field (isolated)
         try {

@@ -49,7 +49,7 @@ public class GetBlocksMessage extends Message {
         int startCount = (int) readVarInt();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
-        length = (int) (cursor - offset + ((startCount + 1) * 32));
+        length = cursor - offset + ((startCount + 1) * 32);
     }
 
     @Override
