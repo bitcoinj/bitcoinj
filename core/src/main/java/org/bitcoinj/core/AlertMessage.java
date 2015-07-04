@@ -190,7 +190,6 @@ public class AlertMessage extends Message {
      * The inclusive upper bound on software versions considered for the purposes of this alert. The Satoshi
      * client compares this against a protocol version field, but as long as the subVer field is used to restrict it your
      * alerts could use any version numbers.
-     * @return
      */
     public long getMaxVer() {
         return maxVer;
