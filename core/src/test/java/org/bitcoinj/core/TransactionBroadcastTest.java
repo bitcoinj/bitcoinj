@@ -80,10 +80,10 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // We expect two peers to receive a tx message, and at least one of the others must announce for the future to
         // complete successfully.
         Message[] messages = {
-                (Message) outbound(channels[0]),
-                (Message) outbound(channels[1]),
-                (Message) outbound(channels[2]),
-                (Message) outbound(channels[3])
+                outbound(channels[0]),
+                outbound(channels[1]),
+                outbound(channels[2]),
+                outbound(channels[3])
         };
         // 0 and 3 are randomly selected to receive the broadcast.
         assertEquals(tx, messages[0]);
@@ -250,6 +250,6 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer. No extra Bloom filter because no change address was needed.
-        assertEquals(t3.getHash(), ((Transaction) outbound(p1)).getHash());
+        assertEquals(t3.getHash(), outbound(p1).getHash());
     }
 }

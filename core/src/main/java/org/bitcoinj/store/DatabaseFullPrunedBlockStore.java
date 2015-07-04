@@ -667,10 +667,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write((int) (0xFF & numTxn));
-                bos.write((int) (0xFF & (numTxn >> 8)));
-                bos.write((int) (0xFF & (numTxn >> 16)));
-                bos.write((int) (0xFF & (numTxn >> 24)));
+                bos.write(0xFF & numTxn);
+                bos.write(0xFF & (numTxn >> 8));
+                bos.write(0xFF & (numTxn >> 16));
+                bos.write(0xFF & (numTxn >> 24));
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();

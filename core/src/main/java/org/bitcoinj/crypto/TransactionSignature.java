@@ -90,7 +90,7 @@ public class TransactionSignature extends ECKey.ECDSASignature {
         if (signature.length < 9 || signature.length > 73)
             return false;
 
-        int hashType = signature[signature.length-1] & ((int)(~Transaction.SIGHASH_ANYONECANPAY_VALUE));
+        int hashType = signature[signature.length-1] & ~Transaction.SIGHASH_ANYONECANPAY_VALUE;
         if (hashType < (Transaction.SigHash.ALL.ordinal() + 1) || hashType > (Transaction.SigHash.SINGLE.ordinal() + 1))
             return false;
 
