@@ -22,12 +22,20 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.crypto.ChildNumber.createHardened;
+import static org.bitcoinj.crypto.ChildNumber.createNonHardened;
+import static org.bitcoinj.crypto.HDUtils.formatPath;
+import static org.bitcoinj.crypto.HDUtils.parsePath;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.util.LinkedList;
 import java.util.List;
 
 public class HDUtilsTest {
     @Test
     public void testHmac() throws Exception {
-        String[] tv = {
+        String[] testVector = {
                 "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b" +
                         "0b0b0b0b",
                 "4869205468657265",
@@ -109,8 +117,8 @@ public class HDUtilsTest {
                         "134676fb6de0446065c97440fa8c6a58"
         };
 
-        for (int i = 0; i < tv.length; i += 3) {
-            Assert.assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
+        for (int i = 0; i < testVector.length; i += 3) {
+            Assert.assertArrayEquals("Case " + i, getBytes(testVector, i + 2), HDUtils.hmacSha512(getBytes(testVector, i), getBytes(testVector, i + 1)));
         }
     }
 
@@ -121,64 +129,75 @@ public class HDUtilsTest {
     @Test
     public void testLongToByteArray() throws Exception {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        Assert.assertEquals("00000402", HEX.encode(bytes));
+        assertThat(HEX.encode(bytes), is("00000402"));
     }
 
 
     @Test
     public void testFormatPath() {
-        Object[] tv = {
-                "M/44H/0H/0H/1/1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
+        List<List<ChildNumber>> paths = new LinkedList<List<ChildNumber>>();
+        List<String> expectedStringPaths = new LinkedList<String>();
 
-                "M/7H/3/3/1H",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
+        paths.add(pathFor_44H_0H_0H_1_1());
+        expectedStringPaths.add("M/44H/0H/0H/1/1");
 
-                "M/1H/2H/3H",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+        paths.add(pathFor_7H_3_3_1H());
+        expectedStringPaths.add("M/7H/3/3/1H");
 
-                "M/1/2/3",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
-        };
+        paths.add(pathFor_1H_2H_3H());
+        expectedStringPaths.add("M/1H/2H/3H");
 
-        for (int i = 0; i < tv.length; i += 2) {
-            String expectedStrPath = (String) tv[i];
-            List<ChildNumber> path = (List<ChildNumber>) tv[i+1];
+        paths.add(pathFor_1_2_3());
+        expectedStringPaths.add("M/1/2/3");
 
-            String generatedStrPath = HDUtils.formatPath(path);
+        for (int i = 0; i < expectedStringPaths.size(); i++) {
+            String expectedStringPath = expectedStringPaths.get(i);
+            List<ChildNumber> path = paths.get(i);
 
-            Assert.assertEquals(generatedStrPath, expectedStrPath);
+            assertThat(formatPath(path), is(expectedStringPath));
         }
-
     }
 
     @Test
     public void testParsePath() {
-        Object[] tv = {
-                "M / 44H / 0H / 0H / 1 / 1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
+        List<String> stringPaths = new LinkedList<String>();
+        List<List<ChildNumber>> expectedPaths = new LinkedList<List<ChildNumber>>();
 
-                "M/7H/3/3/1H/",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
+        stringPaths.add("M / 44H / 0H / 0H / 1 / 1");
+        expectedPaths.add(pathFor_44H_0H_0H_1_1());
 
-                "1 H / 2 H / 3 H /",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+        stringPaths.add("M/7H/3/3/1H/");
+        expectedPaths.add(pathFor_7H_3_3_1H());
 
-                "1 / 2 / 3 /",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
-        };
+        stringPaths.add("1 H / 2 H / 3 H /");
+        expectedPaths.add(pathFor_1H_2H_3H());
 
-        for (int i = 0; i < tv.length; i += 2) {
-            String strPath = (String) tv[i];
-            List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i+1];
+        stringPaths.add("1 / 2 / 3 /");
+        expectedPaths.add(pathFor_1_2_3());
 
-            List<ChildNumber> path = HDUtils.parsePath(strPath);
+        for (int i = 0; i < stringPaths.size(); i++) {
+            String stringPath = stringPaths.get(i);
+            List<ChildNumber> expectedPath = expectedPaths.get(i);
 
-            Assert.assertEquals(path, expectedPath);
+            assertThat(parsePath(stringPath), is(expectedPath));
         }
+    }
+
+    private ImmutableList<ChildNumber> pathFor_44H_0H_0H_1_1() {
+        return ImmutableList.of(createHardened(44), createHardened(0), createHardened(0),
+                createNonHardened(1), createNonHardened(1));
+    }
+
+    private ImmutableList<ChildNumber> pathFor_1H_2H_3H() {
+        return ImmutableList.of(createHardened(1), createHardened(2), createHardened(3));
+    }
+
+    private ImmutableList<ChildNumber> pathFor_1_2_3() {
+        return ImmutableList.of(createNonHardened(1), createNonHardened(2), createNonHardened(3));
+    }
+
+    private ImmutableList<ChildNumber> pathFor_7H_3_3_1H() {
+        return ImmutableList.of(createHardened(7), createNonHardened(3), createNonHardened(3),
+                createHardened(1));
     }
 }
