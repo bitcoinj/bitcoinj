@@ -234,17 +234,17 @@ public class VersionMessage extends Message {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n");
-        sb.append("client version: ").append(clientVersion).append("\n");
-        sb.append("local services: ").append(localServices).append("\n");
-        sb.append("time:           ").append(time).append("\n");
-        sb.append("my addr:        ").append(myAddr).append("\n");
-        sb.append("their addr:     ").append(theirAddr).append("\n");
-        sb.append("sub version:    ").append(subVer).append("\n");
-        sb.append("best height:    ").append(bestHeight).append("\n");
-        sb.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
-        return sb.toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n");
+        stringBuilder.append("client version: ").append(clientVersion).append("\n");
+        stringBuilder.append("local services: ").append(localServices).append("\n");
+        stringBuilder.append("time:           ").append(time).append("\n");
+        stringBuilder.append("my addr:        ").append(myAddr).append("\n");
+        stringBuilder.append("their addr:     ").append(theirAddr).append("\n");
+        stringBuilder.append("sub version:    ").append(subVer).append("\n");
+        stringBuilder.append("best height:    ").append(bestHeight).append("\n");
+        stringBuilder.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
+        return stringBuilder.toString();
     }
 
     public VersionMessage duplicate() {
