@@ -38,7 +38,7 @@ public class TransactionOutputChanges {
     }
     
     public TransactionOutputChanges(InputStream in) throws IOException {
-        int numOutsCreated = ((in.read() & 0xFF) << 0) |
+        int numOutsCreated = (in.read() & 0xFF) |
                              ((in.read() & 0xFF) << 8) |
                              ((in.read() & 0xFF) << 16) |
                              ((in.read() & 0xFF) << 24);
@@ -46,7 +46,7 @@ public class TransactionOutputChanges {
         for (int i = 0; i < numOutsCreated; i++)
             txOutsCreated.add(new UTXO(in));
         
-        int numOutsSpent = ((in.read() & 0xFF) << 0) |
+        int numOutsSpent = (in.read() & 0xFF) |
                            ((in.read() & 0xFF) << 8) |
                            ((in.read() & 0xFF) << 16) |
                            ((in.read() & 0xFF) << 24);
@@ -57,7 +57,7 @@ public class TransactionOutputChanges {
 
     public void serializeToStream(OutputStream bos) throws IOException {
         int numOutsCreated = txOutsCreated.size();
-        bos.write(0xFF & (numOutsCreated >> 0));
+        bos.write(0xFF & numOutsCreated);
         bos.write(0xFF & (numOutsCreated >> 8));
         bos.write(0xFF & (numOutsCreated >> 16));
         bos.write(0xFF & (numOutsCreated >> 24));
@@ -66,7 +66,7 @@ public class TransactionOutputChanges {
         }
         
         int numOutsSpent = txOutsSpent.size();
-        bos.write(0xFF & (numOutsSpent >> 0));
+        bos.write(0xFF & numOutsSpent);
         bos.write(0xFF & (numOutsSpent >> 8));
         bos.write(0xFF & (numOutsSpent >> 16));
         bos.write(0xFF & (numOutsSpent >> 24));

@@ -667,7 +667,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write((int) (0xFF & (numTxn >> 0)));
+                bos.write((int) (0xFF & numTxn));
                 bos.write((int) (0xFF & (numTxn >> 8)));
                 bos.write((int) (0xFF & (numTxn >> 16)));
                 bos.write((int) (0xFF & (numTxn >> 24)));
@@ -805,7 +805,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             StoredUndoableBlock block;
             if (txOutChanges == null) {
                 int offset = 0;
-                int numTxn = ((transactions[offset++] & 0xFF) << 0) |
+                int numTxn = ((transactions[offset++] & 0xFF)) |
                         ((transactions[offset++] & 0xFF) << 8) |
                         ((transactions[offset++] & 0xFF) << 16) |
                         ((transactions[offset++] & 0xFF) << 24);

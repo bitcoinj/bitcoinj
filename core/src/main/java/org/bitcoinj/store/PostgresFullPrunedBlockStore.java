@@ -180,7 +180,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write((int) (0xFF & (numTxn >> 0)));
+                bos.write((int) (0xFF & numTxn));
                 bos.write((int) (0xFF & (numTxn >> 8)));
                 bos.write((int) (0xFF & (numTxn >> 16)));
                 bos.write((int) (0xFF & (numTxn >> 24)));
