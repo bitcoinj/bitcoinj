@@ -62,8 +62,6 @@ public class LazyParseByteCacheTest {
             "00 8b 48 30 45 02 21 00  f3 58 1e 19 72 ae 8a c7" +
             "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a");
 
-    private Context context;
-    private Wallet wallet;
     private BlockStore blockStore;
     private NetworkParameters unitTestParams;
     
@@ -83,8 +81,8 @@ public class LazyParseByteCacheTest {
     @Before
     public void setUp() throws Exception {
         unitTestParams = UnitTestParams.get();
-        context = new Context(unitTestParams);
-        wallet = new Wallet(context);
+        Context context = new Context(unitTestParams);
+        Wallet wallet = new Wallet(context);
         wallet.freshReceiveKey();
 
         resetBlockStore();

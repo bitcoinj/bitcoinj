@@ -49,7 +49,6 @@ public class BitcoindComparisonTool {
     private static final Logger log = LoggerFactory.getLogger(BitcoindComparisonTool.class);
 
     private static NetworkParameters params;
-    private static FullPrunedBlockStore store;
     private static FullPrunedBlockChain chain;
     private static Sha256Hash bitcoindChainHead;
     private static volatile InventoryMessage mostRecentInv = null;
@@ -74,8 +73,8 @@ public class BitcoindComparisonTool {
         final Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
 
         try {
-            store = new H2FullPrunedBlockStore(params, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
-            ((H2FullPrunedBlockStore)store).resetStore();
+            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(params, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
+            store.resetStore();
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(params, store);
         } catch (BlockStoreException e) {
