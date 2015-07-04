@@ -1,7 +1,7 @@
 package org.bitcoinj.uri;
 
 /**
- * <p>Exception to provide the following to {@link org.multibit.qrcode.BitcoinURI}:</p>
+ * <p>Exception to provide the following to {@link org.bitcoinj.uri.BitcoinURI}:</p>
  * <ul>
  * <li>Provision of parsing error messages</li>
  * </ul>

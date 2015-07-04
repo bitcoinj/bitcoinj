@@ -25,8 +25,8 @@ import org.bitcoinj.core.Monetary;
 import com.google.common.math.LongMath;
 
 /**
- * Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type safety. Fiat
- * values always come with an attached currency code.
+ * Represents a monetary fiat value. It was decided to not fold this into {@link org.bitcoinj.core.Coin} because of type
+ * safety. Fiat values always come with an attached currency code.
  * 
  * This class is immutable.
  */

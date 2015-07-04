@@ -1,7 +1,7 @@
 package org.bitcoinj.crypto;
 
 /**
- * <p>Exception to provide the following to {@link EncrypterDecrypterOpenSSL}:</p>
+ * <p>Exception to provide the following:</p>
  * <ul>
  * <li>Provision of encryption / decryption exception</li>
  * </ul>
