@@ -228,7 +228,7 @@ public final class MonetaryFormat {
      * Configure currency code for given decimal separator shift. This configuration is not relevant for parsing.
      * 
      * @param codeShift
-     *            decimal separator shift, see {@link #shift()}
+     *            decimal separator shift, see {@link #shift}
      * @param code
      *            currency code
      */
@@ -401,7 +401,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Parse a human readable fiat value to a {@link org.bitcoinj.core.Fiat} instance.
+     * Parse a human readable fiat value to a {@link org.bitcoinj.utils.Fiat} instance.
      * 
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason

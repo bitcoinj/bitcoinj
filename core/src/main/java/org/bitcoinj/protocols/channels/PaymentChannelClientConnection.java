@@ -162,7 +162,9 @@ public class PaymentChannelClientConnection {
      * an error before the channel has reached the open state.</p>
      *
      * <p>After this future completes successfully, you may call
-     * {@link PaymentChannelClientConnection#incrementPayment(Coin)} or {@link PaymentChannelClientConnection#incrementPayment(Coin, com.google.protobuf.ByteString)} to begin paying the server.</p>
+     * {@link PaymentChannelClientConnection#incrementPayment(Coin)} or
+     * {@link PaymentChannelClientConnection#incrementPayment(Coin, com.google.protobuf.ByteString, KeyParameter)} to
+     * begin paying the server.</p>
      */
     public ListenableFuture<PaymentChannelClientConnection> getChannelOpenFuture() {
         return channelOpenFuture;
