@@ -619,7 +619,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
     protected DeterministicKey getKeyByPath(ChildNumber... path) {
-        return getKeyByPath(ImmutableList.<ChildNumber>copyOf(path));
+        return getKeyByPath(ImmutableList.copyOf(path));
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
