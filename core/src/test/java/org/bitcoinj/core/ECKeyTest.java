@@ -58,8 +58,6 @@ import static org.junit.Assert.*;
 public class ECKeyTest {
     private static final Logger log = LoggerFactory.getLogger(ECKeyTest.class);
 
-    private SecureRandom secureRandom;
-
     private KeyCrypter keyCrypter;
 
     private static CharSequence PASSWORD1 = "my hovercraft has eels";
@@ -67,7 +65,7 @@ public class ECKeyTest {
 
     @Before
     public void setUp() throws Exception {
-        secureRandom = new SecureRandom();
+        SecureRandom secureRandom = new SecureRandom();
 
         byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
         secureRandom.nextBytes(salt);
