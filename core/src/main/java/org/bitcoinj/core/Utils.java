@@ -79,21 +79,21 @@ public class Utils {
     }
 
     public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
-        out[offset + 0] = (byte) (0xFF & (val >> 24));
+        out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
         out[offset + 2] = (byte) (0xFF & (val >> 8));
-        out[offset + 3] = (byte) (0xFF & (val >> 0));
+        out[offset + 3] = (byte) (0xFF & val);
     }
 
     public static void uint32ToByteArrayLE(long val, byte[] out, int offset) {
-        out[offset + 0] = (byte) (0xFF & (val >> 0));
+        out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
         out[offset + 3] = (byte) (0xFF & (val >> 24));
     }
 
     public static void uint64ToByteArrayLE(long val, byte[] out, int offset) {
-        out[offset + 0] = (byte) (0xFF & (val >> 0));
+        out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
         out[offset + 3] = (byte) (0xFF & (val >> 24));
@@ -104,14 +104,14 @@ public class Utils {
     }
 
     public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & (val >> 0)));
+        stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 24)));
     }
     
     public static void int64ToByteStreamLE(long val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & (val >> 0)));
+        stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 24)));
@@ -187,14 +187,14 @@ public class Utils {
 }
 
     public static long readUint32(byte[] bytes, int offset) {
-        return ((bytes[offset++] & 0xFFL) << 0) |
+        return (bytes[offset++] & 0xFFL) |
                 ((bytes[offset++] & 0xFFL) << 8) |
                 ((bytes[offset++] & 0xFFL) << 16) |
                 ((bytes[offset] & 0xFFL) << 24);
     }
     
     public static long readInt64(byte[] bytes, int offset) {
-        return ((bytes[offset++] & 0xFFL) << 0) |
+        return (bytes[offset++] & 0xFFL) |
                ((bytes[offset++] & 0xFFL) << 8) |
                ((bytes[offset++] & 0xFFL) << 16) |
                ((bytes[offset++] & 0xFFL) << 24) |
@@ -205,10 +205,10 @@ public class Utils {
     }
 
     public static long readUint32BE(byte[] bytes, int offset) {
-        return ((bytes[offset + 0] & 0xFFL) << 24) |
+        return ((bytes[offset] & 0xFFL) << 24) |
                 ((bytes[offset + 1] & 0xFFL) << 16) |
                 ((bytes[offset + 2] & 0xFFL) << 8) |
-                ((bytes[offset + 3] & 0xFFL) << 0);
+                (bytes[offset + 3] & 0xFFL);
     }
 
     public static int readUint16BE(byte[] bytes, int offset) {
@@ -309,7 +309,7 @@ public class Utils {
         bytes[3] = (byte) size;
         if (size >= 1) bytes[4] = (byte) ((compact >> 16) & 0xFF);
         if (size >= 2) bytes[5] = (byte) ((compact >> 8) & 0xFF);
-        if (size >= 3) bytes[6] = (byte) ((compact >> 0) & 0xFF);
+        if (size >= 3) bytes[6] = (byte) (compact & 0xFF);
         return decodeMPI(bytes, true);
     }
 

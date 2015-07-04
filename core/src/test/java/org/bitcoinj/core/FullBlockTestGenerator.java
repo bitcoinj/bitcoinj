@@ -158,7 +158,7 @@ public class FullBlockTestGenerator {
                         outStream.write((int) (params.getPacketMagic() >>> 24));
                         outStream.write((int) (params.getPacketMagic() >>> 16));
                         outStream.write((int) (params.getPacketMagic() >>> 8));
-                        outStream.write((int) (params.getPacketMagic() >>> 0));
+                        outStream.write((int) params.getPacketMagic());
                         byte[] block = ((BlockAndValidity)element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
                         Utils.uint32ToByteArrayBE(block.length, length, 0);
