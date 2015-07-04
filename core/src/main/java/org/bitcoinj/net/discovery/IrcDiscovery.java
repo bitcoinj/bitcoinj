@@ -185,7 +185,7 @@ public class IrcDiscovery implements PeerDiscovery {
                 log.warn("Exception whilst closing IRC discovery: " + e.toString());
             }
         }
-        return addresses.toArray(new InetSocketAddress[]{});
+        return addresses.toArray(new InetSocketAddress[addresses.size()]);
     }
 
     private void logAndSend(String command) throws Exception {
