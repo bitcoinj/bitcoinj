@@ -4811,8 +4811,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
      * to re-organise coins internally. A good time to call this would be after receiving coins for an unencrypted
      * wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and just want to know
-     * if some maintenance needs doing, call this method with andSend set to false and look at the returned list of
-     * transactions. Maintenance might also include internal changes that involve some processing or work but
+     * if some maintenance needs doing, call this method with {@code signAndSend} set to false and look at the returned
+     * list of transactions. Maintenance might also include internal changes that involve some processing or work but
      * which don't require making transactions - these will happen automatically unless the password is required
      * in which case an exception will be thrown.
      *
