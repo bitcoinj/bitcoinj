@@ -37,6 +37,7 @@ import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.*;
+import org.bitcoinj.wallet.maintenance.BroadcastTransactionsAndLog;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
 
@@ -4834,28 +4835,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
-        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<ListenableFuture<Transaction>>(txns.size());
-        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
-        for (Transaction tx : txns) {
-            try {
-                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
-                futures.add(future);
-                Futures.addCallback(future, new FutureCallback<Transaction>() {
-                    @Override
-                    public void onSuccess(Transaction transaction) {
-                        log.info("Successfully broadcast key rotation tx: {}", transaction);
-                    }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        log.error("Failed to broadcast key rotation tx", throwable);
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Failed to broadcast rekey tx", e);
-            }
-        }
-        return Futures.allAsList(futures);
+        BroadcastTransactionsAndLog broadcastTransactionsAndLog = new BroadcastTransactionsAndLog(vTransactionBroadcaster);
+        broadcastTransactionsAndLog.setSuccessMessage("Successfully broadcast key rotation tx: {}");
+        broadcastTransactionsAndLog.setErrorMessage("Failed to broadcast key rotation tx");
+        return broadcastTransactionsAndLog.getBroadcastFutures(txns);
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
