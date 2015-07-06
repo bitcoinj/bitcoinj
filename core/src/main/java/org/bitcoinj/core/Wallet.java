@@ -37,6 +37,7 @@ import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.*;
+import org.bitcoinj.wallet.maintenance.BroadcastTransactionsAndLog;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
 
@@ -4811,8 +4812,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
      * to re-organise coins internally. A good time to call this would be after receiving coins for an unencrypted
      * wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and just want to know
-     * if some maintenance needs doing, call this method with andSend set to false and look at the returned list of
-     * transactions. Maintenance might also include internal changes that involve some processing or work but
+     * if some maintenance needs doing, call this method with {@code signAndSend} set to false and look at the returned
+     * list of transactions. Maintenance might also include internal changes that involve some processing or work but
      * which don't require making transactions - these will happen automatically unless the password is required
      * in which case an exception will be thrown.
      *
@@ -4834,28 +4835,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
-        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<ListenableFuture<Transaction>>(txns.size());
-        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
-        for (Transaction tx : txns) {
-            try {
-                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
-                futures.add(future);
-                Futures.addCallback(future, new FutureCallback<Transaction>() {
-                    @Override
-                    public void onSuccess(Transaction transaction) {
-                        log.info("Successfully broadcast key rotation tx: {}", transaction);
-                    }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        log.error("Failed to broadcast key rotation tx", throwable);
-                    }
-                });
-            } catch (Exception e) {
-                log.error("Failed to broadcast rekey tx", e);
-            }
-        }
-        return Futures.allAsList(futures);
+        BroadcastTransactionsAndLog broadcastTransactionsAndLog = new BroadcastTransactionsAndLog(vTransactionBroadcaster);
+        broadcastTransactionsAndLog.setSuccessMessage("Successfully broadcast key rotation tx: {}");
+        broadcastTransactionsAndLog.setErrorMessage("Failed to broadcast key rotation tx");
+        return broadcastTransactionsAndLog.getBroadcastFutures(txns);
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
