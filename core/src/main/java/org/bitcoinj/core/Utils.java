@@ -485,7 +485,7 @@ public class Utils {
             // Didn't decode as hex, try base58.
             try {
                 return Base58.decodeChecked(data);
-            } catch (AddressFormatException e1) {
+            } catch (IllegalArgumentException e1) {
                 return null;
             }
         }

@@ -212,7 +212,7 @@ public class IrcDiscovery implements PeerDiscovery {
                 //
                 // decodeChecked removes the checksum from the returned bytes.
                 addressBytes = Base58.decodeChecked(user.substring(1));
-            } catch (AddressFormatException e) {
+            } catch (IllegalArgumentException e) {
                 log.warn("IRC nick does not parse as base58: " + user);
                 continue;
             }

@@ -495,11 +495,7 @@ public class DeterministicKey extends ECKey {
       *  @param parent The parent node in the given key's deterministic hierarchy.
       */
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58, NetworkParameters params) {
-        try {
-            return deserialize(params, Base58.decodeChecked(base58), parent);
-        } catch (AddressFormatException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return deserialize(params, Base58.decodeChecked(base58), parent);
     }
 
     /**

@@ -37,7 +37,7 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
     protected final int version;
     protected byte[] bytes;
 
-    protected VersionedChecksummedBytes(String encoded) throws AddressFormatException {
+    protected VersionedChecksummedBytes(String encoded) throws IllegalArgumentException {
         byte[] versionAndDataBytes = Base58.decodeChecked(encoded);
         byte versionByte = versionAndDataBytes[0];
         version = versionByte & 0xFF;

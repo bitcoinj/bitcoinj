@@ -95,9 +95,9 @@ public class Base58 {
      *
      * @param input the base58-encoded string to decode
      * @return the decoded data bytes
-     * @throws AddressFormatException if the given string is not a valid base58 string
+     * @throws IllegalArgumentException if the given string is not a valid base58 string
      */
-    public static byte[] decode(String input) throws AddressFormatException {
+    public static byte[] decode(String input) throws IllegalArgumentException {
         if (input.length() == 0) {
             return new byte[0];
         }
@@ -106,7 +106,7 @@ public class Base58 {
         for (int i = 0; i < input.length(); ++i) {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
-            if (digit < 0) {
+            if (digit < 0) { // throw AFE rather than IAE for backwards-compatibility
                 throw new AddressFormatException("Illegal character " + c + " at position " + i);
             }
             input58[i] = (byte) digit;
@@ -133,7 +133,7 @@ public class Base58 {
         return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
     }
     
-    public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
+    public static BigInteger decodeToBigInteger(String input) throws IllegalArgumentException {
         return new BigInteger(1, decode(input));
     }
 
@@ -143,17 +143,17 @@ public class Base58 {
      * removed from the returned data.
      *
      * @param input the base58-encoded string to decode (which should include the checksum)
-     * @throws AddressFormatException if the input is not base 58 or the checksum does not validate.
+     * @throws IllegalArgumentException if the input is not base 58 or the checksum does not validate
      */
-    public static byte[] decodeChecked(String input) throws AddressFormatException {
+    public static byte[] decodeChecked(String input) throws IllegalArgumentException {
         byte[] decoded  = decode(input);
         if (decoded.length < 4)
-            throw new AddressFormatException("Input too short");
+            throw new AddressFormatException("Input too short"); // AFE for backwards-compatibility
         byte[] data = Arrays.copyOfRange(decoded, 0, decoded.length - 4);
         byte[] checksum = Arrays.copyOfRange(decoded, decoded.length - 4, decoded.length);
         byte[] actualChecksum = Arrays.copyOfRange(Sha256Hash.hashTwice(data), 0, 4);
         if (!Arrays.equals(checksum, actualChecksum))
-            throw new AddressFormatException("Checksum does not validate");
+            throw new AddressFormatException("Checksum does not validate"); // AFE for backwards-compatibility
         return data;
     }
 
