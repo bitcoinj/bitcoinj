@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
+
 public class InventoryItem {
     
     /**
@@ -48,12 +50,11 @@ public class InventoryItem {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         InventoryItem other = (InventoryItem) o;
-        return type == other.type &&
-               hash.equals(other.hash);
+        return type == other.type && hash.equals(other.hash);
     }
 
     @Override
     public int hashCode() {
-        return hash.hashCode() + type.ordinal();
+        return Objects.hashCode(type, hash);
     }
 }

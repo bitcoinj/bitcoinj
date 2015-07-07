@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import org.bitcoinj.script.*;
 import org.slf4j.*;
 
@@ -429,22 +430,13 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         TransactionOutput other = (TransactionOutput) o;
-
-        if (!Arrays.equals(scriptBytes, other.scriptBytes)) return false;
-        if (value != other.value) return false;
-        if (parent != null && parent != other.parent) return false;
-
-        return true;
+        return value == other.value && (parent == null || parent == other.parent)
+            && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (value ^ (value >>> 32));
-        result = 31 * result + Arrays.hashCode(scriptBytes);
-        if (parent != null)
-            result *= parent.getHash().hashCode();
-        return result;
+        return Objects.hashCode(value, parent, Arrays.hashCode(scriptBytes));
     }
 }

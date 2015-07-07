@@ -100,17 +100,14 @@ public class GetBlocksMessage extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GetBlocksMessage other = (GetBlocksMessage) o;
-        return version == other.version &&
-               locator.size() == other.locator.size() &&
-               locator.containsAll(other.locator) && // ignores locator ordering
-               stopHash.equals(other.stopHash);
+        return version == other.version && stopHash.equals(other.stopHash) &&
+            locator.size() == other.locator.size() && locator.containsAll(other.locator); // ignores locator ordering
     }
 
     @Override
     public int hashCode() {
-        int hashCode = (int) version ^ "getblocks".hashCode();
+        int hashCode = (int)version ^ "getblocks".hashCode() ^ stopHash.hashCode();
         for (Sha256Hash aLocator : locator) hashCode ^= aLocator.hashCode(); // ignores locator ordering
-        hashCode ^= stopHash.hashCode();
         return hashCode;
     }
 }

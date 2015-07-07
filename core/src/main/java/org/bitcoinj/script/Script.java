@@ -1492,13 +1492,11 @@ public class Script {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Script other = (Script) o;
-        return Arrays.equals(getQuickProgram(), other.getQuickProgram());
+        return Arrays.equals(getQuickProgram(), ((Script)o).getQuickProgram());
     }
 
     @Override
     public int hashCode() {
-        byte[] bytes = getQuickProgram();
-        return Arrays.hashCode(bytes);
+        return Arrays.hashCode(getQuickProgram());
     }
 }

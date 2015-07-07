@@ -585,9 +585,7 @@ public class DeterministicKey extends ECKey {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         DeterministicKey other = (DeterministicKey) o;
-
         return super.equals(other)
                 && Arrays.equals(this.chainCode, other.chainCode)
                 && Objects.equal(this.childNumberPath, other.childNumberPath);
@@ -595,10 +593,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + childNumberPath.hashCode();
-        result = 31 * result + Arrays.hashCode(chainCode);
-        return result;
+        return Objects.hashCode(super.hashCode(), Arrays.hashCode(chainCode), childNumberPath);
     }
 
     @Override

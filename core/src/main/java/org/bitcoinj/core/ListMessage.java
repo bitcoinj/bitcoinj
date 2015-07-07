@@ -124,8 +124,7 @@ public abstract class ListMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ListMessage other = (ListMessage) o;
-        return items.equals(other.items);
+        return items.equals(((ListMessage)o).items);
     }
 
     @Override

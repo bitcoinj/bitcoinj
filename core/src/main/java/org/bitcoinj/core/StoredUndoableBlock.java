@@ -80,8 +80,7 @@ public class StoredUndoableBlock implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        StoredUndoableBlock other = (StoredUndoableBlock) o;
-        return getHash().equals(other.getHash());
+        return getHash().equals(((StoredUndoableBlock)o).getHash());
     }
 
     @Override

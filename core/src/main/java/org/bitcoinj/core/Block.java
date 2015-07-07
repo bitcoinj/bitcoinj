@@ -809,8 +809,7 @@ public class Block extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Block other = (Block) o;
-        return getHash().equals(other.getHash());
+        return getHash().equals(((Block)o).getHash());
     }
 
     @Override

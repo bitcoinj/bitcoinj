@@ -83,9 +83,7 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DumpedPrivateKey other = (DumpedPrivateKey) o;
-        return Arrays.equals(bytes, other.bytes) &&
-               version == other.version &&
-               compressed == other.compressed;
+        return version == other.version && compressed == other.compressed && Arrays.equals(bytes, other.bytes);
     }
 
     @Override

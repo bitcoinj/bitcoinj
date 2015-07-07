@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoinj.wallet.Protos;
@@ -612,15 +613,12 @@ public class ECKey implements EncryptableItem, Serializable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ECDSASignature other = (ECDSASignature) o;
-            return r.equals(other.r) &&
-                   s.equals(other.s);
+            return r.equals(other.r) && s.equals(other.s);
         }
 
         @Override
         public int hashCode() {
-            int result = r.hashCode();
-            result = 31 * result + s.hashCode();
-            return result;
+            return Objects.hashCode(r, s);
         }
     }
 
@@ -1187,9 +1185,7 @@ public class ECKey implements EncryptableItem, Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || !(o instanceof ECKey)) return false;
-
         ECKey other = (ECKey) o;
-
         return Objects.equal(this.priv, other.priv)
                 && Objects.equal(this.pub, other.pub)
                 && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
@@ -1202,7 +1198,7 @@ public class ECKey implements EncryptableItem, Serializable {
         // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
         // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
         byte[] bits = getPubKey();
-        return (bits[0] & 0xFF) | ((bits[1] & 0xFF) << 8) | ((bits[2] & 0xFF) << 16) | ((bits[3] & 0xFF) << 24);
+        return Ints.fromBytes(bits[0], bits[1], bits[2], bits[3]);
     }
 
     @Override

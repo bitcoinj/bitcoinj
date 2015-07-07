@@ -166,9 +166,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BIP38PrivateKey other = (BIP38PrivateKey) o;
-
-        return super.equals(other)
-                && Objects.equal(this.params, other.params);
+        return super.equals(other) && Objects.equal(this.params, other.params);
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import org.bitcoinj.script.*;
 import org.bitcoinj.wallet.*;
 
@@ -233,12 +234,11 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionOutPoint other = (TransactionOutPoint) o;
-        return getIndex() == other.getIndex() &&
-               getHash().equals(other.getHash());
+        return getIndex() == other.getIndex() && getHash().equals(other.getHash());
     }
 
     @Override
     public int hashCode() {
-        return 31 * getHash().hashCode() + (int) (getIndex() ^ (getIndex() >>> 32));
+        return Objects.hashCode(getIndex(), getHash());
     }
 }

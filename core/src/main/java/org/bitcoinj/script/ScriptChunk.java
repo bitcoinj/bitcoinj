@@ -18,6 +18,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.Utils;
+import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -151,21 +152,13 @@ public class ScriptChunk {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         ScriptChunk other = (ScriptChunk) o;
-
-        if (opcode != other.opcode) return false;
-        if (startLocationInProgram != other.startLocationInProgram) return false;
-        if (!Arrays.equals(data, other.data)) return false;
-
-        return true;
+        return opcode == other.opcode && startLocationInProgram == other.startLocationInProgram
+            && Arrays.equals(data, other.data);
     }
 
     @Override
     public int hashCode() {
-        int result = opcode;
-        result = 31 * result + (data != null ? Arrays.hashCode(data) : 0);
-        result = 31 * result + startLocationInProgram;
-        return result;
+        return Objects.hashCode(opcode, startLocationInProgram, Arrays.hashCode(data));
     }
 }

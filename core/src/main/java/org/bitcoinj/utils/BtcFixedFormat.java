@@ -18,6 +18,7 @@ package org.bitcoinj.utils;
 
 import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
 import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.base.Objects;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -134,18 +135,14 @@ public final class BtcFixedFormat extends BtcFormat {
         if (o == this) return true;
         if (!(o instanceof BtcFixedFormat)) return false;
         BtcFixedFormat other = (BtcFixedFormat)o;
-        return other.scale() == scale() &&
-            other.decimalGroups.equals(decimalGroups) &&
-            super.equals(other);
+        return super.equals(other) && other.scale() == scale() && other.decimalGroups.equals(decimalGroups);
     }
 
     /** Return a hash code value for this instance.
      *  @see java.lang.Object#hashCode
      */
     @Override public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + scale;
-        return result;
+        return Objects.hashCode(super.hashCode(), scale);
     }
 
     private static String prefixLabel(int scale) {

@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.params.MainNetParams;
+import com.google.common.base.Objects;
 import com.google.common.net.InetAddresses;
 
 import java.io.IOException;
@@ -223,16 +224,13 @@ public class PeerAddress extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
-        return other.addr.equals(addr) &&
-                other.port == port &&
-                other.services.equals(services) &&
-                other.time == time;
+        return other.addr.equals(addr) && other.port == port && other.time == time && other.services.equals(services);
         //TODO: including services and time could cause same peer to be added multiple times in collections
     }
 
     @Override
     public int hashCode() {
-        return addr.hashCode() ^ port ^ (int) time ^ services.hashCode();
+        return Objects.hashCode(addr, port, time, services);
     }
     
     public InetSocketAddress toSocketAddress() {

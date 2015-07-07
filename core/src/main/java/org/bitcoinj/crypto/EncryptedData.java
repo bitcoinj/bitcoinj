@@ -15,6 +15,7 @@
  */
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Objects;
 import java.util.Arrays;
 
 /**
@@ -37,16 +38,13 @@ public final class EncryptedData {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EncryptedData that = (EncryptedData) o;
-        return Arrays.equals(encryptedBytes, that.encryptedBytes) && Arrays.equals(initialisationVector, that.initialisationVector);
-
+        EncryptedData other = (EncryptedData) o;
+        return Arrays.equals(encryptedBytes, other.encryptedBytes) && Arrays.equals(initialisationVector, other.initialisationVector);
     }
 
     @Override
     public int hashCode() {
-        int result = Arrays.hashCode(initialisationVector);
-        result = 31 * result + Arrays.hashCode(encryptedBytes);
-        return result;
+        return Objects.hashCode(Arrays.hashCode(encryptedBytes), Arrays.hashCode(initialisationVector));
     }
 
     @Override

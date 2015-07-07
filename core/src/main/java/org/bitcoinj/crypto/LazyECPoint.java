@@ -168,8 +168,9 @@ public class LazyECPoint {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || o != null && getClass() == o.getClass()
-            && Arrays.equals(getCanonicalEncoding(), ((LazyECPoint)o).getCanonicalEncoding());
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return Arrays.equals(getCanonicalEncoding(), ((LazyECPoint)o).getCanonicalEncoding());
     }
 
     @Override

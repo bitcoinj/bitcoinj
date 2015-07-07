@@ -203,8 +203,7 @@ public abstract class NetworkParameters implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        NetworkParameters other = (NetworkParameters) o;
-        return getId().equals(other.getId());
+        return getId().equals(((NetworkParameters)o).getId());
     }
 
     @Override

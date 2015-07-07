@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -212,8 +213,8 @@ public class VersionMessage extends Message {
 
     @Override
     public int hashCode() {
-        return (int) bestHeight ^ clientVersion ^ (int) localServices ^ (int) time ^ subVer.hashCode() ^ myAddr.hashCode()
-            ^ theirAddr.hashCode() * (relayTxesBeforeFilter ? 1 : 2);
+        return Objects.hashCode(bestHeight, clientVersion, localServices,
+            time, subVer, myAddr, theirAddr, relayTxesBeforeFilter);
     }
 
     /**

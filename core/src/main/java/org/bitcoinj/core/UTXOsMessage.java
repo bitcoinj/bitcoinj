@@ -15,6 +15,7 @@
  */
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -157,25 +158,14 @@ public class UTXOsMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        UTXOsMessage message = (UTXOsMessage) o;
-
-        if (height != message.height) return false;
-        if (!chainHead.equals(message.chainHead)) return false;
-        if (!Arrays.equals(heights, message.heights)) return false;
-        if (!Arrays.equals(hits, message.hits)) return false;
-        if (!outputs.equals(message.outputs)) return false;
-
-        return true;
+        UTXOsMessage other = (UTXOsMessage) o;
+        return height == other.height && chainHead.equals(other.chainHead)
+            && Arrays.equals(heights, other.heights) && Arrays.equals(hits, other.hits)
+            && outputs.equals(other.outputs);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (height ^ (height >>> 32));
-        result = 31 * result + chainHead.hashCode();
-        result = 31 * result + Arrays.hashCode(hits);
-        result = 31 * result + outputs.hashCode();
-        result = 31 * result + Arrays.hashCode(heights);
-        return result;
+        return Objects.hashCode(height, chainHead, Arrays.hashCode(heights), Arrays.hashCode(hits), outputs);
     }
 }

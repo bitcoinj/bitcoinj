@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.utils.MonetaryFormat;
 import com.google.common.math.LongMath;
+import com.google.common.primitives.Longs;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -256,14 +257,9 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == this)
-            return true;
-        if (o == null || o.getClass() != getClass())
-            return false;
-        final Coin other = (Coin) o;
-        if (this.value != other.value)
-            return false;
-        return true;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return this.value == ((Coin)o).value;
     }
 
     @Override
@@ -273,8 +269,6 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     @Override
     public int compareTo(final Coin other) {
-        if (this.value == other.value)
-            return 0;
-        return this.value > other.value ? 1 : -1;
+        return Longs.compare(this.value, other.value);
     }
 }

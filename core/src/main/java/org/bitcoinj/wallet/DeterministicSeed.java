@@ -21,6 +21,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.store.UnreadableWalletException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import org.spongycastle.crypto.params.KeyParameter;
 
@@ -198,25 +199,15 @@ public class DeterministicSeed implements EncryptableItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        DeterministicSeed seed = (DeterministicSeed) o;
-
-        if (creationTimeSeconds != seed.creationTimeSeconds) return false;
-        if (encryptedMnemonicCode != null) {
-            if (seed.encryptedMnemonicCode == null) return false;
-            if (!encryptedMnemonicCode.equals(seed.encryptedMnemonicCode)) return false;
-        } else {
-            if (!mnemonicCode.equals(seed.mnemonicCode)) return false;
-        }
-
-        return true;
+        DeterministicSeed other = (DeterministicSeed) o;
+        return creationTimeSeconds == other.creationTimeSeconds
+            && Objects.equal(encryptedMnemonicCode, other.encryptedMnemonicCode)
+            && Objects.equal(mnemonicCode, other.mnemonicCode);
     }
 
     @Override
     public int hashCode() {
-        int result = encryptedMnemonicCode != null ? encryptedMnemonicCode.hashCode() : mnemonicCode.hashCode();
-        result = 31 * result + (int) (creationTimeSeconds ^ (creationTimeSeconds >>> 32));
-        return result;
+        return Objects.hashCode(creationTimeSeconds, encryptedMnemonicCode, mnemonicCode);
     }
 
     /**

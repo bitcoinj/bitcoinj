@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import com.google.common.base.Objects;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -86,15 +87,12 @@ public class StoredBlock implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StoredBlock other = (StoredBlock) o;
-        return header.equals(other.header) &&
-               chainWork.equals(other.chainWork) &&
-               height == other.height;
+        return header.equals(other.header) && chainWork.equals(other.chainWork) && height == other.height;
     }
 
     @Override
     public int hashCode() {
-        // A better hashCode is possible, but this works for now.
-        return header.hashCode() ^ chainWork.hashCode() ^ height;
+        return Objects.hashCode(header, chainWork, height);
     }
 
     /**

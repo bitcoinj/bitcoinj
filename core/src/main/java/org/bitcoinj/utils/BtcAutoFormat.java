@@ -186,9 +186,9 @@ public final class BtcAutoFormat extends BtcFormat {
       * Formatters for different locales will never be equal, even
       * if they behave identically. */
     @Override public boolean equals(Object o) {
-        if (o == this) return true;
+        if (this == o) return true;
         if (!(o instanceof BtcAutoFormat)) return false;
-        return super.equals((BtcAutoFormat)o);
+        return super.equals(o);
     }
 
     /**
