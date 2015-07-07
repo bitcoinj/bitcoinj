@@ -36,20 +36,20 @@ import com.google.common.base.Objects;
  * depth-first traversal is performed, consuming bits and hashes as they were written during encoding.</p>
  *
  * <p>The serialization is fixed and provides a hard guarantee about the encoded size,
- * <tt>SIZE <= 10 + ceil(32.25*N)</tt> where N represents the number of leaf nodes of the partial tree. N itself
+ * <tt>SIZE &lt;= 10 + ceil(32.25*N)</tt> where N represents the number of leaf nodes of the partial tree. N itself
  * is bounded by:</p>
  *
  * <p>
- * N <= total_transactions<br>
- * N <= 1 + matched_transactions*tree_height
+ * N &lt;= total_transactions<br>
+ * N &lt;= 1 + matched_transactions*tree_height
  * </p>
  *
  * <p><pre>The serialization format:
  *  - uint32     total_transactions (4 bytes)
  *  - varint     number of hashes   (1-3 bytes)
- *  - uint256[]  hashes in depth-first order (<= 32*N bytes)
+ *  - uint256[]  hashes in depth-first order (&lt;= 32*N bytes)
  *  - varint     number of bytes of flag bits (1-3 bytes)
- *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
+ *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (&lt;= 2*N-1 bits)
  * The size constraints follow from this.</pre></p>
  */
 public class PartialMerkleTree extends Message {
