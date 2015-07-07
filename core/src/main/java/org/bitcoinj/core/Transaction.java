@@ -216,7 +216,7 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
-     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
+     * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
     public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, boolean parseLazy, boolean parseRetain, int length)
             throws ProtocolException {
