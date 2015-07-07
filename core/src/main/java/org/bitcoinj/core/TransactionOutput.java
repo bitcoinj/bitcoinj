@@ -444,7 +444,7 @@ public class TransactionOutput extends ChildMessage implements Serializable {
         int result = (int) (value ^ (value >>> 32));
         result = 31 * result + Arrays.hashCode(scriptBytes);
         if (parent != null)
-            result *= parent.getHash().hashCode() + getIndex();
+            result *= parent.getHash().hashCode();
         return result;
     }
 }

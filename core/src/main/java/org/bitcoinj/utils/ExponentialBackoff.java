@@ -90,6 +90,7 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
 
     @Override
     public int compareTo(ExponentialBackoff other) {
+        // note that in this implementation compareTo() is not consistent with equals()
         if (retryTime < other.retryTime)
             return -1;
         if (retryTime > other.retryTime)

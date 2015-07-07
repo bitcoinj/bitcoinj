@@ -49,14 +49,14 @@ public class GetHeadersMessage extends GetBlocksMessage {
         GetHeadersMessage other = (GetHeadersMessage) o;
         return version == other.version &&
                locator.size() == other.locator.size() &&
-               locator.containsAll(other.locator) &&
+               locator.containsAll(other.locator) && // ignores locator ordering
                stopHash.equals(other.stopHash);
     }
 
     @Override
     public int hashCode() {
         int hashCode = (int) version ^ "getheaders".hashCode();
-        for (Sha256Hash aLocator : locator) hashCode ^= aLocator.hashCode();
+        for (Sha256Hash aLocator : locator) hashCode ^= aLocator.hashCode(); // ignores locator ordering
         hashCode ^= stopHash.hashCode();
         return hashCode;
     }
