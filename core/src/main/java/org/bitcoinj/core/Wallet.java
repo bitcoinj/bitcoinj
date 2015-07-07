@@ -4050,6 +4050,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
 
         @Override public int compareTo(TxOffsetPair o) {
+            // note that in this implementation compareTo() is not consistent with equals()
             return Ints.compare(offset, o.offset);
         }
     }

@@ -239,6 +239,6 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31 * hash.hashCode() + (int) (index ^ (index >>> 32));
+        return 31 * getHash().hashCode() + (int) (getIndex() ^ (getIndex() >>> 32));
     }
 }

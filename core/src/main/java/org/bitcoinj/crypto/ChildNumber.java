@@ -91,6 +91,7 @@ public class ChildNumber implements Comparable<ChildNumber> {
 
     @Override
     public int compareTo(ChildNumber other) {
+        // note that in this implementation compareTo() is not consistent with equals()
         return Ints.compare(this.num(), other.num());
     }
 }

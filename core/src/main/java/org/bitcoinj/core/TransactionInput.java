@@ -479,7 +479,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
         if (sequence != input.sequence) return false;
         if (!outpoint.equals(input.outpoint)) return false;
         if (!Arrays.equals(scriptBytes, input.scriptBytes)) return false;
-        if (scriptSig != null ? !scriptSig.equals(input.scriptSig) : input.scriptSig != null) return false;
         if (parent != input.parent) return false;
 
         return true;
@@ -490,7 +489,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
         int result = (int) (sequence ^ (sequence >>> 32));
         result = 31 * result + outpoint.hashCode();
         result = 31 * result + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
-        result = 31 * result + (scriptSig != null ? scriptSig.hashCode() : 0);
         return result;
     }
 }

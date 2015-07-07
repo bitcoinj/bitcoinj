@@ -578,6 +578,7 @@ public class Utils {
     private static class Pair implements Comparable<Pair> {
         int item, count;
         public Pair(int item, int count) { this.count = count; this.item = item; }
+        // note that in this implementation compareTo() is not consistent with equals()
         @Override public int compareTo(Pair o) { return -Ints.compare(count, o.count); }
     }
 

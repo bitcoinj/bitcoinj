@@ -90,6 +90,6 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(bytes, version, compressed);
+        return Objects.hashCode(version, compressed, Arrays.hashCode(bytes));
     }
 }
