@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -95,19 +96,12 @@ public class GetUTXOsMessage extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        GetUTXOsMessage that = (GetUTXOsMessage) o;
-
-        if (includeMempool != that.includeMempool) return false;
-        if (!outPoints.equals(that.outPoints)) return false;
-
-        return true;
+        GetUTXOsMessage other = (GetUTXOsMessage) o;
+        return includeMempool == other.includeMempool && outPoints.equals(other.outPoints);
     }
 
     @Override
     public int hashCode() {
-        int result = (includeMempool ? 1 : 0);
-        result = 31 * result + outPoints.hashCode();
-        return result;
+        return Objects.hashCode(includeMempool, outPoints);
     }
 }

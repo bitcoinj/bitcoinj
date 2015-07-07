@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -161,18 +162,12 @@ public class RejectMessage extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RejectMessage other = (RejectMessage) o;
-        return message.equals(other.message) &&
-               code.equals(other.code) &&
-               reason.equals(other.reason) &&
-               messageHash.equals(other.messageHash);
+        return message.equals(other.message) && code.equals(other.code)
+            && reason.equals(other.reason) && messageHash.equals(other.messageHash);
     }
 
     @Override
     public int hashCode() {
-        int result = message.hashCode();
-        result = 31 * result + reason.hashCode();
-        result = 31 * result + code.hashCode();
-        result = 31 * result + messageHash.hashCode();
-        return result;
+        return Objects.hashCode(message, code, reason, messageHash);
     }
 }

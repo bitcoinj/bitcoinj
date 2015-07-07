@@ -22,7 +22,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 import org.bitcoinj.core.Monetary;
+import com.google.common.base.Objects;
 import com.google.common.math.LongMath;
+import com.google.common.primitives.Longs;
 
 /**
  * Represents a monetary fiat value. It was decided to not fold this into {@link org.bitcoinj.core.Coin} because of type
@@ -202,29 +204,21 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == this)
-            return true;
-        if (o == null || o.getClass() != getClass())
-            return false;
+        if (o == this) return true;
+        if (o == null || o.getClass() != getClass()) return false;
         final Fiat other = (Fiat) o;
-        if (this.value != other.value)
-            return false;
-        if (!this.currencyCode.equals(other.currencyCode))
-            return false;
-        return true;
+        return this.value == other.value && this.currencyCode.equals(other.currencyCode);
     }
 
     @Override
     public int hashCode() {
-        return (int) this.value + 37 * this.currencyCode.hashCode();
+        return Objects.hashCode(value, currencyCode);
     }
 
     @Override
     public int compareTo(final Fiat other) {
         if (!this.currencyCode.equals(other.currencyCode))
             return this.currencyCode.compareTo(other.currencyCode);
-        if (this.value != other.value)
-            return this.value > other.value ? 1 : -1;
-        return 0;
+        return Longs.compare(this.value, other.value);
     }
 }

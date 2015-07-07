@@ -63,7 +63,7 @@ class StoredTransactionOutPoint implements Serializable {
 
     @Override
     public int hashCode() {
-        return this.hash.hashCode() + (int)index;
+        return Objects.hashCode(getIndex(), getHash());
     }
     
     @Override
@@ -76,8 +76,7 @@ class StoredTransactionOutPoint implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StoredTransactionOutPoint other = (StoredTransactionOutPoint) o;
-        return getIndex() == other.getIndex() &&
-               Objects.equal(getHash(), other.getHash());
+        return getIndex() == other.getIndex() && Objects.equal(getHash(), other.getHash());
     }
 }
 

@@ -1165,8 +1165,7 @@ public class Transaction extends ChildMessage implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Transaction other = (Transaction) o;
-        return getHash().equals(other.getHash());
+        return getHash().equals(((Transaction)o).getHash());
     }
 
     @Override

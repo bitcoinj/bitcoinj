@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.script.*;
+import com.google.common.base.Objects;
 
 import java.io.*;
 import java.math.*;
@@ -161,7 +162,7 @@ public class UTXO implements Serializable {
 
     @Override
     public int hashCode() {
-        return hash.hashCode() + (int) index;
+        return Objects.hashCode(getIndex(), getHash());
     }
 
     @Override
@@ -169,8 +170,7 @@ public class UTXO implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UTXO other = (UTXO) o;
-        return getHash().equals(other.getHash()) &&
-                getIndex() == other.getIndex();
+        return getIndex() == other.getIndex() && getHash().equals(other.getHash());
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {

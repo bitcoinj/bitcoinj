@@ -21,6 +21,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
+import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -473,22 +474,13 @@ public class TransactionInput extends ChildMessage implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        TransactionInput input = (TransactionInput) o;
-
-        if (sequence != input.sequence) return false;
-        if (!outpoint.equals(input.outpoint)) return false;
-        if (!Arrays.equals(scriptBytes, input.scriptBytes)) return false;
-        if (parent != input.parent) return false;
-
-        return true;
+        TransactionInput other = (TransactionInput) o;
+        return sequence == other.sequence && parent == other.parent
+            && outpoint.equals(other.outpoint) && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (sequence ^ (sequence >>> 32));
-        result = 31 * result + outpoint.hashCode();
-        result = 31 * result + (scriptBytes != null ? Arrays.hashCode(scriptBytes) : 0);
-        return result;
+        return Objects.hashCode(sequence, outpoint, Arrays.hashCode(scriptBytes));
     }
 }

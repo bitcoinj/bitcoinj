@@ -357,9 +357,7 @@ public class BloomFilter extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BloomFilter other = (BloomFilter) o;
-        return hashFuncs == other.hashFuncs &&
-               nTweak == other.nTweak &&
-               Arrays.equals(data, other.data);
+        return hashFuncs == other.hashFuncs && nTweak == other.nTweak && Arrays.equals(data, other.data);
     }
 
     @Override

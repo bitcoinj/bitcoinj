@@ -5,6 +5,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionBroadcaster;
 import org.bitcoinj.core.Wallet;
 
+import com.google.common.base.Objects;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -145,20 +146,13 @@ public class ChannelTestUtils {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
-            UpdatePair that = (UpdatePair) o;
-
-            if (amount != null ? !amount.equals(that.amount) : that.amount != null) return false;
-            if (info != null ? !info.equals(that.info) : that.info != null) return false;
-
-            return true;
+            UpdatePair other = (UpdatePair) o;
+            return Objects.equal(amount, other.amount) && Objects.equal(info, other.info);
         }
 
         @Override
         public int hashCode() {
-            int result = amount != null ? amount.hashCode() : 0;
-            result = 31 * result + (info != null ? info.hashCode() : 0);
-            return result;
+            return Objects.hashCode(amount, info);
         }
 
         public void assertPair(Coin amount, ByteString info) {

@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
@@ -132,22 +133,14 @@ public class FilteredBlock extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        FilteredBlock block = (FilteredBlock) o;
-
-        if (!associatedTransactions.equals(block.associatedTransactions)) return false;
-        if (!header.equals(block.header)) return false;
-        if (!merkleTree.equals(block.merkleTree)) return false;
-
-        return true;
+        FilteredBlock other = (FilteredBlock) o;
+        return associatedTransactions.equals(other.associatedTransactions)
+            && header.equals(other.header) && merkleTree.equals(other.merkleTree);
     }
 
     @Override
     public int hashCode() {
-        int result = header.hashCode();
-        result = 31 * result + merkleTree.hashCode();
-        result = 31 * result + associatedTransactions.hashCode();
-        return result;
+        return Objects.hashCode(associatedTransactions, header, merkleTree);
     }
 
     @Override

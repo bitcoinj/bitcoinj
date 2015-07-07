@@ -263,14 +263,13 @@ public class KeyCrypterScrypt implements KeyCrypter, Serializable {
 
     @Override
     public int hashCode() {
-        return com.google.common.base.Objects.hashCode(scryptParameters);
+        return Objects.hashCode(scryptParameters);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        KeyCrypterScrypt other = (KeyCrypterScrypt) o;
-        return Objects.equal(scryptParameters, other.scryptParameters);
+        return Objects.equal(scryptParameters, ((KeyCrypterScrypt)o).scryptParameters);
     }
 }
