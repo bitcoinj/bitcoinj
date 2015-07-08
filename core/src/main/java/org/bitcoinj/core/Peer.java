@@ -1637,6 +1637,20 @@ public class Peer extends PeerSocketHandler {
      * @throws ProtocolException if this peer doesn't support the protocol.
      */
     public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
+        return getUTXOs(outPoints, true);
+    }
+
+    /**
+     * Sends a query to the remote peer asking for the unspent transaction outputs (UTXOs) for the given outpoints.
+     * The result should be treated only as a hint: it's possible for the returned outputs to be fictional and not
+     * exist in any transaction, and it's possible for them to be spent the moment after the query returns.
+     * <b>Most peers do not support this request. You will need to connect to Bitcoin XT peers if you want
+     * this to work.</b>
+     *
+     * @param includeMempool If true (the default) the results take into account the contents of the memory pool too.
+     * @throws ProtocolException if this peer doesn't support the protocol.
+     */
+    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints, boolean includeMempool) {
         lock.lock();
         try {
             VersionMessage peerVer = getPeerVersionMessage();
@@ -1649,12 +1663,11 @@ public class Peer extends PeerSocketHandler {
             if (getutxoFutures == null)
                 getutxoFutures = new LinkedList<SettableFuture<UTXOsMessage>>();
             getutxoFutures.add(future);
-            sendMessage(new GetUTXOsMessage(params, outPoints, true));
+            sendMessage(new GetUTXOsMessage(params, outPoints, includeMempool));
             return future;
         } finally {
             lock.unlock();
         }
-
     }
 
     /**
