@@ -39,10 +39,8 @@ public class TestFeeLevel {
     private static void go(Coin feeToTest) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
         kit.peerGroup().setMaxConnections(50);
 
-        final Address address = kit.wallet().currentReceiveKey().toAddress(PARAMS);
-
         if (kit.wallet().getBalance().compareTo(feeToTest) < 0) {
-            System.out.println("Send some money to " + address);
+            System.out.println("Send some money to " + kit.wallet().currentReceiveAddress());
             System.out.println("... and wait for it to confirm");
             kit.wallet().getBalanceFuture(feeToTest, Wallet.BalanceType.AVAILABLE).get();
         }
@@ -50,11 +48,16 @@ public class TestFeeLevel {
         int heightAtStart = kit.chain().getBestChainHeight();
         System.out.println("Height at start is " + heightAtStart);
 
-        Wallet.SendRequest request = Wallet.SendRequest.to(address, kit.wallet().getBalance().subtract(feeToTest));
+        Coin value = kit.wallet().getBalance().subtract(feeToTest);
+        Coin halfValue = value.divide(2);
+        Transaction transaction = new Transaction(PARAMS);
+        transaction.addOutput(halfValue, kit.wallet().freshReceiveAddress());
+        transaction.addOutput(value.subtract(halfValue), kit.wallet().freshReceiveAddress());
+        Wallet.SendRequest request = Wallet.SendRequest.forTx(transaction);
         request.feePerKb = feeToTest;
         request.ensureMinRequiredFee = false;
         kit.wallet().completeTx(request);
-        System.out.println("Fee paid is " + request.fee.toFriendlyString());
+        System.out.println("Size in bytes is " + request.tx.bitcoinSerialize().length);
         System.out.println("TX is " + request.tx);
         kit.peerGroup().broadcastTransaction(request.tx).future().get();
         System.out.println("Send complete, waiting for confirmation");
