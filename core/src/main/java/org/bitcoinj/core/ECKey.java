@@ -19,8 +19,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
@@ -1227,7 +1227,7 @@ public class ECKey implements EncryptableItem, Serializable {
     }
 
     private String toString(boolean includePrivate, NetworkParameters params) {
-        final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
             try {

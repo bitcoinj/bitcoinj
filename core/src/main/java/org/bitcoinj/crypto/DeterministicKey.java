@@ -17,8 +17,9 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
+
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableList;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.math.ec.ECPoint;
@@ -598,7 +599,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        final ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());

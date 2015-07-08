@@ -19,8 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
 import com.google.common.base.*;
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
@@ -3386,7 +3384,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         @Override
         public String toString() {
             // print only the user-settable fields
-            ToStringHelper helper = Objects.toStringHelper(this).omitNullValues();
+            MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
             helper.add("emptyWallet", emptyWallet);
             helper.add("changeAddress", changeAddress);
             helper.add("fee", fee);
