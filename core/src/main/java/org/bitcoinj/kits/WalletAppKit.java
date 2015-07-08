@@ -101,11 +101,6 @@ public class WalletAppKit extends AbstractIdleService {
         this.params = checkNotNull(context.getParams());
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
-        if (!Utils.isAndroidRuntime()) {
-            InputStream stream = WalletAppKit.class.getResourceAsStream("/" + params.getId() + ".checkpoints");
-            if (stream != null)
-                setCheckpoints(stream);
-        }
     }
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
@@ -280,6 +275,10 @@ public class WalletAppKit extends AbstractIdleService {
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
             vStore = provideBlockStore(chainFile);
             if (!chainFileExists || restoreFromSeed != null) {
+                if (checkpoints == null && !Utils.isAndroidRuntime()) {
+                    checkpoints = CheckpointManager.openStream(params);
+                }
+
                 if (checkpoints != null) {
                     // Initialize the chain file with a checkpoint to speed up first-run sync.
                     long time;

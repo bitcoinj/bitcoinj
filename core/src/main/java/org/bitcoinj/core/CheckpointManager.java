@@ -28,6 +28,7 @@ import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.*;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -82,8 +83,16 @@ public class CheckpointManager {
 
     public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
 
-    public CheckpointManager(NetworkParameters params, InputStream inputStream) throws IOException {
+    /** Loads the default checkpoints bundled with bitcoinj */
+    public CheckpointManager(Context context) throws IOException {
+        this(context.getParams(), null);
+    }
+
+    /** Loads the checkpoints from the given stream */
+    public CheckpointManager(NetworkParameters params, @Nullable InputStream inputStream) throws IOException {
         this.params = checkNotNull(params);
+        if (inputStream == null)
+            inputStream = openStream(params);
         checkNotNull(inputStream);
         inputStream = new BufferedInputStream(inputStream);
         inputStream.mark(1);
@@ -95,6 +104,11 @@ public class CheckpointManager {
             dataHash = readTextual(inputStream);
         else
             throw new IOException("Unsupported format.");
+    }
+
+    /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
+    public static InputStream openStream(NetworkParameters params) {
+        return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints");
     }
 
     private Sha256Hash readBinary(InputStream inputStream) throws IOException {
