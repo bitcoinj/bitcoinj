@@ -79,7 +79,7 @@ public class BlockChainTest {
                                          int relativityOffset) throws VerificationException {
                 super.receiveFromBlock(tx, block, blockType, relativityOffset);
                 BlockChainTest.this.block[0] = block;
-                if (tx.isCoinBase()) {
+                if (isTransactionRelevant(tx) && tx.isCoinBase()) {
                     BlockChainTest.this.coinbaseTransaction = tx;
                 }
             }
@@ -133,35 +133,6 @@ public class BlockChainTest {
         Block b1 = createFakeBlock(blockStore, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
-    }
-
-    @Test
-    public void merkleRoots() throws Exception {
-        // Test that merkle root verification takes place when a relevant transaction is present and doesn't when
-        // there isn't any such tx present (as an optimization).
-        Transaction tx1 = createFakeTx(unitTestParams,
-                                       COIN,
-                                       wallet.currentReceiveKey().toAddress(unitTestParams));
-        Block b1 = createFakeBlock(blockStore, tx1).block;
-        chain.add(b1);
-        resetBlockStore();
-        Sha256Hash hash = b1.getMerkleRoot();
-        b1.setMerkleRoot(Sha256Hash.ZERO_HASH);
-        try {
-            chain.add(b1);
-            fail();
-        } catch (VerificationException e) {
-            // Expected.
-            b1.setMerkleRoot(hash);
-        }
-        // Now add a second block with no relevant transactions and then break it.
-        Transaction tx2 = createFakeTx(unitTestParams, COIN,
-                                       new ECKey().toAddress(unitTestParams));
-        Block b2 = createFakeBlock(blockStore, tx2).block;
-        b2.getMerkleRoot();
-        b2.setMerkleRoot(Sha256Hash.ZERO_HASH);
-        b2.solve();
-        chain.add(b2);  // Broken block is accepted because its contents don't matter to us.
     }
 
     @Test

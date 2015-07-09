@@ -46,15 +46,6 @@ public interface BlockChainListener {
                     List<StoredBlock> newBlocks) throws VerificationException;
 
     /**
-     * Returns true if the given transaction is interesting to the listener. If yes, then the transaction will
-     * be provided via the receiveFromBlock method. This method is essentially an optimization that lets BlockChain
-     * bypass verification of a blocks merkle tree if no listeners are interested, which can save time when processing
-     * full blocks on mobile phones. It's likely the method will be removed in future and replaced with an alternative
-     * mechanism that involves listeners providing all keys that are interesting.
-     */
-    boolean isTransactionRelevant(Transaction tx) throws ScriptException;
-
-    /**
      * <p>Called by the {@link BlockChain} when we receive a new block that contains a relevant transaction.</p>
      *
      * <p>A transaction may be received multiple times if is included into blocks in parallel chains. The blockType

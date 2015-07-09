@@ -374,21 +374,13 @@ public abstract class AbstractBlockChain {
                 return true;
             }
 
-            // Does this block contain any transactions we might care about? Check this up front before verifying the
-            // blocks validity so we can skip the merkle root verification if the contents aren't interesting. This saves
-            // a lot of time for big blocks.
-            boolean contentsImportant = shouldVerifyTransactions();
-            if (block.transactions != null) {
-                contentsImportant = contentsImportant || containsRelevantTransactions(block);
-            }
-
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
             // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
             // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
             // article here for more details: http://code.google.com/p/bitcoinj/wiki/SecurityModel
             try {
                 block.verifyHeader();
-                if (contentsImportant)
+                if (shouldVerifyTransactions())
                     block.verifyTransactions();
             } catch (VerificationException e) {
                 log.error("Failed to verify block: ", e);
@@ -765,12 +757,10 @@ public abstract class AbstractBlockChain {
                                                    Set<Sha256Hash> falsePositives) throws VerificationException {
         for (Transaction tx : transactions) {
             try {
-                if (listener.isTransactionRelevant(tx)) {
-                    falsePositives.remove(tx.getHash());
-                    if (clone)
-                        tx = new Transaction(tx.params, tx.bitcoinSerialize());
-                    listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
-                }
+                falsePositives.remove(tx.getHash());
+                if (clone)
+                    tx = new Transaction(tx.params, tx.bitcoinSerialize());
+                listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was
                 // not scanned here and continue.
@@ -824,26 +814,6 @@ public abstract class AbstractBlockChain {
                 log.info("Connected {} orphan blocks.", blocksConnectedThisRound);
             }
         } while (blocksConnectedThisRound > 0);
-    }
-
-    /**
-     * Returns true if any connected wallet considers any transaction in the block to be relevant.
-     */
-    private boolean containsRelevantTransactions(Block block) {
-        // Does not need to be locked.
-        for (Transaction tx : block.transactions) {
-            try {
-                for (final ListenerRegistration<BlockChainListener> registration : listeners) {
-                    if (registration.executor != Threading.SAME_THREAD) continue;
-                    if (registration.listener.isTransactionRelevant(tx)) return true;
-                }
-            } catch (ScriptException e) {
-                // We don't want scripts we don't understand to break the block chain so just note that this tx was
-                // not scanned here and continue.
-                log.warn("Failed to parse a script: " + e.toString());
-            }
-        }
-        return false;
     }
 
     /**
