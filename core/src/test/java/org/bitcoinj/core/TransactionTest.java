@@ -275,6 +275,7 @@ public class TransactionTest {
         assertEquals(iterator.hasNext(), false);
     }
 
+
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();

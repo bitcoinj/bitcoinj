@@ -31,11 +31,6 @@ public class AbstractBlockChainListener implements BlockChainListener {
     }
 
     @Override
-    public boolean isTransactionRelevant(Transaction tx) throws ScriptException {
-        return false;
-    }
-
-    @Override
     public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                  int relativityOffset) throws VerificationException {
     }

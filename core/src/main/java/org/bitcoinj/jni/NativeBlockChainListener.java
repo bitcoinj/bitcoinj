@@ -35,9 +35,6 @@ public class NativeBlockChainListener implements BlockChainListener {
     public native void reorganize(StoredBlock splitPoint, List<StoredBlock> oldBlocks, List<StoredBlock> newBlocks) throws VerificationException;
 
     @Override
-    public native boolean isTransactionRelevant(Transaction tx) throws ScriptException;
-
-    @Override
     public native void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                         int relativityOffset) throws VerificationException;
 
