@@ -584,6 +584,23 @@ public class Transaction extends ChildMessage implements Serializable {
     }
 
     /**
+     * The priority (coin age) calculation doesn't use the regular message size, but rather one adjusted downwards
+     * for the number of inputs. The goal is to incentivise cleaning up the UTXO set with free transactions, if one
+     * can do so.
+     */
+    public int getMessageSizeForPriorityCalc() {
+        int size = getMessageSize();
+        for (TransactionInput input : inputs) {
+            // 41: min size of an input
+            // 110: enough to cover a compressed pubkey p2sh redemption (somewhat arbitrary).
+            int benefit = 41 + Math.min(110, input.getScriptSig().getProgram().length);
+            if (size > benefit)
+                size -= benefit;
+        }
+        return size;
+    }
+
+    /**
      * A coinbase transaction is one that creates a new coin. They are the first transaction in each block and their
      * value is determined by a formula that all implementations of Bitcoin share. In 2011 the value of a coinbase
      * transaction is 50 coins, but in future it will be less. A coinbase transaction is defined not only by its
