@@ -12,7 +12,8 @@ import java.io.File;
  */
 public class TestFeeLevel {
 
-    public static final MainNetParams PARAMS = MainNetParams.get();
+    private static final MainNetParams PARAMS = MainNetParams.get();
+    private static final int NUM_OUTPUTS = 2;
     private static WalletAppKit kit;
 
     public static void main(String[] args) throws Exception {
@@ -29,14 +30,14 @@ public class TestFeeLevel {
         kit.startAsync();
         kit.awaitRunning();
         try {
-            go(feeToTest);
+            go(feeToTest, NUM_OUTPUTS);
         } finally {
             kit.stopAsync();
             kit.awaitTerminated();
         }
     }
 
-    private static void go(Coin feeToTest) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
+    private static void go(Coin feeToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
         kit.peerGroup().setMaxConnections(50);
 
         if (kit.wallet().getBalance().compareTo(feeToTest) < 0) {
@@ -49,10 +50,13 @@ public class TestFeeLevel {
         System.out.println("Height at start is " + heightAtStart);
 
         Coin value = kit.wallet().getBalance().subtract(feeToTest);
-        Coin halfValue = value.divide(2);
+        Coin outputValue = value.divide(numOutputs);
         Transaction transaction = new Transaction(PARAMS);
-        transaction.addOutput(halfValue, kit.wallet().freshReceiveAddress());
-        transaction.addOutput(value.subtract(halfValue), kit.wallet().freshReceiveAddress());
+        for (int i = 0; i < numOutputs - 1; i++) {
+            transaction.addOutput(outputValue, kit.wallet().freshReceiveAddress());
+            value = value.subtract(outputValue);
+        }
+        transaction.addOutput(value, kit.wallet().freshReceiveAddress());
         Wallet.SendRequest request = Wallet.SendRequest.forTx(transaction);
         request.feePerKb = feeToTest;
         request.ensureMinRequiredFee = false;
