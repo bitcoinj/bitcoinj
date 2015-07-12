@@ -28,6 +28,10 @@ import static com.google.common.base.Preconditions.*;
  * Parameters for the main production network on which people trade goods and services.
  */
 public class MainNetParams extends AbstractBitcoinNetParams {
+    public static final int MAINNET_MAJORITY_WINDOW = 1000;
+    public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
+    public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
+
     public MainNetParams() {
         super();
         interval = INTERVAL;
@@ -41,6 +45,10 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         packetMagic = 0xf9beb4d9L;
         bip32HeaderPub = 0x0488B21E; //The 4 byte header that serializes in base58 to "xpub".
         bip32HeaderPriv = 0x0488ADE4; //The 4 byte header that serializes in base58 to "xprv"
+
+        majorityEnforceBlockUpgrade = MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
+        majorityRejectBlockOutdated = MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
+        majorityWindow = MAINNET_MAJORITY_WINDOW;
 
         genesisBlock.setDifficultyTarget(0x1d00ffffL);
         genesisBlock.setTime(1231006505L);

@@ -25,6 +25,10 @@ import static com.google.common.base.Preconditions.checkState;
  * based on it.
  */
 public class TestNet2Params extends AbstractBitcoinNetParams {
+    public static final int TESTNET_MAJORITY_WINDOW = 100;
+    public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
+    public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
+
     public TestNet2Params() {
         super();
         id = ID_TESTNET;
@@ -48,6 +52,10 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         addrSeeds = null;
         bip32HeaderPub = 0x043587CF;
         bip32HeaderPriv = 0x04358394;
+
+        majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
+        majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
+        majorityWindow = TESTNET_MAJORITY_WINDOW;
     }
 
     private static TestNet2Params instance;

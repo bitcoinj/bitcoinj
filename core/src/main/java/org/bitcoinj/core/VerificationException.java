@@ -42,7 +42,6 @@ public class VerificationException extends RuntimeException {
         }
     }
 
-
     public static class DuplicatedOutPoint extends VerificationException {
         public DuplicatedOutPoint() {
             super("Duplicated outpoint");
@@ -65,6 +64,14 @@ public class VerificationException extends RuntimeException {
     public static class CoinbaseScriptSizeOutOfRange extends VerificationException {
         public CoinbaseScriptSizeOutOfRange() {
             super("Coinbase script size out of range");
+        }
+    }
+
+
+    public static class BlockVersionOutOfDate extends VerificationException {
+        public BlockVersionOutOfDate(final long version) {
+            super("Block version #"
+                + version + " is outdated.");
         }
     }
 

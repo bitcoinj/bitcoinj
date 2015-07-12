@@ -72,6 +72,12 @@ public class Block extends Message {
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
+    public static final long BLOCK_VERSION_GENESIS = 1;
+    /** Block version introduced in BIP 34: Height in coinbase */
+    public static final long BLOCK_VERSION_BIP34 = 2;
+    /** Block version introduced in BIP 66: Strict DER signatures */
+    public static final long BLOCK_VERSION_BIP66 = 3;
+
     // Fields defined as part of the protocol format.
     private long version;
     private Sha256Hash prevBlockHash;
@@ -99,10 +105,10 @@ public class Block extends Message {
     protected int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params) {
+    Block(NetworkParameters params, long setVersion) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
-        version = 1;
+        version = setVersion;
         difficultyTarget = 0x1d07fff8L;
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
@@ -579,7 +585,7 @@ public class Block extends Message {
     /** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
         maybeParseHeader();
-        Block block = new Block(params);
+        Block block = new Block(params, BLOCK_VERSION_GENESIS);
         copyBitcoinHeaderTo(block);
         return block;
     }
@@ -1002,17 +1008,17 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long time) {
-        return createNextBlock(to, null, time, pubkeyForTesting, FIFTY_COINS);
+    public Block createNextBlock(Address to, long version, long time) {
+        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS);
     }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
      */
-    Block createNextBlock(@Nullable Address to, @Nullable TransactionOutPoint prevOut, long time,
-                          byte[] pubKey, Coin coinbaseValue) {
-        Block b = new Block(params);
+    Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut,
+                          long time, byte[] pubKey, Coin coinbaseValue) {
+        Block b = new Block(params, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue);
 
@@ -1054,12 +1060,12 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS);
+        return createNextBlock(to, 1, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS);
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, null, getTimeSeconds() + 5, pubkeyForTesting, value);
+        return createNextBlock(to, 1, null, getTimeSeconds() + 5, pubkeyForTesting, value);
     }
 
     @VisibleForTesting
@@ -1069,7 +1075,7 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlockWithCoinbase(byte[] pubKey, Coin coinbaseValue) {
-        return createNextBlock(null, null, Utils.currentTimeSeconds(), pubKey, coinbaseValue);
+        return createNextBlock(null, 1, null, Utils.currentTimeSeconds(), pubKey, coinbaseValue);
     }
 
     /**
@@ -1078,7 +1084,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     Block createNextBlockWithCoinbase(byte[] pubKey) {
-        return createNextBlock(null, null, Utils.currentTimeSeconds(), pubKey, FIFTY_COINS);
+        return createNextBlock(null, 1, null, Utils.currentTimeSeconds(), pubKey, FIFTY_COINS);
     }
 
     @VisibleForTesting
