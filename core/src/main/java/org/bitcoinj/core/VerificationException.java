@@ -68,6 +68,14 @@ public class VerificationException extends RuntimeException {
         }
     }
 
+
+    public static class BlockVersionOutOfDate extends VerificationException {
+        public BlockVersionOutOfDate(final long version) {
+            super("Block version #"
+                + version + " is outdated.");
+        }
+    }
+
     public static class UnexpectedCoinbaseInput extends VerificationException {
         public UnexpectedCoinbaseInput() {
             super("Coinbase input as input in non-coinbase transaction");

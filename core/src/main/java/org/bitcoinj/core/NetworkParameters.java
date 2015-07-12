@@ -87,6 +87,11 @@ public abstract class NetworkParameters {
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
 
+    /** Used to check majorities for block version upgrade */
+    protected int majorityEnforceBlockUpgrade;
+    protected int majorityRejectBlockOutdated;
+    protected int majorityWindow;
+
     /**
      * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
      * by looking at the port number.
@@ -111,7 +116,7 @@ public abstract class NetworkParameters {
     }
 
     private static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n);
+        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS);
         Transaction t = new Transaction(n);
         try {
             // A script containing the difficulty bits and the following message:
@@ -417,4 +422,30 @@ public abstract class NetworkParameters {
      * networks.
      */
     public abstract boolean hasMaxMoney();
+
+    /**
+     * The number of blocks in the last {@link getMajorityWindow()} blocks
+     * at which to trigger a notice to the user to upgrade their client, where
+     * the client does not understand those blocks.
+     */
+    public int getMajorityEnforceBlockUpgrade() {
+        return majorityEnforceBlockUpgrade;
+    }
+
+    /**
+     * The number of blocks in the last {@link getMajorityWindow()} blocks
+     * at which to enforce the requirement that all new blocks are of the
+     * newer type (i.e. outdated blocks are rejected).
+     */
+    public int getMajorityRejectBlockOutdated() {
+        return majorityRejectBlockOutdated;
+    }
+
+    /**
+     * The sampling window from which the version numbers of blocks are taken
+     * in order to determine if a new block version is now the majority.
+     */
+    public int getMajorityWindow() {
+        return majorityWindow;
+    }
 }

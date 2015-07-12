@@ -26,8 +26,10 @@ import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.junit.rules.ExpectedException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -43,6 +45,9 @@ import static org.junit.Assert.*;
 // Handling of chain splits/reorgs are in ChainSplitTests.
 
 public class BlockChainTest {
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     private BlockChain testNetChain;
 
     private Wallet wallet;
@@ -157,7 +162,7 @@ public class BlockChainTest {
         Block prev = unitTestParams.getGenesisBlock();
         Utils.setMockClock(System.currentTimeMillis()/1000);
         for (int i = 0; i < unitTestParams.getInterval() - 1; i++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds());
+            Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds());
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
@@ -165,13 +170,13 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds()));
+            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, Utils.currentTimeSeconds());
+        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds());
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));
@@ -183,7 +188,7 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(testNet);
+        Block bad = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
@@ -216,6 +221,43 @@ public class BlockChainTest {
         testNet.setMaxTarget(oldVal);
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
+    }
+
+    /**
+     * Test that version 2 blocks are rejected once version 3 blocks are a super
+     * majority.
+     */
+    @Test
+    public void badBip66Version() throws Exception {
+        final BlockStore versionBlockStore = new MemoryBlockStore(unitTestParams);
+        final BlockChain versionChain = new BlockChain(unitTestParams, versionBlockStore);
+
+        // Build a historical chain of version 3 blocks
+        long timeSeconds = 1231006505;
+        int blockCount = 0;
+        FakeTxBuilder.BlockPair chainHead = null;
+
+        // Put in just enough v2 blocks to be a minority
+        for (blockCount = 0; blockCount < (unitTestParams.getMajorityWindow() - unitTestParams.getMajorityRejectBlockOutdated()); blockCount++) {
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds);
+            versionChain.add(chainHead.block);
+            timeSeconds += 60;
+        }
+        // Fill the rest of the window with v3 blocks
+        for (; blockCount < unitTestParams.getMajorityWindow(); blockCount++) {
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP66, timeSeconds);
+            versionChain.add(chainHead.block);
+            timeSeconds += 60;
+        }
+
+        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds);
+        // Trying to add a new v2 block should result in rejection
+        thrown.expect(VerificationException.BlockVersionOutOfDate.class);
+        try {
+            versionChain.add(chainHead.block);
+        } catch(final VerificationException ex) {
+            throw (Exception) ex.getCause();
+        }
     }
 
     @Test
@@ -343,7 +385,7 @@ public class BlockChainTest {
 
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
-        Block b2 = new Block(testNet);
+        Block b2 = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
         b2.setMerkleRoot(Sha256Hash.wrap("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
         b2.setNonce(2642058077L);
         b2.setTime(1296734343L);
@@ -354,7 +396,7 @@ public class BlockChainTest {
     }
 
     private static Block getBlock1() throws Exception {
-        Block b1 = new Block(testNet);
+        Block b1 = new Block(testNet, Block.BLOCK_VERSION_GENESIS);
         b1.setMerkleRoot(Sha256Hash.wrap("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
         b1.setNonce(236038445);
         b1.setTime(1296734340);
