@@ -150,8 +150,10 @@ public class Transaction extends ChildMessage implements Serializable {
         /** Transaction that makes a pledge to an assurance contract. */
         ASSURANCE_CONTRACT_PLEDGE,
         /** Send-to-self transaction that exists just to create an output of the right size we can pledge. */
-        ASSURANCE_CONTRACT_STUB
-        // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
+        ASSURANCE_CONTRACT_STUB,
+        /** Raise fee, e.g. child-pays-for-parent. */
+        RAISE_FEE,
+        // In future: de/refragmentation, privacy boosting/mixing, etc.
     }
 
     private Purpose purpose = Purpose.UNKNOWN;
