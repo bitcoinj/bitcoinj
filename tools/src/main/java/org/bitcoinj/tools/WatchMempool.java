@@ -20,7 +20,7 @@ package org.bitcoinj.tools;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.bitcoinj.core.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
@@ -49,7 +49,7 @@ public class WatchMempool {
         PeerGroup peerGroup = new PeerGroup(PARAMS);
         peerGroup.setMaxConnections(32);
         peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS));
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
+        peerGroup.addDataEventListener(new AbstractPeerDataEventListener() {
             @Override
             public void onTransaction(Peer peer, Transaction tx) {
                 Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();

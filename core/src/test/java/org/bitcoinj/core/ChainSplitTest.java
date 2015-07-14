@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -556,12 +557,12 @@ public class ChainSplitTest {
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addEventListener(Threading.SAME_THREAD, new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
-        }, Threading.SAME_THREAD);
+        });
 
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         final ECKey coinsTo2 = wallet.freshReceiveKey();
@@ -600,12 +601,12 @@ public class ChainSplitTest {
         Transaction fodder = wallet.createSend(new ECKey().toAddress(unitTestParams), FIFTY_COINS);
         wallet.commitTx(fodder);
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
-        fodder.getConfidence().addEventListener(new TransactionConfidence.Listener() {
+        fodder.getConfidence().addEventListener(Threading.SAME_THREAD, new TransactionConfidence.Listener() {
             @Override
             public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
                 fodderIsDead.set(confidence.getConfidenceType() == ConfidenceType.DEAD);
             }
-        }, Threading.SAME_THREAD);
+        });
 
         // Fork like this:
         //

@@ -14,48 +14,29 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.core.listeners;
 
-import javax.annotation.*;
-import java.util.List;
+import org.bitcoinj.core.Peer;
 import java.util.Set;
+import org.bitcoinj.core.PeerAddress;
 
 /**
  * Convenience implementation of {@link PeerEventListener}.
  */
-public class AbstractPeerEventListener implements PeerEventListener {
+public abstract class AbstractPeerConnectionEventListener implements PeerConnectionEventListener {
+
     @Override
     public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
-    }
-
-    @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
-    }
-
-    @Override
-    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+        // Do nothing
     }
 
     @Override
     public void onPeerConnected(Peer peer, int peerCount) {
+        // Do nothing
     }
 
     @Override
     public void onPeerDisconnected(Peer peer, int peerCount) {
-    }
-
-    @Override
-    public Message onPreMessageReceived(Peer peer, Message m) {
-        // Just pass the message right through for further processing.
-        return m;
-    }
-
-    @Override
-    public void onTransaction(Peer peer, Transaction t) {
-    }
-
-    @Override
-    public List<Message> getData(Peer peer, GetDataMessage m) {
-        return null;
+        // Do nothing
     }
 }

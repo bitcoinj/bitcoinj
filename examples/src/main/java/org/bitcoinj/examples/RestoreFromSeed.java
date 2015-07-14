@@ -14,6 +14,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.TestNet3Params;

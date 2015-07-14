@@ -21,10 +21,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.core.listeners.AbstractPeerEventListener;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.H2FullPrunedBlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
@@ -94,7 +94,7 @@ public class BitcoindComparisonTool {
         final Set<Sha256Hash> blocksPendingSend = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        bitcoind.addEventListener(new AbstractPeerEventListener() {
+        final AbstractPeerEventListener listener = new AbstractPeerEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
@@ -203,7 +203,9 @@ public class BitcoindComparisonTool {
                 }
                 return m;
             }
-        }, Threading.SAME_THREAD);
+        };
+        bitcoind.addConnectionEventListener(Threading.SAME_THREAD, listener);
+        bitcoind.addDataEventListener(Threading.SAME_THREAD, listener);
 
         
         bitcoindChainHead = params.getGenesisBlock().getHash();

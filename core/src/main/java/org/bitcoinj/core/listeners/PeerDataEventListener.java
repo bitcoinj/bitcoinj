@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.core.listeners;
 
-import javax.annotation.*;
-import java.util.*;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.GetDataMessage;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.Transaction;
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
  * they can pre-filter messages before they are procesesed by a {@link Peer} or {@link PeerGroup}, and they can
  * provide transactions to remote peers when they ask for them.</p>
  */
-public interface PeerEventListener {
-    /**
-     * <p>Called when peers are discovered, this happens at startup of {@link PeerGroup} or if we run out of
-     * suitable {@link Peer}s to connect to.</p>
-     *
-     * @param peerAddresses the set of discovered {@link PeerAddress}es
-     */
-    void onPeersDiscovered(Set<PeerAddress> peerAddresses);
+public interface PeerDataEventListener {
 
     // TODO: Fix the Block/FilteredBlock type hierarchy so we can avoid the stupid typeless API here.
     /**
@@ -54,26 +53,6 @@ public interface PeerEventListener {
      * @param blocksLeft the number of blocks left to download
      */
     void onChainDownloadStarted(Peer peer, int blocksLeft);
-
-    /**
-     * Called when a peer is connected. If this listener is registered to a {@link Peer} instead of a {@link PeerGroup},
-     * peerCount will always be 1.
-     *
-     * @param peer
-     * @param peerCount the total number of connected peers
-     */
-    void onPeerConnected(Peer peer, int peerCount);
-
-    /**
-     * Called when a peer is disconnected. Note that this won't be called if the listener is registered on a
-     * {@link PeerGroup} and the group is in the process of shutting down. If this listener is registered to a
-     * {@link Peer} instead of a {@link PeerGroup}, peerCount will always be 0. This handler can be called without
-     * a corresponding invocation of onPeerConnected if the initial connection is never successful.
-     *
-     * @param peer
-     * @param peerCount the total number of connected peers
-     */
-    void onPeerDisconnected(Peer peer, int peerCount);
 
     /**
      * <p>Called when a message is received by a peer, before the message is processed. The returned message is
