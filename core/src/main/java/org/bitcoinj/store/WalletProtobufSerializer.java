@@ -299,6 +299,7 @@ public class WalletProtobufSerializer {
             case ASSURANCE_CONTRACT_CLAIM: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM; break;
             case ASSURANCE_CONTRACT_PLEDGE: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE; break;
             case ASSURANCE_CONTRACT_STUB: purpose = Protos.Transaction.Purpose.ASSURANCE_CONTRACT_STUB; break;
+            case RAISE_FEE: purpose = Protos.Transaction.Purpose.RAISE_FEE; break;
             default:
                 throw new RuntimeException("New tx purpose serialization not implemented.");
         }
@@ -595,6 +596,7 @@ public class WalletProtobufSerializer {
                 case ASSURANCE_CONTRACT_CLAIM: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM); break;
                 case ASSURANCE_CONTRACT_PLEDGE: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE); break;
                 case ASSURANCE_CONTRACT_STUB: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_STUB); break;
+                case RAISE_FEE: tx.setPurpose(Transaction.Purpose.RAISE_FEE); break;
                 default: throw new RuntimeException("New purpose serialization not implemented");
             }
         } else {
