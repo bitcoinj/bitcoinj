@@ -1,4 +1,5 @@
 # configuration for https://travis-ci.org/bitcoinj/bitcoinj
+sudo: false
 language: java
 jdk: oraclejdk8
 install: true # remove default
