@@ -2,8 +2,7 @@ package org.bitcoinj.core;
 
 import org.slf4j.*;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 // TODO: Finish adding Context c'tors to all the different objects so we can start deprecating the versions that take NetworkParameters.
 // TODO: Add a working directory notion to Context and make various subsystems that want to use files default to that directory (eg. Orchid, block stores, wallet, etc).
@@ -109,11 +108,8 @@ public class Context {
      * want to create core BitcoinJ objects. Generally, if a class can accept a Context in its constructor and might
      * be used (even indirectly) by a thread, you will want to call this first. Your task may be simplified by using
      * a {@link org.bitcoinj.utils.ContextPropagatingThreadFactory}.
-     *
-     * @throws java.lang.IllegalStateException if this thread already has a context
      */
     public static void propagate(Context context) {
-        checkState(slot.get() == null);
         slot.set(checkNotNull(context));
     }
 
