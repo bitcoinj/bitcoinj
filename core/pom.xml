@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.13</version>
+        <version>0.13.1</version>
     </parent>
 
     <artifactId>bitcoinj-core</artifactId>
@@ -479,7 +479,7 @@
         <dependency>
             <groupId>org.bitcoinj</groupId>
             <artifactId>orchid</artifactId>
-            <version>1.1</version>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp</groupId>
