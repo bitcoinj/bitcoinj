@@ -17,6 +17,10 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.*;
+import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
+import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
+import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.PeerConnectionEventListener;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
@@ -103,10 +107,11 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void testAddEventListener() throws Exception {
         connect();
-        PeerEventListener listener = new AbstractPeerEventListener();
-        peer.addEventListener(listener);
-        assertTrue(peer.removeEventListener(listener));
-        assertFalse(peer.removeEventListener(listener));
+        PeerConnectionEventListener listener = new AbstractPeerConnectionEventListener() {
+        };
+        peer.addConnectionEventListener(listener);
+        assertTrue(peer.removeConnectionEventListener(listener));
+        assertFalse(peer.removeConnectionEventListener(listener));
     }
 
     // Check that it runs through the event loop and shut down correctly
@@ -313,7 +318,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         // Round-trip a ping so that we never see the response verack if we attach too quick
         pingAndWait(writeTarget);
-        peer.addEventListener(new AbstractPeerEventListener() {
+        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
             @Override
             public synchronized Message onPreMessageReceived(Peer p, Message m) {
                 if (p != peer)
@@ -336,7 +341,7 @@ public class PeerTest extends TestWithNetworkConnections {
                 if (newValue != 3 || p != peer || !block.equals(b2) || blocksLeft != OTHER_PEER_CHAIN_HEIGHT - 2)
                     fail.set(true);
             }
-        }, Threading.SAME_THREAD);
+        });
         long height = peer.getBestHeight();
 
         inbound(writeTarget, inv);
@@ -367,13 +372,13 @@ public class PeerTest extends TestWithNetworkConnections {
 
         connect();
         fail.set(true);
-        peer.addEventListener(new AbstractPeerEventListener() {
+        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
             @Override
             public void onChainDownloadStarted(Peer p, int blocksLeft) {
                 if (p == peer && blocksLeft == 108)
                     fail.set(false);
             }
-        }, Threading.SAME_THREAD);
+        });
         peer.startBlockChainDownload();
 
         List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
@@ -544,12 +549,12 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey to = new ECKey();
 
         final Transaction[] onTx = new Transaction[1];
-        peer.addEventListener(new AbstractPeerEventListener() {
+        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
             @Override
             public void onTransaction(Peer peer1, Transaction t) {
                 onTx[0] = t;
             }
-        }, Threading.SAME_THREAD);
+        });
 
         // Make some fake transactions in the following graph:
         //   t1 -> t2 -> [t5]
@@ -746,7 +751,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Set up the connection with an old version.
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
         final SettableFuture<Void> disconnectedFuture = SettableFuture.create();
-        peer.addEventListener(new AbstractPeerEventListener() {
+        peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 connectedFuture.set(null);
@@ -856,7 +861,7 @@ public class PeerTest extends TestWithNetworkConnections {
         };
         connect(); // Writes out a verack+version.
         final SettableFuture<Void> peerDisconnected = SettableFuture.create();
-        writeTarget.peer.addEventListener(new AbstractPeerEventListener() {
+        writeTarget.peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
                 peerDisconnected.set(null);

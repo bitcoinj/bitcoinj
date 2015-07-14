@@ -14,6 +14,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.core.listeners.AbstractPeerEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
@@ -45,13 +46,15 @@ public class DoubleSpend {
         Transaction tx1 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT);
         Transaction tx2 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
-        peer.addEventListener(new AbstractPeerEventListener() {
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
-                return m;
+        peer.addDataEventListener(Threading.SAME_THREAD,
+            new AbstractPeerEventListener() {
+                @Override
+                public Message onPreMessageReceived(Peer peer, Message m) {
+                    System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
+                    return m;
+                }
             }
-        }, Threading.SAME_THREAD);
+        );
         peer.sendMessage(tx1);
         peer.sendMessage(tx2);
 

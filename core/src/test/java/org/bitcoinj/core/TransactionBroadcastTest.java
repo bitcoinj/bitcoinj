@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
+import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.params.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;

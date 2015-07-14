@@ -17,6 +17,7 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
@@ -120,7 +121,7 @@ public class BuildCheckpoints {
         final long timeAgo = now - (86400 * options.valueOf(daysFlag));
         System.out.println("Checkpointing up to " + Utils.dateTimeFormat(timeAgo * 1000));
 
-        chain.addListener(new AbstractBlockChainListener() {
+        chain.addNewBestBlockListener(Threading.SAME_THREAD, new NewBestBlockListener() {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 int height = block.getHeight();
@@ -130,7 +131,7 @@ public class BuildCheckpoints {
                     checkpoints.put(height, block);
                 }
             }
-        }, Threading.SAME_THREAD);
+        });
 
         peerGroup.start();
         peerGroup.downloadBlockChain();

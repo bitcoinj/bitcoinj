@@ -16,6 +16,7 @@
 
 package org.bitcoinj.protocols.channels;
 
+import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -172,7 +173,7 @@ public class PaymentChannelClientState {
         if (storedChannel != null && storedChannel.close != null) {
             watchCloseConfirmations();
         }
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addEventListener(Threading.SAME_THREAD, new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 synchronized (PaymentChannelClientState.this) {
@@ -188,7 +189,7 @@ public class PaymentChannelClientState {
                     }
                 }
             }
-        }, Threading.SAME_THREAD);
+        });
     }
 
     private void watchCloseConfirmations() {
