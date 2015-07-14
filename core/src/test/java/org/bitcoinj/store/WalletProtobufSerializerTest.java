@@ -19,6 +19,7 @@ package org.bitcoinj.store;
 
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.Transaction.Purpose;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
@@ -131,6 +132,18 @@ public class WalletProtobufSerializerTest {
                 t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
         assertEquals(0, t1p.getTransactionInput(0).getTransactionOutPointIndex());
         assertEquals(t1p.getTransactionOutput(0).getValue(), v1.value);
+    }
+
+    @Test
+    public void raiseFeeTx() throws Exception {
+        // Check basic tx serialization.
+        Coin v1 = COIN;
+        Transaction t1 = createFakeTx(params, v1, myAddress);
+        t1.setPurpose(Purpose.RAISE_FEE);
+        myWallet.receivePending(t1, null);
+        Wallet wallet1 = roundTrip(myWallet);
+        Transaction t1copy = wallet1.getTransaction(t1.getHash());
+        assertEquals(Purpose.RAISE_FEE, t1copy.getPurpose());
     }
 
     @Test

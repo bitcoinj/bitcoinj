@@ -271,6 +271,8 @@ message Transaction {
     ASSURANCE_CONTRACT_CLAIM = 3;
     ASSURANCE_CONTRACT_PLEDGE = 4;
     ASSURANCE_CONTRACT_STUB = 5;
+    // Raise fee, e.g. child-pays-for-parent.
+    RAISE_FEE = 6;
     // In future: de/refragmentation, privacy boosting/mixing, child-pays-for-parent fees, etc.
   }
   optional Purpose purpose = 10 [default = UNKNOWN];
