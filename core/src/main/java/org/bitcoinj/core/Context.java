@@ -58,6 +58,7 @@ public class Context {
     }
 
     private static volatile Context lastConstructed;
+    private static boolean isStrictMode;
     private static final ThreadLocal<Context> slot = new ThreadLocal<Context>();
 
     /**
@@ -68,11 +69,16 @@ public class Context {
      * because propagation of contexts is meant to be done manually: this is so two libraries or subsystems that
      * independently use bitcoinj (or possibly alt coin forks of it) can operate correctly.
      *
-     * @throws java.lang.IllegalStateException if no context exists at all.
+     * @throws java.lang.IllegalStateException if no context exists at all or if we are in strict mode and there is no context.
      */
     public static Context get() {
         Context tls = slot.get();
         if (tls == null) {
+            if (isStrictMode) {
+                log.error("Thread is missing a bitcoinj context.");
+                log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
+                throw new IllegalStateException("missing context");
+            }
             if (lastConstructed == null)
                 throw new IllegalStateException("You must construct a Context object before using bitcoinj!");
             slot.set(lastConstructed);
@@ -86,6 +92,14 @@ public class Context {
         } else {
             return tls;
         }
+    }
+
+    /**
+     * Require that new threads use {@link #propagate(Context)} or {@link org.bitcoinj.utils.ContextPropagatingThreadFactory},
+     * rather than using a heuristic for the desired context.
+     */
+    public static void enableStrictMode() {
+        isStrictMode = true;
     }
 
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
