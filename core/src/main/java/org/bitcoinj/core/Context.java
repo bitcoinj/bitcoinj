@@ -86,6 +86,7 @@ public class Context {
             log.error("This error has been corrected for, but doing this makes your app less robust.");
             log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
             log.error("Please refer to the user guide for more information about this.");
+            log.error("Thread name is {}.", Thread.currentThread().getName());
             // TODO: Actually write the user guide section about this.
             // TODO: If the above TODO makes it past the 0.13 release, kick Mike and tell him he sucks.
             return lastConstructed;
