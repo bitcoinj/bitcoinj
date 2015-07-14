@@ -1,20 +1,27 @@
 package org.bitcoinj.utils;
 
+import com.google.common.base.*;
 import org.bitcoinj.core.*;
+import org.slf4j.*;
 
 import java.util.concurrent.*;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link java.util.concurrent.ThreadFactory} that propagates a {@link org.bitcoinj.core.Context} from the creating
  * thread into the new thread. This factory creates daemon threads.
  */
 public class ContextPropagatingThreadFactory implements ThreadFactory {
+    private static final Logger log = LoggerFactory.getLogger(ContextPropagatingThreadFactory.class);
     private final String name;
+    private final int priority;
+
+    public ContextPropagatingThreadFactory(String name, int priority) {
+        this.name = name;
+        this.priority = priority;
+    }
 
     public ContextPropagatingThreadFactory(String name) {
-        this.name = checkNotNull(name);
+        this(name, Thread.NORM_PRIORITY);
     }
 
     @Override
@@ -23,11 +30,20 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Context.propagate(context);
-                r.run();
+                try {
+                    Context.propagate(context);
+                    r.run();
+                } catch (Exception e) {
+                    log.error("Exception in thread", e);
+                    Throwables.propagate(e);
+                }
             }
         }, name);
+        thread.setPriority(priority);
         thread.setDaemon(true);
+        Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
+        if (handler != null)
+            thread.setUncaughtExceptionHandler(handler);
         return thread;
     }
 }
