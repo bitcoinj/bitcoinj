@@ -24,6 +24,10 @@ import com.lambdaworks.crypto.SCrypt;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.text.Normalizer;
@@ -37,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
-    public final NetworkParameters params;
+    public transient NetworkParameters params;
     public final boolean ecMultiply;
     public final boolean compressed;
     public final boolean hasLotAndSequence;
@@ -172,5 +176,17 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     @Override
     public int hashCode() {
         return Objects.hashCode(super.hashCode(), params);
+    }
+
+    // Java serialization
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(params.getId());
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        params = NetworkParameters.fromID(in.readUTF());
     }
 }
