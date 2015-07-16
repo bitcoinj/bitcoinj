@@ -1,6 +1,7 @@
 /**
  * Copyright 2011 Google Inc.
  * Copyright 2014 Giannis Dzegoutanis
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,10 @@
  */
 
 package org.bitcoinj.core;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
@@ -42,7 +47,7 @@ public class Address extends VersionedChecksummedBytes {
      */
     public static final int LENGTH = 20;
 
-    private final NetworkParameters params;
+    private transient NetworkParameters params;
 
     /**
      * Construct an address from parameters, the address version, and the hash160 form. Example:<p>
@@ -175,5 +180,17 @@ public class Address extends VersionedChecksummedBytes {
     @Override
     public Address clone() throws CloneNotSupportedException {
         return (Address) super.clone();
+    }
+
+    // Java serialization
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(params.id);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        params = NetworkParameters.fromID(in.readUTF());
     }
 }
