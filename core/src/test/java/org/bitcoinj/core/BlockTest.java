@@ -128,7 +128,7 @@ public class BlockTest {
     }
 
     @Test
-    public void testBitCoinSerialization() throws Exception {
+    public void testBitcoinSerialization() throws Exception {
         // We have to be able to reserialize everything exactly as we found it for hashing to work. This test also
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
