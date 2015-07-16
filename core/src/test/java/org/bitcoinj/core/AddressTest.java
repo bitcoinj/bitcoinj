@@ -24,6 +24,10 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,6 +37,23 @@ import static org.junit.Assert.*;
 public class AddressTest {
     static final NetworkParameters testParams = TestNet3Params.get();
     static final NetworkParameters mainParams = MainNetParams.get();
+
+    @Test
+    public void testJavaSerialization() throws Exception {
+        Address testAddress = new Address(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        new ObjectOutputStream(os).writeObject(testAddress);
+        VersionedChecksummedBytes testAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
+                new ByteArrayInputStream(os.toByteArray())).readObject();
+        assertEquals(testAddress, testAddressCopy);
+
+        Address mainAddress = new Address(mainParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        os = new ByteArrayOutputStream();
+        new ObjectOutputStream(os).writeObject(mainAddress);
+        VersionedChecksummedBytes mainAddressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
+                new ByteArrayInputStream(os.toByteArray())).readObject();
+        assertEquals(mainAddress, mainAddressCopy);
+    }
 
     @Test
     public void stringification() throws Exception {
