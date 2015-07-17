@@ -358,7 +358,6 @@ public class KeyChainGroup implements KeyBag {
     }
 
     public void markP2SHAddressAsUsed(Address address) {
-        checkState(isMarried());
         checkArgument(address.isP2SHAddress());
         RedeemData data = findRedeemDataFromScriptHash(address.getHash160());
         if (data == null)
@@ -402,7 +401,6 @@ public class KeyChainGroup implements KeyBag {
 
     /** If the given P2SH address is "current", advance it to a new one. */
     private void maybeMarkCurrentAddressAsUsed(Address address) {
-        checkState(isMarried());
         checkArgument(address.isP2SHAddress());
         for (Map.Entry<KeyChain.KeyPurpose, Address> entry : currentAddresses.entrySet()) {
             if (entry.getValue() != null && entry.getValue().equals(address)) {
