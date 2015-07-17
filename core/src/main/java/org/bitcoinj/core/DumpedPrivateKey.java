@@ -53,9 +53,10 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      *
      * @param params  The expected network parameters of the key. If you don't care, provide null.
      * @param encoded The base58 encoded string.
-     * @throws AddressFormatException If the string is invalid or the header byte doesn't match the network params.
+     * @throws IllegalArgumentException If the string is invalid or the header byte doesn't match the network params.
      */
-    public DumpedPrivateKey(NetworkParameters params, String encoded) throws AddressFormatException {
+    public DumpedPrivateKey(NetworkParameters params, String encoded) throws IllegalArgumentException {
+        // we actually throw AFEs instead of IAEs for backwards-compatibility
         super(encoded);
         if (params != null && version != params.getDumpedPrivateKeyHeader())
             throw new AddressFormatException("Mismatched version number, trying to cross networks? " + version +

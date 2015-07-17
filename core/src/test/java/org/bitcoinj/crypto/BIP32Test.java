@@ -118,16 +118,16 @@ public class BIP32Test {
     };
 
     @Test
-    public void testVector1() throws Exception {
+    public void testVector1() {
         testVector(0);
     }
 
     @Test
-    public void testVector2() throws Exception {
+    public void testVector2() {
         testVector(1);
     }
 
-    private void testVector(int testCase) throws AddressFormatException {
+    private void testVector(int testCase) {
         log.info("=======  Test vector {}", testCase);
         HDWTestVector tv = tvs[testCase];
         NetworkParameters params = MainNetParams.get();
@@ -146,7 +146,7 @@ public class BIP32Test {
         }
     }
 
-    private String testEncode(String what) throws AddressFormatException {
+    private String testEncode(String what) {
         return HEX.encode(Base58.decodeChecked(what));
     }
 

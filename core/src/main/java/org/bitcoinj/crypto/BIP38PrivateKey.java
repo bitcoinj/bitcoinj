@@ -51,7 +51,8 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     public static final class BadPassphraseException extends Exception {
     }
 
-    public BIP38PrivateKey(NetworkParameters params, String encoded) throws AddressFormatException {
+    public BIP38PrivateKey(NetworkParameters params, String encoded) throws IllegalArgumentException {
+        // we actually throw AFEs instead of IAEs for backwards-compatibility
         super(encoded);
         this.params = params;
         if (version != 0x01)

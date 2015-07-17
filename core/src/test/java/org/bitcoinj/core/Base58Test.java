@@ -42,7 +42,7 @@ public class Base58Test extends TestCase {
     }
 
     @Test
-    public void testDecode() throws Exception {
+    public void testDecode() throws IllegalArgumentException {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
         assertTrue(new String(actualbytes), Arrays.equals(testbytes, actualbytes));
@@ -53,7 +53,7 @@ public class Base58Test extends TestCase {
         try {
             Base58.decode("This isn't valid base58");
             fail();
-        } catch (AddressFormatException e) {
+        } catch (IllegalArgumentException e) {
             // expected
         }
 
@@ -63,7 +63,7 @@ public class Base58Test extends TestCase {
         try {
             Base58.decodeChecked("4stwEBjT6FYyVW");
             fail();
-        } catch (AddressFormatException e) {
+        } catch (IllegalArgumentException e) {
             // expected
         }
 
@@ -71,7 +71,7 @@ public class Base58Test extends TestCase {
         try {
             Base58.decodeChecked("4s");
             fail();
-        } catch (AddressFormatException e) {
+        } catch (IllegalArgumentException e) {
             // expected
         }
 
@@ -84,7 +84,7 @@ public class Base58Test extends TestCase {
     }
 
     @Test
-    public void testDecodeToBigInteger() throws AddressFormatException {
+    public void testDecodeToBigInteger() throws IllegalArgumentException {
         byte[] input = Base58.decode("129");
         assertEquals(new BigInteger(1, input), Base58.decodeToBigInteger("129"));
     }
