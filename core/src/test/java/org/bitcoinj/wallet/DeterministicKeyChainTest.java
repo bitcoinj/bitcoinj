@@ -59,7 +59,7 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = new Address(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        final Address address = Address.fromBase58(UnitTestParams.get(), "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
         assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
@@ -90,7 +90,7 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = new Address(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        final Address address = Address.fromBase58(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
@@ -124,7 +124,7 @@ public class DeterministicKeyChainTest {
         DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = new Address(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        final Address address = Address.fromBase58(UnitTestParams.get(), "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
         assertEquals(address, key1.toAddress(UnitTestParams.get()));
 
         DeterministicKey watching = chain1.getWatchingKey();

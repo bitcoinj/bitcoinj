@@ -79,6 +79,21 @@ public class Address extends VersionedChecksummedBytes {
     }
 
     /**
+     * Construct an address from its Base58 representation.
+     * @param params
+     *            The expected NetworkParameters or null if you don't want validation.
+     * @param base58
+     *            The textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL".
+     * @throws AddressFormatException
+     *             if the given base58 doesn't parse or the checksum is invalid
+     * @throws WrongNetworkException
+     *             if the given address is valid but for a different chain (eg testnet vs mainnet)
+     */
+    public static Address fromBase58(@Nullable NetworkParameters params, String base58) throws AddressFormatException {
+        return new Address(params, base58);
+    }
+
+    /**
      * Construct an address from parameters and the hash160 form. Example:<p>
      *
      * <pre>new Address(MainNetParams.get(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
@@ -89,16 +104,8 @@ public class Address extends VersionedChecksummedBytes {
         this.params = params;
     }
 
-    /**
-     * Construct an address from parameters and the standard "human readable" form. Example:<p>
-     *
-     * <pre>new Address(MainNetParams.get(), "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");</pre><p>
-     *
-     * @param params The expected NetworkParameters or null if you don't want validation.
-     * @param address The textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL"
-     * @throws AddressFormatException if the given address doesn't parse or the checksum is invalid
-     * @throws WrongNetworkException if the given address is valid but for a different chain (eg testnet vs mainnet)
-     */
+    /** @deprecated Use {@link #fromBase58(NetworkParameters, String)} */
+    @Deprecated
     public Address(@Nullable NetworkParameters params, String address) throws AddressFormatException {
         super(address);
         if (params != null) {
@@ -156,7 +163,7 @@ public class Address extends VersionedChecksummedBytes {
      */
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
         try {
-            return new Address(null, address).getParameters();
+            return Address.fromBase58(null, address).getParameters();
         } catch (WrongNetworkException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }

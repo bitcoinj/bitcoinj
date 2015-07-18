@@ -51,6 +51,21 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     public static final class BadPassphraseException extends Exception {
     }
 
+    /**
+     * Construct a password-protected private key from its Base58 representation.
+     * @param params
+     *            The network parameters of the chain that the key is for.
+     * @param base58
+     *            The textual form of the password-protected private key.
+     * @throws AddressFormatException
+     *             if the given base58 doesn't parse or the checksum is invalid
+     */
+    public static BIP38PrivateKey fromBase58(NetworkParameters params, String base58) throws AddressFormatException {
+        return new BIP38PrivateKey(params, base58);
+    }
+
+    /** @deprecated Use {@link #fromBase58(NetworkParameters, String)} */
+    @Deprecated
     public BIP38PrivateKey(NetworkParameters params, String encoded) throws AddressFormatException {
         super(encoded);
         this.params = params;

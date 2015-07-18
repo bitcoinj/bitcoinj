@@ -93,7 +93,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         ECKey key2 = new ECKey();
         Transaction tx1 = FakeTxBuilder.createFakeTx(params, Coin.COIN,  key1);
         Transaction tx2 = FakeTxBuilder.createFakeTx(params, Coin.FIFTY_COINS, key2.toAddress(params));
-        Block block = FakeTxBuilder.makeSolvedTestBlock(params.getGenesisBlock(), new Address(params, "msg2t2V2sWNd85LccoddtWysBTR8oPnkzW"), tx1, tx2);
+        Block block = FakeTxBuilder.makeSolvedTestBlock(params.getGenesisBlock(), Address.fromBase58(params, "msg2t2V2sWNd85LccoddtWysBTR8oPnkzW"), tx1, tx2);
         BloomFilter filter = new BloomFilter(4, 0.1, 1);
         filter.insert(key1);
         filter.insert(key2);

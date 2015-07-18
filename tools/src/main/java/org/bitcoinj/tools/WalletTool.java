@@ -501,7 +501,7 @@ public class WalletTool {
             return;
         }
         try {
-            Address address = new Address(params, addr);
+            Address address = Address.fromBase58(params, addr);
             // If no creation time is specified, assume genesis (zero).
             wallet.addWatchedAddress(address, getCreationTimeSeconds());
         } catch (AddressFormatException e) {
@@ -533,7 +533,7 @@ public class WalletTool {
                         t.addOutput(value, key);
                     } else {
                         // Treat as an address.
-                        Address addr = new Address(params, destination);
+                        Address addr = Address.fromBase58(params, destination);
                         t.addOutput(value, addr);
                     }
                 } catch (WrongNetworkException e) {
@@ -995,7 +995,7 @@ public class WalletTool {
             if (data.startsWith("5J") || data.startsWith("5H") || data.startsWith("5K")) {
                 DumpedPrivateKey dpk;
                 try {
-                    dpk = new DumpedPrivateKey(params, data);
+                    dpk = DumpedPrivateKey.fromBase58(params, data);
                 } catch (AddressFormatException e) {
                     System.err.println("Could not parse dumped private key " + data);
                     return;
@@ -1061,7 +1061,7 @@ public class WalletTool {
             key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
         } else {
             try {
-                Address address = new Address(wallet.getParams(), addr);
+                Address address = Address.fromBase58(wallet.getParams(), addr);
                 key = wallet.findKeyFromPubHash(address.getHash160());
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");

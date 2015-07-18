@@ -33,7 +33,7 @@ public class BitcoinURITest {
 
     @Test
     public void testConvertToBitcoinURI() throws Exception {
-        Address goodAddress = new Address(MainNetParams.get(), MAINNET_GOOD_ADDRESS);
+        Address goodAddress = Address.fromBase58(MainNetParams.get(), MAINNET_GOOD_ADDRESS);
         
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage", BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34"), "Hello", "AMessage"));

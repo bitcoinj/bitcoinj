@@ -62,7 +62,7 @@ public class ForwardingService {
             filePrefix = "forwarding-service";
         }
         // Parse the address given as the first parameter.
-        forwardingAddress = new Address(params, args[0]);
+        forwardingAddress = Address.fromBase58(params, args[0]);
 
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(params, new File("."), filePrefix);

@@ -36,7 +36,7 @@ public class BitcoinAddressValidator {
 
     private boolean testAddr(String text) {
         try {
-            new Address(params, text);
+            Address.fromBase58(params, text);
             return true;
         } catch (AddressFormatException e) {
             return false;

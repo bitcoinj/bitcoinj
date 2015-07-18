@@ -25,14 +25,28 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.junit.Test;
-
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
 
 public class DumpedPrivateKeyTest {
+
+    private static final MainNetParams MAINNET = MainNetParams.get();
+    private static final TestNet3Params TESTNET = TestNet3Params.get();
+
+    @Test
+    public void checkNetwork() throws Exception {
+        DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+    }
+
+    @Test(expected = WrongNetworkException.class)
+    public void checkNetworkWrong() throws Exception {
+        DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+    }
+
     @Test
     public void testJavaSerialization() throws Exception {
 
-        DumpedPrivateKey key = new DumpedPrivateKey(MainNetParams.get(), new ECKey().getPrivKeyBytes(), true);
+        DumpedPrivateKey key = new DumpedPrivateKey(MAINNET, new ECKey().getPrivKeyBytes(), true);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(key);
         DumpedPrivateKey keyCopy = (DumpedPrivateKey) new ObjectInputStream(new ByteArrayInputStream(os.toByteArray()))
@@ -42,7 +56,7 @@ public class DumpedPrivateKeyTest {
 
     @Test
     public void cloning() throws Exception {
-        DumpedPrivateKey a = new DumpedPrivateKey(MainNetParams.get(), new ECKey().getPrivKeyBytes(), true);
+        DumpedPrivateKey a = new DumpedPrivateKey(MAINNET, new ECKey().getPrivKeyBytes(), true);
         // TODO: Consider overriding clone() in DumpedPrivateKey to narrow the type
         DumpedPrivateKey b = (DumpedPrivateKey) a.clone();
 
@@ -50,4 +64,9 @@ public class DumpedPrivateKeyTest {
         assertNotSame(a, b);
     }
 
+    @Test
+    public void roundtripBase58() throws Exception {
+        String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk";
+        assertEquals(base58, DumpedPrivateKey.fromBase58(null, base58).toBase58());
+    }
 }

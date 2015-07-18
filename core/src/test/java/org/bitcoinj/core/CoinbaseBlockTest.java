@@ -69,7 +69,7 @@ public class CoinbaseBlockTest {
         StoredBlock storedBlock = new StoredBlock(block, BigInteger.ONE, BLOCK_OF_INTEREST); // Nonsense work - not used in test.
 
         // Create a wallet contain the miner's key that receives a spend from a coinbase.
-        ECKey miningKey = (new DumpedPrivateKey(params, MINING_PRIVATE_KEY)).getKey();
+        ECKey miningKey = DumpedPrivateKey.fromBase58(params, MINING_PRIVATE_KEY).getKey();
         assertNotNull(miningKey);
         Context context = new Context(params);
         Wallet wallet = new Wallet(context);

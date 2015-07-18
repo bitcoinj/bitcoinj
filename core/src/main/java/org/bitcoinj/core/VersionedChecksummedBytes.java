@@ -55,8 +55,7 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
      * Returns the base-58 encoded String representation of this
      * object, including version and checksum bytes.
      */
-    @Override
-    public String toString() {
+    public final String toBase58() {
         // A stringified buffer is:
         //   1 byte version + data bytes + 4 bytes check code (a truncated hash)
         byte[] addressBytes = new byte[1 + bytes.length + 4];
@@ -65,6 +64,11 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
         byte[] checksum = Sha256Hash.hashTwice(addressBytes, 0, bytes.length + 1);
         System.arraycopy(checksum, 0, addressBytes, bytes.length + 1, 4);
         return Base58.encode(addressBytes);
+    }
+
+    @Override
+    public String toString() {
+        return toBase58();
     }
 
     @Override
