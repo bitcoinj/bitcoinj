@@ -319,7 +319,7 @@ public class DeterministicKey extends ECKey {
     /** {@inheritDoc} */
     @Override
     public boolean hasPrivKey() {
-        return findOrDerivePrivateKey() != null;
+        return findParentWithPrivKey() != null;
     }
 
     @Nullable
@@ -406,13 +406,18 @@ public class DeterministicKey extends ECKey {
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
-    @Nullable
-    private BigInteger findOrDerivePrivateKey() {
+    private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
             if (cursor.priv != null) break;
             cursor = cursor.parent;
         }
+        return cursor;
+    }
+
+    @Nullable
+    private BigInteger findOrDerivePrivateKey() {
+        DeterministicKey cursor = findParentWithPrivKey();
         if (cursor == null)
             return null;
         return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
