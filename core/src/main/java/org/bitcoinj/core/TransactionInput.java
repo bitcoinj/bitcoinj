@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Map;
@@ -41,9 +40,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * transaction as being a module which is wired up to others, the inputs of one have to be wired
  * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
  */
-public class TransactionInput extends ChildMessage implements Serializable {
+public class TransactionInput extends ChildMessage {
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
-    private static final long serialVersionUID = 2;
     public static final byte[] EMPTY_ARRAY = new byte[0];
 
     // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
@@ -58,7 +56,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     private byte[] scriptBytes;
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
-    private transient WeakReference<Script> scriptSig;
+    private WeakReference<Script> scriptSig;
     /** Value of the output connected to the input, if known. This field does not participate in equals()/hashCode(). */
     @Nullable
     private Coin value;
@@ -392,16 +390,6 @@ public class TransactionInput extends ChildMessage implements Serializable {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
-     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
-     * then data will be lost during serialization.
-     */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        maybeParse();
-        out.defaultWriteObject();
     }
 
     /**

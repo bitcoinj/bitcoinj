@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -23,10 +23,6 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -132,32 +128,9 @@ public class BlockTest {
         // We have to be able to reserialize everything exactly as we found it for hashing to work. This test also
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
-        // NB: This tests the BITCOIN proprietary serialization protocol. A different test checks Java serialization
-        // of transactions.
+        // NB: This tests the bitcoin serialization protocol.
         Block block = new Block(params, blockBytes);
         assertTrue(Arrays.equals(blockBytes, block.bitcoinSerialize()));
-    }
-
-    @Test
-    public void testJavaSerialiazation() throws Exception {
-        Block block = new Block(params, blockBytes);
-        Transaction tx = block.transactions.get(1);
-
-        // Serialize using Java.
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(tx);
-        oos.close();
-        byte[] javaBits = bos.toByteArray();
-        // Deserialize again.
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(javaBits));
-        Transaction tx2 = (Transaction) ois.readObject();
-        ois.close();
-
-        // Note that this will actually check the transactions are equal by doing bitcoin serialization and checking
-        // the bytestreams are the same! A true "deep equals" is not implemented for Transaction. The primary purpose
-        // of this test is to ensure no errors occur during the Java serialization/deserialization process.
-        assertEquals(tx, tx2);
     }
     
     @Test

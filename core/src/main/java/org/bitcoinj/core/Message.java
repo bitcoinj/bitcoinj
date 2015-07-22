@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -27,13 +27,12 @@ import java.util.Arrays;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * <p>A Message is a data structure that can be serialized/deserialized using both the Bitcoin proprietary serialization
- * format and built-in Java object serialization. Specific types of messages that are used both in the block chain,
- * and on the wire, are derived from this class.</p>
+ * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
+ * Specific types of messages that are used both in the block chain, and on the wire, are derived from this
+ * class.</p>
  */
-public abstract class Message implements Serializable {
+public abstract class Message {
     private static final Logger log = LoggerFactory.getLogger(Message.class);
-    private static final long serialVersionUID = -3561053461717079135L;
 
     public static final int MAX_SIZE = 0x02000000; // 32MB
 
@@ -43,31 +42,27 @@ public abstract class Message implements Serializable {
     private static final boolean SELF_CHECK = false;
 
     // The offset is how many bytes into the provided byte array this message payload starts at.
-    protected transient int offset;
+    protected int offset;
     // The cursor keeps track of where we are in the byte array as we parse it.
     // Note that it's relative to the start of the array NOT the start of the message payload.
-    protected transient int cursor;
+    protected int cursor;
 
-    protected transient int length = UNKNOWN_LENGTH;
+    protected int length = UNKNOWN_LENGTH;
 
     // The raw message payload bytes themselves.
-    protected transient byte[] payload;
+    protected byte[] payload;
 
-    protected transient boolean parsed = false;
-    protected transient boolean recached = false;
-    protected final transient boolean parseLazy;
-    protected final transient boolean parseRetain;
+    protected boolean parsed = false;
+    protected boolean recached = false;
+    protected final boolean parseLazy;
+    protected final boolean parseRetain;
 
-    protected transient int protocolVersion;
+    protected int protocolVersion;
 
-    protected transient byte[] checksum;
+    protected byte[] checksum;
 
-    // This will be saved by subclasses that implement Serializable.
     protected NetworkParameters params;
 
-    /**
-     * This exists for the Java serialization framework to use only.
-     */
     protected Message() {
         parsed = true;
         parseLazy = false;
@@ -151,9 +146,7 @@ public abstract class Message implements Serializable {
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
-    // It's somewhat painful to work with in Java, so some of these objects support a second
-    // serialization mechanism - the standard Java serialization system. This is used when things
-    // are serialized to the wallet.
+
     abstract void parse() throws ProtocolException;
 
     /**
@@ -476,7 +469,6 @@ public abstract class Message implements Serializable {
     }
 
     public static class LazyParseException extends RuntimeException {
-        private static final long serialVersionUID = 6971943053112975594L;
 
         public LazyParseException(String message, Throwable cause) {
             super(message, cause);

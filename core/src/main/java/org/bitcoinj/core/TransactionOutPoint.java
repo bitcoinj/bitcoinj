@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +28,7 @@ import static com.google.common.base.Preconditions.*;
 /**
  * This message is a reference or pointer to an output of a different transaction.
  */
-public class TransactionOutPoint extends ChildMessage implements Serializable {
-    private static final long serialVersionUID = -6320880638344662579L;
+public class TransactionOutPoint extends ChildMessage {
 
     static final int MESSAGE_LENGTH = 36;
 
@@ -38,8 +37,7 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     /** Which output of that transaction we are talking about. */
     private long index;
 
-    // This is not part of Bitcoin serialization. It's included in Java serialization.
-    // It points to the connected transaction.
+    // This is not part of bitcoin serialization. It points to the connected transaction.
     Transaction fromTx;
 
     // The connected output.
@@ -217,16 +215,6 @@ public class TransactionOutPoint extends ChildMessage implements Serializable {
     
     public void setIndex(long index) {
         this.index = index;
-    }
-
-    /**
-     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
-     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
-     * then data will be lost during serialization.
-     */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        maybeParse();
-        out.defaultWriteObject();
     }
 
     @Override

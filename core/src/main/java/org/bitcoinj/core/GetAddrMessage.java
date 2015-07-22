@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,8 @@ package org.bitcoinj.core;
  * be confused with {@link Address} which is sort of like an account number.
  */
 public class GetAddrMessage extends EmptyMessage {
-    private static final long serialVersionUID = 6204437624599661503L;
 
     public GetAddrMessage(NetworkParameters params) {
         super(params);
     }
-
 }

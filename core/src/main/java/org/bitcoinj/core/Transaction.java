@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -51,7 +51,7 @@ import static com.google.common.base.Preconditions.checkState;
  * sense for selling MP3s might not make sense for selling cars, or accepting payments from a family member. If you
  * are building a wallet, how to present confidence to your users is something to consider carefully.</p>
  */
-public class Transaction extends ChildMessage implements Serializable {
+public class Transaction extends ChildMessage {
     /**
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
      * into the past.
@@ -78,7 +78,6 @@ public class Transaction extends ChildMessage implements Serializable {
         }
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
-    private static final long serialVersionUID = -8567546957352643140L;
 
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
@@ -99,7 +98,7 @@ public class Transaction extends ChildMessage implements Serializable {
      */
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546);
 
-    // These are serialized in both bitcoin and java serialization.
+    // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
@@ -113,7 +112,7 @@ public class Transaction extends ChildMessage implements Serializable {
     private Date updatedAt;
 
     // This is an in memory helper only.
-    private transient Sha256Hash hash;
+    private Sha256Hash hash;
 
     // Data about how confirmed this tx is. Serialized, may be null.
     @Nullable private TransactionConfidence confidence;
@@ -132,7 +131,7 @@ public class Transaction extends ChildMessage implements Serializable {
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs) so that Blocks
     // can properly keep track of optimal encoded size
-    private transient int optimalEncodingMessageSize;
+    private int optimalEncodingMessageSize;
 
     /**
      * This enum describes the underlying reason the transaction was created. It's useful for rendering wallet GUIs
@@ -1192,16 +1191,6 @@ public class Transaction extends ChildMessage implements Serializable {
     @Override
     public int hashCode() {
         return getHash().hashCode();
-    }
-
-    /**
-     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
-     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
-     * then data will be lost during serialization.
-     */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        maybeParse();
-        out.defaultWriteObject();
     }
 
     /**

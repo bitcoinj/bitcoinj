@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -51,7 +50,6 @@ import static org.bitcoinj.core.Sha256Hash.hashTwice;
  */
 public class Block extends Message {
     private static final Logger log = LoggerFactory.getLogger(Block.class);
-    private static final long serialVersionUID = 2738848929966035281L;
 
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
@@ -87,18 +85,18 @@ public class Block extends Message {
     @Nullable List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    private transient Sha256Hash hash;
+    private Sha256Hash hash;
 
-    private transient boolean headerParsed;
-    private transient boolean transactionsParsed;
+    private boolean headerParsed;
+    private boolean transactionsParsed;
 
-    private transient boolean headerBytesValid;
-    private transient boolean transactionBytesValid;
+    private boolean headerBytesValid;
+    private boolean transactionBytesValid;
     
     // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
-    private transient int optimalEncodingMessageSize;
+    private int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params) {
@@ -170,13 +168,6 @@ public class Block extends Message {
      */
     public Coin getBlockInflation(int height) {
         return FIFTY_COINS.shiftRight(height / params.getSubsidyDecreaseBlockCount());
-    }
-
-    private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
-        ois.defaultReadObject();
-        // This code is not actually necessary, as transient fields are initialized to the default value which is in
-        // this case null. However it clears out a FindBugs warning and makes it explicit what we're doing.
-        hash = null;
     }
 
     protected void parseHeader() throws ProtocolException {

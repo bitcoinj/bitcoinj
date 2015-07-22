@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -31,9 +31,8 @@ import static com.google.common.base.Preconditions.*;
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
  * of the Transaction message.
  */
-public class TransactionOutput extends ChildMessage implements Serializable {
+public class TransactionOutput extends ChildMessage {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
-    private static final long serialVersionUID = -590332479859256824L;
 
     // The output's value is kept as a native type in order to save class instances.
     private long value;
@@ -43,16 +42,16 @@ public class TransactionOutput extends ChildMessage implements Serializable {
     private byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
-    private transient Script scriptPubKey;
+    private Script scriptPubKey;
 
-    // These fields are Java serialized but not Bitcoin serialized. They are used for tracking purposes in our wallet
+    // These fields are not Bitcoin serialized. They are used for tracking purposes in our wallet
     // only. If set to true, this output is counted towards our balance. If false and spentBy is null the tx output
     // was owned by us and was sent to somebody else. If false and spentBy is set it means this output was owned by
     // us and used in one of our own transactions (eg, because it is a change output).
     private boolean availableForSpending;
     @Nullable private TransactionInput spentBy;
 
-    private transient int scriptLen;
+    private int scriptLen;
 
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
@@ -401,16 +400,6 @@ public class TransactionOutput extends ChildMessage implements Serializable {
             }
         }
         return -1;
-    }
-
-    /**
-     * Ensure object is fully parsed before invoking java serialization.  The backing byte array
-     * is transient so if the object has parseLazy = true and hasn't invoked checkParse yet
-     * then data will be lost during serialization.
-     */
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        maybeParse();
-        out.defaultWriteObject();
     }
 
     /**

@@ -29,8 +29,7 @@ import java.math.*;
  * It avoids having to store the entire parentTransaction just to get the hash and index.
  * Useful when working with free standing outputs.
  */
-public class UTXO implements Serializable {
-    private static final long serialVersionUID = -8744924157056340509L;
+public class UTXO {
 
     private Coin value;
     private Script script;

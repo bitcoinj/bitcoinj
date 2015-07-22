@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Matt Corallo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@ import java.io.OutputStream;
  * A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc)
  */
 public class RejectMessage extends Message {
-    private static final long serialVersionUID = -5246995579800334336L;
 
     private String message, reason;
     public enum RejectCode {

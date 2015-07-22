@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ import java.util.List;
  * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.
  */
 public class GetBlocksMessage extends Message {
-    private static final long serialVersionUID = 3479412877853645644L;
+
     protected long version;
     protected List<Sha256Hash> locator;
     protected Sha256Hash stopHash;

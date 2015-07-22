@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Steve Coughlan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ import java.io.OutputStream;
  * Currently this includes getaddr, verack and special bitcoinj class UnknownMessage.
  */
 public abstract class EmptyMessage extends Message {
-    private static final long serialVersionUID = 8240801253854151802L;
 
     public EmptyMessage() {
         length = 0;

@@ -58,8 +58,7 @@ import static com.google.common.base.Preconditions.*;
  * method to ensure the block depth is up to date.</p>
  * To make a copy that won't be changed, use {@link org.bitcoinj.core.TransactionConfidence#duplicate()}.
  */
-public class TransactionConfidence implements Serializable {
-    private static final long serialVersionUID = 4577920141400556444L;
+public class TransactionConfidence {
 
     /**
      * The peers that have announced the transaction to us. Network nodes don't have stable identities, so we use
@@ -70,7 +69,7 @@ public class TransactionConfidence implements Serializable {
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
     // Lazily created listeners array.
-    private transient CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
+    private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
     // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
     private int depth;
@@ -138,15 +137,6 @@ public class TransactionConfidence implements Serializable {
         broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
         listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
         this.hash = hash;
-    }
-
-    /**
-     * In case the class gets created from a serialised version, we need to recreate the listeners object as it is set 
-     * as transient and only created in the constructor.
-     */
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
     }
 
     /**

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.bitcoinj.core;
  * hashes.
  */
 public class GetDataMessage extends ListMessage {
-    private static final long serialVersionUID = 2754681589501709887L;
 
     public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes);

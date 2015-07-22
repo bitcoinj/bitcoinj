@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import java.net.UnknownHostException;
  * to ensure it will be used for each new connection.
  */
 public class VersionMessage extends Message {
-    private static final long serialVersionUID = 7313594258967483180L;
 
     /** A services flag that denotes whether the peer has a copy of the block chain or not. */
     public static final int NODE_NETWORK = 1;

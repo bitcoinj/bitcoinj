@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Steve Coughlan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
  * backing byte array need to invalidate their parent's caches as well as their own if they are modified.
  */
 public abstract class ChildMessage extends Message {
-    private static final long serialVersionUID = -7657113383624517931L;
 
     @Nullable protected Message parent;
 

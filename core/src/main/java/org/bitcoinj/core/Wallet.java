@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -78,17 +78,15 @@ import static com.google.common.base.Preconditions.*;
  * other objects, see the <a href="https://bitcoinj.github.io/getting-started">Getting started</a> tutorial
  * on the website to learn more about how to set everything up.</p>
  *
- * <p>Wallets can be serialized using either Java serialization - this is not compatible across versions of bitcoinj,
- * or protocol buffer serialization. You need to save the wallet whenever it changes, there is an auto-save feature
- * that simplifies this for you although you're still responsible for manually triggering a save when your app is about
- * to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO thrashing when
- * the wallet is changing very fast (eg due to a block chain sync). See
+ * <p>Wallets can be serialized using protocol buffers. You need to save the wallet whenever it changes, there is an
+ * auto-save feature that simplifies this for you although you're still responsible for manually triggering a save when
+ * your app is about to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO
+ * thrashing when the wallet is changing very fast (eg due to a block chain sync). See
  * {@link Wallet#autosaveToFile(java.io.File, long, java.util.concurrent.TimeUnit, org.bitcoinj.wallet.WalletFiles.Listener)}
  * for more information about this.</p>
  */
-public class Wallet extends BaseTaggableObject implements Serializable, BlockChainListener, PeerFilterProvider, KeyBag, TransactionBag {
+public class Wallet extends BaseTaggableObject implements BlockChainListener, PeerFilterProvider, KeyBag, TransactionBag {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
-    private static final long serialVersionUID = 2L;
     private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
 
     // Ordering: lock > keychainLock. Keychain is protected separately to allow fast querying of current receive address
@@ -155,16 +153,16 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     private int lastBlockSeenHeight;
     private long lastBlockSeenTimeSecs;
 
-    private transient CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>> eventListeners;
+    private CopyOnWriteArrayList<ListenerRegistration<WalletEventListener>> eventListeners;
 
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
     // as a convenience to API users so they don't have to register on every transaction themselves.
-    private transient TransactionConfidence.Listener txConfidenceListener;
+    private TransactionConfidence.Listener txConfidenceListener;
 
     // If a TX hash appears in this set then notifyNewBestBlock will ignore it, as its confidence was already set up
     // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
     // it sent transactions to the wallet, without this we'd double count.
-    private transient HashSet<Sha256Hash> ignoreNextNewBlock;
+    private HashSet<Sha256Hash> ignoreNextNewBlock;
     // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
     private boolean acceptRiskyTransactions;
 
@@ -181,7 +179,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
 
-    protected transient CoinSelector coinSelector = new DefaultCoinSelector();
+    protected CoinSelector coinSelector = new DefaultCoinSelector();
 
     // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
     // You can also use it to detect wallets that come from the future (ie they contain features you
@@ -1512,11 +1510,6 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             log.error("Loaded an inconsistent wallet");
         }
         return wallet;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        createTransientState();
     }
 
     //endregion

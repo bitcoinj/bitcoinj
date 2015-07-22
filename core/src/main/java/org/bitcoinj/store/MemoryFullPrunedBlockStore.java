@@ -22,15 +22,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.util.*;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
  * which is required for {@link TransactionOutPoint}
  */
-class StoredTransactionOutPoint implements Serializable {
-    private static final long serialVersionUID = -4064230006297064377L;
+class StoredTransactionOutPoint {
 
     /** Hash of the transaction to which we refer. */
     Sha256Hash hash;

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  * {@link GetDataMessage}.</p>
  */
 public class InventoryMessage extends ListMessage {
-    private static final long serialVersionUID = -7050246551646107066L;
 
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;

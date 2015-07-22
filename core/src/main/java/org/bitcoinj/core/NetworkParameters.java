@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -44,7 +44,7 @@ import static org.bitcoinj.core.Coin.*;
  * intended for unit testing and local app development purposes. Although this class contains some aliases for
  * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
-public abstract class NetworkParameters implements Serializable {
+public abstract class NetworkParameters {
     /**
      * The protocol version this library implements.
      */

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.
  */
 public class PeerAddress extends ChildMessage {
-    private static final long serialVersionUID = 7501293709324197411L;
+
     static final int MESSAGE_SIZE = 30;
 
     private InetAddress addr;
