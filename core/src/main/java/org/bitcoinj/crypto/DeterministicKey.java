@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Matija Mazi.
  * Copyright 2014 Andreas Schildbach
  *
@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
@@ -50,8 +51,6 @@ public class DeterministicKey extends ECKey {
             return cn1.compareTo(cn2);
         }
     };
-
-    private static final long serialVersionUID = 1L;
 
     private final DeterministicKey parent;
     private final ImmutableList<ChildNumber> childNumberPath;

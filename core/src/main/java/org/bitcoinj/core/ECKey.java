@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -48,7 +48,6 @@ import org.spongycastle.util.encoders.Base64;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
@@ -89,7 +88,7 @@ import static com.google.common.base.Preconditions.*;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.</p>
  */
-public class ECKey implements EncryptableItem, Serializable {
+public class ECKey implements EncryptableItem {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
     /** Sorts oldest keys first, newest last. */
@@ -127,7 +126,6 @@ public class ECKey implements EncryptableItem, Serializable {
     public static final BigInteger HALF_CURVE_ORDER;
 
     private static final SecureRandom secureRandom;
-    private static final long serialVersionUID = -728224901792295832L;
 
     static {
         // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
