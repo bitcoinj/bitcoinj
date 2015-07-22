@@ -3,6 +3,8 @@ Coverage status: [![Coverage Status](https://coveralls.io/repos/bitcoinj/bitcoin
 
 ### Welcome to bitcoinj
 
+[![Join the chat at https://gitter.im/bitcoinj/bitcoinj](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bitcoinj/bitcoinj?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 The bitcoinj library is a Java implementation of the Bitcoin protocol, which allows it to maintain a wallet and send/receive transactions without needing a local copy of Bitcoin Core. It comes with full documentation and some example apps showing how to use it.
 
 ### Technologies
