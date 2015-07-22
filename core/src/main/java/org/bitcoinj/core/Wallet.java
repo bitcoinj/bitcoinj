@@ -428,9 +428,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         } finally {
             keychainLock.unlock();
         }
-        // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
-        // and that's not quite so important, so we could coalesce for more performance.
-        saveNow();
+        saveLater();
         return keys;
     }
 
@@ -453,7 +451,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         } finally {
             keychainLock.unlock();
         }
-        saveNow();
+        saveLater();
         return key;
     }
 
@@ -1617,7 +1615,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
             // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
             // timestamp on the transaction and registers/runs event listeners.
-            commitTx(tx);
+            commitTx(tx, false);
         } finally {
             lock.unlock();
         }
@@ -1838,7 +1836,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 if (!unspent.containsKey(hash) && !spent.containsKey(hash)) {
                     // Otherwise put it (possibly back) into pending.
                     // Committing it updates the spent flags and inserts into the pool as well.
-                    commitTx(tx);
+                    commitTx(tx, false);
                 }
             }
         }
@@ -1890,7 +1888,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
         informConfidenceListenersIfNotReorganizing();
         checkState(isConsistent());
-        saveNow();
+        saveLater();
     }
 
     private void informConfidenceListenersIfNotReorganizing() {
@@ -2200,6 +2198,15 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * @return true if the tx was added to the wallet, or false if it was already in the pending pool
      */
     public boolean maybeCommitTx(Transaction tx) throws VerificationException {
+        return maybeCommitTx(tx, true);
+    }
+
+    /**
+     * Calls {@link Wallet#commitTx} if tx is not already in the pending pool
+     *
+     * @return true if the tx was added to the wallet, or false if it was already in the pending pool
+     */
+    public boolean maybeCommitTx(Transaction tx, boolean doSaveNow) throws VerificationException {
         tx.verify();
         lock.lock();
         try {
@@ -2245,7 +2252,10 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             checkState(isConsistent());
             informConfidenceListenersIfNotReorganizing();
-            saveNow();
+            if (doSaveNow)
+                saveNow();
+            else
+                saveLater();
         } finally {
             lock.unlock();
         }
@@ -2265,6 +2275,21 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public void commitTx(Transaction tx) throws VerificationException {
         checkArgument(maybeCommitTx(tx), "commitTx called on the same transaction twice");
+    }
+
+    /**
+     * <p>Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:</p>
+     *
+     * <ol>
+     *     <li>When we have just successfully transmitted the tx we created to the network.</li>
+     *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
+     * </ol>
+     *
+     * <p>Triggers a save, either now or at the next autosave interval, depending on doSaveNow.</p>
+     */
+    public void commitTx(Transaction tx, boolean doSaveNow) throws VerificationException {
+        checkArgument(maybeCommitTx(tx, doSaveNow), "commitTx called on the same transaction twice");
     }
 
     //endregion
@@ -3322,6 +3347,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
          */
         public String memo = null;
 
+        /** If true, save immediately on sendCoins, otherwise wait for next autosave interval */
+        public boolean doSaveNow = true;
+
         // Tracks if this has been passed to wallet.completeTx already: just a safety check.
         private boolean completed;
 
@@ -3394,6 +3422,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
             helper.add("coinSelector", coinSelector);
             helper.add("shuffleOutputs", shuffleOutputs);
+            helper.add("doSaveNow", doSaveNow);
             return helper.toString();
         }
     }
@@ -3454,7 +3483,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         lock.lock();
         try {
             completeTx(request);
-            commitTx(request.tx);
+            commitTx(request.tx, request.doSaveNow);
             return request.tx;
         } finally {
             lock.unlock();
