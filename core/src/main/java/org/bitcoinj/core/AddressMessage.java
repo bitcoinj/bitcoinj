@@ -100,17 +100,6 @@ public class AddressMessage extends Message {
     }
 
     /**
-     * AddressMessage cannot cache checksum in non-retain mode due to dynamic time being used.
-     */
-    @Override
-    void setChecksum(byte[] checksum) {
-        if (parseRetain)
-            super.setChecksum(checksum);
-        else
-            this.checksum = null;
-    }
-
-    /**
      * @return An unmodifiableList view of the backing List of addresses.  Addresses contained within the list may be safely modified.
      */
     public List<PeerAddress> getAddresses() {

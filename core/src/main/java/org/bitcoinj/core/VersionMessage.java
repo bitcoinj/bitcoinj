@@ -216,22 +216,6 @@ public class VersionMessage extends Message {
             time, subVer, myAddr, theirAddr, relayTxesBeforeFilter);
     }
 
-    /**
-     * VersionMessage does not handle cached byte array so should not have a cached checksum.
-     */
-    @Override
-    byte[] getChecksum() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * VersionMessage does not handle cached byte array so should not have a cached checksum.
-     */
-    @Override
-    void setChecksum(byte[] checksum) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();

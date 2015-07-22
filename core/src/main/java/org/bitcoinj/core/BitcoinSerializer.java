@@ -243,8 +243,6 @@ public class BitcoinSerializer {
             log.warn("No support for deserializing message with name {}", command);
             return new UnknownMessage(params, command, payloadBytes);
         }
-        if (checksum != null)
-            message.setChecksum(checksum);
         return message;
     }
 

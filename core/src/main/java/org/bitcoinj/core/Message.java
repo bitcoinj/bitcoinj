@@ -59,8 +59,6 @@ public abstract class Message {
 
     protected int protocolVersion;
 
-    protected byte[] checksum;
-
     protected NetworkParameters params;
 
     protected Message() {
@@ -209,7 +207,6 @@ public abstract class Message {
      */
     protected void unCache() {
         maybeParse();
-        checksum = null;
         payload = null;
         recached = false;
     }
@@ -246,26 +243,6 @@ public abstract class Message {
 
     public boolean isRecached() {
         return recached;
-    }
-
-    /**
-     * Should only used by BitcoinSerializer for cached checksum
-     *
-     * @return the checksum
-     */
-    byte[] getChecksum() {
-        return checksum;
-    }
-
-    /**
-     * Should only used by BitcoinSerializer for caching checksum
-     *
-     * @param checksum the checksum to set
-     */
-    void setChecksum(byte[] checksum) {
-        if (checksum.length != 4)
-            throw new IllegalArgumentException("Checksum length must be 4 bytes, actual length: " + checksum.length);
-        this.checksum = checksum;
     }
 
     /**
