@@ -56,9 +56,10 @@ public class DnsDiscovery extends MultiplexingDiscovery {
     }
 
     private static List<PeerDiscovery> buildDiscoveries(NetworkParameters params, String[] seeds) {
-        List<PeerDiscovery> discoveries = new ArrayList<PeerDiscovery>(seeds.length);
-        for (String seed : seeds)
-            discoveries.add(new DnsSeedDiscovery(params, seed));
+        List<PeerDiscovery> discoveries = new ArrayList<PeerDiscovery>();
+        if (seeds != null)
+            for (String seed : seeds)
+                discoveries.add(new DnsSeedDiscovery(params, seed));
         return discoveries;
     }
 
