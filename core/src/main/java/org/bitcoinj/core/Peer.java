@@ -439,7 +439,7 @@ public class Peer extends PeerSocketHandler {
         PeerAddress peerAddress = getAddress();
         long peerTime = vPeerVersionMessage.time * 1000;
         log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}",
-                peerAddress == null ? "Peer" : peerAddress.getAddr().getHostAddress(),
+                peerAddress == null ? "Peer" : (peerAddress.getAddr() == null ? peerAddress.getHostname() : peerAddress.getAddr().getHostAddress()),
                 peerVersion,
                 vPeerVersionMessage.subVer,
                 vPeerVersionMessage.localServices,

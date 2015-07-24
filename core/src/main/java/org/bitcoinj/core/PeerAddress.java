@@ -40,6 +40,7 @@ public class PeerAddress extends ChildMessage {
     static final int MESSAGE_SIZE = 30;
 
     private InetAddress addr;
+    private String hostname; // Used for .onion addresses
     private int port;
     private BigInteger services;
     private long time;
@@ -97,8 +98,20 @@ public class PeerAddress extends ChildMessage {
         this(addr, MainNetParams.get().getPort());
     }
 
+    /**
+     * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
+     * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
+     */
     public PeerAddress(InetSocketAddress addr) {
-        this(addr.getAddress(), addr.getPort());
+        if (addr.getHostName() == null || !addr.getHostName().toLowerCase().endsWith(".onion")) {
+            this.addr = checkNotNull(addr.getAddress());
+        } else {
+            this.hostname = addr.getHostName();
+        }
+        this.port = addr.getPort();
+        this.protocolVersion = NetworkParameters.PROTOCOL_VERSION;
+        this.services = BigInteger.ZERO;
+        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
@@ -163,6 +176,11 @@ public class PeerAddress extends ChildMessage {
         return length;
     }
 
+    public String getHostname() {
+        maybeParse();
+        return hostname;
+    }
+
     public InetAddress getAddr() {
         maybeParse();
         return addr;
@@ -216,6 +234,9 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     public String toString() {
+        if (hostname != null) {
+            return "[" + hostname + "]:" + port;
+        }
         return "[" + addr.getHostAddress() + "]:" + port;
     }
 
@@ -234,6 +255,11 @@ public class PeerAddress extends ChildMessage {
     }
     
     public InetSocketAddress toSocketAddress() {
-        return new InetSocketAddress(addr, port);
+        // Reconstruct the InetSocketAddress properly
+        if (hostname != null) {
+            return InetSocketAddress.createUnresolved(hostname, port);
+        } else {
+            return new InetSocketAddress(addr, port);
+        }
     }
 }
