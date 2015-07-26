@@ -35,6 +35,10 @@ public class RegTestParams extends TestNet2Params {
         subsidyDecreaseBlockCount = 150;
         port = 18444;
         id = ID_REGTEST;
+
+        majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
+        majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
+        majorityWindow = MainNetParams.MAINNET_MAJORITY_WINDOW;
     }
 
     @Override

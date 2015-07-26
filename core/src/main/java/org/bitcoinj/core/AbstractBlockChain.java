@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
+import org.bitcoinj.utils.VersionTally;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
@@ -136,6 +137,8 @@ public abstract class AbstractBlockChain {
     private double falsePositiveTrend;
     private double previousFalsePositiveRate;
 
+    private final VersionTally versionTally;
+
     /** See {@link #AbstractBlockChain(Context, List, BlockStore)} */
     public AbstractBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
                               BlockStore blockStore) throws BlockStoreException {
@@ -153,6 +156,8 @@ public abstract class AbstractBlockChain {
         this.params = context.getParams();
         this.listeners = new CopyOnWriteArrayList<ListenerRegistration<BlockChainListener>>();
         for (BlockChainListener l : listeners) addListener(l, Threading.SAME_THREAD);
+        this.versionTally = new VersionTally(context.getParams());
+        this.versionTally.initialize(blockStore, chainHead);
     }
 
     /**
@@ -458,13 +463,26 @@ public abstract class AbstractBlockChain {
             }
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
-            
+
+            // BIP 66: Enforce block version 3 once it's a supermajority of blocks
+            // NOTE: This requires 1,000 blocks since the last checkpoint (on main
+            // net, less on test) in order to be applied. It is also limited to
+            // stopping addition of new v2 blocks to the tip of the chain.
+            if (block.getVersion() == Block.BLOCK_VERSION_BIP34) {
+                final Integer count = versionTally.getCount(Block.BLOCK_VERSION_BIP66);
+                if (count != null
+                    && count >= params.getMajorityRejectBlockOutdated()) {
+                    throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
+                }
+            }
+
             // This block connects to the best known block, it is a normal continuation of the system.
             TransactionOutputChanges txOutChanges = null;
             if (shouldVerifyTransactions())
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
                     block.transactions == null ? block : block.cloneAsHeader(), txOutChanges);
+            versionTally.add(block.getVersion());
             setChainHead(newStoredBlock);
             log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
             informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
