@@ -2590,6 +2590,7 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
         pending.clear();
         dead.clear();
         transactions.clear();
+        myUnspents.clear();
     }
 
     /**

@@ -3151,4 +3151,16 @@ public class WalletTest extends TestWithWallet {
         String seed = wallet.getKeyChainSeed().toHexString();
         assertEquals("5ca8cd6c01aa004d3c5396c628b78a4a89462f412f460a845b594ac42eceaa264b0e14dcd4fe73d4ed08ce06f4c28facfa85042d26d784ab2798a870bb7af556", seed);
     }
+
+    @Test
+    public void reset() {
+        sendMoneyToWallet(wallet, COIN, myAddress, AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertNotEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertNotEquals(0, wallet.getTransactions(false).size());
+        assertNotEquals(0, wallet.getUnspents().size());
+        wallet.reset();
+        assertEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+        assertEquals(0, wallet.getTransactions(false).size());
+        assertEquals(0, wallet.getUnspents().size());
+    }
 }
