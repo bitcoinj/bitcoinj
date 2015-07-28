@@ -2597,6 +2597,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         pending.clear();
         dead.clear();
         transactions.clear();
+        myUnspents.clear();
     }
 
     /**
