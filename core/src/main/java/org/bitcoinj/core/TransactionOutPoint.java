@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,22 +89,10 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     @Override
-    protected void parseLite() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         length = MESSAGE_LENGTH;
-    }
-
-    @Override
-    void parse() throws ProtocolException {
         hash = readHash();
         index = readUint32();
-    }
-
-    /* (non-Javadoc)
-      * @see Message#getMessageSize()
-      */
-    @Override
-    public int getMessageSize() {
-        return MESSAGE_LENGTH;
     }
 
     @Override
@@ -197,7 +186,6 @@ public class TransactionOutPoint extends ChildMessage {
      */
     @Override
     public Sha256Hash getHash() {
-        maybeParse();
         return hash;
     }
 
@@ -206,7 +194,6 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     public long getIndex() {
-        maybeParse();
         return index;
     }
     

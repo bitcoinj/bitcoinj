@@ -439,7 +439,7 @@ public abstract class NetworkParameters {
                     // As the serializers are intended to be immutable, creating
                     // two due to a race condition should not be a problem, however
                     // to be safe we ensure only one exists for each network.
-                    this.defaultSerializer = getSerializer(false, false);
+                    this.defaultSerializer = getSerializer(false);
                 }
             }
         }
@@ -449,7 +449,7 @@ public abstract class NetworkParameters {
     /**
      * Construct and return a custom serializer.
      */
-    public abstract BitcoinSerializer getSerializer(boolean parseLazy, boolean parseRetain);
+    public abstract BitcoinSerializer getSerializer(boolean parseRetain);
 
     /**
      * The number of blocks in the last {@link getMajorityWindow()} blocks

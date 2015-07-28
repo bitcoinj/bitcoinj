@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Matt Corallo
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,19 +83,13 @@ public class RejectMessage extends Message {
     }
 
     @Override
-    protected void parseLite() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         message = readStr();
         code = RejectCode.fromCode(readBytes(1)[0]);
         reason = readStr();
         if (message.equals("block") || message.equals("tx"))
             messageHash = readHash();
         length = cursor - offset;
-    }
-
-    @Override
-    public void parse() throws ProtocolException {
-        if (length == UNKNOWN_LENGTH)
-            parseLite();
     }
 
     @Override
@@ -115,7 +110,6 @@ public class RejectMessage extends Message {
      * Note that this is ENTIRELY UNTRUSTED and should be sanity-checked before it is printed or processed.
      */
     public String getRejectedMessage() {
-        ensureParsed();
         return message;
     }
 
@@ -123,7 +117,6 @@ public class RejectMessage extends Message {
      * Provides the hash of the rejected object (if getRejectedMessage() is either "tx" or "block"), otherwise null.
      */
     public Sha256Hash getRejectedObjectHash() {
-        ensureParsed();
         return messageHash;
     }
 

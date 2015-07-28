@@ -201,7 +201,6 @@ public class Transaction extends ChildMessage {
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param parseLazy Whether to perform a full parse immediately or delay until a read is requested.
      * @param parseRetain Whether to retain the backing byte array for quick reserialization.
      * If true and the backing byte array is invalidated due to modification of a field then
      * the cached bytes may be repopulated and retained if the message is serialized again in the future.
@@ -253,7 +252,6 @@ public class Transaction extends ChildMessage {
      * include spent outputs or not.
      */
     Coin getValueSentToMe(TransactionBag transactionBag, boolean includeSpent) {
-        maybeParse();
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
@@ -357,7 +355,6 @@ public class Transaction extends ChildMessage {
      * @return sum of the inputs that are spending coins with keys in the wallet
      */
     public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
-        maybeParse();
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
         for (TransactionInput input : inputs) {
@@ -421,7 +418,6 @@ public class Transaction extends ChildMessage {
      * Returns true if any of the outputs is marked as spent.
      */
     public boolean isAnyOutputSpent() {
-        maybeParse();
         for (TransactionOutput output : outputs) {
             if (!output.isAvailableForSpending())
                 return true;
@@ -434,7 +430,6 @@ public class Transaction extends ChildMessage {
      * otherwise.
      */
     public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
-        maybeParse();
         for (TransactionOutput output : outputs) {
             if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
                 return false;
@@ -479,29 +474,6 @@ public class Transaction extends ChildMessage {
         hash = null;
     }
 
-    @Override
-    protected void parseLite() throws ProtocolException {
-
-        //skip this if the length has been provided i.e. the tx is not part of a block
-        if (serializer.isParseLazyMode() && length == UNKNOWN_LENGTH) {
-            //If length hasn't been provided this tx is probably contained within a block.
-            //In parseRetain mode the block needs to know how long the transaction is
-            //unfortunately this requires a fairly deep (though not total) parse.
-            //This is due to the fact that transactions in the block's list do not include a
-            //size header and inputs/outputs are also variable length due the contained
-            //script so each must be instantiated so the scriptlength varint can be read
-            //to calculate total length of the transaction.
-            //We will still persist will this semi-light parsing because getting the lengths
-            //of the various components gains us the ability to cache the backing bytearrays
-            //so that only those subcomponents that have changed will need to be reserialized.
-
-            //parse();
-            //parsed = true;
-            length = calcLength(payload, offset);
-            cursor = offset + length;
-        }
-    }
-
     protected static int calcLength(byte[] buf, int offset) {
         VarInt varint;
         // jump past version (uint32)
@@ -539,11 +511,7 @@ public class Transaction extends ChildMessage {
     }
 
     @Override
-    void parse() throws ProtocolException {
-
-        if (parsed)
-            return;
-
+    protected void parse() throws ProtocolException {
         cursor = offset;
 
         version = readUint32();
@@ -579,7 +547,6 @@ public class Transaction extends ChildMessage {
     public int getOptimalEncodingMessageSize() {
         if (optimalEncodingMessageSize != 0)
             return optimalEncodingMessageSize;
-        maybeParse();
         if (optimalEncodingMessageSize != 0)
             return optimalEncodingMessageSize;
         optimalEncodingMessageSize = getMessageSize();
@@ -610,7 +577,6 @@ public class Transaction extends ChildMessage {
      * position in a block but by the data in the inputs.
      */
     public boolean isCoinBase() {
-        maybeParse();
         return inputs.size() == 1 && inputs.get(0).isCoinBase();
     }
 
@@ -1067,7 +1033,6 @@ public class Transaction extends ChildMessage {
      * standard and won't be relayed or included in the memory pool either.
      */
     public long getLockTime() {
-        maybeParse();
         return lockTime;
     }
 
@@ -1098,19 +1063,16 @@ public class Transaction extends ChildMessage {
      * @return the version
      */
     public long getVersion() {
-        maybeParse();
         return version;
     }
 
     /** Returns an unmodifiable view of all inputs. */
     public List<TransactionInput> getInputs() {
-        maybeParse();
         return Collections.unmodifiableList(inputs);
     }
 
     /** Returns an unmodifiable view of all outputs. */
     public List<TransactionOutput> getOutputs() {
-        maybeParse();
         return Collections.unmodifiableList(outputs);
     }
 
@@ -1123,7 +1085,6 @@ public class Transaction extends ChildMessage {
      * @return linked list of outputs relevant to the wallet in this transaction
      */
     public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
-        maybeParse();
         List<TransactionOutput> walletOutputs = new LinkedList<TransactionOutput>();
         for (TransactionOutput o : outputs) {
             if (!o.isMineOrWatched(transactionBag)) continue;
@@ -1135,19 +1096,16 @@ public class Transaction extends ChildMessage {
 
     /** Randomly re-orders the transaction outputs: good for privacy */
     public void shuffleOutputs() {
-        maybeParse();
         Collections.shuffle(outputs);
     }
 
     /** Same as getInputs().get(index). */
     public TransactionInput getInput(long index) {
-        maybeParse();
         return inputs.get((int)index);
     }
 
     /** Same as getOutputs().get(index) */
     public TransactionOutput getOutput(long index) {
-        maybeParse();
         return outputs.get((int)index);
     }
 
@@ -1197,7 +1155,6 @@ public class Transaction extends ChildMessage {
      * Gets the count of regular SigOps in this transactions
      */
     public int getSigOpCount() throws ScriptException {
-        maybeParse();
         int sigOps = 0;
         for (TransactionInput input : inputs)
             sigOps += Script.getSigOpCount(input.getScriptBytes());
@@ -1223,7 +1180,6 @@ public class Transaction extends ChildMessage {
      * @throws VerificationException
      */
     public void verify() throws VerificationException {
-        maybeParse();
         if (inputs.size() == 0 || outputs.size() == 0)
             throw new VerificationException.EmptyInputsOrOutputs();
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)

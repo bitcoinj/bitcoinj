@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +32,6 @@ import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkState;
 import org.bitcoinj.core.BitcoinSerializer;
 
 /**
@@ -137,8 +137,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     @Override
-    public BitcoinSerializer getSerializer(boolean parseLazy, boolean parseRetain) {
-        return new BitcoinSerializer(this, parseLazy, parseRetain);
+    public BitcoinSerializer getSerializer(boolean parseRetain) {
+        return new BitcoinSerializer(this, parseRetain);
     }
 
     @Override

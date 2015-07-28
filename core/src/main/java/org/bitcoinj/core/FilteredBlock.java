@@ -1,5 +1,6 @@
 /**
  * Copyright 2012 Matt Corallo
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +58,7 @@ public class FilteredBlock extends Message {
     }
 
     @Override
-    void parse() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         byte[] headerBytes = new byte[Block.HEADER_SIZE];
         System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
         header = params.getDefaultSerializer().makeBlock(headerBytes);
@@ -65,11 +66,6 @@ public class FilteredBlock extends Message {
         merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
         
         length = Block.HEADER_SIZE + merkleTree.getMessageSize();
-    }
-    
-    @Override
-    protected void parseLite() throws ProtocolException {
-
     }
     
     /**

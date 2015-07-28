@@ -46,7 +46,6 @@ public class BitcoinSerializer implements MessageSerializer {
     private static final int COMMAND_LEN = 12;
 
     private final NetworkParameters params;
-    private final boolean parseLazy;
     private final boolean parseRetain;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
@@ -75,31 +74,13 @@ public class BitcoinSerializer implements MessageSerializer {
     }
 
     /**
-     * Constructs a partial BitcoinSerializer with the given behavior. This is
-     * intended for use by messages which do not understand the network they
-     * belong to.
-     * 
-     * @param parseLazy        deserialize messages in lazy mode.
-     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
-     * @deprecated use BitcoinSerializer(NetworkParameters, boolean, boolean) instead.
-     */
-    @Deprecated
-    BitcoinSerializer(boolean parseLazy, boolean parseRetain) {
-        this.params = null;
-        this.parseLazy = parseLazy;
-        this.parseRetain = parseRetain;
-    }
-
-    /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
      * @param params           networkParams used to create Messages instances and termining packetMagic
-     * @param parseLazy        deserialize messages in lazy mode.
      * @param parseRetain      retain the backing byte array of a message for fast reserialization.
      */
-    public BitcoinSerializer(NetworkParameters params, boolean parseLazy, boolean parseRetain) {
+    public BitcoinSerializer(NetworkParameters params, boolean parseRetain) {
         this.params = params;
-        this.parseLazy = parseLazy;
         this.parseRetain = parseRetain;
     }
 
@@ -368,14 +349,6 @@ public class BitcoinSerializer implements MessageSerializer {
                 magicCursor = 3;
             }
         }
-    }
-
-    /**
-     * Whether the serializer will produce lazy parse mode Messages
-     */
-    @Override
-    public boolean isParseLazyMode() {
-        return parseLazy;
     }
 
     /**

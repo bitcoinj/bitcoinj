@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Noa Resare
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ public class Ping extends Message {
     }
 
     @Override
-    void parse() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         try {
             nonce = readInt64();
             hasNonce = true;
@@ -59,11 +60,6 @@ public class Ping extends Message {
             hasNonce = false;
         }
         length = hasNonce ? 8 : 0;
-    }
-    
-    @Override
-    protected void parseLite() {
-        
     }
     
     public boolean hasNonce() {
