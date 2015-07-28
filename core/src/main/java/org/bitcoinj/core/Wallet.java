@@ -2600,6 +2600,7 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
      */
     public List<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
         lock.lock();
+        keychainLock.lock();
         try {
             LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
@@ -2617,6 +2618,7 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
             }
             return candidates;
         } finally {
+            keychainLock.unlock();
             lock.unlock();
         }
     }
