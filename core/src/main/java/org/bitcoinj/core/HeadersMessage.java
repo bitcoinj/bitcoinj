@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +63,7 @@ public class HeadersMessage extends Message {
     }
 
     @Override
-    protected void parseLite() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         if (length == UNKNOWN_LENGTH) {
             int saveCursor = cursor;
             long numHeaders = readVarInt();
@@ -71,10 +72,7 @@ public class HeadersMessage extends Message {
             // Each header has 80 bytes and one more byte for transactions number which is 00.
             length = 81 * (int)numHeaders;
         }
-    }
 
-    @Override
-    void parse() throws ProtocolException {
         long numHeaders = readVarInt();
         if (numHeaders > MAX_HEADERS)
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
@@ -88,7 +86,7 @@ public class HeadersMessage extends Message {
             byte[] blockHeader = readBytes(81);
             if (blockHeader[80] != 0)
                 throw new ProtocolException("Block header does not end with a null byte");
-            Block newBlockHeader = this.params.getSerializer(true, true)
+            Block newBlockHeader = this.params.getSerializer(true)
                 .makeBlock(blockHeader, 81);
             blockHeaders.add(newBlockHeader);
         }
@@ -99,7 +97,6 @@ public class HeadersMessage extends Message {
             }
         }
     }
-
 
     public List<Block> getBlockHeaders() {
         return blockHeaders;

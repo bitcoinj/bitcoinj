@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,22 +44,13 @@ public class GetBlocksMessage extends Message {
     }
 
     @Override
-    protected void parseLite() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         cursor = offset;
         version = readUint32();
         int startCount = (int) readVarInt();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
         length = cursor - offset + ((startCount + 1) * 32);
-    }
-
-    @Override
-    public void parse() throws ProtocolException {
-        cursor = offset;
-        version = readUint32();
-        int startCount = (int) readVarInt();
-        if (startCount > 500)
-            throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
         locator = new ArrayList<Sha256Hash>(startCount);
         for (int i = 0; i < startCount; i++) {
             locator.add(readHash());

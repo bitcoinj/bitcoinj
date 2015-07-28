@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,11 +64,7 @@ public class PeerAddress extends ChildMessage {
      */
     public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion, Message parent, MessageSerializer serializer) throws ProtocolException {
         super(params, payload, offset, protocolVersion, parent, serializer, UNKNOWN_LENGTH);
-        // Message length is calculated in parseLite which is guaranteed to be called before it is ever read.
-        // Even though message length is static for a PeerAddress it is safer to leave it there 
-        // as it will be set regardless of which constructor was used.
     }
-
 
     /**
      * Construct a peer address from a memorized or hardcoded address.
@@ -140,11 +137,6 @@ public class PeerAddress extends ChildMessage {
     }
 
     @Override
-    protected void parseLite() {
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
-    }
-
-    @Override
     protected void parse() throws ProtocolException {
         // Format of a serialized address:
         //   uint32 timestamp
@@ -163,22 +155,15 @@ public class PeerAddress extends ChildMessage {
             throw new RuntimeException(e);  // Cannot happen.
         }
         port = ((0xFF & payload[cursor++]) << 8) | (0xFF & payload[cursor++]);
-    }
-
-    @Override
-    public int getMessageSize() {
         // The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
-        return length;
     }
 
     public String getHostname() {
-        maybeParse();
         return hostname;
     }
 
     public InetAddress getAddr() {
-        maybeParse();
         return addr;
     }
 
@@ -191,42 +176,32 @@ public class PeerAddress extends ChildMessage {
         this.addr = addr;
     }
 
-
     public int getPort() {
-        maybeParse();
         return port;
     }
-
 
     public void setPort(int port) {
         unCache();
         this.port = port;
     }
 
-
     public BigInteger getServices() {
-        maybeParse();
         return services;
     }
-
 
     public void setServices(BigInteger services) {
         unCache();
         this.services = services;
     }
 
-
     public long getTime() {
-        maybeParse();
         return time;
     }
-
 
     public void setTime(long time) {
         unCache();
         this.time = time;
     }
-
 
     @Override
     public String toString() {

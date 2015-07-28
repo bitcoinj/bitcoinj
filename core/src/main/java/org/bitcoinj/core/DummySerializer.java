@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.core;
 
 import java.io.IOException;
@@ -45,11 +46,6 @@ class DummySerializer implements MessageSerializer {
     @Override
     public Message deserializePayload(BitcoinSerializer.BitcoinPacketHeader header, ByteBuffer in) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public boolean isParseLazyMode() {
-        return false;
     }
 
     @Override

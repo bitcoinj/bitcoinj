@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
@@ -90,7 +91,7 @@ public class UTXOsMessage extends Message {
     }
 
     @Override
-    void parse() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         // Format is:
         //   uint32 chainHeight
         //   uint256 chainHeadHash
@@ -121,11 +122,6 @@ public class UTXOsMessage extends Message {
             cursor += output.length;
         }
         length = cursor;
-    }
-
-    @Override
-    protected void parseLite() throws ProtocolException {
-        // Not used.
     }
 
     /**

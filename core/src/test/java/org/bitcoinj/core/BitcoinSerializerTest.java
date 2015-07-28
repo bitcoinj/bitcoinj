@@ -76,75 +76,50 @@ public class BitcoinSerializerTest {
     }
 
     @Test
-    public void testLazyParsing()  throws Exception {
-        MessageSerializer bs = MainNetParams.get().getSerializer(true, false);
-
-    	Transaction tx = (Transaction)bs.deserialize(ByteBuffer.wrap(txMessage));
-        assertNotNull(tx);
-        assertEquals(false, tx.isParsed());
-        assertEquals(true, tx.isCached());
-        tx.getInputs();
-        assertEquals(true, tx.isParsed());
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bs.serialize(tx, bos);
-        assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
-    }
-
-    @Test
-    public void testCachedParsing()  throws Exception {
-        testCachedParsing(true);
-        testCachedParsing(false);
-    }
-
-    private void testCachedParsing(boolean lazy)  throws Exception {
-        MessageSerializer bs = MainNetParams.get().getSerializer(lazy, true);
+    public void testCachedParsing() throws Exception {
+        MessageSerializer bs = MainNetParams.get().getSerializer(true);
         
-        //first try writing to a fields to ensure uncaching and children are not affected
+        // first try writing to a fields to ensure uncaching and children are not affected
         Transaction tx = (Transaction)bs.deserialize(ByteBuffer.wrap(txMessage));
         assertNotNull(tx);
-        assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
 
         tx.setLockTime(1);
-        //parent should have been uncached
+        // parent should have been uncached
         assertEquals(false, tx.isCached());
-        //child should remain cached.
+        // child should remain cached.
         assertEquals(true, tx.getInputs().get(0).isCached());
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, !Arrays.equals(txMessage, bos.toByteArray()));
 
-      //now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
+        // now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
         tx = (Transaction)bs.deserialize(ByteBuffer.wrap(txMessage));
         assertNotNull(tx);
-        assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
 
         tx.getInputs().get(0).setSequenceNumber(1);
-        //parent should have been uncached
+        // parent should have been uncached
         assertEquals(false, tx.isCached());
-        //so should child
+        // so should child
         assertEquals(false, tx.getInputs().get(0).isCached());
 
         bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, !Arrays.equals(txMessage, bos.toByteArray()));
 
-      //deserialize/reserialize to check for equals.
+        // deserialize/reserialize to check for equals.
         tx = (Transaction)bs.deserialize(ByteBuffer.wrap(txMessage));
         assertNotNull(tx);
-        assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
         bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
 
-      //deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
+        // deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
         tx = (Transaction)bs.deserialize(ByteBuffer.wrap(txMessage));
         assertNotNull(tx);
-        assertEquals(!lazy, tx.isParsed());
         assertEquals(true, tx.isCached());
 
         tx.getInputs().get(0).setSequenceNumber(tx.getInputs().get(0).getSequenceNumber());
@@ -152,9 +127,7 @@ public class BitcoinSerializerTest {
         bos = new ByteArrayOutputStream();
         bs.serialize(tx, bos);
         assertEquals(true, Arrays.equals(txMessage, bos.toByteArray()));
-
     }
-
 
     /**
      * Get 1 header of the block number 1 (the first one is 0) in the chain
@@ -176,7 +149,7 @@ public class BitcoinSerializerTest {
         String hash = block.getHashAsString();
         assertEquals(hash, "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048");
 
-        assertNull(block.transactions);
+        assertNotNull(block.transactions);
 
         assertEquals(Utils.HEX.encode(block.getMerkleRoot().getBytes()),
                 "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098");
@@ -294,12 +267,7 @@ public class BitcoinSerializerTest {
      */
     class UnknownMessage extends Message {
         @Override
-        void parse() throws ProtocolException {
-        }
-
-        @Override
-        protected void parseLite() throws ProtocolException {
+        protected void parse() throws ProtocolException {
         }
     }
-
 }

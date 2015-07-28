@@ -110,7 +110,6 @@ public class TransactionOutput extends ChildMessage {
 
     public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null) {
-            maybeParse();
             scriptPubKey = new Script(scriptBytes);
         }
         return scriptPubKey;
@@ -154,21 +153,16 @@ public class TransactionOutput extends ChildMessage {
     }
 
     @Override
-    protected void parseLite() throws ProtocolException {
+    protected void parse() throws ProtocolException {
         value = readInt64();
         scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen;
-    }
-
-    @Override
-    void parse() throws ProtocolException {
         scriptBytes = readBytes(scriptLen);
     }
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         checkNotNull(scriptBytes);
-        maybeParse();
         Utils.int64ToByteStreamLE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
@@ -180,7 +174,6 @@ public class TransactionOutput extends ChildMessage {
      * receives.
      */
     public Coin getValue() {
-        maybeParse();
         try {
             return Coin.valueOf(value);
         } catch (IllegalArgumentException e) {
@@ -286,7 +279,6 @@ public class TransactionOutput extends ChildMessage {
      * @return the scriptBytes
     */
     public byte[] getScriptBytes() {
-        maybeParse();
         return scriptBytes;
     }
 
