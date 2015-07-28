@@ -2607,6 +2607,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      */
     public List<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
         lock.lock();
+        keychainLock.lock();
         try {
             LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
@@ -2624,6 +2625,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
             return candidates;
         } finally {
+            keychainLock.unlock();
             lock.unlock();
         }
     }
