@@ -86,7 +86,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_OUTPUTS_HASH_INDEX               = "CREATE INDEX openoutputs_hash_idx ON openoutputs USING btree (hash)";
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks USING btree (height)";
 
-    private static final String SELECT_UNDOABLEBLOCKS_EXISTS_SQL        = "select 1 from undoableBlocks where hash = ?";
+    private static final String SELECT_UNDOABLEBLOCKS_EXISTS_SQL        = "select 1 from undoableblocks where hash = ?";
 
     /**
      * Creates a new PostgresFullPrunedBlockStore.
