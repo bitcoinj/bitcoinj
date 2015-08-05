@@ -1768,6 +1768,9 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
         }
     }
 
+    // Whether to do a saveNow or saveLater when we are notified of the next best block.
+    private boolean hardSaveOnNextBlock = false;
+
     private void receive(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                          int relativityOffset) throws VerificationException {
         // Runs in a peer thread.
@@ -1885,7 +1888,9 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
 
         informConfidenceListenersIfNotReorganizing();
         checkState(isConsistent());
-        saveNow();
+        // Optimization for the case where a block has tons of relevant transactions.
+        saveLater();
+        hardSaveOnNextBlock = true;
     }
 
     private void informConfidenceListenersIfNotReorganizing() {
@@ -1947,8 +1952,14 @@ public class Wallet extends BaseTaggableObject implements BlockChainListener, Pe
 
             informConfidenceListenersIfNotReorganizing();
             maybeQueueOnWalletChanged();
-            // Coalesce writes to avoid throttling on disk access when catching up with the chain.
-            saveLater();
+
+            if (hardSaveOnNextBlock) {
+                saveNow();
+                hardSaveOnNextBlock = false;
+            } else {
+                // Coalesce writes to avoid throttling on disk access when catching up with the chain.
+                saveLater();
+            }
         } finally {
             lock.unlock();
         }
