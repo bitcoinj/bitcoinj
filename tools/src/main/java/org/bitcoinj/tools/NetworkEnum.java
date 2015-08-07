@@ -1,5 +1,3 @@
-package org.bitcoinj.tools;
-
 /*
  * Copyright 2014 Mike Hearn
  *
@@ -15,6 +13,8 @@ package org.bitcoinj.tools;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.bitcoinj.tools;
 
 public enum NetworkEnum {
     MAIN,
