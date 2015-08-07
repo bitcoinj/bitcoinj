@@ -226,11 +226,9 @@ public class WalletTool {
         parser.accepts("dump-privkeys");
         options = parser.parse(args);
 
-        final String HELP_TEXT = Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8);
-
         if (args.length == 0 || options.has("help") ||
                 options.nonOptionArguments().size() < 1 || options.nonOptionArguments().contains("help")) {
-            System.out.println(HELP_TEXT);
+            System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), Charsets.UTF_8));
             return;
         }
 

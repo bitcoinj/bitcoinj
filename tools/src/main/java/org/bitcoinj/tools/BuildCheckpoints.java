@@ -26,6 +26,7 @@ import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -55,9 +56,15 @@ public class BuildCheckpoints {
 
     public static void main(String[] args) throws Exception {
         OptionParser parser = new OptionParser();
+        parser.accepts("help");
         OptionSpec<NetworkEnum> netFlag = parser.accepts("net").withRequiredArg().ofType(NetworkEnum.class).defaultsTo(NetworkEnum.MAIN);
         OptionSpec<Integer> daysFlag = parser.accepts("days").withRequiredArg().ofType(Integer.class).defaultsTo(30);
         OptionSet options = parser.parse(args);
+
+        if (options.has("help")) {
+            System.out.println(Resources.toString(BuildCheckpoints.class.getResource("build-checkpoints-help.txt"), Charsets.UTF_8));
+            return;
+        }
 
         String suffix;
         switch (netFlag.value(options)) {
