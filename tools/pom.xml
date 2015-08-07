@@ -52,19 +52,37 @@
                           </excludes>
                       </filter>
                   </filters>
-                  <transformers>
-                      <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                          <mainClass>org.bitcoinj.tools.WalletTool</mainClass>
-                      </transformer>
-                  </transformers>
-                  <outputFile>target/wallet-tool.jar</outputFile>
               </configuration>
               <executions>
                   <execution>
+                      <id>shade-wallet-tool</id>
                       <phase>package</phase>
                       <goals>
                           <goal>shade</goal>
                       </goals>
+                      <configuration>
+                          <transformers>
+                              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                  <mainClass>org.bitcoinj.tools.WalletTool</mainClass>
+                              </transformer>
+                          </transformers>
+                          <outputFile>target/wallet-tool.jar</outputFile>
+                      </configuration>
+                  </execution>
+                  <execution>
+                      <id>shade-build-checkpoints</id>
+                      <phase>package</phase>
+                      <goals>
+                          <goal>shade</goal>
+                      </goals>
+                      <configuration>
+                          <transformers>
+                              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                  <mainClass>org.bitcoinj.tools.BuildCheckpoints</mainClass>
+                              </transformer>
+                          </transformers>
+                          <outputFile>target/build-checkpoints.jar</outputFile>
+                      </configuration>
                   </execution>
               </executions>
           </plugin>
