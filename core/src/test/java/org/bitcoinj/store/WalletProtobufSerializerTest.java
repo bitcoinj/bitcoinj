@@ -17,7 +17,7 @@
 
 package org.bitcoinj.store;
 
-
+import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.Transaction.Purpose;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;

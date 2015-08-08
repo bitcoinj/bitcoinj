@@ -1,7 +1,7 @@
 package wallettemplate;
 
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.DownloadProgressTracker;
 import org.bitcoinj.utils.MonetaryFormat;
 import com.subgraph.orchid.TorClient;
 import com.subgraph.orchid.TorInitializationListener;

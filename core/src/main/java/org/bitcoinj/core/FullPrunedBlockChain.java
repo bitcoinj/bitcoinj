@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.store.BlockStoreException;
@@ -61,7 +62,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
      */
     public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<BlockChainListener>(), blockStore);
+        this(context, new ArrayList<Wallet>(), blockStore);
         addWallet(wallet);
     }
 
@@ -78,7 +79,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * Constructs a block chain connected to the given store.
      */
     public FullPrunedBlockChain(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<BlockChainListener>(), blockStore);
+        this(context, new ArrayList<Wallet>(), blockStore);
     }
 
     /**
@@ -91,7 +92,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(Context context, List<BlockChainListener> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(context, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now
@@ -101,7 +102,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<BlockChainListener> listeners,
+    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), listeners, blockStore);
     }

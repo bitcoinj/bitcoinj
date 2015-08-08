@@ -20,6 +20,9 @@ package org.bitcoinj.core;
 import com.google.common.collect.*;
 import com.google.common.net.*;
 import com.google.common.util.concurrent.*;
+import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
+import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
+import org.bitcoinj.core.listeners.AbstractPeerEventListener;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
@@ -43,7 +46,7 @@ import static org.junit.Assert.*;
 public class PeerGroupTest extends TestWithPeerGroup {
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private PeerEventListener listener;
+    private AbstractPeerEventListener listener;
     private Map<Peer, AtomicInteger> peerToMessageCount;
 
     @Parameterized.Parameters
@@ -97,7 +100,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void listener() throws Exception {
         peerGroup.start();
-        peerGroup.addEventListener(listener);
+        peerGroup.addConnectionEventListener(listener);
+        peerGroup.addDataEventListener(listener);
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -117,8 +121,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         disconnectedPeers.take();
         assertEquals(0, disconnectedPeers.size());
 
-        assertTrue(peerGroup.removeEventListener(listener));
-        assertFalse(peerGroup.removeEventListener(listener));
+        assertTrue(peerGroup.removeConnectionEventListener(listener));
+        assertFalse(peerGroup.removeConnectionEventListener(listener));
+        assertTrue(peerGroup.removeDataEventListener(listener));
+        assertFalse(peerGroup.removeDataEventListener(listener));
     }
 
     @Test
@@ -174,7 +180,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addPeerDiscovery(createPeerDiscovery(96, 200));
         peerGroup.addPeerDiscovery(createPeerDiscovery(3, 300));
         peerGroup.addPeerDiscovery(createPeerDiscovery(1, 400));
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
+        peerGroup.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
                 assertEquals(99, peerAddresses.size());
@@ -284,7 +290,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNull(outbound(p2));
         // Peer 1 goes away, peer 2 becomes the download peer and thus queries the remote mempool.
         final SettableFuture<Void> p1CloseFuture = SettableFuture.create();
-        peerOf(p1).addEventListener(new AbstractPeerEventListener() {
+        peerOf(p1).addConnectionEventListener(new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 p1CloseFuture.set(null);
@@ -313,7 +319,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
 
         // Expect a zero hash getblocks on p1. This is how the process starts.
-        peerGroup.startBlockChainDownload(new AbstractPeerEventListener() {
+        peerGroup.startBlockChainDownload(new AbstractPeerDataEventListener() {
         });
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(p1);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
@@ -341,12 +347,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final Transaction[] event = new Transaction[1];
         final TransactionConfidence[] confEvent = new TransactionConfidence[1];
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
+        peerGroup.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
             @Override
             public void onTransaction(Peer peer, Transaction t) {
                 event[0] = t;
             }
-        }, Threading.SAME_THREAD);
+        });
 
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
@@ -489,7 +495,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
         final SettableFuture<Void> peerDisconnectedFuture = SettableFuture.create();
-        peerGroup.addEventListener(new AbstractPeerEventListener() {
+        peerGroup.addConnectionEventListener(Threading.SAME_THREAD, new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 peerConnectedFuture.set(null);
@@ -499,7 +505,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 peerDisconnectedFuture.set(null);
             }
-        }, Threading.SAME_THREAD);
+        });
         // connect to peer but don't do handshake
         long start = System.currentTimeMillis(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);
@@ -524,7 +530,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 new InetSocketAddress("localhost", 2001),
                 new InetSocketAddress("localhost", 2002)
         );
-        peerGroup.addEventListener(listener);
+        peerGroup.addConnectionEventListener(listener);
+        peerGroup.addDataEventListener(listener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
             public InetSocketAddress[] getPeers(long unused, TimeUnit unused2) throws PeerDiscoveryException {

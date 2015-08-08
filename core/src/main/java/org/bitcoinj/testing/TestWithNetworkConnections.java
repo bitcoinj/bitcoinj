@@ -17,6 +17,9 @@
 
 package org.bitcoinj.testing;
 
+import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
+import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
+import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.params.UnitTestParams;
@@ -147,7 +150,7 @@ public class TestWithNetworkConnections {
         checkArgument(versionMessage.hasBlockChain());
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
-        peer.addEventListener(new AbstractPeerEventListener() {
+        peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
                 synchronized (doneConnecting) {
@@ -205,7 +208,7 @@ public class TestWithNetworkConnections {
     private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final SettableFuture<Void> pongReceivedFuture = SettableFuture.create();
-        PeerEventListener listener = new AbstractPeerEventListener() {
+        PeerDataEventListener listener = new AbstractPeerDataEventListener() {
             @Override
             public Message onPreMessageReceived(Peer p, Message m) {
                 if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
@@ -215,10 +218,10 @@ public class TestWithNetworkConnections {
                 return m;
             }
         };
-        p.peer.addEventListener(listener, Threading.SAME_THREAD);
+        p.peer.addDataEventListener(Threading.SAME_THREAD, listener);
         inbound(p, new Pong(nonce));
         pongReceivedFuture.get();
-        p.peer.removeEventListener(listener);
+        p.peer.removeDataEventListener(listener);
     }
 
     protected void pingAndWait(final InboundMessageQueuer p) throws Exception {
