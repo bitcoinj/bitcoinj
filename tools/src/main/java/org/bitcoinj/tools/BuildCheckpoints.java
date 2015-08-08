@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
@@ -55,9 +56,12 @@ public class BuildCheckpoints {
     private static NetworkParameters params;
 
     public static void main(String[] args) throws Exception {
+        BriefLogFormatter.initWithSilentBitcoinJ();
+
         OptionParser parser = new OptionParser();
         parser.accepts("help");
         OptionSpec<NetworkEnum> netFlag = parser.accepts("net").withRequiredArg().ofType(NetworkEnum.class).defaultsTo(NetworkEnum.MAIN);
+        parser.accepts("peer").withRequiredArg();
         OptionSpec<Integer> daysFlag = parser.accepts("days").withRequiredArg().ofType(Integer.class).defaultsTo(30);
         OptionSet options = parser.parse(args);
 
@@ -66,7 +70,7 @@ public class BuildCheckpoints {
             return;
         }
 
-        String suffix;
+        final String suffix;
         switch (netFlag.value(options)) {
             case MAIN:
             case PROD:
@@ -84,7 +88,21 @@ public class BuildCheckpoints {
             default:
                 throw new RuntimeException("Unreachable.");
         }
-        BriefLogFormatter.initWithSilentBitcoinJ();
+
+        final InetAddress ipAddress;
+        if (options.has("peer")) {
+            String peerFlag = (String) options.valueOf("peer");
+            try {
+                ipAddress = InetAddress.getByName(peerFlag);
+            } catch (UnknownHostException e) {
+                System.err.println("Could not understand peer domain name/IP address: " + peerFlag + ": " + e.getMessage());
+                System.exit(1);
+                return;
+            }
+        } else {
+            ipAddress = InetAddress.getLocalHost();
+        }
+        final PeerAddress peerAddress = new PeerAddress(ipAddress, params.getPort());
 
         // Sorted map of block height to StoredBlock object.
         final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
@@ -94,7 +112,6 @@ public class BuildCheckpoints {
         final BlockStore store = new MemoryBlockStore(params);
         final BlockChain chain = new BlockChain(params, store);
         final PeerGroup peerGroup = new PeerGroup(params, chain);
-        final InetAddress peerAddress = InetAddress.getLocalHost();
         System.out.println("Connecting to " + peerAddress + "...");
         peerGroup.addAddress(peerAddress);
         long now = new Date().getTime() / 1000;
