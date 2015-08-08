@@ -285,17 +285,29 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
+    protected final ReentrantLock connectionClosedAlreadyNotifiedLock = Threading.lock("peerConnectionClosedAlreadyNotified");
+    private boolean connectionClosedAlreadyNotified = false;
+    
     @Override
     public void connectionClosed() {
-        for (final PeerListenerRegistration registration : eventListeners) {
-            if (registration.callOnDisconnect)
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onPeerDisconnected(Peer.this, 0);
-                    }
-                });
+        connectionClosedAlreadyNotifiedLock.lock();
+        try {
+            if (!connectionClosedAlreadyNotified) {
+                connectionClosedAlreadyNotified=true;
+                for (final PeerListenerRegistration registration : eventListeners) {
+                    if (registration.callOnDisconnect)
+                        registration.executor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                registration.listener.onPeerDisconnected(Peer.this, 0);
+                            }
+                        });
+                }            
+            }
+        } finally {
+            connectionClosedAlreadyNotifiedLock.unlock();
         }
+        
     }
 
     @Override
