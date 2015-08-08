@@ -2760,6 +2760,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             final KeyCrypter crypter = keychain.getKeyCrypter();
             if (crypter != null)
                 builder.append(String.format("Encryption: %s%n", crypter));
+            if (isWatching())
+                builder.append("Wallet is watching.\n");
 
             // Do the keys.
             builder.append("\nKeys:\n");
