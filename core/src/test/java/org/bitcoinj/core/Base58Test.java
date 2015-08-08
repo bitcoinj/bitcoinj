@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ public class Base58Test extends TestCase {
     }
 
     @Test
-    public void testDecodeToBigInteger() throws AddressFormatException {
+    public void testDecodeToBigInteger() {
         byte[] input = Base58.decode("129");
         assertEquals(new BigInteger(1, input), Base58.decodeToBigInteger("129"));
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -118,7 +118,7 @@ public class ScriptTest {
     }
     
     @Test
-    public void testCreateMultiSigInputScript() throws AddressFormatException {
+    public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
         ECKey key1 = DumpedPrivateKey.fromBase58(params, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
         ECKey key2 = DumpedPrivateKey.fromBase58(params, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();

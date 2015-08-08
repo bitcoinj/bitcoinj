@@ -83,9 +83,6 @@ public class SendMoneyController {
             overlayUI.done();
         } catch (ECKey.KeyIsEncryptedException e) {
             askForPasswordAndRetry();
-        } catch (AddressFormatException e) {
-            // Cannot happen because we already validated it when the text field changed.
-            throw new RuntimeException(e);
         }
     }
 
