@@ -750,7 +750,7 @@ public class Script {
     }
 
     public boolean isOpReturn() {
-        return chunks.size() == 2 && chunks.get(0).equalsOpCode(OP_RETURN);
+        return chunks.size() > 0 && chunks.get(0).equalsOpCode(OP_RETURN);
     }
 
     /**
