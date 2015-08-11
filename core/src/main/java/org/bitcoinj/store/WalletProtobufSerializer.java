@@ -156,7 +156,7 @@ public class WalletProtobufSerializer {
             walletBuilder.addTransaction(txProto);
         }
 
-        walletBuilder.addAllKey(wallet.serializeKeychainToProtobuf());
+        walletBuilder.addAllKey(wallet.serializeKeyChainGroupToProtobuf());
 
         for (Script script : wallet.getWatchedScripts()) {
             Protos.Script protoScript =
@@ -422,15 +422,15 @@ public class WalletProtobufSerializer {
             throw new UnreadableWalletException.WrongNetwork();
 
         // Read the scrypt parameters that specify how encryption and decryption is performed.
-        KeyChainGroup chain;
+        KeyChainGroup keyChainGroup;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            chain = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter, keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter, keyChainFactory);
         } else {
-            chain = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
         }
-        Wallet wallet = factory.create(params, chain);
+        Wallet wallet = factory.create(params, keyChainGroup);
 
         List<Script> scripts = Lists.newArrayList();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {

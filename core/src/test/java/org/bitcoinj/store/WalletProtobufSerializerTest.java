@@ -316,7 +316,7 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(Coin.ZERO, wallet1.getBalance());
-        assertEquals(2, wallet1.getActiveKeychain().getSigsRequiredToSpend());
+        assertEquals(2, wallet1.getActiveKeyChain().getSigsRequiredToSpend());
         assertEquals(myAddress, wallet1.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS));
     }
 

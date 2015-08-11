@@ -947,7 +947,7 @@ public class WalletTool {
             if (options.has(lookaheadSize)) {
                 Integer size = options.valueOf(lookaheadSize);
                 log.info("Setting keychain lookahead size to {}", size);
-                wallet.setKeychainLookaheadSize(size);
+                wallet.setKeyChainGroupLookaheadSize(size);
             }
             ECKey key;
             try {

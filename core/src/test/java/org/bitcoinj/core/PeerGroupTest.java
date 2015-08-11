@@ -629,8 +629,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void testBloomResendOnNewKey() throws Exception {
         // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent but only once
         // we exceed the lookahead threshold.
-        wallet.setKeychainLookaheadSize(5);
-        wallet.setKeychainLookaheadThreshold(4);
+        wallet.setKeyChainGroupLookaheadSize(5);
+        wallet.setKeyChainGroupLookaheadThreshold(4);
         peerGroup.start();
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -639,7 +639,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         BloomFilter f1 = p1.lastReceivedFilter;
         ECKey key = null;
         // We have to run ahead of the lookahead zone for this test. There should only be one bloom filter recalc.
-        for (int i = 0; i < wallet.getKeychainLookaheadSize() + wallet.getKeychainLookaheadThreshold() + 1; i++) {
+        for (int i = 0; i < wallet.getKeyChainGroupLookaheadSize() + wallet.getKeyChainGroupLookaheadThreshold() + 1; i++) {
             key = wallet.freshReceiveKey();
         }
         peerGroup.waitForJobQueue();
@@ -775,8 +775,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
             keys.add(shadow.freshReceiveKey());
         }
         // Reduce the number of keys we need to work with to speed up this test.
-        wallet.setKeychainLookaheadSize(4);
-        wallet.setKeychainLookaheadThreshold(2);
+        wallet.setKeyChainGroupLookaheadSize(4);
+        wallet.setKeyChainGroupLookaheadThreshold(2);
 
         peerGroup.start();
         InboundMessageQueuer p1 = connectPeer(1);
@@ -800,13 +800,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
         // be ignored.
-        int epoch = wallet.keychain.getCombinedKeyLookaheadEpochs();
+        int epoch = wallet.keyChainGroup.getCombinedKeyLookaheadEpochs();
         BloomFilter filter = new BloomFilter(params, p1.lastReceivedFilter.bitcoinSerialize());
         filterAndSend(p1, blocks, filter);
         Block exhaustionPoint = blocks.get(3);
         pingAndWait(p1);
 
-        assertNotEquals(epoch, wallet.keychain.getCombinedKeyLookaheadEpochs());
+        assertNotEquals(epoch, wallet.keyChainGroup.getCombinedKeyLookaheadEpochs());
         // 4th block was end of the lookahead zone and thus was discarded, so we got 3 blocks worth of money (50 each).
         assertEquals(Coin.FIFTY_COINS.multiply(3), wallet.getBalance());
         assertEquals(exhaustionPoint.getPrevBlockHash(), blockChain.getChainHead().getHeader().getHash());
