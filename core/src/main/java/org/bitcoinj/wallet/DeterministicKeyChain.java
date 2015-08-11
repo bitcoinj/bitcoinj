@@ -1340,13 +1340,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)));
         }
         final DeterministicKey watchingKey = getWatchingKey();
-        // Don't show if it's been imported from a watching wallet already, because it'd result in a weird/
-        // unintuitive result where the watching key in a watching wallet is not the one it was created with
-        // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
-        // optionally as well to fix this, but it seems unimportant for now.
-        if (watchingKey.getParent() != null) {
-            builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58(params)));
-        }
+        builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58(params)));
         formatAddresses(includePrivateKeys, params, builder2);
         return builder2.toString();
     }
