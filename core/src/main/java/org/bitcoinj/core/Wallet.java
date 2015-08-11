@@ -96,10 +96,10 @@ public class Wallet extends BaseTaggableObject
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
 
-    // Ordering: lock > keychainLock. Keychain is protected separately to allow fast querying of current receive address
+    // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately to allow fast querying of current receive address
     // even if the wallet itself is busy e.g. saving or processing a big reorg. Useful for reducing UI latency.
     protected final ReentrantLock lock = Threading.lock("wallet");
-    protected final ReentrantLock keychainLock = Threading.lock("wallet-keychain");
+    protected final ReentrantLock keyChainGroupLock = Threading.lock("wallet-keychaingroup");
 
     // The various pools below give quick access to wallet-relevant transactions by the state they're in:
     //
@@ -148,10 +148,10 @@ public class Wallet extends BaseTaggableObject
 
     // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
     // outside the wallet lock. So don't expose this object directly via any accessors!
-    @GuardedBy("keychainLock") protected KeyChainGroup keychain;
+    @GuardedBy("keyChainGroupLock") protected KeyChainGroup keyChainGroup;
 
     // A list of scripts watched by this wallet.
-    @GuardedBy("keychainLock") private Set<Script> watchedScripts;
+    @GuardedBy("keyChainGroupLock") private Set<Script> watchedScripts;
 
     protected final Context context;
     protected final NetworkParameters params;
@@ -267,14 +267,14 @@ public class Wallet extends BaseTaggableObject
     public Wallet(Context context, KeyChainGroup keyChainGroup) {
         this.context = context;
         this.params = context.getParams();
-        this.keychain = checkNotNull(keyChainGroup);
+        this.keyChainGroup = checkNotNull(keyChainGroup);
         if (params == UnitTestParams.get())
-            this.keychain.setLookaheadSize(5);  // Cut down excess computation for unit tests.
-        // If this keychain was created fresh just now (new wallet), make HD so a backup can be made immediately
+            this.keyChainGroup.setLookaheadSize(5);  // Cut down excess computation for unit tests.
+        // If this keyChainGroup was created fresh just now (new wallet), make HD so a backup can be made immediately
         // without having to call current/freshReceiveKey. If there are already keys in the chain of any kind then
         // we're probably being deserialized so leave things alone: the API user can upgrade later.
-        if (this.keychain.numKeys() == 0)
-            this.keychain.createAndActivateNewHDChain();
+        if (this.keyChainGroup.numKeys() == 0)
+            this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<Sha256Hash, Transaction>();
         spent = new HashMap<Sha256Hash, Transaction>();
@@ -325,8 +325,8 @@ public class Wallet extends BaseTaggableObject
     /**
      * Gets the active keychain via {@link KeyChainGroup#getActiveKeyChain()}
      */
-    public DeterministicKeyChain getActiveKeychain() {
-        return keychain.getActiveKeyChain();
+    public DeterministicKeyChain getActiveKeyChain() {
+        return keyChainGroup.getActiveKeyChain();
     }
 
     /**
@@ -368,12 +368,12 @@ public class Wallet extends BaseTaggableObject
      * a different key (for each purpose independently).
      */
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.currentKey(purpose);
+            return keyChainGroup.currentKey(purpose);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -389,12 +389,12 @@ public class Wallet extends BaseTaggableObject
      * Returns address for a {@link #currentKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.currentAddress(purpose);
+            return keyChainGroup.currentAddress(purpose);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -428,12 +428,12 @@ public class Wallet extends BaseTaggableObject
      */
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         List<DeterministicKey> keys;
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            keys = keychain.freshKeys(purpose, numberOfKeys);
+            keys = keyChainGroup.freshKeys(purpose, numberOfKeys);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         // Do we really need an immediate hard save? Arguably all this is doing is saving the 'current' key
         // and that's not quite so important, so we could coalesce for more performance.
@@ -454,11 +454,11 @@ public class Wallet extends BaseTaggableObject
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         Address key;
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            key = keychain.freshAddress(purpose);
+            key = keyChainGroup.freshAddress(purpose);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
         return key;
@@ -477,11 +477,11 @@ public class Wallet extends BaseTaggableObject
      * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
      */
     public List<ECKey> getIssuedReceiveKeys() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.getActiveKeyChain().getIssuedReceiveKeys();
+            return keyChainGroup.getActiveKeyChain().getIssuedReceiveKeys();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -505,11 +505,11 @@ public class Wallet extends BaseTaggableObject
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
     public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            keychain.upgradeToDeterministic(vKeyRotationTimestamp, aesKey);
+            keyChainGroup.upgradeToDeterministic(vKeyRotationTimestamp, aesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -519,11 +519,11 @@ public class Wallet extends BaseTaggableObject
      * that would require a new address or key.
      */
     public boolean isDeterministicUpgradeRequired() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.isDeterministicUpgradeRequired();
+            return keyChainGroup.isDeterministicUpgradeRequired();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -531,10 +531,10 @@ public class Wallet extends BaseTaggableObject
         maybeUpgradeToHD(null);
     }
 
-    @GuardedBy("keychainLock")
+    @GuardedBy("keyChainGroupLock")
     private void maybeUpgradeToHD(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        checkState(keychainLock.isHeldByCurrentThread());
-        if (keychain.isDeterministicUpgradeRequired()) {
+        checkState(keyChainGroupLock.isHeldByCurrentThread());
+        if (keyChainGroup.isDeterministicUpgradeRequired()) {
             log.info("Upgrade to HD wallets is required, attempting to do so.");
             try {
                 upgradeToDeterministic(aesKey);
@@ -550,11 +550,11 @@ public class Wallet extends BaseTaggableObject
      * Returns a snapshot of the watched scripts. This view is not live.
      */
     public List<Script> getWatchedScripts() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             return new ArrayList<Script>(watchedScripts);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -564,23 +564,23 @@ public class Wallet extends BaseTaggableObject
      * @return Whether the key was removed or not.
      */
     public boolean removeKey(ECKey key) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.removeImportedKey(key);
+            return keyChainGroup.removeImportedKey(key);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /**
-     * Returns the number of keys in the key chain, including lookahead keys.
+     * Returns the number of keys in the key chain group, including lookahead keys.
      */
-    public int getKeychainSize() {
-        keychainLock.lock();
+    public int getKeyChainGroupSize() {
+        keyChainGroupLock.lock();
         try {
-            return keychain.numKeys();
+            return keyChainGroup.numKeys();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -588,11 +588,11 @@ public class Wallet extends BaseTaggableObject
      * Returns a list of the non-deterministic keys that have been imported into the wallet, or the empty list if none.
      */
     public List<ECKey> getImportedKeys() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.getImportedKeys();
+            return keyChainGroup.getImportedKeys();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -639,11 +639,11 @@ public class Wallet extends BaseTaggableObject
         // API usage check.
         checkNoDeterministicKeys(keys);
         int result;
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            result = keychain.importKeys(keys);
+            result = keyChainGroup.importKeys(keys);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
         return result;
@@ -658,23 +658,23 @@ public class Wallet extends BaseTaggableObject
 
     /** Takes a list of keys and a password, then encrypts and imports them in one step using the current keycrypter. */
     public int importKeysAndEncrypt(final List<ECKey> keys, CharSequence password) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
             return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** Takes a list of keys and an AES key, then encrypts and imports them in one step using the current keycrypter. */
     public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             checkNoDeterministicKeys(keys);
-            return keychain.importKeysAndEncrypt(keys, aesKey);
+            return keyChainGroup.importKeysAndEncrypt(keys, aesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -690,53 +690,53 @@ public class Wallet extends BaseTaggableObject
      * </p>
      */
     public void addAndActivateHDChain(DeterministicKeyChain chain) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            keychain.addAndActivateHDChain(chain);
+            keyChainGroup.addAndActivateHDChain(chain);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
-    public void setKeychainLookaheadSize(int lookaheadSize) {
-        keychainLock.lock();
+    public void setKeyChainGroupLookaheadSize(int lookaheadSize) {
+        keyChainGroupLock.lock();
         try {
-            keychain.setLookaheadSize(lookaheadSize);
+            keyChainGroup.setLookaheadSize(lookaheadSize);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
-    public int getKeychainLookaheadSize() {
-        keychainLock.lock();
+    public int getKeyChainGroupLookaheadSize() {
+        keyChainGroupLock.lock();
         try {
-            return keychain.getLookaheadSize();
+            return keyChainGroup.getLookaheadSize();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
-    public void setKeychainLookaheadThreshold(int num) {
-        keychainLock.lock();
+    public void setKeyChainGroupLookaheadThreshold(int num) {
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            keychain.setLookaheadThreshold(num);
+            keyChainGroup.setLookaheadThreshold(num);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** See {@link org.bitcoinj.wallet.DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
-    public int getKeychainLookaheadThreshold() {
-        keychainLock.lock();
+    public int getKeyChainGroupLookaheadThreshold() {
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.getLookaheadThreshold();
+            return keyChainGroup.getLookaheadThreshold();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -747,12 +747,12 @@ public class Wallet extends BaseTaggableObject
      * zero key in the recommended BIP32 hierarchy.
      */
     public DeterministicKey getWatchingKey() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.getActiveKeyChain().getWatchingKey();
+            return keyChainGroup.getActiveKeyChain().getWatchingKey();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -764,12 +764,12 @@ public class Wallet extends BaseTaggableObject
      *             if there are no keys, or if there is a mix between watching and non-watching keys.
      */
     public boolean isWatching() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.isWatching();
+            return keyChainGroup.isWatching();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -828,7 +828,7 @@ public class Wallet extends BaseTaggableObject
      */
     public int addWatchedScripts(final List<Script> scripts) {
         int added = 0;
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             for (final Script script : scripts) {
                 // Script.equals/hashCode() only takes into account the program bytes, so this step lets the user replace
@@ -841,7 +841,7 @@ public class Wallet extends BaseTaggableObject
                 added++;
             }
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         if (added > 0) {
             queueOnScriptsChanged(scripts, true);
@@ -902,7 +902,7 @@ public class Wallet extends BaseTaggableObject
      * Returns all addresses watched by this wallet.
      */
     public List<Address> getWatchedAddresses() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             List<Address> addresses = new LinkedList<Address>();
             for (Script script : watchedScripts)
@@ -910,7 +910,7 @@ public class Wallet extends BaseTaggableObject
                     addresses.add(script.getToAddress(params));
             return addresses;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -923,21 +923,21 @@ public class Wallet extends BaseTaggableObject
     @Override
     @Nullable
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.findKeyFromPubHash(pubkeyHash);
+            return keyChainGroup.findKeyFromPubHash(pubkeyHash);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** Returns true if the given key is in the wallet, false otherwise. Currently an O(N) operation. */
     public boolean hasKey(ECKey key) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.hasKey(key);
+            return keyChainGroup.hasKey(key);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -950,11 +950,11 @@ public class Wallet extends BaseTaggableObject
     /** {@inheritDoc} */
     @Override
     public boolean isWatchedScript(Script script) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             return watchedScripts.contains(script);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -965,11 +965,11 @@ public class Wallet extends BaseTaggableObject
     @Override
     @Nullable
     public ECKey findKeyFromPubKey(byte[] pubkey) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.findKeyFromPubKey(pubkey);
+            return keyChainGroup.findKeyFromPubKey(pubkey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -980,17 +980,17 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Locates a redeem data (redeem script and keys) from the keychain given the hash of the script.
+     * Locates a redeem data (redeem script and keys) from the keyChainGroup given the hash of the script.
      * Returns RedeemData object or null if no such data was found.
      */
     @Nullable
     @Override
     public RedeemData findRedeemDataFromScriptHash(byte[] payToScriptHash) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.findRedeemDataFromScriptHash(payToScriptHash);
+            return keyChainGroup.findRedeemDataFromScriptHash(payToScriptHash);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1005,20 +1005,20 @@ public class Wallet extends BaseTaggableObject
      * See {@link org.bitcoinj.wallet.DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
     private void markKeysAsUsed(Transaction tx) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             for (TransactionOutput o : tx.getOutputs()) {
                 try {
                     Script script = o.getScriptPubKey();
                     if (script.isSentToRawPubKey()) {
                         byte[] pubkey = script.getPubKey();
-                        keychain.markPubKeyAsUsed(pubkey);
+                        keyChainGroup.markPubKeyAsUsed(pubkey);
                     } else if (script.isSentToAddress()) {
                         byte[] pubkeyHash = script.getPubKeyHash();
-                        keychain.markPubKeyHashAsUsed(pubkeyHash);
+                        keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
                     } else if (script.isPayToScriptHash()) {
                         Address a = Address.fromP2SHScript(tx.getParams(), script);
-                        keychain.markP2SHAddressAsUsed(a);
+                        keyChainGroup.markP2SHAddressAsUsed(a);
                     }
                 } catch (ScriptException e) {
                     // Just means we didn't understand the output of this transaction: ignore it.
@@ -1026,7 +1026,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1035,14 +1035,14 @@ public class Wallet extends BaseTaggableObject
      * @throws org.bitcoinj.core.ECKey.MissingPrivateKeyException if the seed is unavailable (watching wallet)
      */
     public DeterministicSeed getKeyChainSeed() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            DeterministicSeed seed = keychain.getActiveKeyChain().getSeed();
+            DeterministicSeed seed = keyChainGroup.getActiveKeyChain().getSeed();
             if (seed == null)
                 throw new ECKey.MissingPrivateKeyException();
             return seed;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1051,12 +1051,12 @@ public class Wallet extends BaseTaggableObject
      * use currentReceiveKey/freshReceiveKey instead.
      */
     public DeterministicKey getKeyByPath(List<ChildNumber> path) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
-            return keychain.getActiveKeyChain().getKeyByPath(path, false);
+            return keyChainGroup.getActiveKeyChain().getKeyByPath(path, false);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1066,12 +1066,12 @@ public class Wallet extends BaseTaggableObject
      * parameters to derive a key from the given password.
      */
     public void encrypt(CharSequence password) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             final KeyCrypterScrypt scrypt = new KeyCrypterScrypt();
-            keychain.encrypt(scrypt, scrypt.deriveKey(password));
+            keyChainGroup.encrypt(scrypt, scrypt.deriveKey(password));
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
     }
@@ -1085,11 +1085,11 @@ public class Wallet extends BaseTaggableObject
      * @throws KeyCrypterException Thrown if the wallet encryption fails. If so, the wallet state is unchanged.
      */
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            keychain.encrypt(keyCrypter, aesKey);
+            keyChainGroup.encrypt(keyCrypter, aesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
     }
@@ -1099,13 +1099,13 @@ public class Wallet extends BaseTaggableObject
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
     public void decrypt(CharSequence password) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            final KeyCrypter crypter = keychain.getKeyCrypter();
+            final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             checkState(crypter != null, "Not encrypted");
-            keychain.decrypt(crypter.deriveKey(password));
+            keyChainGroup.decrypt(crypter.deriveKey(password));
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
     }
@@ -1117,11 +1117,11 @@ public class Wallet extends BaseTaggableObject
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
     public void decrypt(KeyParameter aesKey) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            keychain.decrypt(aesKey);
+            keyChainGroup.decrypt(aesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
         saveNow();
     }
@@ -1134,11 +1134,11 @@ public class Wallet extends BaseTaggableObject
      *  @throws IllegalStateException if the wallet is not encrypted.
      */
     public boolean checkPassword(CharSequence password) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.checkPassword(password);
+            return keyChainGroup.checkPassword(password);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1148,11 +1148,11 @@ public class Wallet extends BaseTaggableObject
      *  @return boolean true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
      */
     public boolean checkAESKey(KeyParameter aesKey) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.checkAESKey(aesKey);
+            return keyChainGroup.checkAESKey(aesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1162,11 +1162,11 @@ public class Wallet extends BaseTaggableObject
      */
     @Nullable
     public KeyCrypter getKeyCrypter() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            return keychain.getKeyCrypter();
+            return keyChainGroup.getKeyCrypter();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1176,15 +1176,15 @@ public class Wallet extends BaseTaggableObject
      * (This is a convenience method - the encryption type is actually stored in the keyCrypter).
      */
     public EncryptionType getEncryptionType() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            KeyCrypter crypter = keychain.getKeyCrypter();
+            KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
                 return crypter.getUnderstoodEncryptionType();
             else
                 return EncryptionType.UNENCRYPTED;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1195,23 +1195,23 @@ public class Wallet extends BaseTaggableObject
 
     /** Changes wallet encryption password, this is atomic operation. */
     public void changeEncryptionPassword(CharSequence currentPassword, CharSequence newPassword){
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             decrypt(currentPassword);
             encrypt(newPassword);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
     /** Changes wallet AES encryption key, this is atomic operation. */
     public void changeEncryptionKey(KeyCrypter keyCrypter, KeyParameter currentAesKey, KeyParameter newAesKey){
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             decrypt(currentAesKey);
             encrypt(keyCrypter, newAesKey);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -1223,12 +1223,12 @@ public class Wallet extends BaseTaggableObject
 
     // TODO: Make this package private once the classes finish moving around.
     /** Internal use only. */
-    public List<Protos.Key> serializeKeychainToProtobuf() {
-        keychainLock.lock();
+    public List<Protos.Key> serializeKeyChainGroupToProtobuf() {
+        keyChainGroupLock.lock();
         try {
-            return keychain.serializeToProtobuf();
+            return keyChainGroup.serializeToProtobuf();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -2320,7 +2320,7 @@ public class Wallet extends BaseTaggableObject
     public void addChangeEventListener(Executor executor, WalletChangeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
         changeListeners.add(new ListenerRegistration<WalletChangeEventListener>(executor, listener));
-        keychain.addEventListener(listener, executor);
+        keyChainGroup.addEventListener(listener, executor);
     }
 
     /**
@@ -2355,7 +2355,7 @@ public class Wallet extends BaseTaggableObject
      * was never added.
      */
     public boolean removeChangeEventListener(WalletChangeEventListener listener) {
-        keychain.removeEventListener(listener);
+        keyChainGroup.removeEventListener(listener);
         return ListenerRegistration.removeFromList(listener, changeListeners);
     }
 
@@ -2672,7 +2672,7 @@ public class Wallet extends BaseTaggableObject
      */
     public List<TransactionOutput> getWatchedOutputs(boolean excludeImmatureCoinbases) {
         lock.lock();
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
@@ -2690,7 +2690,7 @@ public class Wallet extends BaseTaggableObject
             }
             return candidates;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
             lock.unlock();
         }
     }
@@ -2807,7 +2807,7 @@ public class Wallet extends BaseTaggableObject
     public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
                            @Nullable AbstractBlockChain chain) {
         lock.lock();
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
@@ -2822,7 +2822,7 @@ public class Wallet extends BaseTaggableObject
             final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
             builder.append(String.format("Last seen best block: %d (%s): %s%n",
                     getLastBlockSeenHeight(), lastBlockSeenTimeStr, getLastBlockSeenHash()));
-            final KeyCrypter crypter = keychain.getKeyCrypter();
+            final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
                 builder.append(String.format("Encryption: %s%n", crypter));
             if (isWatching())
@@ -2833,7 +2833,7 @@ public class Wallet extends BaseTaggableObject
             final long keyRotationTime = vKeyRotationTimestamp * 1000;
             if (keyRotationTime > 0)
                 builder.append(String.format("Key rotation time: %s\n", Utils.dateTimeFormat(keyRotationTime)));
-            builder.append(keychain.toString(includePrivateKeys));
+            builder.append(keyChainGroup.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");
@@ -2869,7 +2869,7 @@ public class Wallet extends BaseTaggableObject
             }
             return builder.toString();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
             lock.unlock();
         }
     }
@@ -2928,16 +2928,16 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     public long getEarliestKeyCreationTime() {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            long earliestTime = keychain.getEarliestKeyCreationTime();
+            long earliestTime = keyChainGroup.getEarliestKeyCreationTime();
             for (Script script : watchedScripts)
                 earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
             if (earliestTime == Long.MAX_VALUE)
                 return Utils.currentTimeSeconds();
             return earliestTime;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -3976,7 +3976,7 @@ public class Wallet extends BaseTaggableObject
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<UTXO>();
-        List<DeterministicKey> keys = getActiveKeychain().getLeafKeys();
+        List<DeterministicKey> keys = getActiveKeyChain().getLeafKeys();
         List<Address> addresses = new ArrayList<Address>();
         for (ECKey key : keys) {
             Address address = new Address(params, key.getPubKeyHash());
@@ -4309,7 +4309,7 @@ public class Wallet extends BaseTaggableObject
         if (bloomFilterGuard.incrementAndGet() > 1)
             return;
         lock.lock();
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         //noinspection FieldAccessNotGuarded
         calcBloomOutPointsLocked();
     }
@@ -4334,12 +4334,12 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    @Override @GuardedBy("keychainLock")
+    @Override @GuardedBy("keyChainGroupLock")
     public void endBloomFilterCalculation() {
         if (bloomFilterGuard.decrementAndGet() > 0)
             return;
         bloomOutPoints.clear();
-        keychainLock.unlock();
+        keyChainGroupLock.unlock();
         lock.unlock();
     }
 
@@ -4352,7 +4352,7 @@ public class Wallet extends BaseTaggableObject
         beginBloomFilterCalculation();
         try {
             int size = bloomOutPoints.size();
-            size += keychain.getBloomFilterElementCount();
+            size += keyChainGroup.getBloomFilterElementCount();
             // Some scripts may have more than one bloom element.  That should normally be okay, because under-counting
             // just increases false-positive rate.
             size += watchedScripts.size();
@@ -4371,11 +4371,11 @@ public class Wallet extends BaseTaggableObject
     public boolean isRequiringUpdateAllBloomFilter() {
         // This is typically called by the PeerGroup, in which case it will have already explicitly taken the lock
         // before calling, but because this is public API we must still lock again regardless.
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             return !watchedScripts.isEmpty();
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -4403,11 +4403,11 @@ public class Wallet extends BaseTaggableObject
      * <p>See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom
      * filters.</p>
      */
-    @Override @GuardedBy("keychainLock")
+    @Override @GuardedBy("keyChainGroupLock")
     public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
         beginBloomFilterCalculation();
         try {
-            BloomFilter filter = keychain.getBloomFilter(size, falsePositiveRate, nTweak);
+            BloomFilter filter = keyChainGroup.getBloomFilter(size, falsePositiveRate, nTweak);
             for (Script script : watchedScripts) {
                 for (ScriptChunk chunk : script.getChunks()) {
                     // Only add long (at least 64 bit) data to the bloom filter.
@@ -4439,20 +4439,20 @@ public class Wallet extends BaseTaggableObject
      * sequence within it to reliably find relevant transactions.
      */
     public boolean checkForFilterExhaustion(FilteredBlock block) {
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
-            int epoch = keychain.getCombinedKeyLookaheadEpochs();
+            int epoch = keyChainGroup.getCombinedKeyLookaheadEpochs();
             for (Transaction tx : block.getAssociatedTransactions().values()) {
                 markKeysAsUsed(tx);
             }
-            int newEpoch = keychain.getCombinedKeyLookaheadEpochs();
+            int newEpoch = keyChainGroup.getCombinedKeyLookaheadEpochs();
             checkState(newEpoch >= epoch);
             // If the key lookahead epoch has advanced, there was a call to addKeys and the PeerGroup already has a
             // pending request to recalculate the filter queued up on another thread. The calling Peer should abandon
             // block at this point and await a new filter before restarting the download.
             return newEpoch > epoch;
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
         }
     }
 
@@ -4531,7 +4531,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void deserializeExtension(WalletExtension extension, byte[] data) throws Exception {
         lock.lock();
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             // This method exists partly to establish a lock ordering of wallet > extension.
             extension.deserializeWalletExtension(this, data);
@@ -4541,7 +4541,7 @@ public class Wallet extends BaseTaggableObject
             extensions.remove(extension.getWalletExtensionID());
             Throwables.propagate(throwable);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
             lock.unlock();
         }
     }
@@ -4895,13 +4895,13 @@ public class Wallet extends BaseTaggableObject
     public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
-        keychainLock.lock();
+        keyChainGroupLock.lock();
         try {
             txns = maybeRotateKeys(aesKey, signAndSend);
             if (!signAndSend)
                 return Futures.immediateFuture(txns);
         } finally {
-            keychainLock.unlock();
+            keyChainGroupLock.unlock();
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
@@ -4930,10 +4930,10 @@ public class Wallet extends BaseTaggableObject
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
-    @GuardedBy("keychainLock")
+    @GuardedBy("keyChainGroupLock")
     private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
-        checkState(keychainLock.isHeldByCurrentThread());
+        checkState(keyChainGroupLock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
         // TODO: Handle chain replays here.
         final long keyRotationTimestamp = vKeyRotationTimestamp;
@@ -4941,7 +4941,7 @@ public class Wallet extends BaseTaggableObject
 
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
-        for (DeterministicKeyChain chain : keychain.getDeterministicKeyChains()) {
+        for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
             if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
                 allChainsRotating = false;
                 break;
@@ -4949,17 +4949,17 @@ public class Wallet extends BaseTaggableObject
         }
         if (allChainsRotating) {
             try {
-                if (keychain.getImportedKeys().isEmpty()) {
+                if (keyChainGroup.getImportedKeys().isEmpty()) {
                     log.info("All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
-                    keychain.createAndActivateNewHDChain();
+                    keyChainGroup.createAndActivateNewHDChain();
                 } else {
                     log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
-                    keychain.upgradeToDeterministic(keyRotationTimestamp, aesKey);
+                    keyChainGroup.upgradeToDeterministic(keyRotationTimestamp, aesKey);
                     log.info(" ... upgraded to HD again, based on next best oldest key.");
                 }
             } catch (AllRandomKeysRotating rotating) {
                 log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
-                keychain.createAndActivateNewHDChain();
+                keyChainGroup.createAndActivateNewHDChain();
             }
             saveNow();
         }
