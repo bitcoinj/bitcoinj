@@ -178,7 +178,6 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     /** Get the redeem data for a key in this married chain */
     @Override
     public RedeemData getRedeemData(DeterministicKey followedKey) {
-        checkState(isMarried());
         List<ECKey> marriedKeys = getMarriedKeysWithFollowed(followedKey);
         Script redeemScript = ScriptBuilder.createRedeemScript(sigsRequiredToSpend, marriedKeys);
         return RedeemData.of(marriedKeys, redeemScript);
