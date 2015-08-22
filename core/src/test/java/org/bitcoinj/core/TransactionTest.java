@@ -8,6 +8,8 @@ import org.easymock.*;
 import org.junit.*;
 
 import java.util.*;
+import static org.bitcoinj.core.BlockTest.params;
+import static org.bitcoinj.core.Utils.HEX;
 
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -27,6 +29,7 @@ public class TransactionTest {
 
     @Before
     public void setUp() throws Exception {
+        Context context = new Context(PARAMS);
         dummy = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
         tx = newTransaction();
     }
@@ -302,5 +305,18 @@ public class TransactionTest {
         assertEquals(78, tx1.getMessageSizeForPriorityCalc());
         tx1.getInput(0).setScriptSig(new Script(new byte[111]));
         assertEquals(79, tx1.getMessageSizeForPriorityCalc());
+    }
+
+    /**
+     * 
+     * @throws VerificationException 
+     */
+    @Test
+    public void testCoinbaseHeightCheck() throws VerificationException {
+        // Coinbase transaction from block 300,000
+        final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
+        final int height = 300000;
+        final Transaction transaction = params.getDefaultSerializer().makeTransaction(transactionBytes);
+        transaction.checkCoinBaseHeight(height);
     }
 }

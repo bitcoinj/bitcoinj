@@ -451,7 +451,7 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
         // t2 and t3 gets confirmed in the same block.
-        BlockPair bp = createFakeBlock(blockStore, t2, t3);
+        BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t2, t3);
         wallet.receiveFromBlock(t2, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         wallet.receiveFromBlock(t3, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         wallet.notifyNewBestBlock(bp.storedBlock);
@@ -539,7 +539,7 @@ public class WalletTest extends TestWithWallet {
                     wallet.getBalance(Wallet.BalanceType.ESTIMATED)));
 
         // Now confirm the transaction by including it into a block.
-        StoredBlock b3 = createFakeBlock(blockStore, spend).storedBlock;
+        StoredBlock b3 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, spend).storedBlock;
         wallet.receiveFromBlock(spend, b3, BlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // Change is confirmed. We started with 5.50 so we should have 4.50 left.
@@ -615,7 +615,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(Coin.valueOf(0, 80), wallet.getBalance());
         Threading.waitForUserCode();
-        BlockPair b4 = createFakeBlock(blockStore);
+        BlockPair b4 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS);
         confTxns.clear();
         wallet.notifyNewBestBlock(b4.storedBlock);
         Threading.waitForUserCode();
@@ -916,7 +916,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(TransactionConfidence.ConfidenceType.PENDING,
                 notifiedTx[0].getConfidence().getConfidenceType());
         // Send a block with nothing interesting. Verify we don't get a callback.
-        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).storedBlock);
         Threading.waitForUserCode();
         assertNull(reasons[0]);
         final Transaction t1Copy = params.getDefaultSerializer().makeTransaction(t1.bitcoinSerialize());
@@ -1151,7 +1151,7 @@ public class WalletTest extends TestWithWallet {
         // TX should have been seen as relevant.
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-        Block b1 = createFakeBlock(blockStore, t1).block;
+        Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).block;
         chain.add(b1);
         // TX should have been seen as relevant, extracted and processed.
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
@@ -1234,7 +1234,7 @@ public class WalletTest extends TestWithWallet {
         Address watchedAddress = key.toAddress(params);
         wallet.addWatchedAddress(watchedAddress);
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
-        StoredBlock b3 = createFakeBlock(blockStore, t1).storedBlock;
+        StoredBlock b3 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).storedBlock;
         wallet.receiveFromBlock(t1, b3, BlockChain.NewBlockType.BEST_CHAIN, 0);
         assertEquals(CENT, wallet.getBalance());
 
@@ -1255,7 +1255,7 @@ public class WalletTest extends TestWithWallet {
 
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
         Transaction t2 = createFakeTx(params, COIN, notMyAddr);
-        StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+        StoredBlock b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).storedBlock;
         Transaction st2 = new Transaction(params);
         st2.addOutput(CENT, notMyAddr);
         st2.addOutput(COIN, notMyAddr);
@@ -1278,7 +1278,7 @@ public class WalletTest extends TestWithWallet {
 
         assertTrue(wallet.isRequiringUpdateAllBloomFilter());
         Transaction t1 = createFakeTx(params, CENT, watchedAddress);
-        StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+        StoredBlock b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).storedBlock;
 
         TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
@@ -1338,7 +1338,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(params, CENT, addr);
-            StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+            StoredBlock b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).storedBlock;
 
             TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
@@ -1358,7 +1358,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash160()));
 
         Transaction t1 = createFakeTx(params, CENT, address);
-        StoredBlock b1 = createFakeBlock(blockStore, t1).storedBlock;
+        StoredBlock b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).storedBlock;
 
         TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
@@ -1416,7 +1416,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(f, results[1]);
         results[0] = results[1] = null;
 
-        Block b0 = createFakeBlock(blockStore).block;
+        Block b0 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         chain.add(b0);
         Sha256Hash hash3 = Sha256Hash.of(f);
         assertEquals(hash2, hash3);  // File has NOT changed yet. Just new blocks with no txns - delayed.
@@ -1424,7 +1424,7 @@ public class WalletTest extends TestWithWallet {
         assertNull(results[1]);
 
         Transaction t1 = createFakeTx(params, valueOf(5, 0), key);
-        Block b1 = createFakeBlock(blockStore, t1).block;
+        Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).block;
         chain.add(b1);
         Sha256Hash hash4 = Sha256Hash.of(f);
         assertFalse(hash3.equals(hash4));  // File HAS changed.
@@ -1451,7 +1451,7 @@ public class WalletTest extends TestWithWallet {
         wallet.importKey(key2);
         assertEquals(hash5, Sha256Hash.of(f)); // File has NOT changed.
         Transaction t2 = createFakeTx(params, valueOf(5, 0), key2);
-        Block b3 = createFakeBlock(blockStore, t2).block;
+        Block b3 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t2).block;
         chain.add(b3);
         Thread.sleep(2000); // Wait longer than autosave delay. TODO Fix the racyness.
         assertEquals(hash5, Sha256Hash.of(f)); // File has still NOT changed.
@@ -1511,7 +1511,7 @@ public class WalletTest extends TestWithWallet {
         // Add a change address to ensure this tx is relevant.
         tx2.addOutput(CENT, wallet.getChangeAddress());
         wallet.receivePending(tx2, null);
-        BlockPair bp = createFakeBlock(blockStore, tx1);
+        BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx1);
         wallet.receiveFromBlock(tx1, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         wallet.notifyNewBestBlock(bp.storedBlock);
         assertEquals(ZERO, wallet.getBalance());
@@ -2981,7 +2981,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertTrue(bool.get());
         // Confirm it in the same manner as how Bloom filtered blocks do. Verify it shows up.
-        StoredBlock block = createFakeBlock(blockStore, tx).storedBlock;
+        StoredBlock block = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx).storedBlock;
         wallet.notifyTransactionIsInBlock(tx.getHash(), block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         assertEquals(COIN, wallet.getBalance());
     }
@@ -2989,7 +2989,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void transactionInBlockNotification() {
         final Transaction tx = createFakeTx(params, COIN, myAddress);
-        StoredBlock block = createFakeBlock(blockStore, tx).storedBlock;
+        StoredBlock block = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx).storedBlock;
         wallet.receivePending(tx, null);
         boolean notification = wallet.notifyTransactionIsInBlock(tx.getHash(), block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         assertTrue(notification);
@@ -2997,7 +2997,7 @@ public class WalletTest extends TestWithWallet {
         Address notMyAddr = new ECKey().toAddress(params);
         final Transaction tx2 = createFakeTx(params, COIN, notMyAddr);
         wallet.receivePending(tx2, null);
-        StoredBlock block2 = createFakeBlock(blockStore, tx2).storedBlock;
+        StoredBlock block2 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS + 1, tx2).storedBlock;
         boolean notification2 = wallet.notifyTransactionIsInBlock(tx2.getHash(), block2, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         assertFalse(notification2);
     }
@@ -3005,7 +3005,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void duplicatedBlock() {
         final Transaction tx = createFakeTx(params, COIN, myAddress);
-        StoredBlock block = createFakeBlock(blockStore, tx).storedBlock;
+        StoredBlock block = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx).storedBlock;
         wallet.notifyNewBestBlock(block);
         wallet.notifyNewBestBlock(block);
     }

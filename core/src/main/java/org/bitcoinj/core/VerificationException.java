@@ -80,4 +80,10 @@ public class VerificationException extends RuntimeException {
             super("Coinbase input as input in non-coinbase transaction");
         }
     }
+
+    public static class CoinbaseHeightMismatch extends VerificationException {
+        public CoinbaseHeightMismatch(final String message) {
+            super(message);
+        }
+    }
 }

@@ -131,11 +131,12 @@ public class BlockChainTest {
 
     @Test
     public void receiveCoins() throws Exception {
+        int height = 1;
         // Quick check that we can actually receive coins.
         Transaction tx1 = createFakeTx(unitTestParams,
                                        COIN,
                                        wallet.currentReceiveKey().toAddress(unitTestParams));
-        Block b1 = createFakeBlock(blockStore, tx1).block;
+        Block b1 = createFakeBlock(blockStore, height, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
     }
@@ -161,8 +162,8 @@ public class BlockChainTest {
         // artificially shortened period.
         Block prev = unitTestParams.getGenesisBlock();
         Utils.setMockClock(System.currentTimeMillis()/1000);
-        for (int i = 0; i < unitTestParams.getInterval() - 1; i++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds());
+        for (int height = 0; height < unitTestParams.getInterval() - 1; height++) {
+            Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), height);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
@@ -170,13 +171,13 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds()));
+            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), unitTestParams.getInterval()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds());
+        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), unitTestParams.getInterval() + 1);
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));
@@ -234,23 +235,23 @@ public class BlockChainTest {
 
         // Build a historical chain of version 3 blocks
         long timeSeconds = 1231006505;
-        int blockCount = 0;
+        int height = 0;
         FakeTxBuilder.BlockPair chainHead = null;
 
         // Put in just enough v2 blocks to be a minority
-        for (blockCount = 0; blockCount < (unitTestParams.getMajorityWindow() - unitTestParams.getMajorityRejectBlockOutdated()); blockCount++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds);
+        for (height = 0; height < (unitTestParams.getMajorityWindow() - unitTestParams.getMajorityRejectBlockOutdated()); height++) {
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
         }
         // Fill the rest of the window with v3 blocks
-        for (; blockCount < unitTestParams.getMajorityWindow(); blockCount++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP66, timeSeconds);
+        for (; height < unitTestParams.getMajorityWindow(); height++) {
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP66, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
         }
 
-        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds);
+        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds, height);
         // Trying to add a new v2 block should result in rejection
         thrown.expect(VerificationException.BlockVersionOutOfDate.class);
         try {
@@ -306,12 +307,13 @@ public class BlockChainTest {
         // Create a second wallet to receive the coinbase spend.
         Wallet wallet2 = new Wallet(unitTestParams);
         ECKey receiveKey = wallet2.freshReceiveKey();
+        int height = 1;
         chain.addWallet(wallet2);
 
         Address addressToSendTo = receiveKey.toAddress(unitTestParams);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(wallet.currentReceiveKey().getPubKey());
+        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
         chain.add(b1);
 
         // Check a transaction has been received.
@@ -335,7 +337,7 @@ public class BlockChainTest {
             Transaction tx2 = createFakeTx(unitTestParams, COIN,
                 new ECKey().toAddress(unitTestParams));
 
-            Block b2 = createFakeBlock(blockStore, tx2).block;
+            Block b2 = createFakeBlock(blockStore, height++, tx2).block;
             chain.add(b2);
 
             // Wallet still does not have the coinbase transaction available for spend.
@@ -355,7 +357,7 @@ public class BlockChainTest {
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
         Transaction tx3 = createFakeTx(unitTestParams, COIN, new ECKey().toAddress(unitTestParams));
-        Block b3 = createFakeBlock(blockStore, tx3).block;
+        Block b3 = createFakeBlock(blockStore, height++, tx3).block;
         chain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
@@ -374,7 +376,7 @@ public class BlockChainTest {
         assertEquals(wallet.getBalance(BalanceType.AVAILABLE), ZERO);
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
-        Block b4 = createFakeBlock(blockStore, coinbaseSend2).block;
+        Block b4 = createFakeBlock(blockStore, height++, coinbaseSend2).block;
         chain.add(b4);
         assertEquals(wallet.getBalance(BalanceType.AVAILABLE), COIN);
 

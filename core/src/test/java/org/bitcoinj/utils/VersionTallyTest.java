@@ -50,10 +50,10 @@ public class VersionTallyTest {
     public void testNullWhileEmpty() {
         VersionTally instance = new VersionTally(unitTestParams);
         for (int i = 0; i < unitTestParams.getMajorityWindow(); i++) {
-            assertNull(instance.getCount(1));
+            assertNull(instance.getCountAtOrAbove(1));
             instance.add(1);
         }
-        assertEquals(unitTestParams.getMajorityWindow(), instance.getCount(1).intValue());
+        assertEquals(unitTestParams.getMajorityWindow(), instance.getCountAtOrAbove(1).intValue());
     }
 
     /**
@@ -74,16 +74,24 @@ public class VersionTallyTest {
 
         // Fill the tally with 1s
         for (int i = 0; i < unitTestParams.getMajorityWindow(); i++) {
-            assertNull(instance.getCount(1));
+            assertNull(instance.getCountAtOrAbove(1));
             instance.add(1);
         }
-        assertEquals(unitTestParams.getMajorityWindow(), instance.getCount(1).intValue());
+        assertEquals(unitTestParams.getMajorityWindow(), instance.getCountAtOrAbove(1).intValue());
 
+        // Check the count updates as we replace with 2s
         for (int i = 0; i < unitTestParams.getMajorityWindow(); i++) {
-            assertEquals(unitTestParams.getMajorityWindow() - i, instance.getCount(1).intValue());
-            assertEquals(i, instance.getCount(2).intValue());
+            assertEquals(i, instance.getCountAtOrAbove(2).intValue());
             instance.add(2);
         }
+ 
+        // Inject a rogue 1
+        instance.add(1);
+        assertEquals(unitTestParams.getMajorityWindow() - 1, instance.getCountAtOrAbove(2).intValue());
+
+        // Check we accept high values as well
+        instance.add(10);
+        assertEquals(unitTestParams.getMajorityWindow() - 1, instance.getCountAtOrAbove(2).intValue());
     }
 
     @Test
@@ -94,14 +102,14 @@ public class VersionTallyTest {
         // Build a historical chain of version 2 blocks
         long timeSeconds = 1231006505;
         StoredBlock chainHead = null;
-        for (int blockCount = 0; blockCount < unitTestParams.getMajorityWindow(); blockCount++) {
-            chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, timeSeconds).storedBlock;
+        for (int height = 0; height < unitTestParams.getMajorityWindow(); height++) {
+            chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, timeSeconds, height).storedBlock;
             assertEquals(2, chainHead.getHeader().getVersion());
             timeSeconds += 60;
         }
 
         VersionTally instance = new VersionTally(unitTestParams);
         instance.initialize(blockStore, chainHead);
-        assertEquals(unitTestParams.getMajorityWindow(), instance.getCount(2).intValue());
+        assertEquals(unitTestParams.getMajorityWindow(), instance.getCountAtOrAbove(2).intValue());
     }
 }

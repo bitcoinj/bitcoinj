@@ -30,6 +30,8 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
@@ -343,5 +345,18 @@ public class ScriptBuilder {
     public static Script createOpReturnScript(byte[] data) {
         checkArgument(data.length <= 40);
         return new ScriptBuilder().op(OP_RETURN).data(data).build();
+    }
+
+    /**
+     * Create script data bytes to represent the given block height.
+     */
+    public static byte[] createHeightScriptData(final int height) {
+        // TODO: Replace with something generic to any integer value
+        final byte[] int32Buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
+        if (int32Buffer[3] == 0) {
+            return Arrays.copyOf(int32Buffer, 3);
+        } else {
+            return int32Buffer;
+        }
     }
 }

@@ -35,6 +35,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
 
 public class ParseByteCacheTest {
+    private static final int BLOCK_HEIGHT_GENESIS = 0;
 
     private final byte[] txMessage = HEX.withSeparator(" ", 2).decode(
             "f9 be b4 d9 74 78 00 00  00 00 00 00 00 00 00 00" +
@@ -101,7 +102,7 @@ public class ParseByteCacheTest {
         Transaction tx2 = createFakeTx(unitTestParams, COIN,
                 new ECKey().toAddress(unitTestParams));
 
-        Block b1 = createFakeBlock(blockStore, tx1, tx2).block;
+        Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
         MessageSerializer bs = unitTestParams.getDefaultSerializer();
         

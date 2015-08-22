@@ -436,14 +436,25 @@ public abstract class AbstractBlockChain {
                 return true;
             }
 
+            final StoredBlock storedPrev;
+            final int height;
+            final EnumSet<VerificationFlags> flags;
+
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
             // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
             // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
             // article here for more details: http://code.google.com/p/bitcoinj/wiki/SecurityModel
             try {
                 block.verifyHeader();
+                storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
+                if (storedPrev != null) {
+                    height = storedPrev.getHeight() + 1;
+                } else {
+                    height = Block.BLOCK_HEIGHT_UNKNOWN;
+                }
+                flags = params.getValidationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
-                    block.verifyTransactions();
+                    block.verifyTransactions(height, flags);
             } catch (VerificationException e) {
                 log.error("Failed to verify block: ", e);
                 log.error(block.getHashAsString());
@@ -451,7 +462,6 @@ public abstract class AbstractBlockChain {
             }
 
             // Try linking it to a place in the currently known blocks.
-            StoredBlock storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
 
             if (storedPrev == null) {
                 // We can't find the previous block. Probably we are still in the process of downloading the chain and a
@@ -526,7 +536,7 @@ public abstract class AbstractBlockChain {
             // net, less on test) in order to be applied. It is also limited to
             // stopping addition of new v2 blocks to the tip of the chain.
             if (block.getVersion() == Block.BLOCK_VERSION_BIP34) {
-                final Integer count = versionTally.getCount(Block.BLOCK_VERSION_BIP66);
+                final Integer count = versionTally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP66);
                 if (count != null
                     && count >= params.getMajorityRejectBlockOutdated()) {
                     throw new VerificationException.BlockVersionOutOfDate(block.getVersion());

@@ -37,13 +37,20 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.testing.FakeTxBuilder;
 import static org.junit.Assert.*;
+import org.junit.rules.ExpectedException;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
 public abstract class AbstractFullPrunedBlockChainTest {
+    @org.junit.Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
     protected NetworkParameters params;
@@ -125,13 +132,14 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
 
         ECKey outKey = new ECKey();
+        int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
+        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
 
@@ -164,14 +172,15 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         
         ECKey outKey = new ECKey();
-        
+        int height = 1;
+
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
+        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, rollingBlock.getTransactions().get(0).getHash());
         byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
         
@@ -237,15 +246,16 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
+        int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
+        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
         rollingBlock = rollingBlock.createNextBlock(null);
@@ -287,15 +297,16 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
         ECKey outKey = new ECKey();
+        int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(outKey.getPubKey());
+        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            rollingBlock = rollingBlock.createNextBlockWithCoinbase(outKey.getPubKey());
+            rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
         rollingBlock = rollingBlock.createNextBlock(null);
@@ -339,5 +350,59 @@ public abstract class AbstractFullPrunedBlockChainTest {
         try {
             store.close();
         } catch (Exception e) {}
+    }
+
+    /**
+     * Test that if the block height is missing from coinbase of a version 2
+     * block, it's rejected.
+     */
+    @Test
+    public void missingHeightFromCoinbase() throws Exception {
+        final int UNDOABLE_BLOCKS_STORED = params.getMajorityEnforceBlockUpgrade() + 1;
+        store = createStore(params, UNDOABLE_BLOCKS_STORED);
+        try {
+            chain = new FullPrunedBlockChain(params, store);
+            ECKey outKey = new ECKey();
+            int height = 1;
+            Block chainHead = params.getGenesisBlock();
+
+            // Build some blocks on genesis block to create a spendable output.
+
+            // Put in just enough v1 blocks to stop the v2 blocks from forming a majority
+            for (height = 1; height <= (params.getMajorityWindow() - params.getMajorityEnforceBlockUpgrade()); height++) {
+                chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
+                    outKey.getPubKey(), height);
+                chain.add(chainHead);
+            }
+
+            // Fill the rest of the window in with v2 blocks
+            for (; height < params.getMajorityWindow(); height++) {
+                chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
+                    outKey.getPubKey(), height);
+                chain.add(chainHead);
+            }
+            // Throw a broken v2 block in before we have a supermajority to enable
+            // enforcement, which should validate as-is
+            chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
+                outKey.getPubKey(), height * 2);
+            chain.add(chainHead);
+            height++;
+
+            // Trying to add a broken v2 block should now result in rejection as
+            // we have a v2 supermajority
+            thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
+            chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
+                outKey.getPubKey(), height * 2);
+            chain.add(chainHead);
+        }  catch(final VerificationException ex) {
+            throw (Exception) ex.getCause();
+        } finally {
+            try {
+                store.close();
+            } catch(Exception e) {
+                // Catch and drop any exception so a break mid-test doesn't result
+                // in a new exception being thrown and the original lost
+            }
+        }
     }
 }

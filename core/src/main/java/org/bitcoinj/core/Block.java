@@ -30,13 +30,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import static org.bitcoinj.core.Sha256Hash.hashTwice;
+import org.bitcoinj.script.ScriptChunk;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -71,6 +76,11 @@ public class Block extends Message {
 
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
+
+    /** Value to use if the block height is unknown */
+    public static final int BLOCK_HEIGHT_UNKNOWN = -1;
+    /** Height of the first block */
+    public static final int BLOCK_HEIGHT_GENESIS = 0;
 
     public static final long BLOCK_VERSION_GENESIS = 1;
     /** Block version introduced in BIP 34: Height in coinbase */
@@ -610,10 +620,21 @@ public class Block extends Message {
         return tree;
     }
 
-    private void checkTransactions() throws VerificationException {
+    /**
+     * Verify the transactions on a block.
+     *
+     * @param height block height, if known, or -1 otherwise. If provided, used
+     * to validate the coinbase input script of v2 and above blocks.
+     * @throws VerificationException if there was an error verifying the block.
+     */
+    private void checkTransactions(final int height, final EnumSet<VerificationFlags> flags)
+            throws VerificationException {
         // The first transaction in a block must always be a coinbase transaction.
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
+        if (flags.contains(VerificationFlags.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
+            transactions.get(0).checkCoinBaseHeight(height);
+        }
         // The rest must not be.
         for (int i = 1; i < transactions.size(); i++) {
             if (transactions.get(i).isCoinBase())
@@ -642,9 +663,13 @@ public class Block extends Message {
     /**
      * Checks the block contents
      *
-     * @throws VerificationException
+     * @param height block height, if known, or -1 otherwise. If valid, used
+     * to validate the coinbase input script of v2 and above blocks.
+     * @param flags flags to indicate which tests should be applied (i.e.
+     * whether to test for height in the coinbase transaction).
+     * @throws VerificationException if there was an error verifying the block.
      */
-    public void verifyTransactions() throws VerificationException {
+    public void verifyTransactions(final int height, final EnumSet<VerificationFlags> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
@@ -653,7 +678,7 @@ public class Block extends Message {
             throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
-        checkTransactions();
+        checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
         for (Transaction transaction : transactions)
@@ -662,10 +687,15 @@ public class Block extends Message {
 
     /**
      * Verifies both the header and that the transactions hash to the merkle root.
+     *
+     * @param height block height, if known, or -1 otherwise.
+     * @param flags flags to indicate which tests should be applied (i.e.
+     * whether to test for height in the coinbase transaction).
+     * @throws VerificationException if there was an error verifying the block.
      */
-    public void verify() throws VerificationException {
+    public void verify(final int height, final EnumSet<VerificationFlags> flags) throws VerificationException {
         verifyHeader();
-        verifyTransactions();
+        verifyTransactions(height, flags);
     }
 
     @Override
@@ -808,19 +838,30 @@ public class Block extends Message {
     // Used to make transactions unique.
     private static int txCounter;
 
-    /** Adds a coinbase transaction to the block. This exists for unit tests. */
+    /** Adds a coinbase transaction to the block. This exists for unit tests.
+     * 
+     * @param height block height, if known, or -1 otherwise.
+     */
     @VisibleForTesting
-    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value) {
+    void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<Transaction>();
         Transaction coinbase = new Transaction(params);
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+
+        if (height >= Block.BLOCK_HEIGHT_GENESIS) {
+            final byte[] blockHeightBytes = ScriptBuilder.createHeightScriptData(height);
+            inputBuilder.data(blockHeightBytes);
+        }
+        inputBuilder.data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)});
+
         // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
         // transactions are distinguished by every TX output going to a different key.
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(params, coinbase,
-                new ScriptBuilder().data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)}).build().getProgram()));
+                inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
@@ -838,19 +879,24 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long version, long time) {
-        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS);
+    public Block createNextBlock(Address to, long version, long time, Integer blockHeight) {
+        return createNextBlock(to, version, (TransactionOutPoint) null, time,
+            pubkeyForTesting, FIFTY_COINS, blockHeight);
     }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
+     * 
+     * @param height block height, if known, or -1 otherwise.
      */
-    Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut,
-                          long time, byte[] pubKey, Coin coinbaseValue) {
+    Block createNextBlock(@Nullable final Address to, final long version,
+                          @Nullable TransactionOutPoint prevOut, final long time,
+                          final byte[] pubKey, final Coin coinbaseValue,
+                          final int height) {
         Block b = new Block(params, version);
         b.setDifficultyTarget(difficultyTarget);
-        b.addCoinbaseTransaction(pubKey, coinbaseValue);
+        b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
@@ -885,17 +931,20 @@ public class Block extends Message {
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
+        if (b.getVersion() != version) {
+            throw new RuntimeException();
+        }
         return b;
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, 1, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, 1, null, getTimeSeconds() + 5, pubkeyForTesting, value);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
@@ -904,8 +953,9 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlockWithCoinbase(byte[] pubKey, Coin coinbaseValue) {
-        return createNextBlock(null, 1, null, Utils.currentTimeSeconds(), pubKey, coinbaseValue);
+    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
+        return createNextBlock(null, version, (TransactionOutPoint) null,
+                               Utils.currentTimeSeconds(), pubKey, coinbaseValue, height);
     }
 
     /**
@@ -913,8 +963,9 @@ public class Block extends Message {
      * This method is intended for test use only.
      */
     @VisibleForTesting
-    Block createNextBlockWithCoinbase(byte[] pubKey) {
-        return createNextBlock(null, 1, null, Utils.currentTimeSeconds(), pubKey, FIFTY_COINS);
+    Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
+        return createNextBlock(null, version, (TransactionOutPoint) null,
+                               Utils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
     }
 
     @VisibleForTesting

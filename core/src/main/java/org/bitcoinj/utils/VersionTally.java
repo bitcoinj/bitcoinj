@@ -68,19 +68,19 @@ public class VersionTally {
     }
 
     /**
-     * Get the count for a block version within the window.
+     * Get the count of blocks at or above the given version, within the window.
      *
      * @param version the block version to query.
      * @return the count for the block version, or null if the window is not yet
      * full.
      */
-    public Integer getCount(final long version) {
+    public Integer getCountAtOrAbove(final long version) {
         if (versionsStored < versionWindow.length) {
             return null;
         }
         int count = 0;
         for (int versionIdx = 0; versionIdx < versionWindow.length; versionIdx++) {
-            if (versionWindow[versionIdx] == version) {
+            if (versionWindow[versionIdx] >= version) {
                 count++;
             }
         }

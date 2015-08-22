@@ -44,6 +44,8 @@ import static org.junit.Assert.*;
 
 @RunWith(value = Parameterized.class)
 public class PeerGroupTest extends TestWithPeerGroup {
+    private static final int BLOCK_HEIGHT_GENESIS = 0;
+
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
     private AbstractPeerEventListener listener;
@@ -274,7 +276,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.
-        Block b1 = FakeTxBuilder.createFakeBlock(blockStore).block;
+        Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1);
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
@@ -314,7 +316,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p1 = connectPeer(1);
 
         // Set up a little block chain.
-        Block b1 = FakeTxBuilder.createFakeBlock(blockStore).block;
+        Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
         Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1);
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
 
