@@ -167,12 +167,13 @@ public class FakeTxBuilder {
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds,
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version,
+                                            long timeSeconds, int height,
                                             Transaction... transactions) {
         try {
             Block chainHead = blockStore.getChainHead().getHeader();
             Address to = new ECKey().toAddress(chainHead.getParams());
-            Block b = chainHead.createNextBlock(to, version, timeSeconds);
+            Block b = chainHead.createNextBlock(to, version, timeSeconds, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -193,8 +194,9 @@ public class FakeTxBuilder {
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), transactions);
+    public static BlockPair createFakeBlock(BlockStore blockStore, Integer height,
+                                            Transaction... transactions) {
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height, transactions);
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {

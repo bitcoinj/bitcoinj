@@ -18,6 +18,8 @@
 package org.bitcoinj.params;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
@@ -33,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.bitcoinj.core.BitcoinSerializer;
+import org.bitcoinj.core.VerificationFlags;
+import org.bitcoinj.utils.VersionTally;
 
 /**
  * Parameters for Bitcoin-like networks.

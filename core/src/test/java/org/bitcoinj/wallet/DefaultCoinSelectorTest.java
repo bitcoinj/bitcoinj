@@ -92,7 +92,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         // and t3=0.01.
         Transaction t1 = checkNotNull(sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN));
         // Padding block.
-        wallet.notifyNewBestBlock(FakeTxBuilder.createFakeBlock(blockStore).storedBlock);
+        wallet.notifyNewBestBlock(FakeTxBuilder.createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).storedBlock);
         final Coin TWO_COINS = COIN.multiply(2);
         Transaction t2 = checkNotNull(sendMoneyToWallet(TWO_COINS, AbstractBlockChain.NewBlockType.BEST_CHAIN));
         Transaction t3 = checkNotNull(sendMoneyToWallet(CENT, AbstractBlockChain.NewBlockType.BEST_CHAIN));

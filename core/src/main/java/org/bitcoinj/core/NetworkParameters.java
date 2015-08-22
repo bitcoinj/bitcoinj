@@ -35,6 +35,7 @@ import java.math.*;
 import java.util.*;
 
 import static org.bitcoinj.core.Coin.*;
+import org.bitcoinj.utils.VersionTally;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -475,5 +476,33 @@ public abstract class NetworkParameters {
      */
     public int getMajorityWindow() {
         return majorityWindow;
+    }
+
+    /**
+     * The flags indicating which block validation tests should be applied to
+     * the given block. Enables support for alternative blockchains which enable
+     * tests based on different criteria.
+     * 
+     * @param block block to determine flags for.
+     * @param height height of the block, if known, null otherwise. Returned
+     * tests should be a safe subset if block height is unknown.
+     */
+    public EnumSet<VerificationFlags> getValidationFlags(final Block block,
+            final VersionTally tally, final Integer height) {
+        final EnumSet<VerificationFlags> flags = EnumSet.noneOf(VerificationFlags.class);
+
+        if (block.getVersion() >= Block.BLOCK_VERSION_BIP34) {
+            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
+            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
+                flags.add(VerificationFlags.HEIGHT_IN_COINBASE);
+            }
+        }
+        if (block.getVersion() >= Block.BLOCK_VERSION_BIP66) {
+            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP66);
+            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
+                flags.add(VerificationFlags.DER_SIGNATURE_FORMAT);
+            }
+        }
+        return flags;
     }
 }

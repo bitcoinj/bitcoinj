@@ -36,6 +36,9 @@ import java.util.*;
 
 import static org.bitcoinj.core.Utils.*;
 import static com.google.common.base.Preconditions.checkState;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import org.bitcoinj.script.ScriptChunk;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -1161,6 +1164,50 @@ public class Transaction extends ChildMessage {
         for (TransactionOutput output : outputs)
             sigOps += Script.getSigOpCount(output.getScriptBytes());
         return sigOps;
+    }
+
+    /**
+     * Generate script data bytes to represent the given block height.
+     */
+    public static byte[] generateHeightScriptData(final int height) {
+        final byte[] int32Buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
+
+        // Repack the buffer down to three bytes if we can
+        if (int32Buffer[3] == 0) {
+            return Arrays.copyOf(int32Buffer, 3);
+        } else {
+            return int32Buffer;
+        }
+    }
+
+    /**
+     * Check block height is in coinbase input script, for use after BIP 34
+     * enforcement is enabled.
+     */
+    public void checkCoinbaseHeight(final int height)
+            throws VerificationException {
+        // Check block height is in coinbase input script
+        final TransactionInput in = this.getInputs().get(0);
+        final List<ScriptChunk> chunks;
+        
+        try {
+            final Script scriptSig = in.getScriptSig();
+            chunks = scriptSig.getChunks();
+        } catch(ScriptException e) {
+            throw new VerificationException("Coinbase input script signature is invalid.", e);
+        }
+        if (chunks.isEmpty()) {
+            throw new VerificationException("Coinbase input script signature is empty.");
+        }
+        final ScriptChunk chunk = chunks.get(0);
+        if (!chunk.isPushData()) {
+            throw new VerificationException("First element of coinbase input script signature is not pushdata.");
+        }
+        final byte[] data = chunk.data;
+        final byte[] expected = generateHeightScriptData(height);
+        if (!Arrays.equals(data, expected)) {
+            throw new VerificationException.CoinbaseHeightMismatch("Coinbase height mismatch.");
+        }
     }
 
     /**

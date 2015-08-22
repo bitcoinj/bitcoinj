@@ -566,7 +566,7 @@ public class ChainSplitTest {
 
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         final ECKey coinsTo2 = wallet.freshReceiveKey();
-        Block b2 = b1.createNextBlockWithCoinbase(coinsTo2.getPubKey());
+        Block b2 = b1.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinsTo2.getPubKey(), 2);
         Block b3 = b2.createNextBlock(someOtherGuy);
 
         log.debug("Adding block b1");

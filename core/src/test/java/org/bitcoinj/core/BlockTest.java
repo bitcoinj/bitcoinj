@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.EnumSet;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
@@ -57,7 +58,7 @@ public class BlockTest {
     @Test
     public void testBlockVerification() throws Exception {
         Block block = params.getDefaultSerializer().makeBlock(blockBytes);
-        block.verify();
+        block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
         assertEquals("00000000a6e5eb79dcec11897af55e90cd571a4335383a3ccfbc12ec81085935", block.getHashAsString());
     }
     
@@ -75,7 +76,7 @@ public class BlockTest {
         Block block = params.getDefaultSerializer().makeBlock(blockBytes);
         block.setNonce(12346);
         try {
-            block.verify();
+            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
             fail();
         } catch (VerificationException e) {
             // Expected.
@@ -84,18 +85,18 @@ public class BlockTest {
         // from containing artificially weak difficulties.
         block.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         // Now it should pass.
-        block.verify();
+        block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
         // Break the nonce again at the lower difficulty level so we can try solving for it.
         block.setNonce(1);
         try {
-            block.verify();
+            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
             fail();
         } catch (VerificationException e) {
             // Expected to fail as the nonce is no longer correct.
         }
         // Should find an acceptable nonce.
         block.solve();
-        block.verify();
+        block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
         assertEquals(block.getNonce(), 2);
     }
 
@@ -108,7 +109,7 @@ public class BlockTest {
         block.transactions.set(0, tx2);
         block.transactions.set(1, tx1);
         try {
-            block.verify();
+            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(VerificationFlags.class));
             fail();
         } catch (VerificationException e) {
             // We should get here.
@@ -136,7 +137,7 @@ public class BlockTest {
     @Test
     public void testUpdateLength() {
         NetworkParameters params = UnitTestParams.get();
-        Block block = params.getGenesisBlock().createNextBlockWithCoinbase(new ECKey().getPubKey());
+        Block block = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS);
         assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
         Transaction tx = new Transaction(params);

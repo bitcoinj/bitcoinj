@@ -226,9 +226,9 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Now confirm the settle TX and see if the channel deletes itself from the wallet.
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
-        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).storedBlock);
         assertEquals(1, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
-        wallet.notifyNewBestBlock(createFakeBlock(blockStore).storedBlock);
+        wallet.notifyNewBestBlock(createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS + 1).storedBlock);
         assertEquals(0, StoredPaymentChannelClientStates.getFromWallet(wallet).mapChannels.size());
     }
 
