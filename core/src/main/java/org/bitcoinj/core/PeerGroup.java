@@ -810,6 +810,22 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
+    /**
+     * Convenience for connecting only to peers that can serve specific services. It will configure suitable peer
+     * discoveries.
+     * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
+     */
+    public void setRequiredServices(long requiredServices) {
+        lock.lock();
+        try {
+            this.requiredServices = requiredServices;
+            peerDiscoverers.clear();
+            peerDiscoverers.add(MultiplexingDiscovery.forServices(params, requiredServices));
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /** Convenience method for addAddress(new PeerAddress(address, params.port)); */
     public void addAddress(InetAddress address) {
         addAddress(new PeerAddress(address, params.getPort()));
