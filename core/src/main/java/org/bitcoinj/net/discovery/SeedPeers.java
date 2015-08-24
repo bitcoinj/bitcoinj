@@ -83,7 +83,9 @@ public class SeedPeers implements PeerDiscovery {
      * Returns an array containing all the Bitcoin nodes within the list.
      */
     @Override
-    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+        if (services != 0)
+            throw new PeerDiscoveryException("Pre-determined peers cannot be filtered by services: " + services);
         try {
             return allPeers();
         } catch (UnknownHostException e) {

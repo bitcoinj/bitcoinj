@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 John Sample
  * Copyright 2014 Andreas Schildbach
  *
@@ -84,7 +84,9 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         }
 
         @Override
-        public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+        public InetSocketAddress[] getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+            if (services != 0)
+                throw new PeerDiscoveryException("DNS seeds cannot filter by services: " + services);
             try {
                 InetAddress[] response = InetAddress.getAllByName(hostname);
                 InetSocketAddress[] result = new InetSocketAddress[response.length];

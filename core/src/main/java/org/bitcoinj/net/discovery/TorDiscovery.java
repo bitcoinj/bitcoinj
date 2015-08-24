@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright 2014 Miron Cuperman
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +97,11 @@ public class TorDiscovery implements PeerDiscovery {
     }
 
     @Override
-    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         if (hostNames == null)
             throw new PeerDiscoveryException("Unable to find any peers via DNS");
+        if (services != 0)
+            throw new PeerDiscoveryException("DNS seeds cannot filter by services: " + services);
 
         Set<Router> routers = Sets.newHashSet();
         ArrayList<ExitTarget> dummyTargets = Lists.newArrayList();

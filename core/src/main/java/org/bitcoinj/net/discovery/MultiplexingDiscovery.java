@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright 2014 Mike Hearn
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +53,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     }
 
     @Override
-    public InetSocketAddress[] getPeers(final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(final long services, final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
         vThreadPool = createExecutor();
         try {
             List<Callable<InetSocketAddress[]>> tasks = Lists.newArrayList();
@@ -60,7 +61,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
                 tasks.add(new Callable<InetSocketAddress[]>() {
                     @Override
                     public InetSocketAddress[] call() throws Exception {
-                        return seed.getPeers(timeoutValue,  timeoutUnit);
+                        return seed.getPeers(services, timeoutValue,  timeoutUnit);
                     }
                 });
             }

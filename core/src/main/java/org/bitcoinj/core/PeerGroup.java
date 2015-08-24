@@ -77,6 +77,8 @@ public class PeerGroup implements TransactionBroadcaster {
     // All members in this class should be marked with final, volatile, @GuardedBy or a mix as appropriate to define
     // their thread safety semantics. Volatile requires a Hungarian-style v prefix.
 
+    // By default we don't require any services because any peer will do.
+    private long requiredServices = 0;
     /**
      * The default number of connections to the p2p network the library will try to build. This is set to 12 empirically.
      * It used to be 4, but because we divide the connection pool in two for broadcasting transactions, that meant we
@@ -837,7 +839,7 @@ public class PeerGroup implements TransactionBroadcaster {
         final List<PeerAddress> addressList = Lists.newLinkedList();
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             InetSocketAddress[] addresses;
-            addresses = peerDiscovery.getPeers(5, TimeUnit.SECONDS);
+            addresses = peerDiscovery.getPeers(requiredServices, 5, TimeUnit.SECONDS);
             for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(address));
             if (addressList.size() >= maxPeersToDiscoverCount) break;
         }
