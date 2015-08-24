@@ -16,6 +16,8 @@ import wallettemplate.utils.WTUtils;
 import static com.google.common.base.Preconditions.checkState;
 import static wallettemplate.utils.GuiUtils.*;
 
+import javax.annotation.Nullable;
+
 public class SendMoneyController {
     public Button sendBtn;
     public Button cancelBtn;
@@ -57,7 +59,7 @@ public class SendMoneyController {
             sendResult = Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
-                public void onSuccess(Transaction result) {
+                public void onSuccess(@Nullable Transaction result) {
                     checkGuiThread();
                     overlayUI.done();
                 }
