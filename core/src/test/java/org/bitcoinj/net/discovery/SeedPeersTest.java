@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright 2011 Micheal Swiggs
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +45,7 @@ public class SeedPeersTest {
     @Test
     public void getPeers_length() throws Exception{
         SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
-        InetSocketAddress[] addresses = seedPeers.getPeers(0, TimeUnit.SECONDS);
+        InetSocketAddress[] addresses = seedPeers.getPeers(0, 0, TimeUnit.SECONDS);
         assertThat(addresses.length, equalTo(MainNetParams.get().getAddrSeeds().length));
     }
 }
