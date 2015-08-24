@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright 2014 Mike Hearn
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.net.discovery;
 
 import com.google.common.annotations.*;
@@ -78,10 +80,13 @@ public class HttpDiscovery implements PeerDiscovery {
     }
 
     @Override
-    public InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public InetSocketAddress[] getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
-            log.info("Requesting seeds from {}", details.uri);
-            Response response = client.newCall(new Request.Builder().url(details.uri.toURL()).build()).execute();
+            HttpUrl.Builder url = HttpUrl.get(details.uri).newBuilder();
+            if (services != 0)
+                url.addQueryParameter("srvmask", Long.toString(services));
+            log.info("Requesting seeds from {}", url);
+            Response response = client.newCall(new Request.Builder().url(url.build()).build()).execute();
             if (!response.isSuccessful())
                 throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
             InputStream stream = response.body().byteStream();

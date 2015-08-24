@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright 2011 John Sample.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ public interface PeerDiscovery {
     // TODO: Flesh out this interface a lot more.
 
     /** Returns an array of addresses. This method may block. */
-    InetSocketAddress[] getPeers(long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException;
+    InetSocketAddress[] getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException;
 
     /** Stops any discovery in progress when we want to shut down quickly. */
     void shutdown();
