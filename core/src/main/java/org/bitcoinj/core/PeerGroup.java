@@ -337,9 +337,12 @@ public class PeerGroup implements TransactionBroadcaster {
             HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
             if (httpSeeds.length > 0) {
                 // Use HTTP discovery when Tor is active and there is a Cartographer seed, for a much needed speed boost.
-                OkHttpClient client = new OkHttpClient();
-                client.setSocketFactory(torClient.getSocketFactory());
-                result.addPeerDiscovery(new HttpDiscovery(params, httpSeeds[0], client));
+                OkHttpClient httpClient = new OkHttpClient();
+                httpClient.setSocketFactory(torClient.getSocketFactory());
+                List<PeerDiscovery> discoveries = Lists.newArrayList();
+                for (HttpDiscovery.Details httpSeed : httpSeeds)
+                    discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
+                result.addPeerDiscovery(new MultiplexingDiscovery(params, discoveries));
             } else {
                 result.addPeerDiscovery(new TorDiscovery(params, torClient));
             }
