@@ -856,7 +856,7 @@ public class Peer extends PeerSocketHandler {
         // Was this block requested by getBlock()?
         if (maybeHandleRequestedData(m)) return;
         if (blockChain == null) {
-            log.warn("Received block but was not configured with an AbstractBlockChain");
+            log.debug("Received block but was not configured with an AbstractBlockChain");
             return;
         }
         // Did we lose download peer status after requesting block data?
@@ -919,7 +919,7 @@ public class Peer extends PeerSocketHandler {
             return;
         }
         if (blockChain == null) {
-            log.warn("Received filtered block but was not configured with an AbstractBlockChain");
+            log.debug("Received filtered block but was not configured with an AbstractBlockChain");
             return;
         }
         // Note that we currently do nothing about peers which maliciously do not include transactions which
