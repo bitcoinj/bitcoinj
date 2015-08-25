@@ -437,8 +437,8 @@ public abstract class AbstractBlockChain {
             }
 
             final StoredBlock storedPrev;
-            final Integer height;
-            final Set<VerificationFlags> flags;
+            final int height;
+            final EnumSet<VerificationFlags> flags;
 
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
             // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
@@ -447,12 +447,12 @@ public abstract class AbstractBlockChain {
             try {
                 block.verifyHeader();
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
-                if (null != storedPrev) {
+                if (storedPrev != null) {
                     height = storedPrev.getHeight() + 1;
                 } else {
-                    height = null;
+                    height = Block.BLOCK_HEIGHT_UNKNOWN;
                 }
-                flags = params.getValidationFlags(block, this.versionTally, height);
+                flags = params.getValidationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
                     block.verifyTransactions(height, flags);
             } catch (VerificationException e) {

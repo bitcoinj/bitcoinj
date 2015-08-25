@@ -1167,25 +1167,14 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Generate script data bytes to represent the given block height.
-     */
-    public static byte[] generateHeightScriptData(final int height) {
-        final byte[] int32Buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
-
-        // Repack the buffer down to three bytes if we can
-        if (int32Buffer[3] == 0) {
-            return Arrays.copyOf(int32Buffer, 3);
-        } else {
-            return int32Buffer;
-        }
-    }
-
-    /**
      * Check block height is in coinbase input script, for use after BIP 34
      * enforcement is enabled.
      */
-    public void checkCoinbaseHeight(final int height)
+    public void checkCoinBaseHeight(final int height)
             throws VerificationException {
+        assert height >= Block.BLOCK_HEIGHT_GENESIS;
+        assert isCoinBase();
+
         // Check block height is in coinbase input script
         final TransactionInput in = this.getInputs().get(0);
         final List<ScriptChunk> chunks;
@@ -1204,7 +1193,7 @@ public class Transaction extends ChildMessage {
             throw new VerificationException("First element of coinbase input script signature is not pushdata.");
         }
         final byte[] data = chunk.data;
-        final byte[] expected = generateHeightScriptData(height);
+        final byte[] expected = ScriptBuilder.createHeightScriptData(height);
         if (!Arrays.equals(data, expected)) {
             throw new VerificationException.CoinbaseHeightMismatch("Coinbase height mismatch.");
         }

@@ -395,7 +395,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
                 outKey.getPubKey(), height * 2);
             chain.add(chainHead);
         }  catch(final VerificationException ex) {
-                throw (Exception) ex.getCause();
+            throw (Exception) ex.getCause();
         } finally {
             try {
                 store.close();

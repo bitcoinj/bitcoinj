@@ -317,6 +317,6 @@ public class TransactionTest {
         final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
         final Transaction transaction = params.getDefaultSerializer().makeTransaction(transactionBytes);
-        transaction.checkCoinbaseHeight(height);
+        transaction.checkCoinBaseHeight(height);
     }
 }
