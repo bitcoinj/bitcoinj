@@ -18,7 +18,7 @@ package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.net.ProtobufParser;
+import org.bitcoinj.net.ProtobufConnection;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -31,10 +31,10 @@ import javax.annotation.Nullable;
  * {@link PaymentChannelServerListener}
 */
 public abstract class ServerConnectionEventHandler {
-    private ProtobufParser<Protos.TwoWayChannelMessage> connectionChannel;
+    private ProtobufConnection<Protos.TwoWayChannelMessage> connectionChannel;
     // Called by ServerListener before channelOpen to set connectionChannel when it is ready to received application messages
     // Also called with null to clear connectionChannel after channelClosed()
-    synchronized void setConnectionChannel(@Nullable ProtobufParser<Protos.TwoWayChannelMessage> connectionChannel) { this.connectionChannel = connectionChannel; }
+    synchronized void setConnectionChannel(@Nullable ProtobufConnection<Protos.TwoWayChannelMessage> connectionChannel) { this.connectionChannel = connectionChannel; }
 
     /**
      * <p>Closes the channel with the client (will generate a

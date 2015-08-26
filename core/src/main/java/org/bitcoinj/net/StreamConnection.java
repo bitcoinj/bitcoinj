@@ -21,8 +21,10 @@ import java.nio.ByteBuffer;
 /**
  * A generic handler which is used in {@link NioServer}, {@link NioClient} and {@link BlockingClient} to handle incoming
  * data streams.
+ *
+ * Used to be callet StreamParser.
  */
-public interface StreamParser {
+public interface StreamConnection {
     /** Called when the connection socket is closed */
     void connectionClosed();
 
@@ -31,7 +33,7 @@ public interface StreamParser {
 
     /**
      * <p>Called when new bytes are available from the remote end. This should only ever be called by the single
-     * writeTarget associated with any given StreamParser, multiple callers will likely confuse implementations.</p>
+     * writeTarget associated with any given StreamConnection, multiple callers will likely confuse implementations.</p>
      *
      * Implementers/callers must follow the following conventions exactly:
      * <ul>
@@ -51,7 +53,7 @@ public interface StreamParser {
     int receiveBytes(ByteBuffer buff) throws Exception;
 
     /**
-     * Called when this parser is attached to an upstream write target (ie a low-level connection handler). This
+     * Called when this connection is attached to an upstream write target (ie a low-level connection handler). This
      * writeTarget should be stored and used to close the connection or write data to the socket.
      */
     void setWriteTarget(MessageWriteTarget writeTarget);

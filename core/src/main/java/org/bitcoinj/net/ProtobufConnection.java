@@ -40,22 +40,24 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * <p>Messages are encoded with a 4-byte signed integer (big endian) prefix to indicate their length followed by the
  * serialized protobuf</p>
+ *
+ * <p>(Used to be called ProtobufParser)</p>
  */
-public class ProtobufParser<MessageType extends MessageLite> extends AbstractTimeoutHandler implements StreamParser {
-    private static final Logger log = LoggerFactory.getLogger(ProtobufParser.class);
+public class ProtobufConnection<MessageType extends MessageLite> extends AbstractTimeoutHandler implements StreamConnection {
+    private static final Logger log = LoggerFactory.getLogger(ProtobufConnection.class);
 
     /**
      * An interface which can be implemented to handle callbacks as new messages are generated and socket events occur.
      * @param <MessageType> The protobuf type which is used on this socket.
-     *                      This <b>MUST</b> match the MessageType used in the parent {@link ProtobufParser}
+     *                      This <b>MUST</b> match the MessageType used in the parent {@link ProtobufConnection}
      */
     public interface Listener<MessageType extends MessageLite> {
         /** Called when a new protobuf is received from the remote side. */
-        void messageReceived(ProtobufParser<MessageType> handler, MessageType msg);
+        void messageReceived(ProtobufConnection<MessageType> handler, MessageType msg);
         /** Called when the connection is opened and available for writing data to. */
-        void connectionOpen(ProtobufParser<MessageType> handler);
+        void connectionOpen(ProtobufConnection<MessageType> handler);
         /** Called when the connection is closed and no more data should be provided. */
-        void connectionClosed(ProtobufParser<MessageType> handler);
+        void connectionClosed(ProtobufConnection<MessageType> handler);
     }
 
     // The callback listener
@@ -73,7 +75,7 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     // attacking clients can be made to timeout/get blocked if they are sending crap to fill buffers.
     @GuardedBy("lock") private int messageBytesOffset = 0;
     @GuardedBy("lock") private byte[] messageBytes;
-    private final ReentrantLock lock = Threading.lock("ProtobufParser");
+    private final ReentrantLock lock = Threading.lock("ProtobufConnection");
 
     @VisibleForTesting final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<MessageWriteTarget>();
 
@@ -88,7 +90,7 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
      * @param timeoutMillis The timeout between messages before the connection is automatically closed. Only enabled
      *                      after the connection is established.
      */
-    public ProtobufParser(Listener<MessageType> handler, MessageType prototype, int maxMessageSize, int timeoutMillis) {
+    public ProtobufConnection(Listener<MessageType> handler, MessageType prototype, int maxMessageSize, int timeoutMillis) {
         this.handler = handler;
         this.prototype = prototype;
         this.maxMessageSize = Math.min(maxMessageSize, Integer.MAX_VALUE - 4);
@@ -108,7 +110,7 @@ public class ProtobufParser<MessageType extends MessageLite> extends AbstractTim
     }
 
     /**
-     * Closes this connection, eventually triggering a {@link ProtobufParser.Listener#connectionClosed()} event.
+     * Closes this connection, eventually triggering a {@link ProtobufConnection.Listener#connectionClosed()} event.
      */
     public void closeConnection() {
         this.writeTarget.get().closeConnection();

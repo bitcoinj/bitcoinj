@@ -26,7 +26,7 @@ import java.net.*;
 import java.nio.*;
 
 /**
- * Creates a simple connection to a server using a {@link StreamParser} to process data.
+ * Creates a simple connection to a server using a {@link StreamConnection} to process data.
  */
 public class NioClient implements MessageWriteTarget {
     private static final Logger log = LoggerFactory.getLogger(NioClient.class);
@@ -34,13 +34,13 @@ public class NioClient implements MessageWriteTarget {
     private final Handler handler;
     private final NioClientManager manager = new NioClientManager();
 
-    class Handler extends AbstractTimeoutHandler implements StreamParser {
-        private final StreamParser upstreamParser;
+    class Handler extends AbstractTimeoutHandler implements StreamConnection {
+        private final StreamConnection upstreamConnection;
         private MessageWriteTarget writeTarget;
         private boolean closeOnOpen = false;
         private boolean closeCalled = false;
-        Handler(StreamParser upstreamParser, int connectTimeoutMillis) {
-            this.upstreamParser = upstreamParser;
+        Handler(StreamConnection upstreamConnection, int connectTimeoutMillis) {
+            this.upstreamConnection = upstreamConnection;
             setSocketTimeout(connectTimeoutMillis);
             setTimeoutEnabled(true);
         }
@@ -56,19 +56,19 @@ public class NioClient implements MessageWriteTarget {
             manager.stopAsync();
             if (!closeCalled) {
                 closeCalled = true;
-                upstreamParser.connectionClosed();
+                upstreamConnection.connectionClosed();
             }
         }
 
         @Override
         public synchronized void connectionOpened() {
             if (!closeOnOpen)
-                upstreamParser.connectionOpened();
+                upstreamConnection.connectionOpened();
         }
 
         @Override
         public int receiveBytes(ByteBuffer buff) throws Exception {
-            return upstreamParser.receiveBytes(buff);
+            return upstreamConnection.receiveBytes(buff);
         }
 
         @Override
@@ -78,26 +78,26 @@ public class NioClient implements MessageWriteTarget {
             else {
                 setTimeoutEnabled(false);
                 this.writeTarget = writeTarget;
-                upstreamParser.setWriteTarget(writeTarget);
+                upstreamConnection.setWriteTarget(writeTarget);
             }
         }
 
         @Override
         public int getMaxMessageSize() {
-            return upstreamParser.getMaxMessageSize();
+            return upstreamConnection.getMaxMessageSize();
         }
     }
 
     /**
-     * <p>Creates a new client to the given server address using the given {@link StreamParser} to decode the data.
-     * The given parser <b>MUST</b> be unique to this object. This does not block while waiting for the connection to
-     * open, but will call either the {@link StreamParser#connectionOpened()} or
-     * {@link StreamParser#connectionClosed()} callback on the created network event processing thread.</p>
+     * <p>Creates a new client to the given server address using the given {@link StreamConnection} to decode the data.
+     * The given connection <b>MUST</b> be unique to this object. This does not block while waiting for the connection to
+     * open, but will call either the {@link StreamConnection#connectionOpened()} or
+     * {@link StreamConnection#connectionClosed()} callback on the created network event processing thread.</p>
      *
      * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
      *                             timeout.
      */
-    public NioClient(final SocketAddress serverAddress, final StreamParser parser,
+    public NioClient(final SocketAddress serverAddress, final StreamConnection parser,
                      final int connectTimeoutMillis) throws IOException {
         manager.startAsync();
         manager.awaitRunning();

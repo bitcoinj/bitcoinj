@@ -23,7 +23,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.net.NioClient;
-import org.bitcoinj.net.ProtobufParser;
+import org.bitcoinj.net.ProtobufConnection;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -43,7 +43,7 @@ public class PaymentChannelClientConnection {
     private final SettableFuture<PaymentChannelClientConnection> channelOpenFuture = SettableFuture.create();
 
     private final PaymentChannelClient channelClient;
-    private final ProtobufParser<Protos.TwoWayChannelMessage> wireParser;
+    private final ProtobufConnection<Protos.TwoWayChannelMessage> wireParser;
 
     /**
      * Attempts to open a new connection to and open a payment channel with the given host and port, blocking until the
@@ -128,9 +128,9 @@ public class PaymentChannelClientConnection {
         });
 
         // And glue back in the opposite direction - network to the channelClient.
-        wireParser = new ProtobufParser<Protos.TwoWayChannelMessage>(new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
+        wireParser = new ProtobufConnection<Protos.TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
             @Override
-            public void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
+            public void messageReceived(ProtobufConnection<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                 try {
                     channelClient.receiveMessage(msg);
                 } catch (InsufficientMoneyException e) {
@@ -140,12 +140,12 @@ public class PaymentChannelClientConnection {
             }
 
             @Override
-            public void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+            public void connectionOpen(ProtobufConnection<Protos.TwoWayChannelMessage> handler) {
                 channelClient.connectionOpen();
             }
 
             @Override
-            public void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+            public void connectionClosed(ProtobufConnection<Protos.TwoWayChannelMessage> handler) {
                 channelClient.connectionClosed();
                 channelOpenFuture.setException(new PaymentChannelCloseException("The TCP socket died",
                         PaymentChannelCloseException.CloseReason.CONNECTION_CLOSED));
@@ -238,7 +238,7 @@ public class PaymentChannelClientConnection {
         // we defined above will be called, which in turn will call wireParser.closeConnection(), which in turn will invoke
         // NioClient.closeConnection(), which will then close the socket triggering interruption of the network
         // thread it had created. That causes the background thread to die, which on its way out calls
-        // ProtobufParser.connectionClosed which invokes the connectionClosed method we defined above which in turn
+        // ProtobufConnection.connectionClosed which invokes the connectionClosed method we defined above which in turn
         // then configures the open-future correctly and closes the state object. Phew!
         try {
             channelClient.settle();

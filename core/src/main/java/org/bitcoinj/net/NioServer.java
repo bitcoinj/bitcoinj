@@ -28,13 +28,13 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.LoggerFactory;
 
 /**
- * Creates a simple server listener which listens for incoming client connections and uses a {@link StreamParser} to
+ * Creates a simple server listener which listens for incoming client connections and uses a {@link StreamConnection} to
  * process data.
  */
 public class NioServer extends AbstractExecutionThreadService {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(NioServer.class);
 
-    private final StreamParserFactory parserFactory;
+    private final StreamConnectionFactory connectionFactory;
 
     private final ServerSocketChannel sc;
     @VisibleForTesting final Selector selector;
@@ -42,14 +42,14 @@ public class NioServer extends AbstractExecutionThreadService {
     // Handle a SelectionKey which was selected
     private void handleKey(Selector selector, SelectionKey key) throws IOException {
         if (key.isValid() && key.isAcceptable()) {
-            // Accept a new connection, give it a parser as an attachment
+            // Accept a new connection, give it a stream connection as an attachment
             SocketChannel newChannel = sc.accept();
             newChannel.configureBlocking(false);
             SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
             try {
-                ConnectionHandler handler = new ConnectionHandler(parserFactory, newKey);
+                ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
                 newKey.attach(handler);
-                handler.parser.connectionOpened();
+                handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null
                 log.error("Error handling new connection", Throwables.getRootCause(e).getMessage());
@@ -62,12 +62,12 @@ public class NioServer extends AbstractExecutionThreadService {
 
     /**
      * Creates a new server which is capable of listening for incoming connections and processing client provided data
-     * using {@link StreamParser}s created by the given {@link StreamParserFactory}
+     * using {@link StreamConnection}s created by the given {@link StreamConnectionFactory}
      *
      * @throws IOException If there is an issue opening the server socket or binding fails for some reason
      */
-    public NioServer(final StreamParserFactory parserFactory, InetSocketAddress bindAddress) throws IOException {
-        this.parserFactory = parserFactory;
+    public NioServer(final StreamConnectionFactory connectionFactory, InetSocketAddress bindAddress) throws IOException {
+        this.connectionFactory = connectionFactory;
 
         sc = ServerSocketChannel.open();
         sc.configureBlocking(false);

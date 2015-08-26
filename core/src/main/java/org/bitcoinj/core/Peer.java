@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.*;
 import com.google.common.base.Objects;
+import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.core.listeners.PeerConnectionEventListener;
 import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.store.BlockStore;
@@ -162,9 +163,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
+     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
+     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -180,9 +181,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
+     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
+     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -199,9 +200,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
+     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
+     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -232,9 +233,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, org.bitcoinj.net.StreamParser)}
+     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, org.bitcoinj.net.StreamParser, int)}.</p>
+     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>

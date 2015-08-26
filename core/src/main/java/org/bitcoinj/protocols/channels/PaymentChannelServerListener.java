@@ -22,8 +22,8 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionBroadcaster;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.net.NioServer;
-import org.bitcoinj.net.ProtobufParser;
-import org.bitcoinj.net.StreamParserFactory;
+import org.bitcoinj.net.ProtobufConnection;
+import org.bitcoinj.net.StreamConnectionFactory;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -90,14 +90,14 @@ public class PaymentChannelServerListener {
                 }
             });
 
-            protobufHandlerListener = new ProtobufParser.Listener<Protos.TwoWayChannelMessage>() {
+            protobufHandlerListener = new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                 @Override
-                public synchronized void messageReceived(ProtobufParser<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
+                public synchronized void messageReceived(ProtobufConnection<Protos.TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                     paymentChannelManager.receiveMessage(msg);
                 }
 
                 @Override
-                public synchronized void connectionClosed(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                public synchronized void connectionClosed(ProtobufConnection<Protos.TwoWayChannelMessage> handler) {
                     paymentChannelManager.connectionClosed();
                     if (closeReason != null)
                         eventHandler.channelClosed(closeReason);
@@ -107,7 +107,7 @@ public class PaymentChannelServerListener {
                 }
 
                 @Override
-                public synchronized void connectionOpen(ProtobufParser<Protos.TwoWayChannelMessage> handler) {
+                public synchronized void connectionOpen(ProtobufConnection<Protos.TwoWayChannelMessage> handler) {
                     ServerConnectionEventHandler eventHandler = eventHandlerFactory.onNewConnection(address);
                     if (eventHandler == null)
                         handler.closeConnection();
@@ -118,7 +118,7 @@ public class PaymentChannelServerListener {
                 }
             };
 
-            socketProtobufHandler = new ProtobufParser<Protos.TwoWayChannelMessage>
+            socketProtobufHandler = new ProtobufConnection<Protos.TwoWayChannelMessage>
                     (protobufHandlerListener, Protos.TwoWayChannelMessage.getDefaultInstance(), Short.MAX_VALUE, timeoutSeconds*1000);
         }
 
@@ -131,10 +131,10 @@ public class PaymentChannelServerListener {
         private final PaymentChannelServer paymentChannelManager;
 
         // The connection handler which puts/gets protobufs from the TCP socket
-        private final ProtobufParser<Protos.TwoWayChannelMessage> socketProtobufHandler;
+        private final ProtobufConnection<Protos.TwoWayChannelMessage> socketProtobufHandler;
 
         // The listener which connects to socketProtobufHandler
-        private final ProtobufParser.Listener<Protos.TwoWayChannelMessage> protobufHandlerListener;
+        private final ProtobufConnection.Listener<Protos.TwoWayChannelMessage> protobufHandlerListener;
     }
 
     /**
@@ -142,9 +142,9 @@ public class PaymentChannelServerListener {
      * @throws Exception If binding to the given port fails (eg SocketException: Permission denied for privileged ports)
      */
     public void bindAndStart(int port) throws Exception {
-        server = new NioServer(new StreamParserFactory() {
+        server = new NioServer(new StreamConnectionFactory() {
             @Override
-            public ProtobufParser<Protos.TwoWayChannelMessage> getNewParser(InetAddress inetAddress, int port) {
+            public ProtobufConnection<Protos.TwoWayChannelMessage> getNewConnection(InetAddress inetAddress, int port) {
                 return new ServerHandler(new InetSocketAddress(inetAddress, port), timeoutSeconds).socketProtobufHandler;
             }
         }, new InetSocketAddress(port));

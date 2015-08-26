@@ -18,7 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.MessageWriteTarget;
-import org.bitcoinj.net.StreamParser;
+import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.*;
  * Handles high-level message (de)serialization for peers, acting as the bridge between the
  * {@link org.bitcoinj.net} classes and {@link Peer}.
  */
-public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamParser {
+public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
 
     private final MessageSerializer serializer;

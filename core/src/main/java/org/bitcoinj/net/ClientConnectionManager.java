@@ -30,10 +30,10 @@ import java.net.SocketAddress;
  */
 public interface ClientConnectionManager extends Service {
     /**
-     * Creates a new connection to the given address, with the given parser used to handle incoming data. Any errors
+     * Creates a new connection to the given address, with the given connection used to handle incoming data. Any errors
      * that occur during connection will be returned in the given future, including errors that can occur immediately.
      */
-    ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamParser parser);
+    ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection);
 
     /** Gets the number of connected peers */
     int getConnectedClientCount();

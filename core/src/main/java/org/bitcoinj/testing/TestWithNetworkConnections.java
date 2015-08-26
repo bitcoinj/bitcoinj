@@ -111,10 +111,10 @@ public class TestWithNetworkConnections {
     }
 
     protected void startPeerServer(int i) throws IOException {
-        peerServers[i] = new NioServer(new StreamParserFactory() {
+        peerServers[i] = new NioServer(new StreamConnectionFactory() {
             @Nullable
             @Override
-            public StreamParser getNewParser(InetAddress inetAddress, int port) {
+            public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
                 return new InboundMessageQueuer(params) {
                     @Override
                     public void connectionClosed() {

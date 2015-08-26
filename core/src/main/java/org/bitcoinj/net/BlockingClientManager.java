@@ -55,11 +55,11 @@ public class BlockingClientManager extends AbstractIdleService implements Client
     }
 
     @Override
-    public ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamParser parser) {
+    public ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
         try {
             if (!isRunning())
                 throw new IllegalStateException();
-            return new BlockingClient(serverAddress, parser, connectTimeoutMillis, socketFactory, clients).getConnectFuture();
+            return new BlockingClient(serverAddress, connection, connectTimeoutMillis, socketFactory, clients).getConnectFuture();
         } catch (IOException e) {
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
         }

@@ -57,7 +57,7 @@ class ConnectionHandler implements MessageWriteTarget {
     @GuardedBy("lock") private final ByteBuffer readBuff;
     @GuardedBy("lock") private final SocketChannel channel;
     @GuardedBy("lock") private final SelectionKey key;
-    @GuardedBy("lock") StreamParser parser;
+    @GuardedBy("lock") StreamConnection connection;
     @GuardedBy("lock") private boolean closeCalled = false;
 
     @GuardedBy("lock") private long bytesToWriteRemaining = 0;
@@ -65,30 +65,30 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private Set<ConnectionHandler> connectedHandlers;
 
-    public ConnectionHandler(StreamParserFactory parserFactory, SelectionKey key) throws IOException {
-        this(parserFactory.getNewParser(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort()), key);
-        if (parser == null)
-            throw new IOException("Parser factory.getNewParser returned null");
+    public ConnectionHandler(StreamConnectionFactory connectionFactory, SelectionKey key) throws IOException {
+        this(connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort()), key);
+        if (connection == null)
+            throw new IOException("Parser factory.getNewConnection returned null");
     }
 
-    private ConnectionHandler(@Nullable StreamParser parser, SelectionKey key) {
+    private ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
         this.key = key;
         this.channel = checkNotNull(((SocketChannel)key.channel()));
-        if (parser == null) {
+        if (connection == null) {
             readBuff = null;
             return;
         }
-        this.parser = parser;
-        readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(parser.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
-        parser.setWriteTarget(this); // May callback into us (eg closeConnection() now)
+        this.connection = connection;
+        readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+        connection.setWriteTarget(this); // May callback into us (eg closeConnection() now)
         connectedHandlers = null;
     }
 
-    public ConnectionHandler(StreamParser parser, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
-        this(checkNotNull(parser), key);
+    public ConnectionHandler(StreamConnection connection, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
+        this(checkNotNull(connection), key);
 
         // closeConnection() may have already happened because we invoked the other c'tor above, which called
-        // parser.setWriteTarget which might have re-entered already. In this case we shouldn't add ourselves
+        // connection.setWriteTarget which might have re-entered already. In this case we shouldn't add ourselves
         // to the connectedHandlers set.
         lock.lock();
         try {
@@ -191,7 +191,7 @@ class ConnectionHandler implements MessageWriteTarget {
         }
         if (callClosed) {
             checkState(connectedHandlers == null || connectedHandlers.remove(this));
-            parser.connectionClosed();
+            connection.connectionClosed();
         }
     }
 
@@ -208,7 +208,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 return;
             }
             if (key.isReadable()) {
-                // Do a socket read and invoke the parser's receiveBytes message
+                // Do a socket read and invoke the connection's receiveBytes message
                 int read = handler.channel.read(handler.readBuff);
                 if (read == 0)
                     return; // Was probably waiting on a write
@@ -219,8 +219,8 @@ class ConnectionHandler implements MessageWriteTarget {
                 }
                 // "flip" the buffer - setting the limit to the current position and setting position to 0
                 handler.readBuff.flip();
-                // Use parser.receiveBytes's return value as a check that it stopped reading at the right location
-                int bytesConsumed = checkNotNull(handler.parser).receiveBytes(handler.readBuff);
+                // Use connection.receiveBytes's return value as a check that it stopped reading at the right location
+                int bytesConsumed = checkNotNull(handler.connection).receiveBytes(handler.readBuff);
                 checkState(handler.readBuff.position() == bytesConsumed);
                 // Now drop the bytes which were read by compacting readBuff (resetting limit and keeping relative
                 // position)
@@ -230,7 +230,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 handler.tryWriteBytes();
         } catch (Exception e) {
             // This can happen eg if the channel closes while the thread is about to get killed
-            // (ClosedByInterruptException), or if handler.parser.receiveBytes throws something
+            // (ClosedByInterruptException), or if handler.connection.receiveBytes throws something
             Throwable t = Throwables.getRootCause(e);
             log.warn("Error handling SelectionKey: {}", t.getMessage() != null ? t.getMessage() : t.getClass().getName());
             handler.closeConnection();
