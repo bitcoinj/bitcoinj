@@ -17,28 +17,20 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
-import org.bitcoinj.net.NioClient;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.H2FullPrunedBlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.utils.BlockFileLoader;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.*;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.net.*;
+import org.bitcoinj.params.*;
+import org.bitcoinj.store.*;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import java.io.File;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.io.*;
+import java.net.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.*;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -63,6 +55,7 @@ public class BitcoindComparisonTool {
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
         params = RegTestParams.get();
+        Context ctx = new Context(params);
 
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
@@ -107,8 +100,6 @@ public class BitcoindComparisonTool {
                                        "and starting with this tester as a way to try to do so will simply end in pain and lost coins.\n" +
                                        "************************************************************************************************************************");
                     System.out.println();
-                    System.out.println("Giving you 30 seconds to think about the above warning...");
-                    Uninterruptibles.sleepUninterruptibly(30, TimeUnit.SECONDS);
                 }
                 log.info("bitcoind connected");
                 // Make sure bitcoind has no blocks
