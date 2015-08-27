@@ -333,20 +333,22 @@ public final class MonetaryFormat {
         if (decimalGroups != null)
             for (int group : decimalGroups)
                 maxDecimals += group;
-        checkState(maxDecimals <= monetary.smallestUnitExponent());
+        int smallestUnitExponent = monetary.smallestUnitExponent();
+        checkState(maxDecimals <= smallestUnitExponent,
+                "The maximum possible number of decimals (%s) cannot exceed %s.", maxDecimals, smallestUnitExponent);
 
         // rounding
         long satoshis = Math.abs(monetary.getValue());
-        long precisionDivisor = checkedPow(10, monetary.smallestUnitExponent() - shift - maxDecimals);
+        long precisionDivisor = checkedPow(10, smallestUnitExponent - shift - maxDecimals);
         satoshis = checkedMultiply(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
-        long shiftDivisor = checkedPow(10, monetary.smallestUnitExponent() - shift);
+        long shiftDivisor = checkedPow(10, smallestUnitExponent - shift);
         long numbers = satoshis / shiftDivisor;
         long decimals = satoshis % shiftDivisor;
 
         // formatting
-        String decimalsStr = String.format(Locale.US, "%0" + (monetary.smallestUnitExponent() - shift) + "d", decimals);
+        String decimalsStr = String.format(Locale.US, "%0" + (smallestUnitExponent - shift) + "d", decimals);
         StringBuilder str = new StringBuilder(decimalsStr);
         while (str.length() > minDecimals && str.charAt(str.length() - 1) == '0')
             str.setLength(str.length() - 1); // trim trailing zero
