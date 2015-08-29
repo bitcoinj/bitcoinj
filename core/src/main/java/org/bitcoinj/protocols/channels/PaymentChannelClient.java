@@ -338,12 +338,14 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         checkState(msg.hasError());
                         log.error("Server sent ERROR {} with explanation {}", msg.getError().getCode().name(),
                                 msg.getError().hasExplanation() ? msg.getError().getExplanation() : "");
+                        setIncreasePaymentFutureIfNeeded(CloseReason.REMOTE_SENT_ERROR, msg.getError().getCode().name());
                         conn.destroyConnection(CloseReason.REMOTE_SENT_ERROR);
                         return;
                     default:
                         log.error("Got unknown message type or type that doesn't apply to clients.");
                         errorBuilder = Protos.Error.newBuilder()
                                 .setCode(Protos.Error.ErrorCode.SYNTAX_ERROR);
+                        setIncreasePaymentFutureIfNeeded(CloseReason.REMOTE_SENT_INVALID_MESSAGE, "");
                         closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
                         break;
                 }
@@ -366,6 +368,18 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             conn.destroyConnection(closeReason);
         } finally {
             lock.unlock();
+        }
+    }
+
+    /*
+     * If this is an ongoing payment channel increase we need to call setException() on its future.
+     *
+     * @param reason is the reason for aborting
+     * @param message is the detailed message
+     */
+    private void setIncreasePaymentFutureIfNeeded(PaymentChannelCloseException.CloseReason reason, String message) {
+        if (increasePaymentFuture != null && !increasePaymentFuture.isDone()) {
+            increasePaymentFuture.setException(new PaymentChannelCloseException(message, reason));
         }
     }
 
