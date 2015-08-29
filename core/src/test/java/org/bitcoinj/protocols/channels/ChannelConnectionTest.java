@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
+import javax.lang.model.type.ExecutableType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -233,7 +234,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     }
 
     @Test
-    public void testServerErrorHandling() throws Exception {
+    public void testServerErrorHandling_badTransaction() throws Exception {
         // Gives the server crap and checks proper error responses are sent.
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
@@ -255,11 +256,14 @@ public class ChannelConnectionTest extends TestWithWallet {
                 ).build());
         final Protos.TwoWayChannelMessage errorMsg = pair.serverRecorder.checkNextMsg(MessageType.ERROR);
         assertEquals(Protos.Error.ErrorCode.BAD_TRANSACTION, errorMsg.getError().getCode());
+    }
 
+    @Test
+    public void testServerErrorHandling_killSocketOnClose() throws Exception {
         // Make sure the server closes the socket on CLOSE
-        pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
-        server = pair.server;
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelServer server = pair.server;
         server.connectionOpen();
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -270,10 +274,14 @@ public class ChannelConnectionTest extends TestWithWallet {
         assertEquals(CloseReason.CLIENT_REQUESTED_CLOSE, pair.serverRecorder.q.take());
 
 
+    }
+
+    @Test
+    public void testServerErrorHandling_killSocketOnError() throws Exception {
         // Make sure the server closes the socket on ERROR
-        pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
-        server = pair.server;
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelServer server = pair.server;
         server.connectionOpen();
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -284,6 +292,59 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setError(Protos.Error.newBuilder().setCode(Protos.Error.ErrorCode.TIMEOUT))
                 .build());
         assertEquals(CloseReason.REMOTE_SENT_ERROR, pair.serverRecorder.q.take());
+    }
+
+    @Test
+    public void testClientErrorHandlingIncreasePaymentError() throws Exception {
+        // Tests various aspects of channel resuming.
+        Utils.setMockClock();
+
+        final Sha256Hash someServerId = Sha256Hash.of(new byte[]{});
+
+        // Open up a normal channel.
+        ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
+        pair.server.connectionOpen();
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        PaymentChannelServer server = pair.server;
+        client.connectionOpen();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
+        final Protos.TwoWayChannelMessage initiateMsg = pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
+        Coin minPayment = Coin.valueOf(initiateMsg.getInitiate().getMinPayment());
+        client.receiveMessage(initiateMsg);
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        broadcastTxPause.release();
+        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
+        broadcasts.take();
+        pair.serverRecorder.checkTotalPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.CHANNEL_OPEN));
+        Sha256Hash contractHash = (Sha256Hash) pair.serverRecorder.q.take();
+        pair.clientRecorder.checkInitiated();
+        assertNull(pair.serverRecorder.q.poll());
+        assertNull(pair.clientRecorder.q.poll());
+        assertEquals(minPayment, client.state().getValueSpent());
+
+        // Send a bitcent.
+        Coin amount = minPayment.add(CENT);
+        ListenableFuture<PaymentIncrementAck> ackFuture = client.incrementPayment(CENT);
+        // We never pass this message to the server
+        // Instead we pretend the server didn't like our increase
+        client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
+                .setType(MessageType.ERROR)
+                .setError(Protos.Error.newBuilder().setCode(Protos.Error.ErrorCode.CHANNEL_VALUE_TOO_LARGE)) // some random error
+                .build());
+
+        // Now we need the client to actually close the future and report this error
+        try {
+            ackFuture.get(1L, TimeUnit.SECONDS);
+            fail("This should not work");
+        } catch (ExecutionException ee) {
+            PaymentChannelCloseException ce = (PaymentChannelCloseException) ee.getCause();
+            assertEquals(CloseReason.REMOTE_SENT_ERROR, ce.getCloseReason());
+        } catch (TimeoutException e) {
+            fail("Should not time out");
+        }
     }
 
     @Test
