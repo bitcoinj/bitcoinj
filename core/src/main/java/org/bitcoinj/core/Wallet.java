@@ -3092,14 +3092,7 @@ public class Wallet extends BaseTaggableObject
         /** Same as ESTIMATED but only for outputs we have the private keys for and can sign ourselves. */
         ESTIMATED_SPENDABLE,
         /** Same as AVAILABLE but only for outputs we have the private keys for and can sign ourselves. */
-        AVAILABLE_SPENDABLE,
-
-        /**
-         * Amount of bitcoin ever received via output. If an output spends from a transactions whose inputs
-         * are also to our wallet, the input amounts are deducted from the outputs contribution, with a minimum of zero
-         * contribution.
-         */
-        TOTAL_RECEIVED
+        AVAILABLE_SPENDABLE
     }
 
     /** @deprecated Use {@link #getBalance()} instead as including watched balances is now the default behaviour */
@@ -3137,8 +3130,6 @@ public class Wallet extends BaseTaggableObject
                 Coin value = Coin.ZERO;
                 for (TransactionOutput out : all) value = value.add(out.getValue());
                 return value;
-            } else if (balanceType == BalanceType.TOTAL_RECEIVED) {
-                return calculateTotalReceived();
             } else {
                 throw new AssertionError("Unknown balance type");  // Unreachable.
             }
@@ -3912,7 +3903,9 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns amount of coin received, not from ourselves. Called by getBalance(BalanceType.TOTAL_RECEIVED)
+     * Returns the amount of bitcoin ever received via output. If an output spends from a transactions whose inputs
+     * are also to our wallet, the input amounts are deducted from the outputs contribution, with a minimum of zero
+     * contribution. The idea behind this is we avoid double counting money sent to us.
      */
     public Coin calculateTotalReceived() {
         // Start with available spendable balance
