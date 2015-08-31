@@ -2781,7 +2781,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns a copy of the internal unspent outputs list */
-    List<TransactionOutput> getUnspents() {
+    public List<TransactionOutput> getUnspents() {
         lock.lock();
         try {
             return new ArrayList<TransactionOutput>(myUnspents);
