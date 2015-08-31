@@ -140,8 +140,18 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(LongMath.checkedAdd(this.value, value.value));
     }
 
+    /** Alias for add */
+    public Coin plus(final Coin value) {
+        return add(value);
+    }
+
     public Coin subtract(final Coin value) {
         return new Coin(LongMath.checkedSubtract(this.value, value.value));
+    }
+
+    /** Alias for subtract */
+    public Coin minus(final Coin value) {
+        return subtract(value);
     }
 
     public Coin multiply(final long factor) {
