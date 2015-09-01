@@ -597,8 +597,14 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
-    public Address getChangeAddress() {
+    public Address currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
+    }
+    /**
+     * @deprecated use {@link #currentChangeAddress()} instead.  
+     */
+    public Address getChangeAddress() {
+        return currentChangeAddress();
     }
 
     /**
@@ -3472,7 +3478,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * <p>Statelessly creates a transaction that sends the given value to address. The change is sent to
-     * {@link Wallet#getChangeAddress()}, so you must have added at least one key.</p>
+     * {@link Wallet#currentChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
      * {@link Wallet#sendCoins(TransactionBroadcaster, Address, Coin)} instead. That will create the sending
@@ -3535,7 +3541,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * <p>Sends coins to the given address, via the given {@link PeerGroup}. Change is returned to
-     * {@link Wallet#getChangeAddress()}. Note that a fee may be automatically added if one may be required for the
+     * {@link Wallet#currentChangeAddress()}. Note that a fee may be automatically added if one may be required for the
      * transaction to be confirmed.</p>
      *
      * <p>The returned object provides both the transaction, and a future that can be used to learn when the broadcast
@@ -3623,7 +3629,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Sends coins to the given address, via the given {@link Peer}. Change is returned to {@link Wallet#getChangeAddress()}.
+     * Sends coins to the given address, via the given {@link Peer}. Change is returned to {@link Wallet#currentChangeAddress()}.
      * If an exception is thrown by {@link Peer#sendMessage(Message)} the transaction is still committed, so the
      * pending transaction must be broadcast <b>by you</b> at some other time. Note that a fee may be automatically added
      * if one may be required for the transaction to be confirmed.
@@ -4641,10 +4647,10 @@ public class Wallet extends BaseTaggableObject
             if (change.signum() > 0) {
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
-                // back to us. The address comes either from the request or getChangeAddress() as a default.
+                // back to us. The address comes either from the request or currentChangeAddress() as a default.
                 Address changeAddress = req.changeAddress;
                 if (changeAddress == null)
-                    changeAddress = getChangeAddress();
+                    changeAddress = currentChangeAddress();
                 changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                 // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
                 if (req.ensureMinRequiredFee && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {

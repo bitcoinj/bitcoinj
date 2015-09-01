@@ -806,7 +806,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addOutput(COIN, new ECKey().toAddress(params));
         Transaction t2 = new Transaction(params);
         t2.addInput(t1.getOutput(0));
-        t2.addOutput(COIN, wallet.getChangeAddress());
+        t2.addOutput(COIN, wallet.currentChangeAddress());
         inbound(writeTarget, t2);
         final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.Transaction, t2.getInput(0).getOutpoint().getHash());
         final NotFoundMessage nfm = new NotFoundMessage(params, Lists.newArrayList(inventoryItem));

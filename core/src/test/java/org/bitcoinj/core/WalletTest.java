@@ -403,7 +403,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(params));
-        assertEquals(wallet.getChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
+        assertEquals(wallet.currentChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(params));
         assertEquals(valueOf(0, 49), t.getOutputs().get(1).getValue());
         // Check the script runs and signatures verify.
         t.getInputs().get(0).verify();
@@ -1509,7 +1509,7 @@ public class WalletTest extends TestWithWallet {
         tx2.addInput(tx1.getOutput(0));
         tx2.addOutput(valueOf(0, 9), someOtherAddress);
         // Add a change address to ensure this tx is relevant.
-        tx2.addOutput(CENT, wallet.getChangeAddress());
+        tx2.addOutput(CENT, wallet.currentChangeAddress());
         wallet.receivePending(tx2, null);
         BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx1);
         wallet.receiveFromBlock(tx1, bp.storedBlock, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
@@ -1531,7 +1531,7 @@ public class WalletTest extends TestWithWallet {
         b.addInput(a.getOutput(0));
         b.addOutput(CENT, someOtherAddress);
         Coin v = COIN.subtract(CENT);
-        b.addOutput(v, wallet.getChangeAddress());
+        b.addOutput(v, wallet.currentChangeAddress());
         a = roundTripTransaction(params, a);
         b = roundTripTransaction(params, b);
         wallet.receivePending(b, null);
