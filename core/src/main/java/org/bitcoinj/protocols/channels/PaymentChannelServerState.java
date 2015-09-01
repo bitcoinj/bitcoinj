@@ -398,7 +398,7 @@ public class PaymentChannelServerState {
             wallet.completeTx(req);  // TODO: Fix things so shuffling is usable.
             feePaidForPayment = req.tx.getFee();
             log.info("Calculated fee is {}", feePaidForPayment);
-            if (feePaidForPayment.compareTo(bestValueToMe) >= 0) {
+            if (feePaidForPayment.compareTo(bestValueToMe) > 0) {
                 final String msg = String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
                         feePaidForPayment, bestValueToMe);
                 throw new InsufficientMoneyException(feePaidForPayment.subtract(bestValueToMe), msg);

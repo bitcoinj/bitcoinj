@@ -705,8 +705,8 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(e.getMessage().contains("more in fees"));
         }
 
-        signature = clientState.incrementPaymentBy(SATOSHI.multiply(2), null).signature.encodeToBitcoin();
-        totalRefund = totalRefund.subtract(SATOSHI.multiply(2));
+        signature = clientState.incrementPaymentBy(SATOSHI, null).signature.encodeToBitcoin();
+        totalRefund = totalRefund.subtract(SATOSHI);
         serverState.incrementPayment(totalRefund, signature);
 
         // And settle the channel.
