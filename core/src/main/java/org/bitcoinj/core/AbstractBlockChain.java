@@ -209,44 +209,44 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * Adds a generic {@link NewBestBlockListener} listener to the chain.
+     * Adds a {@link NewBestBlockListener} listener to the chain.
      */
-    public final void addNewBestBlockListener(final NewBestBlockListener listener) {
+    public void addNewBestBlockListener(NewBestBlockListener listener) {
         addNewBestBlockListener(Threading.USER_THREAD, listener);
     }
 
     /**
-     * Adds a generic {@link NewBestBlockListener} listener to the chain.
+     * Adds a {@link NewBestBlockListener} listener to the chain.
      */
-    public final void addNewBestBlockListener(Executor executor, final NewBestBlockListener listener) {
+    public void addNewBestBlockListener(Executor executor, NewBestBlockListener listener) {
         newBestBlockListeners.add(new ListenerRegistration<NewBestBlockListener>(executor, listener));
     }
 
     /**
      * Adds a generic {@link ReorganizeListener} listener to the chain.
      */
-    public final void addReorganizeListener(final ReorganizeListener listener) {
+    public void addReorganizeListener(ReorganizeListener listener) {
         addReorganizeListener(Threading.USER_THREAD, listener);
     }
 
     /**
      * Adds a generic {@link ReorganizeListener} listener to the chain.
      */
-    public final void addReorganizeListener(Executor executor, final ReorganizeListener listener) {
+    public void addReorganizeListener(Executor executor, ReorganizeListener listener) {
         reorganizeListeners.add(new ListenerRegistration<ReorganizeListener>(executor, listener));
     }
 
     /**
      * Adds a generic {@link TransactionReceivedInBlockListener} listener to the chain.
      */
-    public final void addTransactionReceivedListener(TransactionReceivedInBlockListener listener) {
+    public void addTransactionReceivedListener(TransactionReceivedInBlockListener listener) {
         addTransactionReceivedListener(Threading.USER_THREAD, listener);
     }
 
     /**
      * Adds a generic {@link TransactionReceivedInBlockListener} listener to the chain.
      */
-    public final void addTransactionReceivedListener(Executor executor, TransactionReceivedInBlockListener listener) {
+    public void addTransactionReceivedListener(Executor executor, TransactionReceivedInBlockListener listener) {
         transactionReceivedListeners.add(new ListenerRegistration<TransactionReceivedInBlockListener>(executor, listener));
     }
 
