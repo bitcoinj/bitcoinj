@@ -18,9 +18,8 @@ package org.bitcoinj.core;
 
 import com.google.common.base.*;
 import com.google.common.base.Objects;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.core.listeners.PeerConnectionEventListener;
-import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
@@ -243,6 +242,26 @@ public class Peer extends PeerSocketHandler {
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
+    }
+
+    /** Deprecated: use the more specific event handler methods instead */
+    @Deprecated @SuppressWarnings("deprecation")
+    public void addEventListener(AbstractPeerEventListener listener) {
+        addEventListener(listener, Threading.USER_THREAD);
+    }
+
+    /** Deprecated: use the more specific event handler methods instead */
+    @Deprecated
+    public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
+        addConnectionEventListener(executor, listener);
+        addDataEventListener(executor, listener);
+    }
+
+    /** Deprecated: use the more specific event handler methods instead */
+    @Deprecated
+    public void removeEventListener(AbstractPeerEventListener listener) {
+        removeConnectionEventListener(listener);
+        removeDataEventListener(listener);
     }
 
     /**

@@ -17,26 +17,18 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.listeners.NewBestBlockListener;
-import org.bitcoinj.core.listeners.ReorganizeListener;
-import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.utils.VersionTally;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.*;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.store.*;
+import org.bitcoinj.utils.*;
+import org.slf4j.*;
 
-import javax.annotation.Nullable;
+import javax.annotation.*;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -206,6 +198,27 @@ public abstract class AbstractBlockChain {
         removeNewBestBlockListener(wallet);
         removeReorganizeListener(wallet);
         removeTransactionReceivedListener(wallet);
+    }
+
+    /** Replaced with more specific listener methods: use them instead. */
+    @Deprecated @SuppressWarnings("deprecation")
+    public void addListener(BlockChainListener listener) {
+        addListener(listener, Threading.USER_THREAD);
+    }
+
+    /** Replaced with more specific listener methods: use them instead. */
+    @Deprecated
+    public void addListener(BlockChainListener listener, Executor executor) {
+        addReorganizeListener(executor, listener);
+        addNewBestBlockListener(executor, listener);
+        addTransactionReceivedListener(executor, listener);
+    }
+
+    @Deprecated
+    public void removeListener(BlockChainListener listener) {
+        removeReorganizeListener(listener);
+        removeNewBestBlockListener(listener);
+        removeTransactionReceivedListener(listener);
     }
 
     /**

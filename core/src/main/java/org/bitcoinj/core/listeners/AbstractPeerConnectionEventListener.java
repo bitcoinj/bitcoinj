@@ -16,15 +16,15 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.Peer;
-import java.util.Set;
-import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.*;
+
+import java.util.*;
 
 /**
- * Convenience implementation of {@link PeerEventListener}.
+ * Deprecated: implement the more specific event listener interfaces instead to fill out only what you need
  */
+@Deprecated
 public abstract class AbstractPeerConnectionEventListener implements PeerConnectionEventListener {
-
     @Override
     public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
         // Do nothing

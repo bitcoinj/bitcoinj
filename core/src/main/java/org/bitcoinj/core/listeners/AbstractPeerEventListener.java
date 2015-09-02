@@ -28,8 +28,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Convenience implementation of {@link PeerEventListener}.
+ * Deprecated: implement the more specific event listener interfaces instead to fill out only what you need
  */
+@Deprecated
 public abstract class AbstractPeerEventListener extends AbstractPeerDataEventListener implements PeerConnectionEventListener {
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
