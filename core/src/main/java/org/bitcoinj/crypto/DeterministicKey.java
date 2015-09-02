@@ -433,7 +433,10 @@ public class DeterministicKey extends ECKey {
             downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
         }
         // downCursor is now the same key as us, but with private key bytes.
-        checkState(downCursor.pub.equals(pub));
+        // If it's not, it means we tried decrypting with an invalid password and earlier checks e.g. for padding didn't
+        // catch it.
+        if (!downCursor.pub.equals(pub))
+            throw new KeyCrypterException("Could not decrypt bytes");
         return checkNotNull(downCursor.priv);
     }
 
