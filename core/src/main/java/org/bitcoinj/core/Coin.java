@@ -158,8 +158,28 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return new Coin(LongMath.checkedMultiply(this.value, factor));
     }
 
+    /** Alias for multiply */
+    public Coin times(final long factor) {
+        return multiply(factor);
+    }
+
+    /** Alias for multiply */
+    public Coin times(final int factor) {
+        return multiply(factor);
+    }
+
     public Coin divide(final long divisor) {
         return new Coin(this.value / divisor);
+    }
+
+    /** Alias for divide */
+    public Coin div(final long divisor) {
+        return divide(divisor);
+    }
+
+    /** Alias for divide */
+    public Coin div(final int divisor) {
+        return divide(divisor);
     }
 
     public Coin[] divideAndRemainder(final long divisor) {
