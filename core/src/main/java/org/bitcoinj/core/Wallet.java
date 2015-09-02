@@ -3210,23 +3210,14 @@ public class Wallet extends BaseTaggableObject
     @SuppressWarnings("FieldAccessNotGuarded")
     private void checkBalanceFuturesLocked(@Nullable Coin avail) {
         checkState(lock.isHeldByCurrentThread());
-        Coin estimated = null;
         final ListIterator<BalanceFutureRequest> it = balanceFutureRequests.listIterator();
         while (it.hasNext()) {
             final BalanceFutureRequest req = it.next();
-            Coin val = null;
-            if (req.type == BalanceType.AVAILABLE) {
-                if (avail == null) avail = getBalance(BalanceType.AVAILABLE);
-                if (avail.compareTo(req.value) < 0) continue;
-                val = avail;
-            } else if (req.type == BalanceType.ESTIMATED) {
-                if (estimated == null) estimated = getBalance(BalanceType.ESTIMATED);
-                if (estimated.compareTo(req.value) < 0) continue;
-                val = estimated;
-            }
+            Coin val = getBalance(req.type);   // This could be slow for lots of futures.
+            if (val.compareTo(req.value) < 0) continue;
             // Found one that's finished.
             it.remove();
-            final Coin v = checkNotNull(val);
+            final Coin v = val;
             // Don't run any user-provided future listeners with our lock held.
             Threading.USER_THREAD.execute(new Runnable() {
                 @Override public void run() {
