@@ -24,7 +24,7 @@ Usage: wallet-tool --flags action-name
   current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are
                        independent of addresses derived with the add-key action.
   sync                 Sync the wallet with the latest block chain (download new transactions).
-                       If the chain file does not exist this will RESET the wallet.
+                       If the chain file does not exist or if --force is present, this will RESET the wallet.
   reset                Deletes all transactions from the wallet, for if you want to replay the chain.
   send                 Creates and broadcasts a transaction from the given wallet.
                        Requires either --output or --payment-request to be specified.

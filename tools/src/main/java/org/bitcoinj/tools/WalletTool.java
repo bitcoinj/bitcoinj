@@ -311,11 +311,14 @@ public class WalletTool {
 
         InputStream walletInputStream = null;
         try {
+            boolean forceReset = action == ActionEnum.RESET
+                || (action == ActionEnum.SYNC
+                    && options.has("force"));
             WalletProtobufSerializer loader = new WalletProtobufSerializer();
             if (options.has("ignore-mandatory-extensions"))
                 loader.setRequireMandatoryExtensions(false);
             walletInputStream = new BufferedInputStream(new FileInputStream(walletFile));
-            wallet = loader.readWallet(walletInputStream);
+            wallet = loader.readWallet(walletInputStream, forceReset, (WalletExtension[])(null));
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +
                         wallet.getParams().getId() + " vs " + params.getId());
@@ -372,7 +375,7 @@ public class WalletTool {
             System.err.println("************** WALLET IS INCONSISTENT *****************");
             return;
         }
-        
+
         saveWallet(walletFile);
 
         if (options.has(waitForFlag)) {
