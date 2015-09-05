@@ -420,6 +420,8 @@ public class WalletProtobufSerializer {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         } catch (IllegalStateException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
+        } catch (IllegalArgumentException e) {
+            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
     }
 
