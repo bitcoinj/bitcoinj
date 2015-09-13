@@ -46,6 +46,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
@@ -57,6 +58,11 @@ public class ScriptTest {
     static final NetworkParameters params = TestNet3Params.get();
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
+
+    @Before
+    public void setUp() throws Exception {
+        Context context = new Context(params);
+    }
 
     @Test
     public void testScriptSig() throws Exception {

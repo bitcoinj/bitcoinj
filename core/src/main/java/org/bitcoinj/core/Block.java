@@ -42,6 +42,15 @@ import static org.bitcoinj.core.Sha256Hash.*;
  * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.
  */
 public class Block extends Message {
+    /**
+     * Flags used to control which elements of block validation are done on
+     * received blocks.
+     */
+    public enum VerifyFlag {
+        /** Check that block height is in coinbase transaction (BIP 34). */
+        HEIGHT_IN_COINBASE
+    }
+
     private static final Logger log = LoggerFactory.getLogger(Block.class);
 
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
@@ -631,12 +640,12 @@ public class Block extends Message {
      * to validate the coinbase input script of v2 and above blocks.
      * @throws VerificationException if there was an error verifying the block.
      */
-    private void checkTransactions(final int height, final EnumSet<VerificationFlags> flags)
+    private void checkTransactions(final int height, final EnumSet<VerifyFlag> flags)
             throws VerificationException {
         // The first transaction in a block must always be a coinbase transaction.
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
-        if (flags.contains(VerificationFlags.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
+        if (flags.contains(Block.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
             transactions.get(0).checkCoinBaseHeight(height);
         }
         // The rest must not be.
@@ -673,7 +682,7 @@ public class Block extends Message {
      * whether to test for height in the coinbase transaction).
      * @throws VerificationException if there was an error verifying the block.
      */
-    public void verifyTransactions(final int height, final EnumSet<VerificationFlags> flags) throws VerificationException {
+    public void verifyTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         // Now we need to check that the body of the block actually matches the headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
@@ -697,7 +706,7 @@ public class Block extends Message {
      * whether to test for height in the coinbase transaction).
      * @throws VerificationException if there was an error verifying the block.
      */
-    public void verify(final int height, final EnumSet<VerificationFlags> flags) throws VerificationException {
+    public void verify(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
         verifyHeader();
         verifyTransactions(height, flags);
     }

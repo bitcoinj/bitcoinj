@@ -487,22 +487,34 @@ public abstract class NetworkParameters {
      * @param height height of the block, if known, null otherwise. Returned
      * tests should be a safe subset if block height is unknown.
      */
-    public EnumSet<VerificationFlags> getValidationFlags(final Block block,
+    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(final Block block,
             final VersionTally tally, final Integer height) {
-        final EnumSet<VerificationFlags> flags = EnumSet.noneOf(VerificationFlags.class);
+        final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
 
         if (block.getVersion() >= Block.BLOCK_VERSION_BIP34) {
             final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
             if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(VerificationFlags.HEIGHT_IN_COINBASE);
-            }
-        }
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP66) {
-            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP66);
-            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(VerificationFlags.DER_SIGNATURE_FORMAT);
+                flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
             }
         }
         return flags;
+    }
+
+    /**
+     * The flags indicating which script validation tests should be applied to
+     * the given transaction. Enables support for alternative blockchains which enable
+     * tests based on different criteria.
+     *
+     * @param block block the transaction belongs to.
+     * @param transaction to determine flags for.
+     * @param height height of the block, if known, null otherwise. Returned
+     * tests should be a safe subset if block height is unknown.
+     */
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
+            final Transaction transaction, final VersionTally tally, final Integer height) {
+        final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
+        if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
+            verifyFlags.add(Script.VerifyFlag.P2SH);
+        return verifyFlags;
     }
 }
