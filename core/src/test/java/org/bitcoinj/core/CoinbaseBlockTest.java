@@ -64,7 +64,7 @@ public class CoinbaseBlockTest {
 
         // Check block.
         assertNotNull(block);
-        block.verify(169482, EnumSet.noneOf(VerificationFlags.class));
+        block.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
         assertEquals(BLOCK_NONCE, block.getNonce());
 
         StoredBlock storedBlock = new StoredBlock(block, BigInteger.ONE, BLOCK_OF_INTEREST); // Nonsense work - not used in test.
