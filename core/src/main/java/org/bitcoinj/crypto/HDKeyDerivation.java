@@ -16,19 +16,16 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Utils;
-import com.google.common.collect.ImmutableList;
-import org.spongycastle.crypto.macs.HMac;
-import org.spongycastle.math.ec.ECPoint;
+import com.google.common.collect.*;
+import org.bitcoinj.core.*;
+import org.spongycastle.math.ec.*;
 
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Arrays;
+import java.math.*;
+import java.nio.*;
+import java.security.*;
+import java.util.*;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Implementation of the <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">BIP 32</a>
@@ -54,8 +51,6 @@ public final class HDKeyDerivation {
      */
     public static final int MAX_CHILD_DERIVATION_ATTEMPTS = 100;
 
-    public static final HMac MASTER_HMAC_SHA512 = HDUtils.createHmacSha512Digest("Bitcoin seed".getBytes());
-
     /**
      * Generates a new deterministic key from the given seed, which can be any arbitrary byte array. However resist
      * the temptation to use a string as the seed - any key derived from a password is likely to be weak and easily
@@ -68,7 +63,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
         checkArgument(seed.length > 8, "Seed is too short and could be brute forced");
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
-        byte[] i = HDUtils.hmacSha512(MASTER_HMAC_SHA512, seed);
+        byte[] i = HDUtils.hmacSha512(HDUtils.createHmacSha512Digest("Bitcoin seed".getBytes()), seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
         checkState(i.length == 64, i.length);
