@@ -31,7 +31,7 @@ import java.util.Set;
  * Deprecated: implement the more specific event listener interfaces instead to fill out only what you need
  */
 @Deprecated
-public abstract class AbstractPeerEventListener extends AbstractPeerDataEventListener implements PeerConnectionEventListener {
+public abstract class AbstractPeerEventListener extends AbstractPeerDataEventListener implements PeerConnectionEventListener, OnTransactionBroadcastListener {
     @Override
     public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
     }

@@ -16,14 +16,10 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.GetDataMessage;
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.Transaction;
-import javax.annotation.Nullable;
-import java.util.List;
+import org.bitcoinj.core.*;
+
+import javax.annotation.*;
+import java.util.*;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
@@ -64,11 +60,6 @@ public interface PeerDataEventListener {
      * {@link org.bitcoinj.utils.Threading#SAME_THREAD}</p>
      */
     Message onPreMessageReceived(Peer peer, Message m);
-
-    /**
-     * Called when a new transaction is broadcast over the network.
-     */
-    void onTransaction(Peer peer, Transaction t);
 
     /**
      * <p>Called when a peer receives a getdata message, usually in response to an "inv" being broadcast. Return as many

@@ -78,6 +78,7 @@ public class Peer extends PeerSocketHandler {
     }
     private final CopyOnWriteArrayList<PeerConnectionListenerRegistration> connectionEventListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>> dataEventListeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -217,6 +218,7 @@ public class Peer extends PeerSocketHandler {
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
         this.connectionEventListeners = new CopyOnWriteArrayList<PeerConnectionListenerRegistration>();
         this.dataEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>>();
+        this.onTransactionEventListeners = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
         this.getAddrFutures = new LinkedList<SettableFuture<AddressMessage>>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.isAcked = false;
@@ -255,6 +257,7 @@ public class Peer extends PeerSocketHandler {
     public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
         addConnectionEventListener(executor, listener);
         addDataEventListener(executor, listener);
+        addOnTransactionBroadcastListener(executor, listener);
     }
 
     /** Deprecated: use the more specific event handler methods instead */
@@ -262,48 +265,37 @@ public class Peer extends PeerSocketHandler {
     public void removeEventListener(AbstractPeerEventListener listener) {
         removeConnectionEventListener(listener);
         removeDataEventListener(listener);
+        removeOnTransactionBroadcastListener(listener);
     }
 
-    /**
-     * Registers the given object as an event listener that will be invoked on the user thread. Note that listeners
-     * added this way will <b>not</b> receive {@link PeerEventListener#getData(Peer, GetDataMessage)} or
-     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because those require that the listener
-     * be added using {@link Threading#SAME_THREAD}, which requires the other addListener form.
-     */
+    /** Registers a listener that is invoked when a peer is connected or disconnected. */
     public void addConnectionEventListener(PeerConnectionEventListener listener) {
         addConnectionEventListener(Threading.USER_THREAD, listener);
     }
 
-    /**
-     * Registers the given object as an event listener that will be invoked on the user thread. Note that listeners
-     * added this way will <b>not</b> receive {@link PeerEventListener#getData(Peer, GetDataMessage)} or
-     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because those require that the listener
-     * be added using {@link Threading#SAME_THREAD}, which requires the other addListener form.
-     */
-    public void addDataEventListener(PeerDataEventListener listener) {
-        addDataEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Registers the given object as an event listener that will be invoked by the given executor. Note that listeners
-     * added using any other executor than {@link Threading#SAME_THREAD} will <b>not</b> receive
-     * {@link PeerEventListener#getData(Peer, GetDataMessage)} or
-     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because this class is not willing to cross
-     * threads in order to get the results of those hook methods.
-     */
+    /** Registers a listener that is invoked when a peer is connected or disconnected. */
     public void addConnectionEventListener(Executor executor, PeerConnectionEventListener listener) {
         connectionEventListeners.add(new PeerConnectionListenerRegistration(listener, executor));
     }
 
-    /**
-     * Registers the given object as an event listener that will be invoked by the given executor. Note that listeners
-     * added using any other executor than {@link Threading#SAME_THREAD} will <b>not</b> receive
-     * {@link PeerEventListener#getData(Peer, GetDataMessage)} or
-     * {@link PeerEventListener#onPreMessageReceived(Peer, Message)} calls because this class is not willing to cross
-     * threads in order to get the results of those hook methods.
-     */
+    /** Registers a listener that is called when messages are received. */
+    public void addDataEventListener(PeerDataEventListener listener) {
+        addDataEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is called when messages are received. */
     public void addDataEventListener(Executor executor, PeerDataEventListener listener) {
         dataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(executor, listener));
+    }
+
+    /** Registers a listener that is called when a transaction is broadcast across the network */
+    public void addOnTransactionBroadcastListener(OnTransactionBroadcastListener listener) {
+        addOnTransactionBroadcastListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is called when a transaction is broadcast across the network */
+    public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
+        onTransactionEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(executor, listener));
     }
 
     // Package-local version for PeerGroup
@@ -317,6 +309,10 @@ public class Peer extends PeerSocketHandler {
 
     public boolean removeDataEventListener(PeerDataEventListener listener) {
         return ListenerRegistration.removeFromList(listener, dataEventListeners);
+    }
+
+    public boolean removeOnTransactionBroadcastListener(OnTransactionBroadcastListener listener) {
+        return ListenerRegistration.removeFromList(listener, onTransactionEventListeners);
     }
 
     @Override
@@ -739,7 +735,7 @@ public class Peer extends PeerSocketHandler {
         }
         // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
         // reference around then the memory pool will forget about it after a while too because it uses weak references.
-        for (final ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
+        for (final ListenerRegistration<OnTransactionBroadcastListener> registration : onTransactionEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {

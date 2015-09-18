@@ -26,13 +26,7 @@ import com.google.common.util.concurrent.*;
 import com.squareup.okhttp.*;
 import com.subgraph.orchid.*;
 import net.jcip.annotations.*;
-import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.core.listeners.PeerConnectionEventListener;
-import org.bitcoinj.core.listeners.PeerDataEventListener;
-import org.bitcoinj.core.listeners.WalletEventListener;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.net.discovery.*;
@@ -119,10 +113,11 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
     @Nullable @GuardedBy("lock") private PeerDataEventListener downloadListener;
-    // Callbacks for events related to peer connection/disconnection
-    private final CopyOnWriteArrayList<ListenerRegistration<PeerConnectionEventListener>> peerConnectionEventListeners;
-    // Callbacks for events related to peer data being received
-    private final CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>> peerDataEventListeners;
+    /** Callbacks for events related to peer connection/disconnection */
+    protected final CopyOnWriteArrayList<ListenerRegistration<PeerConnectionEventListener>> peerConnectionEventListeners;
+    /** Callbacks for events related to peer data being received */
+    protected final CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>> peerDataEventListeners;
+    protected final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionBroadastEventListeners;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
     private final CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
@@ -411,6 +406,7 @@ public class PeerGroup implements TransactionBroadcaster {
         peerDiscoverers = new CopyOnWriteArraySet<PeerDiscovery>();
         peerConnectionEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerConnectionEventListener>>();
         peerDataEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>>();
+        onTransactionBroadastEventListeners = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
     }
@@ -691,17 +687,7 @@ public class PeerGroup implements TransactionBroadcaster {
             peer.addConnectionEventListener(executor, listener);
     }
 
-    /**
-     * <p>Adds a listener that will be notified on the given executor when:</p>
-     * <ol>
-     *     <li>New peers are connected to.</li>
-     *     <li>Peers are disconnected from.</li>
-     *     <li>A message is received by the download peer (there is always one peer which is elected as a peer which
-     *     will be used to retrieve data).
-     *     <li>Blocks are downloaded by the download peer.</li>
-     *     </li>
-     * </ol>
-     */
+    /** See {@link Peer#addDataEventListener(Executor, PeerDataEventListener)} */
     public void addDataEventListener(final Executor executor, final PeerDataEventListener listener) {
         peerDataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(executor, checkNotNull(listener)));
         for (Peer peer : getConnectedPeers())
@@ -710,20 +696,28 @@ public class PeerGroup implements TransactionBroadcaster {
             peer.addDataEventListener(executor, listener);
     }
 
-    /**
-     * Same as {@link PeerGroup#addEventListener(PeerEventListener, java.util.concurrent.Executor)} but defaults
-     * to running on the user thread.
-     */
-    public void addConnectionEventListener(PeerConnectionEventListener listener) {
-        addConnectionEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Same as {@link PeerGroup#addEventListener(PeerEventListener, java.util.concurrent.Executor)} but defaults
-     * to running on the user thread.
-     */
+    /** See {@link Peer#addDataEventListener(PeerDataEventListener)} */
     public void addDataEventListener(PeerDataEventListener listener) {
         addDataEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** See {@link Peer#addOnTransactionBroadcastListener(OnTransactionBroadcastListener)} */
+    public void addOnTransactionBroadcastListener(OnTransactionBroadcastListener listener) {
+        addOnTransactionBroadcastListener(Threading.USER_THREAD, listener);
+    }
+
+    /** See {@link Peer#addOnTransactionBroadcastListener(OnTransactionBroadcastListener)} */
+    public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
+        onTransactionBroadastEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(executor, checkNotNull(listener)));
+        for (Peer peer : getConnectedPeers())
+            peer.addOnTransactionBroadcastListener(executor, listener);
+        for (Peer peer: getPendingPeers())
+            peer.addOnTransactionBroadcastListener(executor, listener);
+    }
+
+    /** See {@link Peer#addConnectionEventListener(PeerConnectionEventListener)} */
+    public void addConnectionEventListener(PeerConnectionEventListener listener) {
+        addConnectionEventListener(Threading.USER_THREAD, listener);
     }
 
     /** The given event listener will no longer be called with events. */
@@ -746,12 +740,14 @@ public class PeerGroup implements TransactionBroadcaster {
         return result;
     }
 
-    /**
-     * Removes all event listeners simultaneously. Note that this includes listeners added internally by the framework
-     * so it's generally not advised to use this - it exists for special purposes only.
-     */
-    public void clearEventListeners() {
-        peerConnectionEventListeners.clear();
+    /** The given event listener will no longer be called with events. */
+    public boolean removeOnTransactionBroadcastListener(OnTransactionBroadcastListener listener) {
+        boolean result = ListenerRegistration.removeFromList(listener, onTransactionBroadastEventListeners);
+        for (Peer peer : getConnectedPeers())
+            peer.removeOnTransactionBroadcastListener(listener);
+        for (Peer peer : getPendingPeers())
+            peer.removeOnTransactionBroadcastListener(listener);
+        return result;
     }
 
     /**
@@ -1393,12 +1389,12 @@ public class PeerGroup implements TransactionBroadcaster {
             // Make sure the peer knows how to upload transactions that are requested from us.
             peer.addDataEventListener(Threading.SAME_THREAD, peerListener);
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
-            for (ListenerRegistration<PeerConnectionEventListener> registration : peerConnectionEventListeners) {
+            for (ListenerRegistration<PeerConnectionEventListener> registration : peerConnectionEventListeners)
                 peer.addConnectionEventListenerWithoutOnDisconnect(registration.executor, registration.listener);
-            }
-            for (ListenerRegistration<PeerDataEventListener> registration : peerDataEventListeners) {
+            for (ListenerRegistration<PeerDataEventListener> registration : peerDataEventListeners)
                 peer.addDataEventListener(registration.executor, registration.listener);
-            }
+            for (ListenerRegistration<OnTransactionBroadcastListener> registration : onTransactionBroadastEventListeners)
+                peer.addOnTransactionBroadcastListener(registration.executor, registration.listener);
         } finally {
             lock.unlock();
         }
@@ -1564,9 +1560,10 @@ public class PeerGroup implements TransactionBroadcaster {
         }
 
         final int fNumConnectedPeers = numConnectedPeers;
-        for (ListenerRegistration<PeerDataEventListener> registration : peerDataEventListeners) {
+        for (ListenerRegistration<PeerDataEventListener> registration : peerDataEventListeners)
             peer.removeDataEventListener(registration.listener);
-        }
+        for (ListenerRegistration<OnTransactionBroadcastListener> registration : onTransactionBroadastEventListeners)
+            peer.removeOnTransactionBroadcastListener(registration.listener);
         for (final ListenerRegistration<PeerConnectionEventListener> registration : peerConnectionEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override

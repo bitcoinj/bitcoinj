@@ -17,10 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.*;
-import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
-import org.bitcoinj.core.listeners.PeerConnectionEventListener;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
@@ -549,7 +546,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey to = new ECKey();
 
         final Transaction[] onTx = new Transaction[1];
-        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
+        peer.addOnTransactionBroadcastListener(Threading.SAME_THREAD, new OnTransactionBroadcastListener() {
             @Override
             public void onTransaction(Peer peer1, Transaction t) {
                 onTx[0] = t;

@@ -20,9 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.collect.*;
 import com.google.common.net.*;
 import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
@@ -349,7 +347,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final Transaction[] event = new Transaction[1];
         final TransactionConfidence[] confEvent = new TransactionConfidence[1];
-        peerGroup.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
+        peerGroup.addOnTransactionBroadcastListener(Threading.SAME_THREAD, new OnTransactionBroadcastListener() {
             @Override
             public void onTransaction(Peer peer, Transaction t) {
                 event[0] = t;
