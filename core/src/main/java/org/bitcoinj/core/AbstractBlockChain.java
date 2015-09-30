@@ -656,7 +656,6 @@ public abstract class AbstractBlockChain {
                     registration.listener.notifyNewBestBlock(newStoredBlock);
             } else {
                 // Listener wants to be run on some other thread, so marshal it across here.
-                final boolean notFirst = !first;
                 registration.executor.execute(new Runnable() {
                     @Override
                     public void run() {
