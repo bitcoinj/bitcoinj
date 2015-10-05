@@ -2325,7 +2325,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addChangeEventListener(Executor executor, WalletChangeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        changeListeners.add(new ListenerRegistration<WalletChangeEventListener>(executor, listener));
+        changeListeners.add(new ListenerRegistration<WalletChangeEventListener>(listener, executor));
         keyChainGroup.addEventListener(listener, executor);
     }
 
@@ -2335,7 +2335,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addCoinEventListener(Executor executor, WalletCoinEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        coinListeners.add(new ListenerRegistration<WalletCoinEventListener>(executor, listener));
+        coinListeners.add(new ListenerRegistration<WalletCoinEventListener>(listener, executor));
     }
 
     /**

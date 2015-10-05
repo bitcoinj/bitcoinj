@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.*;
 import org.bitcoinj.utils.*;
 
 import javax.annotation.*;
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -195,7 +194,7 @@ public class TransactionConfidence {
      */
     public void addEventListener(Executor executor, Listener listener) {
         checkNotNull(listener);
-        listeners.addIfAbsent(new ListenerRegistration<Listener>(executor, listener));
+        listeners.addIfAbsent(new ListenerRegistration<Listener>(listener, executor));
         pinnedConfidenceObjects.add(this);
     }
 

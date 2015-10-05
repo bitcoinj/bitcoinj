@@ -28,7 +28,7 @@ public class ListenerRegistration<T> {
     public final T listener;
     public final Executor executor;
 
-    public ListenerRegistration(Executor executor, T listener) {
+    public ListenerRegistration(T listener, Executor executor) {
         this.listener = checkNotNull(listener);
         this.executor = checkNotNull(executor);
     }

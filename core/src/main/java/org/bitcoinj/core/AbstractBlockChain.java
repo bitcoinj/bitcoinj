@@ -232,7 +232,7 @@ public abstract class AbstractBlockChain {
      * Adds a {@link NewBestBlockListener} listener to the chain.
      */
     public void addNewBestBlockListener(Executor executor, NewBestBlockListener listener) {
-        newBestBlockListeners.add(new ListenerRegistration<NewBestBlockListener>(executor, listener));
+        newBestBlockListeners.add(new ListenerRegistration<NewBestBlockListener>(listener, executor));
     }
 
     /**
@@ -246,7 +246,7 @@ public abstract class AbstractBlockChain {
      * Adds a generic {@link ReorganizeListener} listener to the chain.
      */
     public void addReorganizeListener(Executor executor, ReorganizeListener listener) {
-        reorganizeListeners.add(new ListenerRegistration<ReorganizeListener>(executor, listener));
+        reorganizeListeners.add(new ListenerRegistration<ReorganizeListener>(listener, executor));
     }
 
     /**
@@ -260,7 +260,7 @@ public abstract class AbstractBlockChain {
      * Adds a generic {@link TransactionReceivedInBlockListener} listener to the chain.
      */
     public void addTransactionReceivedListener(Executor executor, TransactionReceivedInBlockListener listener) {
-        transactionReceivedListeners.add(new ListenerRegistration<TransactionReceivedInBlockListener>(executor, listener));
+        transactionReceivedListeners.add(new ListenerRegistration<TransactionReceivedInBlockListener>(listener, executor));
     }
 
     /**

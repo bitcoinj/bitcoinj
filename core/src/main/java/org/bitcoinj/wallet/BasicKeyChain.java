@@ -406,7 +406,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     @Override
     public void addEventListener(KeyChainEventListener listener, Executor executor) {
-        listeners.add(new ListenerRegistration<KeyChainEventListener>(executor, listener));
+        listeners.add(new ListenerRegistration<KeyChainEventListener>(listener, executor));
     }
 
     @Override

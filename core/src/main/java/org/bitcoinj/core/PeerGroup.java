@@ -680,7 +680,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * </ol>
      */
     public void addConnectionEventListener(Executor executor, PeerConnectionEventListener listener) {
-        peerConnectionEventListeners.add(new ListenerRegistration<PeerConnectionEventListener>(executor, checkNotNull(listener)));
+        peerConnectionEventListeners.add(new ListenerRegistration<PeerConnectionEventListener>(checkNotNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addConnectionEventListener(executor, listener);
         for (Peer peer: getPendingPeers())
@@ -689,7 +689,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** See {@link Peer#addDataEventListener(Executor, PeerDataEventListener)} */
     public void addDataEventListener(final Executor executor, final PeerDataEventListener listener) {
-        peerDataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(executor, checkNotNull(listener)));
+        peerDataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(checkNotNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addDataEventListener(executor, listener);
         for (Peer peer: getPendingPeers())
@@ -708,7 +708,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** See {@link Peer#addOnTransactionBroadcastListener(OnTransactionBroadcastListener)} */
     public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
-        onTransactionBroadastEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(executor, checkNotNull(listener)));
+        onTransactionBroadastEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(checkNotNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addOnTransactionBroadcastListener(executor, listener);
         for (Peer peer: getPendingPeers())

@@ -68,7 +68,7 @@ public class Peer extends PeerSocketHandler {
     static class PeerConnectionListenerRegistration extends ListenerRegistration<PeerConnectionEventListener> {
         boolean callOnDisconnect = true;
         public PeerConnectionListenerRegistration(PeerConnectionEventListener listener, Executor executor) {
-            super(executor, listener);
+            super(listener, executor);
         }
 
         public PeerConnectionListenerRegistration(PeerConnectionEventListener listener, Executor executor, boolean callOnDisconnect) {
@@ -285,7 +285,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Registers a listener that is called when messages are received. */
     public void addDataEventListener(Executor executor, PeerDataEventListener listener) {
-        dataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(executor, listener));
+        dataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(listener, executor));
     }
 
     /** Registers a listener that is called when a transaction is broadcast across the network */
@@ -295,7 +295,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Registers a listener that is called when a transaction is broadcast across the network */
     public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
-        onTransactionEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(executor, listener));
+        onTransactionEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(listener, executor));
     }
 
     // Package-local version for PeerGroup
