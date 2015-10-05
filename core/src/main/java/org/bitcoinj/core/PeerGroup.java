@@ -750,6 +750,28 @@ public class PeerGroup implements TransactionBroadcaster {
         return result;
     }
 
+    /** Use the more specific listener methods instead */
+    @Deprecated @SuppressWarnings("deprecation")
+    public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
+        addConnectionEventListener(executor, listener);
+        addDataEventListener(executor, listener);
+        addOnTransactionBroadcastListener(executor, listener);
+    }
+
+    /** Use the more specific listener methods instead */
+    @Deprecated @SuppressWarnings("deprecation")
+    public void addEventListener(AbstractPeerEventListener listener) {
+        addEventListener(listener, Threading.USER_THREAD);
+    }
+
+    /** Use the more specific listener methods instead */
+    @Deprecated @SuppressWarnings("deprecation")
+    public void removeEventListener(AbstractPeerEventListener listener) {
+        removeConnectionEventListener(listener);
+        removeDataEventListener(listener);
+        removeOnTransactionBroadcastListener(listener);
+    }
+
     /**
      * Returns a newly allocated list containing the currently connected peers. If all you care about is the count,
      * use numConnectedPeers().
