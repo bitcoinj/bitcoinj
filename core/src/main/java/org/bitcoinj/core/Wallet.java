@@ -3911,7 +3911,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<UTXO>();
-        List<DeterministicKey> keys = getActiveKeychain().getLeafKeys();
+        List<ECKey> keys = getImportedKeys();
+        keys.addAll(getActiveKeychain().getLeafKeys());
         List<Address> addresses = new ArrayList<Address>();
         for (ECKey key : keys) {
             Address address = new Address(params, key.getPubKeyHash());
