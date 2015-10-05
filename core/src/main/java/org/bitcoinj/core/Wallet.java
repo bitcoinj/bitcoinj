@@ -2338,11 +2338,9 @@ public class Wallet extends BaseTaggableObject
         coinListeners.add(new ListenerRegistration<WalletCoinEventListener>(listener, executor));
     }
 
-    /**
-     * Adds an event listener object. Methods on this object are called when something interesting happens,
-     * like receiving money. The listener is executed by the given executor.
-     */
-    public void addEventListener(Executor executor, WalletEventListener listener) {
+    /** Use the more specific listener methods instead */
+    @Deprecated
+    public void addEventListener(WalletEventListener listener, Executor executor) {
         addCoinEventListener(executor, listener);
         addChangeEventListener(executor, listener);
     }

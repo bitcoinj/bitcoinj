@@ -3015,12 +3015,12 @@ public class WalletTest extends TestWithWallet {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
         wallet = new Wallet(params);
         final List<ECKey> keys = Lists.newLinkedList();
-        wallet.addEventListener(Threading.SAME_THREAD, new AbstractWalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> k) {
                 keys.addAll(k);
             }
-        });
+        }, Threading.SAME_THREAD);
         wallet.freshReceiveKey();
         assertEquals(1, keys.size());
     }

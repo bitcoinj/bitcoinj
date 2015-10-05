@@ -173,7 +173,7 @@ public class PaymentChannelClientState {
         if (storedChannel != null && storedChannel.close != null) {
             watchCloseConfirmations();
         }
-        wallet.addEventListener(Threading.SAME_THREAD, new AbstractWalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 synchronized (PaymentChannelClientState.this) {
@@ -189,7 +189,7 @@ public class PaymentChannelClientState {
                     }
                 }
             }
-        });
+        }, Threading.SAME_THREAD);
     }
 
     private void watchCloseConfirmations() {

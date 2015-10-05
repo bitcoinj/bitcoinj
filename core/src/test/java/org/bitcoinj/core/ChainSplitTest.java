@@ -557,12 +557,12 @@ public class ChainSplitTest {
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(Threading.SAME_THREAD, new AbstractWalletEventListener() {
+        wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
-        });
+        }, Threading.SAME_THREAD);
 
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         final ECKey coinsTo2 = wallet.freshReceiveKey();
