@@ -104,7 +104,7 @@ public class PeerAddress extends ChildMessage {
         this.port = addr.getPort();
         this.protocolVersion = NetworkParameters.PROTOCOL_VERSION;
         this.services = BigInteger.ZERO;
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        length = MESSAGE_SIZE;
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
