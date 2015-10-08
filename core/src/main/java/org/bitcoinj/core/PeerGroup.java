@@ -85,8 +85,8 @@ public class PeerGroup implements TransactionBroadcaster {
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
-    private final NetworkParameters params;
-    @Nullable private final AbstractBlockChain chain;
+    protected final NetworkParameters params;
+    @Nullable protected final AbstractBlockChain chain;
 
     // This executor is used to queue up jobs: it's used when we don't want to use locks for mutual exclusion,
     // typically because the job might call in to user provided code that needs/wants the freedom to use the API
@@ -123,7 +123,7 @@ public class PeerGroup implements TransactionBroadcaster {
     // The version message to use for new connections.
     @GuardedBy("lock") private VersionMessage versionMessage;
     // Switch for enabling download of pending transaction dependencies.
-    @GuardedBy("lock") private boolean downloadTxDependencies;
+    @GuardedBy("lock") protected boolean downloadTxDependencies;
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
@@ -1301,7 +1301,7 @@ public class PeerGroup implements TransactionBroadcaster {
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = Utils.currentTimeSeconds();
 
-        Peer peer = new Peer(params, ver, address, chain, downloadTxDependencies);
+        Peer peer = createPeer(address, ver);
         peer.addConnectionEventListener(Threading.SAME_THREAD, startupListener);
         peer.setMinProtocolVersion(vMinRequiredProtocolVersion);
         pendingPeers.add(peer);
@@ -1327,6 +1327,12 @@ public class PeerGroup implements TransactionBroadcaster {
             maxConnections++;
         }
         return peer;
+    }
+
+    /** You can override this to customise the creation of {@link Peer} objects. */
+    @GuardedBy("lock")
+    protected Peer createPeer(PeerAddress address, VersionMessage ver) {
+        return new Peer(params, ver, address, chain, downloadTxDependencies);
     }
 
     /**

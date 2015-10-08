@@ -452,7 +452,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processUTXOMessage(UTXOsMessage m) {
+    protected void processUTXOMessage(UTXOsMessage m) {
         SettableFuture<UTXOsMessage> future = null;
         lock.lock();
         try {
@@ -505,7 +505,7 @@ public class Peer extends PeerSocketHandler {
         versionHandshakeFuture.set(this);
     }
 
-    private void startFilteredBlock(FilteredBlock m) {
+    protected void startFilteredBlock(FilteredBlock m) {
         // Filtered blocks come before the data that they refer to, so stash it here and then fill it out as
         // messages stream in. We'll call endFilteredBlock when a non-tx message arrives (eg, another
         // FilteredBlock) or when a tx that isn't needed by that block is found. A ping message is sent after
@@ -520,7 +520,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processNotFoundMessage(NotFoundMessage m) {
+    protected void processNotFoundMessage(NotFoundMessage m) {
         // This is received when we previously did a getdata but the peer couldn't find what we requested in it's
         // memory pool. Typically, because we are downloading dependencies of a relevant transaction and reached
         // the bottom of the dependency tree (where the unconfirmed transactions connect to transactions that are
@@ -539,7 +539,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processAlert(AlertMessage m) {
+    protected void processAlert(AlertMessage m) {
         try {
             if (m.isSignatureValid()) {
                 log.info("Received alert from peer {}: {}", this, m.getStatusBar());
@@ -554,7 +554,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processHeaders(HeadersMessage m) throws ProtocolException {
+    protected void processHeaders(HeadersMessage m) throws ProtocolException {
         // Runs in network loop thread for this peer.
         //
         // This method can run if a peer just randomly sends us a "headers" message (should never happen), or more
@@ -634,7 +634,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processGetData(GetDataMessage getdata) {
+    protected void processGetData(GetDataMessage getdata) {
         log.info("{}: Received getdata message: {}", getAddress(), getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
         for (ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
@@ -652,7 +652,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processTransaction(final Transaction tx) throws VerificationException {
+    protected void processTransaction(final Transaction tx) throws VerificationException {
         // Check a few basic syntax issues to ensure the received TX isn't nonsense.
         tx.verify();
         lock.lock();
@@ -784,7 +784,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     // The marker object in the future returned is the same as the parameter. It is arbitrary and can be anything.
-    private ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
+    protected ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
                                                                   final Object marker,
                                                                   final List<Transaction> results) {
         final SettableFuture<Object> resultFuture = SettableFuture.create();
@@ -865,7 +865,7 @@ public class Peer extends PeerSocketHandler {
         return resultFuture;
     }
 
-    private void processBlock(Block m) {
+    protected void processBlock(Block m) {
         if (log.isDebugEnabled()) {
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
         }
@@ -927,7 +927,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     // TODO: Fix this duplication.
-    private void endFilteredBlock(FilteredBlock m) {
+    protected void endFilteredBlock(FilteredBlock m) {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast filtered block {}", getAddress(), m.getHash().toString());
         if (!vDownloadData) {
@@ -1062,7 +1062,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processInv(InventoryMessage inv) {
+    protected void processInv(InventoryMessage inv) {
         List<InventoryItem> items = inv.getItems();
 
         // Separate out the blocks and transactions, we'll handle them differently
@@ -1502,7 +1502,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processPong(Pong m) {
+    protected void processPong(Pong m) {
         // Iterates over a snapshot of the list, so we can run unlocked here.
         for (PendingPing ping : pendingPings) {
             if (m.getNonce() == ping.nonce) {
@@ -1574,8 +1574,9 @@ public class Peer extends PeerSocketHandler {
      */
     public boolean setMinProtocolVersion(int minProtocolVersion) {
         this.vMinProtocolVersion = minProtocolVersion;
-        if (getVersionMessage().clientVersion < minProtocolVersion) {
-            log.warn("{}: Disconnecting due to new min protocol version {}", this, minProtocolVersion);
+        VersionMessage ver = getPeerVersionMessage();
+        if (ver != null && ver.clientVersion < minProtocolVersion) {
+            log.warn("{}: Disconnecting due to new min protocol version {}, got: {}", this, minProtocolVersion, ver.clientVersion);
             close();
             return true;
         }
