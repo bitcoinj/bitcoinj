@@ -168,6 +168,12 @@ public class FakeTxBuilder {
 
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, long version,
+                                            long timeSeconds, Transaction... transactions) {
+        return createFakeBlock(blockStore, version, timeSeconds, 0, transactions);
+    }
+
+    /** Emulates receiving a valid block that builds on top of the chain. */
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version,
                                             long timeSeconds, int height,
                                             Transaction... transactions) {
         try {
@@ -194,9 +200,14 @@ public class FakeTxBuilder {
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, Integer height,
+    public static BlockPair createFakeBlock(BlockStore blockStore, int height,
                                             Transaction... transactions) {
         return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height, transactions);
+    }
+
+    /** Emulates receiving a valid block that builds on top of the chain. */
+    public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), 0, transactions);
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
