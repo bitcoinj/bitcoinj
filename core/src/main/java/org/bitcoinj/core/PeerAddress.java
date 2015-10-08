@@ -97,7 +97,7 @@ public class PeerAddress extends ChildMessage {
      */
     public PeerAddress(InetSocketAddress addr) {
         if (addr.getHostName() == null || !addr.getHostName().toLowerCase().endsWith(".onion")) {
-            this.addr = checkNotNull(addr.getAddress());
+            this.addr = addr.getHostName() == null ? addr.getAddress() : new InetSocketAddress(addr.getHostName(), addr.getPort()).getAddress();
         } else {
             this.hostname = addr.getHostName();
         }
