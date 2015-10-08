@@ -41,7 +41,7 @@ import java.util.List;
 public class GetUTXOsMessage extends Message {
     public static final int MIN_PROTOCOL_VERSION = 70002;
     /** Bitmask of service flags required for a node to support this command (0x3) */
-    public static final int SERVICE_FLAGS_REQUIRED = 3;
+    public static final long SERVICE_FLAGS_REQUIRED = 3;
 
     private boolean includeMempool;
     private ImmutableList<TransactionOutPoint> outPoints;
