@@ -7,14 +7,8 @@ var context = new bcj.core.Context(params);
 bcj.utils.BriefLogFormatter.init();
 
 var PeerAddress = Java.type("org.bitcoinj.core.PeerAddress");
-var InetSocketAddress = Java.type("java.net.InetSocketAddress");
-
-// The PeerAddress class can now handle InetSocketAddresses with hostnames if they are .onion.
-var OnionAddress = InetSocketAddress.createUnresolved("hhiv5pnxenvbf4am.onion", params.port);
-
 var pg = bcj.core.PeerGroup.newWithTor(context, null, new com.subgraph.orchid.TorClient(), false);
-
-pg.addAddress(new PeerAddress(OnionAddress));
+pg.addAddress(new PeerAddress("nkf5e6b7pl4jfd4a.onion", params.port));
 pg.start();
 
 pg.waitForPeers(1).get();

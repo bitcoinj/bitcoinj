@@ -96,15 +96,17 @@ public class PeerAddress extends ChildMessage {
      * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
      */
     public PeerAddress(InetSocketAddress addr) {
-        if (addr.getHostName() == null || !addr.getHostName().toLowerCase().endsWith(".onion")) {
-            this.addr = addr.getHostName() == null ? addr.getAddress() : new InetSocketAddress(addr.getHostName(), addr.getPort()).getAddress();
-        } else {
-            this.hostname = addr.getHostName();
-        }
-        this.port = addr.getPort();
+        this(addr.getAddress(), addr.getPort());
+    }
+
+    /**
+     * Constructs a peer address from a stringified hostname+port. Use this if you want to connect to a Tor .onion address.
+     */
+    public PeerAddress(String hostname, int port) {
+        this.hostname = hostname;
+        this.port = port;
         this.protocolVersion = NetworkParameters.PROTOCOL_VERSION;
         this.services = BigInteger.ZERO;
-        length = MESSAGE_SIZE;
     }
 
     public static PeerAddress localhost(NetworkParameters params) {

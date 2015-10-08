@@ -120,7 +120,7 @@ public class HttpDiscovery implements PeerDiscovery {
         InetSocketAddress[] results = new InetSocketAddress[seeds.getSeedCount()];
         int i = 0;
         for (PeerSeedProtos.PeerSeedData data : seeds.getSeedList())
-            results[i++] = InetSocketAddress.createUnresolved(data.getIpAddress(), data.getPort());
+            results[i++] = new InetSocketAddress(data.getIpAddress(), data.getPort());
         return results;
     }
 
