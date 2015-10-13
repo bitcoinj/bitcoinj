@@ -15,11 +15,13 @@
 package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.listeners.PeerConnectionEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * A program that sends a transaction with the specified fee and measures how long it takes to confirm.
@@ -77,6 +79,23 @@ public class TestFeeLevel {
         kit.wallet().completeTx(request);
         System.out.println("Size in bytes is " + request.tx.bitcoinSerialize().length);
         System.out.println("TX is " + request.tx);
+        System.out.println("Waiting for " + kit.peerGroup().getMaxConnections() + " connected peers");
+        kit.peerGroup().addConnectionEventListener(new PeerConnectionEventListener() {
+
+            @Override
+            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
+            }
+
+            @Override
+            public void onPeerDisconnected(Peer peer, int peerCount) {
+                System.out.println(peerCount + " peers connected");
+            }
+
+            @Override
+            public void onPeerConnected(Peer peer, int peerCount) {
+                System.out.println(peerCount + " peers connected");
+            }
+        });
         kit.peerGroup().broadcastTransaction(request.tx).future().get();
         System.out.println("Send complete, waiting for confirmation");
         request.tx.getConfidence().getDepthFuture(1).get();
