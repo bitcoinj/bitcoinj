@@ -52,7 +52,7 @@ public class TestFeeLevel {
     }
 
     private static void go(Coin feeToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
-        kit.peerGroup().setMaxConnections(50);
+        kit.peerGroup().setMaxConnections(25);
 
         if (kit.wallet().getBalance().compareTo(feeToTest) < 0) {
             System.out.println("Send some money to " + kit.wallet().currentReceiveAddress());
