@@ -184,6 +184,8 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
                 if (signature != null) {
                     if (!TransactionSignature.isEncodingCanonical(chunk.data))
                         return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
+                    if (!signature.isCanonical())
+                        return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
                 }
             }
         }
