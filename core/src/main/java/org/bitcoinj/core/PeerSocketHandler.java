@@ -61,7 +61,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
         checkNotNull(params);
         serializer = params.getDefaultSerializer();
-        this.peerAddress = new PeerAddress(remoteIp);
+        this.peerAddress = new PeerAddress(params, remoteIp);
     }
 
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {

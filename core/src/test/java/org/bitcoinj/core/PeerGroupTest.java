@@ -429,7 +429,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(0);
         VersionMessage versionMessage = new VersionMessage(params, 2);
-        versionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+        versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage.localServices = VersionMessage.NODE_NETWORK;
         connectPeer(1, versionMessage);
         peerGroup.waitForPeers(1).get();
@@ -441,7 +441,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(100);
         VersionMessage versionMessage = new VersionMessage(params, 2);
-        versionMessage.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+        versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage.localServices = VersionMessage.NODE_NETWORK;
         InboundMessageQueuer p1 = connectPeer(1, versionMessage);
         Ping ping = (Ping) waitForOutbound(p1);
@@ -458,10 +458,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void downloadPeerSelection() throws Exception {
         peerGroup.start();
         VersionMessage versionMessage2 = new VersionMessage(params, 2);
-        versionMessage2.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+        versionMessage2.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage2.localServices = VersionMessage.NODE_NETWORK;
         VersionMessage versionMessage3 = new VersionMessage(params, 3);
-        versionMessage3.clientVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+        versionMessage3.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage3.localServices = VersionMessage.NODE_NETWORK;
         assertNull(peerGroup.getDownloadPeer());
         Peer a = connectPeer(1, versionMessage2).peer;

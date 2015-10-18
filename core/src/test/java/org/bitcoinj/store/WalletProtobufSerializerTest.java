@@ -104,8 +104,8 @@ public class WalletProtobufSerializerTest {
         // Check basic tx serialization.
         Coin v1 = COIN;
         Transaction t1 = createFakeTx(params, v1, myAddress);
-        t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4")));
-        t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8")));
+        t1.getConfidence().markBroadcastBy(new PeerAddress(params, InetAddress.getByName("1.2.3.4")));
+        t1.getConfidence().markBroadcastBy(new PeerAddress(params, InetAddress.getByName("5.6.7.8")));
         t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
         myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);

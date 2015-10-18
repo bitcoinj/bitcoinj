@@ -506,7 +506,7 @@ public class WalletProtobufSerializer {
 
             // Update transaction outputs to point to inputs that spend them
             for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-                WalletTransaction wtx = connectTransactionOutputs(txProto);
+                WalletTransaction wtx = connectTransactionOutputs(params, txProto);
                 wallet.addWalletTransaction(wtx);
             }
 
@@ -672,7 +672,8 @@ public class WalletProtobufSerializer {
         txMap.put(txProto.getHash(), tx);
     }
 
-    private WalletTransaction connectTransactionOutputs(org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
+    private WalletTransaction connectTransactionOutputs(final NetworkParameters params,
+                                                        final org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = txMap.get(txProto.getHash());
         final WalletTransaction.Pool pool;
         switch (txProto.getPool()) {
@@ -710,14 +711,15 @@ public class WalletProtobufSerializer {
         if (txProto.hasConfidence()) {
             Protos.TransactionConfidence confidenceProto = txProto.getConfidence();
             TransactionConfidence confidence = tx.getConfidence();
-            readConfidence(tx, confidenceProto, confidence);
+            readConfidence(params, tx, confidenceProto, confidence);
         }
 
         return new WalletTransaction(pool, tx);
     }
 
-    private void readConfidence(Transaction tx, Protos.TransactionConfidence confidenceProto,
-                                TransactionConfidence confidence) throws UnreadableWalletException {
+    private void readConfidence(final NetworkParameters params, final Transaction tx,
+                                final Protos.TransactionConfidence confidenceProto,
+                                final TransactionConfidence confidence) throws UnreadableWalletException {
         // We are lenient here because tx confidence is not an essential part of the wallet.
         // If the tx has an unknown type of confidence, ignore.
         if (!confidenceProto.hasType()) {
@@ -772,7 +774,7 @@ public class WalletProtobufSerializer {
                 throw new UnreadableWalletException("Peer IP address does not have the right length", e);
             }
             int port = proto.getPort();
-            PeerAddress address = new PeerAddress(ip, port);
+            PeerAddress address = new PeerAddress(params, ip, port);
             address.setServices(BigInteger.valueOf(proto.getServices()));
             confidence.markBroadcastBy(address);
         }

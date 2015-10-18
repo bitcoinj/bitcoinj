@@ -47,11 +47,6 @@ import org.bitcoinj.utils.VersionTally;
  */
 public abstract class NetworkParameters {
     /**
-     * The protocol version this library implements.
-     */
-    public static final int PROTOCOL_VERSION = 70001;
-
-    /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
      */
     public static final byte[] SATOSHI_KEY = Utils.HEX.decode("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
@@ -516,5 +511,24 @@ public abstract class NetworkParameters {
         if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
             verifyFlags.add(Script.VerifyFlag.P2SH);
         return verifyFlags;
+    }
+
+    public abstract int getProtocolVersionNum(final ProtocolVersion version);
+
+    public static enum ProtocolVersion {
+        MINIMUM(70000),
+        PONG(60001),
+        BLOOM_FILTER(70000),
+        CURRENT(70001);
+
+        private final int bitcoinProtocol;
+
+        ProtocolVersion(final int bitcoinProtocol) {
+            this.bitcoinProtocol = bitcoinProtocol;
+        }
+
+        public int getBitcoinProtocolVersion() {
+            return bitcoinProtocol;
+        }
     }
 }

@@ -130,7 +130,7 @@ public class PeerGroup implements TransactionBroadcaster {
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
     // Minimum protocol version we will allow ourselves to connect to: require Bloom filtering.
-    private volatile int vMinRequiredProtocolVersion = FilteredBlock.MIN_PROTOCOL_VERSION;
+    private volatile int vMinRequiredProtocolVersion;
 
     /** How many milliseconds to wait after receiving a pong before sending another ping. */
     public static final long DEFAULT_PING_INTERVAL_MSEC = 2000;
@@ -411,6 +411,7 @@ public class PeerGroup implements TransactionBroadcaster {
         onTransactionBroadastEventListeners = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
+        vMinRequiredProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -855,7 +856,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** Convenience method for addAddress(new PeerAddress(address, params.port)); */
     public void addAddress(InetAddress address) {
-        addAddress(new PeerAddress(address, params.getPort()));
+        addAddress(new PeerAddress(params, address, params.getPort()));
     }
 
     /**
@@ -884,7 +885,7 @@ public class PeerGroup implements TransactionBroadcaster {
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             InetSocketAddress[] addresses;
             addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeoutMillis, TimeUnit.MILLISECONDS);
-            for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(address));
+            for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(params, address));
             if (addressList.size() >= maxPeersToDiscoverCount) break;
         }
         if (!addressList.isEmpty()) {
@@ -1273,7 +1274,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public Peer connectTo(InetSocketAddress address) {
         lock.lock();
         try {
-            PeerAddress peerAddress = new PeerAddress(address);
+            PeerAddress peerAddress = new PeerAddress(params, address);
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
             return connectTo(peerAddress, true, vConnectTimeoutMillis);
         } finally {
@@ -1468,7 +1469,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         return;  // Disabled.
                     }
                     for (Peer peer : getConnectedPeers()) {
-                        if (peer.getPeerVersionMessage().clientVersion < Pong.MIN_PROTOCOL_VERSION)
+                        if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
                             continue;
                         peer.ping();
                     }
@@ -2079,7 +2080,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // better then we'll settle for the highest we found instead.
         int highestVersion = 0, preferredVersion = 0;
         // If/when PREFERRED_VERSION is not equal to vMinRequiredProtocolVersion, reenable the last test in PeerGroupTest.downloadPeerSelection
-        final int PREFERRED_VERSION = FilteredBlock.MIN_PROTOCOL_VERSION;
+        final int PREFERRED_VERSION = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
         for (Peer peer : candidates) {
             highestVersion = Math.max(peer.getPeerVersionMessage().clientVersion, highestVersion);
             preferredVersion = Math.min(highestVersion, PREFERRED_VERSION);

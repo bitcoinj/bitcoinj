@@ -116,7 +116,7 @@ public class WalletAppKit extends AbstractIdleService {
     public WalletAppKit connectToLocalHost() {
         try {
             final InetAddress localHost = InetAddress.getLocalHost();
-            return setPeerNodes(new PeerAddress(localHost, params.getPort()));
+            return setPeerNodes(new PeerAddress(params, localHost, params.getPort()));
         } catch (UnknownHostException e) {
             // Borked machine with no loopback adapter configured properly.
             throw new RuntimeException(e);

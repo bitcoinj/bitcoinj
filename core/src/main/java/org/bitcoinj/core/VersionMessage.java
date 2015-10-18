@@ -89,7 +89,7 @@ public class VersionMessage extends Message {
     
     public VersionMessage(NetworkParameters params, int newBestHeight) {
         super(params);
-        clientVersion = NetworkParameters.PROTOCOL_VERSION;
+        clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         localServices = 0;
         time = System.currentTimeMillis() / 1000;
         // Note that the official client doesn't do anything with these, and finding out your own external IP address
@@ -274,7 +274,7 @@ public class VersionMessage extends Message {
      * Returns true if the clientVersion field is >= Pong.MIN_PROTOCOL_VERSION. If it is then ping() is usable.
      */
     public boolean isPingPongSupported() {
-        return clientVersion >= Pong.MIN_PROTOCOL_VERSION;
+        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
     }
 
     /**
@@ -282,7 +282,7 @@ public class VersionMessage extends Message {
      * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {
-        return clientVersion >= FilteredBlock.MIN_PROTOCOL_VERSION;
+        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
     }
 
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
