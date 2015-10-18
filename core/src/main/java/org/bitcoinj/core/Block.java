@@ -121,8 +121,9 @@ public class Block extends Message {
     }
 
     /**
-     * Contruct a block object from the Bitcoin wire format.
+     * Construct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
+     * @param payloadBytes the payload to extract the block from.
      * @param serializer the serializer to use for this message.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
@@ -963,5 +964,15 @@ public class Block extends Message {
     @VisibleForTesting
     boolean isTransactionBytesValid() {
         return transactionBytesValid;
+    }
+
+    /**
+     * Return whether this block contains any transactions.
+     * 
+     * @return  true if the block contains transactions, false otherwise (is
+     * purely a header).
+     */
+    public boolean hasTransactions() {
+        return !this.transactions.isEmpty();
     }
 }
