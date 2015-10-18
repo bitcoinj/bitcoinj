@@ -1177,25 +1177,17 @@ public class Transaction extends ChildMessage {
 
         // Check block height is in coinbase input script
         final TransactionInput in = this.getInputs().get(0);
-        final List<ScriptChunk> chunks;
-        
-        try {
-            final Script scriptSig = in.getScriptSig();
-            chunks = scriptSig.getChunks();
-        } catch(ScriptException e) {
-            throw new VerificationException("Coinbase input script signature is invalid.", e);
+        final ScriptBuilder builder = new ScriptBuilder();
+        builder.data(ScriptBuilder.createHeightScriptData(height));
+        final byte[] expected = builder.build().getProgram();
+        final byte[] actual = in.getScriptBytes();
+        if (actual.length < expected.length) {
+            throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");
         }
-        if (chunks.isEmpty()) {
-            throw new VerificationException("Coinbase input script signature is empty.");
-        }
-        final ScriptChunk chunk = chunks.get(0);
-        if (!chunk.isPushData()) {
-            throw new VerificationException("First element of coinbase input script signature is not pushdata.");
-        }
-        final byte[] data = chunk.data;
-        final byte[] expected = ScriptBuilder.createHeightScriptData(height);
-        if (!Arrays.equals(data, expected)) {
-            throw new VerificationException.CoinbaseHeightMismatch("Coinbase height mismatch.");
+        for (int scriptIdx = 0; scriptIdx < expected.length; scriptIdx++) {
+            if (actual[scriptIdx] != expected[scriptIdx]) {
+                throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");
+            }
         }
     }
 
