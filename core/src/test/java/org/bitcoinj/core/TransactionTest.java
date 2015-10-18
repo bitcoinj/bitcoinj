@@ -307,15 +307,29 @@ public class TransactionTest {
         assertEquals(79, tx1.getMessageSizeForPriorityCalc());
     }
 
-    /**
-     * 
-     * @throws VerificationException 
-     */
     @Test
     public void testCoinbaseHeightCheck() throws VerificationException {
         // Coinbase transaction from block 300,000
         final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
+        final Transaction transaction = params.getDefaultSerializer().makeTransaction(transactionBytes);
+        transaction.checkCoinBaseHeight(height);
+    }
+
+    /**
+     * Test a coinbase transaction whose script has nonsense after the block height.
+     * See https://github.com/bitcoinj/bitcoinj/issues/1097
+     */
+    @Test
+    public void testCoinbaseHeightCheckWithDamagedScript() throws VerificationException {
+        // Coinbase transaction from block 224,430
+        final byte[] transactionBytes = HEX.decode(
+            "010000000100000000000000000000000000000000000000000000000000000000"
+            + "00000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d0000"
+            + "0000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac"
+            + "1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf11551"
+            + "5b7c135e779e9f442f88ac00000000");
+        final int height = 224430;
         final Transaction transaction = params.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
