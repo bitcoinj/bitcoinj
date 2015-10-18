@@ -69,7 +69,15 @@ public abstract class MessageSerializer {
      * length as block length.
      */
     public final Block makeBlock(byte[] payloadBytes) throws ProtocolException {
-        return makeBlock(payloadBytes, payloadBytes.length);
+        return makeBlock(payloadBytes, 0, payloadBytes.length);
+    }
+
+    /**
+     * Make a block from the payload, using an offset of zero and the provided
+     * length as block length.
+     */
+    public final Block makeBlock(byte[] payloadBytes, int length) throws ProtocolException {
+        return makeBlock(payloadBytes, 0, length);
     }
 
     /**
@@ -77,7 +85,7 @@ public abstract class MessageSerializer {
      * length as block length. Extension point for alternative
      * serialization format support.
      */
-    public abstract Block makeBlock(byte[] payloadBytes, int length) throws ProtocolException;
+    public abstract Block makeBlock(final byte[] payloadBytes, final int offset, final int length) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an filter message from the payload. Extension point for alternative

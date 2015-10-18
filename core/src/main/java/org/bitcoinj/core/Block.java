@@ -135,6 +135,21 @@ public class Block extends Message {
     }
 
     /**
+     * Construct a block object from the Bitcoin wire format.
+     * @param params NetworkParameters object.
+     * @param payloadBytes the payload to extract the block from.
+     * @param offset The location of the first payload byte within the array.
+     * @param serializer the serializer to use for this message.
+     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
+     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @throws ProtocolException
+     */
+    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length)
+            throws ProtocolException {
+        super(params, payloadBytes, offset, serializer, length);
+    }
+
+    /**
      * Construct a block object from the Bitcoin wire format. Used in the case of a block
      * contained within another message (i.e. for AuxPoW header).
      *

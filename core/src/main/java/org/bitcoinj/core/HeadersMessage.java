@@ -64,31 +64,25 @@ public class HeadersMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        if (length == UNKNOWN_LENGTH) {
-            int saveCursor = cursor;
-            long numHeaders = readVarInt();
-            cursor = saveCursor;
-
-            // Each header has 80 bytes and one more byte for transactions number which is 00.
-            length = (Block.HEADER_SIZE + 1) * (int)numHeaders;
-        }
-
         long numHeaders = readVarInt();
         if (numHeaders > MAX_HEADERS)
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                                          MAX_HEADERS);
 
         blockHeaders = new ArrayList<Block>();
+        final BitcoinSerializer serializer = this.params.getSerializer(true);
 
         for (int i = 0; i < numHeaders; ++i) {
-            // Read 80 bytes of the header and one more byte for the transaction list, which is always a 00 because the
-            // transaction list is empty.
-            byte[] blockHeader = readBytes(Block.HEADER_SIZE + 1);
-            if (blockHeader[Block.HEADER_SIZE] != 0)
+            final Block newBlockHeader = serializer.makeBlock(payload, cursor, UNKNOWN_LENGTH);
+            if (newBlockHeader.hasTransactions()) {
                 throw new ProtocolException("Block header does not end with a null byte");
-            Block newBlockHeader = this.params.getSerializer(true)
-                .makeBlock(blockHeader, Block.HEADER_SIZE + 1);
+            }
+            cursor += newBlockHeader.optimalEncodingMessageSize;
             blockHeaders.add(newBlockHeader);
+        }
+
+        if (length == UNKNOWN_LENGTH) {
+            length = cursor - offset;
         }
 
         if (log.isDebugEnabled()) {
