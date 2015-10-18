@@ -108,7 +108,7 @@ public class Block extends Message {
         time = System.currentTimeMillis() / 1000;
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
-        length = 80;
+        length = HEADER_SIZE;
     }
 
     /**

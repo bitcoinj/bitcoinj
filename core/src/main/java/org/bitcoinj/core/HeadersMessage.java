@@ -70,7 +70,7 @@ public class HeadersMessage extends Message {
             cursor = saveCursor;
 
             // Each header has 80 bytes and one more byte for transactions number which is 00.
-            length = 81 * (int)numHeaders;
+            length = (Block.HEADER_SIZE + 1) * (int)numHeaders;
         }
 
         long numHeaders = readVarInt();
@@ -83,11 +83,11 @@ public class HeadersMessage extends Message {
         for (int i = 0; i < numHeaders; ++i) {
             // Read 80 bytes of the header and one more byte for the transaction list, which is always a 00 because the
             // transaction list is empty.
-            byte[] blockHeader = readBytes(81);
-            if (blockHeader[80] != 0)
+            byte[] blockHeader = readBytes(Block.HEADER_SIZE + 1);
+            if (blockHeader[Block.HEADER_SIZE] != 0)
                 throw new ProtocolException("Block header does not end with a null byte");
             Block newBlockHeader = this.params.getSerializer(true)
-                .makeBlock(blockHeader, 81);
+                .makeBlock(blockHeader, Block.HEADER_SIZE + 1);
             blockHeaders.add(newBlockHeader);
         }
 
