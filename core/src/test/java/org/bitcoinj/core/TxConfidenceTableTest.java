@@ -45,9 +45,9 @@ public class TxConfidenceTableTest {
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(params, COIN, to, change);
         assertEquals(tx1.getHash(), tx2.getHash());
 
-        address1 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
-        address2 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
-        address3 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
+        address1 = new PeerAddress(params, InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
+        address2 = new PeerAddress(params, InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
+        address3 = new PeerAddress(params, InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
     }
 
     @Test

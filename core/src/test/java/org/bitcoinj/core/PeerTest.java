@@ -79,7 +79,7 @@ public class PeerTest extends TestWithNetworkConnections {
         super.setUp();
         VersionMessage ver = new VersionMessage(params, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
-        peer = new Peer(params, ver, new PeerAddress(address), blockChain);
+        peer = new Peer(params, ver, new PeerAddress(params, address), blockChain);
         peer.addWallet(wallet);
     }
 
@@ -269,7 +269,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Check co-ordination of which peer to download via the memory pool.
         VersionMessage ver = new VersionMessage(params, 100);
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4242);
-        Peer peer2 = new Peer(params, ver, new PeerAddress(address), blockChain);
+        Peer peer2 = new Peer(params, ver, new PeerAddress(params, address), blockChain);
         peer2.addWallet(wallet);
         VersionMessage peerVersion = new VersionMessage(params, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = 70001;

@@ -55,7 +55,8 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testAddr() throws Exception {
-        MessageSerializer serializer = MainNetParams.get().getDefaultSerializer();
+        final NetworkParameters params = MainNetParams.get();
+        MessageSerializer serializer = params.getDefaultSerializer();
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         AddressMessage addressMessage = (AddressMessage) serializer.deserialize(ByteBuffer.wrap(ADDRESS_MESSAGE_BYTES));
         assertEquals(1, addressMessage.getAddresses().size());
@@ -66,7 +67,7 @@ public class BitcoinSerializerTest {
         serializer.serialize(addressMessage, bos);
 
         assertEquals(31, addressMessage.getMessageSize());
-        addressMessage.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+        addressMessage.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
         assertEquals(61, addressMessage.getMessageSize());
         addressMessage.removeAddress(0);
         assertEquals(31, addressMessage.getMessageSize());
