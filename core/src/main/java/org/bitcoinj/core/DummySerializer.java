@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * Dummy serializer used ONLY for objects which do not have network parameters
  * set.
  */
-class DummySerializer implements MessageSerializer {
+class DummySerializer extends MessageSerializer {
     public static final DummySerializer DEFAULT = new DummySerializer();
 
     private static final String DEFAULT_EXCEPTION_MESSAGE = "Dummy serializer cannot serialize/deserialize objects as it does not know which network they belong to.";
@@ -64,11 +64,6 @@ class DummySerializer implements MessageSerializer {
     }
 
     @Override
-    public Block makeBlock(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
     public Block makeBlock(byte[] payloadBytes, int length) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
@@ -91,16 +86,6 @@ class DummySerializer implements MessageSerializer {
     @Override
     public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hash) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
-    public Transaction makeTransaction(byte[] payloadBytes) throws UnsupportedOperationException {
-        return makeTransaction(payloadBytes, 0, payloadBytes.length, null);
-    }
-
-    @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset) throws UnsupportedOperationException {
-        return makeTransaction(payloadBytes, offset, payloadBytes.length, null);
     }
 
     @Override
