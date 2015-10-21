@@ -112,7 +112,8 @@ public class MultiplexingDiscovery implements PeerDiscovery {
                 Collections.addAll(addrs, inetAddresses);
             }
             if (addrs.size() == 0)
-                throw new PeerDiscoveryException("No peer discovery returned any results: check internet connection?");
+                throw new PeerDiscoveryException("No peer discovery returned any results in "
+                        + timeoutUnit.toMillis(timeoutValue) + "ms. Check internet connection?");
             Collections.shuffle(addrs);
             vThreadPool.shutdownNow();
             return addrs.toArray(new InetSocketAddress[addrs.size()]);

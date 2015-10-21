@@ -82,6 +82,8 @@ public class PeerGroup implements TransactionBroadcaster {
     public static final int DEFAULT_CONNECTIONS = 12;
     private static final int TOR_TIMEOUT_SECONDS = 60;
     private volatile int vMaxPeersToDiscoverCount = 100;
+    private static final long DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS = 5000;
+    private volatile long vPeerDiscoveryTimeoutMillis = DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS;
 
     protected final ReentrantLock lock = Threading.lock("peergroup");
 
@@ -426,6 +428,13 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         });
         return result;
+    }
+
+    /**
+     * This is how many milliseconds we wait for peer discoveries to return their results.
+     */
+    public void setPeerDiscoveryTimeoutMillis(long peerDiscoveryTimeoutMillis) {
+        this.vPeerDiscoveryTimeoutMillis = peerDiscoveryTimeoutMillis;
     }
 
     /**
@@ -869,11 +878,12 @@ public class PeerGroup implements TransactionBroadcaster {
         // Don't hold the lock whilst doing peer discovery: it can take a long time and cause high API latency.
         checkState(!lock.isHeldByCurrentThread());
         int maxPeersToDiscoverCount = this.vMaxPeersToDiscoverCount;
+        long peerDiscoveryTimeoutMillis = this.vPeerDiscoveryTimeoutMillis;
         long start = System.currentTimeMillis();
         final List<PeerAddress> addressList = Lists.newLinkedList();
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             InetSocketAddress[] addresses;
-            addresses = peerDiscovery.getPeers(requiredServices, 5, TimeUnit.SECONDS);
+            addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeoutMillis, TimeUnit.MILLISECONDS);
             for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(address));
             if (addressList.size() >= maxPeersToDiscoverCount) break;
         }
@@ -891,8 +901,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 });
             }
         }
-        log.info("Peer discovery took {}msec and returned {} items",
-                System.currentTimeMillis() - start, addressList.size());
+        log.info("Peer discovery took {}ms and returned {} items", System.currentTimeMillis() - start,
+                addressList.size());
         return addressList.size();
     }
 
