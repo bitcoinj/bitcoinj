@@ -30,6 +30,7 @@ import javax.annotation.*;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
+import org.bitcoinj.core.AbstractBlock;
 
 /**
  * <p>An implementation of {@link AbstractPeerDataEventListener} that listens to chain download events and tracks progress
@@ -60,7 +61,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     }
 
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft) {
         if (caughtUp)
             return;
 

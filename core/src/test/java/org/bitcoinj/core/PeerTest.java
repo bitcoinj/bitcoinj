@@ -347,7 +347,7 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         peer.addBlocksDownloadedEventListener(Threading.SAME_THREAD, new BlocksDownloadedEventListener() {
             @Override
-            public synchronized void onBlocksDownloaded(Peer p, Block block, @Nullable FilteredBlock filteredBlock,  int blocksLeft) {
+            public synchronized void onBlocksDownloaded(Peer p, AbstractBlock block,  int blocksLeft) {
                 int newValue = newBlockMessagesReceived.incrementAndGet();
                 if (newValue != 3 || p != peer || !block.equals(b2) || blocksLeft != OTHER_PEER_CHAIN_HEIGHT - 2)
                     fail.set(true);

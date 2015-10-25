@@ -1133,7 +1133,7 @@ public class WalletTool {
             case BLOCK:
                 peers.addBlocksDownloadedEventListener(new BlocksDownloadedEventListener() {
                     @Override
-                    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+                    public void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft) {
                         // Check if we already ran. This can happen if a block being received triggers download of more
                         // blocks, or if we receive another block whilst the peer group is shutting down.
                         if (latch.getCount() == 0) return;

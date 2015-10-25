@@ -302,7 +302,7 @@ public abstract class AbstractBlockChain {
      * Adds/updates the given {@link StoredBlock} with the block store.
      * This version is used when the transactions have already been verified to properly spend txOutputChanges.
      * @param storedPrev The {@link StoredBlock} which immediately precedes block.
-     * @param header The {@link StoredBlock} to add/update.
+     * @param header The {@link Block} to add/update.
      * @param txOutputChanges The total sum of all changes made by this block to the set of open transaction outputs
      *                        (from a call to connectTransactions), if in fully verifying mode (null otherwise).
      * @return the newly created {@link StoredBlock}
@@ -377,7 +377,7 @@ public abstract class AbstractBlockChain {
             // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
             // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
             // of the transactions.
-            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
+            return add(block.cloneAsHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
         } catch (BlockStoreException e) {
             // TODO: Figure out a better way to propagate this exception to the user.
             throw new RuntimeException(e);
@@ -418,7 +418,7 @@ public abstract class AbstractBlockChain {
      * @throws BlockStoreException if the block store had an underlying error or newBlock does not exist in the block store at all.
      * @return The full set of all changes made to the set of open transaction outputs.
      */
-    protected abstract TransactionOutputChanges connectTransactions(StoredBlock newBlock) throws VerificationException, BlockStoreException, PrunedException;    
+    protected abstract TransactionOutputChanges connectTransactions(StoredBlock newBlock) throws VerificationException, BlockStoreException, PrunedException;   
     
     // filteredTxHashList contains all transactions, filteredTxn just a subset
     private boolean add(Block block, boolean tryConnecting,

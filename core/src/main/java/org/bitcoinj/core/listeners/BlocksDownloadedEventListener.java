@@ -18,8 +18,6 @@ package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.*;
 
-import javax.annotation.*;
-
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
  * they can pre-filter messages before they are procesesed by a {@link Peer} or {@link PeerGroup}, and they can
@@ -27,7 +25,6 @@ import javax.annotation.*;
  */
 public interface BlocksDownloadedEventListener {
 
-    // TODO: Fix the Block/FilteredBlock type hierarchy so we can avoid the stupid typeless API here.
     /**
      * <p>Called on a Peer thread when a block is received.</p>
      *
@@ -36,8 +33,7 @@ public interface BlocksDownloadedEventListener {
      *
      * @param peer       the peer receiving the block
      * @param block      the downloaded block
-     * @param filteredBlock if non-null, the object that wraps the block header passed as the block param.
      * @param blocksLeft the number of blocks left to download
      */
-    void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft);
+    void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft);
 }
