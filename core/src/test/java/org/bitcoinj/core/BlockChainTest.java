@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import static org.bitcoinj.core.Coin.*;
+import org.bitcoinj.store.BlockStoreException;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
@@ -230,6 +231,20 @@ public class BlockChainTest {
      */
     @Test
     public void badBip66Version() throws Exception {
+        testDeprecatedBlockVersion(Block.BLOCK_VERSION_BIP34, Block.BLOCK_VERSION_BIP66);
+    }
+
+    /**
+     * Test that version 3 blocks are rejected once version 4 blocks are a super
+     * majority.
+     */
+    @Test
+    public void badBip65Version() throws Exception {
+        testDeprecatedBlockVersion(Block.BLOCK_VERSION_BIP66, Block.BLOCK_VERSION_BIP65);
+    }
+
+    private void testDeprecatedBlockVersion(final long deprecatedVersion, final long newVersion)
+            throws Exception {
         final BlockStore versionBlockStore = new MemoryBlockStore(unitTestParams);
         final BlockChain versionChain = new BlockChain(unitTestParams, versionBlockStore);
 
@@ -240,18 +255,18 @@ public class BlockChainTest {
 
         // Put in just enough v2 blocks to be a minority
         for (height = 0; height < (unitTestParams.getMajorityWindow() - unitTestParams.getMajorityRejectBlockOutdated()); height++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds, height);
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
         }
         // Fill the rest of the window with v3 blocks
         for (; height < unitTestParams.getMajorityWindow(); height++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP66, timeSeconds, height);
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, newVersion, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
         }
 
-        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, Block.BLOCK_VERSION_BIP34, timeSeconds, height);
+        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, timeSeconds, height);
         // Trying to add a new v2 block should result in rejection
         thrown.expect(VerificationException.BlockVersionOutOfDate.class);
         try {

@@ -544,12 +544,13 @@ public abstract class AbstractBlockChain {
             if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
 
-            // BIP 66: Enforce block version 3 once it's a supermajority of blocks
+            // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
             // NOTE: This requires 1,000 blocks since the last checkpoint (on main
             // net, less on test) in order to be applied. It is also limited to
-            // stopping addition of new v2 blocks to the tip of the chain.
-            if (block.getVersion() == Block.BLOCK_VERSION_BIP34) {
-                final Integer count = versionTally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP66);
+            // stopping addition of new v2/3 blocks to the tip of the chain.
+            if (block.getVersion() == Block.BLOCK_VERSION_BIP34
+                || block.getVersion() == Block.BLOCK_VERSION_BIP66) {
+                final Integer count = versionTally.getCountAtOrAbove(block.getVersion() + 1);
                 if (count != null
                     && count >= params.getMajorityRejectBlockOutdated()) {
                     throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
