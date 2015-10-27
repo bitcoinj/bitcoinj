@@ -84,6 +84,8 @@ public class Block extends Message {
     public static final long BLOCK_VERSION_BIP34 = 2;
     /** Block version introduced in BIP 66: Strict DER signatures */
     public static final long BLOCK_VERSION_BIP66 = 3;
+    /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
+    public static final long BLOCK_VERSION_BIP65 = 4;
 
     // Fields defined as part of the protocol format.
     private long version;
