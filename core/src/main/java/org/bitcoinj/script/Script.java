@@ -1320,8 +1320,8 @@ public class Script {
         // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
         boolean sigValid = false;
         try {
-            // TODO: Should pass through LOW_S verification flag
-            TransactionSignature sig  = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical);
+            TransactionSignature sig  = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical,
+                verifyFlags.contains(VerifyFlag.LOW_S));
 
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
