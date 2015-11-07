@@ -142,9 +142,15 @@ public class ScriptOpCodes {
     public static final int OP_CHECKMULTISIG = 0xae;
     public static final int OP_CHECKMULTISIGVERIFY = 0xaf;
 
+    // block state
+    /** Check lock time of the block. Introduced in BIP 65, replacing OP_NOP2 */
+    public static final int OP_CHECKLOCKTIMEVERIFY = 0xb1;
+
     // expansion
     public static final int OP_NOP1 = 0xb0;
-    public static final int OP_NOP2 = 0xb1;
+    /** Deprecated by BIP 65 */
+    @Deprecated
+    public static final int OP_NOP2 = OP_CHECKLOCKTIMEVERIFY;
     public static final int OP_NOP3 = 0xb2;
     public static final int OP_NOP4 = 0xb3;
     public static final int OP_NOP5 = 0xb4;
@@ -258,7 +264,7 @@ public class ScriptOpCodes {
         .put(OP_CHECKMULTISIG, "CHECKMULTISIG")
         .put(OP_CHECKMULTISIGVERIFY, "CHECKMULTISIGVERIFY")
         .put(OP_NOP1, "NOP1")
-        .put(OP_NOP2, "NOP2")
+        .put(OP_CHECKLOCKTIMEVERIFY, "CHECKLOCKTIMEVERIFY")
         .put(OP_NOP3, "NOP3")
         .put(OP_NOP4, "NOP4")
         .put(OP_NOP5, "NOP5")
@@ -371,6 +377,7 @@ public class ScriptOpCodes {
         .put("CHECKMULTISIG", OP_CHECKMULTISIG)
         .put("CHECKMULTISIGVERIFY", OP_CHECKMULTISIGVERIFY)
         .put("NOP1", OP_NOP1)
+        .put("CHECKLOCKTIMEVERIFY", OP_CHECKLOCKTIMEVERIFY)
         .put("NOP2", OP_NOP2)
         .put("NOP3", OP_NOP3)
         .put("NOP4", OP_NOP4)
