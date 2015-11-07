@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
+import org.bitcoinj.params.RegTestParams;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -25,9 +26,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class CoinTest {
+    private NetworkParameters params = RegTestParams.get();
+
+    @Before
+    public void setUp() throws Exception {
+        Context context = new Context(params);
+    }
 
     @Test
     public void testParseCoin() {
@@ -77,6 +85,30 @@ public class CoinTest {
             valueOf(-1, 0);
             fail();
         } catch (IllegalArgumentException e) {}
+    }
+
+    /**
+     * Test valueOf() with modifications for altcoin support.
+     */
+    @Test
+    public void testValueOfWithModifiedMaximum() {
+        // No maximum
+        final NetworkParameters noMax = new RegTestParams() {
+            @Override
+            public boolean hasMaxMoney() {
+                return false;
+            }
+        };
+        valueOf(noMax, Long.MAX_VALUE);
+
+        // Very high maximum
+        final NetworkParameters highMax = new RegTestParams() {
+            @Override
+            public Coin getMaxMoney() {
+                return Coin.valueOf(null, Long.MAX_VALUE);
+            }
+        };
+        valueOf(highMax, Long.MAX_VALUE - 1);
     }
 
     @Test

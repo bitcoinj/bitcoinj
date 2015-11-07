@@ -83,15 +83,30 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public final long value;
 
-    private Coin(final long satoshis) {
-        long maxSatoshis = COIN_VALUE * NetworkParameters.MAX_COINS;
-        checkArgument(-maxSatoshis <= satoshis && satoshis <= maxSatoshis,
-            "%s satoshis exceeds maximum possible quantity of Bitcoin.", satoshis);
+    private final NetworkParameters params;
+
+    private Coin(final NetworkParameters params, final long satoshis) {
+        if (null != params &&
+            params.hasMaxMoney()) {
+            long maxSatoshis = params.getMaxMoney().getValue();
+            checkArgument(-maxSatoshis <= satoshis && satoshis <= maxSatoshis,
+                "%s satoshis exceeds maximum possible quantity of coins.", satoshis);
+        }
         this.value = satoshis;
+        this.params = params;
     }
 
     public static Coin valueOf(final long satoshis) {
-        return new Coin(satoshis);
+        final Context context = Context.tryToGet();
+        if (context != null) {
+            return new Coin(context.getParams(), satoshis);
+        } else {
+            return new Coin(null, satoshis);
+        }
+    }
+
+    public static Coin valueOf(final NetworkParameters params, final long satoshis) {
+        return new Coin(params, satoshis);
     }
 
     @Override
@@ -137,7 +152,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin add(final Coin value) {
-        return new Coin(LongMath.checkedAdd(this.value, value.value));
+        return new Coin(params, LongMath.checkedAdd(this.value, value.value));
     }
 
     /** Alias for add */
@@ -146,7 +161,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        return new Coin(LongMath.checkedSubtract(this.value, value.value));
+        return new Coin(params, LongMath.checkedSubtract(this.value, value.value));
     }
 
     /** Alias for subtract */
@@ -155,7 +170,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin multiply(final long factor) {
-        return new Coin(LongMath.checkedMultiply(this.value, factor));
+        return new Coin(params, LongMath.checkedMultiply(this.value, factor));
     }
 
     /** Alias for multiply */
@@ -169,7 +184,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin divide(final long divisor) {
-        return new Coin(this.value / divisor);
+        return new Coin(params, this.value / divisor);
     }
 
     /** Alias for divide */
@@ -183,7 +198,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin[] divideAndRemainder(final long divisor) {
-        return new Coin[] { new Coin(this.value / divisor), new Coin(this.value % divisor) };
+        return new Coin[] { new Coin(params, this.value / divisor), new Coin(params, this.value % divisor) };
     }
 
     public long divide(final Coin divisor) {
@@ -231,11 +246,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin shiftLeft(final int n) {
-        return new Coin(this.value << n);
+        return new Coin(params, this.value << n);
     }
 
     public Coin shiftRight(final int n) {
-        return new Coin(this.value >> n);
+        return new Coin(params, this.value >> n);
     }
 
     @Override
@@ -246,7 +261,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin negate() {
-        return new Coin(-this.value);
+        return new Coin(params, -this.value);
     }
 
     /**

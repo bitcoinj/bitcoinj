@@ -70,6 +70,7 @@ public class Context {
      * independently use bitcoinj (or possibly alt coin forks of it) can operate correctly.
      *
      * @throws java.lang.IllegalStateException if no context exists at all or if we are in strict mode and there is no context.
+     * @see #tryToGet()
      */
     public static Context get() {
         Context tls = slot.get();
@@ -154,5 +155,22 @@ public class Context {
      */
     public int getEventHorizon() {
         return eventHorizon;
+    }
+
+    /**
+     * Returns the current context that is associated with the <b>calling thread</b>.
+     * Unlike {@link #get()} this fails by returning null if no context is available.
+     * This should only be used in cases where context may not be available
+     * (i.e. constants).
+     *
+     * @see #get()
+     */
+    public static Context tryToGet() {
+        Context tls = slot.get();
+        if (tls == null) {
+            return null;
+        } else {
+            return tls;
+        }
     }
 }

@@ -175,7 +175,7 @@ public class TransactionOutput extends ChildMessage {
      */
     public Coin getValue() {
         try {
-            return Coin.valueOf(value);
+            return Coin.valueOf(params, value);
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
@@ -333,7 +333,7 @@ public class TransactionOutput extends ChildMessage {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(Coin.valueOf(value).toFriendlyString());
+            buf.append(Coin.valueOf(params, value).toFriendlyString());
             if (script.isSentToAddress() || script.isPayToScriptHash())
                 buf.append(" to ").append(script.getToAddress(params));
             else if (script.isSentToRawPubKey())
@@ -400,7 +400,7 @@ public class TransactionOutput extends ChildMessage {
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
-        return new TransactionOutput(params, null, Coin.valueOf(value), org.spongycastle.util.Arrays.clone(scriptBytes));
+        return new TransactionOutput(params, null, Coin.valueOf(params, value), org.spongycastle.util.Arrays.clone(scriptBytes));
     }
 
     @Override

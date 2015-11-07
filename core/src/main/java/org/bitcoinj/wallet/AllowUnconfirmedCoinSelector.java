@@ -1,5 +1,6 @@
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 
 /**
@@ -7,6 +8,11 @@ import org.bitcoinj.core.Transaction;
  * confirmed yet. However immature coinbases will not be included (would be a protocol violation).
  */
 public class AllowUnconfirmedCoinSelector extends DefaultCoinSelector {
+
+    public AllowUnconfirmedCoinSelector(NetworkParameters params) {
+        super(params);
+    }
+
     @Override protected boolean shouldSelect(Transaction tx) {
         return true;
     }
@@ -14,10 +20,10 @@ public class AllowUnconfirmedCoinSelector extends DefaultCoinSelector {
     private static AllowUnconfirmedCoinSelector instance;
 
     /** Returns a global static instance of the selector. */
-    public static AllowUnconfirmedCoinSelector get() {
+    public static AllowUnconfirmedCoinSelector get(NetworkParameters params) {
         // This doesn't have to be thread safe as the object has no state, so discarded duplicates are harmless.
         if (instance == null)
-            instance = new AllowUnconfirmedCoinSelector();
+            instance = new AllowUnconfirmedCoinSelector(params);
         return instance;
     }
 }

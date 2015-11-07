@@ -196,6 +196,11 @@ public class WalletTest extends TestWithWallet {
     }
 
     static class TestCoinSelector extends DefaultCoinSelector {
+
+        public TestCoinSelector(NetworkParameters params) {
+            super(params);
+        }
+
         @Override
         protected boolean shouldSelect(Transaction tx) {
             return true;
@@ -256,7 +261,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest req = SendRequest.to(destination, v3);
 
         // Force selection of the incoming coin so that we can spend it
-        req.coinSelector = new TestCoinSelector();
+        req.coinSelector = new TestCoinSelector(params);
 
         req.fee = CENT;
         wallet.completeTx(req);
@@ -2405,7 +2410,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.emptyWallet = true;
-        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get(params);
         wallet.completeTx(emptyReq);
         assertEquals(fee, emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
@@ -2423,7 +2428,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.emptyWallet = true;
-        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get(params);
         wallet.completeTx(emptyReq);
         assertEquals(fee, emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);

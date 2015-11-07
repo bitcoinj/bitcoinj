@@ -818,7 +818,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 block = new StoredUndoableBlock(hash, transactionList);
             } else {
                 TransactionOutputChanges outChangesObject =
-                        new TransactionOutputChanges(new ByteArrayInputStream(txOutChanges));
+                        new TransactionOutputChanges(params, new ByteArrayInputStream(txOutChanges));
                 block = new StoredUndoableBlock(hash, outChangesObject);
             }
             return block;
