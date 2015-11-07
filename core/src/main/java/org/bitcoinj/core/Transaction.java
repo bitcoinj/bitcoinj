@@ -36,6 +36,7 @@ import java.util.*;
 
 import static org.bitcoinj.core.Utils.*;
 import static com.google.common.base.Preconditions.checkState;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.bitcoinj.script.ScriptChunk;
@@ -84,6 +85,8 @@ public class Transaction extends ChildMessage {
 
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+    /** Same but as a BigInteger for CHECKLOCKTIMEVERIFY */
+    public static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(LOCKTIME_THRESHOLD);
 
     /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
     public static final int MAX_STANDARD_TX_SIZE = 100000;

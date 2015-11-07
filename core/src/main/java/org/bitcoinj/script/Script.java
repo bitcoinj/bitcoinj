@@ -753,9 +753,31 @@ public class Script {
         return false;
     }
     
+    /**
+     * Cast a script chunk to a BigInteger.
+     *
+     * @see #castToBigInteger(byte[], int) for values with different maximum
+     * sizes.
+     * @throws ScriptException if the chunk is longer than 4 bytes.
+     */
     private static BigInteger castToBigInteger(byte[] chunk) throws ScriptException {
         if (chunk.length > 4)
             throw new ScriptException("Script attempted to use an integer larger than 4 bytes");
+        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+    }
+
+    /**
+     * Cast a script chunk to a BigInteger. Normally you would want
+     * {@link #castToBigInteger(byte[])} instead, this is only for cases where
+     * the normal maximum length does not apply (i.e. CHECKLOCKTIMEVERIFY).
+     *
+     * @param maxLength the maximum length in bytes.
+     * @throws ScriptException if the chunk is longer than the specified maximum.
+     */
+    private static BigInteger castToBigInteger(final byte[] chunk, final int maxLength) throws ScriptException {
+        if (chunk.length > maxLength)
+            throw new ScriptException("Script attempted to use an integer larger than "
+                + maxLength + " bytes");
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
 
@@ -1271,8 +1293,17 @@ public class Script {
                         throw new IllegalStateException("Script attempted signature check but no tx was provided");
                     opCount = executeMultiSig(txContainingThis, (int) index, script, stack, opCount, lastCodeSepLocation, opcode, verifyFlags);
                     break;
+                case OP_CHECKLOCKTIMEVERIFY:
+                    if (!verifyFlags.contains(VerifyFlag.CHECKLOCKTIMEVERIFY)) {
+                        // not enabled; treat as a NOP2
+                        if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
+                            throw new ScriptException("Script used a reserved opcode " + opcode);
+                        }
+                        break;
+                    }
+                    executeCheckLockTimeVerify(txContainingThis, (int) index, script, stack, lastCodeSepLocation, opcode, verifyFlags);
+                    break;
                 case OP_NOP1:
-                case OP_NOP2:
                 case OP_NOP3:
                 case OP_NOP4:
                 case OP_NOP5:
@@ -1281,6 +1312,9 @@ public class Script {
                 case OP_NOP8:
                 case OP_NOP9:
                 case OP_NOP10:
+                    if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
+                        throw new ScriptException("Script used a reserved opcode " + opcode);
+                    }
                     break;
                     
                 default:
@@ -1294,6 +1328,46 @@ public class Script {
         
         if (!ifStack.isEmpty())
             throw new ScriptException("OP_IF/OP_NOTIF without OP_ENDIF");
+    }
+
+    // This is more or less a direct translation of the code in Bitcoin Core
+    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                        int lastCodeSepLocation, int opcode,
+                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
+        if (stack.size() < 1)
+            throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
+
+        // Thus as a special case we tell CScriptNum to accept up
+        // to 5-byte bignums to avoid year 2038 issue.
+        final BigInteger nLockTime = castToBigInteger(stack.getLast(), 5);
+
+        if (nLockTime.compareTo(BigInteger.ZERO) < 0)
+            throw new ScriptException("Negative locktime");
+
+        // There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
+        if (!(
+            ((txContainingThis.getLockTime() <  Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
+            ((txContainingThis.getLockTime() >= Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
+        )
+            throw new ScriptException("Locktime requirement type mismatch");
+
+        // Now that we know we're comparing apples-to-apples, the
+        // comparison is a simple numeric one.
+        if (nLockTime.compareTo(BigInteger.valueOf(txContainingThis.getLockTime())) > 0)
+            throw new ScriptException("Locktime requirement not satisfied");
+
+        // Finally the nLockTime feature can be disabled and thus
+        // CHECKLOCKTIMEVERIFY bypassed if every txin has been
+        // finalized by setting nSequence to maxint. The
+        // transaction would be allowed into the blockchain, making
+        // the opcode ineffective.
+        //
+        // Testing if this vin is not final is sufficient to
+        // prevent this condition. Alternatively we could test all
+        // inputs, but testing just this input minimizes the data
+        // required to prove correct CHECKLOCKTIMEVERIFY execution.
+        if (!txContainingThis.getInput(index).hasSequence())
+            throw new ScriptException("Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
     }
 
     private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
