@@ -177,6 +177,7 @@ public class WalletTool {
         DECRYPT,
         MARRY,
         ROTATE,
+        SET_CREATION_TIME,
     }
 
     public enum WaitForEnum {
@@ -369,6 +370,7 @@ public class WalletTool {
             case DECRYPT: decrypt(); break;
             case MARRY: marry(); break;
             case ROTATE: rotate(); break;
+            case SET_CREATION_TIME: setCreationTime(); break;
         }
 
         if (!wallet.isConsistent()) {
@@ -1083,5 +1085,19 @@ public class WalletTool {
         if (chainFileName.exists())
             setup();
         System.out.println(wallet.toString(options.has("dump-privkeys"), true, true, chain));
+    }
+
+    private static void setCreationTime() {
+        DeterministicSeed seed = wallet.getActiveKeyChain().getSeed();
+        if (seed == null) {
+            System.err.println("Active chain does not have a seed.");
+            return;
+        }
+        long creationTime = getCreationTimeSeconds();
+        if (creationTime > 0)
+            System.out.println("Setting creation time to: " + Utils.dateTimeFormat(creationTime * 1000));
+        else
+            System.out.println("Clearing creation time.");
+        seed.setCreationTimeSeconds(creationTime);
     }
 }
