@@ -822,8 +822,13 @@ public class Script {
         
         for (ScriptChunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
-            
-            if (!chunk.isOpCode()) {
+
+            if (chunk.opcode == OP_0) {
+                if (!shouldExecute)
+                    continue;
+
+                stack.add(new byte[] {});
+            } else if (!chunk.isOpCode()) {
                 if (chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
                     throw new ScriptException("Attempted to push a data string larger than 520 bytes");
                 

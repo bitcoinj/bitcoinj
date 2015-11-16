@@ -221,6 +221,18 @@ public class ScriptTest {
         }
     }
 
+    @Test
+    public void testOp0() {
+        // Check that OP_0 doesn't NPE and pushes an empty stack frame.
+        Transaction tx = new Transaction(params);
+        tx.addInput(new TransactionInput(params, tx, new byte[] {}));
+        Script script = new ScriptBuilder().smallNum(0).build();
+
+        LinkedList<byte[]> stack = new LinkedList<byte[]>();
+        Script.executeScript(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS);
+        assertEquals("OP_0 push length", 0, stack.get(0).length);
+    }
+
     private Script parseScriptString(String string) throws IOException {
         String[] words = string.split("[ \\t\\n]");
         
