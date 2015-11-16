@@ -1,12 +1,14 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.core.TransactionConfidence.*;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;
 
+import java.math.BigInteger;
 import java.util.*;
 import static org.bitcoinj.core.BlockTest.params;
 import static org.bitcoinj.core.Utils.HEX;
@@ -203,6 +205,86 @@ public class TransactionTest {
 
         tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
         assertEquals(tx.isMature(), false);
+    }
+
+    @Test
+    public void testCLTVPaymentChannelTransactionSpending() {
+        BigInteger time = BigInteger.valueOf(20);
+
+        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
+
+        Transaction tx = new Transaction(PARAMS);
+        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        tx.getInput(0).setSequenceNumber(0);
+        tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
+        TransactionSignature fromSig =
+                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature toSig =
+                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature incorrectSig =
+                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+        Script scriptSig =
+                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
+        Script refundSig =
+                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+        Script invalidScriptSig1 =
+                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
+        Script invalidScriptSig2 =
+                ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
+
+        try {
+            scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+            fail("Settle transaction failed to correctly spend the payment channel");
+        }
+
+        try {
+            refundSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+            fail("Refund passed before expiry");
+        } catch (ScriptException e) { }
+        try {
+            invalidScriptSig1.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+            fail("Invalid sig 1 passed");
+        } catch (ScriptException e) { }
+        try {
+            invalidScriptSig2.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+            fail("Invalid sig 2 passed");
+        } catch (ScriptException e) { }
+    }
+
+    @Test
+    public void testCLTVPaymentChannelTransactionRefund() {
+        BigInteger time = BigInteger.valueOf(20);
+
+        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
+
+        Transaction tx = new Transaction(PARAMS);
+        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        tx.getInput(0).setSequenceNumber(0);
+        tx.setLockTime(time.add(BigInteger.ONE).longValue());
+        TransactionSignature fromSig =
+                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+        TransactionSignature incorrectSig =
+                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+        Script scriptSig =
+                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+        Script invalidScriptSig =
+                ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
+
+        try {
+            scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+            fail("Refund failed to correctly spend the payment channel");
+        }
+
+        try {
+            invalidScriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+            fail("Invalid sig passed");
+        } catch (ScriptException e) { }
     }
 
     @Test

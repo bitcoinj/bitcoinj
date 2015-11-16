@@ -33,7 +33,6 @@ import org.bitcoinj.core.listeners.WalletChangeEventListener;
 import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.signers.*;
 import org.bitcoinj.store.*;
@@ -3643,6 +3642,24 @@ public class Wallet extends BaseTaggableObject
             return req;
         }
 
+        public static SendRequest toCLTVPaymentChannel(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
+            long time = releaseTime.getTime() / 1000L;
+            checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
+            return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value);
+        }
+
+        public static SendRequest toCLTVPaymentChannel(NetworkParameters params, long lockTime, ECKey from, ECKey to, Coin value) {
+            return toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), from, to, value);
+        }
+
+        private static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
+            SendRequest req = new SendRequest();
+            Script output = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
+            req.tx = new Transaction(params);
+            req.tx.addOutput(value, output);
+            return req;
+        }
+
         /** Copy data from payment request. */
         public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
             if (paymentDetails.hasMemo())
@@ -4120,6 +4137,19 @@ public class Wallet extends BaseTaggableObject
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
+        } else if (script.isSentToCLTVPaymentChannel()) {
+            // Any script for which we are the recipient or sender counts.
+            byte[] sender = script.getCLTVPaymentChannelSenderPubKey();
+            ECKey senderKey = findKeyFromPubKey(sender);
+            if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
+                return true;
+            }
+            byte[] recipient = script.getCLTVPaymentChannelRecipientPubKey();
+            ECKey recipientKey = findKeyFromPubKey(sender);
+            if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
+                return true;
+            }
+            return false;
         }
         return false;
     }
