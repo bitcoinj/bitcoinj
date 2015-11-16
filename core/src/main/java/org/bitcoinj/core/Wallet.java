@@ -3643,6 +3643,25 @@ public class Wallet extends BaseTaggableObject
             return req;
         }
 
+        public static SendRequest toLockTimeVerify(NetworkParameters params, Date releaseTime, ECKey from, ECKey to, Coin value) {
+            long time = releaseTime.getTime() / 1000L;
+            checkArgument(time >= Transaction.LOCKTIME_THRESHOLD, "Release time was too small");
+            return toLockTimeVerify(params, BigInteger.valueOf(time), from, to, value);
+        }
+
+        public static SendRequest toLockTimeVerify(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value) {
+            checkArgument(0 <= releaseBlock && releaseBlock < Transaction.LOCKTIME_THRESHOLD, "Block number was too large");
+            return toLockTimeVerify(params, BigInteger.valueOf(releaseBlock), from, to, value);
+        }
+
+        private static SendRequest toLockTimeVerify(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
+            SendRequest req = new SendRequest();
+            Script output = ScriptBuilder.createLockTimeVerifyOutput(time, from, to);
+            req.tx = new Transaction(params);
+            req.tx.addOutput(value, output);
+            return req;
+        }
+
         /** Copy data from payment request. */
         public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
             if (paymentDetails.hasMemo())
@@ -4120,6 +4139,19 @@ public class Wallet extends BaseTaggableObject
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
+        } else if (script.isSentToLockTimeVerify()) {
+            // Any script for which we are the recipient or sender counts.
+            byte[] sender = script.getLockTimeVerifySenderPubKey();
+            ECKey senderKey = findKeyFromPubKey(sender);
+            if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
+                return true;
+            }
+            byte[] recipient = script.getLockTimeVerifyRecipientPubKey();
+            ECKey recipientKey = findKeyFromPubKey(sender);
+            if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
+                return true;
+            }
+            return false;
         }
         return false;
     }

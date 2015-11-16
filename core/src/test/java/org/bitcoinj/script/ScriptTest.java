@@ -407,6 +407,12 @@ public class ScriptTest {
     }
 
     @Test
+    public void testLockTimeVerifyOutput() {
+        Script script = ScriptBuilder.createLockTimeVerifyOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
+        assertTrue("script is locktime-verify", script.isSentToLockTimeVerify());
+    }
+
+    @Test
     public void getToAddress() throws Exception {
         // pay to pubkey
         ECKey toKey = new ECKey();

@@ -303,6 +303,30 @@ public class Script {
     }
 
     /**
+     * Retrieves the sender public key from a LOCKTIMEVERIFY transaction
+     * @return
+     * @throws ScriptException
+     */
+    public byte[] getLockTimeVerifySenderPubKey() throws ScriptException {
+        if (!isSentToLockTimeVerify()) {
+            throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
+        }
+        return chunks.get(8).data;
+    }
+
+    /**
+     * Retrieves the recipient public key from a LOCKTIMEVERIFY transaction
+     * @return
+     * @throws ScriptException
+     */
+    public byte[] getLockTimeVerifyRecipientPubKey() throws ScriptException {
+        if (!isSentToLockTimeVerify()) {
+            throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
+        }
+        return chunks.get(1).data;
+    }
+
+    /**
      * For 2-element [input] scripts assumes that the paid-to-address can be derived from the public key.
      * The concept of a "from address" isn't well defined in Bitcoin and you should not assume the sender of a
      * transaction can actually receive coins on it. This method may be removed in future.
@@ -683,6 +707,21 @@ public class Script {
         } catch (IllegalStateException e) {
             return false;   // Not an OP_N opcode.
         }
+        return true;
+    }
+
+    public boolean isSentToLockTimeVerify() {
+        if (chunks.size() != 10) return false;
+        // Check that opcodes match the pre-determined format.
+        if (!chunks.get(0).equalsOpCode(OP_IF)) return false;
+        // chunk[1] = recipient pubkey
+        if (!chunks.get(2).equalsOpCode(OP_CHECKSIGVERIFY)) return false;
+        if (!chunks.get(3).equalsOpCode(OP_ELSE)) return false;
+        if (!chunks.get(5).equalsOpCode(OP_CHECKLOCKTIMEVERIFY)) return false;
+        if (!chunks.get(6).equalsOpCode(OP_DROP)) return false;
+        if (!chunks.get(7).equalsOpCode(OP_ENDIF)) return false;
+        // chunk[8] = sender pubkey
+        if (!chunks.get(9).equalsOpCode(OP_CHECKSIG)) return false;
         return true;
     }
 
