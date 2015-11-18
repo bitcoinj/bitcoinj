@@ -286,7 +286,7 @@ public abstract class AbstractBlockChain {
             } catch (BlockStoreException e1) {
                 throw new RuntimeException(e1);
             }
-            throw new VerificationException("Could not verify block " + block.getHashAsString() + "\n" +
+            throw new VerificationException("Could not verify block:\n" +
                     block.toString(), e);
         }
     }
