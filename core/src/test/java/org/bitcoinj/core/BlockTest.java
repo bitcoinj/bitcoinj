@@ -241,4 +241,54 @@ public class BlockTest {
         assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
         assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
     }
+
+    @Test
+    public void isBIPs() throws Exception {
+        final MainNetParams mainnet = MainNetParams.get();
+        final Block genesis = mainnet.getGenesisBlock();
+        assertFalse(genesis.isBIP34());
+        assertFalse(genesis.isBIP66());
+        assertFalse(genesis.isBIP65());
+        assertFalse(genesis.isBIP101());
+
+        // 227835/00000000000001aa077d7aa84c532a4d69bdbff519609d1da0835261b7a74eb6: last version 1 block
+        final Block block227835 = mainnet.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block227835.dat")));
+        assertFalse(block227835.isBIP34());
+        assertFalse(block227835.isBIP66());
+        assertFalse(block227835.isBIP65());
+        assertFalse(block227835.isBIP101());
+
+        // 227836/00000000000000d0dfd4c9d588d325dce4f32c1b31b7c0064cba7025a9b9adcc: version 2 block
+        final Block block227836 = mainnet.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block227836.dat")));
+        assertTrue(block227836.isBIP34());
+        assertFalse(block227836.isBIP66());
+        assertFalse(block227836.isBIP65());
+        assertFalse(block227836.isBIP101());
+
+        // 363703/0000000000000000011b2a4cb91b63886ffe0d2263fd17ac5a9b902a219e0a14: version 3 block
+        final Block block363703 = mainnet.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block363703.dat")));
+        assertTrue(block363703.isBIP34());
+        assertTrue(block363703.isBIP66());
+        assertFalse(block363703.isBIP65());
+        assertFalse(block363703.isBIP101());
+
+        // 383616/00000000000000000aab6a2b34e979b09ca185584bd1aecf204f24d150ff55e9: version 4 block
+        final Block block383616 = mainnet.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block383616.dat")));
+        assertTrue(block383616.isBIP34());
+        assertTrue(block383616.isBIP66());
+        assertTrue(block383616.isBIP65());
+        assertFalse(block383616.isBIP101());
+
+        // 370661/00000000000000001416a613602d73bbe5c79170fd8f39d509896b829cf9021e
+        final Block block370661 = mainnet.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block370661.dat")));
+        assertTrue(block370661.isBIP34());
+        assertTrue(block370661.isBIP66());
+        assertTrue(block370661.isBIP65());
+        assertTrue(block370661.isBIP101());
+    }
 }

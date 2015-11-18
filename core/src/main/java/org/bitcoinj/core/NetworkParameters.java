@@ -486,7 +486,7 @@ public abstract class NetworkParameters {
             final VersionTally tally, final Integer height) {
         final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
 
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP34) {
+        if (block.isBIP34()) {
             final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
             if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
                 flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
