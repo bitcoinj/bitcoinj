@@ -478,6 +478,7 @@ public class Block extends Message {
     public String toString() {
         StringBuilder s = new StringBuilder();
         s.append(" block: \n");
+        s.append("   hash: ").append(getHashAsString());
         s.append("   version: ").append(version);
         String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
                 isBIP65() ? "BIP65" : null, isBIP101() ? "BIP101" : null);
