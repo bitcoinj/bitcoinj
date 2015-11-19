@@ -23,6 +23,7 @@ import org.bitcoinj.core.Coin;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Strings;
 
 import java.math.BigDecimal;
@@ -1359,7 +1360,7 @@ public abstract class BtcFormat extends Format {
       * forget to put the symbols back otherwise equals(), hashCode() and immutability will
       * break.  */
     private static DecimalFormatSymbols setSymbolAndCode(DecimalFormat numberFormat, String symbol, String code) {
-        assert Thread.holdsLock(numberFormat);
+        checkState(Thread.holdsLock(numberFormat));
         DecimalFormatSymbols fs = numberFormat.getDecimalFormatSymbols();
         DecimalFormatSymbols ante = (DecimalFormatSymbols)fs.clone();
         fs.setInternationalCurrencySymbol(code);
@@ -1380,7 +1381,7 @@ public abstract class BtcFormat extends Format {
      * @return The DecimalFormatSymbols before changing
      */
     protected static void prefixUnitsIndicator(DecimalFormat numberFormat, int scale) {
-        assert Thread.holdsLock(numberFormat); // make sure caller intends to reset before changing
+        checkState(Thread.holdsLock(numberFormat)); // make sure caller intends to reset before changing
         DecimalFormatSymbols fs = numberFormat.getDecimalFormatSymbols();
         setSymbolAndCode(numberFormat,
             prefixSymbol(fs.getCurrencySymbol(), scale), prefixCode(fs.getInternationalCurrencySymbol(), scale)

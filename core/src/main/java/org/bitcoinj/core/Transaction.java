@@ -35,11 +35,9 @@ import java.io.*;
 import java.util.*;
 
 import static org.bitcoinj.core.Utils.*;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import org.bitcoinj.script.ScriptChunk;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -1203,8 +1201,8 @@ public class Transaction extends ChildMessage {
      */
     public void checkCoinBaseHeight(final int height)
             throws VerificationException {
-        assert height >= Block.BLOCK_HEIGHT_GENESIS;
-        assert isCoinBase();
+        checkArgument(height >= Block.BLOCK_HEIGHT_GENESIS);
+        checkState(isCoinBase());
 
         // Check block height is in coinbase input script
         final TransactionInput in = this.getInputs().get(0);
