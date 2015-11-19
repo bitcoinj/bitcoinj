@@ -17,7 +17,9 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.io.ByteStreams;
 import org.bitcoinj.params.TestNet2Params;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.junit.Before;
@@ -165,5 +167,31 @@ public class BlockTest {
                 new TransactionOutPoint(params, 0, Sha256Hash.of(new byte[] { 1 }))));
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
+    }
+
+    @Test
+    public void testCoinbaseHeightTestnet() throws Exception {
+        // Testnet block 21066 (hash 0000000004053156021d8e42459d284220a7f6e087bf78f30179c3703ca4eefa)
+        // contains a coinbase transaction whose height is two bytes, which is
+        // shorter than we see in most other cases.
+
+        Block block = TestNet3Params.get().getDefaultSerializer().makeBlock(
+            ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat")));
+
+        // Check block.
+        assertEquals("0000000004053156021d8e42459d284220a7f6e087bf78f30179c3703ca4eefa", block.getHashAsString());
+        block.verify(21066, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
+
+        // Testnet block 32768 (hash 000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03)
+        // contains a coinbase transaction whose height is three bytes, but could
+        // fit in two bytes. This test primarily ensures script encoding checks
+        // are applied correctly.
+
+        block = TestNet3Params.get().getDefaultSerializer().makeBlock(
+            ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat")));
+
+        // Check block.
+        assertEquals("000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03", block.getHashAsString());
+        block.verify(32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
     }
 }

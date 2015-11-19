@@ -412,4 +412,65 @@ public class ScriptTest {
     public void getToAddressNoPubKey() throws Exception {
         ScriptBuilder.createOutputScript(new ECKey()).getToAddress(params, false);
     }
+
+    /** Test encoding of zero, which should result in an opcode */
+    @Test
+    public void numberBuilderZero() {
+        final ScriptBuilder builder = new ScriptBuilder();
+
+        // 0 should encode directly to 0
+        builder.number(0);
+        assertArrayEquals(new byte[] {
+            0x00         // Pushed data
+        }, builder.build().getProgram());
+    }
+
+    @Test
+    public void numberBuilderPositiveOpCode() {
+        final ScriptBuilder builder = new ScriptBuilder();
+
+        builder.number(5);
+        assertArrayEquals(new byte[] {
+            0x55         // Pushed data
+        }, builder.build().getProgram());
+    }
+
+    @Test
+    public void numberBuilderBigNum() {
+        ScriptBuilder builder = new ScriptBuilder();
+        // 21066 should take up three bytes including the length byte
+        // at the start
+
+        builder.number(0x524a);
+        assertArrayEquals(new byte[] {
+            0x02,             // Length of the pushed data
+            0x4a, 0x52        // Pushed data
+        }, builder.build().getProgram());
+
+        // Test the trimming code ignores zeroes in the middle
+        builder = new ScriptBuilder();
+        builder.number(0x110011);
+        assertEquals(4, builder.build().getProgram().length);
+
+        // Check encoding of a value where signed/unsigned encoding differs
+        // because the most significant byte is 0x80, and therefore a
+        // sign byte has to be added to the end for the signed encoding.
+        builder = new ScriptBuilder();
+        builder.number(0x8000);
+        assertArrayEquals(new byte[] {
+            0x03,             // Length of the pushed data
+            0x00, (byte) 0x80, 0x00  // Pushed data
+        }, builder.build().getProgram());
+    }
+
+    @Test
+    public void numberBuilderNegative() {
+        // Check encoding of a negative value
+        final ScriptBuilder builder = new ScriptBuilder();
+        builder.number(-5);
+        assertArrayEquals(new byte[] {
+            0x01,        // Length of the pushed data
+            ((byte) 133) // Pushed data
+        }, builder.build().getProgram());
+    }
 }

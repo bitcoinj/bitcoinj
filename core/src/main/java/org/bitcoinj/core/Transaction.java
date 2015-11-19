@@ -1176,7 +1176,7 @@ public class Transaction extends ChildMessage {
         // Check block height is in coinbase input script
         final TransactionInput in = this.getInputs().get(0);
         final ScriptBuilder builder = new ScriptBuilder();
-        builder.data(ScriptBuilder.createHeightScriptData(height));
+        builder.number(height);
         final byte[] expected = builder.build().getProgram();
         final byte[] actual = in.getScriptBytes();
         if (actual.length < expected.length) {

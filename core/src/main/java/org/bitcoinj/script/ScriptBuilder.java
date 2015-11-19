@@ -27,11 +27,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
@@ -107,16 +106,106 @@ public class ScriptBuilder {
         return addChunk(index, new ScriptChunk(opcode, copy));
     }
 
-    /** Adds the given number as a OP_N opcode to the end of the program. */
+    /**
+     * Adds the given number to the end of the program. Automatically uses
+     * shortest encoding possible.
+     */
+    public ScriptBuilder number(long num) {
+        if (num >= 0 && num < 16) {
+            return smallNum((int) num);
+        } else {
+            return bigNum(num);
+        }
+    }
+
+    /**
+     * Adds the given number to the given index in the program. Automatically
+     * uses shortest encoding possible.
+     */
+    public ScriptBuilder number(int index, long num) {
+        if (num >= 0 && num < 16) {
+            return addChunk(index, new ScriptChunk(Script.encodeToOpN((int) num), null));
+        } else {
+            return bigNum(index, num);
+        }
+    }
+
+    /**
+     * Adds the given number as a OP_N opcode to the end of the program.
+     * Only handles values 0-16 inclusive.
+     * 
+     * @see #number(int)
+     */
     public ScriptBuilder smallNum(int num) {
         return smallNum(chunks.size(), num);
     }
 
-    /** Adds the given number as a OP_N opcode to the given index in the program. */
+    /** Adds the given number as a push data chunk.
+     * This is intended to use for negative numbers or values > 16, and although
+     * it will accept numbers in the range 0-16 inclusive, the encoding would be
+     * considered non-standard.
+     * 
+     * @see #number(int)
+     */
+    protected ScriptBuilder bigNum(long num) {
+        return bigNum(chunks.size(), num);
+    }
+
+    /**
+     * Adds the given number as a OP_N opcode to the given index in the program.
+     * Only handles values 0-16 inclusive.
+     * 
+     * @see #number(int)
+     */
     public ScriptBuilder smallNum(int index, int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
         checkArgument(num <= 16, "Cannot encode numbers larger than 16 with smallNum");
         return addChunk(index, new ScriptChunk(Script.encodeToOpN(num), null));
+    }
+
+    /**
+     * Adds the given number as a push data chunk to the given index in the program.
+     * This is intended to use for negative numbers or values > 16, and although
+     * it will accept numbers in the range 0-16 inclusive, the encoding would be
+     * considered non-standard.
+     * 
+     * @see #number(int)
+     */
+    protected ScriptBuilder bigNum(int index, long num) {
+        final byte[] data;
+
+        if (num == 0) {
+            data = new byte[0];
+        } else {
+            Stack<Byte> result = new Stack<Byte>();
+            final boolean neg = num < 0;
+            long absvalue = Math.abs(num);
+
+            while (absvalue != 0) {
+                result.push((byte) (absvalue & 0xff));
+                absvalue >>= 8;
+            }
+
+            if ((result.peek() & 0x80) != 0) {
+                // The most significant byte is >= 0x80, so push an extra byte that
+                // contains just the sign of the value.
+                result.push((byte) (neg ? 0x80 : 0));
+            } else if (neg) {
+                // The most significant byte is < 0x80 and the value is negative,
+                // set the sign bit so it is subtracted and interpreted as a
+                // negative when converting back to an integral.
+                result.push((byte) (result.pop() | 0x80));
+            }
+
+            data = new byte[result.size()];
+            for (int byteIdx = 0; byteIdx < data.length; byteIdx++) {
+                data[byteIdx] = result.get(byteIdx);
+            }
+        }
+
+        // At most the encoded value could take up to 8 bytes, so we don't need
+        // to use OP_PUSHDATA opcodes
+        return addChunk(index, new ScriptChunk(data.length, data));
     }
 
     /** Creates a new immutable Script based on the state of the builder. */
@@ -345,18 +434,5 @@ public class ScriptBuilder {
     public static Script createOpReturnScript(byte[] data) {
         checkArgument(data.length <= 40);
         return new ScriptBuilder().op(OP_RETURN).data(data).build();
-    }
-
-    /**
-     * Create script data bytes to represent the given block height.
-     */
-    public static byte[] createHeightScriptData(final int height) {
-        // TODO: Replace with something generic to any integer value
-        final byte[] int32Buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
-        if (int32Buffer[3] == 0) {
-            return Arrays.copyOf(int32Buffer, 3);
-        } else {
-            return int32Buffer;
-        }
     }
 }
