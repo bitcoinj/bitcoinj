@@ -17,7 +17,9 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.io.ByteStreams;
 import org.bitcoinj.params.TestNet2Params;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.junit.Before;
@@ -165,5 +167,23 @@ public class BlockTest {
                 new TransactionOutPoint(params, 0, Sha256Hash.of(new byte[] { 1 }))));
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
+    }
+
+    @Test
+    public void testBIP34Height() throws Exception {
+        TestNet3Params testnet = TestNet3Params.get();
+        // This block contains the height value stored using only 2 bytes
+        final Block block21066 = testnet.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat")));
+        final Transaction txInBlock21066 = block21066.getTransactions().get(0);
+        // Make sure it's coinbase.
+        assertTrue(txInBlock21066.isCoinBase());
+        // Make sure this has a valid height.
+        txInBlock21066.checkCoinBaseHeight(21066);
+
+        // This block contains the height value stored using only 3 bytes but with a zeroed out 3rd byte.
+        final Block block32768 = testnet.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat")));
+        final Transaction txInBlockblock32768 = block32768.getTransactions().get(0);
+        assertTrue(txInBlockblock32768.isCoinBase());
+        txInBlockblock32768.checkCoinBaseHeight(32768);
     }
 }
