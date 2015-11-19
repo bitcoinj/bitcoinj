@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.*;
 import com.google.common.net.*;
 import com.google.common.util.concurrent.*;
@@ -507,7 +508,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             }
         });
         // connect to peer but don't do handshake
-        long start = System.currentTimeMillis(); // before connection so we don't get elapsed < timeout
+        final Stopwatch watch = Stopwatch.createStarted(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);
         // wait for disconnect (plus a bit more, in case test server is overloaded)
         try {
@@ -516,9 +517,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
             // the checks below suffice for this case too
         }
         // check things after disconnect
-        long end = System.currentTimeMillis();
+        watch.stop();
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
-        assertTrue(end - start >= timeout); // should not disconnect before timeout
+        assertTrue(watch.elapsed(TimeUnit.MILLISECONDS) >= timeout); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
