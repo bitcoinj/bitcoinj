@@ -350,11 +350,12 @@ public class ScriptBuilder {
     /**
      * Create script data bytes to represent the given block height.
      */
-    public static byte[] createHeightScriptData(final int height) {
-        // TODO: Replace with something generic to any integer value
-        final byte[] int32Buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
-        if (int32Buffer[3] == 0) {
-            return Arrays.copyOf(int32Buffer, 3);
+    public static byte[] createHeightScriptData(final int height, final int numberOfBytes) {
+        final int maxNumberOfBytes = 4;
+        checkArgument(numberOfBytes <= maxNumberOfBytes);
+        final byte[] int32Buffer = ByteBuffer.allocate(maxNumberOfBytes).order(ByteOrder.LITTLE_ENDIAN).putInt(height).array();
+        if (numberOfBytes < maxNumberOfBytes) {
+            return Arrays.copyOf(int32Buffer, numberOfBytes);
         } else {
             return int32Buffer;
         }

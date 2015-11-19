@@ -863,7 +863,7 @@ public class Block extends Message {
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
-            final byte[] blockHeightBytes = ScriptBuilder.createHeightScriptData(height);
+            final byte[] blockHeightBytes = ScriptBuilder.createHeightScriptData(height, 4);
             inputBuilder.data(blockHeightBytes);
         }
         inputBuilder.data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)});
