@@ -22,6 +22,8 @@ import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -128,9 +130,10 @@ public class MnemonicCode {
         String pass = Utils.join(words);
         String salt = "mnemonic" + passphrase;
 
-        long start = System.currentTimeMillis();
+        final Stopwatch watch = Stopwatch.createStarted();
         byte[] seed = PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
-        log.info("PBKDF2 took {}ms", System.currentTimeMillis() - start);
+        watch.stop();
+        log.info("PBKDF2 took {}", watch);
         return seed;
     }
 

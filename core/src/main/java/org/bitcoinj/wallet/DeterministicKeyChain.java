@@ -1,5 +1,6 @@
 /**
  * Copyright 2014 The bitcoinj developers.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.Threading;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
@@ -1173,7 +1175,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 needed, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
 
         List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
-        long now = System.currentTimeMillis();
+        final Stopwatch watch = Stopwatch.createStarted();
         int nextChild = numChildren;
         for (int i = 0; i < needed; i++) {
             DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
@@ -1182,7 +1184,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             result.add(key);
             nextChild = key.getChildNumber().num() + 1;
         }
-        log.info("Took {} msec", System.currentTimeMillis() - now);
+        watch.stop();
+        log.info("Took {}", watch);
         return result;
     }
 

@@ -880,7 +880,7 @@ public class PeerGroup implements TransactionBroadcaster {
         checkState(!lock.isHeldByCurrentThread());
         int maxPeersToDiscoverCount = this.vMaxPeersToDiscoverCount;
         long peerDiscoveryTimeoutMillis = this.vPeerDiscoveryTimeoutMillis;
-        long start = System.currentTimeMillis();
+        final Stopwatch watch = Stopwatch.createStarted();
         final List<PeerAddress> addressList = Lists.newLinkedList();
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             InetSocketAddress[] addresses;
@@ -902,8 +902,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 });
             }
         }
-        log.info("Peer discovery took {}ms and returned {} items", System.currentTimeMillis() - start,
-                addressList.size());
+        watch.stop();
+        log.info("Peer discovery took {} and returned {} items", watch, addressList.size());
         return addressList.size();
     }
 
