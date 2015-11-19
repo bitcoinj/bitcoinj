@@ -1,5 +1,6 @@
 /**
  * Copyright 2012 Google Inc.
+ * Copyright 2015 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +23,8 @@ import org.bitcoinj.params.MainNetParams;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import com.google.common.io.ByteStreams;
+
 import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.List;
@@ -42,7 +42,6 @@ public class CoinbaseBlockTest {
     private static final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
 
     private static final int BLOCK_OF_INTEREST = 169482;
-    private static final int BLOCK_LENGTH_AS_HEX = 37357;
     private static final long BLOCK_NONCE = 3973947400L;
     private static final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
 
@@ -57,17 +56,14 @@ public class CoinbaseBlockTest {
         // contains coinbase transactions that are mining pool shares.
         // The private key MINERS_KEY is used to check transactions are received by a wallet correctly.
 
-        byte[] blockAsBytes = getBytes(getClass().getResourceAsStream("block169482.dat"));
-
-        // Create block 169482.
-        Block block = params.getDefaultSerializer().makeBlock(blockAsBytes);
+        Block block169482 = params.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block169482.dat")));
 
         // Check block.
-        assertNotNull(block);
-        block.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
-        assertEquals(BLOCK_NONCE, block.getNonce());
+        assertNotNull(block169482);
+        block169482.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
+        assertEquals(BLOCK_NONCE, block169482.getNonce());
 
-        StoredBlock storedBlock = new StoredBlock(block, BigInteger.ONE, BLOCK_OF_INTEREST); // Nonsense work - not used in test.
+        StoredBlock storedBlock = new StoredBlock(block169482, BigInteger.ONE, BLOCK_OF_INTEREST); // Nonsense work - not used in test.
 
         // Create a wallet contain the miner's key that receives a spend from a coinbase.
         ECKey miningKey = DumpedPrivateKey.fromBase58(params, MINING_PRIVATE_KEY).getKey();
@@ -80,30 +76,12 @@ public class CoinbaseBlockTest {
         assertEquals(Coin.ZERO, wallet.getBalance());
 
         // Give the wallet the first transaction in the block - this is the coinbase tx.
-        List<Transaction> transactions = block.getTransactions();
+        List<Transaction> transactions = block169482.getTransactions();
         assertNotNull(transactions);
         wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN, 0);
 
         // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
         assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
         assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
-    }
-
-    /**
-     * Returns the contents of the InputStream as a byte array.
-     */
-    private byte[] getBytes(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-        int numberRead;
-        byte[] data = new byte[BLOCK_LENGTH_AS_HEX];
-
-        while ((numberRead = inputStream.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, numberRead);
-        }
-
-        buffer.flush();
-
-        return buffer.toByteArray();
     }
 }
