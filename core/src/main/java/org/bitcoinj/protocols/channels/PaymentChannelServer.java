@@ -16,6 +16,7 @@
 
 package org.bitcoinj.protocols.channels;
 
+import com.google.common.collect.ImmutableMap;
 import org.bitcoinj.core.*;
 import org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason;
 import org.bitcoinj.utils.Threading;
@@ -28,6 +29,7 @@ import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -47,12 +49,17 @@ public class PaymentChannelServer {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(PaymentChannelServer.class);
 
     protected final ReentrantLock lock = Threading.lock("channelserver");
-    public final int SERVER_MAJOR_VERSION = 1;
-    public final int SERVER_MINOR_VERSION = 0;
+
+    /**
+     * A map of supported versions; keys are major versions, and the corresponding
+     * value is the minor version at that major level.
+     */
+    public static final Map<Integer, Integer> SERVER_VERSIONS = ImmutableMap.of(1, 0, 2, 0);
 
     // The step in the initialization process we are in, some of this is duplicated in the PaymentChannelServerState
     private enum InitStep {
         WAITING_ON_CLIENT_VERSION,
+        // This step is only used in V1 of the protocol.
         WAITING_ON_UNSIGNED_REFUND,
         WAITING_ON_CONTRACT,
         WAITING_ON_MULTISIG_ACCEPTANCE,
@@ -110,6 +117,9 @@ public class PaymentChannelServer {
         ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
     }
     private final ServerConnection conn;
+
+    // Used to track the negotiated version number
+    @GuardedBy("lock") private int majorVersion;
 
     // Used to keep track of whether or not the "socket" ie connection is open and we can generate messages
     @GuardedBy("lock") private boolean connectionOpen = false;
@@ -211,15 +221,15 @@ public class PaymentChannelServer {
     private void receiveVersionMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
         checkState(step == InitStep.WAITING_ON_CLIENT_VERSION && msg.hasClientVersion());
         final Protos.ClientVersion clientVersion = msg.getClientVersion();
-        final int major = clientVersion.getMajor();
-        if (major != SERVER_MAJOR_VERSION) {
-            error("This server needs protocol version " + SERVER_MAJOR_VERSION + " , client offered " + major,
+        majorVersion = clientVersion.getMajor();
+        if (!SERVER_VERSIONS.containsKey(majorVersion)) {
+            error("This server needs one of protocol versions " + SERVER_VERSIONS.keySet() + " , client offered " + majorVersion,
                     Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION, CloseReason.NO_ACCEPTABLE_VERSION);
             return;
         }
 
         Protos.ServerVersion.Builder versionNegotiationBuilder = Protos.ServerVersion.newBuilder()
-                .setMajor(SERVER_MAJOR_VERSION).setMinor(SERVER_MINOR_VERSION);
+                .setMajor(majorVersion).setMinor(SERVER_VERSIONS.get(majorVersion));
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setType(Protos.TwoWayChannelMessage.MessageType.SERVER_VERSION)
                 .setServerVersion(versionNegotiationBuilder)
@@ -262,7 +272,17 @@ public class PaymentChannelServer {
         wallet.freshReceiveKey();
 
         expireTime = Utils.currentTimeSeconds() + truncateTimeWindow(clientVersion.getTimeWindowSecs());
-        step = InitStep.WAITING_ON_UNSIGNED_REFUND;
+        switch (majorVersion) {
+            case 1:
+                step = InitStep.WAITING_ON_UNSIGNED_REFUND;
+                break;
+            case 2:
+                step = InitStep.WAITING_ON_CONTRACT;
+                break;
+            default:
+                error("Protocol version " + majorVersion + " not supported", Protos.Error.ErrorCode.NO_ACCEPTABLE_VERSION, CloseReason.NO_ACCEPTABLE_VERSION);
+                break;
+        }
 
         Protos.Initiate.Builder initiateBuilder = Protos.Initiate.newBuilder()
                 .setMultisigKey(ByteString.copyFrom(myKey.getPubKey()))
@@ -290,13 +310,16 @@ public class PaymentChannelServer {
 
     @GuardedBy("lock")
     private void receiveRefundMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
+        checkState(majorVersion == 1);
         checkState(step == InitStep.WAITING_ON_UNSIGNED_REFUND && msg.hasProvideRefund());
         log.info("Got refund transaction, returning signature");
 
         Protos.ProvideRefund providedRefund = msg.getProvideRefund();
-        state = new PaymentChannelServerState(broadcaster, wallet, myKey, expireTime);
-        byte[] signature = state.provideRefundTransaction(wallet.getParams().getDefaultSerializer().makeTransaction(providedRefund.getTx().toByteArray()),
-                providedRefund.getMultisigKey().toByteArray());
+        state = new PaymentChannelV1ServerState(broadcaster, wallet, myKey, expireTime);
+        // We can cast to V1 state since this state is only used in the V1 protocol
+        byte[] signature = ((PaymentChannelV1ServerState) state)
+                .provideRefundTransaction(wallet.getParams().getDefaultSerializer().makeTransaction(providedRefund.getTx().toByteArray()),
+                        providedRefund.getMultisigKey().toByteArray());
 
         step = InitStep.WAITING_ON_CONTRACT;
 
@@ -344,18 +367,25 @@ public class PaymentChannelServer {
 
     @GuardedBy("lock")
     private void receiveContractMessage(Protos.TwoWayChannelMessage msg) throws VerificationException {
+        checkState(majorVersion == 1 || majorVersion == 2);
         checkState(step == InitStep.WAITING_ON_CONTRACT && msg.hasProvideContract());
         log.info("Got contract, broadcasting and responding with CHANNEL_OPEN");
         final Protos.ProvideContract providedContract = msg.getProvideContract();
 
+        if (majorVersion == 2) {
+            state = new PaymentChannelV2ServerState(broadcaster, wallet, myKey, expireTime);
+            checkState(providedContract.hasClientKey(), "ProvideContract didn't have a client key in protocol v2");
+            ((PaymentChannelV2ServerState)state).provideClientKey(providedContract.getClientKey().toByteArray());
+        }
+
         //TODO notify connection handler that timeout should be significantly extended as we wait for network propagation?
-        final Transaction multisigContract = wallet.getParams().getDefaultSerializer().makeTransaction(providedContract.getTx().toByteArray());
+        final Transaction contract = wallet.getParams().getDefaultSerializer().makeTransaction(providedContract.getTx().toByteArray());
         step = InitStep.WAITING_ON_MULTISIG_ACCEPTANCE;
-        state.provideMultiSigContract(multisigContract)
+        state.provideContract(contract)
                 .addListener(new Runnable() {
                     @Override
                     public void run() {
-                        multisigContractPropogated(providedContract, multisigContract.getHash());
+                        multisigContractPropogated(providedContract, contract.getHash());
                     }
                 }, Threading.SAME_THREAD);
     }
@@ -413,9 +443,6 @@ public class PaymentChannelServer {
             checkState(connectionOpen);
             if (channelSettling)
                 return;
-            // If we generate an error, we set errorBuilder and closeReason and break, otherwise we return
-            Protos.Error.Builder errorBuilder;
-            CloseReason closeReason;
             try {
                 switch (msg.getType()) {
                     case CLIENT_VERSION:
@@ -532,18 +559,18 @@ public class PaymentChannelServer {
             connectionOpen = false;
 
             try {
-                if (state != null && state.getMultisigContract() != null) {
+                if (state != null && state.getContract() != null) {
                     StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                             wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
                     if (channels != null) {
-                        StoredServerChannel storedServerChannel = channels.getChannel(state.getMultisigContract().getHash());
+                        StoredServerChannel storedServerChannel = channels.getChannel(state.getContract().getHash());
                         if (storedServerChannel != null) {
                             storedServerChannel.clearConnectedHandler();
                         }
                     }
                 }
             } catch (IllegalStateException e) {
-                // Expected when we call getMultisigContract() sometimes
+                // Expected when we call getContract() sometimes
             }
         } finally {
             lock.unlock();

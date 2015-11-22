@@ -43,9 +43,15 @@ message StoredClientPaymentChannel {
 	// Deprecated, key is already stored in the wallet, and found using myPublicKey;
 	required bytes myKey = 4;
 	required uint64 valueToMe = 5;
+	// Fees required to refund the transaction.
 	required uint64 refundFees = 6;
-    // When set, the hash of the transaction that was presented by the server for closure of the channel.
-    // It spends the contractTransaction and is expected to be broadcast to the network by the server.
-    // It's supposed to be in the wallet already.
-    optional bytes closeTransactionHash = 7;
+	// When set, the hash of the transaction that was presented by the server for closure of the channel.
+	// It spends the contractTransaction and is expected to be broadcast to the network by the server.
+	// It's supposed to be in the wallet already.
+	optional bytes closeTransactionHash = 7;
+	optional uint32 majorVersion = 9 [default = 1];
+	// The expiry time of the CLTV lock. Only used in protocol v2.
+	optional uint64 expiryTime = 10;
+	// The server's public key. Only used in protocol v2.
+	optional bytes serverKey = 11;
 }

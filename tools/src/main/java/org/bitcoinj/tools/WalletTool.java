@@ -724,7 +724,7 @@ public class WalletTool {
                 throw new RuntimeException(e);
             }
 
-            Wallet.SendRequest req = Wallet.SendRequest.toCLTVPaymentChannel(params, lockTime, refundKey, outputKey, value);
+            Wallet.SendRequest req = Wallet.SendRequest.toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), refundKey, outputKey, value);
             if (req.tx.getOutputs().size() == 1 && req.tx.getOutput(0).getValue().equals(wallet.getBalance())) {
                 log.info("Emptying out wallet, recipient may get less than what you expect");
                 req.emptyWallet = true;

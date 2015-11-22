@@ -6006,11 +6006,17 @@ public final class Protos {
      *
      * <pre>
      * The serialized bytes of the transaction in Satoshi format.
+     * For version 1:
      * * It must be signed and completely valid and ready for broadcast (ie it includes the
      *   necessary fees) TODO: tell the client how much fee it needs
      * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
      *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
      *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+     * For version 2:
+     * * It must be signed and completely valid and ready for broadcast (ie it includes the
+     *   necessary fees) TODO: tell the client how much fee it needs
+     * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+     *   primary's and the second being the secondary's.
      * </pre>
      */
     boolean hasTx();
@@ -6019,11 +6025,17 @@ public final class Protos {
      *
      * <pre>
      * The serialized bytes of the transaction in Satoshi format.
+     * For version 1:
      * * It must be signed and completely valid and ready for broadcast (ie it includes the
      *   necessary fees) TODO: tell the client how much fee it needs
      * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
      *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
      *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+     * For version 2:
+     * * It must be signed and completely valid and ready for broadcast (ie it includes the
+     *   necessary fees) TODO: tell the client how much fee it needs
+     * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+     *   primary's and the second being the secondary's.
      * </pre>
      */
     com.google.protobuf.ByteString getTx();
@@ -6061,6 +6073,29 @@ public final class Protos {
      * </pre>
      */
     org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder getInitialPaymentOrBuilder();
+
+    /**
+     * <code>optional bytes client_key = 3;</code>
+     *
+     * <pre>
+     * This field is added in protocol version 2 to send the client public key to the server.
+     * In version 1 it isn't used.
+     * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+     * are accepted.  It is only used in the creation of the multisig contract.
+     * </pre>
+     */
+    boolean hasClientKey();
+    /**
+     * <code>optional bytes client_key = 3;</code>
+     *
+     * <pre>
+     * This field is added in protocol version 2 to send the client public key to the server.
+     * In version 1 it isn't used.
+     * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+     * are accepted.  It is only used in the creation of the multisig contract.
+     * </pre>
+     */
+    com.google.protobuf.ByteString getClientKey();
   }
   /**
    * Protobuf type {@code paymentchannels.ProvideContract}
@@ -6136,6 +6171,11 @@ public final class Protos {
               bitField0_ |= 0x00000002;
               break;
             }
+            case 26: {
+              bitField0_ |= 0x00000004;
+              clientKey_ = input.readBytes();
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -6183,11 +6223,17 @@ public final class Protos {
      *
      * <pre>
      * The serialized bytes of the transaction in Satoshi format.
+     * For version 1:
      * * It must be signed and completely valid and ready for broadcast (ie it includes the
      *   necessary fees) TODO: tell the client how much fee it needs
      * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
      *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
      *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+     * For version 2:
+     * * It must be signed and completely valid and ready for broadcast (ie it includes the
+     *   necessary fees) TODO: tell the client how much fee it needs
+     * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+     *   primary's and the second being the secondary's.
      * </pre>
      */
     public boolean hasTx() {
@@ -6198,11 +6244,17 @@ public final class Protos {
      *
      * <pre>
      * The serialized bytes of the transaction in Satoshi format.
+     * For version 1:
      * * It must be signed and completely valid and ready for broadcast (ie it includes the
      *   necessary fees) TODO: tell the client how much fee it needs
      * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
      *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
      *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+     * For version 2:
+     * * It must be signed and completely valid and ready for broadcast (ie it includes the
+     *   necessary fees) TODO: tell the client how much fee it needs
+     * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+     *   primary's and the second being the secondary's.
      * </pre>
      */
     public com.google.protobuf.ByteString getTx() {
@@ -6251,9 +6303,39 @@ public final class Protos {
       return initialPayment_;
     }
 
+    public static final int CLIENT_KEY_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString clientKey_;
+    /**
+     * <code>optional bytes client_key = 3;</code>
+     *
+     * <pre>
+     * This field is added in protocol version 2 to send the client public key to the server.
+     * In version 1 it isn't used.
+     * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+     * are accepted.  It is only used in the creation of the multisig contract.
+     * </pre>
+     */
+    public boolean hasClientKey() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bytes client_key = 3;</code>
+     *
+     * <pre>
+     * This field is added in protocol version 2 to send the client public key to the server.
+     * In version 1 it isn't used.
+     * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+     * are accepted.  It is only used in the creation of the multisig contract.
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getClientKey() {
+      return clientKey_;
+    }
+
     private void initFields() {
       tx_ = com.google.protobuf.ByteString.EMPTY;
       initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
+      clientKey_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -6286,6 +6368,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeMessage(2, initialPayment_);
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, clientKey_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -6302,6 +6387,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, initialPayment_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, clientKey_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -6433,6 +6522,8 @@ public final class Protos {
           initialPaymentBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
+        clientKey_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -6473,6 +6564,10 @@ public final class Protos {
         } else {
           result.initialPayment_ = initialPaymentBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.clientKey_ = clientKey_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -6494,6 +6589,9 @@ public final class Protos {
         }
         if (other.hasInitialPayment()) {
           mergeInitialPayment(other.getInitialPayment());
+        }
+        if (other.hasClientKey()) {
+          setClientKey(other.getClientKey());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -6540,11 +6638,17 @@ public final class Protos {
        *
        * <pre>
        * The serialized bytes of the transaction in Satoshi format.
+       * For version 1:
        * * It must be signed and completely valid and ready for broadcast (ie it includes the
        *   necessary fees) TODO: tell the client how much fee it needs
        * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
        *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
        *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+       * For version 2:
+       * * It must be signed and completely valid and ready for broadcast (ie it includes the
+       *   necessary fees) TODO: tell the client how much fee it needs
+       * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+       *   primary's and the second being the secondary's.
        * </pre>
        */
       public boolean hasTx() {
@@ -6555,11 +6659,17 @@ public final class Protos {
        *
        * <pre>
        * The serialized bytes of the transaction in Satoshi format.
+       * For version 1:
        * * It must be signed and completely valid and ready for broadcast (ie it includes the
        *   necessary fees) TODO: tell the client how much fee it needs
        * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
        *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
        *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+       * For version 2:
+       * * It must be signed and completely valid and ready for broadcast (ie it includes the
+       *   necessary fees) TODO: tell the client how much fee it needs
+       * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+       *   primary's and the second being the secondary's.
        * </pre>
        */
       public com.google.protobuf.ByteString getTx() {
@@ -6570,11 +6680,17 @@ public final class Protos {
        *
        * <pre>
        * The serialized bytes of the transaction in Satoshi format.
+       * For version 1:
        * * It must be signed and completely valid and ready for broadcast (ie it includes the
        *   necessary fees) TODO: tell the client how much fee it needs
        * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
        *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
        *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+       * For version 2:
+       * * It must be signed and completely valid and ready for broadcast (ie it includes the
+       *   necessary fees) TODO: tell the client how much fee it needs
+       * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+       *   primary's and the second being the secondary's.
        * </pre>
        */
       public Builder setTx(com.google.protobuf.ByteString value) {
@@ -6591,11 +6707,17 @@ public final class Protos {
        *
        * <pre>
        * The serialized bytes of the transaction in Satoshi format.
+       * For version 1:
        * * It must be signed and completely valid and ready for broadcast (ie it includes the
        *   necessary fees) TODO: tell the client how much fee it needs
        * * Its first output must be a 2-of-2 multisig output with the first pubkey being the
        *   primary's and the second being the secondary's (ie the script must be exactly "OP_2
        *   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+       * For version 2:
+       * * It must be signed and completely valid and ready for broadcast (ie it includes the
+       *   necessary fees) TODO: tell the client how much fee it needs
+       * * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+       *   primary's and the second being the secondary's.
        * </pre>
        */
       public Builder clearTx() {
@@ -6782,6 +6904,69 @@ public final class Protos {
           initialPayment_ = null;
         }
         return initialPaymentBuilder_;
+      }
+
+      private com.google.protobuf.ByteString clientKey_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes client_key = 3;</code>
+       *
+       * <pre>
+       * This field is added in protocol version 2 to send the client public key to the server.
+       * In version 1 it isn't used.
+       * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+       * are accepted.  It is only used in the creation of the multisig contract.
+       * </pre>
+       */
+      public boolean hasClientKey() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bytes client_key = 3;</code>
+       *
+       * <pre>
+       * This field is added in protocol version 2 to send the client public key to the server.
+       * In version 1 it isn't used.
+       * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+       * are accepted.  It is only used in the creation of the multisig contract.
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getClientKey() {
+        return clientKey_;
+      }
+      /**
+       * <code>optional bytes client_key = 3;</code>
+       *
+       * <pre>
+       * This field is added in protocol version 2 to send the client public key to the server.
+       * In version 1 it isn't used.
+       * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+       * are accepted.  It is only used in the creation of the multisig contract.
+       * </pre>
+       */
+      public Builder setClientKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        clientKey_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes client_key = 3;</code>
+       *
+       * <pre>
+       * This field is added in protocol version 2 to send the client public key to the server.
+       * In version 1 it isn't used.
+       * This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+       * are accepted.  It is only used in the creation of the multisig contract.
+       * </pre>
+       */
+      public Builder clearClientKey() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        clientKey_ = getDefaultInstance().getClientKey();
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:paymentchannels.ProvideContract)
@@ -9439,21 +9624,22 @@ public final class Protos {
       "d_channel_size\030\002 \002(\004\022\030\n\020expire_time_secs" +
       "\030\003 \002(\004\022\023\n\013min_payment\030\004 \002(\004\"1\n\rProvideRe" +
       "fund\022\024\n\014multisig_key\030\001 \002(\014\022\n\n\002tx\030\002 \002(\014\"!",
-      "\n\014ReturnRefund\022\021\n\tsignature\030\001 \002(\014\"V\n\017Pro" +
+      "\n\014ReturnRefund\022\021\n\tsignature\030\001 \002(\014\"j\n\017Pro" +
       "videContract\022\n\n\002tx\030\001 \002(\014\0227\n\017initial_paym" +
       "ent\030\002 \002(\0132\036.paymentchannels.UpdatePaymen" +
-      "t\"M\n\rUpdatePayment\022\033\n\023client_change_valu" +
-      "e\030\001 \002(\004\022\021\n\tsignature\030\002 \002(\014\022\014\n\004info\030\003 \001(\014" +
-      "\"\032\n\nPaymentAck\022\014\n\004info\030\001 \001(\014\"\030\n\nSettleme" +
-      "nt\022\n\n\002tx\030\003 \002(\014\"\251\002\n\005Error\0225\n\004code\030\001 \001(\0162 " +
-      ".paymentchannels.Error.ErrorCode:\005OTHER\022" +
-      "\023\n\013explanation\030\002 \001(\t\022\026\n\016expected_value\030\003" +
-      " \001(\004\"\273\001\n\tErrorCode\022\013\n\007TIMEOUT\020\001\022\020\n\014SYNTA",
-      "X_ERROR\020\002\022\031\n\025NO_ACCEPTABLE_VERSION\020\003\022\023\n\017" +
-      "BAD_TRANSACTION\020\004\022\034\n\030TIME_WINDOW_UNACCEP" +
-      "TABLE\020\005\022\033\n\027CHANNEL_VALUE_TOO_LARGE\020\006\022\031\n\025" +
-      "MIN_PAYMENT_TOO_LARGE\020\007\022\t\n\005OTHER\020\010B$\n\032or" +
-      "g.bitcoin.paymentchannelB\006Protos"
+      "t\022\022\n\nclient_key\030\003 \001(\014\"M\n\rUpdatePayment\022\033" +
+      "\n\023client_change_value\030\001 \002(\004\022\021\n\tsignature" +
+      "\030\002 \002(\014\022\014\n\004info\030\003 \001(\014\"\032\n\nPaymentAck\022\014\n\004in" +
+      "fo\030\001 \001(\014\"\030\n\nSettlement\022\n\n\002tx\030\003 \002(\014\"\251\002\n\005E" +
+      "rror\0225\n\004code\030\001 \001(\0162 .paymentchannels.Err" +
+      "or.ErrorCode:\005OTHER\022\023\n\013explanation\030\002 \001(\t" +
+      "\022\026\n\016expected_value\030\003 \001(\004\"\273\001\n\tErrorCode\022\013",
+      "\n\007TIMEOUT\020\001\022\020\n\014SYNTAX_ERROR\020\002\022\031\n\025NO_ACCE" +
+      "PTABLE_VERSION\020\003\022\023\n\017BAD_TRANSACTION\020\004\022\034\n" +
+      "\030TIME_WINDOW_UNACCEPTABLE\020\005\022\033\n\027CHANNEL_V" +
+      "ALUE_TOO_LARGE\020\006\022\031\n\025MIN_PAYMENT_TOO_LARG" +
+      "E\020\007\022\t\n\005OTHER\020\010B$\n\032org.bitcoin.paymentcha" +
+      "nnelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -9508,7 +9694,7 @@ public final class Protos {
     internal_static_paymentchannels_ProvideContract_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_paymentchannels_ProvideContract_descriptor,
-        new java.lang.String[] { "Tx", "InitialPayment", });
+        new java.lang.String[] { "Tx", "InitialPayment", "ClientKey", });
     internal_static_paymentchannels_UpdatePayment_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_paymentchannels_UpdatePayment_fieldAccessorTable = new

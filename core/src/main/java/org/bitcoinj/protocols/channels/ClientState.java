@@ -772,10 +772,18 @@ public final class ClientState {
 
     /**
      * <code>required uint64 refundFees = 6;</code>
+     *
+     * <pre>
+     * Fees required to refund the transaction.
+     * </pre>
      */
     boolean hasRefundFees();
     /**
      * <code>required uint64 refundFees = 6;</code>
+     *
+     * <pre>
+     * Fees required to refund the transaction.
+     * </pre>
      */
     long getRefundFees();
 
@@ -799,6 +807,49 @@ public final class ClientState {
      * </pre>
      */
     com.google.protobuf.ByteString getCloseTransactionHash();
+
+    /**
+     * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+     */
+    boolean hasMajorVersion();
+    /**
+     * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+     */
+    int getMajorVersion();
+
+    /**
+     * <code>optional uint64 expiryTime = 10;</code>
+     *
+     * <pre>
+     * The expiry time of the CLTV lock. Only used in protocol v2.
+     * </pre>
+     */
+    boolean hasExpiryTime();
+    /**
+     * <code>optional uint64 expiryTime = 10;</code>
+     *
+     * <pre>
+     * The expiry time of the CLTV lock. Only used in protocol v2.
+     * </pre>
+     */
+    long getExpiryTime();
+
+    /**
+     * <code>optional bytes serverKey = 11;</code>
+     *
+     * <pre>
+     * The server's public key. Only used in protocol v2.
+     * </pre>
+     */
+    boolean hasServerKey();
+    /**
+     * <code>optional bytes serverKey = 11;</code>
+     *
+     * <pre>
+     * The server's public key. Only used in protocol v2.
+     * </pre>
+     */
+    com.google.protobuf.ByteString getServerKey();
   }
   /**
    * Protobuf type {@code paymentchannels.StoredClientPaymentChannel}
@@ -895,6 +946,21 @@ public final class ClientState {
             case 66: {
               bitField0_ |= 0x00000008;
               myPublicKey_ = input.readBytes();
+              break;
+            }
+            case 72: {
+              bitField0_ |= 0x00000100;
+              majorVersion_ = input.readUInt32();
+              break;
+            }
+            case 80: {
+              bitField0_ |= 0x00000200;
+              expiryTime_ = input.readUInt64();
+              break;
+            }
+            case 90: {
+              bitField0_ |= 0x00000400;
+              serverKey_ = input.readBytes();
               break;
             }
           }
@@ -1039,12 +1105,20 @@ public final class ClientState {
     private long refundFees_;
     /**
      * <code>required uint64 refundFees = 6;</code>
+     *
+     * <pre>
+     * Fees required to refund the transaction.
+     * </pre>
      */
     public boolean hasRefundFees() {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <code>required uint64 refundFees = 6;</code>
+     *
+     * <pre>
+     * Fees required to refund the transaction.
+     * </pre>
      */
     public long getRefundFees() {
       return refundFees_;
@@ -1077,6 +1151,67 @@ public final class ClientState {
       return closeTransactionHash_;
     }
 
+    public static final int MAJORVERSION_FIELD_NUMBER = 9;
+    private int majorVersion_;
+    /**
+     * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+     */
+    public boolean hasMajorVersion() {
+      return ((bitField0_ & 0x00000100) == 0x00000100);
+    }
+    /**
+     * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+     */
+    public int getMajorVersion() {
+      return majorVersion_;
+    }
+
+    public static final int EXPIRYTIME_FIELD_NUMBER = 10;
+    private long expiryTime_;
+    /**
+     * <code>optional uint64 expiryTime = 10;</code>
+     *
+     * <pre>
+     * The expiry time of the CLTV lock. Only used in protocol v2.
+     * </pre>
+     */
+    public boolean hasExpiryTime() {
+      return ((bitField0_ & 0x00000200) == 0x00000200);
+    }
+    /**
+     * <code>optional uint64 expiryTime = 10;</code>
+     *
+     * <pre>
+     * The expiry time of the CLTV lock. Only used in protocol v2.
+     * </pre>
+     */
+    public long getExpiryTime() {
+      return expiryTime_;
+    }
+
+    public static final int SERVERKEY_FIELD_NUMBER = 11;
+    private com.google.protobuf.ByteString serverKey_;
+    /**
+     * <code>optional bytes serverKey = 11;</code>
+     *
+     * <pre>
+     * The server's public key. Only used in protocol v2.
+     * </pre>
+     */
+    public boolean hasServerKey() {
+      return ((bitField0_ & 0x00000400) == 0x00000400);
+    }
+    /**
+     * <code>optional bytes serverKey = 11;</code>
+     *
+     * <pre>
+     * The server's public key. Only used in protocol v2.
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getServerKey() {
+      return serverKey_;
+    }
+
     private void initFields() {
       id_ = com.google.protobuf.ByteString.EMPTY;
       contractTransaction_ = com.google.protobuf.ByteString.EMPTY;
@@ -1086,6 +1221,9 @@ public final class ClientState {
       valueToMe_ = 0L;
       refundFees_ = 0L;
       closeTransactionHash_ = com.google.protobuf.ByteString.EMPTY;
+      majorVersion_ = 1;
+      expiryTime_ = 0L;
+      serverKey_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1152,6 +1290,15 @@ public final class ClientState {
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeBytes(8, myPublicKey_);
       }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        output.writeUInt32(9, majorVersion_);
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        output.writeUInt64(10, expiryTime_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        output.writeBytes(11, serverKey_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -1192,6 +1339,18 @@ public final class ClientState {
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(8, myPublicKey_);
+      }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(9, majorVersion_);
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(10, expiryTime_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(11, serverKey_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1331,6 +1490,12 @@ public final class ClientState {
         bitField0_ = (bitField0_ & ~0x00000040);
         closeTransactionHash_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000080);
+        majorVersion_ = 1;
+        bitField0_ = (bitField0_ & ~0x00000100);
+        expiryTime_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000200);
+        serverKey_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000400);
         return this;
       }
 
@@ -1391,6 +1556,18 @@ public final class ClientState {
           to_bitField0_ |= 0x00000080;
         }
         result.closeTransactionHash_ = closeTransactionHash_;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000100;
+        }
+        result.majorVersion_ = majorVersion_;
+        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
+          to_bitField0_ |= 0x00000200;
+        }
+        result.expiryTime_ = expiryTime_;
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000400;
+        }
+        result.serverKey_ = serverKey_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1430,6 +1607,15 @@ public final class ClientState {
         }
         if (other.hasCloseTransactionHash()) {
           setCloseTransactionHash(other.getCloseTransactionHash());
+        }
+        if (other.hasMajorVersion()) {
+          setMajorVersion(other.getMajorVersion());
+        }
+        if (other.hasExpiryTime()) {
+          setExpiryTime(other.getExpiryTime());
+        }
+        if (other.hasServerKey()) {
+          setServerKey(other.getServerKey());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1712,18 +1898,30 @@ public final class ClientState {
       private long refundFees_ ;
       /**
        * <code>required uint64 refundFees = 6;</code>
+       *
+       * <pre>
+       * Fees required to refund the transaction.
+       * </pre>
        */
       public boolean hasRefundFees() {
         return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
        * <code>required uint64 refundFees = 6;</code>
+       *
+       * <pre>
+       * Fees required to refund the transaction.
+       * </pre>
        */
       public long getRefundFees() {
         return refundFees_;
       }
       /**
        * <code>required uint64 refundFees = 6;</code>
+       *
+       * <pre>
+       * Fees required to refund the transaction.
+       * </pre>
        */
       public Builder setRefundFees(long value) {
         bitField0_ |= 0x00000040;
@@ -1733,6 +1931,10 @@ public final class ClientState {
       }
       /**
        * <code>required uint64 refundFees = 6;</code>
+       *
+       * <pre>
+       * Fees required to refund the transaction.
+       * </pre>
        */
       public Builder clearRefundFees() {
         bitField0_ = (bitField0_ & ~0x00000040);
@@ -1800,6 +2002,137 @@ public final class ClientState {
         return this;
       }
 
+      private int majorVersion_ = 1;
+      /**
+       * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+       */
+      public boolean hasMajorVersion() {
+        return ((bitField0_ & 0x00000100) == 0x00000100);
+      }
+      /**
+       * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+       */
+      public int getMajorVersion() {
+        return majorVersion_;
+      }
+      /**
+       * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+       */
+      public Builder setMajorVersion(int value) {
+        bitField0_ |= 0x00000100;
+        majorVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 majorVersion = 9 [default = 1];</code>
+       */
+      public Builder clearMajorVersion() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        majorVersion_ = 1;
+        onChanged();
+        return this;
+      }
+
+      private long expiryTime_ ;
+      /**
+       * <code>optional uint64 expiryTime = 10;</code>
+       *
+       * <pre>
+       * The expiry time of the CLTV lock. Only used in protocol v2.
+       * </pre>
+       */
+      public boolean hasExpiryTime() {
+        return ((bitField0_ & 0x00000200) == 0x00000200);
+      }
+      /**
+       * <code>optional uint64 expiryTime = 10;</code>
+       *
+       * <pre>
+       * The expiry time of the CLTV lock. Only used in protocol v2.
+       * </pre>
+       */
+      public long getExpiryTime() {
+        return expiryTime_;
+      }
+      /**
+       * <code>optional uint64 expiryTime = 10;</code>
+       *
+       * <pre>
+       * The expiry time of the CLTV lock. Only used in protocol v2.
+       * </pre>
+       */
+      public Builder setExpiryTime(long value) {
+        bitField0_ |= 0x00000200;
+        expiryTime_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 expiryTime = 10;</code>
+       *
+       * <pre>
+       * The expiry time of the CLTV lock. Only used in protocol v2.
+       * </pre>
+       */
+      public Builder clearExpiryTime() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        expiryTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString serverKey_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes serverKey = 11;</code>
+       *
+       * <pre>
+       * The server's public key. Only used in protocol v2.
+       * </pre>
+       */
+      public boolean hasServerKey() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <code>optional bytes serverKey = 11;</code>
+       *
+       * <pre>
+       * The server's public key. Only used in protocol v2.
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getServerKey() {
+        return serverKey_;
+      }
+      /**
+       * <code>optional bytes serverKey = 11;</code>
+       *
+       * <pre>
+       * The server's public key. Only used in protocol v2.
+       * </pre>
+       */
+      public Builder setServerKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000400;
+        serverKey_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes serverKey = 11;</code>
+       *
+       * <pre>
+       * The server's public key. Only used in protocol v2.
+       * </pre>
+       */
+      public Builder clearServerKey() {
+        bitField0_ = (bitField0_ & ~0x00000400);
+        serverKey_ = getDefaultInstance().getServerKey();
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:paymentchannels.StoredClientPaymentChannel)
     }
 
@@ -1833,13 +2166,15 @@ public final class ClientState {
       "\n storedclientpaymentchannel.proto\022\017paym" +
       "entchannels\"\\\n\033StoredClientPaymentChanne" +
       "ls\022=\n\010channels\030\001 \003(\0132+.paymentchannels.S" +
-      "toredClientPaymentChannel\"\311\001\n\032StoredClie" +
+      "toredClientPaymentChannel\"\211\002\n\032StoredClie" +
       "ntPaymentChannel\022\n\n\002id\030\001 \002(\014\022\033\n\023contract" +
       "Transaction\030\002 \002(\014\022\031\n\021refundTransaction\030\003" +
       " \002(\014\022\023\n\013myPublicKey\030\010 \002(\014\022\r\n\005myKey\030\004 \002(\014" +
       "\022\021\n\tvalueToMe\030\005 \002(\004\022\022\n\nrefundFees\030\006 \002(\004\022" +
-      "\034\n\024closeTransactionHash\030\007 \001(\014B.\n\037org.bit" +
-      "coinj.protocols.channelsB\013ClientState"
+      "\034\n\024closeTransactionHash\030\007 \001(\014\022\027\n\014majorVe" +
+      "rsion\030\t \001(\r:\0011\022\022\n\nexpiryTime\030\n \001(\004\022\021\n\tse",
+      "rverKey\030\013 \001(\014B.\n\037org.bitcoinj.protocols." +
+      "channelsB\013ClientState"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1864,7 +2199,7 @@ public final class ClientState {
     internal_static_paymentchannels_StoredClientPaymentChannel_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_paymentchannels_StoredClientPaymentChannel_descriptor,
-        new java.lang.String[] { "Id", "ContractTransaction", "RefundTransaction", "MyPublicKey", "MyKey", "ValueToMe", "RefundFees", "CloseTransactionHash", });
+        new java.lang.String[] { "Id", "ContractTransaction", "RefundTransaction", "MyPublicKey", "MyKey", "ValueToMe", "RefundFees", "CloseTransactionHash", "MajorVersion", "ExpiryTime", "ServerKey", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

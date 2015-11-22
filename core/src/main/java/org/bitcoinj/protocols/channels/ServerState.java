@@ -745,11 +745,11 @@ public final class ServerState {
     com.google.protobuf.ByteString getContractTransaction();
 
     /**
-     * <code>required bytes clientOutput = 5;</code>
+     * <code>optional bytes clientOutput = 5;</code>
      */
     boolean hasClientOutput();
     /**
-     * <code>required bytes clientOutput = 5;</code>
+     * <code>optional bytes clientOutput = 5;</code>
      */
     com.google.protobuf.ByteString getClientOutput();
 
@@ -761,6 +761,32 @@ public final class ServerState {
      * <code>required bytes myKey = 6;</code>
      */
     com.google.protobuf.ByteString getMyKey();
+
+    /**
+     * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+     */
+    boolean hasMajorVersion();
+    /**
+     * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+     */
+    int getMajorVersion();
+
+    /**
+     * <code>optional bytes clientKey = 8;</code>
+     *
+     * <pre>
+     * Protocol version 2 only - the P2SH hash doesn't contain the required key
+     * </pre>
+     */
+    boolean hasClientKey();
+    /**
+     * <code>optional bytes clientKey = 8;</code>
+     *
+     * <pre>
+     * Protocol version 2 only - the P2SH hash doesn't contain the required key
+     * </pre>
+     */
+    com.google.protobuf.ByteString getClientKey();
   }
   /**
    * Protobuf type {@code paymentchannels.StoredServerPaymentChannel}
@@ -846,6 +872,16 @@ public final class ServerState {
             case 50: {
               bitField0_ |= 0x00000020;
               myKey_ = input.readBytes();
+              break;
+            }
+            case 56: {
+              bitField0_ |= 0x00000040;
+              majorVersion_ = input.readUInt32();
+              break;
+            }
+            case 66: {
+              bitField0_ |= 0x00000080;
+              clientKey_ = input.readBytes();
               break;
             }
           }
@@ -951,13 +987,13 @@ public final class ServerState {
     public static final int CLIENTOUTPUT_FIELD_NUMBER = 5;
     private com.google.protobuf.ByteString clientOutput_;
     /**
-     * <code>required bytes clientOutput = 5;</code>
+     * <code>optional bytes clientOutput = 5;</code>
      */
     public boolean hasClientOutput() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required bytes clientOutput = 5;</code>
+     * <code>optional bytes clientOutput = 5;</code>
      */
     public com.google.protobuf.ByteString getClientOutput() {
       return clientOutput_;
@@ -978,6 +1014,44 @@ public final class ServerState {
       return myKey_;
     }
 
+    public static final int MAJORVERSION_FIELD_NUMBER = 7;
+    private int majorVersion_;
+    /**
+     * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+     */
+    public boolean hasMajorVersion() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+     */
+    public int getMajorVersion() {
+      return majorVersion_;
+    }
+
+    public static final int CLIENTKEY_FIELD_NUMBER = 8;
+    private com.google.protobuf.ByteString clientKey_;
+    /**
+     * <code>optional bytes clientKey = 8;</code>
+     *
+     * <pre>
+     * Protocol version 2 only - the P2SH hash doesn't contain the required key
+     * </pre>
+     */
+    public boolean hasClientKey() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional bytes clientKey = 8;</code>
+     *
+     * <pre>
+     * Protocol version 2 only - the P2SH hash doesn't contain the required key
+     * </pre>
+     */
+    public com.google.protobuf.ByteString getClientKey() {
+      return clientKey_;
+    }
+
     private void initFields() {
       bestValueToMe_ = 0L;
       bestValueSignature_ = com.google.protobuf.ByteString.EMPTY;
@@ -985,6 +1059,8 @@ public final class ServerState {
       contractTransaction_ = com.google.protobuf.ByteString.EMPTY;
       clientOutput_ = com.google.protobuf.ByteString.EMPTY;
       myKey_ = com.google.protobuf.ByteString.EMPTY;
+      majorVersion_ = 1;
+      clientKey_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1001,10 +1077,6 @@ public final class ServerState {
         return false;
       }
       if (!hasContractTransaction()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasClientOutput()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -1036,6 +1108,12 @@ public final class ServerState {
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeBytes(6, myKey_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        output.writeUInt32(7, majorVersion_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        output.writeBytes(8, clientKey_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -1069,6 +1147,14 @@ public final class ServerState {
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(6, myKey_);
+      }
+      if (((bitField0_ & 0x00000040) == 0x00000040)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(7, majorVersion_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(8, clientKey_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1203,6 +1289,10 @@ public final class ServerState {
         bitField0_ = (bitField0_ & ~0x00000010);
         myKey_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000020);
+        majorVersion_ = 1;
+        bitField0_ = (bitField0_ & ~0x00000040);
+        clientKey_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000080);
         return this;
       }
 
@@ -1255,6 +1345,14 @@ public final class ServerState {
           to_bitField0_ |= 0x00000020;
         }
         result.myKey_ = myKey_;
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000040;
+        }
+        result.majorVersion_ = majorVersion_;
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+          to_bitField0_ |= 0x00000080;
+        }
+        result.clientKey_ = clientKey_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1289,6 +1387,12 @@ public final class ServerState {
         if (other.hasMyKey()) {
           setMyKey(other.getMyKey());
         }
+        if (other.hasMajorVersion()) {
+          setMajorVersion(other.getMajorVersion());
+        }
+        if (other.hasClientKey()) {
+          setClientKey(other.getClientKey());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -1303,10 +1407,6 @@ public final class ServerState {
           return false;
         }
         if (!hasContractTransaction()) {
-          
-          return false;
-        }
-        if (!hasClientOutput()) {
           
           return false;
         }
@@ -1472,19 +1572,19 @@ public final class ServerState {
 
       private com.google.protobuf.ByteString clientOutput_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required bytes clientOutput = 5;</code>
+       * <code>optional bytes clientOutput = 5;</code>
        */
       public boolean hasClientOutput() {
         return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
-       * <code>required bytes clientOutput = 5;</code>
+       * <code>optional bytes clientOutput = 5;</code>
        */
       public com.google.protobuf.ByteString getClientOutput() {
         return clientOutput_;
       }
       /**
-       * <code>required bytes clientOutput = 5;</code>
+       * <code>optional bytes clientOutput = 5;</code>
        */
       public Builder setClientOutput(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1496,7 +1596,7 @@ public final class ServerState {
         return this;
       }
       /**
-       * <code>required bytes clientOutput = 5;</code>
+       * <code>optional bytes clientOutput = 5;</code>
        */
       public Builder clearClientOutput() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -1540,6 +1640,89 @@ public final class ServerState {
         return this;
       }
 
+      private int majorVersion_ = 1;
+      /**
+       * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+       */
+      public boolean hasMajorVersion() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      /**
+       * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+       */
+      public int getMajorVersion() {
+        return majorVersion_;
+      }
+      /**
+       * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+       */
+      public Builder setMajorVersion(int value) {
+        bitField0_ |= 0x00000040;
+        majorVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 majorVersion = 7 [default = 1];</code>
+       */
+      public Builder clearMajorVersion() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        majorVersion_ = 1;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString clientKey_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes clientKey = 8;</code>
+       *
+       * <pre>
+       * Protocol version 2 only - the P2SH hash doesn't contain the required key
+       * </pre>
+       */
+      public boolean hasClientKey() {
+        return ((bitField0_ & 0x00000080) == 0x00000080);
+      }
+      /**
+       * <code>optional bytes clientKey = 8;</code>
+       *
+       * <pre>
+       * Protocol version 2 only - the P2SH hash doesn't contain the required key
+       * </pre>
+       */
+      public com.google.protobuf.ByteString getClientKey() {
+        return clientKey_;
+      }
+      /**
+       * <code>optional bytes clientKey = 8;</code>
+       *
+       * <pre>
+       * Protocol version 2 only - the P2SH hash doesn't contain the required key
+       * </pre>
+       */
+      public Builder setClientKey(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+        clientKey_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes clientKey = 8;</code>
+       *
+       * <pre>
+       * Protocol version 2 only - the P2SH hash doesn't contain the required key
+       * </pre>
+       */
+      public Builder clearClientKey() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        clientKey_ = getDefaultInstance().getClientKey();
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:paymentchannels.StoredServerPaymentChannel)
     }
 
@@ -1573,13 +1756,14 @@ public final class ServerState {
       "\n storedserverpaymentchannel.proto\022\017paym" +
       "entchannels\"\\\n\033StoredServerPaymentChanne" +
       "ls\022=\n\010channels\030\001 \003(\0132+.paymentchannels.S" +
-      "toredServerPaymentChannel\"\272\001\n\032StoredServ" +
+      "toredServerPaymentChannel\"\346\001\n\032StoredServ" +
       "erPaymentChannel\022\025\n\rbestValueToMe\030\001 \002(\004\022" +
       "\032\n\022bestValueSignature\030\002 \001(\014\022\'\n\037refundTra" +
       "nsactionUnlockTimeSecs\030\003 \002(\004\022\033\n\023contract" +
-      "Transaction\030\004 \002(\014\022\024\n\014clientOutput\030\005 \002(\014\022" +
-      "\r\n\005myKey\030\006 \002(\014B.\n\037org.bitcoinj.protocols" +
-      ".channelsB\013ServerState"
+      "Transaction\030\004 \002(\014\022\024\n\014clientOutput\030\005 \001(\014\022" +
+      "\r\n\005myKey\030\006 \002(\014\022\027\n\014majorVersion\030\007 \001(\r:\0011\022" +
+      "\021\n\tclientKey\030\010 \001(\014B.\n\037org.bitcoinj.proto",
+      "cols.channelsB\013ServerState"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1604,7 +1788,7 @@ public final class ServerState {
     internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_paymentchannels_StoredServerPaymentChannel_descriptor,
-        new java.lang.String[] { "BestValueToMe", "BestValueSignature", "RefundTransactionUnlockTimeSecs", "ContractTransaction", "ClientOutput", "MyKey", });
+        new java.lang.String[] { "BestValueToMe", "BestValueSignature", "RefundTransactionUnlockTimeSecs", "ContractTransaction", "ClientOutput", "MyKey", "MajorVersion", "ClientKey", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

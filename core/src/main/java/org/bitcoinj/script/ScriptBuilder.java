@@ -457,10 +457,31 @@ public class ScriptBuilder {
         return builder.build();
     }
 
-    public static Script createCLTVPaymentChannelInput(TransactionSignature from, TransactionSignature to) {
+    public static Script createCLTVPaymentChannelP2SHRefund(TransactionSignature signature, Script redeemScript) {
         ScriptBuilder builder = new ScriptBuilder();
-        builder.data(from.encodeToBitcoin());
-        builder.data(to.encodeToBitcoin());
+        builder.data(signature.encodeToBitcoin());
+        builder.data(new byte[] { 0 }); // Use the CHECKLOCKTIMEVERIFY if branch
+        builder.data(redeemScript.getProgram());
+        return builder.build();
+    }
+
+    public static Script createCLTVPaymentChannelP2SHInput(byte[] from, byte[] to, Script redeemScript) {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.data(from);
+        builder.data(to);
+        builder.smallNum(1); // Use the CHECKLOCKTIMEVERIFY if branch
+        builder.data(redeemScript.getProgram());
+        return builder.build();
+    }
+
+    public static Script createCLTVPaymentChannelInput(TransactionSignature from, TransactionSignature to) {
+        return createCLTVPaymentChannelInput(from.encodeToBitcoin(), to.encodeToBitcoin());
+    }
+
+    public static Script createCLTVPaymentChannelInput(byte[] from, byte[] to) {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.data(from);
+        builder.data(to);
         builder.smallNum(1); // Use the CHECKLOCKTIMEVERIFY if branch
         return builder.build();
     }
