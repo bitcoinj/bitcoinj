@@ -407,9 +407,9 @@ public class ScriptTest {
     }
 
     @Test
-    public void testLockTimeVerifyOutput() {
-        Script script = ScriptBuilder.createLockTimeVerifyOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
-        assertTrue("script is locktime-verify", script.isSentToLockTimeVerify());
+    public void testCLTVPaymentChannelOutput() {
+        Script script = ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
+        assertTrue("script is locktime-verify", script.isSentToCLTVPaymentChannel());
     }
 
     @Test

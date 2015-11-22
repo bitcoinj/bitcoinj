@@ -307,8 +307,8 @@ public class Script {
      * @return
      * @throws ScriptException
      */
-    public byte[] getLockTimeVerifySenderPubKey() throws ScriptException {
-        if (!isSentToLockTimeVerify()) {
+    public byte[] getCLTVPaymentChannelSenderPubKey() throws ScriptException {
+        if (!isSentToCLTVPaymentChannel()) {
             throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(8).data;
@@ -319,11 +319,18 @@ public class Script {
      * @return
      * @throws ScriptException
      */
-    public byte[] getLockTimeVerifyRecipientPubKey() throws ScriptException {
-        if (!isSentToLockTimeVerify()) {
+    public byte[] getCLTVPaymentChannelRecipientPubKey() throws ScriptException {
+        if (!isSentToCLTVPaymentChannel()) {
             throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(1).data;
+    }
+
+    public BigInteger getCLTVPaymentChannelExpiry() {
+        if (!isSentToCLTVPaymentChannel()) {
+            throw new ScriptException("Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
+        }
+        return castToBigInteger(chunks.get(4).data, 5);
     }
 
     /**
@@ -710,13 +717,14 @@ public class Script {
         return true;
     }
 
-    public boolean isSentToLockTimeVerify() {
+    public boolean isSentToCLTVPaymentChannel() {
         if (chunks.size() != 10) return false;
         // Check that opcodes match the pre-determined format.
         if (!chunks.get(0).equalsOpCode(OP_IF)) return false;
         // chunk[1] = recipient pubkey
         if (!chunks.get(2).equalsOpCode(OP_CHECKSIGVERIFY)) return false;
         if (!chunks.get(3).equalsOpCode(OP_ELSE)) return false;
+        // chunk[4] = locktime
         if (!chunks.get(5).equalsOpCode(OP_CHECKLOCKTIMEVERIFY)) return false;
         if (!chunks.get(6).equalsOpCode(OP_DROP)) return false;
         if (!chunks.get(7).equalsOpCode(OP_ENDIF)) return false;

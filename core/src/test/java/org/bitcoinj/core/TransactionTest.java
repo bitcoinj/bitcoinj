@@ -208,36 +208,36 @@ public class TransactionTest {
     }
 
     @Test
-    public void testLockTimeVerifyTransactionSpending() {
+    public void testCLTVPaymentChannelTransactionSpending() {
         BigInteger time = BigInteger.valueOf(20);
 
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
-        Script outputScript = ScriptBuilder.createLockTimeVerifyOutput(time, from, to);
+        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
         Transaction tx = new Transaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.ALL, false);
+                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
         TransactionSignature toSig =
-                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.ALL, false);
+                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.ALL, false);
+                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
         Script scriptSig =
-                ScriptBuilder.createLockTimeVerifyInput(fromSig, toSig);
+                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
         Script refundSig =
-                ScriptBuilder.createLockTimeVerifyRefund(fromSig);
+                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
         Script invalidScriptSig1 =
-                ScriptBuilder.createLockTimeVerifyInput(fromSig, incorrectSig);
+                ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
         Script invalidScriptSig2 =
-                ScriptBuilder.createLockTimeVerifyInput(incorrectSig, toSig);
+                ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
 
         try {
             scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
         } catch (ScriptException e) {
             e.printStackTrace();
-            fail("Spend before script failed to correctly spend");
+            fail("Settle transaction failed to correctly spend the payment channel");
         }
 
         try {
@@ -255,30 +255,30 @@ public class TransactionTest {
     }
 
     @Test
-    public void testLockTimeVerifyTransactionRefund() {
+    public void testCLTVPaymentChannelTransactionRefund() {
         BigInteger time = BigInteger.valueOf(20);
 
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
-        Script outputScript = ScriptBuilder.createLockTimeVerifyOutput(time, from, to);
+        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
         Transaction tx = new Transaction(PARAMS);
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.add(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.ALL, false);
+                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.ALL, false);
+                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
         Script scriptSig =
-                ScriptBuilder.createLockTimeVerifyRefund(fromSig);
+                ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
         Script invalidScriptSig =
-                ScriptBuilder.createLockTimeVerifyRefund(incorrectSig);
+                ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
 
         try {
             scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
         } catch (ScriptException e) {
             e.printStackTrace();
-            fail("Spend before script failed to correctly spend");
+            fail("Refund failed to correctly spend the payment channel");
         }
 
         try {

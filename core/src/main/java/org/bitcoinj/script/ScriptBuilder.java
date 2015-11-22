@@ -437,7 +437,7 @@ public class ScriptBuilder {
         return new ScriptBuilder().op(OP_RETURN).data(data).build();
     }
 
-    public static Script createLockTimeVerifyOutput(BigInteger time, ECKey from, ECKey to) {
+    public static Script createCLTVPaymentChannelOutput(BigInteger time, ECKey from, ECKey to) {
         byte[] timeBytes = Utils.reverseBytes(Utils.encodeMPI(time, false));
         if (timeBytes.length > 5) {
             throw new RuntimeException("Time too large to encode as 5-byte int");
@@ -450,14 +450,14 @@ public class ScriptBuilder {
                 .data(from.getPubKey()).op(OP_CHECKSIG).build();
     }
 
-    public static Script createLockTimeVerifyRefund(TransactionSignature signature) {
+    public static Script createCLTVPaymentChannelRefund(TransactionSignature signature) {
         ScriptBuilder builder = new ScriptBuilder();
         builder.data(signature.encodeToBitcoin());
         builder.data(new byte[] { 0 }); // Use the CHECKLOCKTIMEVERIFY if branch
         return builder.build();
     }
 
-    public static Script createLockTimeVerifyInput(TransactionSignature from, TransactionSignature to) {
+    public static Script createCLTVPaymentChannelInput(TransactionSignature from, TransactionSignature to) {
         ScriptBuilder builder = new ScriptBuilder();
         builder.data(from.encodeToBitcoin());
         builder.data(to.encodeToBitcoin());
