@@ -20,6 +20,7 @@ package org.bitcoinj.examples;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.protocols.channels.PaymentChannelClient;
 import org.bitcoinj.protocols.channels.PaymentChannelClientConnection;
 import org.bitcoinj.protocols.channels.StoredPaymentChannelClientStates;
 import org.bitcoinj.protocols.channels.ValueOutOfRangeException;
@@ -113,8 +114,9 @@ public class ExamplePaymentChannelClient {
     }
 
     private void openAndSend(int timeoutSecs, InetSocketAddress server, String channelID, final int times) throws IOException, ValueOutOfRangeException, InterruptedException {
+        // Use protocol version 1 for simplicity
         PaymentChannelClientConnection client = new PaymentChannelClientConnection(
-                server, timeoutSecs, appKit.wallet(), myKey, channelSize, channelID);
+                server, timeoutSecs, appKit.wallet(), myKey, channelSize, channelID, PaymentChannelClient.VersionSelector.VERSION_1);
         // Opening the channel requires talking to the server, so it's asynchronous.
         final CountDownLatch latch = new CountDownLatch(1);
         Futures.addCallback(client.getChannelOpenFuture(), new FutureCallback<PaymentChannelClientConnection>() {

@@ -178,11 +178,17 @@ message ReturnRefund {
 // Sent from the primary to the secondary to complete initialization.
 message ProvideContract {
     // The serialized bytes of the transaction in Satoshi format.
+    // For version 1:
     // * It must be signed and completely valid and ready for broadcast (ie it includes the
     //   necessary fees) TODO: tell the client how much fee it needs
     // * Its first output must be a 2-of-2 multisig output with the first pubkey being the
     //   primary's and the second being the secondary's (ie the script must be exactly "OP_2
     //   ProvideRefund.multisig_key Initiate.multisig_key OP_2 OP_CHECKMULTISIG")
+    // For version 2:
+    // * It must be signed and completely valid and ready for broadcast (ie it includes the
+    //   necessary fees) TODO: tell the client how much fee it needs
+    // * Its first output must be a CHECKLOCKTIMEVERIFY output with the first pubkey being the
+    //   primary's and the second being the secondary's.
     required bytes tx = 1;
 
     // To open the channel, an initial payment of the server-specified dust limit value must be
@@ -190,6 +196,12 @@ message ProvideContract {
     // no payment tx having been provided at all, or a payment that is smaller than the dust
     // limit being provided.
     required UpdatePayment initial_payment = 2;
+
+    // This field is added in protocol version 2 to send the client public key to the server.
+    // In version 1 it isn't used.
+    // This must be a raw pubkey in regular ECDSA form. Both compressed and non-compressed forms
+    // are accepted.  It is only used in the creation of the multisig contract.
+    optional bytes client_key = 3;
 }
 
 // This message can only be used by the primary after it has received a CHANNEL_OPEN message. It

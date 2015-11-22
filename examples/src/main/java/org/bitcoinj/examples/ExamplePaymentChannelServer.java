@@ -97,10 +97,10 @@ public class ExamplePaymentChannelServer implements PaymentChannelServerListener
                 log.info("   with a maximum value of {}, expiring at UNIX timestamp {}.",
                         // The channel's maximum value is the value of the multisig contract which locks in some
                         // amount of money to the channel
-                        state.getMultisigContract().getOutput(0).getValue(),
+                        state.getContract().getOutput(0).getValue(),
                         // The channel expires at some offset from when the client's refund transaction becomes
                         // spendable.
-                        state.getRefundTransactionUnlockTime() + StoredPaymentChannelServerStates.CHANNEL_EXPIRE_OFFSET);
+                        state.getExpiryTime() + StoredPaymentChannelServerStates.CHANNEL_EXPIRE_OFFSET);
             }
 
             @Override

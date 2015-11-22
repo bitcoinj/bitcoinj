@@ -3818,11 +3818,12 @@ public class Wallet extends BaseTaggableObject
             return toCLTVPaymentChannel(params, BigInteger.valueOf(time), from, to, value);
         }
 
-        public static SendRequest toCLTVPaymentChannel(NetworkParameters params, long lockTime, ECKey from, ECKey to, Coin value) {
-            return toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), from, to, value);
+        public static SendRequest toCLTVPaymentChannel(NetworkParameters params, int releaseBlock, ECKey from, ECKey to, Coin value) {
+            checkArgument(0 <= releaseBlock && releaseBlock < Transaction.LOCKTIME_THRESHOLD, "Block number was too large");
+            return toCLTVPaymentChannel(params, BigInteger.valueOf(releaseBlock), from, to, value);
         }
 
-        private static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
+        public static SendRequest toCLTVPaymentChannel(NetworkParameters params, BigInteger time, ECKey from, ECKey to, Coin value) {
             SendRequest req = new SendRequest();
             Script output = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
             req.tx = new Transaction(params);
@@ -4223,6 +4224,7 @@ public class Wallet extends BaseTaggableObject
                     log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                     continue;
                 } catch (ScriptException e) {
+                    log.debug("Input contained an incorrect signature", e);
                     // Expected.
                 }
 

@@ -91,7 +91,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
 
     /**
      * <p>Closes the given channel using {@link ServerConnectionEventHandler#closeChannel()} and
-     * {@link PaymentChannelServerState#close()} to notify any connected client of channel closure and to complete and
+     * {@link PaymentChannelV1ServerState#close()} to notify any connected client of channel closure and to complete and
      * broadcast the latest payment transaction.</p>
      *
      * <p>Removes the given channel from this set of {@link StoredServerChannel}s and notifies the wallet of a change to
@@ -223,11 +223,16 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                 checkState(channel.refundTransactionUnlockTimeSecs > 0);
                 checkNotNull(channel.myKey.getPrivKeyBytes());
                 ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
+                        .setMajorVersion(channel.majorVersion)
                         .setBestValueToMe(channel.bestValueToMe.value)
                         .setRefundTransactionUnlockTimeSecs(channel.refundTransactionUnlockTimeSecs)
                         .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
-                        .setClientOutput(ByteString.copyFrom(channel.clientOutput.bitcoinSerialize()))
                         .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()));
+                if (channel.majorVersion == 1) {
+                    channelBuilder.setClientOutput(ByteString.copyFrom(channel.clientOutput.bitcoinSerialize()));
+                } else {
+                    channelBuilder.setClientKey(ByteString.copyFrom(channel.clientKey.getPubKey()));
+                }
                 if (channel.bestValueSignature != null)
                     channelBuilder.setBestValueSignature(ByteString.copyFrom(channel.bestValueSignature));
                 builder.addChannels(channelBuilder);
@@ -246,11 +251,21 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             ServerState.StoredServerPaymentChannels states = ServerState.StoredServerPaymentChannels.parseFrom(data);
             NetworkParameters params = containingWallet.getParams();
             for (ServerState.StoredServerPaymentChannel storedState : states.getChannelsList()) {
+                final int majorVersion = storedState.getMajorVersion();
+                TransactionOutput clientOutput = null;
+                ECKey clientKey = null;
+                if (majorVersion == 1) {
+                    clientOutput = new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0);
+                } else {
+                    clientKey = ECKey.fromPublicOnly(storedState.getClientKey().toByteArray());
+                }
                 StoredServerChannel channel = new StoredServerChannel(null,
+                        majorVersion,
                         params.getDefaultSerializer().makeTransaction(storedState.getContractTransaction().toByteArray()),
-                        new TransactionOutput(params, null, storedState.getClientOutput().toByteArray(), 0),
+                        clientOutput,
                         storedState.getRefundTransactionUnlockTimeSecs(),
                         ECKey.fromPrivate(storedState.getMyKey().toByteArray()),
+                        clientKey,
                         Coin.valueOf(storedState.getBestValueToMe()),
                         storedState.hasBestValueSignature() ? storedState.getBestValueSignature().toByteArray() : null);
                 putChannel(channel);

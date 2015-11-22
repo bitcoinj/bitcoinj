@@ -30,24 +30,32 @@ import static com.google.common.base.Preconditions.checkArgument;
  * time approaches.
  */
 public class StoredServerChannel {
+    /**
+     * Channel version number. Currently can only be version 1
+     */
+    int majorVersion;
     Coin bestValueToMe;
     byte[] bestValueSignature;
     long refundTransactionUnlockTimeSecs;
     Transaction contract;
     TransactionOutput clientOutput;
     ECKey myKey;
+    // Used in protocol v2 only
+    ECKey clientKey;
 
     // In-memory pointer to the event handler which handles this channel if the client is connected.
     // Used as a flag to prevent duplicate connections and to disconnect the channel if its expire time approaches.
     private PaymentChannelServer connectedHandler = null;
     PaymentChannelServerState state = null;
 
-    StoredServerChannel(@Nullable PaymentChannelServerState state, Transaction contract, TransactionOutput clientOutput,
-                        long refundTransactionUnlockTimeSecs, ECKey myKey, Coin bestValueToMe, @Nullable byte[] bestValueSignature) {
+    StoredServerChannel(@Nullable PaymentChannelServerState state, int majorVersion, Transaction contract, TransactionOutput clientOutput,
+                        long refundTransactionUnlockTimeSecs, ECKey myKey, ECKey clientKey, Coin bestValueToMe, @Nullable byte[] bestValueSignature) {
+        this.majorVersion = majorVersion;
         this.contract = contract;
         this.clientOutput = clientOutput;
         this.refundTransactionUnlockTimeSecs = refundTransactionUnlockTimeSecs;
         this.myKey = myKey;
+        this.clientKey = clientKey;
         this.bestValueToMe = bestValueToMe;
         this.bestValueSignature = bestValueSignature;
         this.state = state;
@@ -96,8 +104,18 @@ public class StoredServerChannel {
      * @param broadcaster The {@link TransactionBroadcaster} which will be used to broadcast contract/payment transactions.
      */
     public synchronized PaymentChannelServerState getOrCreateState(Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
-        if (state == null)
-            state = new PaymentChannelServerState(this, wallet, broadcaster);
+        if (state == null) {
+            switch (majorVersion) {
+                case 1:
+                    state = new PaymentChannelV1ServerState(this, wallet, broadcaster);
+                    break;
+                case 2:
+                    state = new PaymentChannelV2ServerState(this, wallet, broadcaster);
+                    break;
+                default:
+                    throw new IllegalStateException("Invalid version number found");
+            }
+        }
         checkArgument(wallet == state.wallet);
         return state;
     }
@@ -106,12 +124,13 @@ public class StoredServerChannel {
     public synchronized String toString() {
         final String newline = String.format(Locale.US, "%n");
         return String.format(Locale.US, "Stored server channel (%s)%n" +
+                "    Version:       %d%n" +
                 "    Key:           %s%n" +
                 "    Value to me:   %s%n" +
                 "    Client output: %s%n" +
                 "    Refund unlock: %s (%d unix time)%n" +
                 "    Contract:    %s%n",
-                connectedHandler != null ? "connected" : "disconnected", myKey, bestValueToMe,
+                connectedHandler != null ? "connected" : "disconnected", majorVersion, myKey, bestValueToMe,
                 clientOutput,  new Date(refundTransactionUnlockTimeSecs * 1000), refundTransactionUnlockTimeSecs,
                 contract.toString().replaceAll(newline, newline + "    "));
     }

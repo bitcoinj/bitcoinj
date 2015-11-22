@@ -29,16 +29,19 @@ import org.bitcoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-import javax.lang.model.type.ExecutableType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,6 +51,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class ChannelConnectionTest extends TestWithWallet {
     private static final int CLIENT_MAJOR_VERSION = 1;
     private Wallet serverWallet;
@@ -63,6 +67,35 @@ public class ChannelConnectionTest extends TestWithWallet {
             return null;
         }
     };
+
+    /**
+     * We use parameterized tests to run the channel connection tests with each
+     * version of the channel.
+     */
+    @Parameterized.Parameters(name = "{index}: ChannelConnectionTest({0})")
+    public static Collection<PaymentChannelClient.VersionSelector> data() {
+        return Arrays.asList(
+                PaymentChannelClient.VersionSelector.VERSION_1,
+                PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1);
+    }
+
+    @Parameterized.Parameter
+    public PaymentChannelClient.VersionSelector versionSelector;
+
+    /**
+     * Returns <code>true</code> if we are using a protocol version that requires the exchange of refunds.
+     */
+    private boolean useRefunds() {
+        return versionSelector == PaymentChannelClient.VersionSelector.VERSION_1;
+    }
+
+    /**
+     * Returns <code>true</code> if the contract being used is a multisig contract
+     * @return
+     */
+    private boolean isMultiSigContract() {
+        return versionSelector == PaymentChannelClient.VersionSelector.VERSION_1;
+    }
 
     @Override
     @Before
@@ -132,7 +165,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     public void exectuteSimpleChannelTest(KeyParameter userKeySetup) throws Exception {
         // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
-        final SettableFuture<ListenableFuture<PaymentChannelServerState>> serverCloseFuture = SettableFuture.create();
+        final SettableFuture<ListenableFuture<PaymentChannelV1ServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
         final BlockingQueue<ChannelTestUtils.UpdatePair> q = new LinkedBlockingQueue<ChannelTestUtils.UpdatePair>();
         final PaymentChannelServerListener server = new PaymentChannelServerListener(mockBroadcaster, serverWallet, 30, COIN,
@@ -162,7 +195,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         server.bindAndStart(4243);
 
         PaymentChannelClientConnection client = new PaymentChannelClientConnection(
-                new InetSocketAddress("localhost", 4243), 30, wallet, myKey, COIN, "", PaymentChannelClient.DEFAULT_TIME_WINDOW, userKeySetup);
+                new InetSocketAddress("localhost", 4243), 30, wallet, myKey, COIN, "", PaymentChannelClient.DEFAULT_TIME_WINDOW, userKeySetup, versionSelector);
 
         // Wait for the multi-sig tx to be transmitted.
         broadcastTxPause.release();
@@ -213,6 +246,10 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         broadcastTxPause.release();
         Transaction settleTx = broadcasts.take();
+        assertTrue(serverState.getState() == PaymentChannelServerState.State.CLOSING ||
+                serverState.getState() == PaymentChannelServerState.State.CLOSED);
+        // Wait for the server thread to catch up with closing
+        serverState.close().get();
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
         if (!serverState.getBestValueToMe().equals(amount) || !serverState.getFeePaid().equals(Coin.ZERO))
             fail();
@@ -220,7 +257,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Send the settle TX to the client wallet.
         sendMoneyToWallet(settleTx, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(PaymentChannelClientState.State.CLOSED, client.state().getState());
+        assertTrue(client.state().getState() == PaymentChannelClientState.State.CLOSED);
 
         server.close();
         server.close();
@@ -235,9 +272,13 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testServerErrorHandling_badTransaction() throws Exception {
+        if (!useRefunds()) {
+            // This test only applies to versions with refunds
+            return;
+        }
         // Gives the server crap and checks proper error responses are sent.
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         server.connectionOpen();
         client.connectionOpen();
@@ -262,7 +303,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testServerErrorHandling_killSocketOnClose() throws Exception {
         // Make sure the server closes the socket on CLOSE
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         server.connectionOpen();
         client.connectionOpen();
@@ -280,7 +321,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testServerErrorHandling_killSocketOnError() throws Exception {
         // Make sure the server closes the socket on ERROR
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         server.connectionOpen();
         client.connectionOpen();
@@ -304,7 +345,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Open up a normal channel.
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         pair.server.connectionOpen();
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -312,8 +353,10 @@ public class ChannelConnectionTest extends TestWithWallet {
         final Protos.TwoWayChannelMessage initiateMsg = pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
         Coin minPayment = Coin.valueOf(initiateMsg.getInitiate().getMinPayment());
         client.receiveMessage(initiateMsg);
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        if (useRefunds()) {
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        }
         broadcastTxPause.release();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
         broadcasts.take();
@@ -357,7 +400,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Open up a normal channel.
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         pair.server.connectionOpen();
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -365,8 +408,10 @@ public class ChannelConnectionTest extends TestWithWallet {
         final Protos.TwoWayChannelMessage initiateMsg = pair.serverRecorder.checkNextMsg(MessageType.INITIATE);
         Coin minPayment = Coin.valueOf(initiateMsg.getInitiate().getMinPayment());
         client.receiveMessage(initiateMsg);
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        if (useRefunds()) {
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        }
         broadcastTxPause.release();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
         broadcasts.take();
@@ -415,7 +460,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 (StoredPaymentChannelClientStates) wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
 
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         server = pair.server;
         client.connectionOpen();
         server.connectionOpen();
@@ -442,7 +487,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Now open up a new client with the same id and make sure the server disconnects the previous client.
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         server = pair.server;
         client.connectionOpen();
         server.connectionOpen();
@@ -454,7 +499,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         }
         // Make sure the server allows two simultaneous opens. It will close the first and allow resumption of the second.
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         server = pair.server;
         client.connectionOpen();
         server.connectionOpen();
@@ -484,7 +529,11 @@ public class ChannelConnectionTest extends TestWithWallet {
         StoredPaymentChannelClientStates newClientStates = new StoredPaymentChannelClientStates(wallet, mockBroadcaster);
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         broadcastTxPause.release();
-        assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+        if (isMultiSigContract()) {
+            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+        } else {
+            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isPayToScriptHash());
+        }
         broadcastTxPause.release();
         assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());
         assertTrue(broadcasts.isEmpty());
@@ -534,7 +583,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testClientUnknownVersion() throws Exception {
         // Tests client rejects unknown version
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
         client.receiveMessage(Protos.TwoWayChannelMessage.newBuilder()
@@ -554,7 +603,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Tests that clients reject too large time windows
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster, 100);
         PaymentChannelServer server = pair.server;
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -579,7 +628,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testValuesAreRespected() throws Exception {
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -605,7 +654,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         server = pair.server;
         final Coin myValue = COIN.multiply(10);
-        client = new PaymentChannelClient(wallet, myKey, myValue, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        client = new PaymentChannelClient(wallet, myKey, myValue, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -616,9 +665,15 @@ public class ChannelConnectionTest extends TestWithWallet {
                         .setMultisigKey(ByteString.copyFrom(new ECKey().getPubKey()))
                         .setMinPayment(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.value))
                 .setType(MessageType.INITIATE).build());
-        final Protos.TwoWayChannelMessage provideRefund = pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND);
-        Transaction refund = new Transaction(params, provideRefund.getProvideRefund().getTx().toByteArray());
-        assertEquals(myValue, refund.getOutput(0).getValue());
+        if (useRefunds()) {
+            final Protos.TwoWayChannelMessage provideRefund = pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND);
+            Transaction refund = new Transaction(params, provideRefund.getProvideRefund().getTx().toByteArray());
+            assertEquals(myValue, refund.getOutput(0).getValue());
+        } else {
+            assertEquals(2, client.state().getMajorVersion());
+            PaymentChannelV2ClientState state = (PaymentChannelV2ClientState) client.state();
+            assertEquals(myValue, state.refundTx.getOutput(0).getValue());
+        }
     }
 
     @Test
@@ -627,7 +682,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
-        PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(emptyWallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -649,7 +704,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testClientRefusesNonCanonicalKey() throws Exception {
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -667,7 +722,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void testClientResumeNothing() throws Exception {
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         server.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
@@ -681,7 +736,7 @@ public class ChannelConnectionTest extends TestWithWallet {
     @Test
     public void testClientRandomMessage() throws Exception {
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, Sha256Hash.ZERO_HASH, pair.clientRecorder, versionSelector);
 
         client.connectionOpen();
         pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
@@ -702,14 +757,16 @@ public class ChannelConnectionTest extends TestWithWallet {
         Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         pair.server.connectionOpen();
-        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         PaymentChannelServer server = pair.server;
         client.connectionOpen();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
         client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
-        server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-        client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        if (useRefunds()) {
+            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+        }
         broadcastTxPause.release();
         server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
         broadcasts.take();
@@ -733,7 +790,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         client.connectionClosed();
 
         // Now try opening a new channel with the same server ID and verify the client asks for a new channel.
-        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+        client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
         client.connectionOpen();
         Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
         assertFalse(msg.getClientVersion().hasPreviousChannelContractHash());
@@ -748,14 +805,16 @@ public class ChannelConnectionTest extends TestWithWallet {
             Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
             ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
             pair.server.connectionOpen();
-            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
             PaymentChannelServer server = pair.server;
             client.connectionOpen();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            if (useRefunds()) {
+                server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+                client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            }
             broadcastTxPause.release();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
             broadcasts.take();
@@ -800,7 +859,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
             ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
             pair.server.connectionOpen();
-            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
             PaymentChannelServer server = pair.server;
             client.connectionOpen();
             final Protos.TwoWayChannelMessage msg = pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION);
@@ -808,8 +867,10 @@ public class ChannelConnectionTest extends TestWithWallet {
             server.receiveMessage(msg);
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.SERVER_VERSION));
             client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.INITIATE));
-            server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
-            client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            if (useRefunds()) {
+                server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND));
+                client.receiveMessage(pair.serverRecorder.checkNextMsg(MessageType.RETURN_REFUND));
+            }
             broadcastTxPause.release();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_CONTRACT));
             broadcasts.take();
@@ -829,7 +890,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             Sha256Hash someServerId = Sha256Hash.ZERO_HASH;
             ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
             pair.server.connectionOpen();
-            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder);
+            PaymentChannelClient client = new PaymentChannelClient(wallet, myKey, COIN, someServerId, pair.clientRecorder, versionSelector);
             PaymentChannelServer server = pair.server;
             client.connectionOpen();
             server.receiveMessage(pair.clientRecorder.checkNextMsg(MessageType.CLIENT_VERSION));
