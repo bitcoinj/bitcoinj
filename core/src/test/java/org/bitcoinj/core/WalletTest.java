@@ -3185,4 +3185,35 @@ public class WalletTest extends TestWithWallet {
         assertEquals(0, wallet.getTransactions(false).size());
         assertEquals(0, wallet.getUnspents().size());
     }
+
+    @Test
+    public void totalReceivedSent() throws Exception {
+
+        // Receive 4 BTC in 2 separate transactions
+        Transaction toMe1 = createFakeTxWithoutChangeAddress(params, COIN.multiply(2), myAddress);
+        Transaction toMe2 = createFakeTxWithoutChangeAddress(params, COIN.multiply(2), myAddress);
+        StoredBlock block1 = createFakeBlock(blockStore, toMe1, toMe2).storedBlock;
+        wallet.receiveFromBlock(toMe1, block1, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        wallet.receiveFromBlock(toMe2, block1, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        wallet.notifyNewBestBlock(block1);
+
+        // Check we calculate the total received correctly
+        assertEquals(Coin.COIN.multiply(4), wallet.getTotalReceived());
+
+        Address notMyAddr = new ECKey().toAddress(params);
+
+        // Send 3 BTC in a single transaction
+        SendRequest req = SendRequest.to(notMyAddr,Coin.COIN.multiply(3));
+        req.fee = CENT;
+        wallet.completeTx(req);
+        StoredBlock block2 = createFakeBlock(blockStore, req.tx).storedBlock;
+        wallet.receiveFromBlock(req.tx, block2, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        wallet.notifyNewBestBlock(block2);
+
+        // Check that we still have the same totalReceived, since the above tx will have sent us change back
+        assertEquals(Coin.COIN.multiply(4),wallet.getTotalReceived());
+        assertEquals(Coin.COIN.multiply(3),wallet.getTotalSent());
+
+        // TODO: test shared wallet calculation here
+    }
 }

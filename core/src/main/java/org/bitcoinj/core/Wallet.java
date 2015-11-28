@@ -46,6 +46,7 @@ import org.spongycastle.crypto.params.*;
 
 import javax.annotation.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -601,7 +602,7 @@ public class Wallet extends BaseTaggableObject
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
     /**
-     * @deprecated use {@link #currentChangeAddress()} instead.  
+     * @deprecated use {@link #currentChangeAddress()} instead.
      */
     public Address getChangeAddress() {
         return currentChangeAddress();
@@ -3223,6 +3224,82 @@ public class Wallet extends BaseTaggableObject
                 }
             });
         }
+    }
+
+    /**
+     * Returns the amount of bitcoin ever received via output. <b>This is not the balance!</b> If an output spends from a
+     * transaction whose inputs are also to our wallet, the input amounts are deducted from the outputs contribution, with a minimum of zero
+     * contribution. The idea behind this is we avoid double counting money sent to us.
+     * @return the total amount of satoshis received, regardless of whether it was spent or not.
+     */
+    public Coin getTotalReceived() {
+        Coin total = Coin.ZERO;
+
+        // Include outputs to us if they were not just change outputs, ie the inputs to us summed to less
+        // than the outputs to us.
+        for (Transaction tx: transactions.values()) {
+            Coin txTotal = Coin.ZERO;
+            for (TransactionOutput output : tx.getOutputs()) {
+                if (output.isMine(this)) {
+                    txTotal = txTotal.add(output.getValue());
+                }
+            }
+            for (TransactionInput in : tx.getInputs()) {
+                TransactionOutput prevOut = in.getConnectedOutput();
+                if (prevOut != null && prevOut.isMine(this)) {
+                    txTotal = txTotal.subtract(prevOut.getValue());
+                }
+            }
+            if (txTotal.isPositive()) {
+                total = total.add(txTotal);
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Returns the amount of bitcoin ever sent via output. If an output is sent to our own wallet, because of change or
+     * rotating keys or whatever, we do not count it. If the wallet was
+     * involved in a shared transaction, i.e. there is some input to the transaction that we don't have the key for, then
+     * we multiply the sum of the output values by the proportion of satoshi coming in to our inputs. Essentially we treat
+     * inputs as pooling into the transaction, becoming fungible and being equally distributed to all outputs.
+     * @return the total amount of satoshis sent by us
+     */
+    public Coin getTotalSent() {
+        Coin total = Coin.ZERO;
+
+        for (Transaction tx: transactions.values()) {
+            // Count spent outputs to only if they were not to us. This means we don't count change outputs.
+            Coin txOutputTotal = Coin.ZERO;
+            for (TransactionOutput out : tx.getOutputs()) {
+                if (out.isMine(this) == false) {
+                    txOutputTotal = txOutputTotal.add(out.getValue());
+                }
+            }
+
+            // Count the input values to us
+            Coin txOwnedInputsTotal = Coin.ZERO;
+            for (TransactionInput in : tx.getInputs()) {
+                TransactionOutput prevOut = in.getConnectedOutput();
+                if (prevOut != null && prevOut.isMine(this)) {
+                    txOwnedInputsTotal = txOwnedInputsTotal.add(prevOut.getValue());
+                }
+            }
+
+            // If there is an input that isn't from us, i.e. this is a shared transaction
+            Coin txInputsTotal = tx.getInputSum();
+            if (txOwnedInputsTotal != txInputsTotal) {
+
+                // multiply our output total by the appropriate proportion to account for the inputs that we don't own
+                BigInteger txOutputTotalNum = new BigInteger(txOutputTotal.toString());
+                txOutputTotalNum = txOutputTotalNum.multiply(new BigInteger(txOwnedInputsTotal.toString()));
+                txOutputTotalNum = txOutputTotalNum.divide(new BigInteger(txInputsTotal.toString()));
+                txOutputTotal = Coin.valueOf(txOutputTotalNum.longValue());
+            }
+            total = total.add(txOutputTotal);
+
+        }
+        return total;
     }
 
     //endregion

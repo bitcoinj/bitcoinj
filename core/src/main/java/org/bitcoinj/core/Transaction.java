@@ -268,6 +268,22 @@ public class Transaction extends ChildMessage {
         return v;
     }
 
+    /**
+     * Gets the sum of the inputs, regardless of who owns them.
+     */
+    public Coin getInputSum() {
+        Coin inputTotal = Coin.ZERO;
+
+        for (TransactionInput input: inputs) {
+            Coin inputValue = input.getValue();
+            if (inputValue != null) {
+                inputTotal = inputTotal.add(inputValue);
+            }
+        }
+
+        return inputTotal;
+    }
+
     /*
      * If isSpent - check that all my outputs spent, otherwise check that there at least
      * one unspent.
@@ -380,6 +396,20 @@ public class Transaction extends ChildMessage {
             v = v.add(connected.getValue());
         }
         return v;
+    }
+
+    /**
+     * Gets the sum of the outputs of the transaction. If the outputs are less than the inputs, it does not count the fee.
+     * @return the sum of the outputs regardless of who owns them.
+     */
+    public Coin getOutputSum() {
+        Coin totalOut = Coin.ZERO;
+
+        for (TransactionOutput output: outputs) {
+            totalOut = totalOut.add(output.getValue());
+        }
+
+        return totalOut;
     }
 
     @Nullable private Coin cachedValue;
