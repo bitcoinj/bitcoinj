@@ -57,7 +57,7 @@ public abstract class Message {
 
     protected int protocolVersion;
 
-    protected NetworkParameters params;
+    protected transient NetworkParameters params;
 
     protected Message() {
         serializer = DummySerializer.DEFAULT;
@@ -366,11 +366,15 @@ public abstract class Message {
     /**
      * Set the serializer for this message when deserialized by Java.
      */
-    private void readObject(java.io.ObjectInputStream in)
-        throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        if (null != params) {
-            this.serializer = params.getDefaultSerializer();
-        }
+        params = NetworkParameters.fromID(in.readUTF());
     }
+    
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(params.id);
+    }
+    
+    
 }

@@ -11,6 +11,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import static org.junit.Assert.*;
 
 public class TransactionOutputTest extends TestWithWallet {
@@ -65,5 +70,18 @@ public class TransactionOutputTest extends TestWithWallet {
         tx.addOutput(Coin.CENT, script);
         assertNull(tx.getOutput(0).getAddressFromP2SH(params));
         assertNull(tx.getOutput(0).getAddressFromP2PKHScript(params));
+    }
+
+
+    @Test
+    public void testJavaSerialization() throws Exception {
+        NetworkParameters param = new MainNetParams().get();
+        Address addr = new ECKey().toAddress(param);
+        TransactionOutput to = new TransactionOutput(param, null, Coin.COIN, addr);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        new ObjectOutputStream(os).writeObject(to);
+        TransactionOutput toCopy = (TransactionOutput) new ObjectInputStream(
+                new ByteArrayInputStream(os.toByteArray())).readObject();
+        assertEquals(to,toCopy);
     }
 }

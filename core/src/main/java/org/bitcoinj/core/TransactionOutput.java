@@ -18,20 +18,29 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
 
-import javax.annotation.*;
-import java.io.*;
-import java.util.*;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
  * of the Transaction message.
  */
-public class TransactionOutput extends ChildMessage {
+public class TransactionOutput extends ChildMessage implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
 
     // The output's value is kept as a native type in order to save class instances.
