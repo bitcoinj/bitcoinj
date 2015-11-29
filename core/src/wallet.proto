@@ -172,11 +172,13 @@ message TransactionOutput {
  */
 message TransactionConfidence {
   enum Type {
+    // See TransactionConfidence.java for a more thorough explanation of these types.
     UNKNOWN = 0;
     BUILDING = 1; // In best chain.  If and only if appeared_at_height is present.
     PENDING = 2; // Unconfirmed and sitting in the networks memory pools, waiting to be included in the chain.
     NOT_IN_BEST_CHAIN = 3; // Deprecated: equivalent to PENDING.
-    DEAD = 4; // Either if overriding_transaction is present or transaction is dead coinbase
+    DEAD = 4; // Either if overriding_transaction is present or transaction is dead coinbase.
+    IN_CONFLICT = 5; // There is another transaction spending one of this transaction inputs.
   }
 
   // This is optional in case we add confidence types to prevent parse errors - backwards compatible.
