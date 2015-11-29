@@ -56,7 +56,7 @@ public class BloomFilter extends Message {
     private long nTweak;
     private byte nFlags;
 
-    // Same value as the reference client
+    // Same value as Bitcoin Core
     // A filter of 20,000 items and a false positive rate of 0.1% or one of 10,000 items and 0.0001% is just under 36,000 bytes
     private static final long MAX_FILTER_SIZE = 36000;
     // There is little reason to ever have more hash functions than 50 given a limit of 36,000 bytes

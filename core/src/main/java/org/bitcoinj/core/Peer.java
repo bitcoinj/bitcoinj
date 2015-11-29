@@ -1152,9 +1152,9 @@ public class Peer extends PeerSocketHandler {
                         // requesting a subset of what we already requested, which can lead to parallel chain downloads
                         // and other nastyness. So we just do a quick removal of redundant getdatas here too.
                         //
-                        // Note that as of June 2012 the Satoshi client won't actually ever interleave blocks pushed as
+                        // Note that as of June 2012 Bitcoin Core won't actually ever interleave blocks pushed as
                         // part of chain download with newly announced blocks, so it should always be taken care of by
-                        // the duplicate check in blockChainDownloadLocked(). But the satoshi client may change in future so
+                        // the duplicate check in blockChainDownloadLocked(). But Bitcoin Core may change in future so
                         // it's better to be safe here.
                         if (!pendingBlockDownloads.contains(item.hash)) {
                             if (vPeerVersionMessage.isBloomFilteringSupported() && useFilteredBlocks) {

@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * announce the transaction within a reasonable time, it may be that the TX is not valid. Alternatively, an attacker
  * may control your entire internet connection: in this scenario counting broadcasting peers does not help you.</p>
  *
- * <p>It is <b>not</b> at this time directly equivalent to the Satoshi clients memory pool, which tracks
+ * <p>It is <b>not</b> at this time directly equivalent to the Bitcoin Core memory pool, which tracks
  * all transactions not currently included in the best chain - it's simply a cache.</p>
  */
 public class TxConfidenceTable {

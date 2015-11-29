@@ -132,11 +132,11 @@ public class TransactionBroadcast {
             // Only bother with this if we might actually hear back:
             if (minConnections > 1)
                 tx.getConfidence().addEventListener(new ConfidenceChange());
-            // Satoshis code sends an inv in this case and then lets the peer request the tx data. We just
+            // Bitcoin Core sends an inv in this case and then lets the peer request the tx data. We just
             // blast out the TX here for a couple of reasons. Firstly it's simpler: in the case where we have
             // just a single connection we don't have to wait for getdata to be received and handled before
             // completing the future in the code immediately below. Secondly, it's faster. The reason the
-            // Satoshi client sends an inv is privacy - it means you can't tell if the peer originated the
+            // Bitcoin Core sends an inv is privacy - it means you can't tell if the peer originated the
             // transaction or not. However, we are not a fully validating node and this is advertised in
             // our version message, as SPV nodes cannot relay it doesn't give away any additional information
             // to skip the inv here - we wouldn't send invs anyway.

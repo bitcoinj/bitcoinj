@@ -141,7 +141,7 @@ public class Script {
     /** Returns the serialized program as a newly created byte array. */
     public byte[] getProgram() {
         try {
-            // Don't round-trip as Satoshi's code doesn't and it would introduce a mismatch.
+            // Don't round-trip as Bitcoin Core doesn't and it would introduce a mismatch.
             if (program != null)
                 return Arrays.copyOf(program, program.length);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -174,7 +174,7 @@ public class Script {
      * <p>The reason for this split, instead of just interpreting directly, is to make it easier
      * to reach into a programs structure and pull out bits of data without having to run it.
      * This is necessary to render the to/from addresses of transactions in a user interface.
-     * The official client does something similar.</p>
+     * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
         chunks = new ArrayList<ScriptChunk>(5);   // Common size.
@@ -640,7 +640,7 @@ public class Script {
      * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
      * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
      * spending input to provide a program matching that hash. This rule is "soft enforced" by the network as it does
-     * not exist in Satoshis original implementation. It means blocks containing P2SH transactions that don't match
+     * not exist in Bitcoin Core. It means blocks containing P2SH transactions that don't match
      * correctly are considered valid, but won't be mined upon, so they'll be rapidly re-orgd out of the chain. This
      * logic is defined by <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a>.</p>
      *
@@ -746,7 +746,7 @@ public class Script {
     private static boolean castToBool(byte[] data) {
         for (int i = 0; i < data.length; i++)
         {
-            // "Can be negative zero" -reference client (see OpenSSL's BN_bn2mpi)
+            // "Can be negative zero" - Bitcoin Core (see OpenSSL's BN_bn2mpi)
             if (data[i] != 0)
                 return !(i == data.length - 1 && (data[i] & 0xFF) == 0x80);
         }
@@ -1492,7 +1492,7 @@ public class Script {
             }
         }
 
-        // We uselessly remove a stack object to emulate a reference client bug.
+        // We uselessly remove a stack object to emulate a Bitcoin Core bug.
         byte[] nullDummy = stack.pollLast();
         if (verifyFlags.contains(VerifyFlag.NULLDUMMY) && nullDummy.length > 0)
             throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with non-null nulldummy: " + Arrays.toString(nullDummy));

@@ -42,7 +42,7 @@ public class AlertMessageTest {
 
     @Test
     public void deserialize() throws Exception {
-        // A CAlert taken from the reference implementation.
+        // A CAlert taken from Bitcoin Core.
         // TODO: This does not check the subVer or set fields. Support proper version matching.
         final byte[] payload = HEX.decode("5c010000004544eb4e000000004192ec4e00000000eb030000e9030000000000000048ee00000088130000002f43416c6572742073797374656d20746573743a2020202020202020207665722e302e352e3120617661696c61626c6500473045022100ec799908c008b272d5e5cd5a824abaaac53d210cc1fa517d8e22a701ecdb9e7002206fa1e7e7c251d5ba0d7c1fe428fc1870662f2927531d1cad8d4581b45bc4f8a7");
         AlertMessage alert = new AlertMessage(params, payload);

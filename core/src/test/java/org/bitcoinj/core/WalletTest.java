@@ -549,7 +549,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     // Intuitively you'd expect to be able to create a transaction with identical inputs and outputs and get an
-    // identical result to the official client. However the signatures are not deterministic - signing the same data
+    // identical result to Bitcoin Core. However the signatures are not deterministic - signing the same data
     // with the same key twice gives two different outputs. So we cannot prove bit-for-bit compatibility in this test
     // suite.
 
@@ -611,7 +611,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.valueOf(0, 90), bigints[3]);
         // And we do it again after the catchup.
         Transaction send2 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 10));
-        // What we'd really like to do is prove the official client would accept it .... no such luck unfortunately.
+        // What we'd really like to do is prove Bitcoin Core would accept it .... no such luck unfortunately.
         wallet.commitTx(send2);
         sendMoneyToWallet(send2, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         assertEquals(Coin.valueOf(0, 80), wallet.getBalance());

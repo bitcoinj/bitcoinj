@@ -32,7 +32,7 @@ public class TransactionSignature extends ECKey.ECDSASignature {
     /**
      * A byte that controls which parts of a transaction are signed. This is exposed because signatures
      * parsed off the wire may have sighash flags that aren't "normal" serializations of the enum values.
-     * Because Satoshi's code works via bit testing, we must not lose the exact value when round-tripping
+     * Because Bitcoin Core works via bit testing, we must not lose the exact value when round-tripping
      * otherwise we'll fail to verify signature hashes.
      */
     public final int sighashFlags;
@@ -75,14 +75,14 @@ public class TransactionSignature extends ECKey.ECDSASignature {
 
     /**
      * Returns true if the given signature is has canonical encoding, and will thus be accepted as standard by
-     * the reference client. DER and the SIGHASH encoding allow for quite some flexibility in how the same structures
+     * Bitcoin Core. DER and the SIGHASH encoding allow for quite some flexibility in how the same structures
      * are encoded, and this can open up novel attacks in which a man in the middle takes a transaction and then
      * changes its signature such that the transaction hash is different but it's still valid. This can confuse wallets
      * and generally violates people's mental model of how Bitcoin should work, thus, non-canonical signatures are now
      * not relayed by default.
      */
     public static boolean isEncodingCanonical(byte[] signature) {
-        // See reference client's IsCanonicalSignature, https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
+        // See Bitcoin Core's IsCanonicalSignature, https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
         // A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
         // Where R and S are not negative (their first byte has its highest bit not set), and not
         // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,

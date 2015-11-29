@@ -138,7 +138,7 @@ public class BitcoinSerializer extends MessageSerializer {
         // The checksum is the first 4 bytes of a SHA256 hash of the message payload. It isn't
         // present for all messages, notably, the first one on a connection.
         //
-        // Satoshi's implementation ignores garbage before the magic header bytes. We have to do the same because
+        // Bitcoin Core ignores garbage before the magic header bytes. We have to do the same because
         // sometimes it sends us stuff that isn't part of any message.
         seekPastMagicBytes(in);
         BitcoinPacketHeader header = new BitcoinPacketHeader(in);

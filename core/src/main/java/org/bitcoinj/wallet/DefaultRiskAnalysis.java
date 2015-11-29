@@ -120,7 +120,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     }
 
     /**
-     * <p>Checks if a transaction is considered "standard" by the reference client's IsStandardTx and AreInputsStandard
+     * <p>Checks if a transaction is considered "standard" by Bitcoin Core's IsStandardTx and AreInputsStandard
      * functions.</p>
      *
      * <p>Note that this method currently only implements a minimum of checks. More to be added later.</p>

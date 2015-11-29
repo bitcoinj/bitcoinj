@@ -114,8 +114,8 @@ public class Wallet extends BaseTaggableObject
     // Spent:    Transactions that appeared in the best chain but don't have any spendable outputs. They're stored here
     //           for history browsing/auditing reasons only and in future will probably be flushed out to some other
     //           kind of cold storage or just removed.
-    // Dead:     Transactions that we believe will never confirm get moved here, out of pending. Note that the Satoshi
-    //           client has no notion of dead-ness: the assumption is that double spends won't happen so there's no
+    // Dead:     Transactions that we believe will never confirm get moved here, out of pending. Note that Bitcoin
+    //           Core has no notion of dead-ness: the assumption is that double spends won't happen so there's no
     //           need to notify the user about them. We take a more pessimistic approach and try to track the fact that
     //           transactions have been double spent so applications can do something intelligent (cancel orders, show
     //           to the user in the UI, etc). A transaction can leave dead and move into spent/unspent if there is a
@@ -3506,7 +3506,7 @@ public class Wallet extends BaseTaggableObject
          * attacks expensive.</p>
          *
          * <p>This is a constant fee (in satoshis) which will be added to the transaction. It is recommended that it be
-         * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default reference clients will
+         * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default Bitcoin Core will
          * otherwise simply treat the transaction as if there were no fee at all.</p>
          *
          * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
@@ -3523,8 +3523,8 @@ public class Wallet extends BaseTaggableObject
          *
          * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size
          * including the first. This is useful as as miners usually sort pending transactions by their fee per unit size
-         * when choosing which transactions to add to a block. Note that, to keep this equivalent to the reference
-         * client definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
+         * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
+         * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
          *
          * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
          */
@@ -3537,7 +3537,7 @@ public class Wallet extends BaseTaggableObject
         public static Coin DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
         /**
-         * <p>Requires that there be enough fee for a default reference client to at least relay the transaction.
+         * <p>Requires that there be enough fee for a default Bitcoin Core to at least relay the transaction.
          * (ie ensure the transaction will not be outright rejected by the network). Defaults to true, you should
          * only set this to false if you know what you're doing.</p>
          *
@@ -4396,7 +4396,7 @@ public class Wallet extends BaseTaggableObject
                         //
                         // This could be recursive, although of course because we don't have the full transaction
                         // graph we can never reliably kill all transactions we might have that were rooted in
-                        // this coinbase tx. Some can just go pending forever, like the Satoshi client. However we
+                        // this coinbase tx. Some can just go pending forever, like the Bitcoin Core. However we
                         // can do our best.
                         log.warn("Coinbase killed by re-org: {}", tx.getHashAsString());
                         killTxns(ImmutableSet.of(tx), null);
