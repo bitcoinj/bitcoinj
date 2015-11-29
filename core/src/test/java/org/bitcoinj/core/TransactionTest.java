@@ -10,6 +10,8 @@ import org.junit.Test;
 import org.easymock.EasyMock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 
@@ -295,5 +297,15 @@ public class TransactionTest {
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
 
         tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(), script, key);
+    }
+
+    @Test
+    public void optInFullRBF() {
+        // a standard transaction as wallets would create
+        Transaction tx = newTransaction();
+        assertFalse(tx.isOptInFullRBF());
+
+        tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        assertTrue(tx.isOptInFullRBF());
     }
 }

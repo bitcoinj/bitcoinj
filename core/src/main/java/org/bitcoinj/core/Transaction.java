@@ -24,6 +24,8 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
+
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -636,6 +638,9 @@ public class Transaction extends ChildMessage implements Serializable {
             }
             s.append(String.format(Locale.US, "  time locked until %s%n", time));
         }
+        if (isOptInFullRBF()) {
+            s.append("  opts into full replace-by-fee%n");
+        }
         if (inputs.size() == 0) {
             s.append(String.format(Locale.US, "  INCOMPLETE: No inputs!%n"));
             return s.toString();
@@ -675,6 +680,10 @@ public class Transaction extends ChildMessage implements Serializable {
                         s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
                     }
                 }
+                String flags = Joiner.on(", ").skipNulls().join(in.hasSequence() ? "has sequence" : null,
+                        in.isOptInFullRBF() ? "opts into full RBF" : null);
+                if (!flags.isEmpty())
+                    s.append("\n          (").append(flags).append(')');
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
@@ -1268,6 +1277,17 @@ public class Transaction extends ChildMessage implements Serializable {
             return false;
         for (TransactionInput input : getInputs())
             if (input.hasSequence())
+                return true;
+        return false;
+    }
+
+    /**
+     * Returns whether this transaction will opt into the
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki">full replace-by-fee </a> semantics.
+     */
+    public boolean isOptInFullRBF() {
+        for (TransactionInput input : getInputs())
+            if (input.isOptInFullRBF())
                 return true;
         return false;
     }
