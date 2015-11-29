@@ -40,8 +40,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
  */
 public class TransactionInput extends ChildMessage {
+    /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
     public static final byte[] EMPTY_ARRAY = new byte[0];
+    // Magic outpoint index that indicates the input is in fact unconnected.
+    private static final long UNCONNECTED = 0xFFFFFFFFL;
 
     // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
     // client so this is always the UINT_MAX.
@@ -64,7 +67,7 @@ public class TransactionInput extends ChildMessage {
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, NO_SEQUENCE, (Transaction) null));
+        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (Transaction) null));
     }
 
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
