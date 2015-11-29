@@ -21,6 +21,8 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
+
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
@@ -46,7 +48,7 @@ public class TransactionInput extends ChildMessage {
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
 
-    // Allows for altering transactions after they were broadcast.
+    // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
     private TransactionOutPoint outpoint;
@@ -259,18 +261,6 @@ public class TransactionInput extends ChildMessage {
         return value;
     }
 
-    /**
-     * Returns a human readable debug string.
-     */
-    @Override
-    public String toString() {
-        try {
-            return isCoinBase() ? "TxIn: COINBASE" : "TxIn for [" + outpoint + "]: " + getScriptSig();
-        } catch (ScriptException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public enum ConnectionResult {
         NO_SUCH_TX,
         ALREADY_SPENT,
@@ -386,6 +376,14 @@ public class TransactionInput extends ChildMessage {
     }
 
     /**
+     * Returns whether this input will cause a transaction to opt into the
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki">full replace-by-fee </a> semantics.
+     */
+    public boolean isOptInFullRBF() {
+        return sequence < NO_SEQUENCE - 1;
+    }
+
+    /**
      * For a connected transaction, runs the script against the connected pubkey and verifies they are correct.
      * @throws ScriptException if the script did not verify.
      * @throws VerificationException If the outpoint doesn't match the given output.
@@ -466,5 +464,27 @@ public class TransactionInput extends ChildMessage {
     @Override
     public int hashCode() {
         return Objects.hashCode(sequence, outpoint, Arrays.hashCode(scriptBytes));
+    }
+
+    /**
+     * Returns a human readable debug string.
+     */
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder("TxIn");
+        try {
+            if (isCoinBase()) {
+                s.append(": COINBASE");
+            } else {
+                s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
+                String flags = Joiner.on(", ").skipNulls().join(hasSequence() ? "has sequence" : null,
+                        isOptInFullRBF() ? "opts into full RBF" : null);
+                if (!flags.isEmpty())
+                    s.append(" (").append(flags).append(')');
+            }
+            return s.toString();
+        } catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

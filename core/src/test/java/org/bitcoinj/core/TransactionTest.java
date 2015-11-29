@@ -403,4 +403,14 @@ public class TransactionTest {
         final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
+
+    @Test
+    public void optInFullRBF() {
+        // a standard transaction as wallets would create
+        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        assertFalse(tx.isOptInFullRBF());
+
+        tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        assertTrue(tx.isOptInFullRBF());
+    }
 }
