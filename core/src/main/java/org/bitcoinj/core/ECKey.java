@@ -231,8 +231,8 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by the Bitcoin
-     * reference implementation in its wallet. Note that this is slow because it requires an EC point multiply.
+     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by Bitcoin
+     * Core in its wallet. Note that this is slow because it requires an EC point multiply.
      */
     public static ECKey fromASN1(byte[] asn1privkey) {
         return extractKeyFromASN1(asn1privkey);
@@ -414,8 +414,8 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by the Bitcoin reference
-     * implementation in its wallet storage format.
+     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by Bitcoin Core
+     * in its wallet storage format.
      * @throws org.bitcoinj.core.ECKey.MissingPrivateKeyException if the private key is missing or encrypted.
      */
     public byte[] toASN1() {
@@ -1001,7 +1001,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Exports the private key in the form used by the Satoshi client "dumpprivkey" and "importprivkey" commands. Use
+     * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
      * the {@link org.bitcoinj.core.DumpedPrivateKey#toString()} method to get the string.
      *
      * @param params The network this key is intended for use on.

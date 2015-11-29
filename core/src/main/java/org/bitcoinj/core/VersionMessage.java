@@ -61,7 +61,7 @@ public class VersionMessage extends Message {
     public PeerAddress theirAddr;
     /**
      * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
-     * The official client sets it to something like "/Satoshi:0.9.1/".
+     * Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
      */
     public String subVer;
     /**
@@ -92,7 +92,7 @@ public class VersionMessage extends Message {
         clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         localServices = 0;
         time = System.currentTimeMillis() / 1000;
-        // Note that the official client doesn't do anything with these, and finding out your own external IP address
+        // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         try {
             // We hard-code the IPv4 localhost address here rather than use InetAddress.getLocalHost() because some

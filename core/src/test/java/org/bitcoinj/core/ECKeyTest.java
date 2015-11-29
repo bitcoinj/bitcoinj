@@ -388,7 +388,7 @@ public class ECKeyTest {
 
     @Test
     public void testCanonicalSigs() throws Exception {
-        // Tests the canonical sigs from the reference client unit tests
+        // Tests the canonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_canonical.json");
 
         // Poor man's JSON parser (because pulling in a lib for this is overkill)
@@ -409,7 +409,7 @@ public class ECKeyTest {
 
     @Test
     public void testNonCanonicalSigs() throws Exception {
-        // Tests the noncanonical sigs from the reference client unit tests
+        // Tests the noncanonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_noncanonical.json");
 
         // Poor man's JSON parser (because pulling in a lib for this is overkill)

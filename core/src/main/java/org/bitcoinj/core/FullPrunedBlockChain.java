@@ -40,8 +40,8 @@ import static com.google.common.base.Preconditions.checkState;
  * Bitcoin system, with the downside being a large cost in system resources. Fully verifying means all unspent
  * transaction outputs are stored. Once a transaction output is spent and that spend is buried deep enough, the data
  * related to it is deleted to ensure disk space usage doesn't grow forever. For this reason a pruning node cannot
- * serve the full block chain to other clients, but it nevertheless provides the same security guarantees as a regular
- * Satoshi client does.</p>
+ * serve the full block chain to other clients, but it nevertheless provides the same security guarantees as Bitcoin
+ * Core does.</p>
  */
 public class FullPrunedBlockChain extends AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChain.class);
@@ -265,7 +265,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
                             }
                         }
-                        // TODO: Check we're not spending the genesis transaction here. Satoshis code won't allow it.
+                        // TODO: Check we're not spending the genesis transaction here. Bitcoin Core won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
                         if (verifyFlags.contains(VerifyFlag.P2SH)) {
                             if (prevOut.getScript().isPayToScriptHash())

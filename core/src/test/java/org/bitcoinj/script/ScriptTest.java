@@ -381,7 +381,7 @@ public class ScriptTest {
                 valid = false;
             }
 
-            // The reference client checks this case in CheckTransaction, but we leave it to
+            // Bitcoin Core checks this case in CheckTransaction, but we leave it to
             // later where we will see an attempt to double-spend, so we explicitly check here
             HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
             for (TransactionInput input : transaction.getInputs()) {

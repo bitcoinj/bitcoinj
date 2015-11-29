@@ -562,7 +562,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Set up the genesis block. When we start out fresh, it is by
             // definition the top of the chain.
             StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().cloneAsHeader(), params.getGenesisBlock().getWork(), 0);
-            // The coinbase in the genesis block is not spendable. This is because of how the reference client inits
+            // The coinbase in the genesis block is not spendable. This is because of how Bitcoin Core inits
             // its database - the genesis transaction isn't actually in the db so its spent flags can never be updated.
             List<Transaction> genesisTransactions = Lists.newLinkedList();
             StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);

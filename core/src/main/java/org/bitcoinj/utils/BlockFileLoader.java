@@ -31,14 +31,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * <p>This class reads block files stored in the reference/Satoshi client format. This is simply a way to concatenate
+ * <p>This class reads block files stored in the Bitcoin Core format. This is simply a way to concatenate
  * blocks together. Importing block data with this tool can be a lot faster than syncing over the network, if you
  * have the files available.</p>
  * 
  * <p>In order to comply with Iterator&lt;Block>, this class swallows a lot of IOExceptions, which may result in a few
  * blocks being missed followed by a huge set of orphan blocks.</p>
  * 
- * <p>To blindly import all files which can be found in a reference client (version >= 0.8) datadir automatically,
+ * <p>To blindly import all files which can be found in Bitcoin Core (version >= 0.8) datadir automatically,
  * try this code fragment:<br>
  * BlockFileLoader loader = new BlockFileLoader(BlockFileLoader.getReferenceClientBlockFileList());<br>
  * for (Block block : loader) {<br>
@@ -47,7 +47,7 @@ import java.util.NoSuchElementException;
  */
 public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     /**
-     * Gets the list of files which contain blocks from the Satoshi client.
+     * Gets the list of files which contain blocks from Bitcoin Core.
      */
     public static List<File> getReferenceClientBlockFileList() {
         String defaultDataDir;
