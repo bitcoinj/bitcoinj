@@ -84,6 +84,12 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         if (tx.getConfidence().getSource() == TransactionConfidence.Source.SELF)
             return Result.OK;
 
+        // We consider transactions that opt into replace-by-fee at risk of double spending.
+        if (tx.isOptInFullRBF()) {
+            nonFinal = tx;
+            return Result.NON_FINAL;
+        }
+
         if (wallet == null)
             return null;
 
@@ -103,6 +109,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
                 return Result.NON_FINAL;
             }
         }
+
         return Result.OK;
     }
 

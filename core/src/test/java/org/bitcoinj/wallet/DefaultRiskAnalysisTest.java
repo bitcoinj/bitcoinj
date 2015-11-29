@@ -22,6 +22,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.DefaultRiskAnalysis.*;
 import org.junit.*;
 
@@ -54,6 +55,16 @@ public class DefaultRiskAnalysisTest {
         };
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void analysisCantBeUsedTwice() {
+        Transaction tx = new Transaction(params);
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+        assertNull(analysis.getNonFinal());
+        // Verify we can't re-use a used up risk analysis.
+        analysis.analyze();
+    }
+
     @Test
     public void nonFinal() throws Exception {
         // Verify that just having a lock time in the future is not enough to be considered risky (it's still final).
@@ -61,32 +72,20 @@ public class DefaultRiskAnalysisTest {
         TransactionInput input = tx.addInput(params.getGenesisBlock().getTransactions().get(0).getOutput(0));
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
-
-        {
-            DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
-            assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
-            assertNull(analysis.getNonFinal());
-            // Verify we can't re-use a used up risk analysis.
-            try {
-                analysis.analyze();
-                fail();
-            } catch (IllegalStateException e) {}
-        }
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+        assertNull(analysis.getNonFinal());
 
         // Set a sequence number on the input to make it genuinely non-final. Verify it's risky.
-        input.setSequenceNumber(1);
-        {
-            DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
-            assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
-            assertEquals(tx, analysis.getNonFinal());
-        }
+        input.setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
+        assertEquals(tx, analysis.getNonFinal());
 
         // If the lock time is the current block, it's about to become final and we consider it non-risky.
         tx.setLockTime(1000);
-        {
-            DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
-            assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
-        }
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
     }
 
     @Test
@@ -222,5 +221,14 @@ public class DefaultRiskAnalysisTest {
         // OP_RETURN
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hi there".getBytes()));
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS).analyze());
+    }
+
+    @Test
+    public void optInFullRBF() throws Exception {
+        Transaction tx = FakeTxBuilder.createFakeTx(params);
+        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
+        assertEquals(tx, analysis.getNonFinal());
     }
 }
