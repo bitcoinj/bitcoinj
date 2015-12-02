@@ -188,7 +188,7 @@ public class Wallet extends BaseTaggableObject
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
 
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
+    protected CoinSelector coinSelector;
 
     // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
     // You can also use it to detect wallets that come from the future (ie they contain features you
@@ -288,6 +288,7 @@ public class Wallet extends BaseTaggableObject
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
         signers = new ArrayList<TransactionSigner>();
+        coinSelector = new DefaultCoinSelector(params);
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
     }
@@ -4215,7 +4216,7 @@ public class Wallet extends BaseTaggableObject
      * be dangerous - only use this if you absolutely know what you're doing!
      */
     public void allowSpendingUnconfirmedTransactions() {
-        setCoinSelector(AllowUnconfirmedCoinSelector.get());
+        setCoinSelector(AllowUnconfirmedCoinSelector.get(params));
     }
 
     /**

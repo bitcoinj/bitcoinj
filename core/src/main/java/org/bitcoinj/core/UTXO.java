@@ -84,11 +84,11 @@ public class UTXO {
         this.address = address;
     }
 
-    public UTXO(InputStream in) throws IOException {
+    public UTXO(NetworkParameters params, InputStream in) throws IOException {
         byte[] valueBytes = new byte[8];
         if (in.read(valueBytes, 0, 8) != 8)
             throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
+        value = Coin.valueOf(params, Utils.readInt64(valueBytes, 0));
 
         int scriptBytesLength = ((in.read() & 0xFF)) |
                 ((in.read() & 0xFF) << 8) |

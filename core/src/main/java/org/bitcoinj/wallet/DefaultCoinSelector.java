@@ -17,6 +17,12 @@ import java.util.*;
  * "spending" more priority than would be required to get the transaction we are creating confirmed.
  */
 public class DefaultCoinSelector implements CoinSelector {
+    private final NetworkParameters params;
+
+    public      DefaultCoinSelector(final NetworkParameters params) {
+        this.params = params;
+    }
+
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         ArrayList<TransactionOutput> selected = new ArrayList<TransactionOutput>();
@@ -25,8 +31,8 @@ public class DefaultCoinSelector implements CoinSelector {
         ArrayList<TransactionOutput> sortedOutputs = new ArrayList<TransactionOutput>(candidates);
         // When calculating the wallet balance, we may be asked to select all possible coins, if so, avoid sorting
         // them in order to improve performance.
-        // TODO: Take in network parameters when instanatiated, and then test against the current network. Or just have a boolean parameter for "give me everything"
-        if (!target.equals(NetworkParameters.MAX_MONEY)) {
+        // TODO: Just have a boolean parameter for "give me everything"
+        if (!target.equals(params.getMaxMoney())) {
             sortOutputs(sortedOutputs);
         }
         // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
@@ -41,7 +47,7 @@ public class DefaultCoinSelector implements CoinSelector {
         }
         // Total may be lower than target here, if the given candidates were insufficient to create to requested
         // transaction.
-        return new CoinSelection(Coin.valueOf(total), selected);
+        return new CoinSelection(Coin.valueOf(params, total), selected);
     }
 
     @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {

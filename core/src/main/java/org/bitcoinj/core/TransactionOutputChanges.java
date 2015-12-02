@@ -37,14 +37,14 @@ public class TransactionOutputChanges {
         this.txOutsSpent = txOutsSpent;
     }
     
-    public TransactionOutputChanges(InputStream in) throws IOException {
+    public TransactionOutputChanges(NetworkParameters params, InputStream in) throws IOException {
         int numOutsCreated = (in.read() & 0xFF) |
                              ((in.read() & 0xFF) << 8) |
                              ((in.read() & 0xFF) << 16) |
                              ((in.read() & 0xFF) << 24);
         txOutsCreated = new LinkedList<UTXO>();
         for (int i = 0; i < numOutsCreated; i++)
-            txOutsCreated.add(new UTXO(in));
+            txOutsCreated.add(new UTXO(params, in));
         
         int numOutsSpent = (in.read() & 0xFF) |
                            ((in.read() & 0xFF) << 8) |
@@ -52,7 +52,7 @@ public class TransactionOutputChanges {
                            ((in.read() & 0xFF) << 24);
         txOutsSpent = new LinkedList<UTXO>();
         for (int i = 0; i < numOutsSpent; i++)
-            txOutsSpent.add(new UTXO(in));
+            txOutsSpent.add(new UTXO(params, in));
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
