@@ -85,6 +85,6 @@ public class DefaultCoinSelector implements CoinSelector {
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
                // TODO: The value 1 below dates from a time when transactions we broadcast *to* were counted, set to 0
-               (confidence.numBroadcastPeers() > 1 || tx.getParams() == RegTestParams.get());
+               (confidence.numBroadcastPeers() > 1 || tx.getParams().getId().equals(NetworkParameters.ID_REGTEST));
     }
 }
