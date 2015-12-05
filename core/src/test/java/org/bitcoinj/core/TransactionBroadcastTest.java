@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.AbstractWalletEventListener;
-import org.bitcoinj.params.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
 import org.junit.*;
@@ -108,7 +107,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // immediately with the latest state. This avoids API users writing accidentally racy code when they use
         // a convenience method like peerGroup.broadcastTransaction.
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = FakeTxBuilder.createFakeTx(params, CENT, UnitTestParams.TEST_ADDRESS);
+        Transaction tx = FakeTxBuilder.createFakeTx(params, CENT, address);
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
         inbound(channels[1], InventoryMessage.with(tx));

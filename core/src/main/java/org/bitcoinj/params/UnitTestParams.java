@@ -29,10 +29,6 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 6;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
 
-    // A simple static key/address for re-use in unit tests, to speed things up.
-    public static ECKey TEST_KEY = new ECKey();
-    public static Address TEST_ADDRESS;
-
     public UnitTestParams() {
         super();
         id = ID_UNITTESTNET;
@@ -64,7 +60,6 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public static synchronized UnitTestParams get() {
         if (instance == null) {
             instance = new UnitTestParams();
-            TEST_ADDRESS = TEST_KEY.toAddress(instance);
         }
         return instance;
     }
