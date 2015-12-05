@@ -4796,7 +4796,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
      * <p>The given time cannot be in the future.</p>
      */
     public void setKeyRotationTime(long unixTimeSeconds) {
-        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds());
+        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
+                Utils.dateTimeFormat(unixTimeSeconds * 1000));
         vKeyRotationTimestamp = unixTimeSeconds;
         saveNow();
     }
