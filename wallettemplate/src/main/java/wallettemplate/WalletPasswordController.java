@@ -58,7 +58,7 @@ public class WalletPasswordController {
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
-            protected void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
                 if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);

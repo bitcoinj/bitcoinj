@@ -60,7 +60,7 @@ public class DeterministicHierarchy {
      * Inserts a key into the heirarchy. Used during deserialization: you normally don't need this. Keys must be
      * inserted in order.
      */
-    public void putKey(DeterministicKey key) {
+    public final void putKey(DeterministicKey key) {
         ImmutableList<ChildNumber> path = key.getPath();
         // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
         // inserted in order here.

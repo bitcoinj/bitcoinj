@@ -27,7 +27,7 @@ public class BitcoinUIModel {
         setWallet(wallet);
     }
 
-    public void setWallet(Wallet wallet) {
+    public final void setWallet(Wallet wallet) {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
             public void onWalletChanged(Wallet wallet) {
