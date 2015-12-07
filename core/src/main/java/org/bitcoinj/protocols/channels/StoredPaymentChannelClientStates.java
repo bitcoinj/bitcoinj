@@ -81,7 +81,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      *
      * @param transactionBroadcaster which is used to complete and announce contract and refund transactions.
      */
-    public void setTransactionBroadcaster(TransactionBroadcaster transactionBroadcaster) {
+    public final void setTransactionBroadcaster(TransactionBroadcaster transactionBroadcaster) {
         this.announcePeerGroupFuture.set(checkNotNull(transactionBroadcaster));
     }
 

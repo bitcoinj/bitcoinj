@@ -41,7 +41,7 @@ public abstract class AbstractTimeoutHandler {
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
-    public synchronized void setTimeoutEnabled(boolean timeoutEnabled) {
+    public synchronized final void setTimeoutEnabled(boolean timeoutEnabled) {
         this.timeoutEnabled = timeoutEnabled;
         resetTimeout();
     }
@@ -56,7 +56,7 @@ public abstract class AbstractTimeoutHandler {
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
-    public synchronized void setSocketTimeout(int timeoutMillis) {
+    public synchronized final void setSocketTimeout(int timeoutMillis) {
         this.timeoutMillis = timeoutMillis;
         resetTimeout();
     }

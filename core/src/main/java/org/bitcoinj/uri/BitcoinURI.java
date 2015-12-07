@@ -299,7 +299,7 @@ public class BitcoinURI {
      * @return The URL where a payment request (as specified in BIP 70) may
      *         be fetched.
      */
-    public String getPaymentRequestUrl() {
+    public final String getPaymentRequestUrl() {
         return (String) parameterMap.get(FIELD_PAYMENT_REQUEST_URL);
     }
 

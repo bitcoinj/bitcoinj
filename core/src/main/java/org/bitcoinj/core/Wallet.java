@@ -337,7 +337,7 @@ public class Wallet extends BaseTaggableObject
      * <p>Transaction signer should be fully initialized before adding to the wallet, otherwise {@link IllegalStateException}
      * will be thrown</p>
      */
-    public void addTransactionSigner(TransactionSigner signer) {
+    public final void addTransactionSigner(TransactionSigner signer) {
         lock.lock();
         try {
             if (signer.isReady())

@@ -282,7 +282,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
     
     @Override
-    public synchronized void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
+    public synchronized final void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         Sha256Hash hash = storedBlock.getHeader().getHash();
         fullBlockMap.put(hash, storedBlock.getHeight(), undoableBlock);
@@ -319,7 +319,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public synchronized void setChainHead(StoredBlock chainHead) throws BlockStoreException {
+    public synchronized final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.chainHead = chainHead;
     }
@@ -331,7 +331,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public synchronized void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
+    public synchronized final void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
         Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.verifiedChainHead = chainHead;
         if (this.chainHead.getHeight() < chainHead.getHeight())

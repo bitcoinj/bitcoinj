@@ -67,7 +67,7 @@ public class VarInt {
     /**
      * Returns the minimum encoded size of the value.
      */
-    public int getSizeInBytes() {
+    public final int getSizeInBytes() {
         return sizeOf(value);
     }
 

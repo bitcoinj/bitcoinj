@@ -55,7 +55,7 @@ public abstract class ChildMessage extends Message {
         this.parent = parent;
     }
 
-    public void setParent(@Nullable Message parent) {
+    public final void setParent(@Nullable Message parent) {
         if (this.parent != null && this.parent != parent && parent != null) {
             // After old parent is unlinked it won't be able to receive notice if this ChildMessage
             // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds

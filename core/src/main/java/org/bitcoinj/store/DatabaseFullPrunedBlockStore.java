@@ -420,7 +420,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * <p>This will also automatically set up the schema if it does not exist within the DB.</p>
      * @throws BlockStoreException if successful connection to the DB couldn't be made.
      */
-    protected synchronized void maybeConnect() throws BlockStoreException {
+    protected synchronized final void maybeConnect() throws BlockStoreException {
         try {
             if (conn.get() != null && !conn.get().isClosed())
                 return;
