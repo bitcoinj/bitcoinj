@@ -136,7 +136,7 @@ public class PaymentProtocol {
             final Protos.PaymentRequest paymentRequestToSign = paymentRequest.build();
 
             final String algorithm;
-            if (privateKey.getAlgorithm().equalsIgnoreCase("RSA"))
+            if ("RSA".equalsIgnoreCase(privateKey.getAlgorithm()))
                 algorithm = "SHA256withRSA";
             else
                 throw new IllegalStateException(privateKey.getAlgorithm());
@@ -166,14 +166,14 @@ public class PaymentProtocol {
         List<X509Certificate> certs = null;
         try {
             final String pkiType = paymentRequest.getPkiType();
-            if (pkiType.equals("none"))
+            if ("none".equals(pkiType))
                 // Nothing to verify. Everything is fine. Move along.
                 return null;
 
             String algorithm;
-            if (pkiType.equals("x509+sha256"))
+            if ("x509+sha256".equals(pkiType))
                 algorithm = "SHA256withRSA";
-            else if (pkiType.equals("x509+sha1"))
+            else if ("x509+sha1".equals(pkiType))
                 algorithm = "SHA1withRSA";
             else
                 throw new PaymentProtocolException.InvalidPkiType("Unsupported PKI type: " + pkiType);

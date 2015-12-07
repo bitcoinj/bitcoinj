@@ -55,9 +55,9 @@ public class PaymentProtocolTool {
                 Protos.PaymentRequest request = Protos.PaymentRequest.parseFrom(stream);
                 stream.close();
                 session = new PaymentSession(request);
-            } else if (uri.getScheme().equals("http")) {
+            } else if ("http".equals(uri.getScheme())) {
                 session = PaymentSession.createFromUrl(arg).get();
-            } else if (uri.getScheme().equals("bitcoin")) {
+            } else if ("bitcoin".equals(uri.getScheme())) {
                 BitcoinURI bcuri = new BitcoinURI(arg);
                 final String paymentRequestUrl = bcuri.getPaymentRequestUrl();
                 if (paymentRequestUrl == null) {
