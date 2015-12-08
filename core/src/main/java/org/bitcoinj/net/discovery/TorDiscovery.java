@@ -145,9 +145,11 @@ public class TorDiscovery implements PeerDiscovery {
                     }
                 });
                 Futures.addCallback(openCircuit, new FutureCallback<Circuit>() {
+                    @Override
                     public void onSuccess(Circuit circuit) {
                         doneSignal.countDown();
                     }
+                    @Override
                     public void onFailure(Throwable thrown) {
                         doneSignal.countDown();
                     }
