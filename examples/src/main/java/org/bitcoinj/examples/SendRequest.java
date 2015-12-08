@@ -67,10 +67,12 @@ public class SendRequest {
             // Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
             ListenableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
             FutureCallback<Coin> callback = new FutureCallback<Coin>() {
+                @Override
                 public void onSuccess(Coin balance) {
                     System.out.println("coins arrived and the wallet now has enough balance");
                 }
 
+                @Override
                 public void onFailure(Throwable t) {
                     System.out.println("something went wrong");
                 }

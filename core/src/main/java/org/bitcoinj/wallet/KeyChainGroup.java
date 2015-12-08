@@ -345,6 +345,7 @@ public class KeyChainGroup implements KeyBag {
         return importKeys(encryptedKeys);
     }
 
+    @Override
     @Nullable
     public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
         // Iterate in reverse order, since the active keychain is the one most likely to have the hit

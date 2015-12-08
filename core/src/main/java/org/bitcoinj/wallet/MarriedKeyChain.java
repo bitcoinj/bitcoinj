@@ -90,6 +90,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
             return self();
         }
 
+        @Override
         public MarriedKeyChain build() {
             checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkNotNull(followingKeys, "followingKeys must be provided");
