@@ -17,11 +17,14 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.io.ByteStreams;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -191,5 +194,42 @@ public class BlockTest {
                 new TransactionOutPoint(params, 0, Sha256Hash.of(new byte[] { 1 }))));
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
+    }
+
+    @Test
+    public void isBIPs() throws Exception {
+        final MainNetParams mainnet = MainNetParams.get();
+        final Block genesis = mainnet.getGenesisBlock();
+        assertFalse(genesis.isBIP34());
+        assertFalse(genesis.isBIP66());
+        assertFalse(genesis.isBIP65());
+
+        // 227835/00000000000001aa077d7aa84c532a4d69bdbff519609d1da0835261b7a74eb6: last version 1 block
+        final Block block227835 = new Block(mainnet,
+                ByteStreams.toByteArray(getClass().getResourceAsStream("block227835.dat")));
+        assertFalse(block227835.isBIP34());
+        assertFalse(block227835.isBIP66());
+        assertFalse(block227835.isBIP65());
+
+        // 227836/00000000000000d0dfd4c9d588d325dce4f32c1b31b7c0064cba7025a9b9adcc: version 2 block
+        final Block block227836 = new Block(mainnet,
+                ByteStreams.toByteArray(getClass().getResourceAsStream("block227836.dat")));
+        assertTrue(block227836.isBIP34());
+        assertFalse(block227836.isBIP66());
+        assertFalse(block227836.isBIP65());
+
+        // 363703/0000000000000000011b2a4cb91b63886ffe0d2263fd17ac5a9b902a219e0a14: version 3 block
+        final Block block363703 = new Block(mainnet,
+                ByteStreams.toByteArray(getClass().getResourceAsStream("block363703.dat")));
+        assertTrue(block363703.isBIP34());
+        assertTrue(block363703.isBIP66());
+        assertFalse(block363703.isBIP65());
+
+        // 383616/00000000000000000aab6a2b34e979b09ca185584bd1aecf204f24d150ff55e9: version 4 block
+        final Block block383616 = new Block(mainnet,
+                ByteStreams.toByteArray(getClass().getResourceAsStream("block383616.dat")));
+        assertTrue(block383616.isBIP34());
+        assertTrue(block383616.isBIP66());
+        assertTrue(block383616.isBIP65());
     }
 }

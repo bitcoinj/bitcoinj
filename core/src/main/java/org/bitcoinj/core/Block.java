@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -73,6 +74,13 @@ public class Block extends Message {
 
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
+
+    /** Block version introduced in BIP 34: Height in coinbase */
+    public static final long BLOCK_VERSION_BIP34 = 2;
+    /** Block version introduced in BIP 66: Strict DER signatures */
+    public static final long BLOCK_VERSION_BIP66 = 3;
+    /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
+    public static final long BLOCK_VERSION_BIP65 = 4;
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -582,9 +590,14 @@ public class Block extends Message {
      */
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder("v");
-        s.append(version);
+        StringBuilder s = new StringBuilder();
         s.append(" block: \n");
+        s.append("   version: ").append(version);
+        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
+                isBIP65() ? "BIP65" : null);
+        if (!bips.isEmpty())
+            s.append(" (").append(bips).append(')');
+        s.append('\n');
         s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
         s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
         s.append("   time: [").append(time).append("] ").append(Utils.dateTimeFormat(time * 1000)).append("\n");
@@ -1080,5 +1093,29 @@ public class Block extends Message {
     @VisibleForTesting
     boolean isTransactionBytesValid() {
         return transactionBytesValid;
+    }
+
+    /**
+     * Returns whether this block conforms to
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki">BIP34: Height in Coinbase</a>.
+     */
+    public boolean isBIP34() {
+        return version >= BLOCK_VERSION_BIP34;
+    }
+
+    /**
+     * Returns whether this block conforms to
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki">BIP66: Strict DER signatures</a>.
+     */
+    public boolean isBIP66() {
+        return version >= BLOCK_VERSION_BIP66;
+    }
+
+    /**
+     * Returns whether this block conforms to
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP65: OP_CHECKLOCKTIMEVERIFY</a>.
+     */
+    public boolean isBIP65() {
+        return version >= BLOCK_VERSION_BIP65;
     }
 }
