@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoin.protocols.payments.Protos.*;
+import org.bitcoinj.core.Transaction.Purpose;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.*;
@@ -2829,6 +2830,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 builder.append(tx.getValueSentToMe(this).toFriendlyString());
                 builder.append(", total value ");
                 builder.append(tx.getValue(this).toFriendlyString());
+                final Purpose purpose = tx.getPurpose();
+                if (purpose != null)
+                    builder.append(", purpose: ").append(purpose);
                 builder.append(".\n");
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
