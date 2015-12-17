@@ -717,6 +717,8 @@ public class Transaction extends ChildMessage {
         Coin fee = getFee();
         if (fee != null)
             s.append("     fee  ").append(fee.toFriendlyString()).append(String.format("%n"));
+        if (purpose != null)
+            s.append("     prps ").append(purpose).append(String.format("%n"));
         return s.toString();
     }
 
