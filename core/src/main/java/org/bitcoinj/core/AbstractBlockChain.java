@@ -920,7 +920,7 @@ public abstract class AbstractBlockChain {
                 StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
-                    log.debug("  but it is not connectable right now");
+                    log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
                     continue;
                 }
                 // Otherwise we can connect it now.
