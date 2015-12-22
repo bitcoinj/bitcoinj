@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Coin.*;
+import org.bitcoinj.core.NetworkParameters;
 import static org.junit.Assert.*;
 
 public class BitcoinURITest {
@@ -66,6 +67,17 @@ public class BitcoinURITest {
         // no amount, no label, no message
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, null, null));
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, "", ""));
+
+        // different scheme
+        final NetworkParameters alternativeParameters = new MainNetParams() {
+            @Override
+            public String getUriScheme() {
+                return "test";
+            }
+        };
+
+        assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
+             BitcoinURI.convertToBitcoinURI(Address.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS), parseCoin("12.34"), "Hello", "AMessage"));
     }
 
     @Test
