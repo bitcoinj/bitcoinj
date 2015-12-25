@@ -476,6 +476,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private Runnable triggerConnectionsJob = new Runnable() {
         private boolean firstRun = true;
+        private final static long MIN_PEER_DISCOVERY_INTERVAL = 1000L;
 
         @Override
         public void run() {
@@ -525,7 +526,9 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.lock();
             try {
                 if (doDiscovery) {
-                    if (discoverySuccess) {
+                    // Require that we have enough connections, to consider this
+                    // a success, or we just constantly test for new peers
+                    if (discoverySuccess && countConnectedAndPendingPeers() >= getMaxConnections()) {
                         groupBackoff.trackSuccess();
                     } else {
                         groupBackoff.trackFailure();
@@ -534,8 +537,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 // Inactives is sorted by backoffMap time.
                 if (inactives.isEmpty()) {
                     if (countConnectedAndPendingPeers() < getMaxConnections()) {
-                        log.info("Peer discovery didn't provide us any more peers, will try again later.");
-                        executor.schedule(this, groupBackoff.getRetryTime() - now, TimeUnit.MILLISECONDS);
+                        long interval = Math.max(groupBackoff.getRetryTime() - now, MIN_PEER_DISCOVERY_INTERVAL);
+                        log.info("Peer discovery didn't provide us any more peers, will try again in "
+                            + interval + "ms.");
+                        executor.schedule(this, interval, TimeUnit.MILLISECONDS);
                     } else {
                         // We have enough peers and discovery provided no more, so just settle down. Most likely we
                         // were given a fixed set of addresses in some test scenario.
