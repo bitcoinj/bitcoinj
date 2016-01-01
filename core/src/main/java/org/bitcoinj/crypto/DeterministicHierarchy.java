@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -85,7 +86,7 @@ public class DeterministicHierarchy {
                 : ImmutableList.copyOf(path);
         if (!keys.containsKey(absolutePath)) {
             if (!create)
-                throw new IllegalArgumentException(String.format("No key found for %s path %s.",
+                throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
                     relativePath ? "relative" : "absolute", HDUtils.formatPath(path)));
             checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
             DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), false, true);

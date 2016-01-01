@@ -32,6 +32,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -238,9 +239,9 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     @Override
     protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder2) {
         for (DeterministicKeyChain followingChain : followingKeyChains) {
-            builder2.append(String.format("Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58(params)));
+            builder2.append(String.format(Locale.US, "Following chain:  %s%n", followingChain.getWatchingKey().serializePubB58(params)));
         }
-        builder2.append(String.format("%n"));
+        builder2.append(String.format(Locale.US, "%n"));
         for (RedeemData redeemData : marriedKeysRedeemData.values())
             formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder2, params);
     }

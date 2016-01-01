@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.*;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -86,7 +87,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
      * @param date the date of the last block downloaded
      */
     protected void progress(double pct, int blocksSoFar, Date date) {
-        log.info(String.format("Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
+        log.info(String.format(Locale.US, "Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
                 Utils.dateTimeFormat(date)));
     }
 

@@ -1719,7 +1719,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         for (long sample : samples) average += sample;
                         average /= samples.length;
 
-                        log.info(String.format("%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, avg/last %.2f/%.2f kilobytes per sec (stall threshold <%.2f KB/sec for %d seconds)",
+                        log.info(String.format(Locale.US, "%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, avg/last %.2f/%.2f kilobytes per sec (stall threshold <%.2f KB/sec for %d seconds)",
                                 blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, average / 1024.0, bytesInLastSecond / 1024.0,
                                 minSpeedBytesPerSec / 1024.0, samples.length));
 
@@ -1736,7 +1736,7 @@ public class PeerGroup implements TransactionBroadcaster {
                                 log.warn("This network seems to be slower than the requested stall threshold - won't do stall disconnects any more.");
                             } else {
                                 Peer peer = getDownloadPeer();
-                                log.warn(String.format("Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s", average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer));
+                                log.warn(String.format(Locale.US, "Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s", average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer));
                                 peer.close();
                                 // Reset the sample buffer and give the next peer time to get going.
                                 samples = null;
@@ -1746,7 +1746,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     } else {
                         warmupSeconds--;
                         if (bytesInLastSecond > 0)
-                            log.info(String.format("%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, last %.2f kilobytes per sec",
+                            log.info(String.format(Locale.US, "%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, last %.2f kilobytes per sec",
                                     blocksInLastSecond, txnsInLastSecond, origTxnsInLastSecond, bytesInLastSecond / 1024.0));
                     }
                 }

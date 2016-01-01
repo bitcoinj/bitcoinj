@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Locale;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -399,7 +400,7 @@ public class PaymentChannelServerState {
             feePaidForPayment = req.tx.getFee();
             log.info("Calculated fee is {}", feePaidForPayment);
             if (feePaidForPayment.compareTo(bestValueToMe) > 0) {
-                final String msg = String.format("Had to pay more in fees (%s) than the channel was worth (%s)",
+                final String msg = String.format(Locale.US, "Had to pay more in fees (%s) than the channel was worth (%s)",
                         feePaidForPayment, bestValueToMe);
                 throw new InsufficientMoneyException(feePaidForPayment.subtract(bestValueToMe), msg);
             }

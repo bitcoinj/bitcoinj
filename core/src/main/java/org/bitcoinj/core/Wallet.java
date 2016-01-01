@@ -1617,7 +1617,7 @@ public class Wallet extends BaseTaggableObject
             Coin valueSentToMe = tx.getValueSentToMe(this);
             Coin valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
-                log.info(String.format("Received a pending transaction %s that spends %s from our own wallet," +
+                log.info(String.format(Locale.US, "Received a pending transaction %s that spends %s from our own wallet," +
                         " and sends us %s", tx.getHashAsString(), valueSentFromMe.toFriendlyString(),
                         valueSentToMe.toFriendlyString()));
             }
@@ -2943,19 +2943,19 @@ public class Wallet extends BaseTaggableObject
             StringBuilder builder = new StringBuilder();
             Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
             Coin availableBalance = getBalance(BalanceType.AVAILABLE_SPENDABLE);
-            builder.append(String.format("Wallet containing %s BTC (spendable: %s BTC) in:%n",
+            builder.append(String.format(Locale.US, "Wallet containing %s BTC (spendable: %s BTC) in:%n",
                     estimatedBalance.toPlainString(), availableBalance.toPlainString()));
-            builder.append(String.format("  %d pending transactions%n", pending.size()));
-            builder.append(String.format("  %d unspent transactions%n", unspent.size()));
-            builder.append(String.format("  %d spent transactions%n", spent.size()));
-            builder.append(String.format("  %d dead transactions%n", dead.size()));
+            builder.append(String.format(Locale.US, "  %d pending transactions%n", pending.size()));
+            builder.append(String.format(Locale.US, "  %d unspent transactions%n", unspent.size()));
+            builder.append(String.format(Locale.US, "  %d spent transactions%n", spent.size()));
+            builder.append(String.format(Locale.US, "  %d dead transactions%n", dead.size()));
             final Date lastBlockSeenTime = getLastBlockSeenTime();
             final String lastBlockSeenTimeStr = lastBlockSeenTime == null ? "time unknown" : lastBlockSeenTime.toString();
-            builder.append(String.format("Last seen best block: %d (%s): %s%n",
+            builder.append(String.format(Locale.US, "Last seen best block: %d (%s): %s%n",
                     getLastBlockSeenHeight(), lastBlockSeenTimeStr, getLastBlockSeenHash()));
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
-                builder.append(String.format("Encryption: %s%n", crypter));
+                builder.append(String.format(Locale.US, "Encryption: %s%n", crypter));
             if (isWatching())
                 builder.append("Wallet is watching.\n");
 
@@ -2963,7 +2963,7 @@ public class Wallet extends BaseTaggableObject
             builder.append("\nKeys:\n");
             final long keyRotationTime = vKeyRotationTimestamp * 1000;
             if (keyRotationTime > 0)
-                builder.append(String.format("Key rotation time: %s\n", Utils.dateTimeFormat(keyRotationTime)));
+                builder.append(String.format(Locale.US, "Key rotation time: %s\n", Utils.dateTimeFormat(keyRotationTime)));
             builder.append(keyChainGroup.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {

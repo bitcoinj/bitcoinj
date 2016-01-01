@@ -636,7 +636,7 @@ public class Transaction extends ChildMessage {
     public String toString(@Nullable AbstractBlockChain chain) {
         // Basic info about the tx.
         StringBuilder s = new StringBuilder();
-        s.append(String.format("  %s: %s%n", getHashAsString(), getConfidence()));
+        s.append(String.format(Locale.US, "  %s: %s%n", getHashAsString(), getConfidence()));
         if (isTimeLocked()) {
             String time;
             if (lockTime < LOCKTIME_THRESHOLD) {
@@ -648,10 +648,10 @@ public class Transaction extends ChildMessage {
             } else {
                 time = new Date(lockTime*1000).toString();
             }
-            s.append(String.format("  time locked until %s%n", time));
+            s.append(String.format(Locale.US, "  time locked until %s%n", time));
         }
         if (inputs.size() == 0) {
-            s.append(String.format("  INCOMPLETE: No inputs!%n"));
+            s.append(String.format(Locale.US, "  INCOMPLETE: No inputs!%n"));
             return s.toString();
         }
         if (isCoinBase()) {
@@ -692,7 +692,7 @@ public class Transaction extends ChildMessage {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append(String.format("%n"));
+            s.append(String.format(Locale.US, "%n"));
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
@@ -712,13 +712,13 @@ public class Transaction extends ChildMessage {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append(String.format("%n"));
+            s.append(String.format(Locale.US, "%n"));
         }
         Coin fee = getFee();
         if (fee != null)
-            s.append("     fee  ").append(fee.toFriendlyString()).append(String.format("%n"));
+            s.append("     fee  ").append(fee.toFriendlyString()).append(String.format(Locale.US, "%n"));
         if (purpose != null)
-            s.append("     prps ").append(purpose).append(String.format("%n"));
+            s.append("     prps ").append(purpose).append(String.format(Locale.US, "%n"));
         return s.toString();
     }
 
