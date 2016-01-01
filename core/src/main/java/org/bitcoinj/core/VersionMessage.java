@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Locale;
 
 /**
  * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
@@ -284,9 +285,9 @@ public class VersionMessage extends Message {
         checkSubVerComponent(version);
         if (comments != null) {
             checkSubVerComponent(comments);
-            subVer = subVer.concat(String.format("%s:%s(%s)/", name, version, comments));
+            subVer = subVer.concat(String.format(Locale.US, "%s:%s(%s)/", name, version, comments));
         } else {
-            subVer = subVer.concat(String.format("%s:%s/", name, version));
+            subVer = subVer.concat(String.format(Locale.US, "%s:%s/", name, version));
         }
     }
 

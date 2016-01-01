@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
 import static org.bitcoinj.core.Sha256Hash.hashTwice;
@@ -677,7 +678,7 @@ public class Block extends Message {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
         if (time > currentTime + ALLOWED_TIME_DRIFT)
-            throw new VerificationException(String.format("Block too far in future: %d vs %d", time, currentTime + ALLOWED_TIME_DRIFT));
+            throw new VerificationException(String.format(Locale.US, "Block too far in future: %d vs %d", time, currentTime + ALLOWED_TIME_DRIFT));
     }
 
     private void checkSigOps() throws VerificationException {

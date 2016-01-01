@@ -443,7 +443,7 @@ public class Peer extends PeerSocketHandler {
                 peerVersion,
                 vPeerVersionMessage.subVer,
                 vPeerVersionMessage.localServices,
-                String.format("%tF %tT", peerTime, peerTime),
+                String.format(Locale.US, "%tF %tT", peerTime, peerTime),
                 vPeerVersionMessage.bestHeight);
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.

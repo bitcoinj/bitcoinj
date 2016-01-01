@@ -526,7 +526,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         byte[] rederived = HDKeyDerivation.deriveChildKeyBytesFromPublic(parent, k.getChildNumber(), HDKeyDerivation.PublicDeriveMode.WITH_INVERSION).keyBytes;
         byte[] actual = k.getPubKey();
         if (!Arrays.equals(rederived, actual))
-            throw new IllegalStateException(String.format("Bit-flip check failed: %s vs %s", Arrays.toString(rederived), Arrays.toString(actual)));
+            throw new IllegalStateException(String.format(Locale.US, "Bit-flip check failed: %s vs %s", Arrays.toString(rederived), Arrays.toString(actual)));
     }
 
     private void addToBasicChain(DeterministicKey key) {
@@ -1328,15 +1328,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final StringBuilder builder2 = new StringBuilder();
         if (seed != null) {
             if (seed.isEncrypted()) {
-                builder2.append(String.format("Seed is encrypted%n"));
+                builder2.append(String.format(Locale.US, "Seed is encrypted%n"));
             } else if (includePrivateKeys) {
                 final List<String> words = seed.getMnemonicCode();
                 builder2.append(
-                        String.format("Seed as words: %s%nSeed as hex:   %s%n", Utils.join(words),
+                        String.format(Locale.US, "Seed as words: %s%nSeed as hex:   %s%n", Utils.join(words),
                                 seed.toHexString())
                 );
             }
-            builder2.append(String.format("Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(),
+            builder2.append(String.format(Locale.US, "Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(),
                     Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)));
         }
         final DeterministicKey watchingKey = getWatchingKey();
@@ -1345,7 +1345,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // due to the parent fingerprint being missing/not stored. In future we could store the parent fingerprint
         // optionally as well to fix this, but it seems unimportant for now.
         if (watchingKey.getParent() != null) {
-            builder2.append(String.format("Key to watch:  %s%n", watchingKey.serializePubB58(params)));
+            builder2.append(String.format(Locale.US, "Key to watch:  %s%n", watchingKey.serializePubB58(params)));
         }
         formatAddresses(includePrivateKeys, params, builder2);
         return builder2.toString();

@@ -20,6 +20,7 @@ import org.bitcoinj.script.*;
 
 import java.io.*;
 import java.math.*;
+import java.util.Locale;
 
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
@@ -156,7 +157,7 @@ public class UTXO implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash, index);
+        return String.format(Locale.US, "Stored TxOut of %s (%s:%d)", value.toFriendlyString(), hash, index);
     }
 
     @Override

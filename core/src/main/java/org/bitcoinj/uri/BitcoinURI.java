@@ -225,9 +225,9 @@ public class BitcoinURI {
                         throw new ArithmeticException("Negative coins specified");
                     putWithValidation(FIELD_AMOUNT, amount);
                 } catch (IllegalArgumentException e) {
-                    throw new OptionalFieldValidationException(String.format("'%s' is not a valid amount", valueToken), e);
+                    throw new OptionalFieldValidationException(String.format(Locale.US, "'%s' is not a valid amount", valueToken), e);
                 } catch (ArithmeticException e) {
-                    throw new OptionalFieldValidationException(String.format("'%s' has too many decimal places", valueToken), e);
+                    throw new OptionalFieldValidationException(String.format(Locale.US, "'%s' has too many decimal places", valueToken), e);
                 }
             } else {
                 if (nameToken.startsWith("req-")) {
@@ -257,7 +257,7 @@ public class BitcoinURI {
      */
     private void putWithValidation(String key, Object value) throws BitcoinURIParseException {
         if (parameterMap.containsKey(key)) {
-            throw new BitcoinURIParseException(String.format("'%s' is duplicated, URI is invalid", key));
+            throw new BitcoinURIParseException(String.format(Locale.US, "'%s' is duplicated, URI is invalid", key));
         } else {
             parameterMap.put(key, value);
         }

@@ -22,6 +22,7 @@ import org.bitcoinj.store.BlockStoreException;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -147,7 +148,7 @@ public class StoredBlock implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Block %s at height %d: %s",
+        return String.format(Locale.US, "Block %s at height %d: %s",
                 getHeader().getHashAsString(), getHeight(), getHeader().toString());
     }
 }
