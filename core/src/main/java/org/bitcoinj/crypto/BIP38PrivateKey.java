@@ -33,6 +33,7 @@ import java.security.GeneralSecurityException;
 import java.text.Normalizer;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -68,7 +69,7 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
     @Deprecated
     public BIP38PrivateKey(NetworkParameters params, String encoded) throws AddressFormatException {
         super(encoded);
-        this.params = params;
+        this.params = checkNotNull(params);
         if (version != 0x01)
             throw new AddressFormatException("Mismatched version number: " + version);
         if (bytes.length != 38)
@@ -202,6 +203,6 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        params = NetworkParameters.fromID(in.readUTF());
+        params = checkNotNull(NetworkParameters.fromID(in.readUTF()));
     }
 }
