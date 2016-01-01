@@ -336,7 +336,7 @@ public class TransactionConfidence {
                 builder.append("In conflict.");
                 break;
             case BUILDING:
-                builder.append(String.format("Appeared in best chain at height %d, depth %d.",
+                builder.append(String.format(Locale.US, "Appeared in best chain at height %d, depth %d.",
                         getAppearedAtChainHeight(), getDepthInBlocks()));
                 break;
         }

@@ -1215,7 +1215,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             count++;
         }
         rs.close();
-        System.out.printf("Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+        System.out.printf(Locale.US, "Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
 
         totalSize += size; size = 0; count = 0;
         rs = s.executeQuery(getSelectHeadersDumpSQL());
@@ -1227,7 +1227,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             count++;
         }
         rs.close();
-        System.out.printf("Headers size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+        System.out.printf(Locale.US, "Headers size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
 
         totalSize += size; size = 0; count = 0;
         rs = s.executeQuery(getSelectUndoableblocksDumpSQL());
@@ -1244,7 +1244,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             count++;
         }
         rs.close();
-        System.out.printf("Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+        System.out.printf(Locale.US, "Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
 
         totalSize += size; size = 0; count = 0;
         long scriptSize = 0;
@@ -1259,7 +1259,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             count++;
         }
         rs.close();
-        System.out.printf("Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)%n",
+        System.out.printf(Locale.US, "Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)%n",
                 size, count, (double)size/count, (double)scriptSize/count, count * 8);
 
         totalSize += size;

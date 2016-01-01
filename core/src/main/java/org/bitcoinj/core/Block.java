@@ -560,7 +560,7 @@ public class Block extends Message {
         // Allow injection of a fake clock to allow unit testing.
         long currentTime = Utils.currentTimeSeconds();
         if (time > currentTime + ALLOWED_TIME_DRIFT)
-            throw new VerificationException(String.format("Block too far in future: %d vs %d", time, currentTime + ALLOWED_TIME_DRIFT));
+            throw new VerificationException(String.format(Locale.US, "Block too far in future: %d vs %d", time, currentTime + ALLOWED_TIME_DRIFT));
     }
 
     private void checkSigOps() throws VerificationException {

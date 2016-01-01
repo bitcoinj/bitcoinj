@@ -16,6 +16,8 @@
 
 package org.bitcoinj.crypto;
 
+import java.util.Locale;
+
 import com.google.common.primitives.Ints;
 
 /**
@@ -73,7 +75,7 @@ public class ChildNumber implements Comparable<ChildNumber> {
 
     @Override
     public String toString() {
-        return String.format("%d%s", num(), isHardened() ? "H" : "");
+        return String.format(Locale.US, "%d%s", num(), isHardened() ? "H" : "");
     }
 
     @Override

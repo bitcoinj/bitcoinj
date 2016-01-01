@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
@@ -137,7 +138,7 @@ public class BIP32Test {
         for (int i = 0; i < tv.derived.size(); i++) {
             HDWTestVector.DerivedTestCase tc = tv.derived.get(i);
             log.info("{}", tc.name);
-            assertEquals(tc.name, String.format("Test%d %s", testCase + 1, tc.getPathDescription()));
+            assertEquals(tc.name, String.format(Locale.US, "Test%d %s", testCase + 1, tc.getPathDescription()));
             int depth = tc.path.length - 1;
             DeterministicKey ehkey = dh.deriveChild(Arrays.asList(tc.path).subList(0, depth), false, true, tc.path[depth]);
             assertEquals(testEncode(tc.priv), testEncode(ehkey.serializePrivB58(params)));

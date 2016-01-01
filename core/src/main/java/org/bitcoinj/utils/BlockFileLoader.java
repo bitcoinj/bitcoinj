@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 
 /**
@@ -62,7 +63,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
         
         List<File> list = new LinkedList<File>();
         for (int i = 0; true; i++) {
-            File file = new File(defaultDataDir + String.format("blk%05d.dat", i));
+            File file = new File(defaultDataDir + String.format(Locale.US, "blk%05d.dat", i));
             if (!file.exists())
                 break;
             list.add(file);

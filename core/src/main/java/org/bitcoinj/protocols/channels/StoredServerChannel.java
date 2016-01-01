@@ -20,6 +20,7 @@ import org.bitcoinj.core.*;
 
 import javax.annotation.Nullable;
 import java.util.Date;
+import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -103,8 +104,8 @@ public class StoredServerChannel {
 
     @Override
     public synchronized String toString() {
-        final String newline = String.format("%n");
-        return String.format("Stored server channel (%s)%n" +
+        final String newline = String.format(Locale.US, "%n");
+        return String.format(Locale.US, "Stored server channel (%s)%n" +
                 "    Key:           %s%n" +
                 "    Value to me:   %s%n" +
                 "    Client output: %s%n" +
