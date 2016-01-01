@@ -222,9 +222,9 @@ public class WalletTest extends TestWithWallet {
         Transaction t = sendMoneyToWallet(wallet, v1, myAddress, null);
         Threading.waitForUserCode();
         sendMoneyToWallet(wallet, t, null);
-        assertEquals("Wrong number of PENDING.4", 2, wallet.getPoolSize(Pool.PENDING));
-        assertEquals("Wrong number of UNSPENT.4", 0, wallet.getPoolSize(Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.4", 3, wallet.getTransactions(true).size());
+        assertEquals("Wrong number of PENDING", 2, wallet.getPoolSize(Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(Pool.UNSPENT));
+        assertEquals("Wrong number of ALL", 3, wallet.getTransactions(true).size());
         assertEquals(valueOf(0, 59), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
         // Now we have another incoming pending
@@ -241,9 +241,9 @@ public class WalletTest extends TestWithWallet {
 
         wallet.cleanup();
         assertTrue(wallet.isConsistent());
-        assertEquals("Wrong number of PENDING.5", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.5", 2, wallet.getTransactions(true).size());
+        assertEquals("Wrong number of PENDING", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL", 2, wallet.getTransactions(true).size());
         assertEquals(valueOf(0, 49), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
@@ -263,9 +263,9 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
 
-        assertEquals("Wrong number of PENDING.5", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.5", 4, wallet.getTransactions(true).size());
+        assertEquals("Wrong number of PENDING", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL", 4, wallet.getTransactions(true).size());
 
         // Consider the new pending as risky and try to remove it from the wallet
         wallet.setRiskAnalyzer(new TestRiskAnalysis.Analyzer(t));
@@ -274,9 +274,9 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.isConsistent());
 
         // The removal should have failed
-        assertEquals("Wrong number of PENDING.5", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
-        assertEquals("Wrong number of UNSPENT.5", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.5", 4, wallet.getTransactions(true).size());
+        assertEquals("Wrong number of PENDING", 3, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+        assertEquals("Wrong number of UNSPENT", 0, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL", 4, wallet.getTransactions(true).size());
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
@@ -315,8 +315,8 @@ public class WalletTest extends TestWithWallet {
                 fail();
             } catch (ECKey.MissingPrivateKeyException kce) {
             }
-            assertEquals("Wrong number of UNSPENT.1", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-            assertEquals("Wrong number of ALL.1", 1, wallet.getTransactions(true).size());
+            assertEquals("Wrong number of UNSPENT", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+            assertEquals("Wrong number of ALL", 1, wallet.getTransactions(true).size());
 
             // Try to create a send with a fee but the wrong password (this should fail).
             req = Wallet.SendRequest.to(destination, v2);
@@ -331,8 +331,8 @@ public class WalletTest extends TestWithWallet {
                 assertEquals("Could not decrypt bytes", kce.getMessage());
             }
 
-            assertEquals("Wrong number of UNSPENT.2", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-            assertEquals("Wrong number of ALL.2", 1, wallet.getTransactions(true).size());
+            assertEquals("Wrong number of UNSPENT", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+            assertEquals("Wrong number of ALL", 1, wallet.getTransactions(true).size());
 
             // Create a send with a fee with the correct password (this should succeed).
             req = Wallet.SendRequest.to(destination, v2);
@@ -346,8 +346,8 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(req);
 
         Transaction t2 = req.tx;
-        assertEquals("Wrong number of UNSPENT.3", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
-        assertEquals("Wrong number of ALL.3", 1, wallet.getTransactions(true).size());
+        assertEquals("Wrong number of UNSPENT", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
+        assertEquals("Wrong number of ALL", 1, wallet.getTransactions(true).size());
         assertEquals(TransactionConfidence.Source.SELF, t2.getConfidence().getSource());
         assertEquals(Transaction.Purpose.USER_PAYMENT, t2.getPurpose());
 
@@ -2043,23 +2043,23 @@ public class WalletTest extends TestWithWallet {
         assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
 
         // Decrypt wallet.
-        assertTrue("The keyCrypter is missing but should not be.1", keyCrypter != null);
+        assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
         encryptedWallet.decrypt(aesKey);
 
         // Try decrypting it again
         try {
-            assertTrue("The keyCrypter is missing but should not be.2", keyCrypter != null);
+            assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
             encryptedWallet.decrypt(aesKey);
             fail("Should not be able to decrypt a decrypted wallet");
         } catch (IllegalStateException e) {
             assertTrue("Expected behaviour", true);
         }
-        assertTrue("Wallet is not an unencrypted wallet.2", encryptedWallet.getKeyCrypter() == null);
+        assertTrue("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter() == null);
 
         // Encrypt wallet.
         encryptedWallet.encrypt(keyCrypter, aesKey);
 
-        assertTrue("Wallet is not an encrypted wallet.2", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
 
         // Try encrypting it again
         try {
@@ -2068,7 +2068,7 @@ public class WalletTest extends TestWithWallet {
         } catch (IllegalStateException e) {
             assertTrue("Expected behaviour", true);
         }
-        assertTrue("Wallet is not an encrypted wallet.3", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
     }
 
     @Test(expected = KeyCrypterException.class)
