@@ -4153,8 +4153,9 @@ public class Wallet extends BaseTaggableObject
         for (Transaction tx : pending.values()) {
             // Remove the spent outputs.
             for (TransactionInput input : tx.getInputs()) {
-                if (input.getConnectedOutput().isMine(this)) {
-                    candidates.remove(input.getConnectedOutput());
+                TransactionOutput output = input.getConnectedOutput();
+                if (output != null && output.isMine(this)) {
+                    candidates.remove(output);
                 }
             }
             // Add change outputs. Do not try and spend coinbases that were mined too recently, the protocol forbids it.
