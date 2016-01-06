@@ -65,6 +65,11 @@ public class WalletFiles {
         void onAfterAutoSave(File newlySavedFile);
     }
 
+    /**
+     * Initialize atomic and optionally delayed writing of the wallet file to disk. Note the initial wallet state isn't
+     * saved automatically. The {@link Wallet} calls {@link #saveNow()} or {@link #saveLater()} as wallet state changes,
+     * depending on the urgency of the changes.
+     */
     public WalletFiles(final Wallet wallet, File file, long delay, TimeUnit delayTimeUnit) {
         // An executor that starts up threads when needed and shuts them down later.
         this.executor = new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("Wallet autosave thread", Thread.MIN_PRIORITY));
