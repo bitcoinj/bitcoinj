@@ -129,7 +129,6 @@ public class BitcoinURI {
      */
     public BitcoinURI(@Nullable NetworkParameters params, String input) throws BitcoinURIParseException {
         checkNotNull(input);
-        log.debug("Attempting to parse '{}' for {}", input, params == null ? "any" : params.getId());
 
         String scheme = null == params
             ? AbstractBitcoinNetParams.BITCOIN_SCHEME
@@ -345,28 +344,43 @@ public class BitcoinURI {
         return builder.toString();
     }
 
-    public static String convertToBitcoinURI(Address address, Coin amount, String label, String message) {
-        return convertToBitcoinURI(address.toString(), amount, label, message);
-    }
-
     /**
      * Simple Bitcoin URI builder using known good fields.
-     * 
+     *
      * @param address The Bitcoin address
      * @param amount The amount
      * @param label A label
      * @param message A message
      * @return A String containing the Bitcoin URI
      */
-    public static String convertToBitcoinURI(String address, @Nullable Coin amount, @Nullable String label,
-                                             @Nullable String message) {
+    public static String convertToBitcoinURI(Address address, Coin amount,
+                                             String label, String message) {
+        return convertToBitcoinURI(address.getParameters(), address.toString(), amount, label, message);
+    }
+
+    /**
+     * Simple Bitcoin URI builder using known good fields.
+     *
+     * @param params The network parameters that determine which network the URI
+     * is for.
+     * @param address The Bitcoin address
+     * @param amount The amount
+     * @param label A label
+     * @param message A message
+     * @return A String containing the Bitcoin URI
+     */
+    public static String convertToBitcoinURI(NetworkParameters params,
+                                             String address, @Nullable Coin amount,
+                                             @Nullable String label, @Nullable String message) {
+        checkNotNull(params);
         checkNotNull(address);
         if (amount != null && amount.signum() < 0) {
             throw new IllegalArgumentException("Coin must be positive");
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(BITCOIN_SCHEME).append(":").append(address);
+        String scheme = params.getUriScheme();
+        builder.append(scheme).append(":").append(address);
         
         boolean questionMarkHasBeenOutput = false;
         
