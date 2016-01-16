@@ -2702,9 +2702,7 @@ public class Wallet extends BaseTaggableObject
         try {
             checkArgument(numTransactions >= 0);
             // Firstly, put all transactions into an array.
-            int size = getPoolSize(Pool.UNSPENT) +
-                    getPoolSize(Pool.SPENT) +
-                    getPoolSize(Pool.PENDING);
+            int size = unspent.size() + spent.size() + pending.size();
             if (numTransactions > size || numTransactions == 0) {
                 numTransactions = size;
             }
@@ -2900,7 +2898,8 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    int getPoolSize(WalletTransaction.Pool pool) {
+    @VisibleForTesting
+    public int getPoolSize(WalletTransaction.Pool pool) {
         lock.lock();
         try {
             switch (pool) {
