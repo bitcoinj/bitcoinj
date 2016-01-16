@@ -113,6 +113,7 @@ public class PaymentChannelServerListener {
                         handler.closeConnection();
                     else {
                         ServerHandler.this.eventHandler = eventHandler;
+                        ServerHandler.this.eventHandler.setConnectionChannel(socketProtobufHandler);
                         paymentChannelManager.connectionOpen();
                     }
                 }
