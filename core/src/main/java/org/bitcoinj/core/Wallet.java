@@ -2189,7 +2189,7 @@ public class Wallet extends BaseTaggableObject
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
-                Transaction connected = checkNotNull(input.getOutpoint().fromTx);
+                Transaction connected = checkNotNull(input.getConnectedTransaction());
                 log.info("  marked {} as spent", input.getOutpoint());
                 maybeMovePool(connected, "prevtx");
                 // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
@@ -2244,7 +2244,7 @@ public class Wallet extends BaseTaggableObject
             spent.remove(tx.getHash());
             addWalletTransaction(Pool.DEAD, tx);
             for (TransactionInput deadInput : tx.getInputs()) {
-                Transaction connected = deadInput.getOutpoint().fromTx;
+                Transaction connected = deadInput.getConnectedTransaction();
                 if (connected == null) continue;
                 if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD && deadInput.getConnectedOutput().getSpentBy() != null && deadInput.getConnectedOutput().getSpentBy().equals(deadInput)) {
                     checkState(myUnspents.add(deadInput.getConnectedOutput()));
@@ -2272,13 +2272,13 @@ public class Wallet extends BaseTaggableObject
         for (TransactionInput input : overridingTx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.SUCCESS) {
-                maybeMovePool(input.getOutpoint().fromTx, "kill");
+                maybeMovePool(input.getConnectedTransaction(), "kill");
                 myUnspents.remove(input.getConnectedOutput());
                 log.info("Removing from UNSPENTS: {}", input.getConnectedOutput());
             } else {
                 result = input.connect(spent, TransactionInput.ConnectMode.DISCONNECT_ON_CONFLICT);
                 if (result == TransactionInput.ConnectionResult.SUCCESS) {
-                    maybeMovePool(input.getOutpoint().fromTx, "kill");
+                    maybeMovePool(input.getConnectedTransaction(), "kill");
                     myUnspents.remove(input.getConnectedOutput());
                     log.info("Removing from UNSPENTS: {}", input.getConnectedOutput());
                 }

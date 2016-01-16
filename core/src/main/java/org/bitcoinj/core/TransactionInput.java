@@ -432,6 +432,16 @@ public class TransactionInput extends ChildMessage {
         return getOutpoint().getConnectedOutput();
     }
 
+    /**
+     * Returns the connected transaction, assuming the input was connected with
+     * {@link TransactionInput#connect(TransactionOutput)} or variants at some point. If it wasn't connected, then
+     * this method returns null.
+     */
+    @Nullable
+    public Transaction getConnectedTransaction() {
+        return getOutpoint().fromTx;
+    }
+
     /** Returns a copy of the input detached from its containing transaction, if need be. */
     public TransactionInput duplicateDetached() {
         return new TransactionInput(params, null, bitcoinSerialize(), 0);
