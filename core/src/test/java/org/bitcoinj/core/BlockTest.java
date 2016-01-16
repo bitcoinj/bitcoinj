@@ -164,7 +164,7 @@ public class BlockTest {
         block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte) ScriptOpCodes.OP_FALSE, (byte) ScriptOpCodes.OP_FALSE});
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 1);
-        block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {});
+        block.getTransactions().get(1).getInputs().get(0).clearScriptBytes();
         assertEquals(block.length, block.bitcoinSerialize().length);
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength - 1);

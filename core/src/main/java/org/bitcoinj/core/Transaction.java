@@ -950,7 +950,7 @@ public class Transaction extends ChildMessage {
             for (int i = 0; i < inputs.size(); i++) {
                 inputScripts[i] = inputs.get(i).getScriptBytes();
                 inputSequenceNumbers[i] = inputs.get(i).getSequenceNumber();
-                inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
+                inputs.get(i).clearScriptBytes();
             }
 
             // This step has no purpose beyond being synchronized with Bitcoin Core's bugs. OP_CODESEPARATOR

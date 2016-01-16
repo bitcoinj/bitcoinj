@@ -148,7 +148,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
-        input.setScriptBytes(new byte[]{});
+        input.clearScriptBytes();
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         chain.setRunScripts(false);

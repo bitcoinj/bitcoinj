@@ -3268,7 +3268,7 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(req);
         // Delete the sigs
         for (TransactionInput input : req.tx.getInputs())
-            input.setScriptBytes(new byte[]{});
+            input.clearScriptBytes();
         Wallet watching = Wallet.fromWatchingKey(params, wallet.getWatchingKey().dropParent().dropPrivateBytes());
         watching.completeTx(Wallet.SendRequest.forTx(req.tx));
     }
