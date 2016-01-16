@@ -148,7 +148,7 @@ public class Wallet extends BaseTaggableObject
 
     // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
     // outside the wallet lock. So don't expose this object directly via any accessors!
-    @GuardedBy("keyChainGroupLock") protected KeyChainGroup keyChainGroup;
+    @GuardedBy("keyChainGroupLock") private KeyChainGroup keyChainGroup;
 
     // A list of scripts watched by this wallet.
     @GuardedBy("keyChainGroupLock") private Set<Script> watchedScripts;
@@ -579,6 +579,16 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.numKeys();
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+    }
+
+    @VisibleForTesting
+    public int getKeyChainGroupCombinedKeyLookaheadEpochs() {
+        keyChainGroupLock.lock();
+        try {
+            return keyChainGroup.getCombinedKeyLookaheadEpochs();
         } finally {
             keyChainGroupLock.unlock();
         }

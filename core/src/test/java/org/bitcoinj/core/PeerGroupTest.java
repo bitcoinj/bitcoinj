@@ -801,13 +801,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
         // be ignored.
-        int epoch = wallet.keyChainGroup.getCombinedKeyLookaheadEpochs();
+        int epoch = wallet.getKeyChainGroupCombinedKeyLookaheadEpochs();
         BloomFilter filter = new BloomFilter(params, p1.lastReceivedFilter.bitcoinSerialize());
         filterAndSend(p1, blocks, filter);
         Block exhaustionPoint = blocks.get(3);
         pingAndWait(p1);
 
-        assertNotEquals(epoch, wallet.keyChainGroup.getCombinedKeyLookaheadEpochs());
+        assertNotEquals(epoch, wallet.getKeyChainGroupCombinedKeyLookaheadEpochs());
         // 4th block was end of the lookahead zone and thus was discarded, so we got 3 blocks worth of money (50 each).
         assertEquals(Coin.FIFTY_COINS.multiply(3), wallet.getBalance());
         assertEquals(exhaustionPoint.getPrevBlockHash(), blockChain.getChainHead().getHeader().getHash());
