@@ -251,21 +251,6 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet. The flag controls whether to
-     * include spent outputs or not.
-     */
-    Coin getValueSentToMe(TransactionBag transactionBag, boolean includeSpent) {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            if (!includeSpent && !o.isAvailableForSpending()) continue;
-            v = v.add(o.getValue());
-        }
-        return v;
-    }
-
-    /**
      * Gets the sum of the inputs, regardless of who owns them.
      */
     public Coin getInputSum() {
@@ -308,7 +293,13 @@ public class Transaction extends ChildMessage {
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
      */
     public Coin getValueSentToMe(TransactionBag transactionBag) {
-        return getValueSentToMe(transactionBag, true);
+        // This is tested in WalletTest.
+        Coin v = Coin.ZERO;
+        for (TransactionOutput o : outputs) {
+            if (!o.isMineOrWatched(transactionBag)) continue;
+            v = v.add(o.getValue());
+        }
+        return v;
     }
 
     /**

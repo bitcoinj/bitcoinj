@@ -627,7 +627,7 @@ public class WalletTest extends TestWithWallet {
     public void balances() throws Exception {
         Coin nanos = COIN;
         Transaction tx1 = sendMoneyToWallet(nanos, AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertEquals(nanos, tx1.getValueSentToMe(wallet, true));
+        assertEquals(nanos, tx1.getValueSentToMe(wallet));
         assertTrue(tx1.getWalletOutputs(wallet).size() >= 1);
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(new ECKey().toAddress(params), valueOf(0, 10));
