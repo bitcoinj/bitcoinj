@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
 import org.bitcoinj.script.*;
+import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
 
 import javax.annotation.*;

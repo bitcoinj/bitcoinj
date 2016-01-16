@@ -21,9 +21,10 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
-import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * RefreshWallet loads a wallet, then processes the block chain to update the transaction pools within it.

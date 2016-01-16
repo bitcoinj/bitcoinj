@@ -19,6 +19,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.TestWithWallet;
+import org.bitcoinj.wallet.Wallet;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;

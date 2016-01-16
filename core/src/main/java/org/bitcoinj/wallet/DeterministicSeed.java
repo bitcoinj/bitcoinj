@@ -19,7 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.store.UnreadableWalletException;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;

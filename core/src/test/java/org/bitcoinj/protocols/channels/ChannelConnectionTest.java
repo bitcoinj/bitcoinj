@@ -17,10 +17,13 @@
 package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.store.WalletProtobufSerializer;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletFiles;
+import org.bitcoinj.wallet.WalletProtobufSerializer;
+
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;

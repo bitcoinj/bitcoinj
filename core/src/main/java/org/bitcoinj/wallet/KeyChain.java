@@ -18,12 +18,13 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
- * <p>A KeyChain is a class that stores a collection of keys for a {@link org.bitcoinj.core.Wallet}. Key chains
+ * <p>A KeyChain is a class that stores a collection of keys for a {@link org.bitcoinj.wallet.Wallet}. Key chains
  * are expected to be able to look up keys given a hash (i.e. address) or pubkey bytes, and provide keys on request
  * for a given purpose. They can inform event listeners about new keys being added.</p>
  *

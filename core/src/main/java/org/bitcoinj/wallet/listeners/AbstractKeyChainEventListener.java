@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.wallet.listeners;
 
 import org.bitcoinj.core.ECKey;
 

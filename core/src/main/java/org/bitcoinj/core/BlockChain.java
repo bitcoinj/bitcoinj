@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.wallet.Wallet;
 
 import java.util.ArrayList;
 import java.util.List;

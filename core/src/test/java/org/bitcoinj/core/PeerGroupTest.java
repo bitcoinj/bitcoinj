@@ -25,6 +25,7 @@ import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;

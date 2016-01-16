@@ -17,10 +17,12 @@
 package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.TestWithWallet;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.Wallet.SendRequest;
+
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
