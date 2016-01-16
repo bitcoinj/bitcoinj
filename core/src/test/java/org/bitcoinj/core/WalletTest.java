@@ -1156,27 +1156,27 @@ public class WalletTest extends TestWithWallet {
 
     private void assertInConflict(Transaction tx) {
         assertEquals(ConfidenceType.IN_CONFLICT, tx.getConfidence().getConfidenceType());
-        assertTrue(wallet.pending.containsKey(tx.getHash()));
+        assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, tx.getHash()));
     }
 
     private void assertPending(Transaction tx) {
         assertEquals(ConfidenceType.PENDING, tx.getConfidence().getConfidenceType());
-        assertTrue(wallet.pending.containsKey(tx.getHash()));
+        assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, tx.getHash()));
     }
 
     private void assertSpent(Transaction tx) {
         assertEquals(ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
-        assertTrue(wallet.spent.containsKey(tx.getHash()));
+        assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, tx.getHash()));
     }
 
     private void assertUnspent(Transaction tx) {
         assertEquals(ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
-        assertTrue(wallet.unspent.containsKey(tx.getHash()));
+        assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, tx.getHash()));
     }
 
     private void assertDead(Transaction tx) {
         assertEquals(ConfidenceType.DEAD, tx.getConfidence().getConfidenceType());
-        assertTrue(wallet.dead.containsKey(tx.getHash()));
+        assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, tx.getHash()));
     }
 
     @Test

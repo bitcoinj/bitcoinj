@@ -120,10 +120,10 @@ public class Wallet extends BaseTaggableObject
     //           to the user in the UI, etc). A transaction can leave dead and move into spent/unspent if there is a
     //           re-org to a chain that doesn't include the double spend.
 
-    @VisibleForTesting final Map<Sha256Hash, Transaction> pending;
-    @VisibleForTesting final Map<Sha256Hash, Transaction> unspent;
-    @VisibleForTesting final Map<Sha256Hash, Transaction> spent;
-    @VisibleForTesting final Map<Sha256Hash, Transaction> dead;
+    private final Map<Sha256Hash, Transaction> pending;
+    private final Map<Sha256Hash, Transaction> unspent;
+    private final Map<Sha256Hash, Transaction> spent;
+    private final Map<Sha256Hash, Transaction> dead;
 
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
@@ -2902,6 +2902,26 @@ public class Wallet extends BaseTaggableObject
                     return pending.size();
                 case DEAD:
                     return dead.size();
+            }
+            throw new RuntimeException("Unreachable");
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @VisibleForTesting
+    public boolean poolContainsTxHash(final WalletTransaction.Pool pool, final Sha256Hash txHash) {
+        lock.lock();
+        try {
+            switch (pool) {
+                case UNSPENT:
+                    return unspent.containsKey(txHash);
+                case SPENT:
+                    return spent.containsKey(txHash);
+                case PENDING:
+                    return pending.containsKey(txHash);
+                case DEAD:
+                    return dead.containsKey(txHash);
             }
             throw new RuntimeException("Unreachable");
         } finally {
