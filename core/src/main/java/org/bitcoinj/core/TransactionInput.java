@@ -169,10 +169,10 @@ public class TransactionInput extends ChildMessage {
     }
 
     /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
-    public void setScriptSig(Script scriptSig) {
-        this.scriptSig = new WeakReference<Script>(checkNotNull(scriptSig));
+    public void setScriptSig(final Script scriptSig) {
         // TODO: This should all be cleaned up so we have a consistent internal representation.
         setScriptBytes(scriptSig.getProgram());
+        this.scriptSig = new WeakReference<Script>(scriptSig);
     }
 
     /**
