@@ -39,6 +39,8 @@ import org.bitcoinj.utils.Fiat;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
+import org.easymock.EasyMock;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -65,6 +67,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.replay;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
@@ -683,6 +687,37 @@ public class WalletTest extends TestWithWallet {
 
         wallet.addWalletTransaction(new WalletTransaction(Pool.SPENT, tx));
         assertFalse(wallet.isConsistent());
+    }
+
+    @Test
+    public void isTxConsistentReturnsFalseAsExpected() {
+        Wallet wallet = new Wallet(params);
+        TransactionOutput to = createMock(TransactionOutput.class);
+        EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
+        EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
+        EasyMock.expect(to.getSpentBy()).andReturn(new TransactionInput(params, null, new byte[0]));
+
+        Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(params, to);
+
+        replay(to);
+
+        boolean isConsistent = wallet.isTxConsistent(tx, false);
+        assertFalse(isConsistent);
+    }
+
+    @Test
+    public void isTxConsistentReturnsFalseAsExpected_WhenAvailableForSpendingEqualsFalse() {
+        Wallet wallet = new Wallet(params);
+        TransactionOutput to = createMock(TransactionOutput.class);
+        EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
+        EasyMock.expect(to.getSpentBy()).andReturn(null);
+
+        Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(params, to);
+
+        replay(to);
+
+        boolean isConsistent = wallet.isTxConsistent(tx, false);
+        assertFalse(isConsistent);
     }
 
     @Test

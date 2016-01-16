@@ -270,29 +270,6 @@ public class Transaction extends ChildMessage {
         return inputTotal;
     }
 
-    /*
-     * If isSpent - check that all my outputs spent, otherwise check that there at least
-     * one unspent.
-     */
-    boolean isConsistent(TransactionBag transactionBag, boolean isSpent) {
-        boolean isActuallySpent = true;
-        for (TransactionOutput o : outputs) {
-            if (o.isAvailableForSpending()) {
-                if (o.isMineOrWatched(transactionBag)) isActuallySpent = false;
-                if (o.getSpentBy() != null) {
-                    log.error("isAvailableForSpending != spentBy");
-                    return false;
-                }
-            } else {
-                if (o.getSpentBy() == null) {
-                    log.error("isAvailableForSpending != spentBy");
-                    return false;
-                }
-            }
-        }
-        return isActuallySpent == isSpent;
-    }
-
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
      */

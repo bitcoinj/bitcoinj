@@ -112,39 +112,6 @@ public class TransactionTest {
     }
 
     @Test
-    public void isConsistentReturnsFalseAsExpected() {
-        TransactionBag mockTB = createMock(TransactionBag.class);
-
-        TransactionOutput to = createMock(TransactionOutput.class);
-        EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
-        EasyMock.expect(to.isMineOrWatched(mockTB)).andReturn(true);
-        EasyMock.expect(to.getSpentBy()).andReturn(new TransactionInput(PARAMS, null, new byte[0]));
-
-        Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(PARAMS, to);
-
-        replay(to);
-
-        boolean isConsistent = tx.isConsistent(mockTB, false);
-
-        assertEquals(isConsistent, false);
-    }
-
-    @Test
-    public void isConsistentReturnsFalseAsExpected_WhenAvailableForSpendingEqualsFalse() {
-        TransactionOutput to = createMock(TransactionOutput.class);
-        EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
-        EasyMock.expect(to.getSpentBy()).andReturn(null);
-
-        Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(PARAMS, to);
-
-        replay(to);
-
-        boolean isConsistent = tx.isConsistent(createMock(TransactionBag.class), false);
-
-        assertEquals(isConsistent, false);
-    }
-
-    @Test
     public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
         int TEST_LOCK_TIME = 20;
         Date now = Calendar.getInstance().getTime();

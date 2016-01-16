@@ -1505,14 +1505,14 @@ public class Wallet extends BaseTaggableObject
             }
 
             for (Transaction tx : unspent.values()) {
-                if (!tx.isConsistent(this, false)) {
+                if (!isTxConsistent(tx, false)) {
                     success = false;
                     log.error("Inconsistent unspent tx {}", tx.getHashAsString());
                 }
             }
 
             for (Transaction tx : spent.values()) {
-                if (!tx.isConsistent(this, true)) {
+                if (!isTxConsistent(tx, true)) {
                     success = false;
                     log.error("Inconsistent spent tx {}", tx.getHashAsString());
                 }
@@ -1529,6 +1529,30 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    /*
+     * If isSpent - check that all my outputs spent, otherwise check that there at least
+     * one unspent.
+     */
+    @VisibleForTesting
+    boolean isTxConsistent(final Transaction tx, final boolean isSpent) {
+        boolean isActuallySpent = true;
+        for (TransactionOutput o : tx.getOutputs()) {
+            if (o.isAvailableForSpending()) {
+                if (o.isMineOrWatched(this)) isActuallySpent = false;
+                if (o.getSpentBy() != null) {
+                    log.error("isAvailableForSpending != spentBy");
+                    return false;
+                }
+            } else {
+                if (o.getSpentBy() == null) {
+                    log.error("isAvailableForSpending != spentBy");
+                    return false;
+                }
+            }
+        }
+        return isActuallySpent == isSpent;
     }
 
     /** Returns a wallet deserialized from the given input stream and wallet extensions. */
