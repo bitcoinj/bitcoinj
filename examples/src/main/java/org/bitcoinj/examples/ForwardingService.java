@@ -24,6 +24,9 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -31,7 +34,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply

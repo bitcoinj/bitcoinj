@@ -17,6 +17,7 @@
 package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.wallet.Wallet;
 
 import javax.annotation.Nullable;
 import java.util.Date;

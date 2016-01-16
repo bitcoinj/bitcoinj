@@ -20,10 +20,10 @@ package org.bitcoinj.protocols.channels;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionBroadcaster;
-import org.bitcoinj.core.Wallet;
 import org.bitcoinj.net.NioServer;
 import org.bitcoinj.net.ProtobufConnection;
 import org.bitcoinj.net.StreamConnectionFactory;
+import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 
 import java.util.Arrays;

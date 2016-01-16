@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.store;
+package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -26,18 +26,14 @@ import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
-import org.bitcoinj.wallet.DefaultKeyChainFactory;
-import org.bitcoinj.wallet.KeyChainFactory;
-import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.WalletTransaction;
+import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.WireFormat;
 
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

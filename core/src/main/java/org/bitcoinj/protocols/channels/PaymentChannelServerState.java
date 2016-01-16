@@ -16,6 +16,8 @@
 
 package org.bitcoinj.protocols.channels;
 
+import org.bitcoinj.wallet.Wallet;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.FutureCallback;

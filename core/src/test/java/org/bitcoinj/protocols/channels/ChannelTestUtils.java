@@ -17,7 +17,7 @@ package org.bitcoinj.protocols.channels;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionBroadcaster;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.Futures;

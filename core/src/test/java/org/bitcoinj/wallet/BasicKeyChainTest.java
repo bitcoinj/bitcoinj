@@ -22,14 +22,14 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.Threading;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.bitcoinj.wallet.AbstractKeyChainEventListener;
+
 import org.bitcoinj.wallet.BasicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
 import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 import org.junit.Before;
 import org.junit.Test;
 

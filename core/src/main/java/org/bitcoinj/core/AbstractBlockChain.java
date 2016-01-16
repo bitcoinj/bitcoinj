@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.*;
+import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
 
 import javax.annotation.*;

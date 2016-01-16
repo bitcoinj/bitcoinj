@@ -18,7 +18,6 @@
 package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
@@ -50,12 +49,16 @@ import joptsimple.util.DateConverter;
 
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.core.listeners.WalletChangeEventListener;
-import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
+import org.bitcoinj.wallet.WalletProtobufSerializer;
+import org.bitcoinj.wallet.Wallet.BalanceType;
+import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;

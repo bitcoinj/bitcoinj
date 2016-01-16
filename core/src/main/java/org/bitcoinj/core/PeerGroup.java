@@ -33,6 +33,10 @@ import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.slf4j.*;
 
 import javax.annotation.*;
@@ -43,7 +47,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 import static com.google.common.base.Preconditions.*;
-import org.bitcoinj.wallet.KeyChainEventListener;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages

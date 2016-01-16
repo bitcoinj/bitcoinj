@@ -21,6 +21,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.Before;
 import org.junit.Test;
 

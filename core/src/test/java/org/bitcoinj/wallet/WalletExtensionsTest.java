@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.wallet;
 
 import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.testing.TestWithWallet;

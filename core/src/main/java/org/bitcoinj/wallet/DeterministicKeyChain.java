@@ -23,8 +23,8 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.UnreadableWalletException;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;

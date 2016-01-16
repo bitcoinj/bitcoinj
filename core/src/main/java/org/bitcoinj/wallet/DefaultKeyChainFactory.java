@@ -17,7 +17,6 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.store.UnreadableWalletException;
 
 /**
  * Default factory for creating keychains while de-serializing.

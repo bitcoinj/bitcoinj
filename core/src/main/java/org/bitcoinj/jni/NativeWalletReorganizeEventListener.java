@@ -16,8 +16,8 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in

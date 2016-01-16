@@ -21,9 +21,10 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.Wallet;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.ProtobufConnection;
+import org.bitcoinj.wallet.Wallet;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 

@@ -26,6 +26,8 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -33,7 +35,6 @@ import org.spongycastle.crypto.params.KeyParameter;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.*;
-import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * <p>A payment channel is a method of sending money to someone such that the amount of money you send can be adjusted
@@ -209,7 +210,7 @@ public abstract class PaymentChannelClientState {
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction} and
      * {@link PaymentChannelV1ClientState#getContract()}. The way the contract is crafted can be adjusted by
-     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.core.Wallet.SendRequest)}.
+     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.wallet.Wallet.SendRequest)}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      *
      * @throws ValueOutOfRangeException if the value being used is too small to be accepted by the network
@@ -223,7 +224,7 @@ public abstract class PaymentChannelClientState {
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction} and
      * {@link PaymentChannelV1ClientState#getContract()}. The way the contract is crafted can be adjusted by
-     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.core.Wallet.SendRequest)}.
+     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.wallet.Wallet.SendRequest)}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
      *                  The wallet KeyCrypter is assumed.
