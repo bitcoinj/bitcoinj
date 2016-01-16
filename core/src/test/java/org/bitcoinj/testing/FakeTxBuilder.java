@@ -1,5 +1,6 @@
 /**
  * Copyright 2011 Google Inc.
+ * Copyright 2016 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +29,37 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 import static org.bitcoinj.core.Coin.*;
+import static com.google.common.base.Preconditions.checkState;
 
 public class FakeTxBuilder {
+    /** Create a fake transaction, without change. */
+    public static Transaction createFakeTx(final NetworkParameters params) {
+        return createFakeTxWithoutChangeAddress(params, Coin.COIN, new ECKey().toAddress(params));
+    }
+
+    /** Create a fake transaction, without change. */
+    public static Transaction createFakeTxWithoutChange(final NetworkParameters params, final TransactionOutput output) {
+        Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, new ECKey().toAddress(params));
+        Transaction tx = new Transaction(params);
+        tx.addOutput(output);
+        tx.addInput(prevTx.getOutput(0));
+        return tx;
+    }
+
+    /** Create a fake coinbase transaction. */
+    public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
+        TransactionOutPoint outpoint = new TransactionOutPoint(params, -1, Sha256Hash.ZERO_HASH);
+        TransactionInput input = new TransactionInput(params, null, new byte[0], outpoint);
+        Transaction tx = new Transaction(params);
+        tx.addInput(input);
+        TransactionOutput outputToMe = new TransactionOutput(params, tx, Coin.FIFTY_COINS,
+                new ECKey().toAddress(params));
+        tx.addOutput(outputToMe);
+
+        checkState(tx.isCoinBase());
+        return tx;
+    }
+
     /**
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
