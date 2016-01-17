@@ -3,16 +3,15 @@
 
 package org.bitcoin.paymentchannel;
 
-@SuppressWarnings("ALL")
 public final class Protos {
   private Protos() {}
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface TwoWayChannelMessageOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface TwoWayChannelMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.TwoWayChannelMessage)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required .paymentchannels.TwoWayChannelMessage.MessageType type = 1;
     /**
      * <code>required .paymentchannels.TwoWayChannelMessage.MessageType type = 1;</code>
      *
@@ -34,7 +33,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType getType();
 
-    // optional .paymentchannels.ClientVersion client_version = 2;
     /**
      * <code>optional .paymentchannels.ClientVersion client_version = 2;</code>
      *
@@ -60,7 +58,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.ClientVersionOrBuilder getClientVersionOrBuilder();
 
-    // optional .paymentchannels.ServerVersion server_version = 3;
     /**
      * <code>optional .paymentchannels.ServerVersion server_version = 3;</code>
      */
@@ -74,7 +71,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.ServerVersionOrBuilder getServerVersionOrBuilder();
 
-    // optional .paymentchannels.Initiate initiate = 4;
     /**
      * <code>optional .paymentchannels.Initiate initiate = 4;</code>
      */
@@ -88,7 +84,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.InitiateOrBuilder getInitiateOrBuilder();
 
-    // optional .paymentchannels.ProvideRefund provide_refund = 5;
     /**
      * <code>optional .paymentchannels.ProvideRefund provide_refund = 5;</code>
      */
@@ -102,7 +97,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.ProvideRefundOrBuilder getProvideRefundOrBuilder();
 
-    // optional .paymentchannels.ReturnRefund return_refund = 6;
     /**
      * <code>optional .paymentchannels.ReturnRefund return_refund = 6;</code>
      */
@@ -116,7 +110,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.ReturnRefundOrBuilder getReturnRefundOrBuilder();
 
-    // optional .paymentchannels.ProvideContract provide_contract = 7;
     /**
      * <code>optional .paymentchannels.ProvideContract provide_contract = 7;</code>
      */
@@ -130,7 +123,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.ProvideContractOrBuilder getProvideContractOrBuilder();
 
-    // optional .paymentchannels.UpdatePayment update_payment = 8;
     /**
      * <code>optional .paymentchannels.UpdatePayment update_payment = 8;</code>
      */
@@ -144,7 +136,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder getUpdatePaymentOrBuilder();
 
-    // optional .paymentchannels.PaymentAck payment_ack = 11;
     /**
      * <code>optional .paymentchannels.PaymentAck payment_ack = 11;</code>
      */
@@ -158,7 +149,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.PaymentAckOrBuilder getPaymentAckOrBuilder();
 
-    // optional .paymentchannels.Settlement settlement = 9;
     /**
      * <code>optional .paymentchannels.Settlement settlement = 9;</code>
      */
@@ -172,7 +162,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.SettlementOrBuilder getSettlementOrBuilder();
 
-    // optional .paymentchannels.Error error = 10;
     /**
      * <code>optional .paymentchannels.Error error = 10;</code>
      */
@@ -196,8 +185,9 @@ public final class Protos {
    * </pre>
    */
   public static final class TwoWayChannelMessage extends
-      com.google.protobuf.GeneratedMessage
-      implements TwoWayChannelMessageOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.TwoWayChannelMessage)
+      TwoWayChannelMessageOrBuilder {
     // Use TwoWayChannelMessage.newBuilder() to construct.
     private TwoWayChannelMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -485,10 +475,8 @@ public final class Protos {
        * Either side can send this message. If the client sends it to the server, then the server
        * takes the most recent signature it received in an UPDATE_PAYMENT and uses it to create a
        * valid transaction, which it then broadcasts on the network.
-       *
        * Once broadcast is complete, it sends back another CLOSE message with the settlement field set, containing
        * the final state of the contract.
-       *
        * The server is allowed to initiate settlement whenever it wants, in which case the client will
        * asynchronously receive a CLOSE message with the settlement field set. The server is also allowed
        * to send a CLOSE to mark the end of a connection without any settlement taking place, in which
@@ -567,10 +555,8 @@ public final class Protos {
        * Either side can send this message. If the client sends it to the server, then the server
        * takes the most recent signature it received in an UPDATE_PAYMENT and uses it to create a
        * valid transaction, which it then broadcasts on the network.
-       *
        * Once broadcast is complete, it sends back another CLOSE message with the settlement field set, containing
        * the final state of the contract.
-       *
        * The server is allowed to initiate settlement whenever it wants, in which case the client will
        * asynchronously receive a CLOSE message with the settlement field set. The server is also allowed
        * to send a CLOSE to mark the end of a connection without any settlement taking place, in which
@@ -659,7 +645,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required .paymentchannels.TwoWayChannelMessage.MessageType type = 1;
     public static final int TYPE_FIELD_NUMBER = 1;
     private org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType type_;
     /**
@@ -687,7 +672,6 @@ public final class Protos {
       return type_;
     }
 
-    // optional .paymentchannels.ClientVersion client_version = 2;
     public static final int CLIENT_VERSION_FIELD_NUMBER = 2;
     private org.bitcoin.paymentchannel.Protos.ClientVersion clientVersion_;
     /**
@@ -721,7 +705,6 @@ public final class Protos {
       return clientVersion_;
     }
 
-    // optional .paymentchannels.ServerVersion server_version = 3;
     public static final int SERVER_VERSION_FIELD_NUMBER = 3;
     private org.bitcoin.paymentchannel.Protos.ServerVersion serverVersion_;
     /**
@@ -743,7 +726,6 @@ public final class Protos {
       return serverVersion_;
     }
 
-    // optional .paymentchannels.Initiate initiate = 4;
     public static final int INITIATE_FIELD_NUMBER = 4;
     private org.bitcoin.paymentchannel.Protos.Initiate initiate_;
     /**
@@ -765,7 +747,6 @@ public final class Protos {
       return initiate_;
     }
 
-    // optional .paymentchannels.ProvideRefund provide_refund = 5;
     public static final int PROVIDE_REFUND_FIELD_NUMBER = 5;
     private org.bitcoin.paymentchannel.Protos.ProvideRefund provideRefund_;
     /**
@@ -787,7 +768,6 @@ public final class Protos {
       return provideRefund_;
     }
 
-    // optional .paymentchannels.ReturnRefund return_refund = 6;
     public static final int RETURN_REFUND_FIELD_NUMBER = 6;
     private org.bitcoin.paymentchannel.Protos.ReturnRefund returnRefund_;
     /**
@@ -809,7 +789,6 @@ public final class Protos {
       return returnRefund_;
     }
 
-    // optional .paymentchannels.ProvideContract provide_contract = 7;
     public static final int PROVIDE_CONTRACT_FIELD_NUMBER = 7;
     private org.bitcoin.paymentchannel.Protos.ProvideContract provideContract_;
     /**
@@ -831,7 +810,6 @@ public final class Protos {
       return provideContract_;
     }
 
-    // optional .paymentchannels.UpdatePayment update_payment = 8;
     public static final int UPDATE_PAYMENT_FIELD_NUMBER = 8;
     private org.bitcoin.paymentchannel.Protos.UpdatePayment updatePayment_;
     /**
@@ -853,7 +831,6 @@ public final class Protos {
       return updatePayment_;
     }
 
-    // optional .paymentchannels.PaymentAck payment_ack = 11;
     public static final int PAYMENT_ACK_FIELD_NUMBER = 11;
     private org.bitcoin.paymentchannel.Protos.PaymentAck paymentAck_;
     /**
@@ -875,7 +852,6 @@ public final class Protos {
       return paymentAck_;
     }
 
-    // optional .paymentchannels.Settlement settlement = 9;
     public static final int SETTLEMENT_FIELD_NUMBER = 9;
     private org.bitcoin.paymentchannel.Protos.Settlement settlement_;
     /**
@@ -897,7 +873,6 @@ public final class Protos {
       return settlement_;
     }
 
-    // optional .paymentchannels.Error error = 10;
     public static final int ERROR_FIELD_NUMBER = 10;
     private org.bitcoin.paymentchannel.Protos.Error error_;
     /**
@@ -935,7 +910,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasType()) {
         memoizedIsInitialized = 0;
@@ -1170,8 +1146,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.TwoWayChannelMessageOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.TwoWayChannelMessage)
+        org.bitcoin.paymentchannel.Protos.TwoWayChannelMessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_TwoWayChannelMessage_descriptor;
@@ -1516,7 +1493,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required .paymentchannels.TwoWayChannelMessage.MessageType type = 1;
       private org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType type_ = org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType.CLIENT_VERSION;
       /**
        * <code>required .paymentchannels.TwoWayChannelMessage.MessageType type = 1;</code>
@@ -1576,7 +1552,6 @@ public final class Protos {
         return this;
       }
 
-      // optional .paymentchannels.ClientVersion client_version = 2;
       private org.bitcoin.paymentchannel.Protos.ClientVersion clientVersion_ = org.bitcoin.paymentchannel.Protos.ClientVersion.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.ClientVersion, org.bitcoin.paymentchannel.Protos.ClientVersion.Builder, org.bitcoin.paymentchannel.Protos.ClientVersionOrBuilder> clientVersionBuilder_;
@@ -1721,7 +1696,7 @@ public final class Protos {
         if (clientVersionBuilder_ == null) {
           clientVersionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.ClientVersion, org.bitcoin.paymentchannel.Protos.ClientVersion.Builder, org.bitcoin.paymentchannel.Protos.ClientVersionOrBuilder>(
-                  clientVersion_,
+                  getClientVersion(),
                   getParentForChildren(),
                   isClean());
           clientVersion_ = null;
@@ -1729,7 +1704,6 @@ public final class Protos {
         return clientVersionBuilder_;
       }
 
-      // optional .paymentchannels.ServerVersion server_version = 3;
       private org.bitcoin.paymentchannel.Protos.ServerVersion serverVersion_ = org.bitcoin.paymentchannel.Protos.ServerVersion.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.ServerVersion, org.bitcoin.paymentchannel.Protos.ServerVersion.Builder, org.bitcoin.paymentchannel.Protos.ServerVersionOrBuilder> serverVersionBuilder_;
@@ -1838,7 +1812,7 @@ public final class Protos {
         if (serverVersionBuilder_ == null) {
           serverVersionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.ServerVersion, org.bitcoin.paymentchannel.Protos.ServerVersion.Builder, org.bitcoin.paymentchannel.Protos.ServerVersionOrBuilder>(
-                  serverVersion_,
+                  getServerVersion(),
                   getParentForChildren(),
                   isClean());
           serverVersion_ = null;
@@ -1846,7 +1820,6 @@ public final class Protos {
         return serverVersionBuilder_;
       }
 
-      // optional .paymentchannels.Initiate initiate = 4;
       private org.bitcoin.paymentchannel.Protos.Initiate initiate_ = org.bitcoin.paymentchannel.Protos.Initiate.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.Initiate, org.bitcoin.paymentchannel.Protos.Initiate.Builder, org.bitcoin.paymentchannel.Protos.InitiateOrBuilder> initiateBuilder_;
@@ -1955,7 +1928,7 @@ public final class Protos {
         if (initiateBuilder_ == null) {
           initiateBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.Initiate, org.bitcoin.paymentchannel.Protos.Initiate.Builder, org.bitcoin.paymentchannel.Protos.InitiateOrBuilder>(
-                  initiate_,
+                  getInitiate(),
                   getParentForChildren(),
                   isClean());
           initiate_ = null;
@@ -1963,7 +1936,6 @@ public final class Protos {
         return initiateBuilder_;
       }
 
-      // optional .paymentchannels.ProvideRefund provide_refund = 5;
       private org.bitcoin.paymentchannel.Protos.ProvideRefund provideRefund_ = org.bitcoin.paymentchannel.Protos.ProvideRefund.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.ProvideRefund, org.bitcoin.paymentchannel.Protos.ProvideRefund.Builder, org.bitcoin.paymentchannel.Protos.ProvideRefundOrBuilder> provideRefundBuilder_;
@@ -2072,7 +2044,7 @@ public final class Protos {
         if (provideRefundBuilder_ == null) {
           provideRefundBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.ProvideRefund, org.bitcoin.paymentchannel.Protos.ProvideRefund.Builder, org.bitcoin.paymentchannel.Protos.ProvideRefundOrBuilder>(
-                  provideRefund_,
+                  getProvideRefund(),
                   getParentForChildren(),
                   isClean());
           provideRefund_ = null;
@@ -2080,7 +2052,6 @@ public final class Protos {
         return provideRefundBuilder_;
       }
 
-      // optional .paymentchannels.ReturnRefund return_refund = 6;
       private org.bitcoin.paymentchannel.Protos.ReturnRefund returnRefund_ = org.bitcoin.paymentchannel.Protos.ReturnRefund.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.ReturnRefund, org.bitcoin.paymentchannel.Protos.ReturnRefund.Builder, org.bitcoin.paymentchannel.Protos.ReturnRefundOrBuilder> returnRefundBuilder_;
@@ -2189,7 +2160,7 @@ public final class Protos {
         if (returnRefundBuilder_ == null) {
           returnRefundBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.ReturnRefund, org.bitcoin.paymentchannel.Protos.ReturnRefund.Builder, org.bitcoin.paymentchannel.Protos.ReturnRefundOrBuilder>(
-                  returnRefund_,
+                  getReturnRefund(),
                   getParentForChildren(),
                   isClean());
           returnRefund_ = null;
@@ -2197,7 +2168,6 @@ public final class Protos {
         return returnRefundBuilder_;
       }
 
-      // optional .paymentchannels.ProvideContract provide_contract = 7;
       private org.bitcoin.paymentchannel.Protos.ProvideContract provideContract_ = org.bitcoin.paymentchannel.Protos.ProvideContract.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.ProvideContract, org.bitcoin.paymentchannel.Protos.ProvideContract.Builder, org.bitcoin.paymentchannel.Protos.ProvideContractOrBuilder> provideContractBuilder_;
@@ -2306,7 +2276,7 @@ public final class Protos {
         if (provideContractBuilder_ == null) {
           provideContractBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.ProvideContract, org.bitcoin.paymentchannel.Protos.ProvideContract.Builder, org.bitcoin.paymentchannel.Protos.ProvideContractOrBuilder>(
-                  provideContract_,
+                  getProvideContract(),
                   getParentForChildren(),
                   isClean());
           provideContract_ = null;
@@ -2314,7 +2284,6 @@ public final class Protos {
         return provideContractBuilder_;
       }
 
-      // optional .paymentchannels.UpdatePayment update_payment = 8;
       private org.bitcoin.paymentchannel.Protos.UpdatePayment updatePayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder> updatePaymentBuilder_;
@@ -2423,7 +2392,7 @@ public final class Protos {
         if (updatePaymentBuilder_ == null) {
           updatePaymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder>(
-                  updatePayment_,
+                  getUpdatePayment(),
                   getParentForChildren(),
                   isClean());
           updatePayment_ = null;
@@ -2431,7 +2400,6 @@ public final class Protos {
         return updatePaymentBuilder_;
       }
 
-      // optional .paymentchannels.PaymentAck payment_ack = 11;
       private org.bitcoin.paymentchannel.Protos.PaymentAck paymentAck_ = org.bitcoin.paymentchannel.Protos.PaymentAck.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.PaymentAck, org.bitcoin.paymentchannel.Protos.PaymentAck.Builder, org.bitcoin.paymentchannel.Protos.PaymentAckOrBuilder> paymentAckBuilder_;
@@ -2540,7 +2508,7 @@ public final class Protos {
         if (paymentAckBuilder_ == null) {
           paymentAckBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.PaymentAck, org.bitcoin.paymentchannel.Protos.PaymentAck.Builder, org.bitcoin.paymentchannel.Protos.PaymentAckOrBuilder>(
-                  paymentAck_,
+                  getPaymentAck(),
                   getParentForChildren(),
                   isClean());
           paymentAck_ = null;
@@ -2548,7 +2516,6 @@ public final class Protos {
         return paymentAckBuilder_;
       }
 
-      // optional .paymentchannels.Settlement settlement = 9;
       private org.bitcoin.paymentchannel.Protos.Settlement settlement_ = org.bitcoin.paymentchannel.Protos.Settlement.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.Settlement, org.bitcoin.paymentchannel.Protos.Settlement.Builder, org.bitcoin.paymentchannel.Protos.SettlementOrBuilder> settlementBuilder_;
@@ -2657,7 +2624,7 @@ public final class Protos {
         if (settlementBuilder_ == null) {
           settlementBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.Settlement, org.bitcoin.paymentchannel.Protos.Settlement.Builder, org.bitcoin.paymentchannel.Protos.SettlementOrBuilder>(
-                  settlement_,
+                  getSettlement(),
                   getParentForChildren(),
                   isClean());
           settlement_ = null;
@@ -2665,7 +2632,6 @@ public final class Protos {
         return settlementBuilder_;
       }
 
-      // optional .paymentchannels.Error error = 10;
       private org.bitcoin.paymentchannel.Protos.Error error_ = org.bitcoin.paymentchannel.Protos.Error.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.Error, org.bitcoin.paymentchannel.Protos.Error.Builder, org.bitcoin.paymentchannel.Protos.ErrorOrBuilder> errorBuilder_;
@@ -2774,7 +2740,7 @@ public final class Protos {
         if (errorBuilder_ == null) {
           errorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.Error, org.bitcoin.paymentchannel.Protos.Error.Builder, org.bitcoin.paymentchannel.Protos.ErrorOrBuilder>(
-                  error_,
+                  getError(),
                   getParentForChildren(),
                   isClean());
           error_ = null;
@@ -2793,10 +2759,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.TwoWayChannelMessage)
   }
 
-  public interface ClientVersionOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ClientVersionOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.ClientVersion)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required int32 major = 1;
     /**
      * <code>required int32 major = 1;</code>
      */
@@ -2806,7 +2772,6 @@ public final class Protos {
      */
     int getMajor();
 
-    // optional int32 minor = 2 [default = 0];
     /**
      * <code>optional int32 minor = 2 [default = 0];</code>
      */
@@ -2816,7 +2781,6 @@ public final class Protos {
      */
     int getMinor();
 
-    // optional bytes previous_channel_contract_hash = 3;
     /**
      * <code>optional bytes previous_channel_contract_hash = 3;</code>
      *
@@ -2840,7 +2804,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getPreviousChannelContractHash();
 
-    // optional uint64 time_window_secs = 4 [default = 86340];
     /**
      * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
      *
@@ -2869,8 +2832,9 @@ public final class Protos {
    * </pre>
    */
   public static final class ClientVersion extends
-      com.google.protobuf.GeneratedMessage
-      implements ClientVersionOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.ClientVersion)
+      ClientVersionOrBuilder {
     // Use ClientVersion.newBuilder() to construct.
     private ClientVersion(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -2976,7 +2940,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required int32 major = 1;
     public static final int MAJOR_FIELD_NUMBER = 1;
     private int major_;
     /**
@@ -2992,7 +2955,6 @@ public final class Protos {
       return major_;
     }
 
-    // optional int32 minor = 2 [default = 0];
     public static final int MINOR_FIELD_NUMBER = 2;
     private int minor_;
     /**
@@ -3008,7 +2970,6 @@ public final class Protos {
       return minor_;
     }
 
-    // optional bytes previous_channel_contract_hash = 3;
     public static final int PREVIOUS_CHANNEL_CONTRACT_HASH_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString previousChannelContractHash_;
     /**
@@ -3038,7 +2999,6 @@ public final class Protos {
       return previousChannelContractHash_;
     }
 
-    // optional uint64 time_window_secs = 4 [default = 86340];
     public static final int TIME_WINDOW_SECS_FIELD_NUMBER = 4;
     private long timeWindowSecs_;
     /**
@@ -3073,7 +3033,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasMajor()) {
         memoizedIsInitialized = 0;
@@ -3210,8 +3171,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ClientVersionOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.ClientVersion)
+        org.bitcoin.paymentchannel.Protos.ClientVersionOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_ClientVersion_descriptor;
@@ -3355,7 +3317,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required int32 major = 1;
       private int major_ ;
       /**
        * <code>required int32 major = 1;</code>
@@ -3388,7 +3349,6 @@ public final class Protos {
         return this;
       }
 
-      // optional int32 minor = 2 [default = 0];
       private int minor_ ;
       /**
        * <code>optional int32 minor = 2 [default = 0];</code>
@@ -3421,7 +3381,6 @@ public final class Protos {
         return this;
       }
 
-      // optional bytes previous_channel_contract_hash = 3;
       private com.google.protobuf.ByteString previousChannelContractHash_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes previous_channel_contract_hash = 3;</code>
@@ -3485,7 +3444,6 @@ public final class Protos {
         return this;
       }
 
-      // optional uint64 time_window_secs = 4 [default = 86340];
       private long timeWindowSecs_ = 86340L;
       /**
        * <code>optional uint64 time_window_secs = 4 [default = 86340];</code>
@@ -3549,10 +3507,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.ClientVersion)
   }
 
-  public interface ServerVersionOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ServerVersionOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.ServerVersion)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required int32 major = 1;
     /**
      * <code>required int32 major = 1;</code>
      */
@@ -3562,7 +3520,6 @@ public final class Protos {
      */
     int getMajor();
 
-    // optional int32 minor = 2 [default = 0];
     /**
      * <code>optional int32 minor = 2 [default = 0];</code>
      */
@@ -3586,8 +3543,9 @@ public final class Protos {
    * </pre>
    */
   public static final class ServerVersion extends
-      com.google.protobuf.GeneratedMessage
-      implements ServerVersionOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.ServerVersion)
+      ServerVersionOrBuilder {
     // Use ServerVersion.newBuilder() to construct.
     private ServerVersion(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -3683,7 +3641,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required int32 major = 1;
     public static final int MAJOR_FIELD_NUMBER = 1;
     private int major_;
     /**
@@ -3699,7 +3656,6 @@ public final class Protos {
       return major_;
     }
 
-    // optional int32 minor = 2 [default = 0];
     public static final int MINOR_FIELD_NUMBER = 2;
     private int minor_;
     /**
@@ -3722,7 +3678,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasMajor()) {
         memoizedIsInitialized = 0;
@@ -3850,8 +3807,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ServerVersionOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.ServerVersion)
+        org.bitcoin.paymentchannel.Protos.ServerVersionOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_ServerVersion_descriptor;
@@ -3977,7 +3935,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required int32 major = 1;
       private int major_ ;
       /**
        * <code>required int32 major = 1;</code>
@@ -4010,7 +3967,6 @@ public final class Protos {
         return this;
       }
 
-      // optional int32 minor = 2 [default = 0];
       private int minor_ ;
       /**
        * <code>optional int32 minor = 2 [default = 0];</code>
@@ -4054,10 +4010,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.ServerVersion)
   }
 
-  public interface InitiateOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface InitiateOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.Initiate)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required bytes multisig_key = 1;
     /**
      * <code>required bytes multisig_key = 1;</code>
      *
@@ -4079,7 +4035,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getMultisigKey();
 
-    // required uint64 min_accepted_channel_size = 2;
     /**
      * <code>required uint64 min_accepted_channel_size = 2;</code>
      *
@@ -4103,7 +4058,6 @@ public final class Protos {
      */
     long getMinAcceptedChannelSize();
 
-    // required uint64 expire_time_secs = 3;
     /**
      * <code>required uint64 expire_time_secs = 3;</code>
      *
@@ -4133,7 +4087,6 @@ public final class Protos {
      */
     long getExpireTimeSecs();
 
-    // required uint64 min_payment = 4;
     /**
      * <code>required uint64 min_payment = 4;</code>
      *
@@ -4169,8 +4122,9 @@ public final class Protos {
    * </pre>
    */
   public static final class Initiate extends
-      com.google.protobuf.GeneratedMessage
-      implements InitiateOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.Initiate)
+      InitiateOrBuilder {
     // Use Initiate.newBuilder() to construct.
     private Initiate(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -4276,7 +4230,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required bytes multisig_key = 1;
     public static final int MULTISIG_KEY_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString multisigKey_;
     /**
@@ -4304,7 +4257,6 @@ public final class Protos {
       return multisigKey_;
     }
 
-    // required uint64 min_accepted_channel_size = 2;
     public static final int MIN_ACCEPTED_CHANNEL_SIZE_FIELD_NUMBER = 2;
     private long minAcceptedChannelSize_;
     /**
@@ -4334,7 +4286,6 @@ public final class Protos {
       return minAcceptedChannelSize_;
     }
 
-    // required uint64 expire_time_secs = 3;
     public static final int EXPIRE_TIME_SECS_FIELD_NUMBER = 3;
     private long expireTimeSecs_;
     /**
@@ -4370,7 +4321,6 @@ public final class Protos {
       return expireTimeSecs_;
     }
 
-    // required uint64 min_payment = 4;
     public static final int MIN_PAYMENT_FIELD_NUMBER = 4;
     private long minPayment_;
     /**
@@ -4413,7 +4363,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasMultisigKey()) {
         memoizedIsInitialized = 0;
@@ -4561,8 +4512,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.InitiateOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.Initiate)
+        org.bitcoin.paymentchannel.Protos.InitiateOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_Initiate_descriptor;
@@ -4718,7 +4670,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required bytes multisig_key = 1;
       private com.google.protobuf.ByteString multisigKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes multisig_key = 1;</code>
@@ -4778,7 +4729,6 @@ public final class Protos {
         return this;
       }
 
-      // required uint64 min_accepted_channel_size = 2;
       private long minAcceptedChannelSize_ ;
       /**
        * <code>required uint64 min_accepted_channel_size = 2;</code>
@@ -4839,7 +4789,6 @@ public final class Protos {
         return this;
       }
 
-      // required uint64 expire_time_secs = 3;
       private long expireTimeSecs_ ;
       /**
        * <code>required uint64 expire_time_secs = 3;</code>
@@ -4912,7 +4861,6 @@ public final class Protos {
         return this;
       }
 
-      // required uint64 min_payment = 4;
       private long minPayment_ ;
       /**
        * <code>required uint64 min_payment = 4;</code>
@@ -4992,10 +4940,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.Initiate)
   }
 
-  public interface ProvideRefundOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ProvideRefundOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.ProvideRefund)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required bytes multisig_key = 1;
     /**
      * <code>required bytes multisig_key = 1;</code>
      *
@@ -5015,7 +4963,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getMultisigKey();
 
-    // required bytes tx = 2;
     /**
      * <code>required bytes tx = 2;</code>
      *
@@ -5055,8 +5002,9 @@ public final class Protos {
    * </pre>
    */
   public static final class ProvideRefund extends
-      com.google.protobuf.GeneratedMessage
-      implements ProvideRefundOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.ProvideRefund)
+      ProvideRefundOrBuilder {
     // Use ProvideRefund.newBuilder() to construct.
     private ProvideRefund(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -5152,7 +5100,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required bytes multisig_key = 1;
     public static final int MULTISIG_KEY_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString multisigKey_;
     /**
@@ -5178,7 +5125,6 @@ public final class Protos {
       return multisigKey_;
     }
 
-    // required bytes tx = 2;
     public static final int TX_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString tx_;
     /**
@@ -5223,7 +5169,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasMultisigKey()) {
         memoizedIsInitialized = 0;
@@ -5349,8 +5296,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ProvideRefundOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.ProvideRefund)
+        org.bitcoin.paymentchannel.Protos.ProvideRefundOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_ProvideRefund_descriptor;
@@ -5480,7 +5428,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required bytes multisig_key = 1;
       private com.google.protobuf.ByteString multisigKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes multisig_key = 1;</code>
@@ -5536,7 +5483,6 @@ public final class Protos {
         return this;
       }
 
-      // required bytes tx = 2;
       private com.google.protobuf.ByteString tx_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes tx = 2;</code>
@@ -5627,10 +5573,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.ProvideRefund)
   }
 
-  public interface ReturnRefundOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ReturnRefundOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.ReturnRefund)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required bytes signature = 1;
     /**
      * <code>required bytes signature = 1;</code>
      */
@@ -5652,8 +5598,9 @@ public final class Protos {
    * </pre>
    */
   public static final class ReturnRefund extends
-      com.google.protobuf.GeneratedMessage
-      implements ReturnRefundOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.ReturnRefund)
+      ReturnRefundOrBuilder {
     // Use ReturnRefund.newBuilder() to construct.
     private ReturnRefund(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -5744,7 +5691,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required bytes signature = 1;
     public static final int SIGNATURE_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString signature_;
     /**
@@ -5766,7 +5712,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasSignature()) {
         memoizedIsInitialized = 0;
@@ -5885,8 +5832,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ReturnRefundOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.ReturnRefund)
+        org.bitcoin.paymentchannel.Protos.ReturnRefundOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_ReturnRefund_descriptor;
@@ -6003,7 +5951,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required bytes signature = 1;
       private com.google.protobuf.ByteString signature_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes signature = 1;</code>
@@ -6050,10 +5997,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.ReturnRefund)
   }
 
-  public interface ProvideContractOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ProvideContractOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.ProvideContract)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required bytes tx = 1;
     /**
      * <code>required bytes tx = 1;</code>
      *
@@ -6081,7 +6028,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getTx();
 
-    // required .paymentchannels.UpdatePayment initial_payment = 2;
     /**
      * <code>required .paymentchannels.UpdatePayment initial_payment = 2;</code>
      *
@@ -6124,8 +6070,9 @@ public final class Protos {
    * </pre>
    */
   public static final class ProvideContract extends
-      com.google.protobuf.GeneratedMessage
-      implements ProvideContractOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.ProvideContract)
+      ProvideContractOrBuilder {
     // Use ProvideContract.newBuilder() to construct.
     private ProvideContract(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -6229,7 +6176,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required bytes tx = 1;
     public static final int TX_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString tx_;
     /**
@@ -6263,7 +6209,6 @@ public final class Protos {
       return tx_;
     }
 
-    // required .paymentchannels.UpdatePayment initial_payment = 2;
     public static final int INITIAL_PAYMENT_FIELD_NUMBER = 2;
     private org.bitcoin.paymentchannel.Protos.UpdatePayment initialPayment_;
     /**
@@ -6313,7 +6258,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasTx()) {
         memoizedIsInitialized = 0;
@@ -6443,8 +6389,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ProvideContractOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.ProvideContract)
+        org.bitcoin.paymentchannel.Protos.ProvideContractOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_ProvideContract_descriptor;
@@ -6587,7 +6534,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required bytes tx = 1;
       private com.google.protobuf.ByteString tx_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes tx = 1;</code>
@@ -6659,7 +6605,6 @@ public final class Protos {
         return this;
       }
 
-      // required .paymentchannels.UpdatePayment initial_payment = 2;
       private org.bitcoin.paymentchannel.Protos.UpdatePayment initialPayment_ = org.bitcoin.paymentchannel.Protos.UpdatePayment.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder> initialPaymentBuilder_;
@@ -6831,7 +6776,7 @@ public final class Protos {
         if (initialPaymentBuilder_ == null) {
           initialPaymentBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.bitcoin.paymentchannel.Protos.UpdatePayment, org.bitcoin.paymentchannel.Protos.UpdatePayment.Builder, org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder>(
-                  initialPayment_,
+                  getInitialPayment(),
                   getParentForChildren(),
                   isClean());
           initialPayment_ = null;
@@ -6850,10 +6795,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.ProvideContract)
   }
 
-  public interface UpdatePaymentOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface UpdatePaymentOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.UpdatePayment)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required uint64 client_change_value = 1;
     /**
      * <code>required uint64 client_change_value = 1;</code>
      *
@@ -6873,7 +6818,6 @@ public final class Protos {
      */
     long getClientChangeValue();
 
-    // required bytes signature = 2;
     /**
      * <code>required bytes signature = 2;</code>
      *
@@ -6897,7 +6841,6 @@ public final class Protos {
      */
     com.google.protobuf.ByteString getSignature();
 
-    // optional bytes info = 3;
     /**
      * <code>optional bytes info = 3;</code>
      *
@@ -6935,8 +6878,9 @@ public final class Protos {
    * </pre>
    */
   public static final class UpdatePayment extends
-      com.google.protobuf.GeneratedMessage
-      implements UpdatePaymentOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.UpdatePayment)
+      UpdatePaymentOrBuilder {
     // Use UpdatePayment.newBuilder() to construct.
     private UpdatePayment(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -7037,7 +6981,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required uint64 client_change_value = 1;
     public static final int CLIENT_CHANGE_VALUE_FIELD_NUMBER = 1;
     private long clientChangeValue_;
     /**
@@ -7063,7 +7006,6 @@ public final class Protos {
       return clientChangeValue_;
     }
 
-    // required bytes signature = 2;
     public static final int SIGNATURE_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString signature_;
     /**
@@ -7093,7 +7035,6 @@ public final class Protos {
       return signature_;
     }
 
-    // optional bytes info = 3;
     public static final int INFO_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString info_;
     /**
@@ -7125,7 +7066,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasClientChangeValue()) {
         memoizedIsInitialized = 0;
@@ -7270,8 +7212,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.UpdatePayment)
+        org.bitcoin.paymentchannel.Protos.UpdatePaymentOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_UpdatePayment_descriptor;
@@ -7410,7 +7353,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required uint64 client_change_value = 1;
       private long clientChangeValue_ ;
       /**
        * <code>required uint64 client_change_value = 1;</code>
@@ -7463,7 +7405,6 @@ public final class Protos {
         return this;
       }
 
-      // required bytes signature = 2;
       private com.google.protobuf.ByteString signature_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes signature = 2;</code>
@@ -7527,7 +7468,6 @@ public final class Protos {
         return this;
       }
 
-      // optional bytes info = 3;
       private com.google.protobuf.ByteString info_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes info = 3;</code>
@@ -7590,10 +7530,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.UpdatePayment)
   }
 
-  public interface PaymentAckOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface PaymentAckOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.PaymentAck)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional bytes info = 1;
     /**
      * <code>optional bytes info = 1;</code>
      *
@@ -7619,8 +7559,9 @@ public final class Protos {
    * </pre>
    */
   public static final class PaymentAck extends
-      com.google.protobuf.GeneratedMessage
-      implements PaymentAckOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.PaymentAck)
+      PaymentAckOrBuilder {
     // Use PaymentAck.newBuilder() to construct.
     private PaymentAck(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -7711,7 +7652,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional bytes info = 1;
     public static final int INFO_FIELD_NUMBER = 1;
     private com.google.protobuf.ByteString info_;
     /**
@@ -7741,7 +7681,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       memoizedIsInitialized = 1;
       return true;
@@ -7852,8 +7793,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.PaymentAckOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.PaymentAck)
+        org.bitcoin.paymentchannel.Protos.PaymentAckOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_PaymentAck_descriptor;
@@ -7966,7 +7908,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional bytes info = 1;
       private com.google.protobuf.ByteString info_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes info = 1;</code>
@@ -8029,10 +7970,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.PaymentAck)
   }
 
-  public interface SettlementOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface SettlementOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.Settlement)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required bytes tx = 3;
     /**
      * <code>required bytes tx = 3;</code>
      *
@@ -8056,8 +7997,9 @@ public final class Protos {
    * Protobuf type {@code paymentchannels.Settlement}
    */
   public static final class Settlement extends
-      com.google.protobuf.GeneratedMessage
-      implements SettlementOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.Settlement)
+      SettlementOrBuilder {
     // Use Settlement.newBuilder() to construct.
     private Settlement(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -8148,7 +8090,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // required bytes tx = 3;
     public static final int TX_FIELD_NUMBER = 3;
     private com.google.protobuf.ByteString tx_;
     /**
@@ -8180,7 +8121,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasTx()) {
         memoizedIsInitialized = 0;
@@ -8291,8 +8233,9 @@ public final class Protos {
      * Protobuf type {@code paymentchannels.Settlement}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.SettlementOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.Settlement)
+        org.bitcoin.paymentchannel.Protos.SettlementOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_Settlement_descriptor;
@@ -8409,7 +8352,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // required bytes tx = 3;
       private com.google.protobuf.ByteString tx_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes tx = 3;</code>
@@ -8476,10 +8418,10 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.Settlement)
   }
 
-  public interface ErrorOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface ErrorOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.Error)
+      com.google.protobuf.MessageOrBuilder {
 
-    // optional .paymentchannels.Error.ErrorCode code = 1 [default = OTHER];
     /**
      * <code>optional .paymentchannels.Error.ErrorCode code = 1 [default = OTHER];</code>
      */
@@ -8489,7 +8431,6 @@ public final class Protos {
      */
     org.bitcoin.paymentchannel.Protos.Error.ErrorCode getCode();
 
-    // optional string explanation = 2;
     /**
      * <code>optional string explanation = 2;</code>
      *
@@ -8516,7 +8457,6 @@ public final class Protos {
     com.google.protobuf.ByteString
         getExplanationBytes();
 
-    // optional uint64 expected_value = 3;
     /**
      * <code>optional uint64 expected_value = 3;</code>
      *
@@ -8544,8 +8484,9 @@ public final class Protos {
    * </pre>
    */
   public static final class Error extends
-      com.google.protobuf.GeneratedMessage
-      implements ErrorOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.Error)
+      ErrorOrBuilder {
     // Use Error.newBuilder() to construct.
     private Error(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -8603,8 +8544,9 @@ public final class Protos {
               break;
             }
             case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000002;
-              explanation_ = input.readBytes();
+              explanation_ = bs;
               break;
             }
             case 24: {
@@ -8846,7 +8788,6 @@ public final class Protos {
     }
 
     private int bitField0_;
-    // optional .paymentchannels.Error.ErrorCode code = 1 [default = OTHER];
     public static final int CODE_FIELD_NUMBER = 1;
     private org.bitcoin.paymentchannel.Protos.Error.ErrorCode code_;
     /**
@@ -8862,7 +8803,6 @@ public final class Protos {
       return code_;
     }
 
-    // optional string explanation = 2;
     public static final int EXPLANATION_FIELD_NUMBER = 2;
     private java.lang.Object explanation_;
     /**
@@ -8917,7 +8857,6 @@ public final class Protos {
       }
     }
 
-    // optional uint64 expected_value = 3;
     public static final int EXPECTED_VALUE_FIELD_NUMBER = 3;
     private long expectedValue_;
     /**
@@ -8949,7 +8888,8 @@ public final class Protos {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       memoizedIsInitialized = 1;
       return true;
@@ -9076,8 +9016,9 @@ public final class Protos {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoin.paymentchannel.Protos.ErrorOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.Error)
+        org.bitcoin.paymentchannel.Protos.ErrorOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoin.paymentchannel.Protos.internal_static_paymentchannels_Error_descriptor;
@@ -9210,7 +9151,6 @@ public final class Protos {
       }
       private int bitField0_;
 
-      // optional .paymentchannels.Error.ErrorCode code = 1 [default = OTHER];
       private org.bitcoin.paymentchannel.Protos.Error.ErrorCode code_ = org.bitcoin.paymentchannel.Protos.Error.ErrorCode.OTHER;
       /**
        * <code>optional .paymentchannels.Error.ErrorCode code = 1 [default = OTHER];</code>
@@ -9246,7 +9186,6 @@ public final class Protos {
         return this;
       }
 
-      // optional string explanation = 2;
       private java.lang.Object explanation_ = "";
       /**
        * <code>optional string explanation = 2;</code>
@@ -9268,9 +9207,12 @@ public final class Protos {
       public java.lang.String getExplanation() {
         java.lang.Object ref = explanation_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          explanation_ = s;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            explanation_ = s;
+          }
           return s;
         } else {
           return (java.lang.String) ref;
@@ -9344,7 +9286,6 @@ public final class Protos {
         return this;
       }
 
-      // optional uint64 expected_value = 3;
       private long expectedValue_ ;
       /**
        * <code>optional uint64 expected_value = 3;</code>
@@ -9404,57 +9345,57 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:paymentchannels.Error)
   }
 
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_TwoWayChannelMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_TwoWayChannelMessage_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_ClientVersion_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_ClientVersion_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_ServerVersion_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_ServerVersion_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_Initiate_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_Initiate_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_ProvideRefund_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_ProvideRefund_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_ReturnRefund_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_ReturnRefund_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_ProvideContract_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_ProvideContract_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_UpdatePayment_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_UpdatePayment_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_PaymentAck_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_PaymentAck_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_Settlement_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_Settlement_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_Error_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -9515,83 +9456,83 @@ public final class Protos {
       "g.bitcoin.paymentchannelB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-      new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
-        public com.google.protobuf.ExtensionRegistry assignDescriptors(
-            com.google.protobuf.Descriptors.FileDescriptor root) {
-          descriptor = root;
-          internal_static_paymentchannels_TwoWayChannelMessage_descriptor =
-            getDescriptor().getMessageTypes().get(0);
-          internal_static_paymentchannels_TwoWayChannelMessage_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_TwoWayChannelMessage_descriptor,
-              new java.lang.String[] { "Type", "ClientVersion", "ServerVersion", "Initiate", "ProvideRefund", "ReturnRefund", "ProvideContract", "UpdatePayment", "PaymentAck", "Settlement", "Error", });
-          internal_static_paymentchannels_ClientVersion_descriptor =
-            getDescriptor().getMessageTypes().get(1);
-          internal_static_paymentchannels_ClientVersion_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_ClientVersion_descriptor,
-              new java.lang.String[] { "Major", "Minor", "PreviousChannelContractHash", "TimeWindowSecs", });
-          internal_static_paymentchannels_ServerVersion_descriptor =
-            getDescriptor().getMessageTypes().get(2);
-          internal_static_paymentchannels_ServerVersion_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_ServerVersion_descriptor,
-              new java.lang.String[] { "Major", "Minor", });
-          internal_static_paymentchannels_Initiate_descriptor =
-            getDescriptor().getMessageTypes().get(3);
-          internal_static_paymentchannels_Initiate_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_Initiate_descriptor,
-              new java.lang.String[] { "MultisigKey", "MinAcceptedChannelSize", "ExpireTimeSecs", "MinPayment", });
-          internal_static_paymentchannels_ProvideRefund_descriptor =
-            getDescriptor().getMessageTypes().get(4);
-          internal_static_paymentchannels_ProvideRefund_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_ProvideRefund_descriptor,
-              new java.lang.String[] { "MultisigKey", "Tx", });
-          internal_static_paymentchannels_ReturnRefund_descriptor =
-            getDescriptor().getMessageTypes().get(5);
-          internal_static_paymentchannels_ReturnRefund_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_ReturnRefund_descriptor,
-              new java.lang.String[] { "Signature", });
-          internal_static_paymentchannels_ProvideContract_descriptor =
-            getDescriptor().getMessageTypes().get(6);
-          internal_static_paymentchannels_ProvideContract_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_ProvideContract_descriptor,
-              new java.lang.String[] { "Tx", "InitialPayment", });
-          internal_static_paymentchannels_UpdatePayment_descriptor =
-            getDescriptor().getMessageTypes().get(7);
-          internal_static_paymentchannels_UpdatePayment_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_UpdatePayment_descriptor,
-              new java.lang.String[] { "ClientChangeValue", "Signature", "Info", });
-          internal_static_paymentchannels_PaymentAck_descriptor =
-            getDescriptor().getMessageTypes().get(8);
-          internal_static_paymentchannels_PaymentAck_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_PaymentAck_descriptor,
-              new java.lang.String[] { "Info", });
-          internal_static_paymentchannels_Settlement_descriptor =
-            getDescriptor().getMessageTypes().get(9);
-          internal_static_paymentchannels_Settlement_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_Settlement_descriptor,
-              new java.lang.String[] { "Tx", });
-          internal_static_paymentchannels_Error_descriptor =
-            getDescriptor().getMessageTypes().get(10);
-          internal_static_paymentchannels_Error_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_Error_descriptor,
-              new java.lang.String[] { "Code", "Explanation", "ExpectedValue", });
-          return null;
-        }
-      };
+        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
+    internal_static_paymentchannels_TwoWayChannelMessage_descriptor =
+      getDescriptor().getMessageTypes().get(0);
+    internal_static_paymentchannels_TwoWayChannelMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_TwoWayChannelMessage_descriptor,
+        new java.lang.String[] { "Type", "ClientVersion", "ServerVersion", "Initiate", "ProvideRefund", "ReturnRefund", "ProvideContract", "UpdatePayment", "PaymentAck", "Settlement", "Error", });
+    internal_static_paymentchannels_ClientVersion_descriptor =
+      getDescriptor().getMessageTypes().get(1);
+    internal_static_paymentchannels_ClientVersion_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_ClientVersion_descriptor,
+        new java.lang.String[] { "Major", "Minor", "PreviousChannelContractHash", "TimeWindowSecs", });
+    internal_static_paymentchannels_ServerVersion_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_paymentchannels_ServerVersion_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_ServerVersion_descriptor,
+        new java.lang.String[] { "Major", "Minor", });
+    internal_static_paymentchannels_Initiate_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_paymentchannels_Initiate_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_Initiate_descriptor,
+        new java.lang.String[] { "MultisigKey", "MinAcceptedChannelSize", "ExpireTimeSecs", "MinPayment", });
+    internal_static_paymentchannels_ProvideRefund_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_paymentchannels_ProvideRefund_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_ProvideRefund_descriptor,
+        new java.lang.String[] { "MultisigKey", "Tx", });
+    internal_static_paymentchannels_ReturnRefund_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_paymentchannels_ReturnRefund_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_ReturnRefund_descriptor,
+        new java.lang.String[] { "Signature", });
+    internal_static_paymentchannels_ProvideContract_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_paymentchannels_ProvideContract_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_ProvideContract_descriptor,
+        new java.lang.String[] { "Tx", "InitialPayment", });
+    internal_static_paymentchannels_UpdatePayment_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_paymentchannels_UpdatePayment_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_UpdatePayment_descriptor,
+        new java.lang.String[] { "ClientChangeValue", "Signature", "Info", });
+    internal_static_paymentchannels_PaymentAck_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_paymentchannels_PaymentAck_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_PaymentAck_descriptor,
+        new java.lang.String[] { "Info", });
+    internal_static_paymentchannels_Settlement_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_paymentchannels_Settlement_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_Settlement_descriptor,
+        new java.lang.String[] { "Tx", });
+    internal_static_paymentchannels_Error_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_paymentchannels_Error_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_Error_descriptor,
+        new java.lang.String[] { "Code", "Explanation", "ExpectedValue", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

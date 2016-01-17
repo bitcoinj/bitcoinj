@@ -3,16 +3,15 @@
 
 package org.bitcoinj.protocols.channels;
 
-@SuppressWarnings("ALL")
 public final class ServerState {
   private ServerState() {}
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface StoredServerPaymentChannelsOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface StoredServerPaymentChannelsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.StoredServerPaymentChannels)
+      com.google.protobuf.MessageOrBuilder {
 
-    // repeated .paymentchannels.StoredServerPaymentChannel channels = 1;
     /**
      * <code>repeated .paymentchannels.StoredServerPaymentChannel channels = 1;</code>
      */
@@ -45,8 +44,9 @@ public final class ServerState {
    * </pre>
    */
   public static final class StoredServerPaymentChannels extends
-      com.google.protobuf.GeneratedMessage
-      implements StoredServerPaymentChannelsOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.StoredServerPaymentChannels)
+      StoredServerPaymentChannelsOrBuilder {
     // Use StoredServerPaymentChannels.newBuilder() to construct.
     private StoredServerPaymentChannels(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -142,7 +142,6 @@ public final class ServerState {
       return PARSER;
     }
 
-    // repeated .paymentchannels.StoredServerPaymentChannel channels = 1;
     public static final int CHANNELS_FIELD_NUMBER = 1;
     private java.util.List<org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel> channels_;
     /**
@@ -184,7 +183,8 @@ public final class ServerState {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       for (int i = 0; i < getChannelsCount(); i++) {
         if (!getChannels(i).isInitialized()) {
@@ -301,8 +301,9 @@ public final class ServerState {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelsOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.StoredServerPaymentChannels)
+        org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelsOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannels_descriptor;
@@ -452,7 +453,6 @@ public final class ServerState {
       }
       private int bitField0_;
 
-      // repeated .paymentchannels.StoredServerPaymentChannel channels = 1;
       private java.util.List<org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel> channels_ =
         java.util.Collections.emptyList();
       private void ensureChannelsIsMutable() {
@@ -594,7 +594,8 @@ public final class ServerState {
           java.lang.Iterable<? extends org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel> values) {
         if (channelsBuilder_ == null) {
           ensureChannelsIsMutable();
-          super.addAll(values, channels_);
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, channels_);
           onChanged();
         } else {
           channelsBuilder_.addAllMessages(values);
@@ -703,10 +704,10 @@ public final class ServerState {
     // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannels)
   }
 
-  public interface StoredServerPaymentChannelOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface StoredServerPaymentChannelOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:paymentchannels.StoredServerPaymentChannel)
+      com.google.protobuf.MessageOrBuilder {
 
-    // required uint64 bestValueToMe = 1;
     /**
      * <code>required uint64 bestValueToMe = 1;</code>
      */
@@ -716,7 +717,6 @@ public final class ServerState {
      */
     long getBestValueToMe();
 
-    // optional bytes bestValueSignature = 2;
     /**
      * <code>optional bytes bestValueSignature = 2;</code>
      */
@@ -726,7 +726,6 @@ public final class ServerState {
      */
     com.google.protobuf.ByteString getBestValueSignature();
 
-    // required uint64 refundTransactionUnlockTimeSecs = 3;
     /**
      * <code>required uint64 refundTransactionUnlockTimeSecs = 3;</code>
      */
@@ -736,7 +735,6 @@ public final class ServerState {
      */
     long getRefundTransactionUnlockTimeSecs();
 
-    // required bytes contractTransaction = 4;
     /**
      * <code>required bytes contractTransaction = 4;</code>
      */
@@ -746,7 +744,6 @@ public final class ServerState {
      */
     com.google.protobuf.ByteString getContractTransaction();
 
-    // required bytes clientOutput = 5;
     /**
      * <code>required bytes clientOutput = 5;</code>
      */
@@ -756,7 +753,6 @@ public final class ServerState {
      */
     com.google.protobuf.ByteString getClientOutput();
 
-    // required bytes myKey = 6;
     /**
      * <code>required bytes myKey = 6;</code>
      */
@@ -774,8 +770,9 @@ public final class ServerState {
    * </pre>
    */
   public static final class StoredServerPaymentChannel extends
-      com.google.protobuf.GeneratedMessage
-      implements StoredServerPaymentChannelOrBuilder {
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:paymentchannels.StoredServerPaymentChannel)
+      StoredServerPaymentChannelOrBuilder {
     // Use StoredServerPaymentChannel.newBuilder() to construct.
     private StoredServerPaymentChannel(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
@@ -891,7 +888,6 @@ public final class ServerState {
     }
 
     private int bitField0_;
-    // required uint64 bestValueToMe = 1;
     public static final int BESTVALUETOME_FIELD_NUMBER = 1;
     private long bestValueToMe_;
     /**
@@ -907,7 +903,6 @@ public final class ServerState {
       return bestValueToMe_;
     }
 
-    // optional bytes bestValueSignature = 2;
     public static final int BESTVALUESIGNATURE_FIELD_NUMBER = 2;
     private com.google.protobuf.ByteString bestValueSignature_;
     /**
@@ -923,7 +918,6 @@ public final class ServerState {
       return bestValueSignature_;
     }
 
-    // required uint64 refundTransactionUnlockTimeSecs = 3;
     public static final int REFUNDTRANSACTIONUNLOCKTIMESECS_FIELD_NUMBER = 3;
     private long refundTransactionUnlockTimeSecs_;
     /**
@@ -939,7 +933,6 @@ public final class ServerState {
       return refundTransactionUnlockTimeSecs_;
     }
 
-    // required bytes contractTransaction = 4;
     public static final int CONTRACTTRANSACTION_FIELD_NUMBER = 4;
     private com.google.protobuf.ByteString contractTransaction_;
     /**
@@ -955,7 +948,6 @@ public final class ServerState {
       return contractTransaction_;
     }
 
-    // required bytes clientOutput = 5;
     public static final int CLIENTOUTPUT_FIELD_NUMBER = 5;
     private com.google.protobuf.ByteString clientOutput_;
     /**
@@ -971,7 +963,6 @@ public final class ServerState {
       return clientOutput_;
     }
 
-    // required bytes myKey = 6;
     public static final int MYKEY_FIELD_NUMBER = 6;
     private com.google.protobuf.ByteString myKey_;
     /**
@@ -998,7 +989,8 @@ public final class ServerState {
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
-      if (isInitialized != -1) return isInitialized == 1;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
 
       if (!hasBestValueToMe()) {
         memoizedIsInitialized = 0;
@@ -1164,8 +1156,9 @@ public final class ServerState {
      * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder {
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:paymentchannels.StoredServerPaymentChannel)
+        org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannel_descriptor;
@@ -1343,7 +1336,6 @@ public final class ServerState {
       }
       private int bitField0_;
 
-      // required uint64 bestValueToMe = 1;
       private long bestValueToMe_ ;
       /**
        * <code>required uint64 bestValueToMe = 1;</code>
@@ -1376,7 +1368,6 @@ public final class ServerState {
         return this;
       }
 
-      // optional bytes bestValueSignature = 2;
       private com.google.protobuf.ByteString bestValueSignature_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>optional bytes bestValueSignature = 2;</code>
@@ -1412,7 +1403,6 @@ public final class ServerState {
         return this;
       }
 
-      // required uint64 refundTransactionUnlockTimeSecs = 3;
       private long refundTransactionUnlockTimeSecs_ ;
       /**
        * <code>required uint64 refundTransactionUnlockTimeSecs = 3;</code>
@@ -1445,7 +1435,6 @@ public final class ServerState {
         return this;
       }
 
-      // required bytes contractTransaction = 4;
       private com.google.protobuf.ByteString contractTransaction_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes contractTransaction = 4;</code>
@@ -1481,7 +1470,6 @@ public final class ServerState {
         return this;
       }
 
-      // required bytes clientOutput = 5;
       private com.google.protobuf.ByteString clientOutput_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes clientOutput = 5;</code>
@@ -1517,7 +1505,6 @@ public final class ServerState {
         return this;
       }
 
-      // required bytes myKey = 6;
       private com.google.protobuf.ByteString myKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes myKey = 6;</code>
@@ -1564,12 +1551,12 @@ public final class ServerState {
     // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannel)
   }
 
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_StoredServerPaymentChannels_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_StoredServerPaymentChannel_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -1595,29 +1582,29 @@ public final class ServerState {
       ".channelsB\013ServerState"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-      new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
-        public com.google.protobuf.ExtensionRegistry assignDescriptors(
-            com.google.protobuf.Descriptors.FileDescriptor root) {
-          descriptor = root;
-          internal_static_paymentchannels_StoredServerPaymentChannels_descriptor =
-            getDescriptor().getMessageTypes().get(0);
-          internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_StoredServerPaymentChannels_descriptor,
-              new java.lang.String[] { "Channels", });
-          internal_static_paymentchannels_StoredServerPaymentChannel_descriptor =
-            getDescriptor().getMessageTypes().get(1);
-          internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable = new
-            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_paymentchannels_StoredServerPaymentChannel_descriptor,
-              new java.lang.String[] { "BestValueToMe", "BestValueSignature", "RefundTransactionUnlockTimeSecs", "ContractTransaction", "ClientOutput", "MyKey", });
-          return null;
-        }
-      };
+        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+          public com.google.protobuf.ExtensionRegistry assignDescriptors(
+              com.google.protobuf.Descriptors.FileDescriptor root) {
+            descriptor = root;
+            return null;
+          }
+        };
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
+    internal_static_paymentchannels_StoredServerPaymentChannels_descriptor =
+      getDescriptor().getMessageTypes().get(0);
+    internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_StoredServerPaymentChannels_descriptor,
+        new java.lang.String[] { "Channels", });
+    internal_static_paymentchannels_StoredServerPaymentChannel_descriptor =
+      getDescriptor().getMessageTypes().get(1);
+    internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_paymentchannels_StoredServerPaymentChannel_descriptor,
+        new java.lang.String[] { "BestValueToMe", "BestValueSignature", "RefundTransactionUnlockTimeSecs", "ContractTransaction", "ClientOutput", "MyKey", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
