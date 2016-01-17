@@ -29,10 +29,15 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
- * An element that is either an opcode or a raw byte array (signature, pubkey, etc).
+ * A script element that is either a data push (signature, pubkey, etc) or a non-push (logic, numeric, etc) operation.
  */
 public class ScriptChunk {
+    /** Operation to be executed. Opcodes are defined in {@link ScriptOpCodes}. */
     public final int opcode;
+    /**
+     * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
+     * empty. Null for non-push operations.
+     */
     @Nullable
     public final byte[] data;
     private int startLocationInProgram;

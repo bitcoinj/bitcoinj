@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class ScriptOpCodes {
     // push value
-    public static final int OP_0 = 0x00;
+    public static final int OP_0 = 0x00; // push empty vector
     public static final int OP_FALSE = OP_0;
     public static final int OP_PUSHDATA1 = 0x4c;
     public static final int OP_PUSHDATA2 = 0x4d;
