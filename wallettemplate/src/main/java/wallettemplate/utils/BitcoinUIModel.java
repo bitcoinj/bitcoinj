@@ -1,7 +1,8 @@
 package wallettemplate.utils;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.core.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -28,11 +29,26 @@ public class BitcoinUIModel {
     }
 
     public final void setWallet(Wallet wallet) {
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addChangeEventListener(new WalletChangeEventListener() {
             @Override
             public void onWalletChanged(Wallet wallet) {
-                super.onWalletChanged(wallet);
                 update(wallet);
+            }
+
+            @Override
+            public void onKeysAdded(List<ECKey> keys) {
+            }
+
+            @Override
+            public void onReorganize(Wallet wallet) {
+            }
+
+            @Override
+            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            }
+
+            @Override
+            public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
             }
         }, Platform::runLater);
         update(wallet);

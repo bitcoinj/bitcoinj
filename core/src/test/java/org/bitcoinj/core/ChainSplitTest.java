@@ -17,8 +17,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
@@ -399,10 +399,14 @@ public class ChainSplitTest {
         // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
         // maintained correctly.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinEventListener(new WalletCoinEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             }
         });
 
@@ -557,10 +561,14 @@ public class ChainSplitTest {
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinEventListener(new WalletCoinEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             }
         }, Threading.SAME_THREAD);
 

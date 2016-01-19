@@ -14,7 +14,8 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
@@ -47,6 +48,7 @@ public class Kit {
         // Now we initialize a new WalletAppKit. The kit handles all the boilerplate for us and is the easiest way to get everything up and running.
         // Have a look at the WalletAppKit documentation and its source to understand what's happening behind the scenes: https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/org/bitcoinj/kits/WalletAppKit.java
         WalletAppKit kit = new WalletAppKit(params, new File("."), "walletappkit-example");
+        Wallet wallet = kit.wallet();
 
         // In case you want to connect with your local bitcoind tell the kit to connect to localhost.
         // You must do that in reg test mode.
@@ -59,11 +61,13 @@ public class Kit {
 
         // To observe wallet events (like coins received) we implement a EventListener class that extends the AbstractWalletEventListener bitcoinj then calls the different functions from the EventListener class
         WalletListener wListener = new WalletListener();
-        kit.wallet().addEventListener(wListener);
+        wallet.addCoinEventListener(wListener);
+        wallet.addChangeEventListener(wListener);
+        wallet.addKeyChainEventListener(wListener);
 
         // Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.
         // To test everything we create and print a fresh receiving address. Send some coins to that address and see if everything works.
-        System.out.println("send money to: " + kit.wallet().freshReceiveAddress().toString());
+        System.out.println("send money to: " + wallet.freshReceiveAddress().toString());
 
         // Make sure to properly shut down all the running services when you manually want to stop the kit. The WalletAppKit registers a runtime ShutdownHook so we actually do not need to worry about that when our application is stopping.
         //System.out.println("shutting down again");
@@ -72,7 +76,7 @@ public class Kit {
     }
 
     // The Wallet event listener its implementations get called on wallet changes.
-    static class WalletListener extends AbstractWalletEventListener {
+    static class WalletListener implements WalletCoinEventListener, WalletChangeEventListener, KeyChainEventListener {
 
         @Override
         public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
@@ -110,5 +114,4 @@ public class Kit {
             System.out.println("new script added");
         }
     }
-
 }

@@ -17,8 +17,8 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -42,11 +42,15 @@ public class RefreshWallet {
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.startAsync();
 
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinEventListener(new WalletCoinEventListener() {
             @Override
             public synchronized void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 System.out.println("\nReceived tx " + tx.getHashAsString());
                 System.out.println(tx.toString());
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             }
         });
 

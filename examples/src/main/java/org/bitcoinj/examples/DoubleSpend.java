@@ -14,7 +14,7 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
@@ -46,15 +46,26 @@ public class DoubleSpend {
         Transaction tx1 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT);
         Transaction tx2 = kit.wallet().createSend(Address.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
-        peer.addDataEventListener(Threading.SAME_THREAD,
-            new AbstractPeerEventListener() {
-                @Override
-                public Message onPreMessageReceived(Peer peer, Message m) {
-                    System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
-                    return m;
-                }
+        peer.addDataEventListener(Threading.SAME_THREAD, new PeerDataEventListener() {
+            @Override
+            public Message onPreMessageReceived(Peer peer, Message m) {
+                System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
+                return m;
             }
-        );
+
+            @Override
+            public void onBlocksDownloaded(Peer peer, Block block, FilteredBlock filteredBlock, int blocksLeft) {
+            }
+
+            @Override
+            public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+            }
+
+            @Override
+            public List<Message> getData(Peer peer, GetDataMessage m) {
+                return null;
+            }
+        });
         peer.sendMessage(tx1);
         peer.sendMessage(tx2);
 
