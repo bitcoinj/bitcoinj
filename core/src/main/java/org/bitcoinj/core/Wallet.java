@@ -3738,7 +3738,6 @@ public class Wallet extends BaseTaggableObject
      * @param address The Bitcoin address to send the money to.
      * @param value How much currency to send.
      * @return either the created Transaction or null if there are insufficient coins.
-     * coins as spent until commitTx is called on the result.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
