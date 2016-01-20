@@ -3740,9 +3740,10 @@ public class Wallet extends BaseTaggableObject
      * @return either the created Transaction or null if there are insufficient coins.
      * coins as spent until commitTx is called on the result.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, value);
@@ -3761,9 +3762,10 @@ public class Wallet extends BaseTaggableObject
      * @return the Transaction that was created
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public Transaction sendCoinsOffline(SendRequest request) throws InsufficientMoneyException {
         lock.lock();
@@ -3797,9 +3799,10 @@ public class Wallet extends BaseTaggableObject
      * @param value How much value to send.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
         SendRequest request = SendRequest.to(to, value);
@@ -3822,9 +3825,10 @@ public class Wallet extends BaseTaggableObject
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request) throws InsufficientMoneyException {
         // Should not be locked here, as we're going to call into the broadcaster and that might want to hold its
@@ -3855,9 +3859,10 @@ public class Wallet extends BaseTaggableObject
      * @throws IllegalStateException if no transaction broadcaster has been configured.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public SendResult sendCoins(SendRequest request) throws InsufficientMoneyException {
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
@@ -3874,9 +3879,10 @@ public class Wallet extends BaseTaggableObject
      * @return The {@link Transaction} that was created or null if there was insufficient balance to send the coins.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public Transaction sendCoins(Peer peer, SendRequest request) throws InsufficientMoneyException {
         Transaction tx = sendCoinsOffline(request);
@@ -3884,16 +3890,27 @@ public class Wallet extends BaseTaggableObject
         return tx;
     }
 
+    /**
+     * Class of exceptions thrown in {@link Wallet#completeTx(SendRequest)}.
+     */
     public static class CompletionException extends RuntimeException {}
+    /**
+     * Thrown if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile).
+     */
     public static class DustySendRequested extends CompletionException {}
+    /**
+     * Thrown if there is more than one OP_RETURN output for the resultant transaction.
+     */
     public static class MultipleOpReturnRequested extends CompletionException {}
-
     /**
      * Thrown when we were trying to empty the wallet, and the total amount of money we were trying to empty after
      * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
      * case.
      */
     public static class CouldNotAdjustDownwards extends CompletionException {}
+    /**
+     * Thrown if the resultant transaction is too big for Bitcoin to process. Try breaking up the amounts of value.
+     */
     public static class ExceededMaxTransactionSize extends CompletionException {}
 
     /**
@@ -3903,9 +3920,10 @@ public class Wallet extends BaseTaggableObject
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws IllegalArgumentException if you try and complete the same SendRequest twice
-     * @throws DustySendRequested if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile)
+     * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
-     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process (try breaking up the amounts of value)
+     * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
+     * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
     public void completeTx(SendRequest req) throws InsufficientMoneyException {
         lock.lock();
