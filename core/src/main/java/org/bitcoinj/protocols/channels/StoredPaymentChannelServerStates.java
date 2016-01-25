@@ -111,9 +111,9 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                 TransactionBroadcaster broadcaster = getBroadcaster();
                 channel.getOrCreateState(wallet, broadcaster).close();
             } catch (InsufficientMoneyException e) {
-                e.printStackTrace();
+                log.error("Exception when closing channel", e);
             } catch (VerificationException e) {
-                e.printStackTrace();
+                log.error("Exception when closing channel", e);
             }
             channel.state = null;
         }

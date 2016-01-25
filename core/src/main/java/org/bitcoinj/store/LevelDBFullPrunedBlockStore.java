@@ -287,8 +287,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             db = factory.open(new File(filename), options);
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can not open DB");
+            throw new RuntimeException("Can not open DB", e);
         }
 
         utxoCache = new LRUCache(openOutCache, 0.75f);
@@ -299,8 +298,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 initFromDb();
             }
         } catch (BlockStoreException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Can not init/load db");
+            throw new RuntimeException("Can not init/load db", e);
         }
     }
 
@@ -411,8 +409,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             db.close();
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new BlockStoreException("Could not close db");
+            throw new BlockStoreException("Could not close db", e);
         }
     }
 
@@ -458,8 +455,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                     // this is really a BUG.
                     txout = getTransactionOutput(hash, index);
                 } catch (BlockStoreException e) {
-                    e.printStackTrace();
-                    throw new UTXOProviderException("block store execption");
+                    throw new UTXOProviderException("block store execption", e);
                 }
                 if (txout != null) {
                     Script sc = txout.getScript();
@@ -474,7 +470,6 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 ro = null;
                 sn.close();
                 sn = null;
-
             } catch (IOException e) {
                 log.error("Error closing snapshot/iterator?", e);
             }
@@ -754,11 +749,11 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 endMethod("getTransactionOutput");
             return txout;
         } catch (DBException e) {
-            e.printStackTrace();
+            log.error("Exception in getTransactionOutput.", e);
             if (instrument)
                 endMethod("getTransactionOutput");
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Exception in getTransactionOutput.", e);
             if (instrument)
                 endMethod("getTransactionOutput");
         }
@@ -777,8 +772,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         try {
             out.serializeToStream(bos);
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new BlockStoreException("problem serialising utxo");
+            throw new BlockStoreException("problem serialising utxo", e);
         }
 
         byte[] key = getTxKey(KeyType.OPENOUT_ALL, out.getHash(), (int) out.getIndex());
@@ -1110,10 +1104,8 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 batch.close();
                 batch = null;
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new BlockStoreException("could not close batch in abort.");
+            throw new BlockStoreException("could not close batch in abort.", e);
         }
     }
 
@@ -1128,7 +1120,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             bloom = new BloomFilter();
             utxoCache = new LRUCache(openOutCache, 0.75f);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Exception in resetStore.", e);
         }
 
         File f = new File(filename);

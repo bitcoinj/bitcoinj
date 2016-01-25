@@ -27,4 +27,8 @@ public class BlockStoreException extends Exception {
     public BlockStoreException(Throwable t) {
         super(t);
     }
+
+    public BlockStoreException(String message, Throwable t) {
+        super(message, t);
+    }
 }

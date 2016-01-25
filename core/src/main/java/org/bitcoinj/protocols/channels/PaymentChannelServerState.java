@@ -253,8 +253,7 @@ public class PaymentChannelServerState {
 
             @Override public void onFailure(Throwable throwable) {
                 // Couldn't broadcast the transaction for some reason.
-                log.error(throwable.toString());
-                throwable.printStackTrace();
+                log.error("Broadcast multisig contract failed", throwable);
                 state = State.ERROR;
                 future.setException(throwable);
             }
@@ -428,8 +427,7 @@ public class PaymentChannelServerState {
             }
 
             @Override public void onFailure(Throwable throwable) {
-                log.error("Failed to settle channel, could not broadcast: {}", throwable.toString());
-                throwable.printStackTrace();
+                log.error("Failed to settle channel, could not broadcast", throwable);
                 state = State.ERROR;
                 closedFuture.setException(throwable);
             }

@@ -698,8 +698,7 @@ public class ECKey implements EncryptableItem {
         } catch (NullPointerException e) {
             // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those signatures
             // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
-            log.error("Caught NPE inside bouncy castle");
-            e.printStackTrace();
+            log.error("Caught NPE inside bouncy castle", e);
             return false;
         }
     }
