@@ -48,9 +48,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
 
-    // Allows for altering transactions after they were broadcast. Tx replacement is currently disabled in the C++
-    // client so this is always the UINT_MAX.
-    // TODO: Document this in more detail and build features that use it.
+    // Allows for altering transactions after they were broadcast.
     private long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
     private TransactionOutPoint outpoint;
@@ -209,8 +207,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the
      * transaction independently of each other. Newer versions of a transaction can replace an existing version that's
      * in nodes memory pools if the existing version is time locked. See the Contracts page on the Bitcoin wiki for
-     * examples of how you can use this feature to build contract protocols. Note that as of 2012 the tx replacement
-     * feature is disabled so sequence numbers are unusable.
+     * examples of how you can use this feature to build contract protocols.
      */
     public long getSequenceNumber() {
         maybeParse();
@@ -221,8 +218,7 @@ public class TransactionInput extends ChildMessage implements Serializable {
      * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the
      * transaction independently of each other. Newer versions of a transaction can replace an existing version that's
      * in nodes memory pools if the existing version is time locked. See the Contracts page on the Bitcoin wiki for
-     * examples of how you can use this feature to build contract protocols. Note that as of 2012 the tx replacement
-     * feature is disabled so sequence numbers are unusable.
+     * examples of how you can use this feature to build contract protocols.
      */
     public void setSequenceNumber(long sequence) {
         unCache();

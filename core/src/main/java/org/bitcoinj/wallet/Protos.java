@@ -4879,7 +4879,7 @@ public final class Protos {
      * <code>optional uint32 sequence = 4;</code>
      *
      * <pre>
-     * Sequence number. Currently unused, but intended for contracts in future.
+     * Sequence number.
      * </pre>
      */
     boolean hasSequence();
@@ -4887,7 +4887,7 @@ public final class Protos {
      * <code>optional uint32 sequence = 4;</code>
      *
      * <pre>
-     * Sequence number. Currently unused, but intended for contracts in future.
+     * Sequence number.
      * </pre>
      */
     int getSequence();
@@ -5101,7 +5101,7 @@ public final class Protos {
      * <code>optional uint32 sequence = 4;</code>
      *
      * <pre>
-     * Sequence number. Currently unused, but intended for contracts in future.
+     * Sequence number.
      * </pre>
      */
     public boolean hasSequence() {
@@ -5111,7 +5111,7 @@ public final class Protos {
      * <code>optional uint32 sequence = 4;</code>
      *
      * <pre>
-     * Sequence number. Currently unused, but intended for contracts in future.
+     * Sequence number.
      * </pre>
      */
     public int getSequence() {
@@ -5617,7 +5617,7 @@ public final class Protos {
        * <code>optional uint32 sequence = 4;</code>
        *
        * <pre>
-       * Sequence number. Currently unused, but intended for contracts in future.
+       * Sequence number.
        * </pre>
        */
       public boolean hasSequence() {
@@ -5627,7 +5627,7 @@ public final class Protos {
        * <code>optional uint32 sequence = 4;</code>
        *
        * <pre>
-       * Sequence number. Currently unused, but intended for contracts in future.
+       * Sequence number.
        * </pre>
        */
       public int getSequence() {
@@ -5637,7 +5637,7 @@ public final class Protos {
        * <code>optional uint32 sequence = 4;</code>
        *
        * <pre>
-       * Sequence number. Currently unused, but intended for contracts in future.
+       * Sequence number.
        * </pre>
        */
       public Builder setSequence(int value) {
@@ -5650,7 +5650,7 @@ public final class Protos {
        * <code>optional uint32 sequence = 4;</code>
        *
        * <pre>
-       * Sequence number. Currently unused, but intended for contracts in future.
+       * Sequence number.
        * </pre>
        */
       public Builder clearSequence() {
