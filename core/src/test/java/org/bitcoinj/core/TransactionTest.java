@@ -294,28 +294,6 @@ public class TransactionTest {
         hex2 = tx.bitcoinSerialize();
         assertArrayEquals(hex, hex2);
         assertEquals("Uncorrect hash", "99e7484eafb6e01622c395c8cae7cb9f8822aab6ba993696b39df8b60b0f4b11", tx.getHash().toString());
-
-        // Check signature witness
-        hex = HEX.decode("0100000000010213206299feb17742091c3cb2ab45faa3aa87922d3c030cafb3f798850a2722bf0000000000feffffffa12f2424b9599898a1d30f06e1ce55eba7fabfeee82ae9356f07375806632ff3010000006b483045022100fcc8cf3014248e1a0d6dcddf03e80f7e591605ad0dbace27d2c0d87274f8cd66022053fcfff64f35f22a14deb657ac57f110084fb07bb917c3b42e7d033c54c7717b012102b9e4dcc33c9cc9cb5f42b96dddb3b475b067f3e21125f79e10c853e5ca8fba31feffffff02206f9800000000001976a9144841b9874d913c430048c78a7b18baebdbea440588ac8096980000000000160014e4873ef43eac347471dd94bc899c51b395a509a502483045022100dd8250f8b5c2035d8feefae530b10862a63030590a851183cb61b3672eb4f26e022057fe7bc8593f05416c185d829b574290fb8706423451ebd0a0ae50c276b87b43012102179862f40b85fa43487500f1d6b13c864b5eb0a83999738db0f7a6b91b2ec64f00db080000");
-        tx = new Transaction(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), hex);
-        Sha256Hash hash = tx.hashForSignatureWitness(0,
-                new Script(HEX.decode("76a914e4873ef43eac347471dd94bc899c51b395a509a588ac")),
-                Coin.valueOf(10000000),
-                Transaction.SigHash.ALL, false);
-        hash = Sha256Hash.wrapReversed(hash.getBytes());
-        assertEquals("Hash does not match", "36c6483c901d82f55a6557b5060653036f3ba96cd8c55ddb0f204c9e1fbd5b15", hash.toString());
-
-        // Check signature witness from https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki sample
-        hex = HEX.decode("0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac11000000");
-        tx = new Transaction(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), hex);
-        hash = tx.hashForSignatureWitness(1,
-                new Script(HEX.decode("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac")),
-                Coin.valueOf(0x23c34600L),
-                Transaction.SigHash.ALL, false);
-        assertEquals("Hash does not match", "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670", hash.toString());
-
-        // Check segnet does not crash
-        SegNetParams.get();
     }
 
     @Test

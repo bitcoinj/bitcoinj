@@ -201,7 +201,7 @@ public class Transaction extends ChildMessage {
         version = 1;
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
-        witnesses = new ArrayList<TransactionWitness>();
+        witnesses = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
     }
