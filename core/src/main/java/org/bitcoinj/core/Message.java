@@ -58,6 +58,7 @@ public abstract class Message {
     protected MessageSerializer serializer;
 
     protected int protocolVersion;
+    protected int transactionOptions = TransactionOptions.ALL;
 
     protected NetworkParameters params;
 
