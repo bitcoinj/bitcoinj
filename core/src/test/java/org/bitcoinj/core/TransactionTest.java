@@ -413,4 +413,28 @@ public class TransactionTest {
         tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         assertTrue(tx.isOptInFullRBF());
     }
+
+    /**
+     * Ensure that hashForSignature() doesn't modify a transaction's data, which could wreak multithreading havoc.
+     */
+    @Test
+    public void testHashForSignatureThreadSafety() {
+        Block genesis = UnitTestParams.get().getGenesisBlock();
+        Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
+                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
+
+        final Transaction tx = block1.getTransactions().get(1);
+        final String txHash = tx.getHashAsString();
+        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], (byte) (Transaction.SigHash.ALL.ordinal() + 1)).toString();
+
+        for (int i = 0; i < 100; i++) {
+            // ensure the transaction object itself was not modified; if it was, the hash will change
+            assertEquals(txHash, tx.getHashAsString());
+            new Thread(){
+                public void run() {
+                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], (byte) (Transaction.SigHash.ALL.ordinal() + 1)).toString());
+                }
+            };
+        }
+    }
 }
