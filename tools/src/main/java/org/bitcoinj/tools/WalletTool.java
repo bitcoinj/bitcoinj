@@ -49,7 +49,6 @@ import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
 
 import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
@@ -78,6 +77,10 @@ import java.util.logging.LogManager;
 
 import static org.bitcoinj.core.Coin.parseCoin;
 import static com.google.common.base.Preconditions.checkNotNull;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -1109,25 +1112,20 @@ public class WalletTool {
                 break;
 
             case WALLET_TX:
-                wallet.addEventListener(new AbstractWalletEventListener() {
-                    private void handleTx(Transaction tx) {
-                        System.out.println(tx.getHashAsString());
-                        latch.countDown();  // Wake up main thread.
-                    }
-
+                wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
                     @Override
                     public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
-                        super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
-                        handleTx(tx);
+                        System.out.println(tx.getHashAsString());
+                        latch.countDown();  // Wake up main thread.
                     }
-
+                });
+                wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
                     @Override
-                    public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance,
-                                            Coin newBalance) {
+                    public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
-                        super.onCoinsSent(wallet, tx, prevBalance, newBalance);
-                        handleTx(tx);
+                        System.out.println(tx.getHashAsString());
+                        latch.countDown();  // Wake up main thread.
                     }
                 });
                 break;
@@ -1151,18 +1149,11 @@ public class WalletTool {
                     latch.countDown();
                     break;
                 }
-                wallet.addEventListener(new AbstractWalletEventListener() {
-                    @Override
-                    public synchronized void onChange() {
-                        super.onChange();
-                        saveWallet(walletFile);
-                        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
-                        if (condition.matchBitcoins(balance)) {
-                            System.out.println(balance.toFriendlyString());
-                            latch.countDown();
-                        }
-                    }
-                });
+                final WalletEventListener listener = new WalletEventListener(latch);
+                wallet.addCoinsReceivedEventListener(listener);
+                wallet.addCoinsSentEventListener(listener);
+                wallet.addChangeEventListener(listener);
+                wallet.addReorganizeEventListener(listener);
                 break;
 
         }
@@ -1473,5 +1464,43 @@ public class WalletTool {
         else
             System.out.println("Clearing creation time.");
         seed.setCreationTimeSeconds(creationTime);
+    }
+
+    static synchronized void onChange(final CountDownLatch latch) {
+        saveWallet(walletFile);
+        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+        if (condition.matchBitcoins(balance)) {
+            System.out.println(balance.toFriendlyString());
+            latch.countDown();
+        }
+    }
+
+    private static class WalletEventListener implements WalletChangeEventListener, WalletCoinsReceivedEventListener,
+            WalletCoinsSentEventListener, WalletReorganizeEventListener {
+        private final CountDownLatch latch;
+
+        private  WalletEventListener(final CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        public void onWalletChanged(Wallet wallet) {
+            onChange(latch);
+        }
+
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            onChange(latch);
+        }
+
+        @Override
+        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            onChange(latch);
+        }
+
+        @Override
+        public void onReorganize(Wallet wallet) {
+            onChange(latch);
+        }
     }
 }

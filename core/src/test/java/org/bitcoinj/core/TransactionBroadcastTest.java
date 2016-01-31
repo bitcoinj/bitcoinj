@@ -18,7 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
 import org.junit.*;
@@ -198,7 +198,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
         final Transaction[] transactions = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 transactions[0] = tx;

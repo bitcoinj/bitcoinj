@@ -65,6 +65,9 @@ public abstract class AbstractWalletEventListener extends AbstractKeyChainEventL
         onChange();
     }
 
+    /**
+     * Default method called on change events.
+     */
     public void onChange() {
     }
 }

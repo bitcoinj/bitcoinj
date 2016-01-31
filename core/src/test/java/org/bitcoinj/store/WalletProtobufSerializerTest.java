@@ -17,7 +17,7 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.Transaction.Purpose;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -212,7 +212,7 @@ public class WalletProtobufSerializerTest {
         BlockChain chain = new BlockChain(params, myWallet, new MemoryBlockStore(params));
 
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
-        myWallet.addEventListener(new AbstractWalletEventListener() {
+        myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
