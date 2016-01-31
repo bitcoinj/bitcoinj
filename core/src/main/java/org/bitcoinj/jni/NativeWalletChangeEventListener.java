@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core.listeners;
+package org.bitcoinj.jni;
 
-import org.bitcoinj.wallet.KeyChainEventListener;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.Wallet;
 
 /**
- * <p>Common interface for wallet changes and transactions.</p>
- * @deprecated Use the superinterfaces directly instead.
+ * An event listener that relays events to a native C++ object. A pointer to that object is stored in
+ * this class using JNI on the native side, thus several instances of this can point to different actual
+ * native implementations.
  */
-@Deprecated
-public interface WalletEventListener extends
-        KeyChainEventListener, WalletChangeEventListener,
-        WalletCoinsReceivedEventListener, WalletCoinsSentEventListener,
-        WalletReorganizeEventListener, ScriptsChangeEventListener,
-        TransactionConfidenceEventListener {
+public class NativeWalletChangeEventListener implements WalletChangeEventListener {
+    public long ptr;
+
+    @Override
+    public native void onWalletChanged(Wallet wallet);
 }

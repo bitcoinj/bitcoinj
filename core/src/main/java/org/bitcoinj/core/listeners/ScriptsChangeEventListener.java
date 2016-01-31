@@ -16,16 +16,20 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.wallet.KeyChainEventListener;
+import org.bitcoinj.core.Wallet;
+import org.bitcoinj.script.Script;
+
+import java.util.List;
 
 /**
- * <p>Common interface for wallet changes and transactions.</p>
- * @deprecated Use the superinterfaces directly instead.
+ * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
+ * or a block chain re-organize. It may be convenient to derive from {@link AbstractWalletEventListener} instead.</p>
  */
-@Deprecated
-public interface WalletEventListener extends
-        KeyChainEventListener, WalletChangeEventListener,
-        WalletCoinsReceivedEventListener, WalletCoinsSentEventListener,
-        WalletReorganizeEventListener, ScriptsChangeEventListener,
-        TransactionConfidenceEventListener {
+public interface ScriptsChangeEventListener {
+    /**
+     * Called whenever a new watched script is added to the wallet.
+     *
+     * @param isAddingScripts will be true if added scripts, false if removed scripts.
+     */
+    void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts);
 }

@@ -17,8 +17,10 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
-import org.bitcoinj.core.listeners.WalletCoinEventListener;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.crypto.*;
@@ -412,15 +414,10 @@ public class WalletTest extends TestWithWallet {
 
     private static void broadcastAndCommit(Wallet wallet, Transaction t) throws Exception {
         final LinkedList<Transaction> txns = Lists.newLinkedList();
-        wallet.addCoinEventListener(new WalletCoinEventListener() {
+        wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
             public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
-            }
-
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Ignore
             }
         });
 
@@ -559,26 +556,27 @@ public class WalletTest extends TestWithWallet {
         final Coin[] bigints = new Coin[4];
         final Transaction[] txn = new Transaction[2];
         final LinkedList<Transaction> confTxns = new LinkedList<Transaction>();
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
                 bigints[0] = prevBalance;
                 bigints[1] = newBalance;
                 txn[0] = tx;
             }
+        });
 
+        wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
             public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                super.onCoinsSent(wallet, tx, prevBalance, newBalance);
                 bigints[2] = prevBalance;
                 bigints[3] = newBalance;
                 txn[1] = tx;
             }
+        });
 
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                super.onTransactionConfidenceChanged(wallet, tx);
                 confTxns.add(tx);
             }
         });
@@ -813,17 +811,18 @@ public class WalletTest extends TestWithWallet {
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
         final int[] eventWalletChanged = new int[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                super.onTransactionConfidenceChanged(wallet, tx);
                 if (tx.getConfidence().getConfidenceType() ==
                         TransactionConfidence.ConfidenceType.DEAD) {
                     eventDead[0] = tx;
                     eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
                 }
             }
+        });
 
+        wallet.addChangeEventListener(new WalletChangeEventListener() {
             @Override
             public void onWalletChanged(Wallet wallet) {
                 eventWalletChanged[0]++;
@@ -1277,7 +1276,7 @@ public class WalletTest extends TestWithWallet {
         final boolean[] flags = new boolean[2];
         final Transaction[] notifiedTx = new Transaction[1];
         final int[] walletChanged = new int[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 // Check we got the expected transaction.
@@ -1289,7 +1288,9 @@ public class WalletTest extends TestWithWallet {
                 flags[1] = tx.isPending();
                 notifiedTx[0] = tx;
             }
+        });
 
+        wallet.addChangeEventListener(new WalletChangeEventListener() {
             @Override
             public void onWalletChanged(Wallet wallet) {
                 walletChanged[0]++;
@@ -1345,17 +1346,12 @@ public class WalletTest extends TestWithWallet {
         // Check that if we receive a pending tx we did not send, it updates our spent flags correctly.
         final Transaction[] txn = new Transaction[1];
         final Coin[] bigints = new Coin[2];
-        wallet.addCoinEventListener(new WalletCoinEventListener() {
+        wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
             public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txn[0] = tx;
                 bigints[0] = prevBalance;
                 bigints[1] = newBalance;
-            }
-
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Do nothing
             }
         });
         // Receive some coins.
@@ -1399,15 +1395,16 @@ public class WalletTest extends TestWithWallet {
         t2.addInput(doubleSpentOut);
 
         final Transaction[] called = new Transaction[2];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 called[0] = tx;
             }
+        });
 
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                super.onTransactionConfidenceChanged(wallet, tx);
                 if (tx.getConfidence().getConfidenceType() ==
                         TransactionConfidence.ConfidenceType.DEAD) {
                     called[0] = tx;
@@ -2951,29 +2948,19 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void exceptionsDoNotBlockAllListeners() throws Exception {
         // Check that if a wallet listener throws an exception, the others still run.
-        wallet.addCoinEventListener(new WalletCoinEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 log.info("onCoinsReceived 1");
                 throw new RuntimeException("barf");
             }
-
-            @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Do nothing
-            }
         });
         final AtomicInteger flag = new AtomicInteger();
-        wallet.addCoinEventListener(new WalletCoinEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 log.info("onCoinsReceived 2");
                 flag.incrementAndGet();
-            }
-
-            @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Do nothing
             }
         });
 
@@ -3419,12 +3406,12 @@ public class WalletTest extends TestWithWallet {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
         wallet = new Wallet(params);
         final List<ECKey> keys = Lists.newLinkedList();
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addKeyChainEventListener(Threading.SAME_THREAD, new KeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> k) {
                 keys.addAll(k);
             }
-        }, Threading.SAME_THREAD);
+        });
         wallet.freshReceiveKey();
         assertEquals(1, keys.size());
     }
