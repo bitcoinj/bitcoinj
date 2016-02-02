@@ -84,7 +84,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.ExcessiveValue.class)
     public void exceedsMaxMoney2() throws Exception {
-        Coin half = NetworkParameters.MAX_MONEY.divide(2).add(Coin.SATOSHI);
+        Coin half = PARAMS.getMaxMoney().divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
         tx.verify();

@@ -269,11 +269,14 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
     public byte[] serializeWalletExtension() {
         lock.lock();
         try {
+            final NetworkParameters params = getNetworkParameters();
             ClientState.StoredClientPaymentChannels.Builder builder = ClientState.StoredClientPaymentChannels.newBuilder();
             for (StoredClientChannel channel : mapChannels.values()) {
                 // First a few asserts to make sure things won't break
-                checkState(channel.valueToMe.signum() >= 0 && channel.valueToMe.compareTo(NetworkParameters.MAX_MONEY) <= 0);
-                checkState(channel.refundFees.signum() >= 0 && channel.refundFees.compareTo(NetworkParameters.MAX_MONEY) <= 0);
+                checkState(channel.valueToMe.signum() >= 0 &&
+                        (!params.hasMaxMoney() || channel.valueToMe.compareTo(params.getMaxMoney()) <= 0));
+                checkState(channel.refundFees.signum() >= 0 &&
+                        (!params.hasMaxMoney() || channel.refundFees.compareTo(params.getMaxMoney()) <= 0));
                 checkNotNull(channel.myKey.getPubKey());
                 checkState(channel.refund.getConfidence().getSource() == TransactionConfidence.Source.SELF);
                 final ClientState.StoredClientPaymentChannel.Builder value = ClientState.StoredClientPaymentChannel.newBuilder()
@@ -336,6 +339,10 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         } finally {
             lock.unlock();
         }
+    }
+
+    private NetworkParameters getNetworkParameters() {
+        return this.containingWallet.getNetworkParameters();
     }
 }
 

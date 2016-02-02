@@ -213,11 +213,13 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public byte[] serializeWalletExtension() {
         lock.lock();
         try {
+            final NetworkParameters params = getNetworkParameters();
             ServerState.StoredServerPaymentChannels.Builder builder = ServerState.StoredServerPaymentChannels.newBuilder();
             for (StoredServerChannel channel : mapChannels.values()) {
                 // First a few asserts to make sure things won't break
                 // TODO: Pull MAX_MONEY from network parameters
-                checkState(channel.bestValueToMe.signum() >= 0 && channel.bestValueToMe.compareTo(NetworkParameters.MAX_MONEY) <= 0);
+                checkState(channel.bestValueToMe.signum() >= 0 && 
+                        (!params.hasMaxMoney() || channel.bestValueToMe.compareTo(params.getMaxMoney()) <= 0));
                 checkState(channel.refundTransactionUnlockTimeSecs > 0);
                 checkNotNull(channel.myKey.getPrivKeyBytes());
                 ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
@@ -270,5 +272,9 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         } finally {
             lock.unlock();
         }
+    }
+
+    private NetworkParameters getNetworkParameters() {
+        return wallet.getNetworkParameters();
     }
 }
