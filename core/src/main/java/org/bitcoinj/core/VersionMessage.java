@@ -25,13 +25,15 @@ import java.net.UnknownHostException;
 import java.util.Locale;
 
 /**
- * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
+ * <p>A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
  * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
  * append to or change the subVer for your own software so other implementations can identify it, and you can look at
- * the subVer field received from other nodes to see what they are running. <p>
+ * the subVer field received from other nodes to see what they are running.</p>
  *
- * After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
- * to ensure it will be used for each new connection.
+ * <p>After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
+ * to ensure it will be used for each new connection.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class VersionMessage extends Message {
 

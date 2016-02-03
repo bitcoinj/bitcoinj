@@ -27,7 +27,9 @@ import java.io.*;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * This message is a reference or pointer to an output of a different transaction.
+ * <p>This message is a reference or pointer to an output of a different transaction.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class TransactionOutPoint extends ChildMessage {
 

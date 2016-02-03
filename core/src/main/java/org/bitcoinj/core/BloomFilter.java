@@ -40,6 +40,8 @@ import static java.lang.Math.*;
  * match transactions that weren't inserted into it, but it will never fail to match transactions that were. This is
  * a useful privacy feature - if you have spare bandwidth the false positive rate can be increased so the remote peer
  * gets a noisy picture of what transactions are relevant to your wallet.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class BloomFilter extends Message {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using

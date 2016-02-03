@@ -38,8 +38,10 @@ import static org.bitcoinj.core.Sha256Hash.*;
  * <a href="http://www.bitcoin.org/bitcoin.pdf">the Bitcoin technical paper</a> for
  * more detail on blocks. <p/>
  *
- * To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
- * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.
+ * <p>To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
+ * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class Block extends Message {
     /**

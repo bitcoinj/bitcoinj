@@ -27,9 +27,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A protocol message that contains a repeated series of block headers, sent in response to the "getheaders" command.
+ * <p>A protocol message that contains a repeated series of block headers, sent in response to the "getheaders" command.
  * This is useful when you want to traverse the chain but know you don't care about the block contents, for example,
- * because you have a freshly created wallet with no keys.
+ * because you have a freshly created wallet with no keys.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class HeadersMessage extends Message {
     private static final Logger log = LoggerFactory.getLogger(HeadersMessage.class);

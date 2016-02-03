@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+/**
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
+ */
 public class UnknownMessage extends EmptyMessage {
 
     private String name;

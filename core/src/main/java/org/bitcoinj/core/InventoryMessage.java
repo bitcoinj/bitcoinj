@@ -23,6 +23,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv
  * containing the hash of what it saw. It'll only transmit the full thing if a peer asks for it with a
  * {@link GetDataMessage}.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class InventoryMessage extends ListMessage {
 

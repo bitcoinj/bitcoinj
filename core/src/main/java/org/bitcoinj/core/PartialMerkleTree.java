@@ -52,6 +52,8 @@ import com.google.common.base.Objects;
  *  - varint     number of bytes of flag bits (1-3 bytes)
  *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (&lt;= 2*N-1 bits)
  * The size constraints follow from this.</pre></p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PartialMerkleTree extends Message {
     // the total number of transactions in the block

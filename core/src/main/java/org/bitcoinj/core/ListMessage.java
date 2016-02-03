@@ -24,7 +24,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.
+ * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public abstract class ListMessage extends Message {
 

@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Parent class for header only messages that don't have a payload.
- * Currently this includes getaddr, verack and special bitcoinj class UnknownMessage.
+ * <p>Parent class for header only messages that don't have a payload.
+ * Currently this includes getaddr, verack and special bitcoinj class UnknownMessage.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public abstract class EmptyMessage extends Message {
 

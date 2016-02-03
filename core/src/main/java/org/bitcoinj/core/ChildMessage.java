@@ -18,8 +18,10 @@ package org.bitcoinj.core;
 import javax.annotation.Nullable;
 
 /**
- * Represents a Message type that can be contained within another Message.  ChildMessages that have a cached
- * backing byte array need to invalidate their parent's caches as well as their own if they are modified.
+ * <p>Represents a Message type that can be contained within another Message.  ChildMessages that have a cached
+ * backing byte array need to invalidate their parent's caches as well as their own if they are modified.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public abstract class ChildMessage extends Message {
 

@@ -23,7 +23,9 @@ import java.io.OutputStream;
 import java.util.Locale;
 
 /**
- * A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc)
+ * <p>A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc).</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class RejectMessage extends Message {
 

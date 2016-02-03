@@ -28,8 +28,10 @@ import java.util.*;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
- * of the Transaction message.
+ * <p>A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
+ * of the Transaction message.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class TransactionOutput extends ChildMessage {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);

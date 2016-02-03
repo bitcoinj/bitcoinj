@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
- * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.
+ * <p>Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
+ * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetBlocksMessage extends Message {
 

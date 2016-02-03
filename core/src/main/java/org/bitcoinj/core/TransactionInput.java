@@ -36,10 +36,12 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * A transfer of coins from one address to another creates a transaction in which the outputs
+ * <p>A transfer of coins from one address to another creates a transaction in which the outputs
  * can be claimed by the recipient in the input of another transaction. You can imagine a
  * transaction as being a module which is wired up to others, the inputs of one have to be wired
- * to the outputs of another. The exceptions are coinbase transactions, which create new coins.
+ * to the outputs of another. The exceptions are coinbase transactions, which create new coins.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class TransactionInput extends ChildMessage {
     /** Magic sequence number that indicates there is no sequence number. */

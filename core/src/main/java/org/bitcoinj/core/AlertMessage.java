@@ -33,7 +33,9 @@ import java.util.Set;
  * that software upgrades could be distributed independently of a hard-coded website, in order to allow everything to
  * be purely peer-to-peer. You don't have to use this of course, and indeed it often makes more sense not to.<p>
  *     
- * Before doing anything with an alert, you should check {@link AlertMessage#isSignatureValid()}.
+ * <p>Before doing anything with an alert, you should check {@link AlertMessage#isSignatureValid()}.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class AlertMessage extends Message {
     private byte[] content;

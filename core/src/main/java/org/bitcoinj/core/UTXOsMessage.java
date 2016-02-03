@@ -38,6 +38,8 @@ import java.util.List;
  * if the data is occasionally wrong. Bear in mind that the answer can be wrong even in the absence of malicious intent
  * just through the nature of querying an ever changing data source: the UTXO set may be updated by a new transaction
  * immediately after this message is returned.</p>
+ * 
+ * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class UTXOsMessage extends Message {
     private long height;
