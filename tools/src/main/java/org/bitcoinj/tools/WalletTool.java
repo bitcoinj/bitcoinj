@@ -48,9 +48,10 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
 
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.core.listeners.PeerDataEventListener;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
@@ -1109,7 +1110,7 @@ public class WalletTool {
                 break;
 
             case WALLET_TX:
-                wallet.addEventListener(new AbstractWalletEventListener() {
+                wallet.addCoinEventListener(new WalletCoinEventListener() {
                     private void handleTx(Transaction tx) {
                         System.out.println(tx.getHashAsString());
                         latch.countDown();  // Wake up main thread.
@@ -1118,7 +1119,6 @@ public class WalletTool {
                     @Override
                     public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
-                        super.onCoinsReceived(wallet, tx, prevBalance, newBalance);
                         handleTx(tx);
                     }
 
@@ -1126,14 +1126,13 @@ public class WalletTool {
                     public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance,
                                             Coin newBalance) {
                         // Runs in a peer thread.
-                        super.onCoinsSent(wallet, tx, prevBalance, newBalance);
                         handleTx(tx);
                     }
                 });
                 break;
 
             case BLOCK:
-                peers.addDataEventListener(new AbstractPeerDataEventListener() {
+                peers.addDataEventListener(new PeerDataEventListener() {
                     @Override
                     public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
                         // Check if we already ran. This can happen if a block being received triggers download of more
@@ -1141,6 +1140,21 @@ public class WalletTool {
                         if (latch.getCount() == 0) return;
                         System.out.println(block.getHashAsString());
                         latch.countDown();
+                    }
+
+                    @Override
+                    public void onChainDownloadStarted(Peer peer, int blocksLeft) {
+                    }
+
+                    @Override
+                    public Message onPreMessageReceived(Peer peer, Message m) {
+                        return null;
+                    }
+
+                    @Override
+                    @Nullable
+                    public List<Message> getData(Peer peer, GetDataMessage m) {
+                        return null;
                     }
                 });
                 break;
@@ -1151,10 +1165,9 @@ public class WalletTool {
                     latch.countDown();
                     break;
                 }
-                wallet.addEventListener(new AbstractWalletEventListener() {
+                wallet.addChangeEventListener(new WalletChangeEventListener() {
                     @Override
-                    public synchronized void onChange() {
-                        super.onChange();
+                    public synchronized void onWalletChanged(Wallet wallet) {
                         saveWallet(walletFile);
                         Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
                         if (condition.matchBitcoins(balance)) {
@@ -1162,9 +1175,24 @@ public class WalletTool {
                             latch.countDown();
                         }
                     }
+
+                    @Override
+                    public void onKeysAdded(List<ECKey> keys) {
+                    }
+
+                    @Override
+                    public void onReorganize(Wallet wallet) {
+                    }
+
+                    @Override
+                    public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+                    }
+
+                    @Override
+                    public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+                    }
                 });
                 break;
-
         }
         if (!peers.isRunning())
             peers.startAsync();

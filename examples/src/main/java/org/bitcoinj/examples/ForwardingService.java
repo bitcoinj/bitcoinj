@@ -17,7 +17,7 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.WalletCoinEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
@@ -79,7 +79,7 @@ public class ForwardingService {
         kit.awaitRunning();
 
         // We want to know when we receive money.
-        kit.wallet().addEventListener(new AbstractWalletEventListener() {
+        kit.wallet().addCoinEventListener(new WalletCoinEventListener() {
             @Override
             public void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
@@ -106,6 +106,10 @@ public class ForwardingService {
                         throw new RuntimeException(t);
                     }
                 });
+            }
+
+            @Override
+            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             }
         });
 

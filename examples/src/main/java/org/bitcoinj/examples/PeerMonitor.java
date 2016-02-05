@@ -17,7 +17,7 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.PeerConnectionEventListener;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
@@ -67,7 +67,7 @@ public class PeerMonitor {
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        peerGroup.addConnectionEventListener(new AbstractPeerEventListener() {
+        peerGroup.addConnectionEventListener(new PeerConnectionEventListener() {
             @Override
             public void onPeerConnected(final Peer peer, int peerCount) {
                 refreshUI();
@@ -80,6 +80,10 @@ public class PeerMonitor {
                 synchronized (reverseDnsLookups) {
                     reverseDnsLookups.remove(peer);
                 }
+            }
+
+            @Override
+            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
             }
         });
     }
