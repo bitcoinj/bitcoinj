@@ -527,7 +527,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
         Transaction tx = FakeTxBuilder.createFakeTx(params, COIN, address);
         final Transaction[] result = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 result[0] = tx;
@@ -644,7 +644,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 vtx[0] = tx;
@@ -696,7 +696,7 @@ public class PeerTest extends TestWithNetworkConnections {
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 vtx[0] = tx;
@@ -775,7 +775,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void exceptionListener() throws Exception {
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 throw new NullPointerException("boo!");

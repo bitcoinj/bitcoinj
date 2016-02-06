@@ -17,7 +17,10 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
+import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -76,11 +79,13 @@ public class ChainSplitTest {
         // (receiving coins). Checking that we understand reversed spends is in testForking2.
         final AtomicBoolean reorgHappened = new AtomicBoolean();
         final AtomicInteger walletChanged = new AtomicInteger();
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addReorganizeEventListener(new WalletReorganizeEventListener() {
             @Override
             public void onReorganize(Wallet wallet) {
                 reorgHappened.set(true);
             }
+        });
+        wallet.addChangeEventListener(new WalletChangeEventListener() {
 
             @Override
             public void onWalletChanged(Wallet wallet) {
@@ -297,10 +302,9 @@ public class ChainSplitTest {
         // double spend on the new best chain.
 
         final boolean[] eventCalled = new boolean[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                super.onTransactionConfidenceChanged(wallet, tx);
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD)
                     eventCalled[0] = true;
             }
@@ -338,7 +342,7 @@ public class ChainSplitTest {
         // double spend on the new best chain.
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD) {
@@ -400,7 +404,7 @@ public class ChainSplitTest {
         // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
         // maintained correctly.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
@@ -558,12 +562,12 @@ public class ChainSplitTest {
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
-        }, Threading.SAME_THREAD);
+        });
 
         Block b1 = unitTestParams.getGenesisBlock().createNextBlock(someOtherGuy);
         final ECKey coinsTo2 = wallet.freshReceiveKey();

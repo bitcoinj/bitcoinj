@@ -43,6 +43,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 import static com.google.common.base.Preconditions.*;
+import org.bitcoinj.wallet.KeyChainEventListener;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
@@ -166,15 +167,19 @@ public class PeerGroup implements TransactionBroadcaster {
     };
 
     private int minBroadcastConnections = 0;
-    private final WalletEventListener walletEventListener = new AbstractWalletEventListener() {
+    private final ScriptsChangeEventListener walletScriptEventListener = new ScriptsChangeEventListener() {
         @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
         }
+    };
 
+    private final KeyChainEventListener walletKeyEventListener = new KeyChainEventListener() {
         @Override public void onKeysAdded(List<ECKey> keys) {
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
         }
+    };
 
+    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = new WalletCoinsReceivedEventListener() {
         @Override
         public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
@@ -1084,7 +1089,9 @@ public class PeerGroup implements TransactionBroadcaster {
             checkState(!wallets.contains(wallet));
             wallets.add(wallet);
             wallet.setTransactionBroadcaster(this);
-            wallet.addEventListener(walletEventListener, Threading.SAME_THREAD);
+            wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, walletCoinsReceivedEventListener);
+            wallet.addKeyChainEventListener(Threading.SAME_THREAD, walletKeyEventListener);
+            wallet.addScriptChangeEventListener(Threading.SAME_THREAD, walletScriptEventListener);
             addPeerFilterProvider(wallet);
             for (Peer peer : peers) {
                 peer.addWallet(wallet);
@@ -1154,7 +1161,9 @@ public class PeerGroup implements TransactionBroadcaster {
     public void removeWallet(Wallet wallet) {
         wallets.remove(checkNotNull(wallet));
         peerFilterProviders.remove(wallet);
-        wallet.removeEventListener(walletEventListener);
+        wallet.removeCoinsReceivedEventListener(walletCoinsReceivedEventListener);
+        wallet.removeKeyChainEventListener(walletKeyEventListener);
+        wallet.removeScriptChangeEventListener(walletScriptEventListener);
         wallet.setTransactionBroadcaster(null);
         for (Peer peer : peers) {
             peer.removeWallet(wallet);

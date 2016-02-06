@@ -25,12 +25,7 @@ import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoin.protocols.payments.Protos.*;
-import org.bitcoinj.core.listeners.NewBestBlockListener;
-import org.bitcoinj.core.listeners.ReorganizeListener;
-import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
-import org.bitcoinj.core.listeners.WalletEventListener;
-import org.bitcoinj.core.listeners.WalletChangeEventListener;
-import org.bitcoinj.core.listeners.WalletCoinEventListener;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
@@ -160,8 +155,18 @@ public class Wallet extends BaseTaggableObject
     private int lastBlockSeenHeight;
     private long lastBlockSeenTimeSecs;
 
-    private CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>> changeListeners;
-    private CopyOnWriteArrayList<ListenerRegistration<WalletCoinEventListener>> coinListeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>> changeListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsReceivedEventListener>> coinsReceivedListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<WalletCoinsReceivedEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsSentEventListener>> coinsSentListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<WalletCoinsSentEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<WalletReorganizeEventListener>> reorganizeListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<WalletReorganizeEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<ScriptsChangeEventListener>> scriptChangeListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<ScriptsChangeEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<TransactionConfidenceEventListener>> transactionConfidenceListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<TransactionConfidenceEventListener>>();
 
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
     // as a convenience to API users so they don't have to register on every transaction themselves.
@@ -281,8 +286,6 @@ public class Wallet extends BaseTaggableObject
         pending = new HashMap<Sha256Hash, Transaction>();
         dead = new HashMap<Sha256Hash, Transaction>();
         transactions = new HashMap<Sha256Hash, Transaction>();
-        changeListeners = new CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>>();
-        coinListeners = new CopyOnWriteArrayList<ListenerRegistration<WalletCoinEventListener>>();
         extensions = new HashMap<String, WalletExtension>();
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
@@ -2435,7 +2438,24 @@ public class Wallet extends BaseTaggableObject
      */
     public void addEventListener(WalletEventListener listener) {
         addChangeEventListener(Threading.USER_THREAD, listener);
-        addCoinEventListener(Threading.USER_THREAD, listener);
+        addCoinsReceivedEventListener(Threading.USER_THREAD, listener);
+        addCoinsSentEventListener(Threading.USER_THREAD, listener);
+        addKeyChainEventListener(Threading.USER_THREAD, listener);
+        addReorganizeEventListener(Threading.USER_THREAD, listener);
+        addScriptChangeEventListener(Threading.USER_THREAD, listener);
+        addTransactionConfidenceEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Use the more specific listener methods instead */
+    @Deprecated
+    public void addEventListener(WalletEventListener listener, Executor executor) {
+        addCoinsReceivedEventListener(executor, listener);
+        addCoinsSentEventListener(executor, listener);
+        addChangeEventListener(executor, listener);
+        addKeyChainEventListener(executor, listener);
+        addReorganizeEventListener(executor, listener);
+        addScriptChangeEventListener(executor, listener);
+        addTransactionConfidenceEventListener(executor, listener);
     }
 
     /**
@@ -2448,45 +2468,127 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Adds an event listener object. Methods on this object are called when something interesting happens,
-     * like receiving money. Runs the listener methods in the user thread.
-     */
-    public void addCoinEventListener(WalletCoinEventListener listener) {
-        addCoinEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. The listener is executed by the given executor.
      */
     public void addChangeEventListener(Executor executor, WalletChangeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
         changeListeners.add(new ListenerRegistration<WalletChangeEventListener>(listener, executor));
+    }
+
+    /**
+     * Adds an event listener object called when coins are received.
+     * Runs the listener methods in the user thread.
+     */
+    public void addCoinsReceivedEventListener(WalletCoinsReceivedEventListener listener) {
+        addCoinsReceivedEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /**
+     * Adds an event listener object called when coins are received.
+     * The listener is executed by the given executor.
+     */
+    public void addCoinsReceivedEventListener(Executor executor, WalletCoinsReceivedEventListener listener) {
+        // This is thread safe, so we don't need to take the lock.
+        coinsReceivedListeners.add(new ListenerRegistration<WalletCoinsReceivedEventListener>(listener, executor));
+    }
+
+    /**
+     * Adds an event listener object called when coins are sent.
+     * Runs the listener methods in the user thread.
+     */
+    public void addCoinsSentEventListener(WalletCoinsSentEventListener listener) {
+        addCoinsSentEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /**
+     * Adds an event listener object called when coins are sent.
+     * The listener is executed by the given executor.
+     */
+    public void addCoinsSentEventListener(Executor executor, WalletCoinsSentEventListener listener) {
+        // This is thread safe, so we don't need to take the lock.
+        coinsSentListeners.add(new ListenerRegistration<WalletCoinsSentEventListener>(listener, executor));
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when keys are
+     * added. The listener is executed in the user thread.
+     */
+    public void addKeyChainEventListener(KeyChainEventListener listener) {
+        keyChainGroup.addEventListener(listener, Threading.USER_THREAD);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when keys are
+     * added. The listener is executed by the given executor.
+     */
+    public void addKeyChainEventListener(Executor executor, KeyChainEventListener listener) {
         keyChainGroup.addEventListener(listener, executor);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when something interesting happens,
+     * like receiving money. Runs the listener methods in the user thread.
+     */
+    public void addReorganizeEventListener(WalletReorganizeEventListener listener) {
+        addReorganizeEventListener(Threading.USER_THREAD, listener);
     }
 
     /**
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. The listener is executed by the given executor.
      */
-    public void addCoinEventListener(Executor executor, WalletCoinEventListener listener) {
+    public void addReorganizeEventListener(Executor executor, WalletReorganizeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        coinListeners.add(new ListenerRegistration<WalletCoinEventListener>(listener, executor));
+        reorganizeListeners.add(new ListenerRegistration<WalletReorganizeEventListener>(listener, executor));
     }
 
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    public void addEventListener(WalletEventListener listener, Executor executor) {
-        addCoinEventListener(executor, listener);
-        addChangeEventListener(executor, listener);
+    /**
+     * Adds an event listener object. Methods on this object are called when scripts
+     * watched by this wallet change. Runs the listener methods in the user thread.
+     */
+    public void addScriptsChangeEventListener(ScriptsChangeEventListener listener) {
+        addScriptChangeEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when scripts
+     * watched by this wallet change. The listener is executed by the given executor.
+     */
+    public void addScriptChangeEventListener(Executor executor, ScriptsChangeEventListener listener) {
+        // This is thread safe, so we don't need to take the lock.
+        scriptChangeListeners.add(new ListenerRegistration<ScriptsChangeEventListener>(listener, executor));
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when confidence
+     * of a transaction changes. Runs the listener methods in the user thread.
+     */
+    public void addTransactionConfidenceEventListener(TransactionConfidenceEventListener listener) {
+        addTransactionConfidenceEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when confidence
+     * of a transaction changes. The listener is executed by the given executor.
+     */
+    public void addTransactionConfidenceEventListener(Executor executor, TransactionConfidenceEventListener listener) {
+        // This is thread safe, so we don't need to take the lock.
+        transactionConfidenceListeners.add(new ListenerRegistration<TransactionConfidenceEventListener>(listener, executor));
     }
 
     /**
      * Removes the given event listener object. Returns true if the listener was removed, false if that listener
      * was never added.
+     * @deprecated use the fine-grain event listeners instead.
      */
+    @Deprecated
     public boolean removeEventListener(WalletEventListener listener) {
         return removeChangeEventListener(listener) ||
-            removeCoinEventListener(listener);
+            removeCoinsReceivedEventListener(listener) ||
+            removeCoinsSentEventListener(listener) ||
+            removeKeyChainEventListener(listener) ||
+            removeReorganizeEventListener(listener) ||
+            removeTransactionConfidenceEventListener(listener);
     }
 
     /**
@@ -2494,7 +2596,6 @@ public class Wallet extends BaseTaggableObject
      * was never added.
      */
     public boolean removeChangeEventListener(WalletChangeEventListener listener) {
-        keyChainGroup.removeEventListener(listener);
         return ListenerRegistration.removeFromList(listener, changeListeners);
     }
 
@@ -2502,13 +2603,53 @@ public class Wallet extends BaseTaggableObject
      * Removes the given event listener object. Returns true if the listener was removed, false if that listener
      * was never added.
      */
-    public boolean removeCoinEventListener(WalletCoinEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, coinListeners);
+    public boolean removeCoinsReceivedEventListener(WalletCoinsReceivedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, coinsReceivedListeners);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
+     */
+    public boolean removeCoinsSentEventListener(WalletCoinsSentEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, coinsSentListeners);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
+     */
+    public boolean removeKeyChainEventListener(KeyChainEventListener listener) {
+        return keyChainGroup.removeEventListener(listener);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
+     */
+    public boolean removeReorganizeEventListener(WalletReorganizeEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, reorganizeListeners);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
+     */
+    public boolean removeScriptChangeEventListener(ScriptsChangeEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, scriptChangeListeners);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
+     * was never added.
+     */
+    public boolean removeTransactionConfidenceEventListener(TransactionConfidenceEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, transactionConfidenceListeners);
     }
 
     private void queueOnTransactionConfidenceChanged(final Transaction tx) {
         checkState(lock.isHeldByCurrentThread());
-        for (final ListenerRegistration<WalletChangeEventListener> registration : changeListeners) {
+        for (final ListenerRegistration<TransactionConfidenceEventListener> registration : transactionConfidenceListeners) {
             if (registration.executor == Threading.SAME_THREAD) {
                 registration.listener.onTransactionConfidenceChanged(this, tx);
             } else {
@@ -2540,7 +2681,7 @@ public class Wallet extends BaseTaggableObject
 
     protected void queueOnCoinsReceived(final Transaction tx, final Coin balance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
-        for (final ListenerRegistration<WalletCoinEventListener> registration : coinListeners) {
+        for (final ListenerRegistration<WalletCoinsReceivedEventListener> registration : coinsReceivedListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -2552,7 +2693,7 @@ public class Wallet extends BaseTaggableObject
 
     protected void queueOnCoinsSent(final Transaction tx, final Coin prevBalance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
-        for (final ListenerRegistration<WalletCoinEventListener> registration : coinListeners) {
+        for (final ListenerRegistration<WalletCoinsSentEventListener> registration : coinsSentListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -2565,7 +2706,7 @@ public class Wallet extends BaseTaggableObject
     protected void queueOnReorganize() {
         checkState(lock.isHeldByCurrentThread());
         checkState(insideReorg);
-        for (final ListenerRegistration<WalletChangeEventListener> registration : changeListeners) {
+        for (final ListenerRegistration<WalletReorganizeEventListener> registration : reorganizeListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -2576,7 +2717,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     protected void queueOnScriptsChanged(final List<Script> scripts, final boolean isAddingScripts) {
-        for (final ListenerRegistration<WalletChangeEventListener> registration : changeListeners) {
+        for (final ListenerRegistration<ScriptsChangeEventListener> registration : scriptChangeListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {

@@ -16,7 +16,6 @@
 
 package org.bitcoinj.protocols.channels;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -37,6 +36,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * <p>A payment channel is a method of sending money to someone such that the amount of money you send can be adjusted
@@ -173,7 +173,7 @@ public class PaymentChannelClientState {
         if (storedChannel != null && storedChannel.close != null) {
             watchCloseConfirmations();
         }
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 synchronized (PaymentChannelClientState.this) {
@@ -189,7 +189,7 @@ public class PaymentChannelClientState {
                     }
                 }
             }
-        }, Threading.SAME_THREAD);
+        });
     }
 
     private void watchCloseConfirmations() {

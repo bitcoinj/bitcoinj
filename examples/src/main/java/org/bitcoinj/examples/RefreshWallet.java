@@ -17,13 +17,13 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractWalletEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 
 import java.io.File;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * RefreshWallet loads a wallet, then processes the block chain to update the transaction pools within it.
@@ -42,7 +42,7 @@ public class RefreshWallet {
         final PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.startAsync();
 
-        wallet.addEventListener(new AbstractWalletEventListener() {
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public synchronized void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 System.out.println("\nReceived tx " + tx.getHashAsString());
