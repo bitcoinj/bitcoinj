@@ -315,7 +315,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         // Round-trip a ping so that we never see the response verack if we attach too quick
         pingAndWait(writeTarget);
-        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
+        peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, new PreMessageReceivedEventListener() {
             @Override
             public synchronized Message onPreMessageReceived(Peer p, Message m) {
                 if (p != peer)
@@ -331,7 +331,8 @@ public class PeerTest extends TestWithNetworkConnections {
                     fail.set(true);
                 return m;
             }
-
+        });
+        peer.addBlocksDownloadedEventListener(Threading.SAME_THREAD, new BlocksDownloadedEventListener() {
             @Override
             public synchronized void onBlocksDownloaded(Peer p, Block block, @Nullable FilteredBlock filteredBlock,  int blocksLeft) {
                 int newValue = newBlockMessagesReceived.incrementAndGet();
@@ -369,7 +370,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         connect();
         fail.set(true);
-        peer.addDataEventListener(Threading.SAME_THREAD, new AbstractPeerDataEventListener() {
+        peer.addChainDownloadStartedEventListener(Threading.SAME_THREAD, new ChainDownloadStartedEventListener() {
             @Override
             public void onChainDownloadStarted(Peer p, int blocksLeft) {
                 if (p == peer && blocksLeft == 108)
