@@ -235,6 +235,7 @@ public class PaymentChannelServerState {
             throw e;
         }
         log.info("Broadcasting multisig contract: {}", multisigContract);
+        wallet.addWatchedScripts(ImmutableList.of(multisigContract.getOutput(0).getScriptPubKey()));
         state = State.WAITING_FOR_MULTISIG_ACCEPTANCE;
         final SettableFuture<PaymentChannelServerState> future = SettableFuture.create();
         Futures.addCallback(broadcaster.broadcastTransaction(multisigContract).future(), new FutureCallback<Transaction>() {
