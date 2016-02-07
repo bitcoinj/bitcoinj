@@ -65,6 +65,8 @@ public class TransactionConfidence {
      * to us, so only peers we explicitly connected to should go here.
      */
     private CopyOnWriteArrayList<PeerAddress> broadcastBy;
+    /** The time the transaction was last announced to us. */
+    private Date lastBroadcastedAt;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
     // Lazily created listeners array.
@@ -282,9 +284,10 @@ public class TransactionConfidence {
      * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}. Does not run listeners.
      *
      * @param address IP address of the peer, used as a proxy for identity.
-     * @return true if marked, false if this address was already seen (no-op)
+     * @return true if marked, false if this address was already seen
      */
     public boolean markBroadcastBy(PeerAddress address) {
+        lastBroadcastedAt = Utils.now();
         if (!broadcastBy.addIfAbsent(address))
             return false;  // Duplicate.
         synchronized (this) {
@@ -313,6 +316,16 @@ public class TransactionConfidence {
     /** Returns true if the given address has been seen via markBroadcastBy() */
     public boolean wasBroadcastBy(PeerAddress address) {
         return broadcastBy.contains(address);
+    }
+
+    /** Return the time the transaction was last announced to us. */
+    public Date getLastBroadcastedAt() {
+        return lastBroadcastedAt;
+    }
+
+    /** Set the time the transaction was last announced to us. */
+    public void setLastBroadcastedAt(Date lastBroadcastedAt) {
+        this.lastBroadcastedAt = lastBroadcastedAt;
     }
 
     @Override
@@ -381,6 +394,7 @@ public class TransactionConfidence {
     public void clearBroadcastBy() {
         checkState(getConfidenceType() != ConfidenceType.PENDING);
         broadcastBy.clear();
+        lastBroadcastedAt = null;
     }
 
     /**
@@ -413,6 +427,7 @@ public class TransactionConfidence {
     public TransactionConfidence duplicate() {
         TransactionConfidence c = new TransactionConfidence(hash);
         c.broadcastBy.addAll(broadcastBy);
+        c.lastBroadcastedAt = lastBroadcastedAt;
         synchronized (this) {
             c.confidenceType = confidenceType;
             c.overridingTransaction = overridingTransaction;

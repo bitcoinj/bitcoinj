@@ -366,6 +366,9 @@ public class WalletProtobufSerializer {
                     .build();
             confidenceBuilder.addBroadcastBy(proto);
         }
+        Date lastBroadcastedAt = confidence.getLastBroadcastedAt();
+        if (lastBroadcastedAt != null)
+            confidenceBuilder.setLastBroadcastedAt(lastBroadcastedAt.getTime());
         txBuilder.setConfidence(confidenceBuilder);
     }
 
@@ -779,6 +782,8 @@ public class WalletProtobufSerializer {
             address.setServices(BigInteger.valueOf(proto.getServices()));
             confidence.markBroadcastBy(address);
         }
+        if (confidenceProto.hasLastBroadcastedAt())
+            confidence.setLastBroadcastedAt(new Date(confidenceProto.getLastBroadcastedAt()));
         switch (confidenceProto.getSource()) {
             case SOURCE_SELF: confidence.setSource(TransactionConfidence.Source.SELF); break;
             case SOURCE_NETWORK: confidence.setSource(TransactionConfidence.Source.NETWORK); break;

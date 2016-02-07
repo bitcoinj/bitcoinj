@@ -201,6 +201,9 @@ message TransactionConfidence {
 
   repeated PeerAddress broadcast_by = 6;
 
+  // Millis since epoch the transaction was last announced to us.
+  optional int64 last_broadcasted_at = 8;
+
   // Where did we get this transaction from? Knowing the source may help us to risk analyze pending transactions.
   enum Source {
     SOURCE_UNKNOWN = 0;  // We don't know where it came from, or this is a wallet from the future.
@@ -212,6 +215,8 @@ message TransactionConfidence {
     // - from a wallet that uses trusted computing/secure hardware that won't create double spends
   }
   optional Source source = 7;
+
+  // Next tag: 9
 }
 
 /** A bitcoin transaction */

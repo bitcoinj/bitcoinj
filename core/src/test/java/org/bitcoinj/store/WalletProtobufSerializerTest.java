@@ -114,6 +114,7 @@ public class WalletProtobufSerializerTest {
         Transaction t1copy = wallet1.getTransaction(t1.getHash());
         assertArrayEquals(t1.bitcoinSerialize(), t1copy.bitcoinSerialize());
         assertEquals(2, t1copy.getConfidence().numBroadcastPeers());
+        assertNotNull(t1copy.getConfidence().getLastBroadcastedAt());
         assertEquals(TransactionConfidence.Source.NETWORK, t1copy.getConfidence().getSource());
         
         Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(myWallet);

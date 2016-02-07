@@ -367,7 +367,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Transaction tx = FakeTxBuilder.createFakeTx(params, valueOf(20, 0), address);
         InventoryMessage inv = new InventoryMessage(params);
         inv.addTransaction(tx);
-        
+
+        assertEquals(0, tx.getConfidence().numBroadcastPeers());
+        assertNull(tx.getConfidence().getLastBroadcastedAt());
+
         // Peer 2 advertises the tx but does not receive it yet.
         inbound(p2, inv);
         assertTrue(outbound(p2) instanceof GetDataMessage);
@@ -390,6 +393,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p1).getAddress()));
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
+        assertNotNull(tx.getConfidence().getLastBroadcastedAt());
 
         tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
             @Override
