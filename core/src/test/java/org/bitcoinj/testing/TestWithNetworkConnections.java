@@ -18,8 +18,6 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.params.UnitTestParams;
@@ -41,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
@@ -208,7 +207,7 @@ public class TestWithNetworkConnections {
     private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final SettableFuture<Void> pongReceivedFuture = SettableFuture.create();
-        PeerDataEventListener listener = new AbstractPeerDataEventListener() {
+        PreMessageReceivedEventListener listener = new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer p, Message m) {
                 if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
@@ -218,10 +217,10 @@ public class TestWithNetworkConnections {
                 return m;
             }
         };
-        p.peer.addDataEventListener(Threading.SAME_THREAD, listener);
+        p.peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, listener);
         inbound(p, new Pong(nonce));
         pongReceivedFuture.get();
-        p.peer.removeDataEventListener(listener);
+        p.peer.removePreMessageReceivedEventListener(listener);
     }
 
     protected void pingAndWait(final InboundMessageQueuer p) throws Exception {

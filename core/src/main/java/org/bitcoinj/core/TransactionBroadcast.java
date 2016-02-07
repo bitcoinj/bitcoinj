@@ -19,8 +19,6 @@ package org.bitcoinj.core;
 import com.google.common.annotations.*;
 import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
-import org.bitcoinj.core.listeners.PeerDataEventListener;
 import org.bitcoinj.utils.*;
 import org.slf4j.*;
 
@@ -29,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
@@ -88,7 +87,7 @@ public class TransactionBroadcast {
         this.minConnections = minConnections;
     }
 
-    private PeerDataEventListener rejectionListener = new AbstractPeerDataEventListener() {
+    private PreMessageReceivedEventListener rejectionListener = new PreMessageReceivedEventListener() {
         @Override
         public Message onPreMessageReceived(Peer peer, Message m) {
             if (m instanceof RejectMessage) {
@@ -100,7 +99,7 @@ public class TransactionBroadcast {
                     if (size > threshold) {
                         log.warn("Threshold for considering broadcast rejected has been reached ({}/{})", size, threshold);
                         future.setException(new RejectedTransactionException(tx, rejectMessage));
-                        peerGroup.removeDataEventListener(this);
+                        peerGroup.removePreMessageReceivedEventListener(this);
                     }
                 }
             }
@@ -109,7 +108,7 @@ public class TransactionBroadcast {
     };
 
     public ListenableFuture<Transaction> broadcast() {
-        peerGroup.addDataEventListener(Threading.SAME_THREAD, rejectionListener);
+        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         peerGroup.waitForPeers(minConnections).addListener(new EnoughAvailablePeers(), Threading.SAME_THREAD);
         return future;
@@ -161,7 +160,7 @@ public class TransactionBroadcast {
             // So we just have to assume we're done, at that point. This happens when we're not given
             // any peer discovery source and the user just calls connectTo() once.
             if (minConnections == 1) {
-                peerGroup.removeDataEventListener(rejectionListener);
+                peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 future.set(tx);
             }
         }
@@ -197,7 +196,7 @@ public class TransactionBroadcast {
                 // We're done! It's important that the PeerGroup lock is not held (by this thread) at this
                 // point to avoid triggering inversions when the Future completes.
                 log.info("broadcastTransaction: {} complete", tx.getHash());
-                peerGroup.removeDataEventListener(rejectionListener);
+                peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 conf.removeEventListener(this);
                 future.set(tx);  // RE-ENTRANCY POINT
             }

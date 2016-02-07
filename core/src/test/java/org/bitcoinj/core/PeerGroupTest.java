@@ -47,7 +47,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private AbstractPeerEventListener listener;
+    private PeerConnectionEventListener listener;
+    private PreMessageReceivedEventListener preMessageReceivedListener;
     private Map<Peer, AtomicInteger> peerToMessageCount;
 
     @Parameterized.Parameters
@@ -67,7 +68,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerToMessageCount = new HashMap<Peer, AtomicInteger>();
         connectedPeers = new LinkedBlockingQueue<Peer>();
         disconnectedPeers = new LinkedBlockingQueue<Peer>();
-        listener = new AbstractPeerEventListener() {
+        listener = new PeerConnectionEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 connectedPeers.add(peer);
@@ -78,6 +79,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 disconnectedPeers.add(peer);
             }
 
+            @Override
+            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
+                // Ignore
+            }
+        };
+
+        preMessageReceivedListener = new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer peer, Message m) {
                 AtomicInteger messageCount = peerToMessageCount.get(peer);
@@ -102,7 +110,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void listener() throws Exception {
         peerGroup.start();
         peerGroup.addConnectionEventListener(listener);
-        peerGroup.addDataEventListener(listener);
+        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -124,8 +132,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         assertTrue(peerGroup.removeConnectionEventListener(listener));
         assertFalse(peerGroup.removeConnectionEventListener(listener));
-        assertTrue(peerGroup.removeDataEventListener(listener));
-        assertFalse(peerGroup.removeDataEventListener(listener));
+        assertTrue(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
+        assertFalse(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
     }
 
     @Test
@@ -532,7 +540,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 new InetSocketAddress("localhost", 2002)
         );
         peerGroup.addConnectionEventListener(listener);
-        peerGroup.addDataEventListener(listener);
+        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
             public InetSocketAddress[] getPeers(long services, long unused, TimeUnit unused2) throws PeerDiscoveryException {

@@ -48,8 +48,12 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
 
-import org.bitcoinj.core.listeners.AbstractPeerDataEventListener;
+import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.core.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
@@ -77,10 +81,6 @@ import java.util.logging.LogManager;
 
 import static org.bitcoinj.core.Coin.parseCoin;
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.bitcoinj.core.listeners.WalletChangeEventListener;
-import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.core.listeners.WalletReorganizeEventListener;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -1131,7 +1131,7 @@ public class WalletTool {
                 break;
 
             case BLOCK:
-                peers.addDataEventListener(new AbstractPeerDataEventListener() {
+                peers.addBlocksDownloadedEventListener(new BlocksDownloadedEventListener() {
                     @Override
                     public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
                         // Check if we already ran. This can happen if a block being received triggers download of more
