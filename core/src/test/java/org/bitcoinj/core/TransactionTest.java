@@ -313,6 +313,9 @@ public class TransactionTest {
                 Coin.valueOf(0x23c34600L),
                 Transaction.SigHash.ALL, false);
         assertEquals("Hash does not match", "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670", hash.toString());
+
+        // Check segnet does not crash
+        SegNetParams.get();
     }
 
     @Test
