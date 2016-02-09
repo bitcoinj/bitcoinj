@@ -83,8 +83,8 @@ public class Peer extends PeerSocketHandler {
     // The version data to announce to the other side of the connections we make: useful for setting our "user agent"
     // equivalent and other things.
     private final VersionMessage versionMessage;
-    // Switch for enabling download of pending transaction dependencies.
-    private volatile boolean vDownloadTxDependencies;
+    // Maximum depth up to which pending transaction dependencies are downloaded, or 0 for disabled.
+    private volatile int vDownloadTxDependencyDepth;
     // How many block messages the peer has announced to us. Peers only announce blocks that attach to their best chain
     // so we can use this to calculate the height of the peers chain, by adding it to the initial height in the version
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
@@ -191,7 +191,7 @@ public class Peer extends PeerSocketHandler {
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
                 @Nullable AbstractBlockChain chain) {
-        this(params, ver, remoteAddress, chain, true);
+        this(params, ver, remoteAddress, chain, Integer.MAX_VALUE);
     }
 
     /**
@@ -209,11 +209,11 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
-                @Nullable AbstractBlockChain chain, boolean downloadTxDependencies) {
+                @Nullable AbstractBlockChain chain, int downloadTxDependencyDepth) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
         this.versionMessage = Preconditions.checkNotNull(ver);
-        this.vDownloadTxDependencies = chain != null && downloadTxDependencies;
+        this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
@@ -754,7 +754,7 @@ public class Peer extends PeerSocketHandler {
             for (final Wallet wallet : wallets) {
                 try {
                     if (wallet.isPendingTransactionRelevant(tx)) {
-                        if (vDownloadTxDependencies) {
+                        if (vDownloadTxDependencyDepth > 0) {
                             // This transaction seems interesting to us, so let's download its dependencies. This has
                             // several purposes: we can check that the sender isn't attacking us by engaging in protocol
                             // abuse games, like depending on a time-locked transaction that will never confirm, or
@@ -836,7 +836,8 @@ public class Peer extends PeerSocketHandler {
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
         final LinkedList<Transaction> results = new LinkedList<Transaction>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        final ListenableFuture<Object> future = downloadDependenciesInternal(tx, new Object(), results);
+        final ListenableFuture<Object> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx,
+                new Object(), results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback<Object>() {
             @Override
@@ -853,9 +854,9 @@ public class Peer extends PeerSocketHandler {
     }
 
     // The marker object in the future returned is the same as the parameter. It is arbitrary and can be anything.
-    protected ListenableFuture<Object> downloadDependenciesInternal(final Transaction tx,
-                                                                  final Object marker,
-                                                                  final List<Transaction> results) {
+    protected ListenableFuture<Object> downloadDependenciesInternal(final int maxDepth, final int depth,
+            final Transaction tx, final Object marker, final List<Transaction> results) {
+
         final SettableFuture<Object> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getHash();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
@@ -874,7 +875,7 @@ public class Peer extends PeerSocketHandler {
             List<ListenableFuture<Transaction>> futures = Lists.newArrayList();
             GetDataMessage getdata = new GetDataMessage(params);
             if (needToRequest.size() > 1)
-                log.info("{}: Requesting {} transactions for dep resolution", getAddress(), needToRequest.size());
+                log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
             for (Sha256Hash hash : needToRequest) {
                 getdata.addTransaction(hash);
                 GetDataRequest req = new GetDataRequest(hash, SettableFuture.create());
@@ -893,7 +894,8 @@ public class Peer extends PeerSocketHandler {
                         log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getHashAsString());
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
-                        childFutures.add(downloadDependenciesInternal(tx, marker, results));
+                        if (depth + 1 < maxDepth)
+                            childFutures.add(downloadDependenciesInternal(maxDepth, depth + 1, tx, marker, results));
                     }
                     if (childFutures.size() == 0) {
                         // Short-circuit: we're at the bottom of this part of the tree.
@@ -1792,7 +1794,7 @@ public class Peer extends PeerSocketHandler {
      * to try and discover if a pending tx might be at risk of double spending.
      */
     public boolean isDownloadTxDependencies() {
-        return vDownloadTxDependencies;
+        return vDownloadTxDependencyDepth > 0;
     }
 
     /**
@@ -1800,7 +1802,16 @@ public class Peer extends PeerSocketHandler {
      * before handing the transaction off to the wallet. The wallet can do risk analysis on pending/recent transactions
      * to try and discover if a pending tx might be at risk of double spending.
      */
-    public void setDownloadTxDependencies(boolean value) {
-        vDownloadTxDependencies = value;
+    public void setDownloadTxDependencies(boolean enable) {
+        vDownloadTxDependencyDepth = enable ? Integer.MAX_VALUE : 0;
+    }
+
+    /**
+     * Sets if this peer will use getdata/notfound messages to walk backwards through transaction dependencies
+     * before handing the transaction off to the wallet. The wallet can do risk analysis on pending/recent transactions
+     * to try and discover if a pending tx might be at risk of double spending.
+     */
+    public void setDownloadTxDependencies(int depth) {
+        vDownloadTxDependencyDepth = depth;
     }
 }
