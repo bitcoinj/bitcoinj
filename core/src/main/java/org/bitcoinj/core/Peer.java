@@ -137,8 +137,12 @@ public class Peer extends PeerSocketHandler {
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
     private static class GetDataRequest {
-        Sha256Hash hash;
-        SettableFuture future;
+        public GetDataRequest(Sha256Hash hash, SettableFuture future) {
+            this.hash = hash;
+            this.future = future;
+        }
+        final Sha256Hash hash;
+        final SettableFuture future;
     }
     // TODO: The types/locking should be rationalised a bit.
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
@@ -809,9 +813,7 @@ public class Peer extends PeerSocketHandler {
                 log.info("{}: Requesting {} transactions for dep resolution", getAddress(), needToRequest.size());
             for (Sha256Hash hash : needToRequest) {
                 getdata.addTransaction(hash);
-                GetDataRequest req = new GetDataRequest();
-                req.hash = hash;
-                req.future = SettableFuture.create();
+                GetDataRequest req = new GetDataRequest(hash, SettableFuture.create());
                 futures.add(req.future);
                 getDataFutures.add(req);
             }
@@ -1225,9 +1227,7 @@ public class Peer extends PeerSocketHandler {
     private ListenableFuture sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         Preconditions.checkArgument(getdata.getItems().size() == 1);
-        GetDataRequest req = new GetDataRequest();
-        req.future = SettableFuture.create();
-        req.hash = getdata.getItems().get(0).hash;
+        GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash, SettableFuture.create());
         getDataFutures.add(req);
         sendMessage(getdata);
         return req.future;
