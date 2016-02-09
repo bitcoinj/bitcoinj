@@ -554,8 +554,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void recursiveDependencyDownload() throws Exception {
-        // Using ping or notfound?
-        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
+        connect();
         // Check that we can download all dependencies of an unconfirmed relevant transaction from the mempool.
         ECKey to = new ECKey();
 
@@ -574,9 +573,9 @@ public class PeerTest extends TestWithNetworkConnections {
         //      -> [t8]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Transaction t2 = FakeTxBuilder.createFakeTx(params, COIN, to);
-        Sha256Hash t5 = t2.getInput(0).getOutpoint().getHash();
+        Sha256Hash t5hash = t2.getInput(0).getOutpoint().getHash();
         Transaction t4 = FakeTxBuilder.createFakeTx(params, COIN, new ECKey());
-        Sha256Hash t6 = t4.getInput(0).getOutpoint().getHash();
+        Sha256Hash t6hash = t4.getInput(0).getOutpoint().getHash();
         t4.addOutput(COIN, new ECKey());
         Transaction t3 = new Transaction(params);
         t3.addInput(t4.getOutput(0));
@@ -584,10 +583,10 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t1 = new Transaction(params);
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
-        Sha256Hash someHash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 0, someHash)));
-        Sha256Hash anotherHash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 1, anotherHash)));
+        Sha256Hash t7hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
+        t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 0, t7hash)));
+        Sha256Hash t8hash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
+        t1.addInput(new TransactionInput(params, t1, new byte[]{}, new TransactionOutPoint(params, 1, t8hash)));
         t1.addOutput(COIN, to);
         t1 = FakeTxBuilder.roundTripTransaction(params, t1);
         t2 = FakeTxBuilder.roundTripTransaction(params, t2);
@@ -607,19 +606,19 @@ public class PeerTest extends TestWithNetworkConnections {
         // We want its dependencies so ask for them.
         ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
         assertFalse(futures.isDone());
-        // It will recursively ask for the dependencies of t1: t2, t3, someHash and anotherHash.
+        // It will recursively ask for the dependencies of t1: t2, t3, t7, t8.
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(4, getdata.getItems().size());
         assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
         assertEquals(t3.getHash(), getdata.getItems().get(1).hash);
-        assertEquals(someHash, getdata.getItems().get(2).hash);
-        assertEquals(anotherHash, getdata.getItems().get(3).hash);
+        assertEquals(t7hash, getdata.getItems().get(2).hash);
+        assertEquals(t8hash, getdata.getItems().get(3).hash);
         // Deliver the requested transactions.
         inbound(writeTarget, t2);
         inbound(writeTarget, t3);
         NotFoundMessage notFound = new NotFoundMessage(params);
-        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, someHash));
-        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, anotherHash));
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t7hash));
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t8hash));
         inbound(writeTarget, notFound);
         assertFalse(futures.isDone());
         // It will recursively ask for the dependencies of t2: t5 and t4, but not t3 because it already found t4.
@@ -627,7 +626,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(getdata.getItems().get(0).hash, t2.getInput(0).getOutpoint().getHash());
         // t5 isn't found and t4 is.
         notFound = new NotFoundMessage(params);
-        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t5));
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t5hash));
         inbound(writeTarget, notFound);
         assertFalse(futures.isDone());
         // Request t4 ...
@@ -636,17 +635,69 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, t4);
         // Continue to explore the t4 branch and ask for t6, which is in the chain.
         getdata = (GetDataMessage) outbound(writeTarget);
-        assertEquals(t6, getdata.getItems().get(0).hash);
+        assertEquals(t6hash, getdata.getItems().get(0).hash);
         notFound = new NotFoundMessage(params);
-        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t6));
+        notFound.addItem(new InventoryItem(InventoryItem.Type.Transaction, t6hash));
         inbound(writeTarget, notFound);
         pingAndWait(writeTarget);
         // That's it, we explored the entire tree.
         assertTrue(futures.isDone());
         List<Transaction> results = futures.get();
+        assertEquals(3, results.size());
         assertTrue(results.contains(t2));
         assertTrue(results.contains(t3));
         assertTrue(results.contains(t4));
+    }
+
+    @Test
+    public void recursiveDependencyDownload_depthLimited() throws Exception {
+        peer.setDownloadTxDependencies(1); // Depth limit
+        connect();
+
+        // Make some fake transactions in the following graph:
+        //   t1 -> t2 -> t3 -> [t4]
+        // The ones in brackets are assumed to be in the chain and are represented only by hashes.
+        Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
+        Transaction t3 = new Transaction(params);
+        t3.addInput(new TransactionInput(params, t3, new byte[]{}, new TransactionOutPoint(params, 0, t4hash)));
+        t3.addOutput(COIN, new ECKey());
+        t3 = FakeTxBuilder.roundTripTransaction(params, t3);
+        Transaction t2 = new Transaction(params);
+        t2.addInput(t3.getOutput(0));
+        t2.addOutput(COIN, new ECKey());
+        t2 = FakeTxBuilder.roundTripTransaction(params, t2);
+        Transaction t1 = new Transaction(params);
+        t1.addInput(t2.getOutput(0));
+        t1.addOutput(COIN, new ECKey());
+        t1 = FakeTxBuilder.roundTripTransaction(params, t1);
+
+        // Announce the first one. Wait for it to be downloaded.
+        InventoryMessage inv = new InventoryMessage(params);
+        inv.addTransaction(t1);
+        inbound(writeTarget, inv);
+        GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
+        Threading.waitForUserCode();
+        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        inbound(writeTarget, t1);
+        pingAndWait(writeTarget);
+        // We want its dependencies so ask for them.
+        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        assertFalse(futures.isDone());
+        // level 1
+        getdata = (GetDataMessage) outbound(writeTarget);
+        assertEquals(1, getdata.getItems().size());
+        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
+        inbound(writeTarget, t2);
+        // no level 2
+        getdata = (GetDataMessage) outbound(writeTarget);
+        assertNull(getdata);
+
+        // That's it, now double check what we've got
+        pingAndWait(writeTarget);
+        assertTrue(futures.isDone());
+        List<Transaction> results = futures.get();
+        assertEquals(1, results.size());
+        assertTrue(results.contains(t2));
     }
 
     @Test
