@@ -549,8 +549,8 @@ public class Peer extends PeerSocketHandler {
             }
         } catch (Throwable t) {
             // Signature checking can FAIL on Android platforms before Gingerbread apparently due to bugs in their
-            // BigInteger implementations! See issue 160 for discussion. As alerts are just optional and not that
-            // useful, we just swallow the error here.
+            // BigInteger implementations! See https://github.com/bitcoinj/bitcoinj/issues/526 for discussion. As
+            // alerts are just optional and not that useful, we just swallow the error here.
             log.error("Failed to check signature: bug in platform libraries?", t);
         }
     }
