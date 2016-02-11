@@ -207,10 +207,16 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             channelTimeoutHandler.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    TransactionBroadcaster announcePeerGroup = getAnnouncePeerGroup();
-                    removeChannel(channel);
-                    announcePeerGroup.broadcastTransaction(channel.contract);
-                    announcePeerGroup.broadcastTransaction(channel.refund);
+                    try {
+                        TransactionBroadcaster announcePeerGroup = getAnnouncePeerGroup();
+                        removeChannel(channel);
+                        announcePeerGroup.broadcastTransaction(channel.contract);
+                        announcePeerGroup.broadcastTransaction(channel.refund);
+                    } catch (Exception e) {
+                        // Something went wrong closing the channel - we catch
+                        // here or else we take down the whole Timer.
+                        log.error("Auto-closing channel failed", e);
+                    }
                 }
                 // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
             }, new Date(channel.expiryTimeSeconds() * 1000 + (System.currentTimeMillis() - Utils.currentTimeMillis())));

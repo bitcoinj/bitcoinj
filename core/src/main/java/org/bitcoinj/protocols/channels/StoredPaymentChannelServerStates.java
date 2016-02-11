@@ -190,7 +190,13 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                 @Override
                 public void run() {
                     log.info("Auto-closing channel: {}", channel);
-                    closeChannel(channel);
+                    try {
+                        closeChannel(channel);
+                    } catch (Exception e) {
+                        // Something went wrong closing the channel - we catch
+                        // here or else we take down the whole Timer.
+                        log.error("Auto-closing channel failed", e);
+                    }
                 }
             }, autocloseTime);
         } finally {
