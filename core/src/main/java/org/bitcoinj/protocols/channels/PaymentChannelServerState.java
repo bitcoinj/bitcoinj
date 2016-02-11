@@ -122,6 +122,7 @@ public abstract class PaymentChannelServerState {
             this.serverKey = checkNotNull(storedServerChannel.myKey);
             this.storedServerChannel = storedServerChannel;
             this.bestValueToMe = checkNotNull(storedServerChannel.bestValueToMe);
+            this.minExpireTime = storedServerChannel.refundTransactionUnlockTimeSecs;
             this.bestValueSignature = storedServerChannel.bestValueSignature;
             checkArgument(bestValueToMe.equals(Coin.ZERO) || bestValueSignature != null);
             storedServerChannel.state = this;
