@@ -76,9 +76,18 @@ public class Peer extends PeerSocketHandler {
             this.callOnDisconnect = callOnDisconnect;
         }
     }
-    private final CopyOnWriteArrayList<PeerConnectionListenerRegistration> connectionEventListeners;
-    private final CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>> dataEventListeners;
-    private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>> chainDownloadStartedEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>>();
+    private final CopyOnWriteArrayList<PeerConnectionListenerRegistration> connectionEventListeners
+        = new CopyOnWriteArrayList<PeerConnectionListenerRegistration>();
+    private final CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>> getDataEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>> preMessageReceivedEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -220,9 +229,6 @@ public class Peer extends PeerSocketHandler {
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
         this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
-        this.connectionEventListeners = new CopyOnWriteArrayList<PeerConnectionListenerRegistration>();
-        this.dataEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerDataEventListener>>();
-        this.onTransactionEventListeners = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
         this.getAddrFutures = new LinkedList<SettableFuture<AddressMessage>>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.isAcked = false;
@@ -254,23 +260,54 @@ public class Peer extends PeerSocketHandler {
     /** Deprecated: use the more specific event handler methods instead */
     @Deprecated @SuppressWarnings("deprecation")
     public void addEventListener(AbstractPeerEventListener listener) {
-        addEventListener(listener, Threading.USER_THREAD);
+        addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
+        addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);
+        addConnectionEventListener(Threading.USER_THREAD, listener);
+        addGetDataEventListener(Threading.USER_THREAD, listener);
+        addOnTransactionBroadcastListener(Threading.USER_THREAD, listener);
+        addPreMessageReceivedEventListener(Threading.USER_THREAD, listener);
     }
 
     /** Deprecated: use the more specific event handler methods instead */
     @Deprecated
     public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
+        addBlocksDownloadedEventListener(executor, listener);
+        addChainDownloadStartedEventListener(executor, listener);
         addConnectionEventListener(executor, listener);
-        addDataEventListener(executor, listener);
+        addGetDataEventListener(executor, listener);
         addOnTransactionBroadcastListener(executor, listener);
+        addPreMessageReceivedEventListener(executor, listener);
     }
 
     /** Deprecated: use the more specific event handler methods instead */
     @Deprecated
     public void removeEventListener(AbstractPeerEventListener listener) {
+        removeBlocksDownloadedEventListener(listener);
+        removeChainDownloadStartedEventListener(listener);
         removeConnectionEventListener(listener);
-        removeDataEventListener(listener);
+        removeGetDataEventListener(listener);
         removeOnTransactionBroadcastListener(listener);
+        removePreMessageReceivedEventListener(listener);
+    }
+
+    /** Registers a listener that is invoked when new blocks are downloaded. */
+    public void addBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
+        addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is invoked when new blocks are downloaded. */
+    public void addBlocksDownloadedEventListener(Executor executor, BlocksDownloadedEventListener listener) {
+        blocksDownloadedEventListeners.add(new ListenerRegistration(listener, executor));
+    }
+
+    /** Registers a listener that is invoked when a blockchain downloaded starts. */
+    public void addChainDownloadStartedEventListener(ChainDownloadStartedEventListener listener) {
+        addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is invoked when a blockchain downloaded starts. */
+    public void addChainDownloadStartedEventListener(Executor executor, ChainDownloadStartedEventListener listener) {
+        chainDownloadStartedEventListeners.add(new ListenerRegistration(listener, executor));
     }
 
     /** Registers a listener that is invoked when a peer is connected or disconnected. */
@@ -284,13 +321,13 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Registers a listener that is called when messages are received. */
-    public void addDataEventListener(PeerDataEventListener listener) {
-        addDataEventListener(Threading.USER_THREAD, listener);
+    public void addGetDataEventListener(GetDataEventListener listener) {
+        addGetDataEventListener(Threading.USER_THREAD, listener);
     }
 
     /** Registers a listener that is called when messages are received. */
-    public void addDataEventListener(Executor executor, PeerDataEventListener listener) {
-        dataEventListeners.add(new ListenerRegistration<PeerDataEventListener>(listener, executor));
+    public void addGetDataEventListener(Executor executor, GetDataEventListener listener) {
+        getDataEventListeners.add(new ListenerRegistration<GetDataEventListener>(listener, executor));
     }
 
     /** Registers a listener that is called when a transaction is broadcast across the network */
@@ -303,21 +340,43 @@ public class Peer extends PeerSocketHandler {
         onTransactionEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(listener, executor));
     }
 
+    /** Registers a listener that is called immediately before a message is received */
+    public void addPreMessageReceivedEventListener(PreMessageReceivedEventListener listener) {
+        addPreMessageReceivedEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is called immediately before a message is received */
+    public void addPreMessageReceivedEventListener(Executor executor, PreMessageReceivedEventListener listener) {
+        preMessageReceivedEventListeners.add(new ListenerRegistration<PreMessageReceivedEventListener>(listener, executor));
+    }
+
     // Package-local version for PeerGroup
     void addConnectionEventListenerWithoutOnDisconnect(Executor executor, PeerConnectionEventListener listener) {
         connectionEventListeners.add(new PeerConnectionListenerRegistration(listener, executor, false));
+    }
+
+    public boolean removeBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, blocksDownloadedEventListeners);
+    }
+
+    public boolean removeChainDownloadStartedEventListener(ChainDownloadStartedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, chainDownloadStartedEventListeners);
     }
 
     public boolean removeConnectionEventListener(PeerConnectionEventListener listener) {
         return ListenerRegistration.removeFromList(listener, connectionEventListeners);
     }
 
-    public boolean removeDataEventListener(PeerDataEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, dataEventListeners);
+    public boolean removeGetDataEventListener(GetDataEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, getDataEventListeners);
     }
 
     public boolean removeOnTransactionBroadcastListener(OnTransactionBroadcastListener listener) {
         return ListenerRegistration.removeFromList(listener, onTransactionEventListeners);
+    }
+
+    public boolean removePreMessageReceivedEventListener(PreMessageReceivedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, preMessageReceivedEventListeners);
     }
 
     @Override
@@ -376,7 +435,7 @@ public class Peer extends PeerSocketHandler {
     protected void processMessage(Message m) throws Exception {
         // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
         // returning null.
-        for (ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
+        for (ListenerRegistration<PreMessageReceivedEventListener> registration : preMessageReceivedEventListeners) {
             // Skip any listeners that are supposed to run in another thread as we don't want to block waiting
             // for it, which might cause circular deadlock.
             if (registration.executor == Threading.SAME_THREAD) {
@@ -642,13 +701,13 @@ public class Peer extends PeerSocketHandler {
     protected void processGetData(GetDataMessage getdata) {
         log.info("{}: Received getdata message: {}", getAddress(), getdata.toString());
         ArrayList<Message> items = new ArrayList<Message>();
-        for (ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
+        for (ListenerRegistration<GetDataEventListener> registration : getDataEventListeners) {
             if (registration.executor != Threading.SAME_THREAD) continue;
             List<Message> listenerItems = registration.listener.getData(this, getdata);
             if (listenerItems == null) continue;
             items.addAll(listenerItems);
         }
-        if (items.size() == 0) {
+        if (items.isEmpty()) {
             return;
         }
         log.info("{}: Sending {} items gathered from listeners to peer", getAddress(), items.size());
@@ -1055,7 +1114,7 @@ public class Peer extends PeerSocketHandler {
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
         final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
-        for (final ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
+        for (final ListenerRegistration<BlocksDownloadedEventListener> registration : blocksDownloadedEventListeners) {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -1388,7 +1447,7 @@ public class Peer extends PeerSocketHandler {
         // chain even if the chain block count is lower.
         final int blocksLeft = getPeerBlockHeightDifference();
         if (blocksLeft >= 0) {
-            for (final ListenerRegistration<PeerDataEventListener> registration : dataEventListeners) {
+            for (final ListenerRegistration<ChainDownloadStartedEventListener> registration : chainDownloadStartedEventListeners) {
                 registration.executor.execute(new Runnable() {
                     @Override
                     public void run() {

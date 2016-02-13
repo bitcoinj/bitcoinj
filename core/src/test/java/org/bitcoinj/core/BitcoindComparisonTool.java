@@ -87,7 +87,7 @@ public class BitcoindComparisonTool {
         final Set<Sha256Hash> blocksPendingSend = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        final AbstractPeerEventListener listener = new AbstractPeerEventListener() {
+        final PeerConnectionEventListener listener = new PeerConnectionEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
@@ -114,6 +114,13 @@ public class BitcoindComparisonTool {
                 System.exit(1);
             }
 
+            @Override
+            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
+                // Ignore
+            }
+        };
+
+        final PreMessageReceivedEventListener preMessageReceivedListener = new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer peer, Message m) {
                 if (m instanceof HeadersMessage) {
@@ -196,7 +203,7 @@ public class BitcoindComparisonTool {
             }
         };
         bitcoind.addConnectionEventListener(Threading.SAME_THREAD, listener);
-        bitcoind.addDataEventListener(Threading.SAME_THREAD, listener);
+        bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
 
         
         bitcoindChainHead = params.getGenesisBlock().getHash();
