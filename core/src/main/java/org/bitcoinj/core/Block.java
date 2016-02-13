@@ -88,8 +88,6 @@ public class Block extends Message {
     public static final long BLOCK_VERSION_BIP66 = 3;
     /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
     public static final long BLOCK_VERSION_BIP65 = 4;
-    /** Block version bitmask for BIP101: Increase maximum blocksize */
-    public static final long BLOCK_VERSION_MASK_BIP101 = 0x20000007;
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -483,7 +481,7 @@ public class Block extends Message {
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
         String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null, isBIP101() ? "BIP101" : null);
+                isBIP65() ? "BIP65" : null);
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
@@ -1031,13 +1029,5 @@ public class Block extends Message {
      */
     public boolean isBIP65() {
         return version >= BLOCK_VERSION_BIP65;
-    }
-
-    /**
-     * Returns whether this block conforms to
-     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0101.mediawiki">BIP101: Increase maximum block size</a>.
-     */
-    public boolean isBIP101() {
-        return (version & BLOCK_VERSION_MASK_BIP101) == BLOCK_VERSION_MASK_BIP101;
     }
 }
