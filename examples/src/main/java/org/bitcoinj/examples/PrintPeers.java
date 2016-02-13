@@ -16,7 +16,8 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.PeerConnectedEventListener;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
@@ -84,7 +85,7 @@ public class PrintPeers {
             final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new PeerAddress(address));
             final SettableFuture<Void> future = SettableFuture.create();
             // Once the connection has completed version handshaking ...
-            peer.addConnectionEventListener(new AbstractPeerEventListener() {
+            peer.addConnectedEventListener(new PeerConnectedEventListener() {
                 @Override
                 public void onPeerConnected(Peer p, int peerCount) {
                     // Check the chain height it claims to have.
@@ -106,7 +107,8 @@ public class PrintPeers {
                     future.set(null);
                     peer.close();
                 }
-
+            });
+            peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
                 @Override
                 public void onPeerDisconnected(Peer p, int peerCount) {
                     if (!future.isDone())

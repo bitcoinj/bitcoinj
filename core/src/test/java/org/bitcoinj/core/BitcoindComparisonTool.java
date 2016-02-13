@@ -87,7 +87,7 @@ public class BitcoindComparisonTool {
         final Set<Sha256Hash> blocksPendingSend = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        final PeerConnectionEventListener listener = new PeerConnectionEventListener() {
+        bitcoind.addConnectedEventListener(Threading.SAME_THREAD, new PeerConnectedEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
@@ -107,20 +107,17 @@ public class BitcoindComparisonTool {
                 bitcoind.startBlockChainDownload();
                 connectedFuture.set(null);
             }
+        });
 
+        bitcoind.addDisconnectedEventListener(Threading.SAME_THREAD, new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 log.error("bitcoind node disconnected!");
                 System.exit(1);
             }
+        });
 
-            @Override
-            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
-                // Ignore
-            }
-        };
-
-        final PreMessageReceivedEventListener preMessageReceivedListener = new PreMessageReceivedEventListener() {
+        bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer peer, Message m) {
                 if (m instanceof HeadersMessage) {
@@ -201,10 +198,7 @@ public class BitcoindComparisonTool {
                 }
                 return m;
             }
-        };
-        bitcoind.addConnectionEventListener(Threading.SAME_THREAD, listener);
-        bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
-
+        });
         
         bitcoindChainHead = params.getGenesisBlock().getHash();
         

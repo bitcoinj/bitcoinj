@@ -47,7 +47,18 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private PeerConnectionEventListener listener;
+    private PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
+        @Override
+        public void onPeerConnected(Peer peer, int peerCount) {
+            connectedPeers.add(peer);
+        }
+    };
+    private PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
+        @Override
+        public void onPeerDisconnected(Peer peer, int peerCount) {
+            disconnectedPeers.add(peer);
+        }
+    };
     private PreMessageReceivedEventListener preMessageReceivedListener;
     private Map<Peer, AtomicInteger> peerToMessageCount;
 
@@ -68,23 +79,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerToMessageCount = new HashMap<Peer, AtomicInteger>();
         connectedPeers = new LinkedBlockingQueue<Peer>();
         disconnectedPeers = new LinkedBlockingQueue<Peer>();
-        listener = new PeerConnectionEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                connectedPeers.add(peer);
-            }
-
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                disconnectedPeers.add(peer);
-            }
-
-            @Override
-            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
-                // Ignore
-            }
-        };
-
         preMessageReceivedListener = new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer peer, Message m) {
@@ -108,7 +102,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        peerGroup.addConnectionEventListener(listener);
+        peerGroup.addConnectedEventListener(connectedListener);
+        peerGroup.addDisconnectedEventListener(disconnectedListener);
         peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
         peerGroup.start();
 
@@ -130,8 +125,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         disconnectedPeers.take();
         assertEquals(0, disconnectedPeers.size());
 
-        assertTrue(peerGroup.removeConnectionEventListener(listener));
-        assertFalse(peerGroup.removeConnectionEventListener(listener));
+        assertTrue(peerGroup.removeConnectedEventListener(connectedListener));
+        assertFalse(peerGroup.removeConnectedEventListener(connectedListener));
+        assertTrue(peerGroup.removeDisconnectedEventListener(disconnectedListener));
+        assertFalse(peerGroup.removeDisconnectedEventListener(disconnectedListener));
         assertTrue(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
         assertFalse(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
     }
@@ -189,7 +186,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addPeerDiscovery(createPeerDiscovery(96, 200));
         peerGroup.addPeerDiscovery(createPeerDiscovery(3, 300));
         peerGroup.addPeerDiscovery(createPeerDiscovery(1, 400));
-        peerGroup.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
+        peerGroup.addDiscoveredEventListener(new PeerDiscoveredEventListener() {
             @Override
             public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
                 assertEquals(99, peerAddresses.size());
@@ -299,7 +296,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNull(outbound(p2));
         // Peer 1 goes away, peer 2 becomes the download peer and thus queries the remote mempool.
         final SettableFuture<Void> p1CloseFuture = SettableFuture.create();
-        peerOf(p1).addConnectionEventListener(new AbstractPeerConnectionEventListener() {
+        peerOf(p1).addDisconnectedEventListener(new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 p1CloseFuture.set(null);
@@ -504,12 +501,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
         final SettableFuture<Void> peerDisconnectedFuture = SettableFuture.create();
-        peerGroup.addConnectionEventListener(Threading.SAME_THREAD, new AbstractPeerConnectionEventListener() {
+        peerGroup.addConnectedEventListener(Threading.SAME_THREAD, new PeerConnectedEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 peerConnectedFuture.set(null);
             }
-
+        });
+        peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 peerDisconnectedFuture.set(null);
@@ -539,7 +537,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 new InetSocketAddress("localhost", 2001),
                 new InetSocketAddress("localhost", 2002)
         );
-        peerGroup.addConnectionEventListener(listener);
+        peerGroup.addConnectedEventListener(connectedListener);
+        peerGroup.addDisconnectedEventListener(disconnectedListener);
         peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override

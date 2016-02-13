@@ -17,7 +17,8 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.listeners.AbstractPeerConnectionEventListener;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.params.UnitTestParams;
@@ -39,7 +40,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 
 /**
  * Utility class that makes it easy to work with mock NetworkConnections.
@@ -149,7 +149,7 @@ public class TestWithNetworkConnections {
         checkArgument(versionMessage.hasBlockChain());
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
-        peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
+        peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
                 synchronized (doneConnecting) {

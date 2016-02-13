@@ -62,26 +62,14 @@ public class Peer extends PeerSocketHandler {
     private final AbstractBlockChain blockChain;
     private final Context context;
 
-    // onPeerDisconnected should not be called directly by Peers when a PeerGroup is involved (we don't know the total
-    // number of connected peers), thus we use a wrapper that PeerGroup can use to register listeners that wont get
-    // onPeerDisconnected calls
-    static class PeerConnectionListenerRegistration extends ListenerRegistration<PeerConnectionEventListener> {
-        boolean callOnDisconnect = true;
-        public PeerConnectionListenerRegistration(PeerConnectionEventListener listener, Executor executor) {
-            super(listener, executor);
-        }
-
-        public PeerConnectionListenerRegistration(PeerConnectionEventListener listener, Executor executor, boolean callOnDisconnect) {
-            this(listener, executor);
-            this.callOnDisconnect = callOnDisconnect;
-        }
-    }
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
         = new CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>>();
     private final CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>> chainDownloadStartedEventListeners
         = new CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>>();
-    private final CopyOnWriteArrayList<PeerConnectionListenerRegistration> connectionEventListeners
-        = new CopyOnWriteArrayList<PeerConnectionListenerRegistration>();
+    private final CopyOnWriteArrayList<ListenerRegistration<PeerConnectedEventListener>> connectedEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<PeerConnectedEventListener>>();
+    private final CopyOnWriteArrayList<ListenerRegistration<PeerDisconnectedEventListener>> disconnectedEventListeners
+        = new CopyOnWriteArrayList<ListenerRegistration<PeerDisconnectedEventListener>>();
     private final CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>> getDataEventListeners
         = new CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>>();
     private final CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>> preMessageReceivedEventListeners
@@ -262,7 +250,8 @@ public class Peer extends PeerSocketHandler {
     public void addEventListener(AbstractPeerEventListener listener) {
         addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
         addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);
-        addConnectionEventListener(Threading.USER_THREAD, listener);
+        addConnectedEventListener(Threading.USER_THREAD, listener);
+        addDisconnectedEventListener(Threading.USER_THREAD, listener);
         addGetDataEventListener(Threading.USER_THREAD, listener);
         addOnTransactionBroadcastListener(Threading.USER_THREAD, listener);
         addPreMessageReceivedEventListener(Threading.USER_THREAD, listener);
@@ -273,7 +262,8 @@ public class Peer extends PeerSocketHandler {
     public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
         addBlocksDownloadedEventListener(executor, listener);
         addChainDownloadStartedEventListener(executor, listener);
-        addConnectionEventListener(executor, listener);
+        addConnectedEventListener(executor, listener);
+        addDisconnectedEventListener(executor, listener);
         addGetDataEventListener(executor, listener);
         addOnTransactionBroadcastListener(executor, listener);
         addPreMessageReceivedEventListener(executor, listener);
@@ -284,7 +274,8 @@ public class Peer extends PeerSocketHandler {
     public void removeEventListener(AbstractPeerEventListener listener) {
         removeBlocksDownloadedEventListener(listener);
         removeChainDownloadStartedEventListener(listener);
-        removeConnectionEventListener(listener);
+        removeConnectedEventListener(listener);
+        removeDisconnectedEventListener(listener);
         removeGetDataEventListener(listener);
         removeOnTransactionBroadcastListener(listener);
         removePreMessageReceivedEventListener(listener);
@@ -310,14 +301,24 @@ public class Peer extends PeerSocketHandler {
         chainDownloadStartedEventListeners.add(new ListenerRegistration(listener, executor));
     }
 
-    /** Registers a listener that is invoked when a peer is connected or disconnected. */
-    public void addConnectionEventListener(PeerConnectionEventListener listener) {
-        addConnectionEventListener(Threading.USER_THREAD, listener);
+    /** Registers a listener that is invoked when a peer is connected. */
+    public void addConnectedEventListener(PeerConnectedEventListener listener) {
+        addConnectedEventListener(Threading.USER_THREAD, listener);
     }
 
-    /** Registers a listener that is invoked when a peer is connected or disconnected. */
-    public void addConnectionEventListener(Executor executor, PeerConnectionEventListener listener) {
-        connectionEventListeners.add(new PeerConnectionListenerRegistration(listener, executor));
+    /** Registers a listener that is invoked when a peer is connected. */
+    public void addConnectedEventListener(Executor executor, PeerConnectedEventListener listener) {
+        connectedEventListeners.add(new ListenerRegistration(listener, executor));
+    }
+
+    /** Registers a listener that is invoked when a peer is disconnected. */
+    public void addDisconnectedEventListener(PeerDisconnectedEventListener listener) {
+        addDisconnectedEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is invoked when a peer is disconnected. */
+    public void addDisconnectedEventListener(Executor executor, PeerDisconnectedEventListener listener) {
+        disconnectedEventListeners.add(new ListenerRegistration(listener, executor));
     }
 
     /** Registers a listener that is called when messages are received. */
@@ -350,11 +351,6 @@ public class Peer extends PeerSocketHandler {
         preMessageReceivedEventListeners.add(new ListenerRegistration<PreMessageReceivedEventListener>(listener, executor));
     }
 
-    // Package-local version for PeerGroup
-    void addConnectionEventListenerWithoutOnDisconnect(Executor executor, PeerConnectionEventListener listener) {
-        connectionEventListeners.add(new PeerConnectionListenerRegistration(listener, executor, false));
-    }
-
     public boolean removeBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
         return ListenerRegistration.removeFromList(listener, blocksDownloadedEventListeners);
     }
@@ -363,8 +359,12 @@ public class Peer extends PeerSocketHandler {
         return ListenerRegistration.removeFromList(listener, chainDownloadStartedEventListeners);
     }
 
-    public boolean removeConnectionEventListener(PeerConnectionEventListener listener) {
-        return ListenerRegistration.removeFromList(listener, connectionEventListeners);
+    public boolean removeConnectedEventListener(PeerConnectedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, connectedEventListeners);
+    }
+
+    public boolean removeDisconnectedEventListener(PeerDisconnectedEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, disconnectedEventListeners);
     }
 
     public boolean removeGetDataEventListener(GetDataEventListener listener) {
@@ -396,14 +396,13 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     public void connectionClosed() {
-        for (final PeerConnectionListenerRegistration registration : connectionEventListeners) {
-            if (registration.callOnDisconnect)
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onPeerDisconnected(Peer.this, 0);
-                    }
-                });
+        for (final ListenerRegistration<PeerDisconnectedEventListener> registration : disconnectedEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeerDisconnected(Peer.this, 0);
+                }
+            });
         }
     }
 
@@ -491,7 +490,7 @@ public class Peer extends PeerSocketHandler {
             }
             isAcked = true;
             this.setTimeoutEnabled(false);
-            for (final ListenerRegistration<PeerConnectionEventListener> registration : connectionEventListeners) {
+            for (final ListenerRegistration<PeerConnectedEventListener> registration : connectedEventListeners) {
                 registration.executor.execute(new Runnable() {
                     @Override
                     public void run() {

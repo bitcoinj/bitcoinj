@@ -102,13 +102,26 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
-    public void testAddEventListener() throws Exception {
+    public void testAddConnectedEventListener() throws Exception {
         connect();
-        PeerConnectionEventListener listener = new AbstractPeerConnectionEventListener() {
+        PeerConnectedEventListener listener = new AbstractPeerConnectionEventListener() {
         };
-        peer.addConnectionEventListener(listener);
-        assertTrue(peer.removeConnectionEventListener(listener));
-        assertFalse(peer.removeConnectionEventListener(listener));
+        assertFalse(peer.removeConnectedEventListener(listener));
+        peer.addConnectedEventListener(listener);
+        assertTrue(peer.removeConnectedEventListener(listener));
+        assertFalse(peer.removeConnectedEventListener(listener));
+    }
+
+    @Test
+    public void testAddDisconnectedEventListener() throws Exception {
+        connect();
+        PeerDisconnectedEventListener listener = new AbstractPeerConnectionEventListener() {
+        };
+
+        assertFalse(peer.removeDisconnectedEventListener(listener));
+        peer.addDisconnectedEventListener(listener);
+        assertTrue(peer.removeDisconnectedEventListener(listener));
+        assertFalse(peer.removeDisconnectedEventListener(listener));
     }
 
     // Check that it runs through the event loop and shut down correctly
@@ -749,12 +762,14 @@ public class PeerTest extends TestWithNetworkConnections {
         // Set up the connection with an old version.
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
         final SettableFuture<Void> disconnectedFuture = SettableFuture.create();
-        peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
+        peer.addConnectedEventListener(new PeerConnectedEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 connectedFuture.set(null);
             }
+        });
 
+        peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 disconnectedFuture.set(null);
@@ -859,7 +874,7 @@ public class PeerTest extends TestWithNetworkConnections {
         };
         connect(); // Writes out a verack+version.
         final SettableFuture<Void> peerDisconnected = SettableFuture.create();
-        writeTarget.peer.addConnectionEventListener(new AbstractPeerConnectionEventListener() {
+        writeTarget.peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer p, int peerCount) {
                 peerDisconnected.set(null);

@@ -15,7 +15,8 @@
 package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.listeners.PeerConnectionEventListener;
+import org.bitcoinj.core.listeners.PeerConnectedEventListener;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -80,17 +81,13 @@ public class TestFeeLevel {
         System.out.println("Size in bytes is " + request.tx.bitcoinSerialize().length);
         System.out.println("TX is " + request.tx);
         System.out.println("Waiting for " + kit.peerGroup().getMaxConnections() + " connected peers");
-        kit.peerGroup().addConnectionEventListener(new PeerConnectionEventListener() {
-
-            @Override
-            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
-            }
-
+        kit.peerGroup().addDisconnectedEventListener(new PeerDisconnectedEventListener() {
             @Override
             public void onPeerDisconnected(Peer peer, int peerCount) {
                 System.out.println(peerCount + " peers connected");
             }
-
+        });
+        kit.peerGroup().addConnectedEventListener(new PeerConnectedEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
                 System.out.println(peerCount + " peers connected");
