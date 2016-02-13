@@ -1481,16 +1481,10 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             if (downloadPeer != null) {
                 if (this.downloadListener != null) {
-                    downloadPeer.removeBlocksDownloadedEventListener(this.downloadListener);
-                    downloadPeer.removeChainDownloadStartedEventListener(this.downloadListener);
-                    downloadPeer.removeGetDataEventListener(this.downloadListener);
-                    downloadPeer.removePreMessageReceivedEventListener(this.downloadListener);
+                    removeDataEventListenerFromPeer(downloadPeer, this.downloadListener);
                 }
                 if (listener != null) {
-                    downloadPeer.addBlocksDownloadedEventListener(listener);
-                    downloadPeer.addChainDownloadStartedEventListener(listener);
-                    downloadPeer.addGetDataEventListener(listener);
-                    downloadPeer.addPreMessageReceivedEventListener(listener);
+                    addDataEventListenerToPeer(Threading.USER_THREAD, downloadPeer, listener);
                 }
             }
             this.downloadListener = listener;
@@ -1503,6 +1497,30 @@ public class PeerGroup implements TransactionBroadcaster {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Register a data event listener against a single peer (i.e. for blockchain
+     * download). Handling registration/deregistration on peer death/add is
+     * outside the scope of these methods.
+     */
+    private static void addDataEventListenerToPeer(Executor executor, Peer peer, PeerDataEventListener downloadListener) {
+        peer.addBlocksDownloadedEventListener(executor, downloadListener);
+        peer.addChainDownloadStartedEventListener(executor, downloadListener);
+        peer.addGetDataEventListener(executor, downloadListener);
+        peer.addPreMessageReceivedEventListener(executor, downloadListener);
+    }
+
+    /**
+     * Remove a registered data event listener against a single peer (i.e. for
+     * blockchain download). Handling registration/deregistration on peer death/add is
+     * outside the scope of these methods.
+     */
+    private static void removeDataEventListenerFromPeer(Peer peer, PeerDataEventListener listener) {
+        peer.removeBlocksDownloadedEventListener(listener);
+        peer.removeChainDownloadStartedEventListener(listener);
+        peer.removeGetDataEventListener(listener);
+        peer.removePreMessageReceivedEventListener(listener);
     }
 
     /**
@@ -1620,10 +1638,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (downloadPeer != null) {
                 log.info("Unsetting download peer: {}", downloadPeer);
                 if (downloadListener != null) {
-                    downloadPeer.removeBlocksDownloadedEventListener(downloadListener);
-                    downloadPeer.removeChainDownloadStartedEventListener(downloadListener);
-                    downloadPeer.removeGetDataEventListener(downloadListener);
-                    downloadPeer.removePreMessageReceivedEventListener(downloadListener);
+                    removeDataEventListenerFromPeer(downloadPeer, downloadListener);
                 }
                 downloadPeer.setDownloadData(false);
             }
@@ -1631,10 +1646,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (downloadPeer != null) {
                 log.info("Setting download peer: {}", downloadPeer);
                 if (downloadListener != null) {
-                    peer.addBlocksDownloadedEventListener(Threading.SAME_THREAD, downloadListener);
-                    peer.addChainDownloadStartedEventListener(Threading.SAME_THREAD, downloadListener);
-                    peer.addGetDataEventListener(Threading.SAME_THREAD, downloadListener);
-                    peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, downloadListener);
+                    addDataEventListenerToPeer(Threading.SAME_THREAD, peer, downloadListener);
                 }
                 downloadPeer.setDownloadData(true);
                 if (chain != null)
