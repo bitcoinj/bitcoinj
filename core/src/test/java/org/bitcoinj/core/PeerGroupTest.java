@@ -108,9 +108,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void listener() throws Exception {
-        peerGroup.start();
         peerGroup.addConnectionEventListener(listener);
         peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
+        peerGroup.start();
 
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
