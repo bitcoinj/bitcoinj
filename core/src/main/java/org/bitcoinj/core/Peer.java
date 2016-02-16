@@ -537,10 +537,15 @@ public class Peer extends PeerSocketHandler {
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
         if (!vPeerVersionMessage.hasBlockChain() ||
-                (!params.allowEmptyPeerChain() && vPeerVersionMessage.bestHeight <= 0)) {
-            // Shut down the channel
-            throw new ProtocolException("Peer does not have a copy of the block chain.");
+                (!params.allowEmptyPeerChain() && vPeerVersionMessage.bestHeight == 0)) {
+            // Shut down the channel gracefully.
+            log.info("{}: Peer does not have a copy of the block chain.", this);
+            close();
+            return;
         }
+        if (vPeerVersionMessage.bestHeight < 0)
+            // In this case, it's a protocol violation.
+            throw new ProtocolException("Peer reports invalid best height: " + vPeerVersionMessage.bestHeight);
         versionHandshakeFuture.set(this);
     }
 
