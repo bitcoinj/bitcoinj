@@ -482,30 +482,7 @@ public class Peer extends PeerSocketHandler {
         } else if (m instanceof VersionMessage) {
             processVersionMessage((VersionMessage) m);
         } else if (m instanceof VersionAck) {
-            if (vPeerVersionMessage == null) {
-                throw new ProtocolException("got a version ack before version");
-            }
-            if (isAcked) {
-                throw new ProtocolException("got more than one version ack");
-            }
-            isAcked = true;
-            this.setTimeoutEnabled(false);
-            for (final ListenerRegistration<PeerConnectedEventListener> registration : connectedEventListeners) {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onPeerConnected(Peer.this, 1);
-                    }
-                });
-            }
-            // We check min version after onPeerConnected as channel.close() will
-            // call onPeerDisconnected, and we should probably call onPeerConnected first.
-            final int version = vMinProtocolVersion;
-            if (vPeerVersionMessage.clientVersion < version) {
-                log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
-                        vPeerVersionMessage.clientVersion, version);
-                close();
-            }
+            processVersionAck((VersionAck) m);
         } else if (m instanceof UTXOsMessage) {
             processUTXOMessage((UTXOsMessage) m);
         } else if (m instanceof RejectMessage) {
@@ -566,6 +543,33 @@ public class Peer extends PeerSocketHandler {
             throw new ProtocolException("Peer does not have a copy of the block chain.");
         }
         versionHandshakeFuture.set(this);
+    }
+
+    private void processVersionAck(VersionAck m) throws ProtocolException {
+        if (vPeerVersionMessage == null) {
+            throw new ProtocolException("got a version ack before version");
+        }
+        if (isAcked) {
+            throw new ProtocolException("got more than one version ack");
+        }
+        isAcked = true;
+        this.setTimeoutEnabled(false);
+        for (final ListenerRegistration<PeerConnectedEventListener> registration : connectedEventListeners) {
+            registration.executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    registration.listener.onPeerConnected(Peer.this, 1);
+                }
+            });
+        }
+        // We check min version after onPeerConnected as channel.close() will
+        // call onPeerDisconnected, and we should probably call onPeerConnected first.
+        final int version = vMinProtocolVersion;
+        if (vPeerVersionMessage.clientVersion < version) {
+            log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
+                    vPeerVersionMessage.clientVersion, version);
+            close();
+        }
     }
 
     protected void startFilteredBlock(FilteredBlock m) {
