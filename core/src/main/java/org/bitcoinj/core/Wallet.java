@@ -1456,10 +1456,32 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
     }
 
+    /**
+     * Returns if this wallet is structurally consistent, so e.g. no duplicate transactions. First inconsistency and a
+     * dump of the wallet will be logged.
+     */
     public boolean isConsistent() {
+        try {
+            isConsistentOrThrow();
+            return true;
+        } catch (IllegalStateException x) {
+            log.error(x.getMessage());
+            try {
+                log.error(toString());
+            } catch (RuntimeException x2) {
+                log.error("Printing inconsistent wallet failed", x2);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Variant of {@link Wallet#isConsistent()} that throws an {@link IllegalStateException} describing the first
+     * inconsistency.
+     */
+    public void isConsistentOrThrow() throws IllegalStateException {
         lock.lock();
         try {
-            boolean success = true;
             Set<Transaction> transactions = getTransactions(true);
 
             Set<Sha256Hash> hashes = new HashSet<Sha256Hash>();
@@ -1468,40 +1490,26 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             }
 
             int size1 = transactions.size();
-
             if (size1 != hashes.size()) {
-                log.error("Two transactions with same hash");
-                success = false;
+                throw new IllegalStateException("Two transactions with same hash");
             }
 
             int size2 = unspent.size() + spent.size() + pending.size() + dead.size();
             if (size1 != size2) {
-                log.error("Inconsistent wallet sizes: {} {}", size1, size2);
-                success = false;
+                throw new IllegalStateException("Inconsistent wallet sizes: " + size1 + ", " + size2);
             }
 
             for (Transaction tx : unspent.values()) {
                 if (!tx.isConsistent(this, false)) {
-                    success = false;
-                    log.error("Inconsistent unspent tx {}", tx.getHashAsString());
+                    throw new IllegalStateException("Inconsistent unspent tx: " + tx.getHashAsString());
                 }
             }
 
             for (Transaction tx : spent.values()) {
                 if (!tx.isConsistent(this, true)) {
-                    success = false;
-                    log.error("Inconsistent spent tx {}", tx.getHashAsString());
+                    throw new IllegalStateException("Inconsistent spent tx: " + tx.getHashAsString());
                 }
             }
-
-            if (!success) {
-                try {
-                    log.error(toString());
-                } catch (RuntimeException x) {
-                    log.error("Printing inconsistent wallet failed", x);
-                }
-            }
-            return success;
         } finally {
             lock.unlock();
         }
@@ -1891,7 +1899,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
         }
 
         informConfidenceListenersIfNotReorganizing();
-        checkState(isConsistent());
+        isConsistentOrThrow();
         saveNow();
     }
 
@@ -2245,7 +2253,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 throw new RuntimeException(e);
             }
 
-            checkState(isConsistent());
+            isConsistentOrThrow();
             informConfidenceListenersIfNotReorganizing();
             saveNow();
         } finally {
@@ -2665,7 +2673,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 }
             }
             if (dirty) {
-                checkState(isConsistent());
+                isConsistentOrThrow();
                 saveLater();
             }
         } finally {
@@ -4201,7 +4209,7 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
                 }
                 notifyNewBestBlock(block);
             }
-            checkState(isConsistent());
+            isConsistentOrThrow();
             final Coin balance = getBalance();
             log.info("post-reorg balance is {}", balance.toFriendlyString());
             // Inform event listeners that a re-org took place.
