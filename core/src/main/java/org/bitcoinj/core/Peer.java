@@ -452,8 +452,7 @@ public class Peer extends PeerSocketHandler {
         }
 
         if (m instanceof Ping) {
-            if (((Ping) m).hasNonce())
-                sendMessage(new Pong(((Ping) m).getNonce()));
+            processPing((Ping) m);
         } else if (m instanceof Pong) {
             processPong((Pong) m);
         } else if (m instanceof NotFoundMessage) {
@@ -1563,6 +1562,11 @@ public class Peer extends PeerSocketHandler {
         } finally {
             lastPingTimesLock.unlock();
         }
+    }
+
+    private void processPing(Ping m) {
+        if (m.hasNonce())
+            sendMessage(new Pong(m.getNonce()));
     }
 
     protected void processPong(Pong m) {
