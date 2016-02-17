@@ -16,6 +16,8 @@
 
 package org.bitcoinj.protocols.channels;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -29,11 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -168,7 +166,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
      * Finds a channel with the given id and contract hash and returns it, or returns null.
      */
     @Nullable
-    StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
+    public StoredClientChannel getChannel(Sha256Hash id, Sha256Hash contractHash) {
         lock.lock();
         try {
             Set<StoredClientChannel> setChannels = mapChannels.get(id);
@@ -177,6 +175,18 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                     return channel;
             }
             return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Get a copy of all {@link StoredClientChannel}s
+     */
+    public Multimap<Sha256Hash, StoredClientChannel> getChannelMap() {
+        lock.lock();
+        try {
+            return ImmutableMultimap.copyOf(mapChannels);
         } finally {
             lock.unlock();
         }
