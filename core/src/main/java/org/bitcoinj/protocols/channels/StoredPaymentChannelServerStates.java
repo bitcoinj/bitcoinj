@@ -89,6 +89,12 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         this.broadcasterFuture.set(checkNotNull(broadcaster));
     }
 
+    /** Returns this extension from the given wallet, or null if no such extension was added. */
+    @Nullable
+    public static StoredPaymentChannelServerStates getFromWallet(Wallet wallet) {
+        return (StoredPaymentChannelServerStates) wallet.getExtensions().get(EXTENSION_ID);
+    }
+
     /**
      * <p>Closes the given channel using {@link ServerConnectionEventHandler#closeChannel()} and
      * {@link PaymentChannelV1ServerState#close()} to notify any connected client of channel closure and to complete and
