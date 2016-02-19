@@ -1247,7 +1247,8 @@ public class WalletTool {
     private static void shutdown() {
         try {
             if (peers == null) return;  // setup() never called so nothing to do.
-            peers.stop();
+            if (peers.isRunning())
+                peers.stop();
             saveWallet(walletFile);
             store.close();
             wallet = null;
