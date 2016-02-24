@@ -693,9 +693,10 @@ public class Transaction extends ChildMessage {
             }
             s.append(String.format(Locale.US, "%n"));
         }
-        Coin fee = getFee();
+        final Coin fee = getFee();
         if (fee != null)
-            s.append("     fee  ").append(fee.toFriendlyString()).append(String.format(Locale.US, "%n"));
+            s.append("     fee  ").append(fee.multiply(1000).divide(unsafeBitcoinSerialize().length).toFriendlyString())
+                    .append("/kB, ").append(fee.toFriendlyString()).append(String.format(Locale.US, " total%n"));
         if (purpose != null)
             s.append("     prps ").append(purpose).append(String.format(Locale.US, "%n"));
         return s.toString();
