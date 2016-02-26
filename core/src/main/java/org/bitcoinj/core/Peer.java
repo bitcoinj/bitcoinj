@@ -1538,7 +1538,7 @@ public class Peer extends PeerSocketHandler {
      * Returns true if this peer will try and download things it is sent in "inv" messages. Normally you only need
      * one peer to be downloading data. Defaults to true.
      */
-    public boolean getDownloadData() {
+    public boolean isDownloadData() {
         return vDownloadData;
     }
 
@@ -1722,7 +1722,7 @@ public class Peer extends PeerSocketHandler {
      * before handing the transaction off to the wallet. The wallet can do risk analysis on pending/recent transactions
      * to try and discover if a pending tx might be at risk of double spending.
      */
-    public boolean getDownloadTxDependencies() {
+    public boolean isDownloadTxDependencies() {
         return vDownloadTxDependencies;
     }
 
