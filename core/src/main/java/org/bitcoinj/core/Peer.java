@@ -519,12 +519,10 @@ public class Peer extends PeerSocketHandler {
             throw new ProtocolException("Got two version messages from peer");
         vPeerVersionMessage = m;
         // Switch to the new protocol version.
-        int peerVersion = vPeerVersionMessage.clientVersion;
-        PeerAddress peerAddress = getAddress();
         long peerTime = vPeerVersionMessage.time * 1000;
-        log.info("Connected to {}: version={}, subVer='{}', services=0x{}, time={}, blocks={}",
-                peerAddress == null ? "Peer" : (peerAddress.getAddr() == null ? peerAddress.getHostname() : peerAddress.getAddr().getHostAddress()),
-                peerVersion,
+        log.info("{}: Got version={}, subVer='{}', services=0x{}, time={}, blocks={}",
+                this,
+                vPeerVersionMessage.clientVersion,
                 vPeerVersionMessage.subVer,
                 vPeerVersionMessage.localServices,
                 String.format(Locale.US, "%tF %tT", peerTime, peerTime),
