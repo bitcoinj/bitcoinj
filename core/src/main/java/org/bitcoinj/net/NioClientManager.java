@@ -62,7 +62,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             ConnectionHandler handler = new ConnectionHandler(connection, key, connectedHandlers);
             try {
                 if (sc.finishConnect()) {
-                    log.info("Successfully connected to {}", sc.socket().getRemoteSocketAddress());
+                    log.info("Connected to {}", sc.socket().getRemoteSocketAddress());
                     key.interestOps((key.interestOps() | SelectionKey.OP_READ) & ~SelectionKey.OP_CONNECT).attach(handler);
                     connection.connectionOpened();
                     data.future.set(data.address);
