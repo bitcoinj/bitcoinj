@@ -288,13 +288,16 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         lock.lock();
         try {
             final NetworkParameters params = getNetworkParameters();
+            // If we haven't attached to a wallet yet we can't check against network parameters
+            final boolean hasMaxMoney = params != null ? params.hasMaxMoney() : true;
+            final Coin networkMaxMoney = params != null ? params.getMaxMoney() : NetworkParameters.MAX_MONEY;
             ClientState.StoredClientPaymentChannels.Builder builder = ClientState.StoredClientPaymentChannels.newBuilder();
             for (StoredClientChannel channel : mapChannels.values()) {
                 // First a few asserts to make sure things won't break
                 checkState(channel.valueToMe.signum() >= 0 &&
-                        (!params.hasMaxMoney() || channel.valueToMe.compareTo(params.getMaxMoney()) <= 0));
+                        (!hasMaxMoney || channel.valueToMe.compareTo(networkMaxMoney) <= 0));
                 checkState(channel.refundFees.signum() >= 0 &&
-                        (!params.hasMaxMoney() || channel.refundFees.compareTo(params.getMaxMoney()) <= 0));
+                        (!hasMaxMoney || channel.refundFees.compareTo(networkMaxMoney) <= 0));
                 checkNotNull(channel.myKey.getPubKey());
                 checkState(channel.refund.getConfidence().getSource() == TransactionConfidence.Source.SELF);
                 checkNotNull(channel.myKey.getPubKey());
@@ -368,8 +371,8 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         }
     }
 
-    private NetworkParameters getNetworkParameters() {
-        return this.containingWallet.getNetworkParameters();
+    private @Nullable NetworkParameters getNetworkParameters() {
+        return this.containingWallet != null ? this.containingWallet.getNetworkParameters() : null;
     }
 }
 

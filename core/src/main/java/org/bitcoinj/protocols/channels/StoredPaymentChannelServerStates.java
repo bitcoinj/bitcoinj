@@ -226,12 +226,15 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         lock.lock();
         try {
             final NetworkParameters params = getNetworkParameters();
+            // If we haven't attached to a wallet yet we can't check against network parameters
+            final boolean hasMaxMoney = params != null ? params.hasMaxMoney() : true;
+            final Coin networkMaxMoney = params != null ? params.getMaxMoney() : NetworkParameters.MAX_MONEY;
             ServerState.StoredServerPaymentChannels.Builder builder = ServerState.StoredServerPaymentChannels.newBuilder();
             for (StoredServerChannel channel : mapChannels.values()) {
                 // First a few asserts to make sure things won't break
                 // TODO: Pull MAX_MONEY from network parameters
                 checkState(channel.bestValueToMe.signum() >= 0 && 
-                        (!params.hasMaxMoney() || channel.bestValueToMe.compareTo(params.getMaxMoney()) <= 0));
+                        (!hasMaxMoney || channel.bestValueToMe.compareTo(networkMaxMoney) <= 0));
                 checkState(channel.refundTransactionUnlockTimeSecs > 0);
                 checkNotNull(channel.myKey.getPrivKeyBytes());
                 ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
@@ -301,7 +304,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
         }
     }
 
-    private NetworkParameters getNetworkParameters() {
-        return wallet.getNetworkParameters();
+    private @Nullable NetworkParameters getNetworkParameters() {
+        return wallet != null ? wallet.getNetworkParameters() : null;
     }
 }
