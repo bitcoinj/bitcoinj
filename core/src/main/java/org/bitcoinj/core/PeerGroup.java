@@ -140,8 +140,8 @@ public class PeerGroup implements TransactionBroadcaster {
     private final CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
     // The version message to use for new connections.
     @GuardedBy("lock") private VersionMessage versionMessage;
-    // Switch for enabling download of pending transaction dependencies.
-    @GuardedBy("lock") protected boolean downloadTxDependencies;
+    // Maximum depth up to which pending transaction dependencies are downloaded, or 0 for disabled.
+    @GuardedBy("lock") private int downloadTxDependencyDepth;
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
@@ -413,7 +413,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // We never request that the remote node wait for a bloom filter yet, as we have no wallets
         versionMessage.relayTxesBeforeFilter = true;
 
-        downloadTxDependencies = true;
+        downloadTxDependencyDepth = Integer.MAX_VALUE;
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
@@ -485,13 +485,13 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Switch for enabling download of pending transaction dependencies. A change of value only takes effect for newly
-     * connected peers.
+     * Configure download of pending transaction dependencies. A change of values only takes effect for newly connected
+     * peers.
      */
-    public void setDownloadTxDependencies(boolean downloadTxDependencies) {
+    public void setDownloadTxDependencies(int depth) {
         lock.lock();
         try {
-            this.downloadTxDependencies = downloadTxDependencies;
+            this.downloadTxDependencyDepth = depth;
         } finally {
             lock.unlock();
         }
@@ -1511,7 +1511,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /** You can override this to customise the creation of {@link Peer} objects. */
     @GuardedBy("lock")
     protected Peer createPeer(PeerAddress address, VersionMessage ver) {
-        return new Peer(params, ver, address, chain, downloadTxDependencies);
+        return new Peer(params, ver, address, chain, downloadTxDependencyDepth);
     }
 
     /**
