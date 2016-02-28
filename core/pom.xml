@@ -197,7 +197,6 @@
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
                                         <urn>org.apache.maven.plugins:maven-clean-plugin:2.6.1:maven-plugin:null:runtime:bfdf7d6c2f8fc8759457e9d54f458ba56ac7b30f</urn>
                                         <urn>org.apache.maven.plugins:maven-compiler-plugin:3.2:maven-plugin:null:runtime:aec10f274ac07fafab8906cb1aa69669d753b2c2</urn>
-                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:2.10:maven-plugin:null:runtime:af87ceeb71c6499147c5d27f74c9317bf707538e</urn>
                                         <urn>org.apache.maven.plugins:maven-deploy-plugin:2.8.2:maven-plugin:null:runtime:3c2d83ecd387e9843142ae92a0439792c1500319</urn>
                                         <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.0:maven-plugin:null:runtime:ad032b7593576e9fe9305c73865633e163895b29</urn>
                                         <urn>org.apache.maven.plugins:maven-install-plugin:2.5.2:maven-plugin:null:runtime:8a67631619fc3c1d1f036e59362ddce71e1e496f</urn>
@@ -337,78 +336,6 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>3.1.0</version>
-            </plugin>
-
-            <!-- Create a bundled executable test jar that runs the regtester/pulltester.
-                 The comparison tool is kind of messy and badly needs a seriously refactoring.
-                 It depends on classes which are only in the test tree so we must do some
-                 Maven kung fu here to create a bundle of it, as I couldn't make Maven Shade
-                 do bundling on the test jar for some reason. Maven kind of sucks ...
-              -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unzip-lib</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <artifactItems>
-                                <artifactItem>
-                                    <outputDirectory>target/test-classes/</outputDirectory>
-                                    <groupId>org.bitcoinj</groupId>
-                                    <artifactId>bitcoinj-core</artifactId>
-                                    <version>${project.version}</version>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>unzip-deps</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>target/test-classes/</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>org.bitcoinj.core.BitcoindComparisonTool</mainClass>
-                                    <addClasspath>false</addClasspath>
-                                </manifest>
-                            </archive>
-                            <finalName>pull</finalName>    <!-- becomes pull-tests.jar on disk (hacky) -->
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
