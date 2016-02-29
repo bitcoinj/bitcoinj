@@ -4164,8 +4164,7 @@ public class Wallet extends BaseTaggableObject
             TransactionOutput bestChangeOutput = null;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation;
-                feeCalculation = calculateFee(req, value, originalInputs, needAtLeastReferenceFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, needAtLeastReferenceFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
             } else {
@@ -5021,7 +5020,6 @@ public class Wallet extends BaseTaggableObject
     public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
                                        boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
-        FeeCalculation result = new FeeCalculation();
         // There are 3 possibilities for what adding change might do:
         // 1) No effect
         // 2) Causes increase in fee (change < 0.01 COINS)
@@ -5174,8 +5172,7 @@ public class Wallet extends BaseTaggableObject
         }
 
         Coin lowestFee = null;
-        result.bestCoinSelection = null;
-        result.bestChangeOutput = null;
+        FeeCalculation result = new FeeCalculation();
         if (selection1 != null) {
             if (selection1Change != null)
                 lowestFee = selection1.valueGathered.subtract(selection1Change.getValue());
