@@ -267,9 +267,7 @@ public class Wallet extends BaseTaggableObject
         this(Context.getOrCreate(params), keyChainGroup);
     }
 
-    // TODO: When this class moves to the Wallet package, along with the protobuf serializer, then hide this.
-    /** For internal use only. */
-    public Wallet(Context context, KeyChainGroup keyChainGroup) {
+    private Wallet(Context context, KeyChainGroup keyChainGroup) {
         this.context = context;
         this.params = context.getParams();
         this.keyChainGroup = checkNotNull(keyChainGroup);
