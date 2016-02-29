@@ -105,7 +105,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        Context context = new Context(params, 3);  // Shorter event horizon for unit tests.
+        Context context = new Context(PARAMS, 3);  // Shorter event horizon for unit tests.
         serverWallet = new Wallet(context);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
@@ -667,7 +667,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.INITIATE).build());
         if (useRefunds()) {
             final Protos.TwoWayChannelMessage provideRefund = pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND);
-            Transaction refund = new Transaction(params, provideRefund.getProvideRefund().getTx().toByteArray());
+            Transaction refund = new Transaction(PARAMS, provideRefund.getProvideRefund().getTx().toByteArray());
             assertEquals(myValue, refund.getOutput(0).getValue());
         } else {
             assertEquals(2, client.state().getMajorVersion());
@@ -678,7 +678,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testEmptyWallet() throws Exception {
-        Wallet emptyWallet = new Wallet(params);
+        Wallet emptyWallet = new Wallet(PARAMS);
         emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
@@ -846,7 +846,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             Transaction settlement1 = broadcasts.take();
             // Server sends back the settle TX it just broadcast.
             final Protos.TwoWayChannelMessage closeMsg = pair.serverRecorder.checkNextMsg(MessageType.CLOSE);
-            final Transaction settlement2 = new Transaction(params, closeMsg.getSettlement().getTx().toByteArray());
+            final Transaction settlement2 = new Transaction(PARAMS, closeMsg.getSettlement().getTx().toByteArray());
             assertEquals(settlement1, settlement2);
             client.receiveMessage(closeMsg);
             assertNotNull(wallet.getTransaction(settlement2.getHash()));   // Close TX entered the wallet.

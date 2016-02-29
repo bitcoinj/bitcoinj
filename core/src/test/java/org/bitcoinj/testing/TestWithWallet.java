@@ -38,7 +38,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
  * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} before doing so.
  */
 public class TestWithWallet {
-    protected static final NetworkParameters params = UnitTestParams.get();
+    protected static final NetworkParameters PARAMS = UnitTestParams.get();
     protected ECKey myKey;
     protected Address myAddress;
     protected Wallet wallet;
@@ -48,12 +48,12 @@ public class TestWithWallet {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
-        Context ctx = new Context(params);
-        wallet = new Wallet(params);
+        Context ctx = new Context(PARAMS);
+        wallet = new Wallet(PARAMS);
         myKey = wallet.currentReceiveKey();
-        myAddress = myKey.toAddress(params);
-        blockStore = new MemoryBlockStore(params);
-        chain = new BlockChain(params, wallet, blockStore);
+        myAddress = myKey.toAddress(PARAMS);
+        blockStore = new MemoryBlockStore(PARAMS);
+        chain = new BlockChain(PARAMS, wallet, blockStore);
     }
 
     public void tearDown() throws Exception {
@@ -83,16 +83,16 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, Address toAddress, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(wallet, createFakeTx(params, value, toAddress), type);
+        return sendMoneyToWallet(wallet, createFakeTx(PARAMS, value, toAddress), type);
     }
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, ECKey toPubKey, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(wallet, createFakeTx(params, value, toPubKey), type);
+        return sendMoneyToWallet(wallet, createFakeTx(PARAMS, value, toPubKey), type);
     }
 
     @Nullable
     protected Transaction sendMoneyToWallet(Coin value, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(this.wallet, createFakeTx(params, value, myAddress), type);
+        return sendMoneyToWallet(this.wallet, createFakeTx(PARAMS, value, myAddress), type);
     }
 }

@@ -38,7 +38,7 @@ import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
 public class BlockTest {
-    static final NetworkParameters params = TestNet2Params.get();
+    private static final NetworkParameters PARAMS = TestNet2Params.get();
 
     public static final byte[] blockBytes;
 
@@ -50,12 +50,12 @@ public class BlockTest {
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(params);
+        Context context = new Context(PARAMS);
     }
 
     @Test
     public void testWork() throws Exception {
-        BigInteger work = params.getGenesisBlock().getWork();
+        BigInteger work = PARAMS.getGenesisBlock().getWork();
         // This number is printed by Bitcoin Core at startup as the calculated value of chainWork on testnet:
         //
         // SetBestChain: new best=00000007199508e34a9f  height=0  work=536879104
@@ -64,7 +64,7 @@ public class BlockTest {
 
     @Test
     public void testBlockVerification() throws Exception {
-        Block block = params.getDefaultSerializer().makeBlock(blockBytes);
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
         assertEquals("00000000a6e5eb79dcec11897af55e90cd571a4335383a3ccfbc12ec81085935", block.getHashAsString());
     }
@@ -72,7 +72,7 @@ public class BlockTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testDate() throws Exception {
-        Block block = params.getDefaultSerializer().makeBlock(blockBytes);
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         assertEquals("4 Nov 2010 16:06:04 GMT", block.getTime().toGMTString());
     }
 
@@ -109,7 +109,7 @@ public class BlockTest {
 
     @Test
     public void testBadTransactions() throws Exception {
-        Block block = params.getDefaultSerializer().makeBlock(blockBytes);
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         // Re-arrange so the coinbase transaction is not first.
         Transaction tx1 = block.transactions.get(0);
         Transaction tx2 = block.transactions.get(1);
@@ -125,9 +125,9 @@ public class BlockTest {
 
     @Test
     public void testHeaderParse() throws Exception {
-        Block block = params.getDefaultSerializer().makeBlock(blockBytes);
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         Block header = block.cloneAsHeader();
-        Block reparsed = params.getDefaultSerializer().makeBlock(header.bitcoinSerialize());
+        Block reparsed = PARAMS.getDefaultSerializer().makeBlock(header.bitcoinSerialize());
         assertEquals(reparsed, header);
     }
 
@@ -137,7 +137,7 @@ public class BlockTest {
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
         // NB: This tests the bitcoin serialization protocol.
-        Block block = params.getDefaultSerializer().makeBlock(blockBytes);
+        Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         assertTrue(Arrays.equals(blockBytes, block.bitcoinSerialize()));
     }
     

@@ -36,7 +36,7 @@ import static org.bitcoinj.core.Coin.COIN;
 import static org.junit.Assert.*;
 
 public class PaymentSessionTest {
-    private static final NetworkParameters params = TestNet3Params.get();
+    private static final NetworkParameters PARAMS = TestNet3Params.get();
     private static final String simplePaymentUrl = "http://a.simple.url.com/";
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
     private static final String paymentMemo = "take ze coinz";
@@ -50,8 +50,8 @@ public class PaymentSessionTest {
     @Before
     public void setUp() throws Exception {
         serverKey = new ECKey();
-        tx = new Transaction(params);
-        outputToMe = new TransactionOutput(params, tx, coin, serverKey);
+        tx = new Transaction(PARAMS);
+        outputToMe = new TransactionOutput(PARAMS, tx, coin, serverKey);
         tx.addOutput(outputToMe);
     }
 
@@ -68,10 +68,10 @@ public class PaymentSessionTest {
 
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(params, tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<Transaction>();
         txns.add(tx);
-        Address refundAddr = new Address(params, serverKey.getPubKeyHash());
+        Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentLog().get(0).getUrl().toString());
@@ -80,7 +80,7 @@ public class PaymentSessionTest {
         assertEquals(merchantData, payment.getMerchantData());
         assertEquals(1, payment.getRefundToCount());
         assertEquals(coin.value, payment.getRefundTo(0).getAmount());
-        TransactionOutput refundOutput = new TransactionOutput(params, null, coin, refundAddr);
+        TransactionOutput refundOutput = new TransactionOutput(PARAMS, null, coin, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
     }
@@ -108,7 +108,7 @@ public class PaymentSessionTest {
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(params, tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<Transaction>();
         txns.add(tx);
         try {
@@ -139,10 +139,10 @@ public class PaymentSessionTest {
 
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(params, tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<Transaction>();
         txns.add(tx);
-        Address refundAddr = new Address(params, serverKey.getPubKeyHash());
+        Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
     }

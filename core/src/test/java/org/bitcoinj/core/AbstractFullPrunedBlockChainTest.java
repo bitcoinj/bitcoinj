@@ -53,7 +53,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected NetworkParameters params;
+    protected static final NetworkParameters PARAMS = new UnitTestParams() {
+        @Override public int getInterval() {
+            return 10000;
+        }
+    };
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
     protected Context context;
@@ -61,12 +65,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        params = new UnitTestParams() {
-            @Override public int getInterval() {
-                return 10000;
-            }
-        };
-        context = new Context(params);
+        context = new Context(PARAMS);
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
@@ -77,11 +76,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
+        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
         
-        store = createStore(params, blockList.maximumReorgBlockCount);
-        chain = new FullPrunedBlockChain(params, store);
+        store = createStore(PARAMS, blockList.maximumReorgBlockCount);
+        chain = new FullPrunedBlockChain(PARAMS, store);
 
         for (Rule rule : blockList.list) {
             if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
@@ -125,8 +124,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @Test
     public void skipScripts() throws Exception {
-        store = createStore(params, 10);
-        chain = new FullPrunedBlockChain(params, store);
+        store = createStore(PARAMS, 10);
+        chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -135,17 +134,17 @@ public abstract class AbstractFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
-        for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
 
         rollingBlock = rollingBlock.createNextBlock(null);
-        Transaction t = new Transaction(params);
-        t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, new byte[] {}));
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
         input.clearScriptBytes();
@@ -165,8 +164,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(params, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(params, store);
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(PARAMS, store);
         
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -175,11 +174,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, rollingBlock.getTransactions().get(0).getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, rollingBlock.getTransactions().get(0).getHash());
         byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
@@ -188,9 +187,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
                                        (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(null);
         
-        Transaction t = new Transaction(params);
+        Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
-        t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, new byte[]{}));
+        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[]{}));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -240,8 +239,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testGetOpenTransactionOutputs() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(params, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(params, store);
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -249,12 +248,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
@@ -263,11 +262,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        Address address = new Address(params, toKey.getPubKeyHash());
+        Address address = new Address(PARAMS, toKey.getPubKeyHash());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(params);
-        t.addOutput(new TransactionOutput(params, t, amount, toKey));
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -291,8 +290,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(params, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(params, store);
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -300,19 +299,19 @@ public abstract class AbstractFullPrunedBlockChainTest {
         int height = 1;
 
         // Build some blocks on genesis block to create a spendable output.
-        Block rollingBlock = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(params, 0, transaction.getHash());
+        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getHash());
         byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
-        for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
         rollingBlock = rollingBlock.createNextBlock(null);
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        Wallet wallet = new Wallet(params);
+        Wallet wallet = new Wallet(PARAMS);
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
@@ -320,8 +319,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100000000);
 
-        Transaction t = new Transaction(params);
-        t.addOutput(new TransactionOutput(params, t, amount, toKey));
+        Transaction t = new Transaction(PARAMS);
+        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -330,7 +329,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = new Address(params, toKey2.getPubKeyHash());
+        Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
         Wallet.SendRequest req = Wallet.SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
@@ -358,25 +357,25 @@ public abstract class AbstractFullPrunedBlockChainTest {
      */
     @Test
     public void missingHeightFromCoinbase() throws Exception {
-        final int UNDOABLE_BLOCKS_STORED = params.getMajorityEnforceBlockUpgrade() + 1;
-        store = createStore(params, UNDOABLE_BLOCKS_STORED);
+        final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         try {
-            chain = new FullPrunedBlockChain(params, store);
+            chain = new FullPrunedBlockChain(PARAMS, store);
             ECKey outKey = new ECKey();
             int height = 1;
-            Block chainHead = params.getGenesisBlock();
+            Block chainHead = PARAMS.getGenesisBlock();
 
             // Build some blocks on genesis block to create a spendable output.
 
             // Put in just enough v1 blocks to stop the v2 blocks from forming a majority
-            for (height = 1; height <= (params.getMajorityWindow() - params.getMajorityEnforceBlockUpgrade()); height++) {
+            for (height = 1; height <= (PARAMS.getMajorityWindow() - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
                 chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height);
                 chain.add(chainHead);
             }
 
             // Fill the rest of the window in with v2 blocks
-            for (; height < params.getMajorityWindow(); height++) {
+            for (; height < PARAMS.getMajorityWindow(); height++) {
                 chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
                     outKey.getPubKey(), height);
                 chain.add(chainHead);

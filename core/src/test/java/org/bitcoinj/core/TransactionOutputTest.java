@@ -35,7 +35,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(params);
+        Transaction multiSigTransaction = new Transaction(PARAMS);
         ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -63,7 +63,7 @@ public class TransactionOutputTest extends TestWithWallet {
         Transaction tx = new Transaction(MainNetParams.get());
         Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
         tx.addOutput(Coin.CENT, script);
-        assertNull(tx.getOutput(0).getAddressFromP2SH(params));
-        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(params));
+        assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
+        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));
     }
 }

@@ -46,7 +46,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
-    protected final NetworkParameters params = UnitTestParams.get();
+    protected static final NetworkParameters PARAMS = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
@@ -83,16 +83,16 @@ public class TestWithNetworkConnections {
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
 
-        context = new Context(params);
+        context = new Context(PARAMS);
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
-            wallet = new Wallet(params);
+            wallet = new Wallet(PARAMS);
             key = wallet.freshReceiveKey();
-            address = key.toAddress(params);
+            address = key.toAddress(PARAMS);
         }
-        blockChain = new BlockChain(params, wallet, blockStore);
+        blockChain = new BlockChain(PARAMS, wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -114,7 +114,7 @@ public class TestWithNetworkConnections {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(params) {
+                return new InboundMessageQueuer(PARAMS) {
                     @Override
                     public void connectionClosed() {
                     }
