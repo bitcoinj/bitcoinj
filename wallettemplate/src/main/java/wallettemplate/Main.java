@@ -28,9 +28,11 @@ import java.net.URL;
 import static wallettemplate.utils.GuiUtils.*;
 
 public class Main extends Application {
-    public static String APP_NAME = "WalletTemplate";
-
     public static NetworkParameters params = MainNetParams.get();
+    public static final String APP_NAME = "WalletTemplate";
+    private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
+            + params.getPaymentProtocolId();
+
     public static WalletAppKit bitcoin;
     public static Main instance;
 
@@ -113,7 +115,7 @@ public class Main extends Application {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File("."), APP_NAME + "-" + params.getPaymentProtocolId()) {
+        bitcoin = new WalletAppKit(params, new File("."), WALLET_FILE_NAME) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
