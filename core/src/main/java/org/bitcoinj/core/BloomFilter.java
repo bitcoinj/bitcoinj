@@ -332,14 +332,14 @@ public class BloomFilter extends Message {
                 if (contains(chunk.data)) {
                     boolean isSendingToPubKeys = script.isSentToRawPubKey() || script.isSentToMultiSig();
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
-                        insert(output.getOutPointFor().bitcoinSerialize());
+                        insert(output.getOutPointFor().unsafeBitcoinSerialize());
                     found = true;
                 }
             }
         }
         if (found) return true;
         for (TransactionInput input : tx.getInputs()) {
-            if (contains(input.getOutpoint().bitcoinSerialize())) {
+            if (contains(input.getOutpoint().unsafeBitcoinSerialize())) {
                 return true;
             }
             for (ScriptChunk chunk : input.getScriptSig().getChunks()) {

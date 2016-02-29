@@ -158,7 +158,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value
-        assertArrayEquals(filter.bitcoinSerialize(), HEX.decode("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"));
+        assertArrayEquals(HEX.decode("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.unsafeBitcoinSerialize());
 
         // Create a peer.
         peerGroup.start();

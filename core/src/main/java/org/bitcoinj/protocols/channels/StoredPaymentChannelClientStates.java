@@ -304,9 +304,9 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                 final ClientState.StoredClientPaymentChannel.Builder value = ClientState.StoredClientPaymentChannel.newBuilder()
                         .setMajorVersion(channel.majorVersion)
                         .setId(ByteString.copyFrom(channel.id.getBytes()))
-                        .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
+                        .setContractTransaction(ByteString.copyFrom(channel.contract.unsafeBitcoinSerialize()))
                         .setRefundFees(channel.refundFees.value)
-                        .setRefundTransaction(ByteString.copyFrom(channel.refund.bitcoinSerialize()))
+                        .setRefundTransaction(ByteString.copyFrom(channel.refund.unsafeBitcoinSerialize()))
                         .setMyKey(ByteString.copyFrom(new byte[0])) // Not  used, but protobuf message requires
                         .setMyPublicKey(ByteString.copyFrom(channel.myKey.getPubKey()))
                         .setServerKey(ByteString.copyFrom(channel.serverKey.getPubKey()))

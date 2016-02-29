@@ -234,8 +234,7 @@ public class Transaction extends ChildMessage {
     @Override
     public Sha256Hash getHash() {
         if (hash == null) {
-            byte[] bits = bitcoinSerialize();
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(unsafeBitcoinSerialize()));
         }
         return hash;
     }
@@ -713,7 +712,7 @@ public class Transaction extends ChildMessage {
         }
         inputs.clear();
         // You wanted to reserialize, right?
-        this.length = this.bitcoinSerialize().length;
+        this.length = this.unsafeBitcoinSerialize().length;
     }
 
     /**
@@ -801,7 +800,7 @@ public class Transaction extends ChildMessage {
         }
         outputs.clear();
         // You wanted to reserialize, right?
-        this.length = this.bitcoinSerialize().length;
+        this.length = this.unsafeBitcoinSerialize().length;
     }
 
     /**

@@ -224,7 +224,7 @@ public class TransactionOutput extends ChildMessage {
         // formula is wrong for anything that's not a pay-to-address output, unfortunately, we must follow Bitcoin Core's
         // wrongness in order to ensure we're considered standard. A better formula would either estimate the
         // size of data needed to satisfy all different script types, or just hard code 33 below.
-        final long size = this.bitcoinSerialize().length + 148;
+        final long size = this.unsafeBitcoinSerialize().length + 148;
         Coin[] nonDustAndRemainder = feePerKbRequired.multiply(size).divideAndRemainder(1000);
         return nonDustAndRemainder[1].equals(Coin.ZERO) ? nonDustAndRemainder[0] : nonDustAndRemainder[0].add(Coin.SATOSHI);
     }

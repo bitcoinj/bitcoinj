@@ -634,7 +634,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Now we connect p3 and there is a new bloom filter sent, that DOES match the relevant outpoint.
         InboundMessageQueuer p3 = connectPeer(3);
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
-        assertTrue(p3.lastReceivedFilter.contains(outpoint.bitcoinSerialize()));
+        assertTrue(p3.lastReceivedFilter.contains(outpoint.unsafeBitcoinSerialize()));
     }
 
     @Test

@@ -78,7 +78,7 @@ public class TestFeeLevel {
         request.feePerKb = feeToTest;
         request.ensureMinRequiredFee = false;
         kit.wallet().completeTx(request);
-        System.out.println("Size in bytes is " + request.tx.bitcoinSerialize().length);
+        System.out.println("Size in bytes is " + request.tx.unsafeBitcoinSerialize().length);
         System.out.println("TX is " + request.tx);
         System.out.println("Waiting for " + kit.peerGroup().getMaxConnections() + " connected peers");
         kit.peerGroup().addDisconnectedEventListener(new PeerDisconnectedEventListener() {

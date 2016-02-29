@@ -527,7 +527,7 @@ public class PaymentChannelServer {
                 if (result != null) {
                     // Result can be null on various error paths, like if we never actually opened
                     // properly and so on.
-                    msg.getSettlementBuilder().setTx(ByteString.copyFrom(result.bitcoinSerialize()));
+                    msg.getSettlementBuilder().setTx(ByteString.copyFrom(result.unsafeBitcoinSerialize()));
                     log.info("Sending CLOSE back with broadcast settlement tx.");
                 } else {
                     log.info("Sending CLOSE back without broadcast settlement tx.");

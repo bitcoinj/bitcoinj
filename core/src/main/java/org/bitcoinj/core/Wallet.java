@@ -4284,7 +4284,7 @@ public class Wallet extends BaseTaggableObject
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee, Coin feePerKb) {
         TransactionOutput output = tx.getOutput(0);
         // Check if we need additional fee due to the transaction's size
-        int size = tx.bitcoinSerialize().length;
+        int size = tx.unsafeBitcoinSerialize().length;
         size += estimateBytesForSigning(coinSelection);
         Coin fee = baseFee.add(feePerKb.multiply((size / 1000) + 1));
         output.setValue(output.getValue().subtract(fee));
@@ -4870,7 +4870,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
             for (TransactionOutPoint point : bloomOutPoints)
-                filter.insert(point.bitcoinSerialize());
+                filter.insert(point.unsafeBitcoinSerialize());
             return filter;
         } finally {
             endBloomFilterCalculation();
@@ -5104,7 +5104,7 @@ public class Wallet extends BaseTaggableObject
                     additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
                                                      Transaction.MIN_NONDUST_OUTPUT.add(Coin.SATOSHI));
                 } else {
-                    size += changeOutput.bitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
+                    size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
                     // This solution is either category 1 or 2
                     if (!eitherCategory2Or3) // must be category 1
                         additionalValueForNextCategory = null;
@@ -5126,7 +5126,7 @@ public class Wallet extends BaseTaggableObject
 
             // Estimate transaction size and loop again if we need more fee per kb. The serialized tx doesn't
             // include things we haven't added yet like input signatures/scripts or the change output.
-            size += req.tx.bitcoinSerialize().length;
+            size += req.tx.unsafeBitcoinSerialize().length;
             size += estimateBytesForSigning(selection);
             if (size/1000 > lastCalculatedSize/1000 && req.feePerKb.signum() > 0) {
                 lastCalculatedSize = size;
@@ -5464,7 +5464,7 @@ public class Wallet extends BaseTaggableObject
             if (sign)
                 signTransaction(req);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
-            checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
+            checkState(rekeyTx.unsafeBitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.

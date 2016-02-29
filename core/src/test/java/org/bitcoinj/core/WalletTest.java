@@ -1719,10 +1719,10 @@ public class WalletTest extends TestWithWallet {
         TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
-        assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+        assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.unsafeBitcoinSerialize()));
 
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertTrue(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+        assertTrue(wallet.getBloomFilter(1e-12).contains(outPoint.unsafeBitcoinSerialize()));
     }
 
     @Test
@@ -1779,10 +1779,10 @@ public class WalletTest extends TestWithWallet {
             TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
-            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.unsafeBitcoinSerialize()));
 
             wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
-            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.unsafeBitcoinSerialize()));
         }
     }
 
@@ -1798,10 +1798,10 @@ public class WalletTest extends TestWithWallet {
 
         TransactionOutPoint outPoint = new TransactionOutPoint(params, 0, t1);
 
-        assertFalse(wallet.getBloomFilter(0.001).contains(outPoint.bitcoinSerialize()));
+        assertFalse(wallet.getBloomFilter(0.001).contains(outPoint.unsafeBitcoinSerialize()));
 
         wallet.receiveFromBlock(t1, b1, BlockChain.NewBlockType.BEST_CHAIN, 0);
-        assertTrue(wallet.getBloomFilter(0.001).contains(outPoint.bitcoinSerialize()));
+        assertTrue(wallet.getBloomFilter(0.001).contains(outPoint.unsafeBitcoinSerialize()));
     }
 
     @Test
@@ -2497,7 +2497,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request15 = SendRequest.to(notMyAddr, CENT);
         for (int i = 0; i < 29; i++)
             request15.tx.addOutput(CENT, notMyAddr);
-        assertTrue(request15.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request15.tx.unsafeBitcoinSerialize().length > 1000);
         request15.feePerKb = SATOSHI;
         wallet.completeTx(request15);
         assertEquals(SATOSHI.multiply(2), request15.tx.getFee());
@@ -2514,7 +2514,7 @@ public class WalletTest extends TestWithWallet {
         request16.feePerKb = ZERO;
         for (int i = 0; i < 29; i++)
             request16.tx.addOutput(CENT, notMyAddr);
-        assertTrue(request16.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request16.tx.unsafeBitcoinSerialize().length > 1000);
         wallet.completeTx(request16);
         // Of course the fee shouldn't be added if feePerKb == 0
         assertEquals(ZERO, request16.tx.getFee());
@@ -2536,14 +2536,14 @@ public class WalletTest extends TestWithWallet {
         assertEquals(SATOSHI, request17.tx.getFee());
         assertEquals(1, request17.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 999
-        int theoreticalMaxLength17 = request17.tx.bitcoinSerialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength17 = request17.tx.unsafeBitcoinSerialize().length + myKey.getPubKey().length + 75;
         for (TransactionInput in : request17.tx.getInputs())
             theoreticalMaxLength17 -= in.getScriptBytes().length;
         assertEquals(999, theoreticalMaxLength17);
         Transaction spend17 = request17.tx;
         {
             // Its actual size must be between 996 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
-            final int length = spend17.bitcoinSerialize().length;
+            final int length = spend17.unsafeBitcoinSerialize().length;
             assertTrue(Integer.toString(length), length >= 996 && length <= 999);
         }
         // Now check that it got a fee of 1 since its max size is 999 (1kb).
@@ -2565,13 +2565,13 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request18.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 1001
         Transaction spend18 = request18.tx;
-        int theoreticalMaxLength18 = spend18.bitcoinSerialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength18 = spend18.unsafeBitcoinSerialize().length + myKey.getPubKey().length + 75;
         for (TransactionInput in : spend18.getInputs())
             theoreticalMaxLength18 -= in.getScriptBytes().length;
         assertEquals(1001, theoreticalMaxLength18);
         // Its actual size must be between 998 and 1000 (inclusive) as signatures have a 3-byte size range (almost always)
-        assertTrue(spend18.bitcoinSerialize().length >= 998);
-        assertTrue(spend18.bitcoinSerialize().length <= 1001);
+        assertTrue(spend18.unsafeBitcoinSerialize().length >= 998);
+        assertTrue(spend18.unsafeBitcoinSerialize().length <= 1001);
         // Now check that it did get a fee since its max size is 1000
         assertEquals(25, spend18.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one
@@ -2689,7 +2689,7 @@ public class WalletTest extends TestWithWallet {
             request26.tx.addOutput(CENT, notMyAddr);
         request26.tx.addOutput(CENT.subtract(
                 Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)), notMyAddr);
-        assertTrue(request26.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request26.tx.unsafeBitcoinSerialize().length > 1000);
         request26.feePerKb = SATOSHI;
         wallet.completeTx(request26);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT), request26.tx.getFee());
@@ -2755,7 +2755,7 @@ public class WalletTest extends TestWithWallet {
 
         //
         SendRequest request4 = SendRequest.to(notMyAddr, balance.subtract(SATOSHI));
-        request4.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(request3.tx.bitcoinSerialize().length);
+        request4.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(request3.tx.unsafeBitcoinSerialize().length);
         wallet.completeTx(request4);
         assertEquals(SATOSHI, request4.tx.getFee());
         assertEquals(request4.tx.getInputs().size(), i - 2); // We should have spent all inputs - 2

@@ -333,7 +333,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
 
                 Protos.ProvideRefund.Builder provideRefundBuilder = Protos.ProvideRefund.newBuilder()
                         .setMultisigKey(ByteString.copyFrom(myKey.getPubKey()))
-                        .setTx(ByteString.copyFrom(((PaymentChannelV1ClientState)state).getIncompleteRefundTransaction().bitcoinSerialize()));
+                        .setTx(ByteString.copyFrom(((PaymentChannelV1ClientState)state).getIncompleteRefundTransaction().unsafeBitcoinSerialize()));
 
                 conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                         .setProvideRefund(provideRefundBuilder)
@@ -348,7 +348,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                 state.storeChannelInWallet(serverId);
 
                 Protos.ProvideContract.Builder provideContractBuilder = Protos.ProvideContract.newBuilder()
-                        .setTx(ByteString.copyFrom(state.getContract().bitcoinSerialize()))
+                        .setTx(ByteString.copyFrom(state.getContract().unsafeBitcoinSerialize()))
                         .setClientKey(ByteString.copyFrom(myKey.getPubKey()));
                 try {
                     // Make an initial payment of the dust limit, and put it into the message as well. The size of the
@@ -390,7 +390,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         state.storeChannelInWallet(serverId);
 
         Protos.ProvideContract.Builder contractMsg = Protos.ProvideContract.newBuilder()
-                .setTx(ByteString.copyFrom(state.getContract().bitcoinSerialize()));
+                .setTx(ByteString.copyFrom(state.getContract().unsafeBitcoinSerialize()));
         try {
             // Make an initial payment of the dust limit, and put it into the message as well. The size of the
             // server-requested dust limit was already sanity checked by this point.

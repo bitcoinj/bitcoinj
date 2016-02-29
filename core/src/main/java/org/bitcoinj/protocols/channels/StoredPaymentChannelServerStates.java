@@ -241,10 +241,10 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                         .setMajorVersion(channel.majorVersion)
                         .setBestValueToMe(channel.bestValueToMe.value)
                         .setRefundTransactionUnlockTimeSecs(channel.refundTransactionUnlockTimeSecs)
-                        .setContractTransaction(ByteString.copyFrom(channel.contract.bitcoinSerialize()))
+                        .setContractTransaction(ByteString.copyFrom(channel.contract.unsafeBitcoinSerialize()))
                         .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()));
                 if (channel.majorVersion == 1) {
-                    channelBuilder.setClientOutput(ByteString.copyFrom(channel.clientOutput.bitcoinSerialize()));
+                    channelBuilder.setClientOutput(ByteString.copyFrom(channel.clientOutput.unsafeBitcoinSerialize()));
                 } else {
                     channelBuilder.setClientKey(ByteString.copyFrom(channel.clientKey.getPubKey()));
                 }
