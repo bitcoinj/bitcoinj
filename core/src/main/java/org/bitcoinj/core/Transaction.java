@@ -623,7 +623,7 @@ public class Transaction extends ChildMessage {
             s.append(String.format(Locale.US, "  time locked until %s%n", time));
         }
         if (isOptInFullRBF()) {
-            s.append("  opts into full replace-by-fee%n");
+            s.append("  opts into full replace-by-fee\n");
         }
         if (inputs.size() == 0) {
             s.append(String.format(Locale.US, "  INCOMPLETE: No inputs!%n"));
