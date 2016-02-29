@@ -1331,19 +1331,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final StringBuilder builder2 = new StringBuilder();
         if (seed != null) {
             if (seed.isEncrypted()) {
-                builder2.append(String.format(Locale.US, "Seed is encrypted%n"));
+                builder2.append("Seed is encrypted\n");
             } else if (includePrivateKeys) {
                 final List<String> words = seed.getMnemonicCode();
-                builder2.append(
-                        String.format(Locale.US, "Seed as words: %s%nSeed as hex:   %s%n", Utils.join(words),
-                                seed.toHexString())
-                );
+                builder2.append("Seed as words: ").append(Utils.join(words)).append('\n');
+                builder2.append("Seed as hex:   ").append(seed.toHexString()).append('\n');
             }
-            builder2.append(String.format(Locale.US, "Seed birthday: %d  [%s]%n", seed.getCreationTimeSeconds(),
-                    Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)));
+            builder2.append("Seed birthday: ").append(seed.getCreationTimeSeconds()).append("  [")
+                    .append(Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
         }
         final DeterministicKey watchingKey = getWatchingKey();
-        builder2.append(String.format(Locale.US, "Key to watch:  %s%n", watchingKey.serializePubB58(params)));
+        builder2.append("Key to watch:  ").append(watchingKey.serializePubB58(params)).append('\n');
         formatAddresses(includePrivateKeys, params, builder2);
         return builder2.toString();
     }

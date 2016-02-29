@@ -605,27 +605,26 @@ public class Transaction extends ChildMessage {
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
     public String toString(@Nullable AbstractBlockChain chain) {
-        // Basic info about the tx.
         StringBuilder s = new StringBuilder();
-        s.append(String.format(Locale.US, "  %s: %s%n", getHashAsString(), getConfidence()));
+        s.append("  ").append(getHashAsString()).append(": ").append(getConfidence()).append('\n');
         if (isTimeLocked()) {
-            String time;
+            s.append("  time locked until ");
             if (lockTime < LOCKTIME_THRESHOLD) {
-                time = "block " + lockTime;
+                s.append("block ").append(lockTime);
                 if (chain != null) {
-                    time = time + " (estimated to be reached at " +
-                            chain.estimateBlockTime((int)lockTime).toString() + ")";
+                    s.append(" (estimated to be reached at ").append(chain.estimateBlockTime((int) lockTime).toString())
+                            .append(')');
                 }
             } else {
-                time = new Date(lockTime*1000).toString();
+                s.append(Utils.dateTimeFormat(lockTime * 1000));
             }
-            s.append(String.format(Locale.US, "  time locked until %s%n", time));
+            s.append('\n');
         }
         if (isOptInFullRBF()) {
             s.append("  opts into full replace-by-fee\n");
         }
         if (inputs.size() == 0) {
-            s.append(String.format(Locale.US, "  INCOMPLETE: No inputs!%n"));
+            s.append("  INCOMPLETE: No inputs!\n");
             return s.toString();
         }
         if (isCoinBase()) {
@@ -670,7 +669,7 @@ public class Transaction extends ChildMessage {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append(String.format(Locale.US, "%n"));
+            s.append('\n');
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
@@ -690,14 +689,14 @@ public class Transaction extends ChildMessage {
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
-            s.append(String.format(Locale.US, "%n"));
+            s.append('\n');
         }
         final Coin fee = getFee();
         if (fee != null)
             s.append("     fee  ").append(fee.multiply(1000).divide(unsafeBitcoinSerialize().length).toFriendlyString())
-                    .append("/kB, ").append(fee.toFriendlyString()).append(String.format(Locale.US, " total%n"));
+                    .append("/kB, ").append(fee.toFriendlyString()).append(" total\n");
         if (purpose != null)
-            s.append("     prps ").append(purpose).append(String.format(Locale.US, "%n"));
+            s.append("     prps ").append(purpose).append('\n');
         return s.toString();
     }
 

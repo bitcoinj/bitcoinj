@@ -808,7 +808,7 @@ public class KeyChainGroup implements KeyBag {
         for (DeterministicKeyChain chain : chains) {
             chainStrs.add(chain.toString(includePrivateKeys, params));
         }
-        builder.append(Joiner.on(String.format(Locale.US, "%n")).join(chainStrs));
+        builder.append(Joiner.on('\n').join(chainStrs));
         return builder.toString();
     }
 
