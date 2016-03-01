@@ -2235,7 +2235,7 @@ public class Wallet extends BaseTaggableObject
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
                 Transaction connected = checkNotNull(input.getConnectedTransaction());
-                log.info("  marked {} as spent", input.getOutpoint());
+                log.info("  marked {} as spent by {}", input.getOutpoint(), tx.getHashAsString());
                 maybeMovePool(connected, "prevtx");
                 // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
                 if (output.isMineOrWatched(this)) {
