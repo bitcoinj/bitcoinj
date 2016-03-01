@@ -2843,7 +2843,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.emptyWallet = true;
         emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
         wallet.completeTx(emptyReq);
-        assertEquals(fee, emptyReq.tx.getFee());
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
@@ -2861,7 +2861,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.emptyWallet = true;
         emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
         wallet.completeTx(emptyReq);
-        assertEquals(fee, emptyReq.tx.getFee());
+        assertEquals(Coin.valueOf(17100), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
@@ -3029,6 +3029,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx = createFakeTx(PARAMS, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         SendRequest request = SendRequest.emptyWallet(outputKey);
+        request.ensureMinRequiredFee = false;
         wallet.completeTx(request);
         assertEquals(Wallet.SendRequest.DEFAULT_FEE_PER_KB, request.tx.getFee());
         wallet.commitTx(request.tx);
@@ -3043,28 +3044,18 @@ public class WalletTest extends TestWithWallet {
         tx = createFakeTx(PARAMS, CENT, myAddress);
         wallet.receivePending(tx, null);
         request = SendRequest.emptyWallet(outputKey);
+        request.ensureMinRequiredFee = false;
         wallet.completeTx(request);
         assertEquals(Wallet.SendRequest.DEFAULT_FEE_PER_KB, request.tx.getFee());
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
         assertEquals(CENT, request.tx.getOutput(0).getValue());
 
-        // Add just under 0.01
-        StoredBlock block2 = new StoredBlock(block.getHeader().createNextBlock(outputKey), BigInteger.ONE, 2);
-        tx = createFakeTx(PARAMS, CENT.subtract(SATOSHI), myAddress);
-        wallet.receiveFromBlock(tx, block2, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
-        request = SendRequest.emptyWallet(outputKey);
-        wallet.completeTx(request);
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request.tx.getFee());
-        wallet.commitTx(request.tx);
-        assertEquals(ZERO, wallet.getBalance());
-        assertEquals(CENT.subtract(SATOSHI).subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), request.tx.getOutput(0).getValue());
-
         // Add an unsendable value
-        StoredBlock block3 = new StoredBlock(block2.getHeader().createNextBlock(outputKey), BigInteger.ONE, 3);
+        StoredBlock block2 = new StoredBlock(block.getHeader().createNextBlock(outputKey), BigInteger.ONE, 3);
         Coin outputValue = Transaction.MIN_NONDUST_OUTPUT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE).subtract(SATOSHI);
         tx = createFakeTx(PARAMS, outputValue, myAddress);
-        wallet.receiveFromBlock(tx, block3, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        wallet.receiveFromBlock(tx, block2, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         try {
             request = SendRequest.emptyWallet(outputKey);
             wallet.completeTx(request);
