@@ -710,9 +710,11 @@ public class Transaction extends ChildMessage implements Serializable {
             s.append(String.format(Locale.US, "%n"));
         }
         final Coin fee = getFee();
-        if (fee != null)
-            s.append("     fee  ").append(fee.multiply(1000).divide(unsafeBitcoinSerialize().length).toFriendlyString())
-                    .append("/kB, ").append(fee.toFriendlyString()).append(String.format(Locale.US, " total%n"));
+        if (fee != null) {
+            final int size = unsafeBitcoinSerialize().length;
+            s.append("     fee  ").append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB, ")
+                    .append(fee.toFriendlyString()).append(" for ").append(size).append(" bytes\n");
+        }
         if (purpose != null)
             s.append("     prps ").append(purpose).append(String.format(Locale.US, "%n"));
         return s.toString();
