@@ -157,7 +157,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * If true (the default) then the startup of this service won't be considered complete until the network has been
-     * brought up, peer connections established and the block chain synchronised. Therefore {@link #startAndWait()} can
+     * brought up, peer connections established and the block chain synchronised. Therefore {@link #awaitRunning()} can
      * potentially take a very long time. If false, then startup is considered complete once the network activity
      * begins and peer connections/block chain sync will continue in the background.
      */
