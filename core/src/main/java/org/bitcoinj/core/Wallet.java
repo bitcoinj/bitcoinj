@@ -4181,11 +4181,10 @@ public class Wallet extends BaseTaggableObject
             for (TransactionOutput output : bestCoinSelection.gathered)
                 req.tx.addInput(output);
 
-            if (req.ensureMinRequiredFee && req.emptyWallet) {
+            if (req.emptyWallet) {
                 final Coin baseFee = req.fee == null ? Coin.ZERO : req.fee;
                 final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                Transaction tx = req.tx;
-                if (!adjustOutputDownwardsForFee(tx, bestCoinSelection, baseFee, feePerKb))
+                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, baseFee, feePerKb, req.ensureMinRequiredFee))
                     throw new CouldNotAdjustDownwards();
             }
 
@@ -4289,16 +4288,14 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee, Coin feePerKb) {
+    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee,
+            Coin feePerKb, boolean ensureMinRequiredFee) {
+        final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
+        Coin fee = baseFee.add(feePerKb.multiply(size).divide(1000));
+        if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+            fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
-        // Check if we need additional fee due to the transaction's size
-        int size = tx.unsafeBitcoinSerialize().length;
-        size += estimateBytesForSigning(coinSelection);
-        Coin fee = baseFee.add(feePerKb.multiply((size / 1000) + 1));
         output.setValue(output.getValue().subtract(fee));
-        // Check if we need additional fee due to the output's value
-        if (output.getValue().compareTo(Coin.CENT) < 0 && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-            output.setValue(output.getValue().subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.subtract(fee)));
         return output.getMinNonDustValue().compareTo(output.getValue()) <= 0;
     }
 
@@ -5466,7 +5463,7 @@ public class Wallet extends BaseTaggableObject
             }
             // When not signing, don't waste addresses.
             rekeyTx.addOutput(toMove.valueGathered, sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }
