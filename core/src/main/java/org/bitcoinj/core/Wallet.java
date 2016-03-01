@@ -4202,8 +4202,9 @@ public class Wallet extends BaseTaggableObject
 
             final Coin calculatedFee = req.tx.getFee();
             if (calculatedFee != null)
-                log.info("  with a fee of {}/kB, {} total",
-                        calculatedFee.multiply(1000).divide(size).toFriendlyString(), calculatedFee.toFriendlyString());
+                log.info("  with a fee of {}/kB, {} for {} bytes",
+                        calculatedFee.multiply(1000).divide(size).toFriendlyString(), calculatedFee.toFriendlyString(),
+                        size);
 
             // Label the transaction as being self created. We can use this later to spend its change output even before
             // the transaction is confirmed. We deliberately won't bother notifying listeners here as there's not much
