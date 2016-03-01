@@ -33,6 +33,7 @@ import org.bitcoinj.signers.*;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.*;
+import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Protos.Wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.*;
 import org.slf4j.*;
@@ -3832,6 +3833,32 @@ public class Wallet extends BaseTaggableObject
             req.tx = new Transaction(parameters);
             req.tx.addOutput(Coin.ZERO, destination);
             req.emptyWallet = true;
+            return req;
+        }
+
+        /**
+         * Construct a SendRequest for a CPFP (child-pays-for-parent) transaction. The resulting transaction is already
+         * completed, so you should directly proceed to signing and broadcasting/committing the transaction. CPFP is
+         * currently only supported by a few miners, so use with care.
+         */
+        public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise) {
+            TransactionOutput outputToSpend = null;
+            for (final TransactionOutput output : parentTransaction.getOutputs()) {
+                if (output.isMine(wallet) && output.isAvailableForSpending()
+                        && output.getValue().isGreaterThan(feeRaise)) {
+                    outputToSpend = output;
+                    break;
+                }
+            }
+            // TODO spend another confirmed output of own wallet if needed
+            checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
+
+            final Transaction tx = new Transaction(parentTransaction.getParams());
+            tx.addInput(outputToSpend);
+            tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
+            tx.setPurpose(Transaction.Purpose.RAISE_FEE);
+            final SendRequest req = forTx(tx);
+            req.completed = true;
             return req;
         }
 

@@ -22,6 +22,7 @@ import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.core.listeners.WalletCoinsSentEventListener;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
@@ -3060,6 +3061,29 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(request.tx);
         assertEquals(ZERO, wallet.getBalance());
         assertEquals(outputValue, request.tx.getOutput(0).getValue());
+    }
+
+    @Test
+    public void childPaysForParent() throws Exception {
+        // Receive confirmed balance to play with.
+        Transaction toMe = createFakeTxWithoutChangeAddress(PARAMS, COIN, myAddress);
+        wallet.receiveFromBlock(toMe, createFakeBlock(blockStore, toMe).storedBlock,
+                AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        assertEquals(Coin.COIN, wallet.getBalance(BalanceType.ESTIMATED_SPENDABLE));
+        assertEquals(Coin.COIN, wallet.getBalance(BalanceType.AVAILABLE_SPENDABLE));
+        // Receive unconfirmed coin without fee.
+        Transaction toMeWithoutFee = createFakeTxWithoutChangeAddress(PARAMS, COIN, myAddress);
+        wallet.receivePending(toMeWithoutFee, null);
+        assertEquals(Coin.COIN.multiply(2), wallet.getBalance(BalanceType.ESTIMATED_SPENDABLE));
+        assertEquals(Coin.COIN, wallet.getBalance(BalanceType.AVAILABLE_SPENDABLE));
+        // Craft a child-pays-for-parent transaction.
+        final Coin feeRaise = MILLICOIN;
+        final SendRequest sendRequest = SendRequest.childPaysForParent(wallet, toMeWithoutFee, feeRaise);
+        wallet.signTransaction(sendRequest);
+        wallet.commitTx(sendRequest.tx);
+        assertEquals(Transaction.Purpose.RAISE_FEE, sendRequest.tx.getPurpose());
+        assertEquals(Coin.COIN.multiply(2).subtract(feeRaise), wallet.getBalance(BalanceType.ESTIMATED_SPENDABLE));
+        assertEquals(Coin.COIN, wallet.getBalance(BalanceType.AVAILABLE_SPENDABLE));
     }
 
     @Test
