@@ -176,8 +176,11 @@ public class Wallet extends BaseTaggableObject
     // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
     // it sent transactions to the wallet, without this we'd double count.
     private HashSet<Sha256Hash> ignoreNextNewBlock;
-    // Whether or not to ignore nLockTime > 0 transactions that are received to the mempool.
+    // Whether or not to ignore pending transactions that are considered risky by the configured risk analyzer.
     private boolean acceptRiskyTransactions;
+    // Object that performs risk analysis of pending transactions. We might reject transactions that seem like
+    // a high risk of being a double spending attack.
+    private RiskAnalysis.Analyzer riskAnalyzer = DefaultRiskAnalysis.FACTORY;
 
     // Stuff for notifying transaction objects that we changed their confidences. The purpose of this is to avoid
     // spuriously sending lots of repeated notifications to listeners that API users aren't really interested in as a
@@ -203,9 +206,6 @@ public class Wallet extends BaseTaggableObject
     // Stores objects that know how to serialize/unserialize themselves to byte streams and whether they're mandatory
     // or not. The string key comes from the extension itself.
     private final HashMap<String, WalletExtension> extensions;
-    // Object that performs risk analysis of received pending transactions. We might reject transactions that seem like
-    // a high risk of being a double spending attack.
-    private RiskAnalysis.Analyzer riskAnalyzer = DefaultRiskAnalysis.FACTORY;
 
     // Objects that perform transaction signing. Applied subsequently one after another
     @GuardedBy("lock") private List<TransactionSigner> signers;
@@ -1301,11 +1301,11 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * <p>Whether or not the wallet will ignore received pending transactions that fail the selected
+     * <p>Whether or not the wallet will ignore pending transactions that fail the selected
      * {@link RiskAnalysis}. By default, if a transaction is considered risky then it won't enter the wallet
      * and won't trigger any event listeners. If you set this property to true, then all transactions will
-     * be allowed in regardless of risk. Currently, the {@link DefaultRiskAnalysis} checks for non-finality of
-     * transactions. You should not encounter these outside of special protocols.</p>
+     * be allowed in regardless of risk. For example, the {@link DefaultRiskAnalysis} checks for non-finality of
+     * transactions.</p>
      *
      * <p>Note that this property is not serialized. You have to set it each time a Wallet object is constructed,
      * even if it's loaded from a protocol buffer.</p>
@@ -1322,7 +1322,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * See {@link Wallet#setAcceptRiskyTransactions(boolean)} for an explanation of this property.
      */
-    public boolean doesAcceptRiskyTransactions() {
+    public boolean isAcceptRiskyTransactions() {
         lock.lock();
         try {
             return acceptRiskyTransactions;
@@ -1681,7 +1681,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Given a transaction and an optional list of dependencies (recursive/flattened), returns true if the given
      * transaction would be rejected by the analyzer, or false otherwise. The result of this call is independent
-     * of the value of {@link #doesAcceptRiskyTransactions()}. Risky transactions yield a logged warning. If you
+     * of the value of {@link #isAcceptRiskyTransactions()}. Risky transactions yield a logged warning. If you
      * want to know the reason why a transaction is risky, create an instance of the {@link RiskAnalysis} yourself
      * using the factory returned by {@link #getRiskAnalyzer()} and use it directly.
      */
