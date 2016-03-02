@@ -2234,6 +2234,9 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
             confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
             addWalletTransaction(Pool.PENDING, tx);
+            if (log.isInfoEnabled())
+                log.info("Estimated balance is now: {}", getBalance(BalanceType.ESTIMATED).toFriendlyString());
+
             // Mark any keys used in the outputs as "used", this allows wallet UI's to auto-advance the current key
             // they are showing to the user in qr codes etc.
             markKeysAsUsed(tx);
@@ -2675,6 +2678,8 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
             if (dirty) {
                 isConsistentOrThrow();
                 saveLater();
+                if (log.isInfoEnabled())
+                    log.info("Estimated balance is now: {}", getBalance(BalanceType.ESTIMATED).toFriendlyString());
             }
         } finally {
             lock.unlock();
