@@ -2778,9 +2778,11 @@ public class Wallet extends BaseTaggableObject implements Serializable, BlockCha
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            final long keyRotationTime = vKeyRotationTimestamp * 1000;
-            if (keyRotationTime > 0)
-                builder.append(String.format(Locale.US, "Key rotation time: %s\n", Utils.dateTimeFormat(keyRotationTime)));
+            builder.append("Earliest creation time: ").append(Utils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
+                    .append('\n');
+            final Date keyRotationTime = getKeyRotationTime();
+            if (keyRotationTime != null)
+                builder.append("Key rotation time: ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
             builder.append(keychain.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
