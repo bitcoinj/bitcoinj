@@ -1315,22 +1315,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     public String toString(boolean includePrivateKeys, NetworkParameters params) {
-        final StringBuilder builder2 = new StringBuilder();
+        final DeterministicKey watchingKey = getWatchingKey();
+        final StringBuilder builder = new StringBuilder();
         if (seed != null) {
             if (seed.isEncrypted()) {
-                builder2.append("Seed is encrypted\n");
+                builder.append("Seed is encrypted\n");
             } else if (includePrivateKeys) {
                 final List<String> words = seed.getMnemonicCode();
-                builder2.append("Seed as words: ").append(Utils.join(words)).append('\n');
-                builder2.append("Seed as hex:   ").append(seed.toHexString()).append('\n');
+                builder.append("Seed as words: ").append(Utils.join(words)).append('\n');
+                builder.append("Seed as hex:   ").append(seed.toHexString()).append('\n');
             }
-            builder2.append("Seed birthday: ").append(seed.getCreationTimeSeconds()).append("  [")
+            builder.append("Seed birthday: ").append(seed.getCreationTimeSeconds()).append("  [")
                     .append(Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
+        } else {
+            builder.append("Key birthday:  ").append(watchingKey.getCreationTimeSeconds()).append("  [")
+                    .append(Utils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
         }
-        final DeterministicKey watchingKey = getWatchingKey();
-        builder2.append("Key to watch:  ").append(watchingKey.serializePubB58(params)).append('\n');
-        formatAddresses(includePrivateKeys, params, builder2);
-        return builder2.toString();
+        builder.append("Key to watch:  ").append(watchingKey.serializePubB58(params)).append('\n');
+        formatAddresses(includePrivateKeys, params, builder);
+        return builder.toString();
     }
 
     protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder2) {
