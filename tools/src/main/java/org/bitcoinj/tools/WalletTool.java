@@ -1262,10 +1262,10 @@ public class WalletTool {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
         }
+        long creationTimeSecs = getCreationTimeSeconds();
+        if (creationTimeSecs == 0)
+            creationTimeSecs = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
         if (options.has(seedFlag)) {
-            long creationTimeSecs = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
-            if (options.has(dateFlag))
-                creationTimeSecs = options.valueOf(dateFlag).getTime() / 1000;
             String seedStr = options.valueOf(seedFlag);
             DeterministicSeed seed;
             // Parse as mnemonic code.
@@ -1289,8 +1289,7 @@ public class WalletTool {
             }
             wallet = Wallet.fromSeed(params, seed);
         } else if (options.has(watchFlag)) {
-            DeterministicKey watchKey = DeterministicKey.deserializeB58(null, options.valueOf(watchFlag), params);
-            wallet = Wallet.fromWatchingKey(params, watchKey);
+            wallet = Wallet.fromWatchingKeyB58(params, options.valueOf(watchFlag), creationTimeSecs);
         } else {
             wallet = new Wallet(params);
         }
@@ -1405,13 +1404,12 @@ public class WalletTool {
     }
 
     private static long getCreationTimeSeconds() {
-        long creationTimeSeconds = 0;
-        if (options.has(unixtimeFlag)) {
-            creationTimeSeconds = unixtimeFlag.value(options);
-        } else if (options.has(dateFlag)) {
-            creationTimeSeconds = dateFlag.value(options).getTime() / 1000;
-        }
-        return creationTimeSeconds;
+        if (options.has(unixtimeFlag))
+            return unixtimeFlag.value(options);
+        else if (options.has(dateFlag))
+            return dateFlag.value(options).getTime() / 1000;
+        else
+            return 0;
     }
 
     private static void deleteKey() {
