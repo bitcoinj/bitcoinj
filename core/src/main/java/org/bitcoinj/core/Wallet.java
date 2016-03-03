@@ -3165,9 +3165,11 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
+            builder.append("Earliest creation time: ").append(Utils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
+                    .append('\n');
             final Date keyRotationTime = getKeyRotationTime();
             if (keyRotationTime != null)
-                builder.append("Key rotation time: ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
+                builder.append("Key rotation time:      ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
             builder.append(keyChainGroup.toString(includePrivateKeys));
 
             if (!watchedScripts.isEmpty()) {
