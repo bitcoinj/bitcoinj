@@ -120,8 +120,8 @@ message Key {
   // User-provided label associated with the key.
   optional string label = 4;
 
-  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-  // optional is that some very old wallets don't have this data.
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+  // optional is that keys derived from a parent don't have this data.
   optional int64 creation_timestamp = 5;
 
   optional DeterministicKey deterministic_key = 7;

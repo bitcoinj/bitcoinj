@@ -1640,8 +1640,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingWalletWithCreationTime() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(PARAMS);
-        watchKey = DeterministicKey.deserializeB58(null, serialized, PARAMS);
-        Wallet watchingWallet = Wallet.fromWatchingKey(PARAMS, watchKey, 1415282801);
+        Wallet watchingWallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 1415282801);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -3499,8 +3498,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(PARAMS);
-        watchKey = DeterministicKey.deserializeB58(null, serialized, PARAMS);
-        Wallet wallet = Wallet.fromWatchingKey(PARAMS, watchKey);
+        Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 0);
         blockStore = new MemoryBlockStore(PARAMS);
         chain = new BlockChain(PARAMS, wallet, blockStore);
 

@@ -2405,8 +2405,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-     * optional is that some very old wallets don't have this data.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+     * optional is that keys derived from a parent don't have this data.
      * </pre>
      */
     boolean hasCreationTimestamp();
@@ -2414,8 +2414,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-     * optional is that some very old wallets don't have this data.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+     * optional is that keys derived from a parent don't have this data.
      * </pre>
      */
     long getCreationTimestamp();
@@ -2958,8 +2958,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-     * optional is that some very old wallets don't have this data.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+     * optional is that keys derived from a parent don't have this data.
      * </pre>
      */
     public boolean hasCreationTimestamp() {
@@ -2969,8 +2969,8 @@ public final class Protos {
      * <code>optional int64 creation_timestamp = 5;</code>
      *
      * <pre>
-     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-     * optional is that some very old wallets don't have this data.
+     * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+     * optional is that keys derived from a parent don't have this data.
      * </pre>
      */
     public long getCreationTimestamp() {
@@ -3905,8 +3905,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-       * optional is that some very old wallets don't have this data.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+       * optional is that keys derived from a parent don't have this data.
        * </pre>
        */
       public boolean hasCreationTimestamp() {
@@ -3916,8 +3916,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-       * optional is that some very old wallets don't have this data.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+       * optional is that keys derived from a parent don't have this data.
        * </pre>
        */
       public long getCreationTimestamp() {
@@ -3927,8 +3927,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-       * optional is that some very old wallets don't have this data.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+       * optional is that keys derived from a parent don't have this data.
        * </pre>
        */
       public Builder setCreationTimestamp(long value) {
@@ -3941,8 +3941,8 @@ public final class Protos {
        * <code>optional int64 creation_timestamp = 5;</code>
        *
        * <pre>
-       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. Only reason it's
-       * optional is that some very old wallets don't have this data.
+       * Timestamp stored as millis since epoch. Useful for skipping block bodies before this point. The reason it's
+       * optional is that keys derived from a parent don't have this data.
        * </pre>
        */
       public Builder clearCreationTimestamp() {

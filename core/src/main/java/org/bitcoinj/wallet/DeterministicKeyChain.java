@@ -105,9 +105,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Nullable private DeterministicKey rootKey;
     @Nullable private DeterministicSeed seed;
 
-    // Ignored if seed != null. Useful for watching hierarchies.
-    private long creationTimeSeconds = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
-
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits. The first number is the "account number" but we don't use
@@ -240,7 +237,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
-
         public DeterministicKeyChain build() {
             checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkState(passphrase == null || seed == null, "Passphrase must not be specified with seed");
@@ -252,9 +248,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             } else if (entropy != null) {
                 chain = new DeterministicKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
             } else if (seed != null) {
+                seed.setCreationTimeSeconds(seedCreationTimeSecs);
                 chain = new DeterministicKeyChain(seed);
             } else {
-                chain = new DeterministicKeyChain(watchingKey, seedCreationTimeSecs);
+                watchingKey.setCreationTimeSeconds(seedCreationTimeSecs);
+                chain = new DeterministicKeyChain(watchingKey);
             }
 
             return chain;
@@ -316,20 +314,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * balances and generally follow along, but spending is not possible with such a chain. Currently you can't use
      * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
      */
-    public DeterministicKeyChain(DeterministicKey watchingKey, long creationTimeSeconds) {
+    public DeterministicKeyChain(DeterministicKey watchingKey) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         checkArgument(watchingKey.getPath().size() == getAccountPath().size(), "You can only watch an account key currently");
         basicKeyChain = new BasicKeyChain();
-        this.creationTimeSeconds = creationTimeSeconds;
         this.seed = null;
         rootKey = null;
         addToBasicChain(watchingKey);
         hierarchy = new DeterministicHierarchy(watchingKey);
         initializeHierarchyUnencrypted(watchingKey);
-    }
-
-    public DeterministicKeyChain(DeterministicKey watchingKey) {
-        this(watchingKey, Utils.currentTimeSeconds());
     }
 
     /**
@@ -338,7 +331,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * <p>Watch key has to be an account key.</p>
      */
     protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
-        this(watchKey, Utils.currentTimeSeconds());
+        this(watchKey);
         this.isFollowing = isFollowing;
     }
 
@@ -352,20 +345,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * Creates a key chain that watches the given account key. The creation time is taken to be the time that BIP 32
-     * was standardised: most likely, you can optimise by selecting a more accurate creation time for your key and
-     * using the other watch method.
+     * Creates a key chain that watches the given account key.
      */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return watch(accountKey, DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS);
-    }
-
-    /**
-     * Creates a key chain that watches the given account key, and assumes there are no transactions involving it until
-     * the given time (this is an optimisation for chain scanning purposes).
-     */
-    public static DeterministicKeyChain watch(DeterministicKey accountKey, long seedCreationTimeSecs) {
-        return new DeterministicKeyChain(accountKey, seedCreationTimeSecs);
+        return new DeterministicKeyChain(accountKey);
     }
 
     /**
@@ -682,7 +665,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public long getEarliestKeyCreationTime() {
-        return seed != null ? seed.getCreationTimeSeconds() : creationTimeSeconds;
+        if (seed != null)
+            return seed.getCreationTimeSeconds();
+        else
+            return getWatchingKey().getCreationTimeSeconds();
     }
 
     @Override
@@ -868,6 +854,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
+                        accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
                         isWatchingAccountKey = true;
                     } else {

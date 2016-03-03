@@ -289,7 +289,7 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void testRoundTripNormalWallet() throws Exception {
-        Wallet wallet1 = roundTrip(myWallet);     
+        Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(Coin.ZERO, wallet1.getBalance());
         assertArrayEquals(myKey.getPubKey(),
@@ -298,6 +298,22 @@ public class WalletProtobufSerializerTest {
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(),
                 wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+    }
+
+    @Test
+    public void testRoundTripWatchingWallet() throws Exception {
+        final String xpub = "tpubD9LrDvFDrB6wYNhbR2XcRRaT4yCa37TjBR3YthBQvrtEwEq6CKeEXUs3TppQd38rfxmxD1qLkC99iP3vKcKwLESSSYdFAftbrpuhSnsw6XM";
+        final long creationTimeSeconds = 1457019819;
+        Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, xpub, creationTimeSeconds);
+        Wallet wallet2 = roundTrip(wallet);
+        Wallet wallet3 = roundTrip(wallet2);
+        assertEquals(xpub, wallet.getWatchingKey().serializePubB58(PARAMS));
+        assertEquals(creationTimeSeconds, wallet.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTimeSeconds, wallet2.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTimeSeconds, wallet3.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTimeSeconds, wallet.getEarliestKeyCreationTime());
+        assertEquals(creationTimeSeconds, wallet2.getEarliestKeyCreationTime());
+        assertEquals(creationTimeSeconds, wallet3.getEarliestKeyCreationTime());
     }
 
     @Test

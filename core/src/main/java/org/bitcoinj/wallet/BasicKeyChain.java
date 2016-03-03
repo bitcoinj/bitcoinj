@@ -384,7 +384,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     else
                         ecKey = ECKey.fromPublicOnly(pub);
                 }
-                ecKey.setCreationTimeSeconds((key.getCreationTimestamp() + 500) / 1000);
+                ecKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                 importKeyLocked(ecKey);
             }
         } finally {
