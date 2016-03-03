@@ -3165,8 +3165,8 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            final long keyRotationTime = vKeyRotationTimestamp * 1000;
-            if (keyRotationTime > 0)
+            final Date keyRotationTime = getKeyRotationTime();
+            if (keyRotationTime != null)
                 builder.append("Key rotation time: ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
             builder.append(keyChainGroup.toString(includePrivateKeys));
 
@@ -5300,10 +5300,15 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns a UNIX time since the epoch in seconds, or zero if unconfigured.
+     * Returns the key rotation time, or null if unconfigured. See {@link #setKeyRotationTime(Date)} for a description
+     * of the field.
      */
-    public Date getKeyRotationTime() {
-        return new Date(vKeyRotationTimestamp * 1000);
+    public @Nullable Date getKeyRotationTime() {
+        final long keyRotationTimestamp = vKeyRotationTimestamp;
+        if (keyRotationTimestamp != 0)
+            return new Date(keyRotationTimestamp * 1000);
+        else
+            return null;
     }
 
     /**
