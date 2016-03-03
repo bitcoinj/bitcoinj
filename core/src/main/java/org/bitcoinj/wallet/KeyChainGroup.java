@@ -795,11 +795,8 @@ public class KeyChainGroup implements KeyBag {
             for (ECKey key : keys)
                 key.formatKeyWithAddress(includePrivateKeys, builder, params);
         }
-        List<String> chainStrs = Lists.newLinkedList();
-        for (DeterministicKeyChain chain : chains) {
-            chainStrs.add(chain.toString(includePrivateKeys, params));
-        }
-        builder.append(Joiner.on('\n').join(chainStrs));
+        for (DeterministicKeyChain chain : chains)
+            builder.append(chain.toString(includePrivateKeys, params)).append('\n');
         return builder.toString();
     }
 
