@@ -323,7 +323,7 @@ public class DeterministicKeyChainTest {
         watchingKey = DeterministicKey.deserializeB58(null, pub58, params);
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey);
-        assertEquals(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS, chain.getEarliestKeyCreationTime());
+        assertEquals(100000, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 

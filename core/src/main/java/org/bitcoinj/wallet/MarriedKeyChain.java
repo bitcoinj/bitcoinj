@@ -103,9 +103,11 @@ public class MarriedKeyChain extends DeterministicKeyChain {
             } else if (entropy != null) {
                 chain = new MarriedKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
             } else if (seed != null) {
+                seed.setCreationTimeSeconds(seedCreationTimeSecs);
                 chain = new MarriedKeyChain(seed);
             } else {
-                chain = new MarriedKeyChain(watchingKey, seedCreationTimeSecs);
+                watchingKey.setCreationTimeSeconds(seedCreationTimeSecs);
+                chain = new MarriedKeyChain(watchingKey);
             }
             chain.addFollowingAccountKeys(followingKeys, threshold);
             return chain;
@@ -119,10 +121,6 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     // Protobuf deserialization constructors
     MarriedKeyChain(DeterministicKey accountKey) {
         super(accountKey, false);
-    }
-
-    MarriedKeyChain(DeterministicKey accountKey, long seedCreationTimeSecs) {
-        super(accountKey, seedCreationTimeSecs);
     }
 
     MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter) {
