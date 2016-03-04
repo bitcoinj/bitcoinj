@@ -624,7 +624,9 @@ public class Transaction extends ChildMessage implements Serializable {
     public String toString(@Nullable AbstractBlockChain chain) {
         // Basic info about the tx.
         StringBuilder s = new StringBuilder();
-        s.append(String.format(Locale.US, "  %s: %s%n", getHashAsString(), getConfidence()));
+        s.append("  ").append(getHashAsString()).append('\n');
+        if (hasConfidence())
+            s.append("  confidence: ").append(getConfidence()).append('\n');
         if (isTimeLocked()) {
             String time;
             if (lockTime < LOCKTIME_THRESHOLD) {
