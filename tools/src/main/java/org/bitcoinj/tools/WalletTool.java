@@ -1176,14 +1176,26 @@ public class WalletTool {
     private static void setup() throws BlockStoreException {
         if (store != null) return;  // Already done.
         // Will create a fresh chain if one doesn't exist or there is an issue with this one.
-        if (!chainFileName.exists() && wallet.getTransactions(true).size() > 0) {
+        boolean reset = !chainFileName.exists();
+        if (reset) {
             // No chain, so reset the wallet as we will be downloading from scratch.
-            System.out.println("Chain file is missing so clearing transactions from the wallet.");
+            System.out.println("Chain file is missing so resetting the wallet.");
             reset();
         }
         if (mode == ValidationMode.SPV) {
             store = new SPVBlockStore(params, chainFileName);
             chain = new BlockChain(params, wallet, store);
+            if (reset) {
+                try {
+                    CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
+                            wallet.getEarliestKeyCreationTime());
+                    StoredBlock head = store.getChainHead();
+                    System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
+                            + Utils.dateTimeFormat(head.getHeader().getTimeSeconds() * 1000));
+                } catch (IOException x) {
+                    System.out.println("Could not load checkpoints: " + x.getMessage());
+                }
+            }
         } else if (mode == ValidationMode.FULL) {
             FullPrunedBlockStore s = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
             store = s;
