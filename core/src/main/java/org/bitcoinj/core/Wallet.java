@@ -3024,7 +3024,8 @@ public class Wallet extends BaseTaggableObject
                         for (TransactionInput input : tx.getInputs()) {
                             TransactionOutput output = input.getConnectedOutput();
                             if (output == null) continue;
-                            myUnspents.add(output);
+                            if (output.isMineOrWatched(this))
+                                checkState(myUnspents.add(output));
                             input.disconnect();
                         }
                         for (TransactionOutput output : tx.getOutputs())
