@@ -527,7 +527,8 @@ public abstract class NetworkParameters {
         MINIMUM(70000),
         PONG(60001),
         BLOOM_FILTER(70000),
-        CURRENT(70001);
+        NO_BLOOM_VERSION(70011),
+        CURRENT(70011);
 
         private final int bitcoinProtocol;
 

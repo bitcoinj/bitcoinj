@@ -41,6 +41,8 @@ public class VersionMessage extends Message {
     public static final int NODE_NETWORK = 1;
     /** A flag that denotes whether the peer supports the getutxos message or not. */
     public static final int NODE_GETUTXOS = 2;
+    /** A flag that denotes whether the peer supports bloom filters or not. */
+    public static final int NODE_BLOOM = 4;
 
     /**
      * The version number of the protocol spoken.
@@ -281,11 +283,14 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Returns true if the clientVersion field is >= FilteredBlock.MIN_PROTOCOL_VERSION. If it is then Bloom filtering
-     * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
+     * Returns true if the clientVersion field is >= FilteredBlock.MIN_PROTOCOL_VERSION and service bits indicate
+     * support for bloom filters. If it is then Bloom filtering is available and the memory pool of the remote peer
+     * will be queried when the downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {
-        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
+        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER) &&
+                (localServices == NODE_BLOOM ||
+                        clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.NO_BLOOM_VERSION));
     }
 
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
