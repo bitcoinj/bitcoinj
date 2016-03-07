@@ -333,7 +333,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Wallet.SendRequest req = Wallet.SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
-        Coin fee = req.fee;
+        Coin fee = Coin.ZERO;
 
         // There should be one pending tx (our spend).
         assertEquals("Wrong number of PENDING.4", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));

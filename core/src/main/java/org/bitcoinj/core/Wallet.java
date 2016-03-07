@@ -3715,28 +3715,10 @@ public class Wallet extends BaseTaggableObject
          * a way for people to prioritize their transactions over others and is used as a way to make denial of service
          * attacks expensive.</p>
          *
-         * <p>This is a constant fee (in satoshis) which will be added to the transaction. It is recommended that it be
-         * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default Bitcoin Core will
-         * otherwise simply treat the transaction as if there were no fee at all.</p>
-         *
-         * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
-         * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
-         */
-        public Coin fee = null;
-
-        /**
-         * <p>A transaction can have a fee attached, which is defined as the difference between the input values
-         * and output values. Any value taken in that is not provided to an output can be claimed by a miner. This
-         * is how mining is incentivized in later years of the Bitcoin system when inflation drops. It also provides
-         * a way for people to prioritize their transactions over others and is used as a way to make denial of service
-         * attacks expensive.</p>
-         *
          * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size
          * including the first. This is useful as as miners usually sort pending transactions by their fee per unit size
          * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
          * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
-         *
-         * <p>You might also consider using a {@link SendRequest#fee} to set the fee added for the first kb of size.</p>
          */
         public Coin feePerKb = DEFAULT_FEE_PER_KB;
 
@@ -3752,7 +3734,7 @@ public class Wallet extends BaseTaggableObject
          * only set this to false if you know what you're doing.</p>
          *
          * <p>Note that this does not enforce certain fee rules that only apply to transactions which are larger than
-         * 26,000 bytes. If you get a transaction which is that large, you should set a fee and feePerKb of at least
+         * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
          * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
          */
         public boolean ensureMinRequiredFee = true;
@@ -3885,7 +3867,6 @@ public class Wallet extends BaseTaggableObject
             MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
             helper.add("emptyWallet", emptyWallet);
             helper.add("changeAddress", changeAddress);
-            helper.add("fee", fee);
             helper.add("feePerKb", feePerKb);
             helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
             helper.add("signInputs", signInputs);
@@ -4184,9 +4165,8 @@ public class Wallet extends BaseTaggableObject
                 req.tx.addInput(output);
 
             if (req.emptyWallet) {
-                final Coin baseFee = req.fee == null ? Coin.ZERO : req.fee;
                 final Coin feePerKb = req.feePerKb == null ? Coin.ZERO : req.feePerKb;
-                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, baseFee, feePerKb, req.ensureMinRequiredFee))
+                if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, feePerKb, req.ensureMinRequiredFee))
                     throw new CouldNotAdjustDownwards();
             }
 
@@ -4226,7 +4206,6 @@ public class Wallet extends BaseTaggableObject
             req.tx.setExchangeRate(req.exchangeRate);
             req.tx.setMemo(req.memo);
             req.completed = true;
-            req.fee = calculatedFee;
             log.info("  completed: {}", req.tx);
         } finally {
             lock.unlock();
@@ -4290,10 +4269,10 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
-    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee,
-            Coin feePerKb, boolean ensureMinRequiredFee) {
+    private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
+            boolean ensureMinRequiredFee) {
         final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
-        Coin fee = baseFee.add(feePerKb.multiply(size).divide(1000));
+        Coin fee = feePerKb.multiply(size).divide(1000);
         if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
@@ -5045,12 +5024,12 @@ public class Wallet extends BaseTaggableObject
         while (true) {
             resetTxInputs(req, originalInputs);
 
-            Coin fees = req.fee == null ? Coin.ZERO : req.fee;
+            Coin fees;
             if (lastCalculatedSize > 0) {
                 // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
-                fees = fees.add(req.feePerKb.multiply((lastCalculatedSize / 1000) + 1));
+                fees = req.feePerKb.multiply((lastCalculatedSize / 1000) + 1);
             } else {
-                fees = fees.add(req.feePerKb);  // First time around the loop.
+                fees = req.feePerKb;  // First time around the loop.
             }
             if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
                 fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
@@ -5465,7 +5444,7 @@ public class Wallet extends BaseTaggableObject
             }
             // When not signing, don't waste addresses.
             rekeyTx.addOutput(toMove.valueGathered, sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Coin.ZERO, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, true)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }
