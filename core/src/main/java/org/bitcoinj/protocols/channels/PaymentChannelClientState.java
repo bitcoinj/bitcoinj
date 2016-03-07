@@ -132,7 +132,6 @@ public abstract class PaymentChannelClientState {
      * @param myKey a freshly generated private key for this channel.
      * @param serverKey a public key retrieved from the server used for the initial multisig contract
      * @param value how many satoshis to put into this contract. If the channel reaches this limit, it must be closed.
-     *              It is suggested you use at least {@link Coin#CENT} to avoid paying fees if you need to spend the refund transaction
      * @param expiryTimeInSeconds At what point (UNIX timestamp +/- a few hours) the channel will expire
      *
      * @throws VerificationException If either myKey's pubkey or serverKey's pubkey are non-canonical (ie invalid)

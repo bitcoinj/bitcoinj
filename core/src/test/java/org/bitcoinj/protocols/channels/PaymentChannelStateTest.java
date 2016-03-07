@@ -17,6 +17,7 @@
 package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.TestWithWallet;
@@ -88,7 +89,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
         super.setUp();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, new TransactionBroadcaster() {
             @Override
             public TransactionBroadcast broadcastTransaction(Transaction tx) {
@@ -357,8 +358,6 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         assertEquals(CENT.divide(2), clientState.getTotalValue());
         clientState.initiate();
-        // We will have to pay min_tx_fee twice - both the multisig contract and the refund tx
-        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(2));
         assertEquals(getInitialClientState(), clientState.getState());
 
         if (useRefunds()) {
@@ -442,7 +441,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), multisigContract,clientBroadcastedRefund));
 
         // Make sure we actually had to pay what initialize() told us we would
-        assertEquals(wallet.getBalance(), CENT.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(2)));
+        assertEquals(CENT, wallet.getBalance());
 
         try {
             // After its expired, we cant still increment payment
@@ -687,13 +686,17 @@ public class PaymentChannelStateTest extends TestWithWallet {
     @Test
     public void feesTest() throws Exception {
         // Test that transactions are getting the necessary fees
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
 
         // Spend the client wallet's one coin
-        wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(PARAMS), COIN));
+        final SendRequest request = Wallet.SendRequest.to(new ECKey().toAddress(PARAMS), COIN);
+        request.ensureMinRequiredFee = false;
+        wallet.sendCoinsOffline(request);
         assertEquals(Coin.ZERO, wallet.getBalance());
 
-        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), createFakeTx(PARAMS, CENT, myAddress)));
-        assertEquals(CENT, wallet.getBalance());
+        chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(),
+                createFakeTx(PARAMS, CENT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), myAddress)));
+        assertEquals(CENT.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE), wallet.getBalance());
 
         Utils.setMockClock(); // Use mock clock
         final long EXPIRE_TIME = Utils.currentTimeMillis()/1000 + 60*60*24;
@@ -724,14 +727,14 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         // We'll have to pay REFERENCE_DEFAULT_MIN_TX_FEE twice (multisig+refund), and we'll end up getting back nearly nothing...
         clientState.initiate();
-        assertEquals(clientState.getRefundTxFees(), Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(2));
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(2), clientState.getRefundTxFees());
         assertEquals(getInitialClientState(), clientState.getState());
 
         // Now actually use a more useful CENT
         clientState = makeClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), CENT, EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         clientState.initiate();
-        assertEquals(clientState.getRefundTxFees(), Coin.ZERO);
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(2), clientState.getRefundTxFees());
         assertEquals(getInitialClientState(), clientState.getState());
 
         if (useRefunds()) {
@@ -802,6 +805,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
     @Test
     public void serverAddsFeeTest() throws Exception {
         // Test that the server properly adds the necessary fee at the end (or just drops the payment if its not worth it)
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
 
         Utils.setMockClock(); // Use mock clock
         final long EXPIRE_TIME = Utils.currentTimeMillis()/1000 + 60*60*24;
@@ -882,9 +886,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
 
         // Now give the server enough coins to pay the fee
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, new ECKey().toAddress(PARAMS)), BigInteger.ONE, 1);
-        Transaction tx1 = createFakeTx(PARAMS, COIN, serverKey.toAddress(PARAMS));
-        serverWallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, serverKey.toAddress(PARAMS));
 
         // The contract is still not worth redeeming - its worth less than we pay in fee
         try {

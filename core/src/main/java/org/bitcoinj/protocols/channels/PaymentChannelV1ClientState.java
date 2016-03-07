@@ -77,7 +77,6 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
      * @param myKey a freshly generated private key for this channel.
      * @param serverMultisigKey a public key retrieved from the server used for the initial multisig contract
      * @param value how many satoshis to put into this contract. If the channel reaches this limit, it must be closed.
-     *              It is suggested you use at least {@link Coin#CENT} to avoid paying fees if you need to spend the refund transaction
      * @param expiryTimeInSeconds At what point (UNIX timestamp +/- a few hours) the channel will expire
      *
      * @throws VerificationException If either myKey's pubkey or serverKey's pubkey are non-canonical (ie invalid)
@@ -155,7 +154,7 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
         // by using this sequence value, we avoid extra full replace-by-fee and relative lock time processing.
         refundTx.addInput(multisigOutput).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1L);
         refundTx.setLockTime(expiryTime);
-        if (totalValue.compareTo(Coin.CENT) < 0 && Context.get().isEnsureMinRequiredFee()) {
+        if (Context.get().isEnsureMinRequiredFee()) {
             // Must pay min fee.
             final Coin valueAfterFee = totalValue.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
             if (Transaction.MIN_NONDUST_OUTPUT.compareTo(valueAfterFee) > 0)

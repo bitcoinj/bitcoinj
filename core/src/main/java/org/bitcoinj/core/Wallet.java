@@ -4132,26 +4132,18 @@ public class Wallet extends BaseTaggableObject
             value = value.subtract(totalInput);
 
             List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
-            int opReturnCount = 0;
 
-            // We need to know if we need to add an additional fee because one of our values are smaller than 0.01 BTC
-            boolean needAtLeastReferenceFee = false;
+            // Check for dusty sends and the OP_RETURN limit.
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
+                int opReturnCount = 0;
                 for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.getValue().compareTo(Coin.CENT) < 0) {
-                        needAtLeastReferenceFee = true;
-                        if (output.isDust())
-                            throw new DustySendRequested();
-                        if (output.getScriptPubKey().isOpReturn())
-                            ++opReturnCount;
-                        else
-                            break;
-                    }
+                    if (output.isDust())
+                        throw new DustySendRequested();
+                    if (output.getScriptPubKey().isOpReturn())
+                        ++opReturnCount;
                 }
-            }
-
-            if (opReturnCount > 1) { // Only 1 OP_RETURN per transaction allowed.
-                throw new MultipleOpReturnRequested();
+                if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
+                    throw new MultipleOpReturnRequested();
             }
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
@@ -4164,7 +4156,7 @@ public class Wallet extends BaseTaggableObject
             TransactionOutput bestChangeOutput = null;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, needAtLeastReferenceFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
             } else {
