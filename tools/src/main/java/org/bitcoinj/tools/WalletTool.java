@@ -277,6 +277,8 @@ public class WalletTool {
             default:
                 throw new RuntimeException("Unreachable.");
         }
+        Context.propagate(new Context(params));
+
         mode = modeFlag.value(options);
 
         // Allow the user to override the name of the chain used.
