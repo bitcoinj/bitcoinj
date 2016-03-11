@@ -25,6 +25,7 @@ import com.google.common.base.Stopwatch;
 
 import javax.annotation.*;
 import java.io.*;
+import java.util.Date;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -90,7 +91,11 @@ public class WalletFiles {
                     // Some other scheduled request already beat us to it.
                     return null;
                 }
-                log.info("Background saving wallet, last seen block is {}/{}", wallet.getLastBlockSeenHeight(), wallet.getLastBlockSeenHash());
+                Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
+                log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
+                        wallet.getLastBlockSeenHeight(),
+                        lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                        wallet.getLastBlockSeenHash());
                 saveNowInternal();
                 return null;
             }
@@ -108,7 +113,10 @@ public class WalletFiles {
     public void saveNow() throws IOException {
         // Can be called by any thread. However the wallet is locked whilst saving, so we can have two saves in flight
         // but they will serialize (using different temp files).
-        log.info("Saving wallet, last seen block is {}/{}", wallet.getLastBlockSeenHeight(), wallet.getLastBlockSeenHash());
+        Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
+        log.info("Saving wallet; last seen block is height {}, date {}, hash {}", wallet.getLastBlockSeenHeight(),
+                lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                wallet.getLastBlockSeenHash());
         saveNowInternal();
     }
 
