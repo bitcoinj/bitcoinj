@@ -35,7 +35,7 @@ public class NativePeerEventListener implements PeerConnectionEventListener, Pee
     public native void onPeersDiscovered(Set<PeerAddress> peerAddresses);
 
     @Override
-    public native void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft);
+    public native void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft);
 
     @Override
     public native void onChainDownloadStarted(Peer peer, int blocksLeft);

@@ -63,7 +63,6 @@ public abstract class MessageSerializer {
      */
     public abstract Message makeAlertMessage(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
 
-
     /**
      * Make a block from the payload, using an offset of zero and the payload
      * length as block length.
@@ -94,10 +93,26 @@ public abstract class MessageSerializer {
     public abstract Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
 
     /**
-     * Make a filtered block from the payload. Extension point for alternative
-     * serialization format support.
+     * Make a block from the payload, using an offset of zero and the payload
+     * length as block length.
      */
-    public abstract FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public final FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException {
+        return makeFilteredBlock(payloadBytes, 0, payloadBytes.length);
+    }
+
+    /**
+     * Make a block from the payload, using an offset of zero and the provided
+     * length as block length.
+     */
+    public final FilteredBlock makeFilteredBlock(byte[] payloadBytes, int length) throws ProtocolException {
+        return makeFilteredBlock(payloadBytes, 0, length);
+    }
+
+    /**
+     * Make a block from the payload, using an offset of zero and the provided
+     * length as block length.
+     */
+    public abstract FilteredBlock makeFilteredBlock(byte[] payloadBytes, int offset, int length);
 
     /**
      * Make an inventory message from the payload. Extension point for alternative

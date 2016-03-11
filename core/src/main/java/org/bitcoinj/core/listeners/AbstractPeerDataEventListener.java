@@ -27,7 +27,7 @@ import java.util.*;
 @Deprecated
 public abstract class AbstractPeerDataEventListener implements PeerDataEventListener {
     @Override
-    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+    public void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft) {
     }
 
     @Override

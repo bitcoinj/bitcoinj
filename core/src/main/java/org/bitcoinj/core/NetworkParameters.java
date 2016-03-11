@@ -505,7 +505,7 @@ public abstract class NetworkParameters {
      * @param height height of the block, if known, null otherwise. Returned
      * tests should be a safe subset if block height is unknown.
      */
-    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final AbstractBlock block,
             final Transaction transaction, final VersionTally tally, final Integer height) {
         final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
         if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)

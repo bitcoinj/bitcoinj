@@ -284,8 +284,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException {
-        return new FilteredBlock(params, payloadBytes);
+    public FilteredBlock makeFilteredBlock(byte[] payloadBytes, final int offset, final int length) throws ProtocolException {
+        return new FilteredBlock(params, payloadBytes, offset, this, length);
     }
 
     /**

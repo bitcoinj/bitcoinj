@@ -234,7 +234,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
 
         @Override
-        public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+        public void onBlocksDownloaded(Peer peer, AbstractBlock block, int blocksLeft) {
             if (chain == null) return;
             final double rate = chain.getFalsePositiveRate();
             final double target = bloomFilterMerger.getBloomFilterFPRate() * MAX_FP_RATE_INCREASE;
@@ -1871,16 +1871,21 @@ public class PeerGroup implements TransactionBroadcaster {
         private boolean syncDone;
 
         @Override
-        public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
+        public synchronized void onBlocksDownloaded(Peer peer, AbstractBlock header, int blocksLeft) {
             blocksInLastSecond++;
             bytesInLastSecond += Block.HEADER_SIZE;
-            List<Transaction> blockTransactions = block.getTransactions();
-            // This whole area of the type hierarchy is a mess.
-            int txCount = (blockTransactions != null ? countAndMeasureSize(blockTransactions) : 0) +
-                          (filteredBlock != null ? countAndMeasureSize(filteredBlock.getAssociatedTransactions().values()) : 0);
-            txnsInLastSecond = txnsInLastSecond + txCount;
-            if (filteredBlock != null)
+            if (header instanceof FilteredBlock) {
+                final FilteredBlock filteredBlock = (FilteredBlock) header;
+                int txCount = countAndMeasureSize(filteredBlock.getAssociatedTransactions().values());
+                txnsInLastSecond = txnsInLastSecond + txCount;
                 origTxnsInLastSecond += filteredBlock.getTransactionCount();
+            } else if (header instanceof Block) {
+                final Block block = (Block) header;
+                List<Transaction> blockTransactions = block.getTransactions();
+                int txCount = blockTransactions != null ? countAndMeasureSize(blockTransactions) : 0;
+                txnsInLastSecond = txnsInLastSecond + txCount;
+                
+            }
         }
 
         private int countAndMeasureSize(Collection<Transaction> transactions) {

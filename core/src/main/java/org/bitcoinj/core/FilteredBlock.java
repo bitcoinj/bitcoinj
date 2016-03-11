@@ -17,10 +17,11 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import static org.bitcoinj.core.Message.UNKNOWN_LENGTH;
 
 /**
  * <p>A FilteredBlock is used to relay a block with its transactions filtered using a {@link BloomFilter}. It consists
@@ -28,8 +29,7 @@ import java.util.*;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class FilteredBlock extends Message {
-    private Block header;
+public class FilteredBlock extends AbstractBlock {
 
     private PartialMerkleTree merkleTree;
     private List<Sha256Hash> cachedTransactionHashes = null;
@@ -38,34 +38,51 @@ public class FilteredBlock extends Message {
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
     private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<Sha256Hash, Transaction>();
     
-    public FilteredBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public FilteredBlock(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length) throws ProtocolException {
+        super(params, payloadBytes, offset, serializer, length);
     }
 
-    public FilteredBlock(NetworkParameters params, Block header, PartialMerkleTree pmt) {
-        super(params);
-        this.header = header;
+    public FilteredBlock(NetworkParameters params, final Block block, PartialMerkleTree pmt) {
+        super(params, block.getVersion(), block.getPrevBlockHash(), block.getMerkleRoot(),
+                block.getTimeSeconds(), block.getDifficultyTarget(), block.getNonce());
         this.merkleTree = pmt;
     }
 
     @Override
+    public byte[] bitcoinSerialize() {
+        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE * 2: length);
+        try {
+            writeHeader(stream);
+            merkleTree.bitcoinSerializeToStream(stream);
+        } catch (IOException e) {
+            // Cannot happen, we are serializing to a memory stream.
+        }
+        return stream.toByteArray();
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (header.transactions == null)
-            header.bitcoinSerializeToStream(stream);
-        else
-            header.cloneAsHeader().bitcoinSerializeToStream(stream);
+        super.bitcoinSerializeToStream(stream);
         merkleTree.bitcoinSerializeToStream(stream);
     }
 
     @Override
     protected void parse() throws ProtocolException {
-        byte[] headerBytes = new byte[Block.HEADER_SIZE];
-        System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
-        header = params.getDefaultSerializer().makeBlock(headerBytes);
-        
-        merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
-        
-        length = Block.HEADER_SIZE + merkleTree.getMessageSize();
+        super.parse();
+        parseTransactions();
+
+        length = cursor - offset;
+        optimalEncodingMessageSize = length;
+    }
+
+    /**
+     * Parse the merkle tree containing the filtered transaction's details.
+     * Extension point for cases where the filtered block contains non-standard
+     * header information.
+     */
+    protected void parseTransactions() throws ProtocolException {
+        merkleTree = new PartialMerkleTree(params, payload, cursor);
+        cursor += merkleTree.getMessageSize();
     }
     
     /**
@@ -77,24 +94,11 @@ public class FilteredBlock extends Message {
         if (cachedTransactionHashes != null)
             return Collections.unmodifiableList(cachedTransactionHashes);
         List<Sha256Hash> hashesMatched = new LinkedList<Sha256Hash>();
-        if (header.getMerkleRoot().equals(merkleTree.getTxnHashAndMerkleRoot(hashesMatched))) {
+        if (getMerkleRoot().equals(merkleTree.getTxnHashAndMerkleRoot(hashesMatched))) {
             cachedTransactionHashes = hashesMatched;
             return Collections.unmodifiableList(cachedTransactionHashes);
         } else
             throw new VerificationException("Merkle root of block header does not match merkle root of partial merkle tree.");
-    }
-    
-    /**
-     * Gets a copy of the block header
-     */
-    public Block getBlockHeader() {
-        return header.cloneAsHeader();
-    }
-    
-    /** Gets the hash of the block represented in this Filtered Block */
-    @Override
-    public Sha256Hash getHash() {
-        return header.getHash();
     }
     
     /**
@@ -125,22 +129,23 @@ public class FilteredBlock extends Message {
         return merkleTree.getTransactionCount();
     }
 
+    // Hash code provided on just the block header is good enough, but equals
+    // must be precise
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FilteredBlock other = (FilteredBlock) o;
         return associatedTransactions.equals(other.associatedTransactions)
-            && header.equals(other.header) && merkleTree.equals(other.merkleTree);
+            && super.equals(other) && merkleTree.equals(other.merkleTree);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(associatedTransactions, header, merkleTree);
-    }
-
-    @Override
-    public String toString() {
-        return "FilteredBlock{merkleTree=" + merkleTree + ", header=" + header + '}';
+    protected final void appendToStringBuilder(final StringBuilder s) {
+        s.append("FilteredBlock{merkleTree=")
+            .append(merkleTree)
+            .append(", header=");
+        super.appendToStringBuilder(s);
+        s.append("}");
     }
 }
