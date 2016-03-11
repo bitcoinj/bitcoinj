@@ -64,7 +64,7 @@ public class ParseByteCacheTest {
             "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a");
 
     private BlockStore blockStore;
-    private NetworkParameters unitTestParams;
+    private static final NetworkParameters PARAMS = UnitTestParams.get();
     
     private byte[] b1Bytes;
     private byte[] b1BytesWithHeader;
@@ -76,35 +76,34 @@ public class ParseByteCacheTest {
     private byte[] tx2BytesWithHeader;
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(unitTestParams);
+        blockStore = new MemoryBlockStore(PARAMS);
     }
     
     @Before
     public void setUp() throws Exception {
-        unitTestParams = UnitTestParams.get();
-        Context context = new Context(unitTestParams);
+        Context context = new Context(PARAMS);
         Wallet wallet = new Wallet(context);
         wallet.freshReceiveKey();
 
         resetBlockStore();
         
-        Transaction tx1 = createFakeTx(unitTestParams,
+        Transaction tx1 = createFakeTx(PARAMS,
                 valueOf(2, 0),
-                wallet.currentReceiveKey().toAddress(unitTestParams));
+                wallet.currentReceiveKey().toAddress(PARAMS));
         
         // add a second input so can test granularity of byte cache.
-        Transaction prevTx = new Transaction(unitTestParams);
-        TransactionOutput prevOut = new TransactionOutput(unitTestParams, prevTx, COIN, wallet.currentReceiveKey().toAddress(unitTestParams));
+        Transaction prevTx = new Transaction(PARAMS);
+        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, wallet.currentReceiveKey().toAddress(PARAMS));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(unitTestParams, COIN,
-                new ECKey().toAddress(unitTestParams));
+        Transaction tx2 = createFakeTx(PARAMS, COIN,
+                new ECKey().toAddress(PARAMS));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
-        MessageSerializer bs = unitTestParams.getDefaultSerializer();
+        MessageSerializer bs = PARAMS.getDefaultSerializer();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx1, bos);
@@ -139,15 +138,15 @@ public class ParseByteCacheTest {
     @Test
     public void testTransactionsRetain() throws Exception {
         testTransaction(MainNetParams.get(), txMessage, false, true);
-        testTransaction(unitTestParams, tx1BytesWithHeader, false, true);
-        testTransaction(unitTestParams, tx2BytesWithHeader, false, true);
+        testTransaction(PARAMS, tx1BytesWithHeader, false, true);
+        testTransaction(PARAMS, tx2BytesWithHeader, false, true);
     }
     
     @Test
     public void testTransactionsNoRetain() throws Exception {
         testTransaction(MainNetParams.get(), txMessage, false, false);
-        testTransaction(unitTestParams, tx1BytesWithHeader, false, false);
-        testTransaction(unitTestParams, tx2BytesWithHeader, false, false);
+        testTransaction(PARAMS, tx1BytesWithHeader, false, false);
+        testTransaction(PARAMS, tx2BytesWithHeader, false, false);
     }
 
     @Test
@@ -159,10 +158,10 @@ public class ParseByteCacheTest {
     public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = unitTestParams.getSerializer(false);
+        MessageSerializer bsRef = PARAMS.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer bs = unitTestParams.getSerializer(retain);
+        BitcoinSerializer bs = PARAMS.getSerializer(retain);
         Block b1;
         Block bRef;
         b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));

@@ -55,7 +55,7 @@ public class BlockChainTest {
     private BlockChain chain;
     private BlockStore blockStore;
     private Address coinbaseTo;
-    private NetworkParameters unitTestParams;
+    private static final NetworkParameters PARAMS = UnitTestParams.get();
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
@@ -67,7 +67,7 @@ public class BlockChainTest {
     private static final TweakableTestNet2Params testNet = new TweakableTestNet2Params();
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(unitTestParams);
+        blockStore = new MemoryBlockStore(PARAMS);
     }
 
     @Before
@@ -76,9 +76,7 @@ public class BlockChainTest {
         Context testNetContext = new Context(testNet);
         testNetChain = new BlockChain(testNet, new Wallet(testNetContext), new MemoryBlockStore(testNet));
         Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
-
-        unitTestParams = UnitTestParams.get();
-        Context context = new Context(unitTestParams);
+        Context context = new Context(PARAMS);
         wallet = new Wallet(context) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
@@ -93,9 +91,9 @@ public class BlockChainTest {
         wallet.freshReceiveKey();
 
         resetBlockStore();
-        chain = new BlockChain(unitTestParams, wallet, blockStore);
+        chain = new BlockChain(PARAMS, wallet, blockStore);
 
-        coinbaseTo = wallet.currentReceiveKey().toAddress(unitTestParams);
+        coinbaseTo = wallet.currentReceiveKey().toAddress(PARAMS);
     }
 
     @After
@@ -134,9 +132,9 @@ public class BlockChainTest {
     public void receiveCoins() throws Exception {
         int height = 1;
         // Quick check that we can actually receive coins.
-        Transaction tx1 = createFakeTx(unitTestParams,
+        Transaction tx1 = createFakeTx(PARAMS,
                                        COIN,
-                                       wallet.currentReceiveKey().toAddress(unitTestParams));
+                                       wallet.currentReceiveKey().toAddress(PARAMS));
         Block b1 = createFakeBlock(blockStore, height, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
@@ -144,7 +142,7 @@ public class BlockChainTest {
 
     @Test
     public void unconnectedBlocks() throws Exception {
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         // Connected.
@@ -161,9 +159,9 @@ public class BlockChainTest {
     public void difficultyTransitions() throws Exception {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
-        Block prev = unitTestParams.getGenesisBlock();
+        Block prev = PARAMS.getGenesisBlock();
         Utils.setMockClock(System.currentTimeMillis()/1000);
-        for (int height = 0; height < unitTestParams.getInterval() - 1; height++) {
+        for (int height = 0; height < PARAMS.getInterval() - 1; height++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), height);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
@@ -172,13 +170,13 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), unitTestParams.getInterval()));
+            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), PARAMS.getInterval()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), unitTestParams.getInterval() + 1);
+        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), PARAMS.getInterval() + 1);
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));
@@ -245,8 +243,8 @@ public class BlockChainTest {
 
     private void testDeprecatedBlockVersion(final long deprecatedVersion, final long newVersion)
             throws Exception {
-        final BlockStore versionBlockStore = new MemoryBlockStore(unitTestParams);
-        final BlockChain versionChain = new BlockChain(unitTestParams, versionBlockStore);
+        final BlockStore versionBlockStore = new MemoryBlockStore(PARAMS);
+        final BlockChain versionChain = new BlockChain(PARAMS, versionBlockStore);
 
         // Build a historical chain of version 3 blocks
         long timeSeconds = 1231006505;
@@ -254,13 +252,13 @@ public class BlockChainTest {
         FakeTxBuilder.BlockPair chainHead = null;
 
         // Put in just enough v2 blocks to be a minority
-        for (height = 0; height < (unitTestParams.getMajorityWindow() - unitTestParams.getMajorityRejectBlockOutdated()); height++) {
+        for (height = 0; height < (PARAMS.getMajorityWindow() - PARAMS.getMajorityRejectBlockOutdated()); height++) {
             chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
         }
         // Fill the rest of the window with v3 blocks
-        for (; height < unitTestParams.getMajorityWindow(); height++) {
+        for (; height < PARAMS.getMajorityWindow(); height++) {
             chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, newVersion, timeSeconds, height);
             versionChain.add(chainHead.block);
             timeSeconds += 60;
@@ -279,7 +277,7 @@ public class BlockChainTest {
     @Test
     public void duplicates() throws Exception {
         // Adding a block twice should not have any effect, in particular it should not send the block to the wallet.
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         assertTrue(chain.add(b1));
@@ -299,13 +297,13 @@ public class BlockChainTest {
     public void intraBlockDependencies() throws Exception {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
-        Address somebodyElse = new ECKey().toAddress(unitTestParams);
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(somebodyElse);
+        Address somebodyElse = new ECKey().toAddress(PARAMS);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = wallet.freshReceiveKey();
-        Address addr = key.toAddress(unitTestParams);
+        Address addr = key.toAddress(PARAMS);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
-        Transaction t1 = FakeTxBuilder.createFakeTx(unitTestParams, COIN, addr);
-        Transaction t2 = new Transaction(unitTestParams);
+        Transaction t1 = FakeTxBuilder.createFakeTx(PARAMS, COIN, addr);
+        Transaction t2 = new Transaction(PARAMS);
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
         b1.addTransaction(t1);
@@ -320,15 +318,15 @@ public class BlockChainTest {
         // Check that a coinbase transaction is only available to spend after NetworkParameters.getSpendableCoinbaseDepth() blocks.
 
         // Create a second wallet to receive the coinbase spend.
-        Wallet wallet2 = new Wallet(unitTestParams);
+        Wallet wallet2 = new Wallet(PARAMS);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
         chain.addWallet(wallet2);
 
-        Address addressToSendTo = receiveKey.toAddress(unitTestParams);
+        Address addressToSendTo = receiveKey.toAddress(PARAMS);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
         chain.add(b1);
 
         // Check a transaction has been received.
@@ -347,10 +345,10 @@ public class BlockChainTest {
         }
 
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
-        for (int i = 0; i < unitTestParams.getSpendableCoinbaseDepth() - 2; i++) {
+        for (int i = 0; i < PARAMS.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(unitTestParams, COIN,
-                new ECKey().toAddress(unitTestParams));
+            Transaction tx2 = createFakeTx(PARAMS, COIN,
+                new ECKey().toAddress(PARAMS));
 
             Block b2 = createFakeBlock(blockStore, height++, tx2).block;
             chain.add(b2);
@@ -371,7 +369,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(unitTestParams, COIN, new ECKey().toAddress(unitTestParams));
+        Transaction tx3 = createFakeTx(PARAMS, COIN, new ECKey().toAddress(PARAMS));
         Block b3 = createFakeBlock(blockStore, height++, tx3).block;
         chain.add(b3);
 
@@ -463,7 +461,7 @@ public class BlockChainTest {
     public void rollbackBlockStore() throws Exception {
         // This test simulates an issue on Android, that causes the VM to crash while receiving a block, so that the
         // block store is persisted but the wallet is not.
-        Block b1 = unitTestParams.getGenesisBlock().createNextBlock(coinbaseTo);
+        Block b1 = PARAMS.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         // Add block 1, no frills.
         assertTrue(chain.add(b1));
