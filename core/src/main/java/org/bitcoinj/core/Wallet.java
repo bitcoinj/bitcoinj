@@ -5040,13 +5040,7 @@ public class Wallet extends BaseTaggableObject
         while (true) {
             resetTxInputs(req, originalInputs);
 
-            Coin fees;
-            if (lastCalculatedSize > 0) {
-                // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
-                fees = req.feePerKb.multiply((lastCalculatedSize / 1000) + 1);
-            } else {
-                fees = req.feePerKb;  // First time around the loop.
-            }
+            Coin fees = req.feePerKb.multiply(lastCalculatedSize).divide(1000);
             if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
                 fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
@@ -5130,7 +5124,7 @@ public class Wallet extends BaseTaggableObject
             // include things we haven't added yet like input signatures/scripts or the change output.
             size += req.tx.unsafeBitcoinSerialize().length;
             size += estimateBytesForSigning(selection);
-            if (size/1000 > lastCalculatedSize/1000 && req.feePerKb.signum() > 0) {
+            if (size > lastCalculatedSize && req.feePerKb.signum() > 0) {
                 lastCalculatedSize = size;
                 // We need more fees anyway, just try again with the same additional value
                 additionalValueForNextCategory = additionalValueSelected;
