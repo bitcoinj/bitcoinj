@@ -198,7 +198,7 @@ public class ExamplePaymentChannelClient {
 
     private void waitForSufficientBalance(Coin amount) {
         // Not enough money in the wallet.
-        Coin amountPlusFee = amount.add(Wallet.SendRequest.DEFAULT_FEE_PER_KB);
+        Coin amountPlusFee = amount.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
         // ESTIMATED because we don't really need to wait for confirmation.
         ListenableFuture<Coin> balanceFuture = appKit.wallet().getBalanceFuture(amountPlusFee, Wallet.BalanceType.ESTIMATED);
         if (!balanceFuture.isDone()) {

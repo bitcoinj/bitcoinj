@@ -1,5 +1,6 @@
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.Wallet.SendRequest;
 import org.slf4j.*;
 
 import static com.google.common.base.Preconditions.*;
@@ -30,6 +31,8 @@ public class Context {
     private TxConfidenceTable confidenceTable;
     private NetworkParameters params;
     private int eventHorizon = 100;
+    private boolean ensureMinRequiredFee = true;
+    private Coin feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
@@ -46,15 +49,18 @@ public class Context {
     }
 
     /**
-     * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
-     * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
+     * Creates a new custom context object. This is mainly meant for unit tests for now.
      *
      * @param params The network parameters that will be associated with this context.
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs (see {@link #getEventHorizon()}.
+     * @param feePerKb The default fee per 1000 bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
+     * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
      */
-    public Context(NetworkParameters params, int eventHorizon) {
+    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
         this(params);
         this.eventHorizon = eventHorizon;
+        this.feePerKb = feePerKb;
+        this.ensureMinRequiredFee = ensureMinRequiredFee;
     }
 
     private static volatile Context lastConstructed;
@@ -154,5 +160,19 @@ public class Context {
      */
     public int getEventHorizon() {
         return eventHorizon;
+    }
+
+    /**
+     * The default fee per 1000 bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
+     */
+    public Coin getFeePerKb() {
+        return feePerKb;
+    }
+
+    /**
+     * Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
+     */
+    public boolean isEnsureMinRequiredFee() {
+        return ensureMinRequiredFee;
     }
 }

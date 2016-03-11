@@ -73,11 +73,10 @@ public class BlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        Context testNetContext = new Context(testNet);
-        testNetChain = new BlockChain(testNet, new Wallet(testNetContext), new MemoryBlockStore(testNet));
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
-        Context context = new Context(PARAMS);
-        wallet = new Wallet(context) {
+        Context.propagate(new Context(testNet, 100, Coin.ZERO, false));
+        testNetChain = new BlockChain(testNet, new Wallet(testNet), new MemoryBlockStore(testNet));
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+        wallet = new Wallet(PARAMS) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
@@ -94,11 +93,6 @@ public class BlockChainTest {
         chain = new BlockChain(PARAMS, wallet, blockStore);
 
         coinbaseTo = wallet.currentReceiveKey().toAddress(PARAMS);
-    }
-
-    @After
-    public void tearDown() {
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     @Test

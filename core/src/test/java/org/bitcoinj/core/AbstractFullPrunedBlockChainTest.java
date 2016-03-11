@@ -37,9 +37,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.testing.FakeTxBuilder;
 import static org.junit.Assert.*;
 import org.junit.rules.ExpectedException;
 
@@ -60,12 +57,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
     };
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
-    protected Context context;
 
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        context = new Context(PARAMS);
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)

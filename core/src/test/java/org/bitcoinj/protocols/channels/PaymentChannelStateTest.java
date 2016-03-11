@@ -88,6 +88,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
         super.setUp();
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, new TransactionBroadcaster() {
             @Override
             public TransactionBroadcast broadcastTransaction(Transaction tx) {
@@ -710,7 +711,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         } catch (ValueOutOfRangeException e) {}
 
         clientState = makeClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()),
-                                                    Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.SATOSHI).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
+                Transaction.MIN_NONDUST_OUTPUT.subtract(Coin.SATOSHI).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE),
                 EXPIRE_TIME);
         assertEquals(PaymentChannelClientState.State.NEW, clientState.getState());
         try {

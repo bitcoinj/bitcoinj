@@ -59,10 +59,9 @@ public class ChainSplitTest {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Utils.setMockClock(); // Use mock clock
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
-        Context context = new Context(PARAMS);
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         MemoryBlockStore blockStore = new MemoryBlockStore(PARAMS);
-        wallet = new Wallet(context);
+        wallet = new Wallet(PARAMS);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         chain = new BlockChain(PARAMS, wallet, blockStore);

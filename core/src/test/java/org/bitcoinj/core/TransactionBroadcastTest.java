@@ -244,7 +244,6 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
         Wallet.SendRequest req = Wallet.SendRequest.to(dest, valueOf(2, 0));
-        req.ensureMinRequiredFee = false;
         Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.

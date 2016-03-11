@@ -82,9 +82,7 @@ public class TestWithNetworkConnections {
     
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
-
-        context = new Context(PARAMS);
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
@@ -131,7 +129,6 @@ public class TestWithNetworkConnections {
     }
 
     public void tearDown() throws Exception {
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         stopPeerServers();
     }
 

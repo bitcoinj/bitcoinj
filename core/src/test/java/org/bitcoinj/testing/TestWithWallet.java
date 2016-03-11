@@ -47,8 +47,7 @@ public class TestWithWallet {
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Coin.ZERO;
-        Context ctx = new Context(PARAMS);
+        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet = new Wallet(PARAMS);
         myKey = wallet.currentReceiveKey();
         myAddress = myKey.toAddress(PARAMS);
@@ -57,7 +56,6 @@ public class TestWithWallet {
     }
 
     public void tearDown() throws Exception {
-        Wallet.SendRequest.DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
     }
 
     @Nullable

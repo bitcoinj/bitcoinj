@@ -3721,13 +3721,7 @@ public class Wallet extends BaseTaggableObject
          * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
          * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
          */
-        public Coin feePerKb = DEFAULT_FEE_PER_KB;
-
-        /**
-         * If you want to modify the default fee for your entire app without having to change each SendRequest you make,
-         * you can do it here. This is primarily useful for unit tests.
-         */
-        public static Coin DEFAULT_FEE_PER_KB = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        public Coin feePerKb = Context.get().getFeePerKb();
 
         /**
          * <p>Requires that there be enough fee for a default Bitcoin Core to at least relay the transaction.
@@ -3738,7 +3732,7 @@ public class Wallet extends BaseTaggableObject
          * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
          * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
          */
-        public boolean ensureMinRequiredFee = true;
+        public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
 
         /**
          * If true (the default), the inputs will be signed.

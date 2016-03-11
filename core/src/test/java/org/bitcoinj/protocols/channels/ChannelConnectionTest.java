@@ -102,11 +102,11 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void setUp() throws Exception {
         super.setUp();
         Utils.setMockClock(); // Use mock clock
+        Context.propagate(new Context(PARAMS, 3, Coin.ZERO, false)); // Shorter event horizon for unit tests.
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         sendMoneyToWallet(COIN, AbstractBlockChain.NewBlockType.BEST_CHAIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        Context context = new Context(PARAMS, 3);  // Shorter event horizon for unit tests.
-        serverWallet = new Wallet(context);
+        serverWallet = new Wallet(PARAMS);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
@@ -163,7 +163,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         exectuteSimpleChannelTest(userKeySetup);
     }
 
-    public void exectuteSimpleChannelTest(KeyParameter userKeySetup) throws Exception {
+    private void exectuteSimpleChannelTest(KeyParameter userKeySetup) throws Exception {
         // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
         final SettableFuture<ListenableFuture<PaymentChannelV1ServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
@@ -251,8 +251,8 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Wait for the server thread to catch up with closing
         serverState.close().get();
         assertEquals(PaymentChannelServerState.State.CLOSED, serverState.getState());
-        if (!serverState.getBestValueToMe().equals(amount) || !serverState.getFeePaid().equals(Coin.ZERO))
-            fail();
+        assertEquals(amount, serverState.getBestValueToMe());
+        assertEquals(ZERO, serverState.getFeePaid());
         assertTrue(channels.mapChannels.isEmpty());
 
         // Send the settle TX to the client wallet.
