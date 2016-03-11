@@ -26,6 +26,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Wallet;
+import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptChunk;
 import org.slf4j.Logger;
@@ -92,6 +93,21 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
         if (wallet == null)
             return null;
+
+        // Transactions that would cause estimated balance to exceed the maximum allowed are considered risky. There is
+        // a risk that the culprit is actually a previous transaction and we're punishing the wrong one, but this
+        // situation will clear up as transactions are confirmed. Most important is that the balance will not rise too
+        // high.
+        NetworkParameters params = tx.getParams();
+        if (params.hasMaxMoney()) {
+            Coin balanceAfterCommit = wallet.getBalance(BalanceType.ESTIMATED).add(tx.getValueSentToMe(wallet))
+                    .subtract(tx.getValueSentFromMe(wallet));
+            if (balanceAfterCommit.compareTo(params.getMaxMoney()) > 0) {
+                log.warn("Transaction would cause estimated balance to exceed maximum allowed, thus flagged as risky.");
+                nonFinal = tx;
+                return Result.NON_FINAL;
+            }
+        }
 
         final int height = wallet.getLastBlockSeenHeight();
         final long time = wallet.getLastBlockSeenTimeSecs();

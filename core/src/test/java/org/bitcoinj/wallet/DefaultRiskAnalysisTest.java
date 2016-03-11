@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 
 import com.google.common.collect.*;
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.Wallet.BalanceType;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
@@ -30,6 +31,7 @@ import java.util.*;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.script.ScriptOpCodes.*;
+import static org.bitcoinj.testing.FakeTxBuilder.createFakeTxWithoutChangeAddress;
 import static org.junit.Assert.*;
 
 public class DefaultRiskAnalysisTest {
@@ -227,6 +229,20 @@ public class DefaultRiskAnalysisTest {
     public void optInFullRBF() throws Exception {
         Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
         tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
+        assertEquals(tx, analysis.getNonFinal());
+    }
+
+    @Test
+    public void multipleTransactionsExceedMaximumCoins() {
+        // First check if receiving a max coins transaction is fine.
+        Address address = wallet.currentReceiveAddress();
+        Transaction tx = createFakeTxWithoutChangeAddress(params, params.getMaxMoney(), address);
+        assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS).analyze());
+
+        // The prepare the wallet with one satoshi and check max coins again. It should be risky now.
+        wallet.commitTx(createFakeTxWithoutChangeAddress(params, Coin.SATOSHI, address));
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx, analysis.getNonFinal());
