@@ -3741,6 +3741,11 @@ public class Wallet extends BaseTaggableObject
         public Coin feePerKb = DEFAULT_FEE_PER_KB;
 
         /**
+         * <p>Code for estimating fees on a transaction.</p>
+         */
+        public FeeCalculator feeEstimator = new DefaultFeeCalculator();
+
+        /**
          * If you want to modify the default fee for your entire app without having to change each SendRequest you make,
          * you can do it here. This is primarily useful for unit tests.
          */
@@ -5045,13 +5050,7 @@ public class Wallet extends BaseTaggableObject
         while (true) {
             resetTxInputs(req, originalInputs);
 
-            Coin fees = req.fee == null ? Coin.ZERO : req.fee;
-            if (lastCalculatedSize > 0) {
-                // If the size is exactly 1000 bytes then we'll over-pay, but this should be rare.
-                fees = fees.add(req.feePerKb.multiply((lastCalculatedSize / 1000) + 1));
-            } else {
-                fees = fees.add(req.feePerKb);  // First time around the loop.
-            }
+            Coin fees = req.feeEstimator.calculateFees(req, lastCalculatedSize);
             if (needAtLeastReferenceFee && fees.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
                 fees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
 
