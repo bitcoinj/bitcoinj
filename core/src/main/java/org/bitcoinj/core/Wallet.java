@@ -5084,7 +5084,7 @@ public class Wallet extends BaseTaggableObject
                     changeAddress = currentChangeAddress();
                 changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                 // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
-                if (req.ensureMinRequiredFee && Transaction.MIN_NONDUST_OUTPUT.compareTo(change) >= 0) {
+                if (req.ensureMinRequiredFee && change.isLessThan(Transaction.MIN_NONDUST_OUTPUT)) {
                     // This solution definitely fits in category 3
                     isCategory3 = true;
                     additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(

@@ -2414,18 +2414,18 @@ public class WalletTest extends TestWithWallet {
         assertEquals(spend8.getOutput(0).getValue(), COIN.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE));
 
         SendRequest request9 = SendRequest.to(notMyAddr, COIN.subtract(
-                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)));
+                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI)));
         wallet.completeTx(request9);
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT), request9.tx.getFee());
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI), request9.tx.getFee());
         Transaction spend9 = request9.tx;
         // ...in fact, also add fee if we would get back less than MIN_NONDUST_OUTPUT
         assertEquals(1, spend9.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one.
         assertEquals(spend9.getOutput(0).getValue(),
-                COIN.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)));
+                COIN.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI)));
 
         SendRequest request10 = SendRequest.to(notMyAddr, COIN.subtract(
-                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).add(SATOSHI)));
+                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)));
         wallet.completeTx(request10);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request10.tx.getFee());
         Transaction spend10 = request10.tx;
@@ -2679,11 +2679,13 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 98; i++)
             request26.tx.addOutput(CENT, notMyAddr);
         request26.tx.addOutput(CENT.subtract(
-                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)), notMyAddr);
+                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI)),
+                notMyAddr);
         assertTrue(request26.tx.unsafeBitcoinSerialize().length > 1000);
         request26.feePerKb = SATOSHI;
         wallet.completeTx(request26);
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT), request26.tx.getFee());
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI),
+                request26.tx.getFee());
         Transaction spend26 = request26.tx;
         // If a transaction is over 1kb, the set fee should be added
         assertEquals(100, spend26.getOutputs().size());
@@ -2692,7 +2694,7 @@ public class WalletTest extends TestWithWallet {
         for (TransactionOutput out : spend26.getOutputs())
             outValue26 = outValue26.add(out.getValue());
         assertEquals(outValue26, COIN.subtract(
-                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT)));
+                Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI)));
     }
 
     @Test
