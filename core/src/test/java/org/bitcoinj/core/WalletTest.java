@@ -26,7 +26,6 @@ import org.bitcoinj.core.Wallet.SendRequest;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.signers.StatelessTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
@@ -2268,8 +2267,7 @@ public class WalletTest extends TestWithWallet {
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         Transaction tx = new Transaction(PARAMS);
         Address notMyAddr = new ECKey().toAddress(PARAMS);
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
-        tx.addOutput(Coin.ZERO, script);
+        tx.addOutput(Coin.ZERO, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         tx.addOutput(Coin.SATOSHI, notMyAddr);
         SendRequest request = Wallet.SendRequest.forTx(tx);
         wallet.completeTx(request);
@@ -2281,8 +2279,7 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(PARAMS);
         Address notMyAddr = new ECKey().toAddress(PARAMS);
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
-        tx.addOutput(Coin.CENT, script);
+        tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         tx.addOutput(Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI), notMyAddr);
         SendRequest request = Wallet.SendRequest.forTx(tx);
         wallet.completeTx(request);

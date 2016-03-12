@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.testing.TestWithWallet;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -61,8 +60,7 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void getAddressTests() throws Exception {
         Transaction tx = new Transaction(MainNetParams.get());
-        Script script = new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data("hello world!".getBytes()).build();
-        tx.addOutput(Coin.CENT, script);
+        tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
         assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));
     }
