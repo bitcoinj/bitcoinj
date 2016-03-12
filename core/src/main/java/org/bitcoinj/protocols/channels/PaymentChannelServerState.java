@@ -250,7 +250,7 @@ public abstract class PaymentChannelServerState {
 
         Wallet.SendRequest req = makeUnsignedChannelContract(newValueToMe);
 
-        if (!fullyUsedUp && refundSize.compareTo(req.tx.getOutput(0).getMinNonDustValue()) < 0)
+        if (!fullyUsedUp && refundSize.isLessThan(req.tx.getOutput(0).getMinNonDustValue()))
             throw new ValueOutOfRangeException("Attempt to refund negative value or value too small to be accepted by the network");
 
         // Get the wallet's copy of the contract (ie with confidence information), if this is null, the wallet

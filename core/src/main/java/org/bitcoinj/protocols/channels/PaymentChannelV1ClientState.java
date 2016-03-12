@@ -134,7 +134,7 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
         // format which one is the change. If we start obfuscating the change output better in future this may
         // be worth revisiting.
         TransactionOutput multisigOutput = template.addOutput(totalValue, ScriptBuilder.createMultiSigOutputScript(2, keys));
-        if (multisigOutput.getMinNonDustValue().compareTo(totalValue) > 0)
+        if (multisigOutput.isDust())
             throw new ValueOutOfRangeException("totalValue too small to use");
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();

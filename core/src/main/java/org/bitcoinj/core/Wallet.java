@@ -4119,15 +4119,12 @@ public class Wallet extends BaseTaggableObject
                 for (TransactionOutput output : req.tx.getOutputs()) {
                     if (output.getValue().compareTo(Coin.CENT) < 0) {
                         needAtLeastReferenceFee = true;
-                        if (output.getValue().compareTo(output.getMinNonDustValue()) < 0) { // Is transaction a "dust".
-                            if (output.getScriptPubKey().isOpReturn()) { // Transactions that are OP_RETURN can't be dust regardless of their value.
-                                ++opReturnCount;
-                                continue;
-                            } else {
-                                throw new DustySendRequested();
-                            }
-                        }
-                        break;
+                        if (output.isDust())
+                            throw new DustySendRequested();
+                        if (output.getScriptPubKey().isOpReturn())
+                            ++opReturnCount;
+                        else
+                            break;
                     }
                 }
             }
@@ -4277,7 +4274,7 @@ public class Wallet extends BaseTaggableObject
             fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
         output.setValue(output.getValue().subtract(fee));
-        return output.getMinNonDustValue().compareTo(output.getValue()) <= 0;
+        return !output.isDust();
     }
 
     /**
@@ -5084,11 +5081,11 @@ public class Wallet extends BaseTaggableObject
                     changeAddress = currentChangeAddress();
                 changeOutput = new TransactionOutput(params, req.tx, change, changeAddress);
                 // If the change output would result in this transaction being rejected as dust, just drop the change and make it a fee
-                if (req.ensureMinRequiredFee && change.isLessThan(Transaction.MIN_NONDUST_OUTPUT)) {
+                if (req.ensureMinRequiredFee && changeOutput.isDust()) {
                     // This solution definitely fits in category 3
                     isCategory3 = true;
                     additionalValueForNextCategory = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.add(
-                                                     Transaction.MIN_NONDUST_OUTPUT.add(Coin.SATOSHI));
+                                                     changeOutput.getMinNonDustValue().add(Coin.SATOSHI));
                 } else {
                     size += changeOutput.unsafeBitcoinSerialize().length + VarInt.sizeOf(req.tx.getOutputs().size()) - VarInt.sizeOf(req.tx.getOutputs().size() - 1);
                     // This solution is either category 1 or 2

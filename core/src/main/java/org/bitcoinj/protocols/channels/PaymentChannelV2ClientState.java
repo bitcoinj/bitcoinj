@@ -110,7 +110,7 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
                 ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.valueOf(expiryTime), myKey, serverKey);
         TransactionOutput transactionOutput = template.addOutput(totalValue,
                 ScriptBuilder.createP2SHOutputScript(redeemScript));
-        if (transactionOutput.getMinNonDustValue().compareTo(totalValue) > 0)
+        if (transactionOutput.isDust())
             throw new ValueOutOfRangeException("totalValue too small to use");
         Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
