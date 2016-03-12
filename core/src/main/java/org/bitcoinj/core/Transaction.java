@@ -1085,7 +1085,7 @@ public class Transaction extends ChildMessage implements Serializable {
                 break;
             }
         }
-        if (!seqNumSet || inputs.isEmpty()) {
+        if (lockTime != 0 && (!seqNumSet || inputs.isEmpty())) {
             // At least one input must have a non-default sequence number for lock times to have any effect.
             // For instance one of them can be set to zero to make this feature work.
             log.warn("You are setting the lock time on a transaction but none of the inputs have non-default sequence numbers. This will not do what you expect!");
