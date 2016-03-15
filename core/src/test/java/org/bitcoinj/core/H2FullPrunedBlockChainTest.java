@@ -19,7 +19,7 @@ public class H2FullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest
     @Override
     public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException {
         deleteFiles();
-        return new H2FullPrunedBlockStore(params, "test", blockCount);
+        return new H2FullPrunedBlockStore(params, "test", "sa", "sa", blockCount);
     }
 
     private void deleteFiles() {
