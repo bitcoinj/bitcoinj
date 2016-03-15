@@ -79,6 +79,19 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableblocks (height)";
 
     /**
+     * Creates a new H2FullPrunedBlockStore, with given credentials for H2 database
+     * @param params A copy of the NetworkParameters used
+     * @param dbName The path to the database on disk
+     * @param username The username to use in the database
+     * @param password The username's password to use in the database
+     * @param fullStoreDepth The number of blocks of history stored in full (something like 1000 is pretty safe)
+     * @throws BlockStoreException if the database fails to open for any reason
+     */
+    public H2FullPrunedBlockStore(NetworkParameters params, String dbName, String username, String password, int fullStoreDepth) throws BlockStoreException {
+        super(params, DATABASE_CONNECTION_URL_PREFIX + dbName + ";create=true;LOCK_TIMEOUT=60000;DB_CLOSE_ON_EXIT=FALSE", fullStoreDepth, username, password, null);
+    }
+
+    /**
      * Creates a new H2FullPrunedBlockStore
      * @param params A copy of the NetworkParameters used
      * @param dbName The path to the database on disk
@@ -86,7 +99,7 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
      * @throws BlockStoreException if the database fails to open for any reason
      */
     public H2FullPrunedBlockStore(NetworkParameters params, String dbName, int fullStoreDepth) throws BlockStoreException {
-        super(params, DATABASE_CONNECTION_URL_PREFIX + dbName + ";create=true;LOCK_TIMEOUT=60000;DB_CLOSE_ON_EXIT=FALSE", fullStoreDepth, null, null, null);
+        this(params, DATABASE_CONNECTION_URL_PREFIX + dbName + ";create=true;LOCK_TIMEOUT=60000;DB_CLOSE_ON_EXIT=FALSE", null, null, fullStoreDepth);
     }
 
     /**
