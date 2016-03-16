@@ -286,10 +286,20 @@ public abstract class Message {
             checkState(false, "Length field has not been set in %s.", getClass().getSimpleName());
         return length;
     }
-
+    
     long readUint32() throws ProtocolException {
         try {
             long u = Utils.readUint32(payload, cursor);
+            cursor += 4;
+            return u;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ProtocolException(e);
+        }
+    }
+    
+    long readUint32BE() throws ProtocolException {
+        try {
+            long u = Utils.readUint32BE(payload, cursor);
             cursor += 4;
             return u;
         } catch (ArrayIndexOutOfBoundsException e) {

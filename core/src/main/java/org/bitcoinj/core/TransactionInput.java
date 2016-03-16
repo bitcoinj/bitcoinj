@@ -136,7 +136,7 @@ public class TransactionInput extends ChildMessage {
         int scriptLen = (int) readVarInt();
         length = cursor - offset + scriptLen + 4;
         scriptBytes = readBytes(scriptLen);
-        sequence = readUint32();
+        sequence = readUint32BE();
     }
 
     @Override
