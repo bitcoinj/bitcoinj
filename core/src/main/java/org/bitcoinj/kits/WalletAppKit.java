@@ -376,9 +376,15 @@ public class WalletAppKit extends AbstractIdleService {
             wallet = loadWallet(false);
         }
 
-        if (useAutoSave) wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
+        if (useAutoSave) {
+            this.setupAutoSave(wallet);
+        }
 
         return wallet;
+    }
+
+    protected void setupAutoSave(Wallet wallet) {
+        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
     }
 
     private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
