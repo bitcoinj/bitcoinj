@@ -81,7 +81,7 @@ public class GetUTXOsMessage extends Message {
     }
 
     @Override
-    void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new byte[]{includeMempool ? (byte) 1 : 0});  // include mempool.
         stream.write(new VarInt(outPoints.size()).encode());
         for (TransactionOutPoint outPoint : outPoints) {

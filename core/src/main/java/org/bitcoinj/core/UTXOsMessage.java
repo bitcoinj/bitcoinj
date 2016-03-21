@@ -77,7 +77,7 @@ public class UTXOsMessage extends Message {
     }
 
     @Override
-    void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         Utils.uint32ToByteStreamLE(height, stream);
         stream.write(chainHead.getBytes());
         stream.write(new VarInt(hits.length).encode());

@@ -87,11 +87,8 @@ public class AddressMessage extends Message {
         length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
     }
 
-    /* (non-Javadoc)
-      * @see Message#bitcoinSerializeToStream(java.io.OutputStream)
-      */
     @Override
-    void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (addresses == null)
             return;
         stream.write(new VarInt(addresses.size()).encode());
