@@ -51,6 +51,7 @@ import java.util.Set;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class WalletProtobufSerializerTest {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
@@ -204,6 +205,22 @@ public class WalletProtobufSerializerTest {
         wallet.setLastBlockSeenHash(genesisBlock.getHash());
         Wallet wallet2 = roundTrip(wallet);
         assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());
+    }
+
+    @Test
+    public void testSequenceNumber() throws Exception {
+        Wallet wallet = new Wallet(PARAMS);
+        Transaction tx1 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
+        tx1.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        wallet.receivePending(tx1, null);
+        Transaction tx2 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
+        tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
+        wallet.receivePending(tx2, null);
+        Wallet walletCopy = roundTrip(wallet);
+        Transaction tx1copy = checkNotNull(walletCopy.getTransaction(tx1.getHash()));
+        assertEquals(TransactionInput.NO_SEQUENCE, tx1copy.getInput(0).getSequenceNumber());
+        Transaction tx2copy = checkNotNull(walletCopy.getTransaction(tx2.getHash()));
+        assertEquals(TransactionInput.NO_SEQUENCE - 1, tx2copy.getInput(0).getSequenceNumber());
     }
 
     @Test

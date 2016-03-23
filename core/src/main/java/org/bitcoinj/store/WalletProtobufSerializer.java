@@ -623,9 +623,8 @@ public class WalletProtobufSerializer {
             );
             Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
             TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint, value);
-            if (inputProto.hasSequence()) {
-                input.setSequenceNumber(inputProto.getSequence());
-            }
+            if (inputProto.hasSequence())
+                input.setSequenceNumber(0xffffffffL & inputProto.getSequence());
             tx.addInput(input);
         }
 
