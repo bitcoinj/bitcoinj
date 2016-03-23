@@ -664,10 +664,11 @@ public class Transaction extends ChildMessage {
                         s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
                     }
                 }
-                String flags = Joiner.on(", ").skipNulls().join(in.hasSequence() ? "has sequence" : null,
-                        in.isOptInFullRBF() ? "opts into full RBF" : null);
-                if (!flags.isEmpty())
-                    s.append("\n          (").append(flags).append(')');
+                if (in.hasSequence()) {
+                    s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
+                    if (in.isOptInFullRBF())
+                        s.append(", opts into full RBF");
+                }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }

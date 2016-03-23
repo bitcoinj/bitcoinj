@@ -479,7 +479,8 @@ public class TransactionInput extends ChildMessage {
                 s.append(": COINBASE");
             } else {
                 s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
-                String flags = Joiner.on(", ").skipNulls().join(hasSequence() ? "has sequence" : null,
+                String flags = Joiner.on(", ").skipNulls().join(
+                        hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())
                     s.append(" (").append(flags).append(')');
