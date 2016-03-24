@@ -513,7 +513,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertEquals(PaymentChannelServerState.State.WAITING_FOR_MULTISIG_CONTRACT, serverState.getState());
 
             byte[] refundSigCopy = Arrays.copyOf(refundSig, refundSig.length);
-            refundSigCopy[refundSigCopy.length - 1] = (byte) (Transaction.SigHash.NONE.ordinal() + 1);
+            refundSigCopy[refundSigCopy.length - 1] = Transaction.SigHash.NONE.byteValue();
             try {
                 clientV1State().provideRefundSignature(refundSigCopy, null);
                 fail();
@@ -627,7 +627,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         totalPayment = totalPayment.add(size);
 
         byte[] signatureCopy = Arrays.copyOf(signature, signature.length);
-        signatureCopy[signatureCopy.length - 1] = (byte) ((Transaction.SigHash.NONE.ordinal() + 1) | 0x80);
+        signatureCopy[signatureCopy.length - 1] = Transaction.SigHash.ANYONECANPAY_NONE.byteValue();
         try {
             serverState.incrementPayment(halfCoin.subtract(totalPayment), signatureCopy);
             fail();
@@ -659,7 +659,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(totalPayment, halfCoin);
 
         signatureCopy = Arrays.copyOf(signature, signature.length);
-        signatureCopy[signatureCopy.length - 1] = (byte) ((Transaction.SigHash.SINGLE.ordinal() + 1) | 0x80);
+        signatureCopy[signatureCopy.length - 1] = Transaction.SigHash.ANYONECANPAY_SINGLE.byteValue();
         try {
             serverState.incrementPayment(halfCoin.subtract(totalPayment), signatureCopy);
             fail();
