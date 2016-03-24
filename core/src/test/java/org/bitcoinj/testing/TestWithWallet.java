@@ -57,38 +57,53 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, Transaction tx, AbstractBlockChain.NewBlockType type)
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Transaction... transactions)
             throws VerificationException {
         if (type == null) {
-            // Pending/broadcast tx.
-            if (wallet.isPendingTransactionRelevant(tx))
-                wallet.receivePending(tx, null);
+            // Pending transaction
+            for (Transaction tx : transactions)
+                if (wallet.isPendingTransactionRelevant(tx))
+                    wallet.receivePending(tx, null);
         } else {
-            FakeTxBuilder.BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx);
-            wallet.receiveFromBlock(tx, bp.storedBlock, type, 0);
+            FakeTxBuilder.BlockPair bp = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, transactions);
+            for (Transaction tx : transactions)
+                wallet.receiveFromBlock(tx, bp.storedBlock, type, 0);
             if (type == AbstractBlockChain.NewBlockType.BEST_CHAIN)
                 wallet.notifyNewBestBlock(bp.storedBlock);
         }
-        return wallet.getTransaction(tx.getHash());  // Can be null if tx is a double spend that's otherwise irrelevant.
+        if (transactions.length == 1)
+            return wallet.getTransaction(transactions[0].getHash());  // Can be null if tx is a double spend that's otherwise irrelevant.
+        else
+            return null;
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Transaction tx, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(this.wallet, tx, type);
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+        return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toAddress));
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, Address toAddress, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(wallet, createFakeTx(PARAMS, value, toAddress), type);
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
+        return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toPubKey));
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, Coin value, ECKey toPubKey, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(wallet, createFakeTx(PARAMS, value, toPubKey), type);
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Transaction... transactions) throws VerificationException {
+        return sendMoneyToWallet(this.wallet, type, transactions);
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Coin value, AbstractBlockChain.NewBlockType type) throws VerificationException {
-        return sendMoneyToWallet(this.wallet, createFakeTx(PARAMS, value, myAddress), type);
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value) throws VerificationException {
+        return sendMoneyToWallet(this.wallet, type, value, myAddress);
+    }
+
+    @Nullable
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+        return sendMoneyToWallet(this.wallet, type, value, toAddress);
+    }
+
+    @Nullable
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
+        return sendMoneyToWallet(this.wallet, type, value, toPubKey);
     }
 }
