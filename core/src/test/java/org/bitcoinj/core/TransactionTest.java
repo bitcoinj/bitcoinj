@@ -392,14 +392,14 @@ public class TransactionTest {
 
         final Transaction tx = block1.getTransactions().get(1);
         final String txHash = tx.getHashAsString();
-        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], (byte) (Transaction.SigHash.ALL.ordinal() + 1)).toString();
+        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString();
 
         for (int i = 0; i < 100; i++) {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getHashAsString());
             new Thread(){
                 public void run() {
-                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], (byte) (Transaction.SigHash.ALL.ordinal() + 1)).toString());
+                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
                 }
             };
         }

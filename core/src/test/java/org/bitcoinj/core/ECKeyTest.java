@@ -447,7 +447,7 @@ public class ECKeyTest {
         new Random().nextBytes(hash);
         byte[] sigBytes = key.sign(Sha256Hash.wrap(hash)).encodeToDER();
         byte[] encodedSig = Arrays.copyOf(sigBytes, sigBytes.length + 1);
-        encodedSig[sigBytes.length] = (byte) (Transaction.SigHash.ALL.ordinal() + 1);
+        encodedSig[sigBytes.length] = Transaction.SigHash.ALL.byteValue();
         if (!TransactionSignature.isEncodingCanonical(encodedSig)) {
             log.error(Utils.HEX.encode(sigBytes));
             fail();
