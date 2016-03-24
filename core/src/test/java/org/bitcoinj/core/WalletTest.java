@@ -2271,9 +2271,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void feeSolverAndCoinSelectionTest() throws Exception {
-        // Tests basic fee solving works
-
+    public void feeSolverAndCoinSelectionTest_dustySendRequested() throws Exception {
         // Make sure TestWithWallet isnt doing anything crazy.
         assertEquals(0, wallet.getTransactions(true).size());
 
@@ -2300,9 +2298,14 @@ public class WalletTest extends TestWithWallet {
         SendRequest req = SendRequest.to(OTHER_ADDRESS, SATOSHI.multiply(12));
         assertNotNull(wallet.sendCoinsOffline(req));
         assertEquals(ZERO, wallet.getBalance());
+    }
+
+    @Test
+    public void feeSolverAndCoinSelectionTests1() throws Exception {
+        // Tests basic fee solving works
 
         // Add some reasonable-sized outputs
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx4 = createFakeTx(PARAMS, Coin.COIN, myAddress);
         wallet.receiveFromBlock(tx4, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -2432,7 +2435,12 @@ public class WalletTest extends TestWithWallet {
 
         // Remove the coin from our wallet
         wallet.commitTx(spend11);
+    }
+
+    @Test
+    public void feeSolverAndCoinSelectionTests2() throws Exception {
         Transaction tx5 = createFakeTx(PARAMS, CENT, myAddress);
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         wallet.receiveFromBlock(tx5, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         assertEquals(CENT, wallet.getBalance());
 
