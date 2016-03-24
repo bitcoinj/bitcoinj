@@ -30,12 +30,10 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 // TODO: This needs to be somewhat rewritten - the "sendMoneyToWallet" methods aren't sending via the block chain object
 
 /**
- * A utility class that you can derive from in your unit tests. TestWithWallet sets up a wallet with a key,
- * an in memory block store and a block chain object. It also provides helper methods for filling the wallet
+ * A utility class that you can derive from in your unit tests. TestWithWallet sets up an empty wallet,
+ * an in-memory block store and a block chain object. It also provides helper methods for filling the wallet
  * with money in whatever ways you wish. Note that for simplicity with amounts, this class sets the default
- * fee per kilobyte to zero in setUp and back to normal in tearDown. If you are wanting to test your behaviour
- * with fees (a good idea!) make sure you set the {@link Wallet.SendRequest#DEFAULT_FEE_PER_KB} value to
- * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} before doing so.
+ * fee per kilobyte to zero in setUp.
  */
 public class TestWithWallet {
     protected static final NetworkParameters PARAMS = UnitTestParams.get();

@@ -80,8 +80,7 @@ public class WalletTest extends TestWithWallet {
 
     private SecureRandom secureRandom = new SecureRandom();
 
-    private final ECKey OTHER_KEY = new ECKey();
-    private final Address OTHER_ADDRESS = OTHER_KEY.toAddress(PARAMS);
+    private final Address OTHER_ADDRESS = new ECKey().toAddress(PARAMS);
 
     @Before
     @Override
@@ -2272,9 +2271,6 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void feeSolverAndCoinSelectionTest_dustySendRequested() throws Exception {
-        // Make sure TestWithWallet isnt doing anything crazy.
-        assertEquals(0, wallet.getTransactions(true).size());
-
         // Generate a few outputs to us that are far too small to spend reasonably
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx1 = createFakeTx(PARAMS, SATOSHI, myAddress);
@@ -2700,8 +2696,6 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void basicCategoryStepTest() throws Exception {
         // Creates spends that step through the possible fee solver categories
-        // Make sure TestWithWallet isnt doing anything crazy.
-        assertEquals(0, wallet.getTransactions(true).size());
 
         // Generate a ton of small outputs
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
@@ -2785,9 +2779,6 @@ public class WalletTest extends TestWithWallet {
     public void testCategory2WithChange() throws Exception {
         // Specifically target case 2 with significant change
 
-        // Make sure TestWithWallet isnt doing anything crazy.
-        assertEquals(0, wallet.getTransactions(true).size());
-
         // Generate a ton of small outputs
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         int i = 0;
@@ -2861,9 +2852,6 @@ public class WalletTest extends TestWithWallet {
     public void feePerKbCategoryJumpTest() throws Exception {
         // Simple test of boundary condition on fee per kb in category fee solver
 
-        // Make sure TestWithWallet isnt doing anything crazy.
-        assertEquals(0, wallet.getTransactions(true).size());
-
         // Generate a ton of small outputs
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx = createFakeTx(PARAMS, COIN, myAddress);
@@ -2908,8 +2896,6 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void testCompleteTxWithExistingInputs() throws Exception {
         // Tests calling completeTx with a SendRequest that already has a few inputs in it
-        // Make sure TestWithWallet isnt doing anything crazy.
-        assertEquals(0, wallet.getTransactions(true).size());
 
         // Generate a few outputs to us
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
