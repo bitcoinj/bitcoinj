@@ -633,7 +633,7 @@ public class WalletTest extends TestWithWallet {
         tx.addOutput(output);
         wallet.receiveFromBlock(tx, null, BlockChain.NewBlockType.BEST_CHAIN, 0);
 
-        assertTrue("Wallet is not consistent", wallet.isConsistent());
+        assertTrue(wallet.isConsistent());
 
         Transaction txClone = PARAMS.getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
         try {
@@ -1951,11 +1951,11 @@ public class WalletTest extends TestWithWallet {
         assertTrue(encryptedWallet.checkPassword(PASSWORD1));
         assertTrue(encryptedWallet.checkAESKey(aesKey));
         assertFalse(encryptedWallet.checkPassword(WRONG_PASSWORD));
-        assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
+        assertNotNull("The keyCrypter is missing but should not be", keyCrypter);
         encryptedWallet.decrypt(aesKey);
 
         // Wallet should now be unencrypted.
-        assertTrue("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter() == null);
+        assertNull("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter());
         try {
             encryptedWallet.checkPassword(PASSWORD1);
             fail();
@@ -1973,7 +1973,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(encryptedWallet.isEncrypted());
 
         // Wallet should now be unencrypted.
-        assertTrue("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter() == null);
+        assertNull("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter());
         try {
             encryptedWallet.checkPassword(PASSWORD1);
             fail();
@@ -1989,7 +1989,7 @@ public class WalletTest extends TestWithWallet {
         KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
 
         // Check the wallet is currently encrypted
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
         assertFalse(encryptedWallet.checkAESKey(wrongAesKey));
 
         // Check that the wrong password does not decrypt the wallet.
@@ -2036,35 +2036,35 @@ public class WalletTest extends TestWithWallet {
         KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         // Check the wallet is currently encrypted
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
 
         // Decrypt wallet.
-        assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
+        assertNotNull("The keyCrypter is missing but should not be", keyCrypter);
         encryptedWallet.decrypt(aesKey);
 
         // Try decrypting it again
         try {
-            assertTrue("The keyCrypter is missing but should not be", keyCrypter != null);
+            assertNotNull("The keyCrypter is missing but should not be", keyCrypter);
             encryptedWallet.decrypt(aesKey);
             fail("Should not be able to decrypt a decrypted wallet");
         } catch (IllegalStateException e) {
-            assertTrue("Expected behaviour", true);
+            // expected
         }
-        assertTrue("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter() == null);
+        assertNull("Wallet is not an unencrypted wallet", encryptedWallet.getKeyCrypter());
 
         // Encrypt wallet.
         encryptedWallet.encrypt(keyCrypter, aesKey);
 
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
 
         // Try encrypting it again
         try {
             encryptedWallet.encrypt(keyCrypter, aesKey);
             fail("Should not be able to encrypt an encrypted wallet");
         } catch (IllegalStateException e) {
-            assertTrue("Expected behaviour", true);
+            // expected
         }
-        assertTrue("Wallet is not an encrypted wallet", encryptedWallet.getEncryptionType() == EncryptionType.ENCRYPTED_SCRYPT_AES);
+        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
     }
 
     @Test(expected = KeyCrypterException.class)
@@ -2276,7 +2276,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx1 = createFakeTx(PARAMS, SATOSHI, myAddress);
         wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         Transaction tx2 = createFakeTx(PARAMS, SATOSHI, myAddress);
-        assertTrue(!tx1.getHash().equals(tx2.getHash()));
+        assertNotEquals(tx1.getHash(), tx2.getHash());
         wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         Transaction tx3 = createFakeTx(PARAMS, SATOSHI.multiply(10), myAddress);
         wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
@@ -2449,27 +2449,42 @@ public class WalletTest extends TestWithWallet {
         block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx6 = createFakeTx(PARAMS, COIN, myAddress);
         wallet.receiveFromBlock(tx6, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
-        assertTrue(tx5.getOutput(0).isMine(wallet) && tx5.getOutput(0).isAvailableForSpending() && tx5.getConfidence().getDepthInBlocks() == 100);
-        assertTrue(tx6.getOutput(0).isMine(wallet) && tx6.getOutput(0).isAvailableForSpending() && tx6.getConfidence().getDepthInBlocks() == 1);
+        assertTrue(tx5.getOutput(0).isMine(wallet));
+        assertTrue(tx5.getOutput(0).isAvailableForSpending());
+        assertEquals(100, tx5.getConfidence().getDepthInBlocks());
+        assertTrue(tx6.getOutput(0).isMine(wallet));
+        assertTrue(tx6.getOutput(0).isAvailableForSpending());
+        assertEquals(1, tx6.getConfidence().getDepthInBlocks());
 
         // tx5 and tx6 have exactly the same coin*depth, so the larger should be selected...
         Transaction spend12 = wallet.createSend(OTHER_ADDRESS, CENT);
-        assertTrue(spend12.getOutputs().size() == 2 && spend12.getOutput(0).getValue().add(spend12.getOutput(1).getValue()).equals(COIN));
+        assertEquals(2, spend12.getOutputs().size());
+        assertEquals(COIN, spend12.getOutput(0).getValue().add(spend12.getOutput(1).getValue()));
 
         wallet.notifyNewBestBlock(block);
-        assertTrue(tx5.getOutput(0).isMine(wallet) && tx5.getOutput(0).isAvailableForSpending() && tx5.getConfidence().getDepthInBlocks() == 101);
-        assertTrue(tx6.getOutput(0).isMine(wallet) && tx6.getOutput(0).isAvailableForSpending() && tx6.getConfidence().getDepthInBlocks() == 1);
+        assertTrue(tx5.getOutput(0).isMine(wallet));
+        assertTrue(tx5.getOutput(0).isAvailableForSpending());
+        assertEquals(101, tx5.getConfidence().getDepthInBlocks());
+        assertTrue(tx6.getOutput(0).isMine(wallet));
+        assertTrue(tx6.getOutput(0).isAvailableForSpending());
+        assertEquals(1, tx6.getConfidence().getDepthInBlocks());
         // Now tx5 has slightly higher coin*depth than tx6...
         Transaction spend13 = wallet.createSend(OTHER_ADDRESS, CENT);
-        assertTrue(spend13.getOutputs().size() == 1 && spend13.getOutput(0).getValue().equals(CENT));
+        assertEquals(1, spend13.getOutputs().size());
+        assertEquals(CENT, spend13.getOutput(0).getValue());
 
         block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         wallet.notifyNewBestBlock(block);
-        assertTrue(tx5.getOutput(0).isMine(wallet) && tx5.getOutput(0).isAvailableForSpending() && tx5.getConfidence().getDepthInBlocks() == 102);
-        assertTrue(tx6.getOutput(0).isMine(wallet) && tx6.getOutput(0).isAvailableForSpending() && tx6.getConfidence().getDepthInBlocks() == 2);
+        assertTrue(tx5.getOutput(0).isMine(wallet));
+        assertTrue(tx5.getOutput(0).isAvailableForSpending());
+        assertEquals(102, tx5.getConfidence().getDepthInBlocks());
+        assertTrue(tx6.getOutput(0).isMine(wallet));
+        assertTrue(tx6.getOutput(0).isAvailableForSpending());
+        assertEquals(2, tx6.getConfidence().getDepthInBlocks());
         // Now tx6 has higher coin*depth than tx5...
         Transaction spend14 = wallet.createSend(OTHER_ADDRESS, CENT);
-        assertTrue(spend14.getOutputs().size() == 2 && spend14.getOutput(0).getValue().add(spend14.getOutput(1).getValue()).equals(COIN));
+        assertEquals(2, spend14.getOutputs().size());
+        assertEquals(COIN, spend14.getOutput(0).getValue().add(spend14.getOutput(1).getValue()));
 
         // Now test feePerKb
         SendRequest request15 = SendRequest.to(OTHER_ADDRESS, CENT);
@@ -2901,7 +2916,8 @@ public class WalletTest extends TestWithWallet {
         StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx1 = createFakeTx(PARAMS, COIN, myAddress);
         wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
-        Transaction tx2 = createFakeTx(PARAMS, COIN, myAddress); assertTrue(!tx1.getHash().equals(tx2.getHash()));
+        Transaction tx2 = createFakeTx(PARAMS, COIN, myAddress);
+        assertNotEquals(tx1.getHash(), tx2.getHash());
         wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         Transaction tx3 = createFakeTx(PARAMS, CENT, myAddress);
         wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
