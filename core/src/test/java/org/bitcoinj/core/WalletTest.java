@@ -2794,14 +2794,14 @@ public class WalletTest extends TestWithWallet {
 
         // Create a transaction
         SendRequest request = SendRequest.to(OTHER_ADDRESS, CENT);
-        request.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+        request.feePerKb = Transaction.DEFAULT_TX_FEE;
         wallet.completeTx(request);
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, request.tx.getFee());
+        assertEquals(Transaction.DEFAULT_TX_FEE, request.tx.getFee());
     }
 
     @Test
     public void lowerThanDefaultFee() throws InsufficientMoneyException {
-        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.divide(10);
+        Coin fee = Transaction.DEFAULT_TX_FEE.divide(10);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
@@ -2820,7 +2820,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void higherThanDefaultFee() throws InsufficientMoneyException {
-        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(10);
+        Coin fee = Transaction.DEFAULT_TX_FEE.multiply(10);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
@@ -2832,7 +2832,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.emptyWallet = true;
         emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
         wallet.completeTx(emptyReq);
-        assertEquals(Coin.valueOf(17100), emptyReq.tx.getFee());
+        assertEquals(Coin.valueOf(34200), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 

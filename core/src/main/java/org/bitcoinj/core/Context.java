@@ -32,7 +32,7 @@ public class Context {
     private NetworkParameters params;
     private int eventHorizon = 100;
     private boolean ensureMinRequiredFee = true;
-    private Coin feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+    private Coin feePerKb = Transaction.DEFAULT_TX_FEE;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be

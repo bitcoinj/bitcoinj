@@ -357,7 +357,7 @@ public class WalletTool {
                     System.err.println("--payment-request and --output cannot be used together.");
                     return;
                 } else if (options.has(outputFlag)) {
-                    Coin feePerKb = Coin.ZERO;
+                    Coin feePerKb = null;
                     if (options.has(feePerKbOption))
                         feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
                     String lockTime = null;
@@ -378,7 +378,7 @@ public class WalletTool {
                     System.err.println("You must specify a --output=addr:value");
                     return;
                 }
-                Coin feePerKb = Coin.ZERO;
+                Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
                 if (!options.has("locktime")) {
@@ -398,7 +398,7 @@ public class WalletTool {
                     System.err.println("You must specify a --output=addr:value");
                     return;
                 }
-                Coin feePerKb = Coin.ZERO;
+                Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
@@ -413,7 +413,7 @@ public class WalletTool {
                     System.err.println("You must specify a --output=addr:value");
                     return;
                 }
-                Coin feePerKb = Coin.ZERO;
+                Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
@@ -596,7 +596,8 @@ public class WalletTool {
                 log.info("Emptying out wallet, recipient may get less than what you expect");
                 req.emptyWallet = true;
             }
-            req.feePerKb = feePerKb;
+            if (feePerKb != null)
+                req.feePerKb = feePerKb;
             if (allowUnconfirmed) {
                 wallet.allowSpendingUnconfirmedTransactions();
             }
@@ -727,7 +728,8 @@ public class WalletTool {
                 log.info("Emptying out wallet, recipient may get less than what you expect");
                 req.emptyWallet = true;
             }
-            req.feePerKb = feePerKb;
+            if (feePerKb != null)
+                req.feePerKb = feePerKb;
             if (allowUnconfirmed) {
                 wallet.allowSpendingUnconfirmedTransactions();
             }
@@ -794,7 +796,8 @@ public class WalletTool {
             Wallet.SendRequest req = outputSpec.isAddress() ?
                     Wallet.SendRequest.to(outputSpec.addr, value) :
                     Wallet.SendRequest.to(params, outputSpec.key, value);
-            req.feePerKb = feePerKb;
+            if (feePerKb != null)
+                req.feePerKb = feePerKb;
 
             Transaction lockTimeVerify = wallet.getTransaction(Sha256Hash.wrap(txHash));
             if (lockTimeVerify == null) {
@@ -897,7 +900,8 @@ public class WalletTool {
             Wallet.SendRequest req = outputSpec.isAddress() ?
                     Wallet.SendRequest.to(outputSpec.addr, value) :
                     Wallet.SendRequest.to(params, outputSpec.key, value);
-            req.feePerKb = feePerKb;
+            if (feePerKb != null)
+                req.feePerKb = feePerKb;
 
             Transaction lockTimeVerify = wallet.getTransaction(Sha256Hash.wrap(txHash));
             if (lockTimeVerify == null) {
