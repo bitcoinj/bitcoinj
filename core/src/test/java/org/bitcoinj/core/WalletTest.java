@@ -2402,59 +2402,62 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void feeSolverAndCoinSelectionTests2() throws Exception {
-        Transaction tx5 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT);
-        assertEquals(CENT, wallet.getBalance());
-
-        // Now test coin selection properly selects coin*depth
+    public void coinSelection_coinTimesDepth() throws Exception {
+        Transaction txCent = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT);
         for (int i = 0; i < 197; i++)
             sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        Transaction txCoin = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
+        assertEquals(COIN.add(CENT), wallet.getBalance());
 
-        Transaction tx6 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
-        assertTrue(tx5.getOutput(0).isMine(wallet));
-        assertTrue(tx5.getOutput(0).isAvailableForSpending());
-        assertEquals(199, tx5.getConfidence().getDepthInBlocks());
-        assertTrue(tx6.getOutput(0).isMine(wallet));
-        assertTrue(tx6.getOutput(0).isAvailableForSpending());
-        assertEquals(1, tx6.getConfidence().getDepthInBlocks());
-
-        // tx5 has higher coin*depth than tx6...
-        assertTrue(tx5.getOutput(0).getValue().multiply(tx5.getConfidence().getDepthInBlocks())
-                .isGreaterThan(tx6.getOutput(0).getValue().multiply(tx6.getConfidence().getDepthInBlocks())));
-        // ...so tx5 should be selected
-        Transaction spend12 = wallet.createSend(OTHER_ADDRESS, CENT);
-        assertEquals(1, spend12.getInputs().size());
-        assertEquals(CENT, spend12.getInput(0).getValue());
-
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(tx5.getOutput(0).isMine(wallet));
-        assertTrue(tx5.getOutput(0).isAvailableForSpending());
-        assertEquals(200, tx5.getConfidence().getDepthInBlocks());
-        assertTrue(tx6.getOutput(0).isMine(wallet));
-        assertTrue(tx6.getOutput(0).isAvailableForSpending());
-        assertEquals(2, tx6.getConfidence().getDepthInBlocks());
-        // Now tx5 and tx6 have exactly the same coin*depth...
-        assertEquals(tx5.getOutput(0).getValue().multiply(tx5.getConfidence().getDepthInBlocks()),
-                tx6.getOutput(0).getValue().multiply(tx6.getConfidence().getDepthInBlocks()));
-        // ...so the larger tx6 should be selected
-        Transaction spend13 = wallet.createSend(OTHER_ADDRESS, COIN);
-        assertEquals(1, spend13.getInputs().size());
-        assertEquals(COIN, spend13.getInput(0).getValue());
+        assertTrue(txCent.getOutput(0).isMine(wallet));
+        assertTrue(txCent.getOutput(0).isAvailableForSpending());
+        assertEquals(199, txCent.getConfidence().getDepthInBlocks());
+        assertTrue(txCoin.getOutput(0).isMine(wallet));
+        assertTrue(txCoin.getOutput(0).isAvailableForSpending());
+        assertEquals(1, txCoin.getConfidence().getDepthInBlocks());
+        // txCent has higher coin*depth than txCoin...
+        assertTrue(txCent.getOutput(0).getValue().multiply(txCent.getConfidence().getDepthInBlocks())
+                .isGreaterThan(txCoin.getOutput(0).getValue().multiply(txCoin.getConfidence().getDepthInBlocks())));
+        // ...so txCent should be selected
+        Transaction spend1 = wallet.createSend(OTHER_ADDRESS, CENT);
+        assertEquals(1, spend1.getInputs().size());
+        assertEquals(CENT, spend1.getInput(0).getValue());
 
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN);
-        assertTrue(tx5.getOutput(0).isMine(wallet));
-        assertTrue(tx5.getOutput(0).isAvailableForSpending());
-        assertEquals(201, tx5.getConfidence().getDepthInBlocks());
-        assertTrue(tx6.getOutput(0).isMine(wallet));
-        assertTrue(tx6.getOutput(0).isAvailableForSpending());
-        assertEquals(3, tx6.getConfidence().getDepthInBlocks());
-        // Now tx5 has lower coin*depth than tx6...
-        assertTrue(tx5.getOutput(0).getValue().multiply(tx5.getConfidence().getDepthInBlocks())
-                .isLessThan(tx6.getOutput(0).getValue().multiply(tx6.getConfidence().getDepthInBlocks())));
-        // ...so tx6 should be selected
-        Transaction spend14 = wallet.createSend(OTHER_ADDRESS, COIN);
-        assertEquals(1, spend14.getInputs().size());
-        assertEquals(COIN, spend14.getInput(0).getValue());
+        assertTrue(txCent.getOutput(0).isMine(wallet));
+        assertTrue(txCent.getOutput(0).isAvailableForSpending());
+        assertEquals(200, txCent.getConfidence().getDepthInBlocks());
+        assertTrue(txCoin.getOutput(0).isMine(wallet));
+        assertTrue(txCoin.getOutput(0).isAvailableForSpending());
+        assertEquals(2, txCoin.getConfidence().getDepthInBlocks());
+        // Now txCent and txCoin have exactly the same coin*depth...
+        assertEquals(txCent.getOutput(0).getValue().multiply(txCent.getConfidence().getDepthInBlocks()),
+                txCoin.getOutput(0).getValue().multiply(txCoin.getConfidence().getDepthInBlocks()));
+        // ...so the larger txCoin should be selected
+        Transaction spend2 = wallet.createSend(OTHER_ADDRESS, COIN);
+        assertEquals(1, spend2.getInputs().size());
+        assertEquals(COIN, spend2.getInput(0).getValue());
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN);
+        assertTrue(txCent.getOutput(0).isMine(wallet));
+        assertTrue(txCent.getOutput(0).isAvailableForSpending());
+        assertEquals(201, txCent.getConfidence().getDepthInBlocks());
+        assertTrue(txCoin.getOutput(0).isMine(wallet));
+        assertTrue(txCoin.getOutput(0).isAvailableForSpending());
+        assertEquals(3, txCoin.getConfidence().getDepthInBlocks());
+        // Now txCent has lower coin*depth than txCoin...
+        assertTrue(txCent.getOutput(0).getValue().multiply(txCent.getConfidence().getDepthInBlocks())
+                .isLessThan(txCoin.getOutput(0).getValue().multiply(txCoin.getConfidence().getDepthInBlocks())));
+        // ...so txCoin should be selected
+        Transaction spend3 = wallet.createSend(OTHER_ADDRESS, COIN);
+        assertEquals(1, spend3.getInputs().size());
+        assertEquals(COIN, spend3.getInput(0).getValue());
+    }
+
+    @Test
+    public void feeSolverAndCoinSelectionTests2() throws Exception {
+        Transaction tx5 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT);
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
 
         // Now test feePerKb
         SendRequest request15 = SendRequest.to(OTHER_ADDRESS, CENT);
