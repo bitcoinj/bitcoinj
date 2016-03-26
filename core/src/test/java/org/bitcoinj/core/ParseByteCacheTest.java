@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Steve Coughlan.
  * Copyright 2014 Andreas Schildbach
  *

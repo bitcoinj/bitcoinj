@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
  *
@@ -27,7 +27,6 @@ import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.rules.ExpectedException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +37,6 @@ import java.util.Date;
 import java.util.Locale;
 
 import static org.bitcoinj.core.Coin.*;
-import org.bitcoinj.store.BlockStoreException;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.*;

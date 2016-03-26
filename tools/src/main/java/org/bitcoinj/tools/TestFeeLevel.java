@@ -22,7 +22,6 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 
 import java.io.File;
-import java.util.Set;
 
 /**
  * A program that sends a transaction with the specified fee and measures how long it takes to confirm.

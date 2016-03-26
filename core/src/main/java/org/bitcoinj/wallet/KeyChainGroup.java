@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Mike Hearn
  * Copyright 2014 Andreas Schildbach
  *
@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.protobuf.*;
 import org.bitcoinj.core.*;

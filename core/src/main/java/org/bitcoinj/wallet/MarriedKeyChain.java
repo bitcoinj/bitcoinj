@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 The bitcoinj developers.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import org.bitcoinj.script.ScriptBuilder;
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Nullable;

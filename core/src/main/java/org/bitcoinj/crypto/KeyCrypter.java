@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2013 Jim Burton.
  *
  * Licensed under the MIT license (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;

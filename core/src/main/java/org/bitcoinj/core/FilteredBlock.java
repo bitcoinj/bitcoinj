@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2012 Matt Corallo
  * Copyright 2015 Andreas Schildbach
  *

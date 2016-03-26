@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Noa Resare
  * Copyright 2015 Andreas Schildbach
  *

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2014 Kalpesh Parmar.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.core;
 
 public class UTXOProviderException extends Exception {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Thilo Planz
  * Copyright 2014 Andreas Schildbach
  *

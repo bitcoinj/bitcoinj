@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Giannis Dzegoutanis
  * Copyright 2015 Andreas Schildbach
