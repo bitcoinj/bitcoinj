@@ -177,6 +177,14 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * Sets a wallet factory which will be used when the kit creates a new wallet.
+     */
+    public WalletAppKit setWalletFactory(WalletProtobufSerializer.WalletFactory walletFactory) {
+        this.walletFactory = walletFactory;
+        return this;
+    }
+
+    /**
      * If a seed is set here then any existing wallet that matches the file name will be renamed to a backup name,
      * the chain file will be deleted, and the wallet object will be instantiated with the given seed instead of
      * a fresh one being created. This is intended for restoring a wallet from the original seed. To implement restore
