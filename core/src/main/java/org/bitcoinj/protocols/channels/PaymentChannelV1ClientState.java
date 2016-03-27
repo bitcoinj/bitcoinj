@@ -153,7 +153,7 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
         refundTx = new Transaction(params);
         refundTx.addInput(multisigOutput).setSequenceNumber(0);   // Allow replacement when it's eventually reactivated.
         refundTx.setLockTime(expiryTime);
-        if (totalValue.compareTo(Coin.CENT) < 0) {
+        if (totalValue.compareTo(Coin.CENT) < 0 && Context.get().isEnsureMinRequiredFee()) {
             // Must pay min fee.
             final Coin valueAfterFee = totalValue.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
             if (Transaction.MIN_NONDUST_OUTPUT.compareTo(valueAfterFee) > 0)
