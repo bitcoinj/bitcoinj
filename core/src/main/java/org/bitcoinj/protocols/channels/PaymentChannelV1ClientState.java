@@ -151,7 +151,9 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
         // in future as it breaks the intended design of timelocking/tx replacement, but for now it simplifies this
         // specific protocol somewhat.
         refundTx = new Transaction(params);
-        refundTx.addInput(multisigOutput).setSequenceNumber(0);   // Allow replacement when it's eventually reactivated.
+        // don't disable lock time. the sequence will be included in the server's signature and thus won't be changeable.
+        // by using this sequence value, we avoid extra full replace-by-fee and relative lock time processing.
+        refundTx.addInput(multisigOutput).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1L);
         refundTx.setLockTime(expiryTime);
         if (totalValue.compareTo(Coin.CENT) < 0 && Context.get().isEnsureMinRequiredFee()) {
             // Must pay min fee.
