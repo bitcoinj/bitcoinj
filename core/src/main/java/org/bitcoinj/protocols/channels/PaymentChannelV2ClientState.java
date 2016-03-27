@@ -119,13 +119,12 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
         contract = req.tx;
 
         // Build a refund transaction that protects us in the case of a bad server that's just trying to cause havoc
-        // by locking up peoples money (perhaps as a precursor to a ransom attempt). We time lock it so the server
-        // has an assurance that we cannot take back our money by claiming a refund before the channel closes - this
-        // relies on the fact that since Bitcoin 0.8 time locked transactions are non-final. This will need to change
-        // in future as it breaks the intended design of timelocking/tx replacement, but for now it simplifies this
-        // specific protocol somewhat.
+        // by locking up peoples money (perhaps as a precursor to a ransom attempt). We time lock it because the
+        // CheckLockTimeVerify opcode requires a lock time to be specified and the input to have a non-final sequence
+        // number (so that the lock time is not disabled).
         refundTx = new Transaction(params);
-        refundTx.addInput(contract.getOutput(0)).setSequenceNumber(0);   // Allow replacement when it's eventually reactivated.
+        // by using this sequence value, we avoid extra full replace-by-fee and relative lock time processing.
+        refundTx.addInput(contract.getOutput(0)).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1L);
         refundTx.setLockTime(expiryTime);
         if (totalValue.compareTo(Coin.CENT) < 0 && Context.get().isEnsureMinRequiredFee()) {
             // Must pay min fee.

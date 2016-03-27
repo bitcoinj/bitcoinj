@@ -125,9 +125,9 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
         // Verify that the refund transaction has a single input (that we can fill to sign the multisig output).
         if (refundTx.getInputs().size() != 1)
             throw new VerificationException("Refund transaction does not have exactly one input");
-        // Verify that the refund transaction has a time lock on it and a sequence number of zero.
-        if (refundTx.getInput(0).getSequenceNumber() != 0)
-            throw new VerificationException("Refund transaction's input's sequence number is non-0");
+        // Verify that the refund transaction has a time lock on it and a sequence number that does not disable lock time.
+        if (refundTx.getInput(0).getSequenceNumber() == TransactionInput.NO_SEQUENCE)
+            throw new VerificationException("Refund transaction's input's sequence number disables lock time");
         if (refundTx.getLockTime() < minExpireTime)
             throw new VerificationException("Refund transaction has a lock time too soon");
         // Verify the transaction has one output (we don't care about its contents, its up to the client)
