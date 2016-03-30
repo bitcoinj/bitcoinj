@@ -27,6 +27,7 @@ import org.bitcoinj.core.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * RefreshWallet loads a wallet, then processes the block chain to update the transaction pools within it.
+ * To get a test wallet you can use wallet-tool from the tools subproject.
  */
 public class RefreshWallet {
     public static void main(String[] args) throws Exception {
