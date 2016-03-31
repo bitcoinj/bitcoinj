@@ -3139,6 +3139,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(200, tx.getInputs().size());
     }
 
+    private static final byte[] EMPTY_SIG = {};
+
     @Test
     public void completeTxPartiallySignedWithDummySigs() throws Exception {
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
@@ -3147,8 +3149,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void completeTxPartiallySignedWithEmptySig() throws Exception {
-        byte[] emptySig = {};
-        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
+        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
     }
 
     @Test (expected = ECKey.MissingPrivateKeyException.class)
@@ -3171,14 +3172,12 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void completeTxPartiallySignedMarriedWithEmptySig() throws Exception {
-        byte[] emptySig = {};
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, emptySig);
+        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
     }
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
     public void completeTxPartiallySignedMarriedThrows() throws Exception {
-        byte[] emptySig = {};
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, emptySig);
+        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, EMPTY_SIG);
     }
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
