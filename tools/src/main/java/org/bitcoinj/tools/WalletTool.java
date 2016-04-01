@@ -51,6 +51,7 @@ import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
@@ -594,7 +595,7 @@ public class WalletTool {
                     return;
                 }
             }
-            Wallet.SendRequest req = Wallet.SendRequest.forTx(t);
+            SendRequest req = SendRequest.forTx(t);
             if (t.getOutputs().size() == 1 && t.getOutput(0).getValue().equals(wallet.getBalance())) {
                 log.info("Emptying out wallet, recipient may get less than what you expect");
                 req.emptyWallet = true;
@@ -726,7 +727,7 @@ public class WalletTool {
                 throw new RuntimeException(e);
             }
 
-            Wallet.SendRequest req = Wallet.SendRequest.toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), refundKey, outputKey, value);
+            SendRequest req = SendRequest.toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), refundKey, outputKey, value);
             if (req.tx.getOutputs().size() == 1 && req.tx.getOutput(0).getValue().equals(wallet.getBalance())) {
                 log.info("Emptying out wallet, recipient may get less than what you expect");
                 req.emptyWallet = true;
@@ -796,9 +797,9 @@ public class WalletTool {
                 return;
             }
 
-            Wallet.SendRequest req = outputSpec.isAddress() ?
-                    Wallet.SendRequest.to(outputSpec.addr, value) :
-                    Wallet.SendRequest.to(params, outputSpec.key, value);
+            SendRequest req = outputSpec.isAddress() ?
+                    SendRequest.to(outputSpec.addr, value) :
+                    SendRequest.to(params, outputSpec.key, value);
             if (feePerKb != null)
                 req.feePerKb = feePerKb;
 
@@ -900,9 +901,9 @@ public class WalletTool {
                 return;
             }
 
-            Wallet.SendRequest req = outputSpec.isAddress() ?
-                    Wallet.SendRequest.to(outputSpec.addr, value) :
-                    Wallet.SendRequest.to(params, outputSpec.key, value);
+            SendRequest req = outputSpec.isAddress() ?
+                    SendRequest.to(outputSpec.addr, value) :
+                    SendRequest.to(params, outputSpec.key, value);
             if (feePerKb != null)
                 req.feePerKb = feePerKb;
 
@@ -1057,7 +1058,7 @@ public class WalletTool {
                 System.out.println("Pki-Verified Name: " + session.pkiVerificationData.displayName);
                 System.out.println("PKI data verified by: " + session.pkiVerificationData.rootAuthorityName);
             }
-            final Wallet.SendRequest req = session.getSendRequest();
+            final SendRequest req = session.getSendRequest();
             if (password != null) {
                 req.aesKey = passwordToKey(true);
                 if (req.aesKey == null)

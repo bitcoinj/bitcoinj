@@ -19,7 +19,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.TestWithWallet;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
@@ -55,7 +55,7 @@ public class TransactionOutputTest extends TestWithWallet {
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
         multiSigTransaction.addOutput(Coin.COIN, scriptPubKey);
 
-        Wallet.SendRequest req = Wallet.SendRequest.forTx(multiSigTransaction);
+        SendRequest req = SendRequest.forTx(multiSigTransaction);
         this.wallet.completeTx(req);
         TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
 

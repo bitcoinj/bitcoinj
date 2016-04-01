@@ -16,6 +16,7 @@ package wallettemplate;
 
 import javafx.scene.layout.HBox;
 import org.bitcoinj.core.*;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -66,11 +67,11 @@ public class SendMoneyController {
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = Address.fromBase58(Main.params, address.getText());
-            Wallet.SendRequest req;
+            SendRequest req;
             if (amount.equals(Main.bitcoin.wallet().getBalance()))
-                req = Wallet.SendRequest.emptyWallet(destination);
+                req = SendRequest.emptyWallet(destination);
             else
-                req = Wallet.SendRequest.to(destination, amount);
+                req = SendRequest.to(destination, amount);
             req.aesKey = aesKey;
             sendResult = Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {

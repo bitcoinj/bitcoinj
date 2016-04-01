@@ -16,6 +16,7 @@
 
 package org.bitcoinj.protocols.channels;
 
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.collect.ImmutableList;
@@ -215,13 +216,13 @@ public abstract class PaymentChannelServerState {
     }
 
     // Create a payment transaction with valueToMe going back to us
-    protected synchronized Wallet.SendRequest makeUnsignedChannelContract(Coin valueToMe) {
+    protected synchronized SendRequest makeUnsignedChannelContract(Coin valueToMe) {
         Transaction tx = new Transaction(wallet.getParams());
         if (!getTotalValue().subtract(valueToMe).equals(Coin.ZERO)) {
             tx.addOutput(getTotalValue().subtract(valueToMe), getClientKey().toAddress(wallet.getParams()));
         }
         tx.addInput(contract.getOutput(0));
-        return Wallet.SendRequest.forTx(tx);
+        return SendRequest.forTx(tx);
     }
 
     /**
@@ -248,7 +249,7 @@ public abstract class PaymentChannelServerState {
         if (newValueToMe.compareTo(bestValueToMe) < 0)
             throw new ValueOutOfRangeException("Attempt to roll back payment on the channel.");
 
-        Wallet.SendRequest req = makeUnsignedChannelContract(newValueToMe);
+        SendRequest req = makeUnsignedChannelContract(newValueToMe);
 
         if (!fullyUsedUp && refundSize.isLessThan(req.tx.getOutput(0).getMinNonDustValue()))
             throw new ValueOutOfRangeException("Attempt to refund negative value or value too small to be accepted by the network");

@@ -20,6 +20,7 @@ import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
@@ -74,7 +75,7 @@ public class TestFeeLevel {
             value = value.subtract(outputValue);
         }
         transaction.addOutput(value, kit.wallet().freshReceiveAddress());
-        Wallet.SendRequest request = Wallet.SendRequest.forTx(transaction);
+        SendRequest request = SendRequest.forTx(transaction);
         request.feePerKb = feeToTest;
         request.ensureMinRequiredFee = false;
         kit.wallet().completeTx(request);

@@ -60,7 +60,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
-import org.bitcoinj.wallet.Wallet.SendRequest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -307,7 +306,7 @@ public class WalletTest extends TestWithWallet {
 
         // Try to send too much and fail.
         Coin vHuge = valueOf(10, 0);
-        Wallet.SendRequest req = Wallet.SendRequest.to(destination, vHuge);
+        SendRequest req = SendRequest.to(destination, vHuge);
         try {
             wallet.completeTx(req);
             fail();
@@ -317,7 +316,7 @@ public class WalletTest extends TestWithWallet {
 
         // Prepare to send.
         Coin v2 = valueOf(0, 50);
-        req = Wallet.SendRequest.to(destination, v2);
+        req = SendRequest.to(destination, v2);
 
         if (encryptedWallet != null) {
             KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -334,7 +333,7 @@ public class WalletTest extends TestWithWallet {
             assertEquals("Wrong number of ALL", 1, wallet.getTransactions(true).size());
 
             // Try to create a send with a fee but the wrong password (this should fail).
-            req = Wallet.SendRequest.to(destination, v2);
+            req = SendRequest.to(destination, v2);
             req.aesKey = wrongAesKey;
 
             try {
@@ -348,7 +347,7 @@ public class WalletTest extends TestWithWallet {
             assertEquals("Wrong number of ALL", 1, wallet.getTransactions(true).size());
 
             // Create a send with a fee with the correct password (this should succeed).
-            req = Wallet.SendRequest.to(destination, v2);
+            req = SendRequest.to(destination, v2);
             req.aesKey = aesKey;
         }
 
@@ -446,7 +445,7 @@ public class WalletTest extends TestWithWallet {
             wallet = roundTrip(wallet);
         Coin v3 = valueOf(0, 50);
         assertEquals(v3, wallet.getBalance());
-        Wallet.SendRequest req = Wallet.SendRequest.to(OTHER_ADDRESS, valueOf(0, 48));
+        SendRequest req = SendRequest.to(OTHER_ADDRESS, valueOf(0, 48));
         req.aesKey = aesKey;
         req.shuffleOutputs = false;
         wallet.completeTx(req);
@@ -2106,7 +2105,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(key.getPubKeyPoint(), encryptedWallet.getImportedKeys().get(0).getPubKeyPoint());
         sendMoneyToWallet(encryptedWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN, key.toAddress(PARAMS));
         assertEquals(Coin.COIN, encryptedWallet.getBalance());
-        SendRequest req = Wallet.SendRequest.emptyWallet(OTHER_ADDRESS);
+        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         req.aesKey = checkNotNull(encryptedWallet.getKeyCrypter()).deriveKey(PASSWORD1);
         encryptedWallet.sendCoinsOffline(req);
     }
@@ -2141,7 +2140,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 3100; i++) {
             tx.addOutput(v, new Address(PARAMS, bits));
         }
-        Wallet.SendRequest req = Wallet.SendRequest.forTx(tx);
+        SendRequest req = SendRequest.forTx(tx);
         wallet.completeTx(req);
     }
 
@@ -2153,7 +2152,7 @@ public class WalletTest extends TestWithWallet {
         Coin messagePrice = Coin.ZERO;
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
     }
@@ -2166,7 +2165,7 @@ public class WalletTest extends TestWithWallet {
         Coin messagePrice = CENT;
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         wallet.completeTx(request);
     }
 
@@ -2179,7 +2178,7 @@ public class WalletTest extends TestWithWallet {
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(CENT, OTHER_ADDRESS);
         tx.addOutput(messagePrice, script);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         wallet.completeTx(request);
     }
 
@@ -2193,7 +2192,7 @@ public class WalletTest extends TestWithWallet {
         Script script2 = ScriptBuilder.createOpReturnScript("hello world 2!".getBytes());
         tx.addOutput(messagePrice, script1);
         tx.addOutput(messagePrice, script2);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
     }
@@ -2203,7 +2202,7 @@ public class WalletTest extends TestWithWallet {
         // Tests sending dust, should throw DustySendRequested.
         Transaction tx = new Transaction(PARAMS);
         tx.addOutput(Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI), OTHER_ADDRESS);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
     }
@@ -2217,7 +2216,7 @@ public class WalletTest extends TestWithWallet {
         tx.addOutput(c, OTHER_ADDRESS);
         tx.addOutput(c, OTHER_ADDRESS);
         tx.addOutput(c, OTHER_ADDRESS);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         wallet.completeTx(request);
     }
 
@@ -2228,7 +2227,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx = new Transaction(PARAMS);
         tx.addOutput(Coin.ZERO, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         tx.addOutput(Coin.SATOSHI, OTHER_ADDRESS);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
     }
@@ -2240,7 +2239,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx = new Transaction(PARAMS);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         tx.addOutput(Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI), OTHER_ADDRESS);
-        SendRequest request = Wallet.SendRequest.forTx(tx);
+        SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
     }
@@ -3148,7 +3147,7 @@ public class WalletTest extends TestWithWallet {
         for (TransactionInput input : req.tx.getInputs())
             input.clearScriptBytes();
         Wallet watching = Wallet.fromWatchingKey(PARAMS, wallet.getWatchingKey().dropParent().dropPrivateBytes());
-        watching.completeTx(Wallet.SendRequest.forTx(req.tx));
+        watching.completeTx(SendRequest.forTx(req.tx));
     }
 
     @Test
@@ -3175,7 +3174,7 @@ public class WalletTest extends TestWithWallet {
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
 
-        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(OTHER_ADDRESS);
+        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         wallet.completeTx(req);
     }
 
@@ -3185,7 +3184,7 @@ public class WalletTest extends TestWithWallet {
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
 
-        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(OTHER_ADDRESS);
+        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         req.missingSigsMode = missSigMode;
         wallet.completeTx(req);
         TransactionInput input = req.tx.getInput(0);
@@ -3214,7 +3213,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t2 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, pub);
         Transaction t3 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, priv2);
 
-        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(OTHER_ADDRESS);
+        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         req.missingSigsMode = missSigMode;
         wallet.completeTx(req);
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
@@ -3397,7 +3396,7 @@ public class WalletTest extends TestWithWallet {
         Address myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
 
-        Wallet.SendRequest req = Wallet.SendRequest.emptyWallet(OTHER_ADDRESS);
+        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
         wallet.completeTx(req);
     }

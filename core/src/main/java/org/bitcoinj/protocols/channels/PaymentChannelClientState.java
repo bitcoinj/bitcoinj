@@ -26,6 +26,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.slf4j.Logger;
@@ -239,7 +240,7 @@ public abstract class PaymentChannelClientState {
      * channel. For example if you want it to only use specific coins, you can adjust the coin selector here.
      * The default implementation does nothing.
      */
-    protected void editContractSendRequest(Wallet.SendRequest req) {
+    protected void editContractSendRequest(SendRequest req) {
     }
 
     /**

@@ -20,7 +20,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.SendRequest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -293,13 +293,13 @@ public class PaymentSession {
     }
 
     /**
-     * Returns a {@link Wallet.SendRequest} suitable for broadcasting to the network.
+     * Returns a {@link SendRequest} suitable for broadcasting to the network.
      */
-    public Wallet.SendRequest getSendRequest() {
+    public SendRequest getSendRequest() {
         Transaction tx = new Transaction(params);
         for (Protos.Output output : paymentDetails.getOutputsList())
             tx.addOutput(new TransactionOutput(params, tx, Coin.valueOf(output.getAmount()), output.getScript().toByteArray()));
-        return Wallet.SendRequest.forTx(tx).fromPaymentDetails(paymentDetails);
+        return SendRequest.forTx(tx).fromPaymentDetails(paymentDetails);
     }
 
     /**

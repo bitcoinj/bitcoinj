@@ -25,6 +25,7 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Before;
@@ -327,7 +328,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
         Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
-        Wallet.SendRequest req = Wallet.SendRequest.to(address2, amount2);
+        SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);
         Coin fee = Coin.ZERO;

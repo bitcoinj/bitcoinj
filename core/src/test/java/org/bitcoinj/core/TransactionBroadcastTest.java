@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.*;
 import org.junit.runner.*;
@@ -244,7 +245,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
-        Wallet.SendRequest req = Wallet.SendRequest.to(dest, valueOf(2, 0));
+        SendRequest req = SendRequest.to(dest, valueOf(2, 0));
         Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.

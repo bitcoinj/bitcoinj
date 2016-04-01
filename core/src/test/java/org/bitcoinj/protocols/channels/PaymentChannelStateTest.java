@@ -20,8 +20,8 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.TestWithWallet;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.Wallet.SendRequest;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -340,7 +340,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // we can broadcast the refund and get our balance back.
 
         // Spend the client wallet's one coin
-        Transaction spendCoinTx = wallet.sendCoinsOffline(Wallet.SendRequest.to(new ECKey().toAddress(PARAMS), COIN));
+        Transaction spendCoinTx = wallet.sendCoinsOffline(SendRequest.to(new ECKey().toAddress(PARAMS), COIN));
         assertEquals(Coin.ZERO, wallet.getBalance());
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), spendCoinTx, createFakeTx(PARAMS, CENT, myAddress)));
         assertEquals(CENT, wallet.getBalance());
@@ -691,7 +691,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
 
         // Spend the client wallet's one coin
-        final SendRequest request = Wallet.SendRequest.to(new ECKey().toAddress(PARAMS), COIN);
+        final SendRequest request = SendRequest.to(new ECKey().toAddress(PARAMS), COIN);
         request.ensureMinRequiredFee = false;
         wallet.sendCoinsOffline(request);
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -819,7 +819,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             case VERSION_1:
                 clientState = new PaymentChannelV1ClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), CENT, EXPIRE_TIME) {
                     @Override
-                    protected void editContractSendRequest(Wallet.SendRequest req) {
+                    protected void editContractSendRequest(SendRequest req) {
                         req.coinSelector = wallet.getCoinSelector();
                     }
                 };
@@ -828,7 +828,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             case VERSION_2:
                 clientState = new PaymentChannelV2ClientState(wallet, myKey, ECKey.fromPublicOnly(serverKey.getPubKey()), CENT, EXPIRE_TIME) {
                     @Override
-                    protected void editContractSendRequest(Wallet.SendRequest req) {
+                    protected void editContractSendRequest(SendRequest req) {
                         req.coinSelector = wallet.getCoinSelector();
                     }
                 };

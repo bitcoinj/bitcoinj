@@ -24,6 +24,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +111,7 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
                 ScriptBuilder.createP2SHOutputScript(redeemScript));
         if (transactionOutput.isDust())
             throw new ValueOutOfRangeException("totalValue too small to use");
-        Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
+        SendRequest req = SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.

@@ -26,6 +26,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,7 +166,7 @@ public class PaymentChannelV2ServerState extends PaymentChannelServerState {
         }
         Transaction tx = null;
         try {
-            Wallet.SendRequest req = makeUnsignedChannelContract(bestValueToMe);
+            SendRequest req = makeUnsignedChannelContract(bestValueToMe);
             tx = req.tx;
             // Provide a throwaway signature so that completeTx won't complain out about unsigned inputs it doesn't
             // know how to sign. Note that this signature does actually have to be valid, so we can't use a dummy

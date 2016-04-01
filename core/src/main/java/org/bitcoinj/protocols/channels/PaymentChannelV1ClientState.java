@@ -23,6 +23,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
 import com.google.common.annotations.VisibleForTesting;
@@ -136,7 +137,7 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
         TransactionOutput multisigOutput = template.addOutput(totalValue, ScriptBuilder.createMultiSigOutputScript(2, keys));
         if (multisigOutput.isDust())
             throw new ValueOutOfRangeException("totalValue too small to use");
-        Wallet.SendRequest req = Wallet.SendRequest.forTx(template);
+        SendRequest req = SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
         editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
