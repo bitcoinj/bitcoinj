@@ -640,8 +640,8 @@ public class Transaction extends ChildMessage {
             if (lockTime < LOCKTIME_THRESHOLD) {
                 s.append("block ").append(lockTime);
                 if (chain != null) {
-                    s.append(" (estimated to be reached at ").append(chain.estimateBlockTime((int) lockTime).toString())
-                            .append(')');
+                    s.append(" (estimated to be reached at ")
+                            .append(Utils.dateTimeFormat(chain.estimateBlockTime((int) lockTime))).append(')');
                 }
             } else {
                 s.append(Utils.dateTimeFormat(lockTime * 1000));
