@@ -37,6 +37,11 @@ import java.util.Locale;
  */
 public class VersionMessage extends Message {
 
+    /** The version of this library release, as a string. */
+    public static final String BITCOINJ_VERSION = "0.15-SNAPSHOT";
+    /** The value that is prepended to the subVer field of this application. */
+    public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
+
     /** A services flag that denotes whether the peer has a copy of the block chain or not. */
     public static final int NODE_NETWORK = 1;
     /** A flag that denotes whether the peer supports the getutxos message or not. */
@@ -76,11 +81,6 @@ public class VersionMessage extends Message {
      * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP 37</a>.
      */
     public boolean relayTxesBeforeFilter;
-
-    /** The version of this library release, as a string. */
-    public static final String BITCOINJ_VERSION = "0.14-SNAPSHOT";
-    /** The value that is prepended to the subVer field of this application. */
-    public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
     public VersionMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
         super(params, payload, 0);
