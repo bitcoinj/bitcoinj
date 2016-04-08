@@ -17,6 +17,7 @@
 package org.bitcoinj.protocols.channels;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AsyncFunction;
 import org.bitcoinj.core.*;
 import org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason;
 import org.bitcoinj.utils.Threading;
@@ -29,6 +30,7 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -117,6 +119,13 @@ public class PaymentChannelServer {
          */
         @Nullable
         ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info);
+
+        /**
+         * <p>Called when a channel is being closed and must be signed, possibly with an encrypted key.</p>
+         * @return A future for the (nullable) KeyParameter for the ECKey, or <code>null</code> if no key is required.
+         */
+        @Nullable
+        ListenableFuture<KeyParameter> getUserKey();
     }
     private final ServerConnection conn;
 
@@ -520,7 +529,19 @@ public class PaymentChannelServer {
         // close() on us here below via the stored channel state.
         // TODO: Strongly separate the lifecycle of the payment channel from the TCP connection in these classes.
         channelSettling = true;
-        Futures.addCallback(state.close(), new FutureCallback<Transaction>() {
+        ListenableFuture<KeyParameter> keyFuture = conn.getUserKey();
+        ListenableFuture<Transaction> result;
+        if (keyFuture != null) {
+            result = Futures.transform(conn.getUserKey(), new AsyncFunction<KeyParameter, Transaction>() {
+                @Override
+                public ListenableFuture<Transaction> apply(KeyParameter userKey) throws Exception {
+                    return state.close(userKey);
+                }
+            });
+        } else {
+            result = state.close();
+        }
+        Futures.addCallback(result, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(Transaction result) {
                 // Send the successfully accepted transaction back to the client.

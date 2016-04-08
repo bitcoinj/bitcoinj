@@ -30,7 +30,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nullable;
 import java.util.Locale;
 
 import static com.google.common.base.Preconditions.*;
@@ -163,8 +165,9 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
     }
 
     // Signs the first input of the transaction which must spend the multisig contract.
-    private void signMultisigInput(Transaction tx, Transaction.SigHash hashType, boolean anyoneCanPay) {
-        TransactionSignature signature = tx.calculateSignature(0, serverKey, getContractScript(), hashType, anyoneCanPay);
+    private void signMultisigInput(Transaction tx, Transaction.SigHash hashType,
+                                   boolean anyoneCanPay, @Nullable KeyParameter userKey) {
+        TransactionSignature signature = tx.calculateSignature(0, serverKey, userKey, getContractScript(), hashType, anyoneCanPay);
         byte[] mySig = signature.encodeToBitcoin();
         Script scriptSig = ScriptBuilder.createMultiSigInputScriptBytes(ImmutableList.of(bestValueSignature, mySig));
         tx.getInput(0).setScriptSig(scriptSig);
@@ -181,13 +184,14 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
      * simply set the state to {@link State#CLOSED} and let the client handle getting its refund transaction confirmed.
      * </p>
      *
+     * @param userKey The AES key to use for decryption of the private key. If null then no decryption is required.
      * @return a future which completes when the provided multisig contract successfully broadcasts, or throws if the
      *         broadcast fails for some reason. Note that if the network simply rejects the transaction, this future
      *         will never complete, a timeout should be used.
      * @throws InsufficientMoneyException If the payment tx would have cost more in fees to spend than it is worth.
      */
     @Override
-    public synchronized ListenableFuture<Transaction> close() throws InsufficientMoneyException {
+    public synchronized ListenableFuture<Transaction> close(@Nullable KeyParameter userKey) throws InsufficientMoneyException {
         if (storedServerChannel != null) {
             StoredServerChannel temp = storedServerChannel;
             storedServerChannel = null;
@@ -217,7 +221,7 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
             // know how to sign. Note that this signature does actually have to be valid, so we can't use a dummy
             // signature to save time, because otherwise completeTx will try to re-sign it to make it valid and then
             // die. We could probably add features to the SendRequest API to make this a bit more efficient.
-            signMultisigInput(tx, Transaction.SigHash.NONE, true);
+            signMultisigInput(tx, Transaction.SigHash.NONE, true, userKey);
             // Let wallet handle adding additional inputs/fee as necessary.
             req.shuffleOutputs = false;
             req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
@@ -230,7 +234,7 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
                 throw new InsufficientMoneyException(feePaidForPayment.subtract(bestValueToMe), msg);
             }
             // Now really sign the multisig input.
-            signMultisigInput(tx, Transaction.SigHash.ALL, false);
+            signMultisigInput(tx, Transaction.SigHash.ALL, false, userKey);
             // Some checks that shouldn't be necessary but it can't hurt to check.
             tx.verify();  // Sanity check syntax.
             for (TransactionInput input : tx.getInputs())
