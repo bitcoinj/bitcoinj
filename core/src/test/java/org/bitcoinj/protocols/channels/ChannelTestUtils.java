@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.BlockingQueue;
@@ -57,6 +58,12 @@ public class ChannelTestUtils {
         public ListenableFuture<ByteString> paymentIncrease(Coin by, Coin to, @Nullable ByteString info) {
             q.add(new UpdatePair(to, info));
             return Futures.immediateFuture(ByteString.copyFromUtf8(by.toPlainString()));
+        }
+
+        @Nullable
+        @Override
+        public ListenableFuture<KeyParameter> getUserKey() {
+            return null;
         }
 
         public Protos.TwoWayChannelMessage getNextMsg() throws InterruptedException {
