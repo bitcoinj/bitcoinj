@@ -31,6 +31,7 @@ import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.WireFormat;
 
@@ -120,8 +121,17 @@ public class WalletProtobufSerializer {
      * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
      */
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
+        this.writeWallet(wallet, output, CodedOutputStream.DEFAULT_BUFFER_SIZE);
+    }
+
+    public void writeWallet(Wallet wallet, OutputStream output, int bufferSize) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
-        walletProto.writeTo(output);
+
+        int serializedSize = walletProto.getSerializedSize();
+        bufferSize = serializedSize > bufferSize ? bufferSize : serializedSize;
+        final CodedOutputStream codedOutput = CodedOutputStream.newInstance(output, bufferSize);
+        walletProto.writeTo(codedOutput);
+        codedOutput.flush();
     }
 
     /**
