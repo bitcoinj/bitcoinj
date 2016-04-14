@@ -79,6 +79,7 @@ public class WalletProtobufSerializer {
     protected Map<ByteString, Transaction> txMap;
 
     private boolean requireMandatoryExtensions = true;
+    private int walletWriteBufferSize = CodedOutputStream.DEFAULT_BUFFER_SIZE;
 
     public interface WalletFactory {
         Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
@@ -115,20 +116,24 @@ public class WalletProtobufSerializer {
         requireMandatoryExtensions = value;
     }
 
+	/**
+     * Change buffer size for writing wallet to output stream. Default is {@link com.google.protobuf.CodedOutputStream.DEFAULT_BUFFER_SIZE}
+     * @param walletWriteBufferSize - buffer size in bytes
+     */
+    public void setWalletWriteBufferSize(int walletWriteBufferSize) {
+        this.walletWriteBufferSize = walletWriteBufferSize;
+    }
+
     /**
      * Formats the given wallet (transactions and keys) to the given output stream in protocol buffer format.<p>
      *
      * Equivalent to <tt>walletToProto(wallet).writeTo(output);</tt>
      */
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
-        this.writeWallet(wallet, output, CodedOutputStream.DEFAULT_BUFFER_SIZE);
-    }
-
-    public void writeWallet(Wallet wallet, OutputStream output, int bufferSize) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
 
         int serializedSize = walletProto.getSerializedSize();
-        bufferSize = serializedSize > bufferSize ? bufferSize : serializedSize;
+        int bufferSize = serializedSize > this.walletWriteBufferSize ? this.walletWriteBufferSize : serializedSize;
         final CodedOutputStream codedOutput = CodedOutputStream.newInstance(output, bufferSize);
         walletProto.writeTo(codedOutput);
         codedOutput.flush();
