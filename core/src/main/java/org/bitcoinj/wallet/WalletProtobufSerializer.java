@@ -131,10 +131,7 @@ public class WalletProtobufSerializer {
      */
     public void writeWallet(Wallet wallet, OutputStream output) throws IOException {
         Protos.Wallet walletProto = walletToProto(wallet);
-
-        int serializedSize = walletProto.getSerializedSize();
-        int bufferSize = serializedSize > this.walletWriteBufferSize ? this.walletWriteBufferSize : serializedSize;
-        final CodedOutputStream codedOutput = CodedOutputStream.newInstance(output, bufferSize);
+        final CodedOutputStream codedOutput = CodedOutputStream.newInstance(output, this.walletWriteBufferSize);
         walletProto.writeTo(codedOutput);
         codedOutput.flush();
     }
