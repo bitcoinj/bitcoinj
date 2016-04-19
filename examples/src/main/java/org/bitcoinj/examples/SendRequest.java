@@ -65,7 +65,7 @@ public class SendRequest {
 
             // Bitcoinj allows you to define a BalanceFuture to execute a callback once your wallet has a certain balance.
             // Here we wait until the we have enough balance and display a notice.
-            // Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
+            // Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://github.com/google/guava/wiki/ListenableFutureExplained
             ListenableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
             FutureCallback<Coin> callback = new FutureCallback<Coin>() {
                 @Override

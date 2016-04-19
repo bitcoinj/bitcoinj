@@ -46,7 +46,7 @@ import java.math.BigInteger;
  * the minting of new coins. A Transaction object corresponds to the equivalent in the Bitcoin C++ implementation.</p>
  *
  * <p>Transactions are the fundamental atoms of Bitcoin and have many powerful features. Read
- * <a href="http://code.google.com/p/bitcoinj/wiki/WorkingWithTransactions">"Working with transactions"</a> in the
+ * <a href="https://bitcoinj.github.io/working-with-transactions">"Working with transactions"</a> in the
  * documentation to learn more about how to use this class.</p>
  *
  * <p>All Bitcoin transactions are at risk of being reversed, though the risk is much less than with traditional payment

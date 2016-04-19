@@ -59,7 +59,7 @@ public class Kit {
         //kit.connectToLocalHost();
 
         // Now we start the kit and sync the blockchain.
-        // bitcoinj is working a lot with the Google Guava libraries. The WalletAppKit extends the AbstractIdleService. Have a look at the introduction to Guava services: https://code.google.com/p/guava-libraries/wiki/ServiceExplained
+        // bitcoinj is working a lot with the Google Guava libraries. The WalletAppKit extends the AbstractIdleService. Have a look at the introduction to Guava services: https://github.com/google/guava/wiki/ServiceExplained
         kit.startAsync();
         kit.awaitRunning();
 

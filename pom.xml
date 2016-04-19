@@ -40,8 +40,8 @@
   </licenses>
 
   <issueManagement>
-    <system>Google Code</system>
-    <url>http://code.google.com/p/bitcoinj/issues/list</url>
+    <system>GitHub</system>
+    <url>https://github.com/bitcoinj/bitcoinj/issues</url>
   </issueManagement>
 
   <mailingLists>

@@ -50,7 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Serialize and de-serialize a wallet to a byte stream containing a
- * <a href="http://code.google.com/apis/protocolbuffers/docs/overview.html">protocol buffer</a>. Protocol buffers are
+ * <a href="https://developers.google.com/protocol-buffers/docs/overview">protocol buffer</a>. Protocol buffers are
  * a data interchange format developed by Google with an efficient binary representation, a type safe specification
  * language and compilers that generate code to work with those data structures for many languages. Protocol buffers
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
