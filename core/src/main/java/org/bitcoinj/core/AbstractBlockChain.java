@@ -454,7 +454,7 @@ public abstract class AbstractBlockChain {
             // Prove the block is internally valid: hash is lower than target, etc. This only checks the block contents
             // if there is a tx sending or receiving coins using an address in one of our wallets. And those transactions
             // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
-            // article here for more details: http://code.google.com/p/bitcoinj/wiki/SecurityModel
+            // article here for more details: https://bitcoinj.github.io/security-model
             try {
                 block.verifyHeader();
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
