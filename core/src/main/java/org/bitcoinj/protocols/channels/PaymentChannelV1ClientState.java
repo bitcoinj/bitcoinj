@@ -20,6 +20,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
@@ -71,9 +72,9 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
 
     /**
      * Creates a state object for a payment channel client. It is expected that you be ready to
-     * {@link PaymentChannelV1ClientState#initiate()} after construction (to avoid creating objects for channels which are
+     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} after construction (to avoid creating objects for channels which are
      * not going to finish opening) and thus some parameters provided here are only used in
-     * {@link PaymentChannelV1ClientState#initiate()} to create the Multisig contract and refund transaction.
+     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} to create the Multisig contract and refund transaction.
      *
      * @param wallet a wallet that contains at least the specified amount of value.
      * @param myKey a freshly generated private key for this channel.
@@ -115,17 +116,17 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
     /**
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction} and
-     * {@link PaymentChannelV1ClientState#getContract()}. The way the contract is crafted can be adjusted by
-     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.core.Wallet.SendRequest)}.
+     * {@link PaymentChannelV1ClientState#getContract()}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
-     *                  The wallet KeyCrypter is assumed.
+     *                The wallet KeyCrypter is assumed.
+     * @param clientChannelProperties Modify the channel's configuration.
      *
      * @throws ValueOutOfRangeException   if the value being used is too small to be accepted by the network
      * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
      */
     @Override
-    public synchronized void initiate(@Nullable KeyParameter userKey) throws ValueOutOfRangeException, InsufficientMoneyException {
+    public synchronized void initiate(@Nullable KeyParameter userKey, ClientChannelProperties clientChannelProperties) throws ValueOutOfRangeException, InsufficientMoneyException {
         final NetworkParameters params = wallet.getParams();
         Transaction template = new Transaction(params);
         // We always place the client key before the server key because, if either side wants some privacy, they can
@@ -139,9 +140,9 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
             throw new ValueOutOfRangeException("totalValue too small to use");
         SendRequest req = SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
-        editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
-        req.aesKey = userKey;
+        req = clientChannelProperties.modifyContractSendRequest(req);
+        if (userKey != null) req.aesKey = userKey;
         wallet.completeTx(req);
         Coin multisigFee = req.tx.getFee();
         multisigContract = req.tx;

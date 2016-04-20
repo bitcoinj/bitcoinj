@@ -92,7 +92,16 @@ public class PaymentChannelServerTest {
         connection.sendToClient(capture(initiateCapture));
 
         replay(connection);
-        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, minTimeWindow, 40000, connection);
+        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, new PaymentChannelServer.DefaultServerChannelProperties() {
+            @Override
+            public long getMinTimeWindow() {
+                return minTimeWindow;
+            }
+            @Override
+            public long getMaxTimeWindow() {
+                return 40000;
+            }
+        }, connection);
 
         dut.connectionOpen();
         dut.receiveMessage(message);
@@ -111,7 +120,14 @@ public class PaymentChannelServerTest {
         connection.sendToClient(capture(initiateCapture));
         replay(connection);
 
-        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, 20000, maxTimeWindow, connection);
+        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, new PaymentChannelServer.DefaultServerChannelProperties(){
+            @Override
+            public long getMaxTimeWindow() {
+                return maxTimeWindow;
+            }
+            @Override
+            public long getMinTimeWindow() { return 20000; }
+        }, connection);
 
         dut.connectionOpen();
         dut.receiveMessage(message);
@@ -123,12 +139,24 @@ public class PaymentChannelServerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAllowTimeWindowLessThan2h() {
-        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, 7199, 40000, connection);
+        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, new PaymentChannelServer.DefaultServerChannelProperties(){
+            @Override
+            public long getMaxTimeWindow() { return 40000; }
+            @Override
+            public long getMinTimeWindow() {
+                return 7199;
+            }
+        }, connection);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAllowNegativeTimeWindow() {
-        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, 40001, 40000, connection);
+        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, new PaymentChannelServer.DefaultServerChannelProperties(){
+            @Override
+            public long getMaxTimeWindow() { return 40000; }
+            @Override
+            public long getMinTimeWindow() { return 40001; }
+        }, connection);
     }
 
     @Test
@@ -139,7 +167,12 @@ public class PaymentChannelServerTest {
         replay(connection);
         final int expire = 24 * 60 * 60 - 60;  // This the default defined in paymentchannel.proto
 
-        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, expire, expire, connection);
+        dut = new PaymentChannelServer(broadcaster, wallet, Coin.CENT, new PaymentChannelServer.DefaultServerChannelProperties(){
+            @Override
+            public long getMaxTimeWindow() { return expire; }
+            @Override
+            public long getMinTimeWindow() { return expire; }
+        }, connection);
         dut.connectionOpen();
         long expectedExpire = Utils.currentTimeSeconds() + expire;
         dut.receiveMessage(message);

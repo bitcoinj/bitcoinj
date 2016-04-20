@@ -24,9 +24,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.slf4j.Logger;
@@ -60,14 +60,14 @@ import static com.google.common.base.Preconditions.*;
  * the given time (within a few hours), the channel must be closed or else the client will broadcast the refund
  * transaction and take back all the money once the expiry time is reached.</p>
  *
- * <p>To begin, the client calls {@link PaymentChannelV1ClientState#initiate()}, which moves the channel into state
+ * <p>To begin, the client calls {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)}, which moves the channel into state
  * INITIATED and creates the initial multi-sig contract and refund transaction. If the wallet has insufficient funds an
  * exception will be thrown at this point. Once this is done, call
  * {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction()} and pass the resultant transaction through to the
  * server. Once you have retrieved the signature, use {@link PaymentChannelV1ClientState#provideRefundSignature(byte[], KeyParameter)}.
- * You must then call {@link PaymentChannelV1ClientState#storeChannelInWallet(Sha256Hash)} to store the refund transaction
+ * You must then call {@link PaymentChannelClientState#storeChannelInWallet(Sha256Hash)} to store the refund transaction
  * in the wallet, protecting you against a malicious server attempting to destroy all your coins. At this point, you can
- * provide the server with the multi-sig contract (via {@link PaymentChannelV1ClientState#getContract()}) safely.
+ * provide the server with the multi-sig contract (via {@link PaymentChannelClientState#getContract()}) safely.
  * </p>
  */
 public abstract class PaymentChannelClientState {
@@ -126,9 +126,9 @@ public abstract class PaymentChannelClientState {
 
     /**
      * Creates a state object for a payment channel client. It is expected that you be ready to
-     * {@link PaymentChannelV1ClientState#initiate()} after construction (to avoid creating objects for channels which are
+     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} after construction (to avoid creating objects for channels which are
      * not going to finish opening) and thus some parameters provided here are only used in
-     * {@link PaymentChannelV1ClientState#initiate()} to create the Multisig contract and refund transaction.
+     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} to create the Multisig contract and refund transaction.
      *
      * @param wallet a wallet that contains at least the specified amount of value.
      * @param myKey a freshly generated private key for this channel.
@@ -211,37 +211,28 @@ public abstract class PaymentChannelClientState {
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction} and
      * {@link PaymentChannelV1ClientState#getContract()}. The way the contract is crafted can be adjusted by
-     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.wallet.Wallet.SendRequest)}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      *
      * @throws ValueOutOfRangeException if the value being used is too small to be accepted by the network
      * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
      */
     public void initiate() throws ValueOutOfRangeException, InsufficientMoneyException {
-        initiate(null);
+        initiate(null, PaymentChannelClient.defaultChannelProperties);
     }
 
     /**
      * Creates the initial multisig contract and incomplete refund transaction which can be requested at the appropriate
      * time using {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction} and
-     * {@link PaymentChannelV1ClientState#getContract()}. The way the contract is crafted can be adjusted by
-     * overriding {@link PaymentChannelV1ClientState#editContractSendRequest(org.bitcoinj.wallet.Wallet.SendRequest)}.
+     * {@link PaymentChannelClientState#getContract()}.
      * By default unconfirmed coins are allowed to be used, as for micropayments the risk should be relatively low.
      * @param userKey Key derived from a user password, needed for any signing when the wallet is encrypted.
-     *                  The wallet KeyCrypter is assumed.
+     *                The wallet KeyCrypter is assumed.
+     * @param clientChannelProperties Modify the channel's configuration.
      *
      * @throws ValueOutOfRangeException   if the value being used is too small to be accepted by the network
      * @throws InsufficientMoneyException if the wallet doesn't contain enough balance to initiate
      */
-    public abstract void initiate(@Nullable KeyParameter userKey) throws ValueOutOfRangeException, InsufficientMoneyException;
-
-    /**
-     * You can override this method in order to control the construction of the initial contract that creates the
-     * channel. For example if you want it to only use specific coins, you can adjust the coin selector here.
-     * The default implementation does nothing.
-     */
-    protected void editContractSendRequest(SendRequest req) {
-    }
+    public abstract void initiate(@Nullable KeyParameter userKey, ClientChannelProperties clientChannelProperties) throws ValueOutOfRangeException, InsufficientMoneyException;
 
     /**
      * Gets the contract which was used to initialize this channel
@@ -392,7 +383,7 @@ public abstract class PaymentChannelClientState {
 
     /**
      * Returns the fees that will be paid if the refund transaction has to be claimed because the server failed to settle
-     * the channel properly. May only be called after {@link PaymentChannelV1ClientState#initiate()}
+     * the channel properly. May only be called after {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)}
      */
     public abstract Coin getRefundTxFees();
 

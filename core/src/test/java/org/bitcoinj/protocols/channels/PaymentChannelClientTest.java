@@ -34,6 +34,9 @@ import java.util.HashMap;
 
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage;
 import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType.*;
+import static org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector.VERSION_1;
+import static org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector.VERSION_2;
+import static org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
@@ -55,16 +58,25 @@ public class PaymentChannelClientTest {
      * version of the channel.
      */
     @Parameterized.Parameters(name = "{index}: PaymentChannelClientTest({0})")
-    public static Collection<PaymentChannelClient.VersionSelector> data() {
+    public static Collection<PaymentChannelClient.DefaultClientChannelProperties> data() {
         return Arrays.asList(
-                PaymentChannelClient.VersionSelector.VERSION_1,
-                PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1,
-                PaymentChannelClient.VersionSelector.VERSION_2
+                new PaymentChannelClient.DefaultClientChannelProperties() {
+                    @Override
+                    public PaymentChannelClient.VersionSelector versionSelector() { return VERSION_1;}
+                },
+                new PaymentChannelClient.DefaultClientChannelProperties() {
+                    @Override
+                    public PaymentChannelClient.VersionSelector versionSelector() { return VERSION_2_ALLOW_1;}
+                },
+                new PaymentChannelClient.DefaultClientChannelProperties() {
+                    @Override
+                    public PaymentChannelClient.VersionSelector versionSelector() { return VERSION_2;}
+                }
         );
     }
 
     @Parameterized.Parameter
-    public PaymentChannelClient.VersionSelector versionSelector;
+    public IPaymentChannelClient.ClientChannelProperties clientChannelProperties;
 
     @Before
     public void before() {
@@ -78,7 +90,7 @@ public class PaymentChannelClientTest {
 
     @Test
     public void shouldSendClientVersionOnChannelOpen() throws Exception {
-        PaymentChannelClient dut = new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, connection, versionSelector);
+        PaymentChannelClient dut = new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, null, clientChannelProperties, connection);
         connection.sendToServer(capture(clientVersionCapture));
         EasyMock.expect(wallet.getExtensions()).andReturn(new HashMap<String, WalletExtension>());
         replay(connection, wallet);
@@ -87,10 +99,20 @@ public class PaymentChannelClientTest {
     }
     @Test
     public void shouldSendTimeWindowInClientVersion() throws Exception {
-        long timeWindow = 4000;
+        final long timeWindow = 4000;
         KeyParameter userKey = null;
         PaymentChannelClient dut =
-                new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, timeWindow, userKey, connection, versionSelector);
+                new PaymentChannelClient(wallet, ecKey, maxValue, serverHash, userKey, new PaymentChannelClient.DefaultClientChannelProperties() {
+                    @Override
+                    public long timeWindow() {
+                        return timeWindow;
+                    }
+
+                    @Override
+                    public PaymentChannelClient.VersionSelector versionSelector() {
+                        return clientChannelProperties.versionSelector();
+                    }
+                }, connection);
         connection.sendToServer(capture(clientVersionCapture));
         EasyMock.expect(wallet.getExtensions()).andReturn(new HashMap<String, WalletExtension>());
         replay(connection, wallet);
@@ -104,7 +126,7 @@ public class PaymentChannelClientTest {
         assertEquals("Wrong type " + type, CLIENT_VERSION, type);
         final Protos.ClientVersion clientVersion = response.getClientVersion();
         final int major = clientVersion.getMajor();
-        final int requestedVersion = versionSelector.getRequestedMajorVersion();
+        final int requestedVersion = clientChannelProperties.versionSelector().getRequestedMajorVersion();
         assertEquals("Wrong major version " + major, requestedVersion, major);
         final long actualTimeWindow = clientVersion.getTimeWindowSecs();
         assertEquals("Wrong timeWindow " + actualTimeWindow, expectedTimeWindow, actualTimeWindow );

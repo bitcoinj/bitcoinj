@@ -23,10 +23,7 @@ import joptsimple.OptionSpec;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.protocols.channels.PaymentChannelClient;
-import org.bitcoinj.protocols.channels.PaymentChannelClientConnection;
-import org.bitcoinj.protocols.channels.StoredPaymentChannelClientStates;
-import org.bitcoinj.protocols.channels.ValueOutOfRangeException;
+import org.bitcoinj.protocols.channels.*;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -70,14 +67,21 @@ public class ExamplePaymentChannelClient {
             parser.printHelpOn(System.err);
             return;
         }
-        PaymentChannelClient.VersionSelector versionSelector = PaymentChannelClient.VersionSelector.VERSION_1;
+        IPaymentChannelClient.ClientChannelProperties clientChannelProperties = new PaymentChannelClient.DefaultClientChannelProperties(){
+            @Override
+            public PaymentChannelClient.VersionSelector versionSelector() { return PaymentChannelClient.VersionSelector.VERSION_1; }
+        };
+
         if (opts.has("version")) {
             switch (version.value(opts)) {
                 case 1:
-                    versionSelector = PaymentChannelClient.VersionSelector.VERSION_1;
+                    // Keep the default
                     break;
                 case 2:
-                    versionSelector = PaymentChannelClient.VersionSelector.VERSION_2;
+                    clientChannelProperties = new PaymentChannelClient.DefaultClientChannelProperties(){
+                        @Override
+                        public PaymentChannelClient.VersionSelector versionSelector() { return PaymentChannelClient.VersionSelector.VERSION_2; }
+                    };
                     break;
                 default:
                     System.err.println("Invalid version - valid versions are 1, 2");
@@ -85,7 +89,7 @@ public class ExamplePaymentChannelClient {
             }
         }
         NetworkParameters params = net.value(opts).get();
-        new ExamplePaymentChannelClient().run(opts.nonOptionArguments().get(0), versionSelector, params);
+        new ExamplePaymentChannelClient().run(opts.nonOptionArguments().get(0), clientChannelProperties, params);
     }
 
     public ExamplePaymentChannelClient() {
@@ -94,7 +98,7 @@ public class ExamplePaymentChannelClient {
         params = RegTestParams.get();
     }
 
-    public void run(final String host, PaymentChannelClient.VersionSelector versionSelector, final NetworkParameters params) throws Exception {
+    public void run(final String host, IPaymentChannelClient.ClientChannelProperties clientChannelProperties, final NetworkParameters params) throws Exception {
         // Bring up all the objects we need, create/load a wallet, sync the chain, etc. We override WalletAppKit so we
         // can customize it by adding the extension objects - we have to do this before the wallet file is loaded so
         // the plugin that knows how to parse all the additional data is present during the load.
@@ -137,19 +141,19 @@ public class ExamplePaymentChannelClient {
         // demonstrates resuming a channel that wasn't closed yet. It should close automatically once we run out
         // of money on the channel.
         log.info("Round one ...");
-        openAndSend(timeoutSeconds, server, channelID, 5, versionSelector);
+        openAndSend(timeoutSeconds, server, channelID, 5, clientChannelProperties);
         log.info("Round two ...");
         log.info(appKit.wallet().toString());
-        openAndSend(timeoutSeconds, server, channelID, 4, versionSelector);   // 4 times because the opening of the channel made a payment.
+        openAndSend(timeoutSeconds, server, channelID, 4, clientChannelProperties);   // 4 times because the opening of the channel made a payment.
         log.info("Stopping ...");
         appKit.stopAsync();
         appKit.awaitTerminated();
     }
 
-    private void openAndSend(int timeoutSecs, InetSocketAddress server, String channelID, final int times, PaymentChannelClient.VersionSelector versionSelector) throws IOException, ValueOutOfRangeException, InterruptedException {
+    private void openAndSend(int timeoutSecs, InetSocketAddress server, String channelID, final int times, IPaymentChannelClient.ClientChannelProperties clientChannelProperties) throws IOException, ValueOutOfRangeException, InterruptedException {
         // Use protocol version 1 for simplicity
         PaymentChannelClientConnection client = new PaymentChannelClientConnection(
-                server, timeoutSecs, appKit.wallet(), myKey, channelSize, channelID, versionSelector);
+                server, timeoutSecs, appKit.wallet(), myKey, channelSize, channelID, null, clientChannelProperties);
         // Opening the channel requires talking to the server, so it's asynchronous.
         final CountDownLatch latch = new CountDownLatch(1);
         Futures.addCallback(client.getChannelOpenFuture(), new FutureCallback<PaymentChannelClientConnection>() {
