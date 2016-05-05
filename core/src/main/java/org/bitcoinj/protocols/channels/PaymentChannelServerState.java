@@ -30,6 +30,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 
@@ -300,7 +301,20 @@ public abstract class PaymentChannelServerState {
      *         will never complete, a timeout should be used.
      * @throws InsufficientMoneyException If the payment tx would have cost more in fees to spend than it is worth.
      */
-    public abstract ListenableFuture<Transaction> close() throws InsufficientMoneyException;
+    public ListenableFuture<Transaction> close() throws InsufficientMoneyException {
+        return close(null);
+    }
+
+    /**
+     * <p>Closes this channel and broadcasts the highest value payment transaction on the network.</p>
+     *
+     * @param userKey The AES key to use for decryption of the private key. If null then no decryption is required.
+     * @return a future which completes when the provided multisig contract successfully broadcasts, or throws if the
+     *         broadcast fails for some reason. Note that if the network simply rejects the transaction, this future
+     *         will never complete, a timeout should be used.
+     * @throws InsufficientMoneyException If the payment tx would have cost more in fees to spend than it is worth.
+     */
+    public abstract ListenableFuture<Transaction> close(@Nullable KeyParameter userKey) throws InsufficientMoneyException;
 
     /**
      * Gets the highest payment to ourselves (which we will receive on settle(), not including fees)

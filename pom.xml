@@ -4,7 +4,7 @@
 
   <groupId>org.bitcoinj</groupId>
   <artifactId>bitcoinj-parent</artifactId>
-  <version>0.14-SNAPSHOT</version>
+  <version>0.15-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -40,8 +40,8 @@
   </licenses>
 
   <issueManagement>
-    <system>Google Code</system>
-    <url>http://code.google.com/p/bitcoinj/issues/list</url>
+    <system>GitHub</system>
+    <url>https://github.com/bitcoinj/bitcoinj/issues</url>
   </issueManagement>
 
   <mailingLists>
