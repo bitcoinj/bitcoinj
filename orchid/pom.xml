@@ -6,11 +6,11 @@
     <parent>
         <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.14</version>
+        <version>0.14.1</version>
     </parent>
 
     <artifactId>orchid</artifactId>
-    <version>1.2</version>
+    <version>1.2.1</version>
 
     <name>Orchid</name>
     <description>Tor library</description>
