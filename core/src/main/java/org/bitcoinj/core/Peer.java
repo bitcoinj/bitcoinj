@@ -160,8 +160,18 @@ public class Peer extends PeerSocketHandler {
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
     private final SettableFuture<Peer> outgoingVersionHandshakeFuture = SettableFuture.create();
     private final SettableFuture<Peer> incomingVersionHandshakeFuture = SettableFuture.create();
-    private final ListenableFuture<List<Peer>> versionHandshakeFuture = Futures
-            .allAsList(outgoingVersionHandshakeFuture, incomingVersionHandshakeFuture);
+    private final ListenableFuture<Peer> versionHandshakeFuture = Futures.transform(
+            Futures.allAsList(outgoingVersionHandshakeFuture, incomingVersionHandshakeFuture),
+            new Function<List<Peer>, Peer>() {
+
+                @Override
+                @Nullable
+                public Peer apply(@Nullable List<Peer> peers) {
+                    checkNotNull(peers);
+                    checkState(peers.size() == 2 && peers.get(0) == peers.get(1));
+                    return peers.get(0);
+                }
+            });
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain.</p>
@@ -436,7 +446,7 @@ public class Peer extends PeerSocketHandler {
         return connectionOpenFuture;
     }
 
-    public ListenableFuture<List<Peer>> getVersionHandshakeFuture() {
+    public ListenableFuture<Peer> getVersionHandshakeFuture() {
         return versionHandshakeFuture;
     }
 
