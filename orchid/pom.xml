@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>orchid</artifactId>
-    <version>1.2</version>
+    <version>1.2.1</version>
 
     <name>Orchid</name>
     <description>Tor library</description>
