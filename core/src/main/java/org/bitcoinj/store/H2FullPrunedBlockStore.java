@@ -101,7 +101,7 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
      */
     public H2FullPrunedBlockStore(NetworkParameters params, String dbName, int fullStoreDepth)
             throws BlockStoreException {
-        this(params, DATABASE_CONNECTION_URL_PREFIX + dbName + ";create=true;LOCK_TIMEOUT=60000;DB_CLOSE_ON_EXIT=FALSE", null, null, fullStoreDepth);
+        this(params, dbName, null, null, fullStoreDepth);
     }
 
     /**
