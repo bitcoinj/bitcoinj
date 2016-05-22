@@ -78,11 +78,6 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "seed.bitnodes.io",            // Addy Yeow
         };
         httpSeeds = new HttpDiscovery.Details[] {
-                // Mike Hearn
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("027a79143a4de36341494d21b6593015af6b2500e720ad2eda1c0b78165f4f38c4")),
-                        URI.create("http://main.seed.vinumeris.com/peers")
-                ),
                 // Andreas Schildbach
                 new HttpDiscovery.Details(
                         ECKey.fromPublicOnly(Utils.HEX.decode("0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),

@@ -163,7 +163,7 @@ public class BloomFilter extends Message {
 
     /**
      * Applies the MurmurHash3 (x86_32) algorithm to the given data.
-     * See this <a href="http://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp">C++ code for the original.</a>
+     * See this <a href="https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp">C++ code for the original.</a>
      */
     public static int murmurHash3(byte[] data, long nTweak, int hashNum, byte[] object) {
         int h1 = (int)(hashNum * 0xFBA4C795L + nTweak);
