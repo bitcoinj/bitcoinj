@@ -19,6 +19,7 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.*;
+import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -44,10 +45,11 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
-import java.util.Date;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.Future;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period
@@ -90,31 +92,48 @@ public class BuildCheckpoints {
                 throw new RuntimeException("Unreachable.");
         }
 
-        final InetAddress ipAddress;
-        if (options.has("peer")) {
-            String peerFlag = (String) options.valueOf("peer");
-            try {
-                ipAddress = InetAddress.getByName(peerFlag);
-            } catch (UnknownHostException e) {
-                System.err.println("Could not understand peer domain name/IP address: " + peerFlag + ": " + e.getMessage());
-                System.exit(1);
-                return;
-            }
-        } else {
-            ipAddress = InetAddress.getLocalHost();
-        }
-        final PeerAddress peerAddress = new PeerAddress(ipAddress, params.getPort());
-
-        // Sorted map of block height to StoredBlock object.
-        final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
-
         // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final BlockStore store = new MemoryBlockStore(params);
         final BlockChain chain = new BlockChain(params, store);
         final PeerGroup peerGroup = new PeerGroup(params, chain);
-        System.out.println("Connecting to " + peerAddress + "...");
-        peerGroup.addAddress(peerAddress);
+
+        final InetAddress ipAddress;
+
+        // DNS discovery can be used for some networks
+        boolean networkHasDnsSeeds = params.getDnsSeeds() != null;
+        if (options.has("peer")) {
+            // use peer provided in argument
+            String peerFlag = (String) options.valueOf("peer");
+            try {
+                ipAddress = InetAddress.getByName(peerFlag);
+                startPeerGroup(peerGroup, ipAddress);
+            } catch (UnknownHostException e) {
+                System.err.println("Could not understand peer domain name/IP address: " + peerFlag + ": " + e.getMessage());
+                System.exit(1);
+                return;
+            }
+        } else if (networkHasDnsSeeds) {
+            // for PROD and TEST use a peer group discovered with dns
+            peerGroup.setUserAgent("PeerMonitor", "1.0");
+            peerGroup.setMaxConnections(20);
+            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+            peerGroup.start();
+
+            // Connect to at least 4 peers because some may not support download
+            Future<List<Peer>> future = peerGroup.waitForPeers(4);
+            System.out.println("Connecting to " + params.getId() + ", timeout 20 seconds...");
+            // throw timeout exception if we can't get peers
+            future.get(20, SECONDS);
+        } else {
+            // try localhost
+            ipAddress = InetAddress.getLocalHost();
+            startPeerGroup(peerGroup, ipAddress);
+        }
+
+        // Sorted map of block height to StoredBlock object.
+        final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
+
         long now = new Date().getTime() / 1000;
         peerGroup.setFastCatchupTimeSecs(now);
 
@@ -133,7 +152,6 @@ public class BuildCheckpoints {
             }
         });
 
-        peerGroup.start();
         peerGroup.downloadBlockChain();
 
         checkState(checkpoints.size() > 0);
@@ -207,5 +225,12 @@ public class BuildCheckpoints {
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
         }
+    }
+
+    private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
+        final PeerAddress peerAddress = new PeerAddress(ipAddress, params.getPort());
+        System.out.println("Connecting to " + peerAddress + "...");
+        peerGroup.addAddress(peerAddress);
+        peerGroup.start();
     }
 }
