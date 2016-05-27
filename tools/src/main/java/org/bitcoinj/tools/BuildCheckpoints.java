@@ -154,7 +154,6 @@ public class BuildCheckpoints {
             }
         });
 
-        //peerGroup.start();
         peerGroup.downloadBlockChain();
 
         checkState(checkpoints.size() > 0);
