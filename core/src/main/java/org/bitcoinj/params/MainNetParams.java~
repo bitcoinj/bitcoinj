@@ -34,19 +34,15 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
     public MainNetParams() {
         super();
-        targetTimespan = (int)(1 * 60 * 60); // fast diff. adjust in woodcoin, 30 blocks
-        interval = targetTimespan/((int)(2 * 60));  // -- changed fh 
-
-        genesisBlock.setDifficultyTarget(0x1e0ffff0L);  // this is ok -- fh
-        //interval = INTERVAL;
-        //targetTimespan = TARGET_TIMESPAN;
+        interval = INTERVAL;
+        targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
-        dumpedPrivateKeyHeader = 128 + addressHeader;
+        dumpedPrivateKeyHeader = 128;
         addressHeader = 0;
         p2shHeader = 5;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
-        port = 8338;
-        packetMagic = 0xfcd9b7ddL; // was 0xfbc0b6dbL
+        port = 8333;
+        packetMagic = 0xf9beb4d9L;
         bip32HeaderPub = 0x0488B21E; //The 4 byte header that serializes in base58 to "xpub".
         bip32HeaderPriv = 0x0488ADE4; //The 4 byte header that serializes in base58 to "xprv"
 
@@ -55,10 +51,10 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         majorityWindow = MAINNET_MAJORITY_WINDOW;
 
         genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(1413817324L); // 1413817324  was 1317972665L -- fh
-        genesisBlock.setNonce(1591189L); // 1591189  was 2084524493L
+        genesisBlock.setTime(1231006505L);
+        genesisBlock.setNonce(2083236893);
         id = ID_MAINNET;
-        subsidyDecreaseBlockCount = 210000;  // lets check this 
+        subsidyDecreaseBlockCount = 210000;
         spendableCoinbaseDepth = 100;
         String genesisHash = genesisBlock.getHashAsString();
         checkState(genesisHash.equals("30758383eae55ae5c7752b73388c1c85bdfbe930ad25ad877252841ed1e734a4"),
