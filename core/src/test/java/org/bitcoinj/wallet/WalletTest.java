@@ -2168,6 +2168,17 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void opReturnMaxBytes() throws Exception {
+        receiveATransaction(wallet, myAddress);
+        Transaction tx = new Transaction(PARAMS);
+        Script script = ScriptBuilder.createOpReturnScript(new byte[80]);
+        tx.addOutput(Coin.ZERO, script);
+        SendRequest request = SendRequest.forTx(tx);
+        request.ensureMinRequiredFee = true;
+        wallet.completeTx(request);
+    }
+
+    @Test
     public void opReturnOneOutputWithValueTest() throws Exception {
         // Tests basic send of transaction with one output that destroys coins and has an OP_RETURN.
         receiveATransaction(wallet, myAddress);
