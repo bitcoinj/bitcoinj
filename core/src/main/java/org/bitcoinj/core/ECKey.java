@@ -979,8 +979,8 @@ public class ECKey implements EncryptableItem {
         //        do another iteration of Step 1.
         //
         // More concisely, what these points mean is to use X as a compressed public key.
-        BigInteger prime = n;   // this was Curve.Q
-        if (x.compareTo(prime) >= 0) {
+        //BigInteger prime = n;   // this was Curve.Q
+        if (x.compareTo(n) >= 0) {
             // Cannot have point co-ordinates larger than this as everything takes place modulo Q.
             return null;
         }
