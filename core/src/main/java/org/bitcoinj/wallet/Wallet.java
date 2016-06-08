@@ -5069,7 +5069,8 @@ public class Wallet extends BaseTaggableObject
         // is no inversion.
         for (Transaction tx : toBroadcast) {
             ConfidenceType confidenceType = tx.getConfidence().getConfidenceType();
-            checkState(confidenceType == ConfidenceType.PENDING, "Expected PENDING, was %s.", confidenceType);
+            checkState(confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT,
+                    "Expected PENDING or IN_CONFLICT, was %s.", confidenceType);
             // Re-broadcast even if it's marked as already seen for two reasons
             // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
             //    never saw it, due to bugs.
