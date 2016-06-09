@@ -42,6 +42,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         packetMagic = 0x0b110907;
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
+        noRetargeting = false;
         maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
         port = 18333;
         addressHeader = 111;

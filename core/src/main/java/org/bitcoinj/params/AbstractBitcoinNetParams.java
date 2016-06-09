@@ -67,7 +67,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         Block prev = storedPrev.getHeader();
 
         // Is this supposed to be a difficulty transition point?
-        if (!isDifficultyTransitionPoint(storedPrev)) {
+        if (!isDifficultyTransitionPoint(storedPrev) || getNoRetargeting()) {
 
             // No ... so check the difficulty didn't actually change.
             if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())

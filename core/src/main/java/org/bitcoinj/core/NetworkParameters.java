@@ -79,6 +79,7 @@ public abstract class NetworkParameters {
     protected int dumpedPrivateKeyHeader;
     protected int interval;
     protected int targetTimespan;
+    protected boolean noRetargeting;
     protected byte[] alertSigningKey;
     protected int bip32HeaderPub;
     protected int bip32HeaderPriv;
@@ -345,6 +346,15 @@ public abstract class NetworkParameters {
     public int getTargetTimespan() {
         return targetTimespan;
     }
+
+    /**
+     * Whether to skip retargeting. 
+     * If set to false, the node works as usual: recalculates the difficulty using targetTimespan and interval.
+     * If set to true, the difficulty is never recalculated
+     */
+    public boolean getNoRetargeting() {
+        return noRetargeting;
+    }    
 
     /**
      * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
