@@ -39,37 +39,37 @@ public class TestFeeLevel {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.initWithSilentBitcoinJ();
         if (args.length == 0) {
-            System.err.println("Specify the fee level to test in satoshis as the first argument.");
+            System.err.println("Specify the fee rate to test in satoshis/kB as the first argument.");
             return;
         }
 
-        Coin feeToTest = Coin.valueOf(Long.parseLong(args[0]));
-        System.out.println("Fee to test is " + feeToTest.toFriendlyString());
+        Coin feeRateToTest = Coin.valueOf(Long.parseLong(args[0]));
+        System.out.println("Fee rate to test is " + feeRateToTest.toFriendlyString() + "/kB");
 
         kit = new WalletAppKit(PARAMS, new File("."), "testfeelevel");
         kit.startAsync();
         kit.awaitRunning();
         try {
-            go(feeToTest, NUM_OUTPUTS);
+            go(feeRateToTest, NUM_OUTPUTS);
         } finally {
             kit.stopAsync();
             kit.awaitTerminated();
         }
     }
 
-    private static void go(Coin feeToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
+    private static void go(Coin feeRateToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
         kit.peerGroup().setMaxConnections(25);
 
-        if (kit.wallet().getBalance().compareTo(feeToTest) < 0) {
+        if (kit.wallet().getBalance().compareTo(feeRateToTest) < 0) {
             System.out.println("Send some money to " + kit.wallet().currentReceiveAddress());
             System.out.println("... and wait for it to confirm");
-            kit.wallet().getBalanceFuture(feeToTest, Wallet.BalanceType.AVAILABLE).get();
+            kit.wallet().getBalanceFuture(feeRateToTest, Wallet.BalanceType.AVAILABLE).get();
         }
 
         int heightAtStart = kit.chain().getBestChainHeight();
         System.out.println("Height at start is " + heightAtStart);
 
-        Coin value = kit.wallet().getBalance().subtract(feeToTest);
+        Coin value = kit.wallet().getBalance().divide(2); // Keep a chunk for the fee.
         Coin outputValue = value.divide(numOutputs);
         Transaction transaction = new Transaction(PARAMS);
         for (int i = 0; i < numOutputs - 1; i++) {
@@ -78,7 +78,7 @@ public class TestFeeLevel {
         }
         transaction.addOutput(value, kit.wallet().freshReceiveAddress());
         SendRequest request = SendRequest.forTx(transaction);
-        request.feePerKb = feeToTest;
+        request.feePerKb = feeRateToTest;
         request.ensureMinRequiredFee = false;
         kit.wallet().completeTx(request);
         System.out.println("Size in bytes is " + request.tx.unsafeBitcoinSerialize().length);
