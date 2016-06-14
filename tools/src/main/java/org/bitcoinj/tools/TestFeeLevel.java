@@ -58,11 +58,13 @@ public class TestFeeLevel {
     }
 
     private static void go(Coin feeRateToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
+        System.out.println("Wallet has " + kit.wallet().getBalance().toFriendlyString()
+                + "; current receive address is " + kit.wallet().currentReceiveAddress());
+
         kit.peerGroup().setMaxConnections(25);
 
         if (kit.wallet().getBalance().compareTo(feeRateToTest) < 0) {
-            System.out.println("Send some money to " + kit.wallet().currentReceiveAddress());
-            System.out.println("... and wait for it to confirm");
+            System.out.println("Send some coins to receive address and wait for it to confirm ...");
             kit.wallet().getBalanceFuture(feeRateToTest, Wallet.BalanceType.AVAILABLE).get();
         }
 
