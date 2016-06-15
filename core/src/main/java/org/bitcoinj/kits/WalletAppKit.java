@@ -146,7 +146,8 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * If set, the file is expected to contain a checkpoints file calculated with BuildCheckpoints. It makes initial
-     * block sync faster for new users - please refer to the documentation on the bitcoinj website for further details.
+     * block sync faster for new users - please refer to the documentation on the bitcoinj website
+     * (https://bitcoinj.github.io/speeding-up-chain-sync) for further details.
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
         if (this.checkpoints != null)
