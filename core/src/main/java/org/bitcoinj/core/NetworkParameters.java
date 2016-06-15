@@ -129,13 +129,16 @@ public abstract class NetworkParameters {
 
    
             t.addInput(new TransactionInput(n, t, bytes));
-           /* 
+            
             ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
-            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
-                    ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
+            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode ("00ac"));  // no real output in LOG genesis transaction, this is placeholder
+   //("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-            t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
-            */
+          
+            //public static final Coin FIFTY_COINS = COIN.multiply(50);
+            // "ZERO"  is defined in the same place as "FIFTY_COINS"  so this should work
+            t.addOutput(new TransactionOutput(n, t, ZERO, scriptPubKeyBytes.toByteArray()));
+            
         } catch (Exception e) {
             // Cannot happen.
             throw new RuntimeException(e);
