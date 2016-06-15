@@ -44,6 +44,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         interval = 10;
         dumpedPrivateKeyHeader = 239;
         targetTimespan = 200000000;  // 6 years. Just a very big number.
+        noRetargeting = false;        
         spendableCoinbaseDepth = 5;
         subsidyDecreaseBlockCount = 100;
         dnsSeeds = null;

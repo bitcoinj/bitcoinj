@@ -31,6 +31,7 @@ public class RegTestParams extends TestNet2Params {
     public RegTestParams() {
         super();
         interval = 10000;
+        noRetargeting = true;        
         maxTarget = MAX_TARGET;
         subsidyDecreaseBlockCount = 150;
         port = 18444;

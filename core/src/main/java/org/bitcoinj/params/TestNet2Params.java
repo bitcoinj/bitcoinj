@@ -39,6 +39,7 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
+        noRetargeting = false;
         maxTarget = Utils.decodeCompactBits(0x1d0fffffL);
         dumpedPrivateKeyHeader = 239;
         genesisBlock.setTime(1296688602L);
