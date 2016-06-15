@@ -42,7 +42,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         //targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
         dumpedPrivateKeyHeader = 128 + addressHeader;
-        addressHeader = 0;
+        addressHeader = 73;  // was 48, now 73 --- fh
         p2shHeader = 5;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         port = 8338;
