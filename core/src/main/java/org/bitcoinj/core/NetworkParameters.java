@@ -143,7 +143,7 @@ public abstract class NetworkParameters {
             // Cannot happen.
             throw new RuntimeException(e);
         }
-        //genesisBlock.addTransaction(t);
+        genesisBlock.addTransaction(t);
         return genesisBlock;
     }
 

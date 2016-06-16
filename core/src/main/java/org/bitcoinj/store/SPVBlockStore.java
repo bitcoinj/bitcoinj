@@ -143,6 +143,7 @@ public class SPVBlockStore implements BlockStore {
         } finally {
             lock.unlock();
         }
+        //Block genesis = params.getGenesisBlock();
         Block genesis = params.getGenesisBlock().cloneAsHeader();
         StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
         put(storedGenesis);
