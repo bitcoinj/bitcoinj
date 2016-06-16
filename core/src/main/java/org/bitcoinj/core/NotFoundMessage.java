@@ -26,7 +26,7 @@ import java.util.List;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class NotFoundMessage extends InventoryMessage {
-    public static int MIN_PROTOCOL_VERSION = 70001;
+    public static int MIN_PROTOCOL_VERSION = 10001;
 
     public NotFoundMessage(NetworkParameters params) {
         super(params);
