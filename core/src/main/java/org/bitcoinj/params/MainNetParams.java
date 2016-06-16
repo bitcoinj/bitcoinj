@@ -60,7 +60,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         id = ID_MAINNET;
         subsidyDecreaseBlockCount = 210000;  // lets check this 
         spendableCoinbaseDepth = 100;
-        String genesisHash = genesisBlock.getHashAsString();
+        String genesisHash = "30758383eae55ae5c7752b73388c1c85bdfbe930ad25ad877252841ed1e734a4";
        // checkState(genesisHash.equals("30758383eae55ae5c7752b73388c1c85bdfbe930ad25ad877252841ed1e734a4"), genesisHash);
 
         dnsSeeds = new String[] {
