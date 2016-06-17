@@ -533,6 +533,10 @@ public class Block extends Message {
     }
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
+    
+    /** we aren't going to check for now!  if a node is attacking us, they can fake the difficulty as well,
+    so this check doesn't do much for our security model */
+    
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
@@ -542,7 +546,7 @@ public class Block extends Message {
         //
         // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
         // field is of the right value. This requires us to have the preceeding blocks.
-        BigInteger target = getDifficultyTargetAsInteger();
+      /*  BigInteger target = getDifficultyTargetAsInteger();
 
         BigInteger h = getHash().toBigInteger();
         if (h.compareTo(target) > 0) {
@@ -553,6 +557,7 @@ public class Block extends Message {
             else
                 return false;
         }
+        */
         return true;
     }
 
