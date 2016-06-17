@@ -115,12 +115,13 @@ public class Address extends VersionedChecksummedBytes {
             this.params = params;
         } else {
             NetworkParameters paramsFound = null;
-            for (NetworkParameters p : Networks.get()) {
+            paramsFound = new MainNetParams();
+            /*for (NetworkParameters p : Networks.get()) {
                 if (isAcceptableVersion(p, version)) {
                     paramsFound = p;
                     break;
                 }
-            }
+            }*/
             if (paramsFound == null)
                 throw new AddressFormatException("No network found for " + address);
 
