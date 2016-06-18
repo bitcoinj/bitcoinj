@@ -63,6 +63,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         String genesisHash = "30758383eae55ae5c7752b73388c1c85bdfbe930ad25ad877252841ed1e734a4";
        // checkState(genesisHash.equals("30758383eae55ae5c7752b73388c1c85bdfbe930ad25ad877252841ed1e734a4"), genesisHash);
 
+        checkpoints.put(339143, Sha256Hash.wrap("17f1ef1b7ec9f9b9ae9f4a9edd69a82c578133d3471feadf0b48c8c2819ac048"));
         dnsSeeds = new String[] {
                 "dnsseed.woodcoin.org",        // 
         };
