@@ -700,7 +700,8 @@ public class Peer extends PeerSocketHandler {
                         // This block is unconnected - we don't know how to get from it back to the genesis block yet.
                         // That must mean that the peer is buggy or malicious because we specifically requested for
                         // headers that are part of the best chain.
-                        throw new ProtocolException("Got unconnected header from peer: " + header.getHashAsString());
+                        // ALERT this is likely temporary - for debug woodcoin - comment out the exception being thrown
+                        // throw new ProtocolException("Got unconnected header from peer: " + header.getHashAsString());
                     }
                 } else {
                     lock.lock();

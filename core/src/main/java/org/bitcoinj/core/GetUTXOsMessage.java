@@ -41,7 +41,7 @@ import java.util.List;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetUTXOsMessage extends Message {
-    public static final int MIN_PROTOCOL_VERSION = 70002;
+    public static final int MIN_PROTOCOL_VERSION = 10002;
     /** Bitmask of service flags required for a node to support this command (0x3) */
     public static final long SERVICE_FLAGS_REQUIRED = 3;
 
