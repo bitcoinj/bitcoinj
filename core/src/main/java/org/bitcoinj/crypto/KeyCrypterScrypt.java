@@ -257,7 +257,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
 
     @Override
     public String toString() {
-        return "Scrypt/AES";
+        return "AES-" + KEY_LENGTH * 8 + "-CBC, Scrypt (N: " + scryptParameters.getN() + ")";
     }
 
     @Override
