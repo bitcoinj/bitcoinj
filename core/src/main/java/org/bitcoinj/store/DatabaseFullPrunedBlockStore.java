@@ -255,7 +255,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * Get the SQL to select the transaction outputs for a given address.
      * @return The SQL prepared statement.
      */
-    protected String getTrasactionOutputSelectSQL() {
+    protected String getTransactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
     }
 
@@ -606,7 +606,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.verifiedChainHeadBlock = get(hash);
         this.verifiedChainHeadHash = hash;
         if (this.verifiedChainHeadBlock == null) {
-            throw new BlockStoreException("corrupt databse block store - verified head block not found");
+            throw new BlockStoreException("corrupt database block store - verified head block not found");
         }
     }
 
@@ -1161,7 +1161,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(getTrasactionOutputSelectSQL());
+            s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 ResultSet rs = s.executeQuery();

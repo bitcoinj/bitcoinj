@@ -119,7 +119,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getTrasactionOutputSelectSQL() {
+    protected String getTransactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
     }
 
