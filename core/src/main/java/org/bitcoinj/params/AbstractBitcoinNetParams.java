@@ -54,11 +54,11 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     /**
      * Checks if we are at a difficulty transition point.
-     * @param storedPrev The previous stored block
+     * @param height The height of the previous stored block
      * @return If this is a difficulty transition point
      */
-    protected boolean isDifficultyTransitionPoint(StoredBlock storedPrev) {
-        return ((storedPrev.getHeight() + 1) % this.getInterval()) == 0;
+    public final boolean isDifficultyTransitionPoint(final int height) {
+        return ((height + 1) % this.getInterval()) == 0;
     }
 
     @Override
@@ -67,7 +67,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         Block prev = storedPrev.getHeader();
 
         // Is this supposed to be a difficulty transition point?
-        if (!isDifficultyTransitionPoint(storedPrev)) {
+        if (!isDifficultyTransitionPoint(storedPrev.getHeight())) {
 
             // No ... so check the difficulty didn't actually change.
             if (nextBlock.getDifficultyTarget() != prev.getDifficultyTarget())
