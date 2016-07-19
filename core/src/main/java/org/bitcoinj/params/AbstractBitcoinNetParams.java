@@ -41,15 +41,26 @@ import org.bitcoinj.core.BitcoinSerializer;
  * Parameters for Bitcoin-like networks.
  */
 public abstract class AbstractBitcoinNetParams extends NetworkParameters {
+
     /**
      * Scheme part for Bitcoin URIs.
      */
     public static final String BITCOIN_SCHEME = "bitcoin";
+    public static final int REWARD_HALVING_INTERVAL = 210000;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
 
     public AbstractBitcoinNetParams() {
         super();
+    }
+
+    /**
+     * Checks if we are at a reward halving point.
+     * @param height The height of the previous stored block
+     * @return If this is a reward halving point
+     */
+    public final boolean isRewardHalvingPoint(final int height) {
+        return ((height + 1) % REWARD_HALVING_INTERVAL) == 0;
     }
 
     /**
