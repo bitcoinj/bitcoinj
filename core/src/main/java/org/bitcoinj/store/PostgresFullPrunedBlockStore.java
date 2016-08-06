@@ -258,4 +258,32 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         }
 
     }
+    
+    @Override
+    public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
+        maybeConnect();
+        PreparedStatement s = null;
+        try {
+            s = conn.get()
+                    .prepareStatement(getSelectOpenoutputsSQL());
+            s.setBytes(1, out.getHash().getBytes());
+            // index is actually an unsigned int
+            s.setInt(2, (int) out.getIndex());
+            ResultSet results = s.executeQuery();
+            if (results.next()) {
+                return;
+            }
+        } catch (SQLException e) {
+            throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException(e);
+                }
+            }
+        }
+        super.addUnspentTransactionOutput(out);
+    }
 }
