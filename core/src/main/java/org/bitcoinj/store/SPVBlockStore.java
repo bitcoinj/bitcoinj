@@ -79,6 +79,7 @@ public class SPVBlockStore implements BlockStore {
     protected FileLock fileLock = null;
     protected RandomAccessFile randomAccessFile = null;
     private int fileLength;
+    private final String fileAbsolutePath;
 
     /**
      * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
@@ -100,6 +101,7 @@ public class SPVBlockStore implements BlockStore {
      */
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
         checkNotNull(file);
+        fileAbsolutePath = file.getAbsolutePath();
         this.params = checkNotNull(params);
         checkArgument(capacity > 0);
         try {
@@ -261,8 +263,9 @@ public class SPVBlockStore implements BlockStore {
                 buffer.get(headHash);
                 Sha256Hash hash = Sha256Hash.wrap(headHash);
                 StoredBlock block = get(hash);
-                if (block == null)
-                    throw new BlockStoreException("Corrupted block store: could not find chain head: " + hash);
+                if (block == null) 
+                    throw new BlockStoreException("Corrupted block store: could not find chain head: " + hash 
+                                                          +"\nFile path: "+ fileAbsolutePath);
                 lastChainHead = block;
             }
             return lastChainHead;
