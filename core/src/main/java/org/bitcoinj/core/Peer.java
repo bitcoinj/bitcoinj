@@ -705,7 +705,9 @@ public class Peer extends PeerSocketHandler {
                 } else {
                     lock.lock();
                     try {
-                        log.info("Passed the fast catchup time, discarding {} headers and requesting full blocks",
+                        log.info(
+                                "Passed the fast catchup time ({}) at height {}, discarding {} headers and requesting full blocks",
+                                Utils.dateTimeFormat(fastCatchupTimeSecs * 1000), blockChain.getBestChainHeight() + 1,
                                 m.getBlockHeaders().size() - i);
                         this.downloadBlockBodies = true;
                         // Prevent this request being seen as a duplicate.
