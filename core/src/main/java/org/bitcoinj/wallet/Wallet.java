@@ -3264,13 +3264,12 @@ public class Wallet extends BaseTaggableObject
 
         for (Transaction tx : txns) {
             try {
-                builder.append("Sends ");
+                builder.append(tx.getValue(this).toFriendlyString());
+                builder.append(" total value (sends ");
                 builder.append(tx.getValueSentFromMe(this).toFriendlyString());
                 builder.append(" and receives ");
                 builder.append(tx.getValueSentToMe(this).toFriendlyString());
-                builder.append(", total value ");
-                builder.append(tx.getValue(this).toFriendlyString());
-                builder.append(".\n");
+                builder.append(")\n");
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
             }
