@@ -986,19 +986,25 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         maybeConnect();
-        // TODO: This should only need one query (maybe a stored procedure)
-        if (getTransactionOutput(out.getHash(), out.getIndex()) == null)
-            throw new BlockStoreException("Tried to remove a UTXO from DatabaseFullPrunedBlockStore that it didn't have!");
+        PreparedStatement s = null;
         try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getDeleteOpenoutputsSQL());
+            s = conn.get().prepareStatement(getDeleteOpenoutputsSQL());
             s.setBytes(1, out.getHash().getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int)out.getIndex());
-            s.executeUpdate();
-            s.close();
+            if (s.executeUpdate() == 0) {
+                throw new BlockStoreException("Tried to remove a UTXO from DatabaseFullPrunedBlockStore that it didn't have!");
+            }
         } catch (SQLException e) {
             throw new BlockStoreException(e);
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    throw new BlockStoreException(e);
+                }
+            }
         }
     }
 
