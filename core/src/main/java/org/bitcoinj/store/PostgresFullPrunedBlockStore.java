@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -88,7 +90,9 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks USING btree (height)";
 
     private static final String SELECT_UNDOABLEBLOCKS_EXISTS_SQL        = "select 1 from undoableblocks where hash = ?";
-
+    private static final String INSERT_OPENOUTPUTS_ONCONFLICT_SQL       = "INSERT INTO openoutputs (hash, index, height, value, scriptbytes, toaddress, addresstargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING";
+    
+    protected final ThreadLocal<Long> supportsOnConflict = new ThreadLocal<Long>();
     /**
      * Creates a new PostgresFullPrunedBlockStore.
      *
@@ -164,7 +168,32 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
-
+    
+    protected boolean isSupportsOnConflict() {
+        Connection conn = this.conn.get();
+        Long n = supportsOnConflict.get();
+        if (n != null) {
+            if (n.intValue() == conn.hashCode()) {
+                // Connection's hash code matches, check support flag
+                return (n & 0x100000000L) != 0;
+            }
+        }
+        
+        long newValue = (long)conn.hashCode() & 0xFFFFFFFFL;
+        try {
+            DatabaseMetaData metaData = conn.getMetaData();
+            if ((metaData.getDatabaseMajorVersion() >= 9) && (metaData.getDatabaseMinorVersion() >= 5)) {
+                newValue |= 0x100000000L;
+                return true;
+            }
+        } catch (Exception e) {
+        } finally {
+            supportsOnConflict.set(Long.valueOf(newValue));
+        }
+        
+        return false;
+    }
+    
     @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
@@ -260,30 +289,42 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
     
     @Override
+    protected String getInsertOpenoutputsSQL() {
+        if (isSupportsOnConflict()) {
+            return INSERT_OPENOUTPUTS_ONCONFLICT_SQL;
+        }
+        return super.getInsertOpenoutputsSQL();
+    }
+
+    @Override
     public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         maybeConnect();
-        PreparedStatement s = null;
-        try {
-            s = conn.get()
-                    .prepareStatement(getSelectOpenoutputsSQL());
-            s.setBytes(1, out.getHash().getBytes());
-            // index is actually an unsigned int
-            s.setInt(2, (int) out.getIndex());
-            ResultSet results = s.executeQuery();
-            if (results.next()) {
-                return;
-            }
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException(e);
+        if (!isSupportsOnConflict()) {
+            
+            PreparedStatement s = null;
+            try {
+                s = conn.get()
+                        .prepareStatement(getSelectOpenoutputsSQL());
+                s.setBytes(1, out.getHash().getBytes());
+                // index is actually an unsigned int
+                s.setInt(2, (int) out.getIndex());
+                ResultSet results = s.executeQuery();
+                if (results.next()) {
+                    return;
+                }
+            } catch (SQLException e) {
+                throw new BlockStoreException(e);
+            } finally {
+                if (s != null) {
+                    try {
+                        s.close();
+                    } catch (SQLException e) {
+                        throw new BlockStoreException(e);
+                    }
                 }
             }
         }
+        
         super.addUnspentTransactionOutput(out);
     }
 }
