@@ -705,7 +705,7 @@ public class ECKey implements EncryptableItem {
 
         if (Secp256k1Context.isEnabled()) {
             try {
-                return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
+                return NativeSecp256k1.verify(data, signature.toCanonicalised().encodeToDER(), pub);
             } catch (NativeSecp256k1Util.AssertFailException e) {
                 log.error("Caught AssertFailException inside secp256k1", e);
                 return false;
@@ -733,14 +733,6 @@ public class ECKey implements EncryptableItem {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
-        if (Secp256k1Context.isEnabled()) {
-            try {
-                return NativeSecp256k1.verify(data, signature, pub);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                return false;
-            }
-        }
         return verify(data, ECDSASignature.decodeFromDER(signature), pub);
     }
 
