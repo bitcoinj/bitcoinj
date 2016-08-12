@@ -648,7 +648,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 throw e;
 
             s.close();
-            s = null;
             s = conn.get().prepareStatement(getUpdateHeadersSQL());
             s.setBoolean(1, true);
             s.setBytes(2, hashBytes);
@@ -714,7 +713,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
                 s.executeUpdate();
                 s.close();
-                s = null;
                 try {
                     putUpdateStoredBlock(storedBlock, true);
                 } catch (SQLException e) {
@@ -727,7 +725,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 // There is probably an update-or-insert statement, but it wasn't obvious from the docs
                 if (s != null) {
                     s.close();
-                    s = null;
                 }
                 s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
                 s.setBytes(3, hashBytes);
@@ -740,7 +737,6 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
                 s.executeUpdate();
                 s.close();
-                s = null;
             } finally {
                 if (s != null) {
                     s.close();
