@@ -187,6 +187,8 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 return true;
             }
         } catch (Exception e) {
+            if (log.isDebugEnabled())
+                log.debug("Unable to check if database is version 9.5 or later: " + e.toString());
         } finally {
             supportsOnConflict.set(Long.valueOf(newValue));
         }
@@ -198,8 +200,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
         // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-        byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
+        byte[] hashBytes = getTruncatedHashBytes(storedBlock);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -223,24 +224,23 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             throw new BlockStoreException(e);
         }
 
-
+        PreparedStatement s = null;
         try {
             if (log.isDebugEnabled())
                 log.debug("Looking for undoable block with hash: " + Utils.HEX.encode(hashBytes));
 
-            PreparedStatement findS = conn.get().prepareStatement(SELECT_UNDOABLEBLOCKS_EXISTS_SQL);
-            findS.setBytes(1, hashBytes);
+            s = conn.get().prepareStatement(SELECT_UNDOABLEBLOCKS_EXISTS_SQL);
+            s.setBytes(1, hashBytes);
 
-            ResultSet rs = findS.executeQuery();
-            if (rs.next())
-            {
+            ResultSet rs = s.executeQuery();
+            if (rs.next()) {
                 // We already have this output, update it.
-                findS.close();
+                s.close();
+                s = null;
 
                 // Postgres insert-or-updates are very complex (and finnicky).  This level of transaction isolation
                 // seems to work for bitcoinj
-                PreparedStatement s =
-                        conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
+                s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
                 s.setBytes(3, hashBytes);
 
                 if (log.isDebugEnabled())
@@ -255,12 +255,13 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 }
                 s.executeUpdate();
                 s.close();
-
+                s = null;
                 return;
             }
 
-            PreparedStatement s =
-                    conn.get().prepareStatement(getInsertUndoableBlocksSQL());
+            s.close();
+            s = null;
+            s = conn.get().prepareStatement(getInsertUndoableBlocksSQL());
             s.setBytes(1, hashBytes);
             s.setInt(2, height);
 
@@ -276,6 +277,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             }
             s.executeUpdate();
             s.close();
+            s = null;
             try {
                 putUpdateStoredBlock(storedBlock, true);
             } catch (SQLException e) {
@@ -284,8 +286,9 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         } catch (SQLException e) {
             if (!e.getSQLState().equals(POSTGRES_DUPLICATE_KEY_ERROR_CODE))
                 throw new BlockStoreException(e);
+        } finally {
+            closeRethrow(s);
         }
-
     }
     
     @Override
@@ -315,13 +318,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             } catch (SQLException e) {
                 throw new BlockStoreException(e);
             } finally {
-                if (s != null) {
-                    try {
-                        s.close();
-                    } catch (SQLException e) {
-                        throw new BlockStoreException(e);
-                    }
-                }
+                closeRethrow(s);
             }
         }
         

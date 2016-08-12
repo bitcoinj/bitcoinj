@@ -521,35 +521,47 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException If the block store could not be created.
      */
     private void createTables() throws SQLException, BlockStoreException {
-        Statement s = conn.get().createStatement();
-        // create all the database tables
-        for (String sql : getCreateTablesSQL()) {
-            if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullPrunedBlockStore : CREATE table [SQL= {0}]", sql);
+        Statement s = null;
+        try {
+            s = conn.get().createStatement();
+            // create all the database tables
+            for (String sql : getCreateTablesSQL()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("DatabaseFullPrunedBlockStore : CREATE table [SQL= {0}]", sql);
+                }
+                s.executeUpdate(sql);
             }
-            s.executeUpdate(sql);
-        }
-        // create all the database indexes
-        for (String sql : getCreateIndexesSQL()) {
-            if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullPrunedBlockStore : CREATE index [SQL= {0}]", sql);
+            // create all the database indexes
+            for (String sql : getCreateIndexesSQL()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("DatabaseFullPrunedBlockStore : CREATE index [SQL= {0}]", sql);
+                }
+                s.executeUpdate(sql);
             }
-            s.executeUpdate(sql);
+        } finally {
+            if (s != null) {
+                s.close();
+            }
         }
-        s.close();
-
+        
         // insert the initial settings for this store
-        PreparedStatement ps = conn.get().prepareStatement(getInsertSettingsSQL());
-        ps.setString(1, CHAIN_HEAD_SETTING);
-        ps.setNull(2, Types.BINARY);
-        ps.execute();
-        ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
-        ps.setNull(2, Types.BINARY);
-        ps.execute();
-        ps.setString(1, VERSION_SETTING);
-        ps.setBytes(2, "03".getBytes());
-        ps.execute();
-        ps.close();
+        PreparedStatement ps = null;
+        try {
+            ps = conn.get().prepareStatement(getInsertSettingsSQL());
+            ps.setString(1, CHAIN_HEAD_SETTING);
+            ps.setNull(2, Types.BINARY);
+            ps.execute();
+            ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
+            ps.setNull(2, Types.BINARY);
+            ps.execute();
+            ps.setString(1, VERSION_SETTING);
+            ps.setBytes(2, "03".getBytes());
+            ps.execute();
+        } finally {
+            if (ps != null) {
+                ps.close();
+            }
+        }
         createNewStore(params);
     }
 
@@ -581,28 +593,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @throws BlockStoreException If there is a block store error.
      */
     private void initFromDatabase() throws SQLException, BlockStoreException {
-        PreparedStatement ps = conn.get().prepareStatement(getSelectSettingsSQL());
-        ResultSet rs;
-        ps.setString(1, CHAIN_HEAD_SETTING);
-        rs = ps.executeQuery();
-        if (!rs.next()) {
-            throw new BlockStoreException("corrupt database block store - no chain head pointer");
+        PreparedStatement ps = null;
+        Sha256Hash hash = null;
+        try {
+            ps = conn.get().prepareStatement(getSelectSettingsSQL());
+            ResultSet rs;
+            ps.setString(1, CHAIN_HEAD_SETTING);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                throw new BlockStoreException("corrupt database block store - no chain head pointer");
+            }
+            hash = Sha256Hash.wrap(rs.getBytes(1));
+            rs.close();
+            this.chainHeadBlock = get(hash);
+            this.chainHeadHash = hash;
+            if (this.chainHeadBlock == null) {
+                throw new BlockStoreException("corrupt database block store - head block not found");
+            }
+            ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                throw new BlockStoreException("corrupt database block store - no verified chain head pointer");
+            }
+            hash = Sha256Hash.wrap(rs.getBytes(1));
+        } finally {
+            if (ps != null) {
+                ps.close();
+            }
         }
-        Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));
-        rs.close();
-        this.chainHeadBlock = get(hash);
-        this.chainHeadHash = hash;
-        if (this.chainHeadBlock == null) {
-            throw new BlockStoreException("corrupt database block store - head block not found");
-        }
-        ps.setString(1, VERIFIED_CHAIN_HEAD_SETTING);
-        rs = ps.executeQuery();
-        if (!rs.next()) {
-            throw new BlockStoreException("corrupt database block store - no verified chain head pointer");
-        }
-        hash = Sha256Hash.wrap(rs.getBytes(1));
-        rs.close();
-        ps.close();
+        
         this.verifiedChainHeadBlock = get(hash);
         this.verifiedChainHeadHash = hash;
         if (this.verifiedChainHeadBlock == null) {
@@ -611,33 +630,33 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
+        // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
+        byte[] hashBytes = getTruncatedHashBytes(storedBlock);
+        PreparedStatement s = null;
         try {
-            PreparedStatement s =
-                    conn.get().prepareStatement(getInsertHeadersSQL());
-            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-            byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
+            s = conn.get().prepareStatement(getInsertHeadersSQL());
             s.setBytes(1, hashBytes);
             s.setBytes(2, storedBlock.getChainWork().toByteArray());
             s.setInt(3, storedBlock.getHeight());
             s.setBytes(4, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
             s.setBoolean(5, wasUndoable);
             s.executeUpdate();
-            s.close();
         } catch (SQLException e) {
             // It is possible we try to add a duplicate StoredBlock if we upgraded
             // In that case, we just update the entry to mark it wasUndoable
             if  (!(e.getSQLState().equals(getDuplicateKeyErrorCode())) || !wasUndoable)
                 throw e;
 
-            PreparedStatement s = conn.get().prepareStatement(getUpdateHeadersSQL());
+            s.close();
+            s = null;
+            s = conn.get().prepareStatement(getUpdateHeadersSQL());
             s.setBoolean(1, true);
-            // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-            byte[] hashBytes = new byte[28];
-            System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
             s.setBytes(2, hashBytes);
             s.executeUpdate();
-            s.close();
+        } finally {
+            if (s != null) {
+                s.close();
+            }
         }
     }
 
@@ -656,8 +675,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
         // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-        byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
+        byte[] hashBytes = getTruncatedHashBytes(storedBlock);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -682,9 +700,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         }
 
         try {
+            PreparedStatement s = null;
             try {
-                PreparedStatement s =
-                        conn.get().prepareStatement(getInsertUndoableBlocksSQL());
+                s = conn.get().prepareStatement(getInsertUndoableBlocksSQL());
                 s.setBytes(1, hashBytes);
                 s.setInt(2, height);
                 if (transactions == null) {
@@ -696,6 +714,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
                 s.executeUpdate();
                 s.close();
+                s = null;
                 try {
                     putUpdateStoredBlock(storedBlock, true);
                 } catch (SQLException e) {
@@ -706,8 +725,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     throw new BlockStoreException(e);
 
                 // There is probably an update-or-insert statement, but it wasn't obvious from the docs
-                PreparedStatement s =
-                        conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
+                if (s != null) {
+                    s.close();
+                    s = null;
+                }
+                s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
                 s.setBytes(3, hashBytes);
                 if (transactions == null) {
                     s.setBytes(1, txOutChanges);
@@ -718,6 +740,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 }
                 s.executeUpdate();
                 s.close();
+                s = null;
+            } finally {
+                if (s != null) {
+                    s.close();
+                }
             }
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
@@ -736,9 +763,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get()
                     .prepareStatement(getSelectHeadersSQL());
             // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-            byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
-            s.setBytes(1, hashBytes);
+            s.setBytes(1, getTruncatedHashBytes(hash.getBytes()));
             ResultSet results = s.executeQuery();
             if (!results.next()) {
                 return null;
@@ -764,13 +789,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // blocks.
             throw new BlockStoreException(e);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -792,10 +811,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s = conn.get()
                     .prepareStatement(getSelectUndoableBlocksSQL());
             // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-
-            byte[] hashBytes = new byte[28];
-            System.arraycopy(hash.getBytes(), 4, hashBytes, 0, 28);
-            s.setBytes(1, hashBytes);
+            s.setBytes(1, getTruncatedHashBytes(hash.getBytes()));
             ResultSet results = s.executeQuery();
             if (!results.next()) {
                 return null;
@@ -838,13 +854,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             // Corrupted database.
             throw new BlockStoreException(e);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -859,15 +869,16 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.chainHeadHash = hash;
         this.chainHeadBlock = chainHead;
         maybeConnect();
+        PreparedStatement s = null;
         try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getUpdateSettingsSLQ());
+            s = conn.get().prepareStatement(getUpdateSettingsSLQ());
             s.setString(2, CHAIN_HEAD_SETTING);
             s.setBytes(1, hash.getBytes());
             s.executeUpdate();
-            s.close();
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
+        } finally {
+            closeRethrow(s);
         }
     }
 
@@ -882,32 +893,35 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.verifiedChainHeadHash = hash;
         this.verifiedChainHeadBlock = chainHead;
         maybeConnect();
+        PreparedStatement s = null;
         try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getUpdateSettingsSLQ());
+            s = conn.get().prepareStatement(getUpdateSettingsSLQ());
             s.setString(2, VERIFIED_CHAIN_HEAD_SETTING);
             s.setBytes(1, hash.getBytes());
             s.executeUpdate();
-            s.close();
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
+        } finally {
+            closeRethrow(s);
         }
-        if (this.chainHeadBlock.getHeight() < chainHead.getHeight())
+        if (this.chainHeadBlock.getHeight() < chainHead.getHeight()) {
             setChainHead(chainHead);
+        }
         removeUndoableBlocksWhereHeightIsLessThan(chainHead.getHeight() - fullStoreDepth);
     }
 
     private void removeUndoableBlocksWhereHeightIsLessThan(int height) throws BlockStoreException {
+        PreparedStatement s = null;
         try {
-            PreparedStatement s = conn.get()
-                    .prepareStatement(getDeleteUndoableBlocksSQL());
+            s = conn.get().prepareStatement(getDeleteUndoableBlocksSQL());
             s.setInt(1, height);
             if (log.isDebugEnabled())
                 log.debug("Deleting undoable undoable block with height <= " + height);
             s.executeUpdate();
-            s.close();
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
+        } finally {
+            closeRethrow(s);
         }
     }
 
@@ -916,8 +930,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         maybeConnect();
         PreparedStatement s = null;
         try {
-            s = conn.get()
-                    .prepareStatement(getSelectOpenoutputsSQL());
+            s = conn.get().prepareStatement(getSelectOpenoutputsSQL());
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
             s.setInt(2, (int) index);
@@ -942,13 +955,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -968,18 +975,11 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setInt(7, out.getScript().getScriptType().ordinal());
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
-            s.close();
         } catch (SQLException e) {
             if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
                 throw new BlockStoreException(e);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException(e);
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -998,13 +998,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException(e);
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -1066,13 +1060,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Failed to close PreparedStatement");
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -1151,13 +1139,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (SQLException ex) {
             throw new BlockStoreException(ex);
         } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    throw new BlockStoreException("Could not close statement");
-                }
-            }
+            closeRethrow(s);
         }
     }
 
@@ -1195,12 +1177,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         } catch (BlockStoreException bse) {
             throw new UTXOProviderException(bse);
         } finally {
-            if (s != null)
+            if (s != null) {
                 try {
                     s.close();
                 } catch (SQLException e) {
                     throw new UTXOProviderException("Could not close statement", e);
                 }
+            }
         }
     }
 
@@ -1211,67 +1194,92 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      */
     public void dumpSizes() throws SQLException, BlockStoreException {
         maybeConnect();
-        Statement s = conn.get().createStatement();
-        long size = 0;
-        long totalSize = 0;
-        int count = 0;
-        ResultSet rs = s.executeQuery(getSelectSettingsDumpSQL());
-        while (rs.next()) {
-            size += rs.getString(1).length();
-            size += rs.getBytes(2).length;
-            count++;
+        Statement s = null;
+        try {
+            s = conn.get().createStatement();
+            long size = 0;
+            long totalSize = 0;
+            int count = 0;
+            ResultSet rs = s.executeQuery(getSelectSettingsDumpSQL());
+            while (rs.next()) {
+                size += rs.getString(1).length();
+                size += rs.getBytes(2).length;
+                count++;
+            }
+            rs.close();
+            System.out.printf(Locale.US, "Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+    
+            totalSize += size; size = 0; count = 0;
+            rs = s.executeQuery(getSelectHeadersDumpSQL());
+            while (rs.next()) {
+                size += 28; // hash
+                size += rs.getBytes(1).length;
+                size += 4; // height
+                size += rs.getBytes(2).length;
+                count++;
+            }
+            rs.close();
+            System.out.printf(Locale.US, "Headers size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+    
+            totalSize += size; size = 0; count = 0;
+            rs = s.executeQuery(getSelectUndoableblocksDumpSQL());
+            while (rs.next()) {
+                size += 28; // hash
+                size += 4; // height
+                byte[] txOutChanges = rs.getBytes(1);
+                byte[] transactions = rs.getBytes(2);
+                if (txOutChanges == null)
+                    size += transactions.length;
+                else
+                    size += txOutChanges.length;
+                // size += the space to represent NULL
+                count++;
+            }
+            rs.close();
+            System.out.printf(Locale.US, "Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
+    
+            totalSize += size; size = 0; count = 0;
+            long scriptSize = 0;
+            rs = s.executeQuery(getSelectopenoutputsDumpSQL());
+            while (rs.next()) {
+                size += 32; // hash
+                size += 4; // index
+                size += 4; // height
+                size += rs.getBytes(1).length;
+                size += rs.getBytes(2).length;
+                scriptSize += rs.getBytes(2).length;
+                count++;
+            }
+            rs.close();
+            System.out.printf(Locale.US, "Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)%n",
+                    size, count, (double)size/count, (double)scriptSize/count, count * 8);
+    
+            totalSize += size;
+            System.out.println("Total Size: " + totalSize);
+        } finally {
+            if (s != null) {
+                s.close();
+            }
         }
-        rs.close();
-        System.out.printf(Locale.US, "Settings size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
-
-        totalSize += size; size = 0; count = 0;
-        rs = s.executeQuery(getSelectHeadersDumpSQL());
-        while (rs.next()) {
-            size += 28; // hash
-            size += rs.getBytes(1).length;
-            size += 4; // height
-            size += rs.getBytes(2).length;
-            count++;
+    }
+    
+    static void closeRethrow(Statement s) throws BlockStoreException {
+        if (s != null) {
+            try {
+                s.close();
+            } catch (SQLException e) {
+                throw new BlockStoreException(e);
+            }
         }
-        rs.close();
-        System.out.printf(Locale.US, "Headers size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
-
-        totalSize += size; size = 0; count = 0;
-        rs = s.executeQuery(getSelectUndoableblocksDumpSQL());
-        while (rs.next()) {
-            size += 28; // hash
-            size += 4; // height
-            byte[] txOutChanges = rs.getBytes(1);
-            byte[] transactions = rs.getBytes(2);
-            if (txOutChanges == null)
-                size += transactions.length;
-            else
-                size += txOutChanges.length;
-            // size += the space to represent NULL
-            count++;
-        }
-        rs.close();
-        System.out.printf(Locale.US, "Undoable Blocks size: %d, count: %d, average size: %f%n", size, count, (double)size/count);
-
-        totalSize += size; size = 0; count = 0;
-        long scriptSize = 0;
-        rs = s.executeQuery(getSelectopenoutputsDumpSQL());
-        while (rs.next()) {
-            size += 32; // hash
-            size += 4; // index
-            size += 4; // height
-            size += rs.getBytes(1).length;
-            size += rs.getBytes(2).length;
-            scriptSize += rs.getBytes(2).length;
-            count++;
-        }
-        rs.close();
-        System.out.printf(Locale.US, "Open Outputs size: %d, count: %d, average size: %f, average script size: %f (%d in id indexes)%n",
-                size, count, (double)size/count, (double)scriptSize/count, count * 8);
-
-        totalSize += size;
-        System.out.println("Total Size: " + totalSize);
-
-        s.close();
+    }
+    
+    static byte[] getTruncatedHashBytes(StoredBlock storedBlock) {
+        return getTruncatedHashBytes(storedBlock.getHeader().getHash().getBytes());
+    }
+    
+    static byte[] getTruncatedHashBytes(byte[] srcBytes) {
+        byte[] truncatedHash = new byte[28];
+        System.arraycopy(srcBytes, 4, truncatedHash, 0, 28);
+        return truncatedHash;
     }
 }
