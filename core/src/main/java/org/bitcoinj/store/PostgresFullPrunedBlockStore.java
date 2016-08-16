@@ -178,6 +178,13 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
     
     protected boolean isSupportsOnConflict() {
+        if (supportsOnConflict == null) {
+            // The DatabaseFullPrunedBlockStore constructor may call createNewStore() which calls overridden method put(),
+            // before this class's constructor has been executed (and initialized final fields). This is a workaround for
+            // that problem.
+            return false;
+        }
+        
         Connection conn = this.conn.get();
         Long n = supportsOnConflict.get();
         if (n != null) {
