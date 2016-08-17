@@ -3273,6 +3273,8 @@ public class Wallet extends BaseTaggableObject
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
             }
+            if (tx.hasConfidence())
+                builder.append("  confidence: ").append(tx.getConfidence()).append('\n');
             builder.append(tx.toString(chain));
         }
     }
