@@ -1587,7 +1587,6 @@ public class WalletTest extends TestWithWallet {
         // TODO: This code is messy, improve the Script class and fixinate!
         assertEquals(t2.toString(), 1, t2.getInputs().get(0).getScriptSig().getChunks().size());
         assertTrue(t2.getInputs().get(0).getScriptSig().getChunks().get(0).data.length > 50);
-        log.info(t2.toString(chain));
     }
 
     @Test
