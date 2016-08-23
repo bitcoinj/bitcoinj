@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.SecureRandom;
 import java.util.Random;
 import java.util.UUID;
 
@@ -50,9 +49,8 @@ public class KeyCrypterScryptTest {
 
     @Before
     public void setUp() throws Exception {
-        byte[] salt = new byte[KeyCrypterScrypt.SALT_LENGTH];
-        new SecureRandom().nextBytes(salt);
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(ByteString.copyFrom(salt));
+        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder()
+                .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()));
         scryptParameters = scryptParametersBuilder.build();
 
         BriefLogFormatter.init();
