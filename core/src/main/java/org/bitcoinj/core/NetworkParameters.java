@@ -362,7 +362,7 @@ public abstract class NetworkParameters {
         return true;
     }
 
-    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2015. */
+    /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2016. */
     public int getInterval() {
         return interval;
     }
