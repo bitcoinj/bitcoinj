@@ -66,8 +66,13 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
 
         if (blocksLeft == 0) {
             caughtUp = true;
+            if (lastPercent != 100) {
+                lastPercent = 100;
+                progress(lastPercent, blocksLeft, new Date(block.getTimeSeconds() * 1000));
+            }
             doneDownload();
             future.set(peer.getBestHeight());
+            return;
         }
 
         if (blocksLeft < 0 || originalBlocksLeft <= 0)
