@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
@@ -75,7 +76,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     @Override
     public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
     	final BlockStore blockStore) throws VerificationException, BlockStoreException {
-        Block prev = storedPrev.getHeader();
+        final Block prev = storedPrev.getHeader();
 
         // Is this supposed to be a difficulty transition point?
         if (!isDifficultyTransitionPoint(storedPrev.getHeight())) {
@@ -91,14 +92,17 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
         // two weeks after the initial block chain download.
         final Stopwatch watch = Stopwatch.createStarted();
-        StoredBlock cursor = blockStore.get(prev.getHash());
-        for (int i = 0; i < this.getInterval() - 1; i++) {
+        Sha256Hash hash = prev.getHash();
+        StoredBlock cursor = null;
+        final int interval = this.getInterval();
+        for (int i = 0; i < interval; i++) {
+            cursor = blockStore.get(hash);
             if (cursor == null) {
                 // This should never happen. If it does, it means we are following an incorrect or busted chain.
                 throw new VerificationException(
-                        "Difficulty transition point but we did not find a way back to the genesis block.");
+                        "Difficulty transition point but we did not find a way back to the last transition point. Not found: " + hash);
             }
-            cursor = blockStore.get(cursor.getHeader().getPrevBlockHash());
+            hash = cursor.getHeader().getPrevBlockHash();
         }
         watch.stop();
         if (watch.elapsed(TimeUnit.MILLISECONDS) > 50)
