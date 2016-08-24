@@ -17,6 +17,8 @@
 
 package org.bitcoinj.params;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
@@ -104,6 +106,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
             }
             hash = cursor.getHeader().getPrevBlockHash();
         }
+        checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1),
+                "Didn't arrive at a transition point.");
         watch.stop();
         if (watch.elapsed(TimeUnit.MILLISECONDS) > 50)
             log.info("Difficulty transition traversal took {}", watch);
