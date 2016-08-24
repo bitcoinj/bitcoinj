@@ -30,7 +30,9 @@ import java.util.Locale;
  * It avoids having to store the entire parentTransaction just to get the hash and index.
  * Useful when working with free standing outputs.
  */
-public class UTXO {
+public class UTXO implements Serializable {
+
+    private static final long serialVersionUID = 4736241649298988166L;
 
     private Coin value;
     private Script script;
@@ -86,38 +88,7 @@ public class UTXO {
     }
 
     public UTXO(InputStream in) throws IOException {
-        byte[] valueBytes = new byte[8];
-        if (in.read(valueBytes, 0, 8) != 8)
-            throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
-
-        int scriptBytesLength = ((in.read() & 0xFF)) |
-                ((in.read() & 0xFF) << 8) |
-                ((in.read() & 0xFF) << 16) |
-                ((in.read() & 0xFF) << 24);
-        byte[] scriptBytes = new byte[scriptBytesLength];
-        if (in.read(scriptBytes) != scriptBytesLength)
-            throw new EOFException();
-        script = new Script(scriptBytes);
-
-        byte[] hashBytes = new byte[32];
-        if (in.read(hashBytes) != 32)
-            throw new EOFException();
-        hash = Sha256Hash.wrap(hashBytes);
-
-        byte[] indexBytes = new byte[4];
-        if (in.read(indexBytes) != 4)
-            throw new EOFException();
-        index = Utils.readUint32(indexBytes, 0);
-
-        height = ((in.read() & 0xFF)) |
-                ((in.read() & 0xFF) << 8) |
-                ((in.read() & 0xFF) << 16) |
-                ((in.read() & 0xFF) << 24);
-
-        byte[] coinbaseByte = new byte[1];
-        in.read(coinbaseByte);
-        coinbase = coinbaseByte[0] == 1;
+        deserializeFromStream(in);
     }
 
     /** The value which this Transaction output holds. */
@@ -193,4 +164,48 @@ public class UTXO {
 
         bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
     }
+    
+    public void deserializeFromStream(InputStream in) throws IOException {
+        byte[] valueBytes = new byte[8];
+        if (in.read(valueBytes, 0, 8) != 8)
+            throw new EOFException();
+        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
+
+        int scriptBytesLength = ((in.read() & 0xFF)) |
+                ((in.read() & 0xFF) << 8) |
+                ((in.read() & 0xFF) << 16) |
+                ((in.read() & 0xFF) << 24);
+        byte[] scriptBytes = new byte[scriptBytesLength];
+        if (in.read(scriptBytes) != scriptBytesLength)
+            throw new EOFException();
+        script = new Script(scriptBytes);
+
+        byte[] hashBytes = new byte[32];
+        if (in.read(hashBytes) != 32)
+            throw new EOFException();
+        hash = Sha256Hash.wrap(hashBytes);
+
+        byte[] indexBytes = new byte[4];
+        if (in.read(indexBytes) != 4)
+            throw new EOFException();
+        index = Utils.readUint32(indexBytes, 0);
+
+        height = ((in.read() & 0xFF)) |
+                ((in.read() & 0xFF) << 8) |
+                ((in.read() & 0xFF) << 16) |
+                ((in.read() & 0xFF) << 24);
+
+        byte[] coinbaseByte = new byte[1];
+        in.read(coinbaseByte);
+        coinbase = coinbaseByte[0] == 1;
+    }
+    
+    
+    private void writeObject(ObjectOutputStream o) throws IOException {
+        serializeToStream(o);
+    }
+          
+    private void readObject(ObjectInputStream o) throws IOException, ClassNotFoundException {
+        deserializeFromStream(o);
+    }        
 }
