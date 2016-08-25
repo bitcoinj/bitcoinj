@@ -44,7 +44,7 @@ public class TransactionOutPoint extends ChildMessage {
     Transaction fromTx;
 
     // The connected output.
-    private TransactionOutput connectedOutput;
+    TransactionOutput connectedOutput;
 
     public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
         super(params);
