@@ -2206,7 +2206,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Returns the period between pings for an individual peer. Setting this lower means more accurate and timely ping
      * times are available via {@link org.bitcoinj.core.Peer#getLastPingTime()} but it increases load on the
-     * remote node. It defaults to 5000.
+     * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      */
     public long getPingIntervalMsec() {
         lock.lock();
