@@ -44,8 +44,8 @@ public class SPVBlockStore implements BlockStore {
     public static final String HEADER_MAGIC = "SPVB";
 
     protected volatile MappedByteBuffer buffer;
-    protected int capacity;
-    protected NetworkParameters params;
+    protected final int capacity;
+    protected final NetworkParameters params;
 
     protected ReentrantLock lock = Threading.lock("SPVBlockStore");
 
@@ -80,14 +80,28 @@ public class SPVBlockStore implements BlockStore {
     protected RandomAccessFile randomAccessFile = null;
 
     /**
-     * Creates and initializes an SPV block store. Will create the given file if it's missing. This operation
-     * will block on disk.
+     * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} blocks. Will create the given
+     * file if it's missing. This operation will block on disk.
+     * @param file file to use for the block store
+     * @throws BlockStoreException if something goes wrong
      */
     public SPVBlockStore(NetworkParameters params, File file) throws BlockStoreException {
+        this(params, file, DEFAULT_CAPACITY);
+    }
+
+    /**
+     * Creates and initializes an SPV block store that can hold a given amount of blocks. Will create the given file if
+     * it's missing. This operation will block on disk.
+     * @param file file to use for the block store
+     * @param capacity custom capacity
+     * @throws BlockStoreException if something goes wrong
+     */
+    public SPVBlockStore(NetworkParameters params, File file, int capacity) throws BlockStoreException {
         checkNotNull(file);
         this.params = checkNotNull(params);
+        checkArgument(capacity > 0);
+        this.capacity = capacity;
         try {
-            this.capacity = DEFAULT_CAPACITY;
             boolean exists = file.exists();
             // Set up the backing file.
             randomAccessFile = new RandomAccessFile(file, "rw");
