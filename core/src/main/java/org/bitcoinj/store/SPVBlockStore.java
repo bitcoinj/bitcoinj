@@ -40,11 +40,11 @@ public class SPVBlockStore implements BlockStore {
     private static final Logger log = LoggerFactory.getLogger(SPVBlockStore.class);
 
     /** The default number of headers that will be stored in the ring buffer. */
-    public static final int DEFAULT_NUM_HEADERS = 5000;
+    public static final int DEFAULT_CAPACITY = 5000;
     public static final String HEADER_MAGIC = "SPVB";
 
     protected volatile MappedByteBuffer buffer;
-    protected int numHeaders;
+    protected int capacity;
     protected NetworkParameters params;
 
     protected ReentrantLock lock = Threading.lock("SPVBlockStore");
@@ -87,7 +87,7 @@ public class SPVBlockStore implements BlockStore {
         checkNotNull(file);
         this.params = checkNotNull(params);
         try {
-            this.numHeaders = DEFAULT_NUM_HEADERS;
+            this.capacity = DEFAULT_CAPACITY;
             boolean exists = file.exists();
             // Set up the backing file.
             randomAccessFile = new RandomAccessFile(file, "rw");
@@ -151,7 +151,7 @@ public class SPVBlockStore implements BlockStore {
 
     /** Returns the size in bytes of the file that is used to store the chain with the current parameters. */
     public final int getFileSize() {
-        return RECORD_SIZE * numHeaders + FILE_PROLOGUE_BYTES /* extra kilobyte for stuff */;
+        return RECORD_SIZE * capacity + FILE_PROLOGUE_BYTES /* extra kilobyte for stuff */;
     }
 
     @Override
