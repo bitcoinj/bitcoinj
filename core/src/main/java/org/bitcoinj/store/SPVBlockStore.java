@@ -68,7 +68,7 @@ public class SPVBlockStore implements BlockStore {
     //
     // We don't care about the value in this cache. It is always notFoundMarker. Unfortunately LinkedHashSet does not
     // provide the removeEldestEntry control.
-    protected static final Object notFoundMarker = new Object();
+    private static final Object NOT_FOUND_MARKER = new Object();
     protected LinkedHashMap<Sha256Hash, Object> notFoundCache = new LinkedHashMap<Sha256Hash, Object>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, Object> entry) {
@@ -214,7 +214,7 @@ public class SPVBlockStore implements BlockStore {
                 }
             } while (cursor != startingPoint);
             // Not found.
-            notFoundCache.put(hash, notFoundMarker);
+            notFoundCache.put(hash, NOT_FOUND_MARKER);
             return null;
         } catch (ProtocolException e) {
             throw new RuntimeException(e);  // Cannot happen.
