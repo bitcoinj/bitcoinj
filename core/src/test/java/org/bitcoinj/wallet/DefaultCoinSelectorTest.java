@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.bitcoinj.core.Coin.*;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -112,5 +113,23 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertEquals(t2.getOutput(0), candidates.get(0));
         assertEquals(t1.getOutput(0), candidates.get(1));
         assertEquals(t3.getOutput(0), candidates.get(2));
+    }
+
+    @Test
+    public void identicalInputs() throws Exception {
+        // Add four outputs to a transaction with same value and destination. Select them all.
+        Transaction t = new Transaction(params);
+        java.util.List<TransactionOutput> outputs = Arrays.asList(
+            new TransactionOutput(params, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(params, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(params, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(params, t, Coin.valueOf(30302787), myAddress)
+        );
+        t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
+
+        DefaultCoinSelector selector = new DefaultCoinSelector();
+        CoinSelection selection = selector.select(COIN.multiply(2), outputs);
+
+        assertTrue(selection.gathered.size() == 4);
     }
 }

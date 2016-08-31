@@ -20,7 +20,7 @@ public class DefaultCoinSelector implements CoinSelector {
     @Override
     public CoinSelection select(Coin biTarget, List<TransactionOutput> candidates) {
         long target = biTarget.value;
-        HashSet<TransactionOutput> selected = new HashSet<TransactionOutput>();
+        ArrayList<TransactionOutput> selected = new ArrayList<TransactionOutput>();
         // Sort the inputs by age*value so we get the highest "coindays" spent.
         // TODO: Consider changing the wallets internal format to track just outputs and keep them ordered.
         ArrayList<TransactionOutput> sortedOutputs = new ArrayList<TransactionOutput>(candidates);
