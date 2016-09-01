@@ -79,6 +79,7 @@ public class WalletProtobufSerializer {
     protected Map<ByteString, Transaction> txMap;
 
     private boolean requireMandatoryExtensions = true;
+    private boolean requireAllExtensionsKnown = false;
     private int walletWriteBufferSize = CodedOutputStream.DEFAULT_BUFFER_SIZE;
 
     public interface WalletFactory {
@@ -114,6 +115,13 @@ public class WalletProtobufSerializer {
      */
     public void setRequireMandatoryExtensions(boolean value) {
         requireMandatoryExtensions = value;
+    }
+
+    /**
+     * If this property is set to true, the wallet will fail to load if  any found extensions are unknown..
+     */
+    public void setRequireAllExtensionsKnown(boolean value) {
+        requireAllExtensionsKnown = value;
     }
 
     /**
@@ -584,6 +592,8 @@ public class WalletProtobufSerializer {
                         throw new UnreadableWalletException("Unknown mandatory extension in wallet: " + id);
                     else
                         log.error("Unknown extension in wallet {}, ignoring", id);
+                } else if (requireAllExtensionsKnown) {
+                    throw new UnreadableWalletException("Unknown extension in wallet: " + id);
                 }
             } else {
                 log.info("Loading wallet extension {}", id);
@@ -592,6 +602,9 @@ public class WalletProtobufSerializer {
                 } catch (Exception e) {
                     if (extProto.getMandatory() && requireMandatoryExtensions) {
                         log.error("Error whilst reading mandatory extension {}, failing to read wallet", id);
+                        throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
+                    } else if (requireAllExtensionsKnown) {
+                        log.error("Error whilst reading extension {}, failing to read wallet", id);
                         throw new UnreadableWalletException("Could not parse mandatory extension in wallet: " + id);
                     }
                 }
