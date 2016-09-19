@@ -43,11 +43,13 @@ import static com.google.common.base.Preconditions.*;
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
 
-    private TxConfidenceTable confidenceTable;
-    private NetworkParameters params;
-    private int eventHorizon = 100;
-    private boolean ensureMinRequiredFee = true;
-    private Coin feePerKb = Transaction.DEFAULT_TX_FEE;
+    public static final int DEFAULT_EVENT_HORIZON = 100;
+
+    final private TxConfidenceTable confidenceTable;
+    final private NetworkParameters params;
+    final private int eventHorizon;
+    final private boolean ensureMinRequiredFee;
+    final private Coin feePerKb;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
@@ -59,8 +61,10 @@ public class Context {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
         this.confidenceTable = new TxConfidenceTable();
         this.params = params;
+        this.eventHorizon = DEFAULT_EVENT_HORIZON;
+        this.ensureMinRequiredFee = true;
+        this.feePerKb = Transaction.DEFAULT_TX_FEE;
         lastConstructed = this;
-        // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
         slot.set(this);
     }
 
@@ -73,10 +77,14 @@ public class Context {
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
      */
     public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
-        this(params);
+        log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
+        this.confidenceTable = new TxConfidenceTable();
+        this.params = params;
         this.eventHorizon = eventHorizon;
-        this.feePerKb = feePerKb;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
+        this.feePerKb = feePerKb;
+        lastConstructed = this;
+        slot.set(this);
     }
 
     private static volatile Context lastConstructed;
