@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkState;
  *    Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right, and starting with
  *    this tester as a way to try to do so will simply end in pain and lost coins. SERIOUSLY, JUST STOP!
  *
- * b) Bitcoin Core is faling some test in here and you're wondering what test is causing failure. Just stop. There is no
+ * b) Bitcoin Core is failing some test in here and you're wondering what test is causing failure. Just stop. There is no
  *    hope trying to read this file and decipher it. Give up and ping BlueMatt. Seriously, this stuff is a huge mess.
  *
  * c) You are trying to add a new test. STOP! WHY THE HELL WOULD YOU EVEN DO THAT? GO REWRITE THIS TESTER!
