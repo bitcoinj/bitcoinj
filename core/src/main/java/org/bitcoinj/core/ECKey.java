@@ -1259,6 +1259,9 @@ public class ECKey implements EncryptableItem {
                 helper.add("priv WIF", getPrivateKeyAsWiF(params));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
+            } catch (Exception e) {
+                final String message = e.getMessage();
+                helper.add("priv EXCEPTION", e.getClass().getName() + (message != null ? ": " + message : ""));
             }
         }
         if (creationTimeSeconds > 0)
