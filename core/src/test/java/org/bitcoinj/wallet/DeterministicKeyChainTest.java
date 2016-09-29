@@ -80,7 +80,7 @@ public class DeterministicKeyChainTest {
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         chain.getKey(KeyChain.KeyPurpose.CHANGE);
         chain.maybeLookAhead();
-        assertEquals(2, chain.getKeys(false).size());
+        assertEquals(2, chain.getKeys(false, false).size());
     }
 
     @Test
