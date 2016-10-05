@@ -116,6 +116,14 @@ public class WalletProtobufSerializer {
         requireMandatoryExtensions = value;
     }
 
+	/**
+     * Change buffer size for writing wallet to output stream. Default is {@link com.google.protobuf.CodedOutputStream.DEFAULT_BUFFER_SIZE}
+     * @param walletWriteBufferSize - buffer size in bytes
+     */
+    public void setWalletWriteBufferSize(int walletWriteBufferSize) {
+        this.walletWriteBufferSize = walletWriteBufferSize;
+    }
+
     /**
      * Change buffer size for writing wallet to output stream. Default is {@link com.google.protobuf.CodedOutputStream.DEFAULT_BUFFER_SIZE}
      * @param walletWriteBufferSize - buffer size in bytes
