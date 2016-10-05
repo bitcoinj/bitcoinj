@@ -63,12 +63,13 @@ public final class PeerSeedProtos {
       return defaultInstance;
     }
 
+    @Override
     public PeerSeedData getDefaultInstanceForType() {
       return defaultInstance;
     }
 
     private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
+    @Override
     public final com.google.protobuf.UnknownFieldSet
         getUnknownFields() {
       return this.unknownFields;
@@ -129,6 +130,7 @@ public final class PeerSeedProtos {
       return org.bitcoin.crawler.PeerSeedProtos.internal_static_org_bitcoin_crawler_PeerSeedData_descriptor;
     }
 
+    @Override
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoin.crawler.PeerSeedProtos.internal_static_org_bitcoin_crawler_PeerSeedData_fieldAccessorTable
@@ -146,7 +148,7 @@ public final class PeerSeedProtos {
       }
     };
 
-    @java.lang.Override
+    @Override
     public com.google.protobuf.Parser<PeerSeedData> getParserForType() {
       return PARSER;
     }
@@ -157,12 +159,14 @@ public final class PeerSeedProtos {
     /**
      * <code>required string ip_address = 1;</code>
      */
+    @Override
     public boolean hasIpAddress() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
      * <code>required string ip_address = 1;</code>
      */
+    @Override
     public java.lang.String getIpAddress() {
       java.lang.Object ref = ipAddress_;
       if (ref instanceof java.lang.String) {
@@ -180,6 +184,7 @@ public final class PeerSeedProtos {
     /**
      * <code>required string ip_address = 1;</code>
      */
+    @Override
     public com.google.protobuf.ByteString
         getIpAddressBytes() {
       java.lang.Object ref = ipAddress_;
@@ -199,12 +204,15 @@ public final class PeerSeedProtos {
     /**
      * <code>required uint32 port = 2;</code>
      */
+    @Override
     public boolean hasPort() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
      * <code>required uint32 port = 2;</code>
      */
+
+    @Override
     public int getPort() {
       return port_;
     }
@@ -214,12 +222,14 @@ public final class PeerSeedProtos {
     /**
      * <code>required uint32 services = 3;</code>
      */
+    @Override
     public boolean hasServices() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>required uint32 services = 3;</code>
      */
+    @Override
     public int getServices() {
       return services_;
     }
@@ -230,6 +240,8 @@ public final class PeerSeedProtos {
       services_ = 0;
     }
     private byte memoizedIsInitialized = -1;
+
+    @Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -251,6 +263,7 @@ public final class PeerSeedProtos {
       return true;
     }
 
+    @Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
@@ -267,6 +280,8 @@ public final class PeerSeedProtos {
     }
 
     private int memoizedSerializedSize = -1;
+
+    @Override
     public int getSerializedSize() {
       int size = memoizedSerializedSize;
       if (size != -1) return size;
@@ -290,7 +305,7 @@ public final class PeerSeedProtos {
     }
 
     private static final long serialVersionUID = 0L;
-    @java.lang.Override
+    @Override
     protected java.lang.Object writeReplace()
         throws java.io.ObjectStreamException {
       return super.writeReplace();
@@ -350,13 +365,15 @@ public final class PeerSeedProtos {
     }
 
     public static Builder newBuilder() { return Builder.create(); }
+    @Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder(org.bitcoin.crawler.PeerSeedProtos.PeerSeedData prototype) {
       return newBuilder().mergeFrom(prototype);
     }
+    @Override
     public Builder toBuilder() { return newBuilder(this); }
 
-    @java.lang.Override
+    @Override
     protected Builder newBuilderForType(
         com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       Builder builder = new Builder(parent);
@@ -374,6 +391,7 @@ public final class PeerSeedProtos {
         return org.bitcoin.crawler.PeerSeedProtos.internal_static_org_bitcoin_crawler_PeerSeedData_descriptor;
       }
 
+      @Override
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoin.crawler.PeerSeedProtos.internal_static_org_bitcoin_crawler_PeerSeedData_fieldAccessorTable
@@ -399,6 +417,7 @@ public final class PeerSeedProtos {
         return new Builder();
       }
 
+      @Override
       public Builder clear() {
         super.clear();
         ipAddress_ = "";
@@ -410,19 +429,23 @@ public final class PeerSeedProtos {
         return this;
       }
 
+      @Override
       public Builder clone() {
         return create().mergeFrom(buildPartial());
       }
 
+      @Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoin.crawler.PeerSeedProtos.internal_static_org_bitcoin_crawler_PeerSeedData_descriptor;
       }
 
+      @Override
       public org.bitcoin.crawler.PeerSeedProtos.PeerSeedData getDefaultInstanceForType() {
         return org.bitcoin.crawler.PeerSeedProtos.PeerSeedData.getDefaultInstance();
       }
 
+      @Override
       public org.bitcoin.crawler.PeerSeedProtos.PeerSeedData build() {
         org.bitcoin.crawler.PeerSeedProtos.PeerSeedData result = buildPartial();
         if (!result.isInitialized()) {
@@ -431,6 +454,7 @@ public final class PeerSeedProtos {
         return result;
       }
 
+      @Override
       public org.bitcoin.crawler.PeerSeedProtos.PeerSeedData buildPartial() {
         org.bitcoin.crawler.PeerSeedProtos.PeerSeedData result = new org.bitcoin.crawler.PeerSeedProtos.PeerSeedData(this);
         int from_bitField0_ = bitField0_;
@@ -452,6 +476,7 @@ public final class PeerSeedProtos {
         return result;
       }
 
+      @Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoin.crawler.PeerSeedProtos.PeerSeedData) {
           return mergeFrom((org.bitcoin.crawler.PeerSeedProtos.PeerSeedData)other);
@@ -478,6 +503,7 @@ public final class PeerSeedProtos {
         return this;
       }
 
+      @Override
       public final boolean isInitialized() {
         if (!hasIpAddress()) {
           
@@ -494,6 +520,7 @@ public final class PeerSeedProtos {
         return true;
       }
 
+      @Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -517,12 +544,14 @@ public final class PeerSeedProtos {
       /**
        * <code>required string ip_address = 1;</code>
        */
+      @Override
       public boolean hasIpAddress() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
        * <code>required string ip_address = 1;</code>
        */
+      @Override
       public java.lang.String getIpAddress() {
         java.lang.Object ref = ipAddress_;
         if (!(ref instanceof java.lang.String)) {
@@ -540,6 +569,7 @@ public final class PeerSeedProtos {
       /**
        * <code>required string ip_address = 1;</code>
        */
+      @Override
       public com.google.protobuf.ByteString
           getIpAddressBytes() {
         java.lang.Object ref = ipAddress_;
