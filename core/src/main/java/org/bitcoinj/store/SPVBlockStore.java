@@ -107,7 +107,7 @@ public class SPVBlockStore implements BlockStore {
             boolean exists = file.exists();
             // Set up the backing file.
             randomAccessFile = new RandomAccessFile(file, "rw");
-            long fileSize = getFileSize();
+            long fileSize = getFileSize(capacity);
             if (!exists) {
                 log.info("Creating new SPV block chain file " + file);
                 randomAccessFile.setLength(fileSize);
@@ -166,7 +166,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     /** Returns the size in bytes of the file that is used to store the chain with the current parameters. */
-    public final int getFileSize() {
+    public static final int getFileSize(int capacity) {
         return RECORD_SIZE * capacity + FILE_PROLOGUE_BYTES /* extra kilobyte for stuff */;
     }
 
@@ -178,7 +178,7 @@ public class SPVBlockStore implements BlockStore {
         lock.lock();
         try {
             int cursor = getRingCursor(buffer);
-            if (cursor == getFileSize()) {
+            if (cursor == getFileSize(capacity)) {
                 // Wrapped around.
                 cursor = FILE_PROLOGUE_BYTES;
             }
@@ -210,7 +210,7 @@ public class SPVBlockStore implements BlockStore {
             // wrapped around.
             int cursor = getRingCursor(buffer);
             final int startingPoint = cursor;
-            final int fileSize = getFileSize();
+            final int fileSize = getFileSize(capacity);
             final byte[] targetHashBytes = hash.getBytes();
             byte[] scratch = new byte[32];
             do {
