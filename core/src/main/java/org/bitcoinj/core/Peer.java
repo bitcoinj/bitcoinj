@@ -959,7 +959,7 @@ public class Peer extends PeerSocketHandler {
             // Start the operation.
             sendMessage(getdata);
         } catch (Exception e) {
-            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash());
+            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash(), e);
             resultFuture.setException(e);
             return resultFuture;
         } finally {
