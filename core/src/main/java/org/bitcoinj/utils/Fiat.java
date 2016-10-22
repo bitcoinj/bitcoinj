@@ -84,8 +84,7 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
      */
     public static Fiat parseFiat(final String currencyCode, final String str) {
         try {
-            long val = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT)
-                    .toBigIntegerExact().longValue();
+            long val = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
             return Fiat.valueOf(currencyCode, val);
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(e);
