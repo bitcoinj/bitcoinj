@@ -73,18 +73,41 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
     }
 
     /**
-     * Parses an amount expressed in the way humans are used to.
      * <p>
+     * Parses an amount expressed in the way humans are used to.
      * <p/>
+     * <p>
      * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
      * "1.23E3", "1234.5E-5".
-     * 
+     * <p/>
+     *
      * @throws IllegalArgumentException
      *             if you try to specify more than 4 digits after the comma, or a value out of range.
      */
     public static Fiat parseFiat(final String currencyCode, final String str) {
         try {
             long val = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
+            return Fiat.valueOf(currencyCode, val);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * <p>
+     * Parses an amount expressed in the way humans are used to. The amount is cut to 4 digits after the comma.
+     * <p/>
+     * <p>
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".
+     * <p/>
+     *
+     * @throws IllegalArgumentException
+     *             if you try to specify a value out of range.
+     */
+    public static Fiat parseFiatInexact(final String currencyCode, final String str) {
+        try {
+            long val = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).longValue();
             return Fiat.valueOf(currencyCode, val);
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(e);

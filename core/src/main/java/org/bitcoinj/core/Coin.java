@@ -116,16 +116,41 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Parses an amount expressed in the way humans are used to.<p>
+     * <p>
+     * Parses an amount expressed in the way humans are used to.
      * <p/>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)},
-     * for example "0", "1", "0.10", "1.23E3", "1234.5E-5".
+     * <p>
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".
+     * </p>
      *
-     * @throws IllegalArgumentException if you try to specify fractional satoshis, or a value out of range.
+     * @throws IllegalArgumentException
+     *             if you try to specify fractional satoshis, or a value out of range.
      */
     public static Coin parseCoin(final String str) {
         try {
             long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
+            return Coin.valueOf(satoshis);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(e); // Repackage exception to honor method contract
+        }
+    }
+
+    /**
+     * <p>
+     * Parses an amount expressed in the way humans are used to. The amount is cut to satoshi precision.
+     * <p/>
+     * <p>
+     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".
+     * <p/>
+     *
+     * @throws IllegalArgumentException
+     *             if you try to specify a value out of range.
+     */
+    public static Coin parseCoinInexact(final String str) {
+        try {
+            long satoshis = new BigDecimal(str).movePointRight(SMALLEST_UNIT_EXPONENT).longValue();
             return Coin.valueOf(satoshis);
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(e); // Repackage exception to honor method contract

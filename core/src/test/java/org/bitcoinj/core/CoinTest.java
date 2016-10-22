@@ -42,6 +42,19 @@ public class CoinTest {
         } catch (Exception e) {
             org.junit.Assert.fail("should throw IllegalArgumentException");
         }
+        assertEquals(1, parseCoin("0.00000001").value);
+        assertEquals(1, parseCoin("0.000000010").value);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseCoinOverprecise() {
+        parseCoin("0.000000011");
+    }
+
+    @Test
+    public void testParseCoinInexact() {
+        assertEquals(1, parseCoinInexact("0.00000001").value);
+        assertEquals(1, parseCoinInexact("0.000000011").value);
     }
 
     @Test
