@@ -1219,10 +1219,11 @@ public class ECKey implements EncryptableItem {
 
     @Override
     public int hashCode() {
-        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
-        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
+        // Public keys are random already so we can just use a part of them as the hashcode.
+        // Read from the X-coord (byte indexes [1-33)) to avoid pick up the
+        // compression indicator, which is the first byte.
         byte[] bits = getPubKey();
-        return Ints.fromBytes(bits[0], bits[1], bits[2], bits[3]);
+        return Ints.fromBytes(bits[1], bits[2], bits[3], bits[4]);
     }
 
     @Override
