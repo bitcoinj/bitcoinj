@@ -454,4 +454,14 @@ public class ECKeyTest {
         for (byte b : bytes) if (b != 0) return true;
         return false;
     }
+
+    @Test
+    public void testPublicKeysAreEqual() {
+        ECKey key = new ECKey();
+        ECKey pubKey1 = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        assertTrue(pubKey1.isCompressed());
+        ECKey pubKey2 = pubKey1.decompress();
+        assertEquals(pubKey1, pubKey2);
+        assertEquals(pubKey1.hashCode(), pubKey2.hashCode());
+    }
 }
