@@ -17,9 +17,7 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
@@ -134,8 +132,6 @@ public class ScriptBuilder {
     /**
      * Adds the given number as a OP_N opcode to the end of the program.
      * Only handles values 0-16 inclusive.
-     * 
-     * @see #number(int)
      */
     public ScriptBuilder smallNum(int num) {
         return smallNum(chunks.size(), num);
@@ -145,8 +141,6 @@ public class ScriptBuilder {
      * This is intended to use for negative numbers or values > 16, and although
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
-     * 
-     * @see #number(int)
      */
     protected ScriptBuilder bigNum(long num) {
         return bigNum(chunks.size(), num);
@@ -155,8 +149,6 @@ public class ScriptBuilder {
     /**
      * Adds the given number as a OP_N opcode to the given index in the program.
      * Only handles values 0-16 inclusive.
-     * 
-     * @see #number(int)
      */
     public ScriptBuilder smallNum(int index, int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
@@ -169,8 +161,6 @@ public class ScriptBuilder {
      * This is intended to use for negative numbers or values > 16, and although
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
-     * 
-     * @see #number(int)
      */
     protected ScriptBuilder bigNum(int index, long num) {
         final byte[] data;
@@ -257,6 +247,15 @@ public class ScriptBuilder {
     public static Script createInputScript(@Nullable TransactionSignature signature) {
         byte[] sigBytes = signature != null ? signature.encodeToBitcoin() : new byte[]{};
         return new ScriptBuilder().data(sigBytes).build();
+    }
+
+    /**
+     * Creates a scriptSig including a segwit program to use when paying to segwit outputs wrapped in P2SH.
+     * @param segwitProgram
+     * @return
+     */
+    public static Script createSegwitP2SHSigScript(Script segwitProgram) {
+        return new ScriptBuilder().data(segwitProgram.getProgram()).build();
     }
 
     /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
@@ -391,6 +390,22 @@ public class ScriptBuilder {
     }
 
     /**
+     * Creates a segwit scriptPubKey that sends to the given public key hash.
+     */
+    public static Script createP2WPKHOutputScript(byte[] hash) {
+        checkArgument(hash.length == 20);
+        return new ScriptBuilder().smallNum(0).data(hash).build();
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that sends to the given public key.
+     */
+    public static Script createP2WPKHOutputScript(ECKey key) {
+        checkArgument(key.isCompressed());
+        return createP2WPKHOutputScript(key.getPubKeyHash());
+    }
+
+    /**
      * Creates a scriptPubKey that sends to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
@@ -398,6 +413,15 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(byte[] hash) {
         checkArgument(hash.length == 20);
         return new ScriptBuilder().op(OP_HASH160).data(hash).op(OP_EQUAL).build();
+    }
+
+    /**
+     * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
+     * redeem script in the lexicographical sorting order.
+     */
+    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
+        Script redeemScript = createRedeemScript(threshold, pubkeys);
+        return createP2SHOutputScript(redeemScript);
     }
 
     /**
@@ -409,12 +433,19 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
-     * redeem script in the lexicographical sorting order.
+     * Creates a segwit P2WSH pubKeyScript for provided script.
      */
-    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
-        Script redeemScript = createRedeemScript(threshold, pubkeys);
-        return createP2SHOutputScript(redeemScript);
+    public static Script createP2WSHOutputScript(Script segwitScript) {
+        byte[] hash = Sha256Hash.hash(segwitScript.getProgram());
+        return ScriptBuilder.createP2WSHOutputScript(hash);
+    }
+
+    /**
+     * Creates a segwit scriptPubKey for the given redeem script sha256 hash.
+     */
+    public static Script createP2WSHOutputScript(byte[] hash) {
+        checkArgument(hash.length == 32);
+        return new ScriptBuilder().smallNum(0).data(hash).build();
     }
 
     /**
