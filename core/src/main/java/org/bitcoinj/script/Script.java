@@ -20,6 +20,7 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
+
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.*;
 
@@ -59,7 +61,9 @@ public class Script {
         NO_TYPE,
         P2PKH,
         PUB_KEY,
-        P2SH
+        P2SH,
+        P2WPKH,
+        P2WSH
     }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
@@ -75,7 +79,8 @@ public class Script {
         MINIMALDATA, // Require minimal encodings for all push operations
         DISCOURAGE_UPGRADABLE_NOPS, // Discourage use of NOPs reserved for upgrades (NOP1-10)
         CLEANSTACK, // Require that only a single stack element remains after evaluation.
-        CHECKLOCKTIMEVERIFY // Enable CHECKLOCKTIMEVERIFY operation
+        CHECKLOCKTIMEVERIFY, // Enable CHECKLOCKTIMEVERIFY operation
+        SEGWIT // Enable segregated witnesses
     }
     public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
 
@@ -255,6 +260,45 @@ public class Script {
     }
 
     /**
+     * Returns true if this script is of the form OP_0 &lt;160-bit pubkey hash&gt; (segwit P2WPKH).
+     */
+    public boolean isSentToP2WPKH() {
+        return chunks.size() == 2 &&
+               chunks.get(0).equalsOpCode(OP_0) &&
+               chunks.get(1).data.length == 20;
+    }
+
+    /**
+     * Returns true if this script is P2SH wrapping P2WPKH for provided key.
+     * @param pubKey
+     * @return
+     */
+    public boolean isSentToP2WPKHP2SH(ECKey pubKey) {
+        byte[] scriptHash = Utils.sha256hash160(ScriptBuilder.createP2WPKHOutputScript(pubKey).getProgram());
+        return (isPayToScriptHash() && Arrays.equals(scriptHash, getPubKeyHash()));
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 &lt;256-bit script hash&gt; (segwit P2WSH).
+     */
+    public boolean isSentToP2WSH() {
+        return chunks.size() == 2 &&
+               chunks.get(0).equalsOpCode(OP_0) &&
+               chunks.get(1).data.length == 32;
+    }
+
+    /**
+     * Returns true if this is a P2SH pubKeyScript wrapping a P2WSH redeem script for provided segwit script.
+     * @param script
+     * @return
+     */
+    public boolean isSentToP2WSHP2SH(Script script) {
+        Script segwitProgram = ScriptBuilder.createP2WSHOutputScript(script);
+        byte[] scriptHash = Utils.sha256hash160(segwitProgram.getProgram());
+        return (isPayToScriptHash() && Arrays.equals(scriptHash, getPubKeyHash()));
+    }
+
+    /**
      * <p>If a program matches the standard template DUP HASH160 &lt;pubkey hash&gt; EQUALVERIFY CHECKSIG
      * then this function retrieves the third element.
      * In this case, this is useful for fetching the destination address of a transaction.</p>
@@ -262,6 +306,12 @@ public class Script {
      * <p>If a program matches the standard template HASH160 &lt;script hash&gt; EQUAL
      * then this function retrieves the second element.
      * In this case, this is useful for fetching the hash of the redeem script of a transaction.</p>
+     *
+     * <p>If a program matches the segwit template 0 &lt;pubkey hash&gt; then this function retrieves the second
+     * element, which is the hash of the public key.</p>
+     *
+     * <p>If a program matches the segwit template 0 &lt;script hash&gt; then this function retrieves the second
+     * element, which is the hash of the segwit script.</p>
      * 
      * <p>Otherwise it throws a ScriptException.</p>
      *
@@ -269,7 +319,7 @@ public class Script {
     public byte[] getPubKeyHash() throws ScriptException {
         if (isSentToAddress())
             return chunks.get(2).data;
-        else if (isPayToScriptHash())
+        else if (isPayToScriptHash() || isSentToP2WPKH() || isSentToP2WSH())
             return chunks.get(1).data;
         else
             throw new ScriptException("Script not in the standard scriptPubKey form");
@@ -540,7 +590,7 @@ public class Script {
             }
         }
 
-        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
+        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + HEX.encode(signatureBytes));
     }
 
 
@@ -852,21 +902,28 @@ public class Script {
         executeScript(txContainingThis, index, script, stack, flags);
     }
 
+    @Deprecated
+    public static void executeScript(@Nullable Transaction txContainingThis, long index,
+                                     Script script, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
+        executeScript(txContainingThis, index, script, stack, Coin.ZERO, false, verifyFlags);
+    }
+
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
      * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
-     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script, Coin, Set<VerifyFlag>)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      */
     public static void executeScript(@Nullable Transaction txContainingThis, long index,
-                                     Script script, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
+                                     Script script, LinkedList<byte[]> stack, Coin value, boolean segwit,
+                                     Set<VerifyFlag> verifyFlags) throws ScriptException {
         int opCount = 0;
         int lastCodeSepLocation = 0;
-        
+
         LinkedList<byte[]> altstack = new LinkedList<>();
         LinkedList<Boolean> ifStack = new LinkedList<>();
-        
+
         for (ScriptChunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
 
@@ -1337,13 +1394,32 @@ public class Script {
                 case OP_CHECKSIGVERIFY:
                     if (txContainingThis == null)
                         throw new IllegalStateException("Script attempted signature check but no tx was provided");
-                    executeCheckSig(txContainingThis, (int) index, script, stack, lastCodeSepLocation, opcode, verifyFlags);
+                    executeCheckSig(
+                        txContainingThis,
+                        (int) index,
+                        script,
+                        stack,
+                        lastCodeSepLocation,
+                        opcode,
+                        value,
+                        segwit,
+                        verifyFlags);
                     break;
                 case OP_CHECKMULTISIG:
                 case OP_CHECKMULTISIGVERIFY:
                     if (txContainingThis == null)
                         throw new IllegalStateException("Script attempted signature check but no tx was provided");
-                    opCount = executeMultiSig(txContainingThis, (int) index, script, stack, opCount, lastCodeSepLocation, opcode, verifyFlags);
+                    opCount = executeMultiSig(
+                        txContainingThis,
+                        (int) index,
+                        script,
+                        stack,
+                        opCount,
+                        lastCodeSepLocation,
+                        opcode,
+                        value,
+                        segwit,
+                        verifyFlags);
                     break;
                 case OP_CHECKLOCKTIMEVERIFY:
                     if (!verifyFlags.contains(VerifyFlag.CHECKLOCKTIMEVERIFY)) {
@@ -1422,8 +1498,16 @@ public class Script {
             throw new ScriptException("Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
     }
 
-    private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                        int lastCodeSepLocation, int opcode, 
+    private static void executeCheckSig(Transaction txContainingThis, int index, Script script,
+                                        LinkedList<byte[]> stack, int lastCodeSepLocation, int opcode,
+                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
+        executeCheckSig(txContainingThis, index, script, stack, lastCodeSepLocation, opcode,
+            Coin.ZERO, false, verifyFlags);
+    }
+
+    private static void executeCheckSig(Transaction txContainingThis, int index, Script script,
+                                        LinkedList<byte[]> stack, int lastCodeSepLocation, int opcode,
+                                        Coin value, boolean segwit,
                                         Set<VerifyFlag> verifyFlags) throws ScriptException {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
             || verifyFlags.contains(VerifyFlag.DERSIG)
@@ -1442,7 +1526,7 @@ public class Script {
         } catch (IOException e) {
             throw new RuntimeException(e); // Cannot happen
         }
-        connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
+        if (!segwit) connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
 
         // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
         boolean sigValid = false;
@@ -1451,7 +1535,11 @@ public class Script {
                 verifyFlags.contains(VerifyFlag.LOW_S));
 
             // TODO: Should check hash type is known
-            Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
+            Sha256Hash hash = segwit
+                ? txContainingThis.hashForSignatureWitness(
+                    index, connectedScript, value, sig.sigHashMode(), sig.anyoneCanPay())
+                : txContainingThis.hashForSignature(
+                    index, connectedScript, (byte) sig.sighashFlags);
             sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
@@ -1471,7 +1559,14 @@ public class Script {
     }
 
     private static int executeMultiSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                       int opCount, int lastCodeSepLocation, int opcode, 
+                                       int opCount, int lastCodeSepLocation, int opcode,
+                                       Set<VerifyFlag> verifyFlags) throws ScriptException {
+        return executeMultiSig(txContainingThis, index, script, stack, opCount, lastCodeSepLocation, opcode,
+            Coin.ZERO, false, verifyFlags);
+    }
+
+    private static int executeMultiSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
+                                       int opCount, int lastCodeSepLocation, int opcode, Coin value, boolean segwit,
                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
             || verifyFlags.contains(VerifyFlag.DERSIG)
@@ -1508,14 +1603,16 @@ public class Script {
         byte[] prog = script.getProgram();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
-        for (byte[] sig : sigs) {
-            UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
-            try {
-                writeBytes(outStream, sig);
-            } catch (IOException e) {
-                throw new RuntimeException(e); // Cannot happen
+        if (!segwit) {
+            for (byte[] sig : sigs) {
+                UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
+                try {
+                    writeBytes(outStream, sig);
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // Cannot happen
+                }
+                connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
             }
-            connectedScript = removeAllInstancesOf(connectedScript, outStream.toByteArray());
         }
 
         boolean valid = true;
@@ -1525,7 +1622,11 @@ public class Script {
             // more expensive than hashing, its not a big deal.
             try {
                 TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical);
-                Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
+                Sha256Hash hash = segwit
+                    ? txContainingThis.hashForSignatureWitness(
+                        index, connectedScript, value, sig.sigHashMode(), sig.anyoneCanPay())
+                    : txContainingThis.hashForSignature(
+                        index, connectedScript, (byte) sig.sighashFlags);
                 if (ECKey.verify(hash.getBytes(), sig, pubKey))
                     sigs.pollFirst();
             } catch (Exception e) {
@@ -1567,7 +1668,13 @@ public class Script {
     @Deprecated
     public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey)
             throws ScriptException {
-        correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, ALL_VERIFY_FLAGS);
+        correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, Coin.ZERO, ALL_VERIFY_FLAGS);
+    }
+
+    @Deprecated
+    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
+                                Set<VerifyFlag> verifyFlags) throws ScriptException {
+        correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, Coin.ZERO, verifyFlags);
     }
 
     /**
@@ -1576,10 +1683,11 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @param verifyFlags Each flag enables one validation rule. If in doubt, use {@link #correctlySpends(Transaction, long, Script)}
+     * @param value The amount being spent by this script.
+     * @param verifyFlags Each flag enables one validation rule. If in doubt, use {@link #ALL_VERIFY_FLAGS)}
      *                    which sets all flags.
      */
-    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
+    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey, Coin value,
                                 Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
@@ -1590,15 +1698,15 @@ public class Script {
         }
         if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
-        
+
         LinkedList<byte[]> stack = new LinkedList<>();
         LinkedList<byte[]> p2shStack = null;
         
-        executeScript(txContainingThis, scriptSigIndex, this, stack, verifyFlags);
+        executeScript(txContainingThis, scriptSigIndex, this, stack, value, false, verifyFlags);
         if (verifyFlags.contains(VerifyFlag.P2SH))
             p2shStack = new LinkedList<>(stack);
-        executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
-        
+        executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, value, false, verifyFlags);
+
         if (stack.size() == 0)
             throw new ScriptException("Stack empty at end of script execution.");
         
@@ -1626,13 +1734,32 @@ public class Script {
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
             Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
             
-            executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
-            
+            executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, value, false, verifyFlags);
+
             if (p2shStack.size() == 0)
                 throw new ScriptException("P2SH stack empty at end of script execution.");
-            
+
             if (!castToBool(p2shStack.pollLast()))
-                throw new ScriptException("P2SH script execution resulted in a non-true stack");
+                throw new ScriptException("P2SH script execution resulted in a non-true stack: " + p2shStack);
+
+            scriptPubKeyP2SH.checkWitness(txContainingThis, scriptSigIndex, value, verifyFlags);
+        } else {
+            scriptPubKey.checkWitness(txContainingThis, scriptSigIndex, value, verifyFlags);
+        }
+    }
+
+    private void checkWitness(Transaction tx, long index, Coin value, Set<VerifyFlag> verifyFlags) {
+        if (verifyFlags.contains(VerifyFlag.SEGWIT) && isWitnessProgram()) {
+            TransactionWitness witness = tx.getWitness((int) index);
+            Script scriptCode = scriptCode(witness);
+            LinkedList<byte[]> witnessStack = witnessStack(witness);
+            executeScript(tx, index, scriptCode, witnessStack, value, true, verifyFlags);
+
+            if (witnessStack.isEmpty())
+                throw new ScriptException("Witness stack empty at end of script execution.");
+
+            if (!castToBool(witnessStack.pollLast()))
+                throw new ScriptException("Witness script execution resulted in a non-true stack: " + witnessStack);
         }
     }
 
@@ -1655,6 +1782,10 @@ public class Script {
             type = ScriptType.PUB_KEY;
         } else if (isPayToScriptHash()) {
             type = ScriptType.P2SH;
+        } else if (isSentToP2WPKH()) {
+            type = ScriptType.P2WPKH;
+        } else if (isSentToP2WSH()) {
+            type = ScriptType.P2WSH;
         }
         return type;
     }
@@ -1669,5 +1800,67 @@ public class Script {
     @Override
     public int hashCode() {
         return Arrays.hashCode(getQuickProgram());
+    }
+
+    public boolean isWitnessProgram() {
+        return (chunks.size() == 2 && chunks.get(0).equalsOpCode(OP_0))
+            && (chunks.get(1).isPushData());
+    }
+
+    /**
+     * scriptCode for witness. Read BIP143 for more information.
+     * @return
+     */
+    public Script scriptCode(TransactionWitness witness) {
+        byte[] expectedHash = getPubKeyHash();
+        byte[] pubKeyOrScript = witness.getPush(witness.getPushCount() - 1);
+
+        if (isSentToP2WPKH()) {
+            byte[] pubKeyHash = Utils.sha256hash160(pubKeyOrScript);
+            if (witness.getPushCount() == 2 && Arrays.equals(expectedHash, pubKeyHash))
+                return scriptCode();
+            else
+                throw new ScriptException("Incorrect public key hash or P2WPKH witness push count");
+        } else if (isSentToP2WSH()) {
+            byte[] scriptHash = Sha256Hash.hash(pubKeyOrScript);
+            if (Arrays.equals(expectedHash, scriptHash))
+                return new Script(pubKeyOrScript);
+            else
+                throw new ScriptException("Incorrect witness script hash");
+        } else {
+            throw new ScriptException("Not a valid witness program");
+        }
+    }
+
+    /**
+     * scriptCode for P2WPKH transactions. See BIP143.
+     * @return
+     */
+    public Script scriptCode() {
+        if (isSentToP2WPKH())
+            return new ScriptBuilder()
+                .op(OP_DUP)
+                .op(OP_HASH160)
+                .data(getPubKeyHash())
+                .op(OP_EQUALVERIFY)
+                .op(OP_CHECKSIG)
+                .build();
+        else
+            throw new IllegalStateException("This method cannot compute scriptCode for anything but P2WPKH");
+    }
+
+    public LinkedList<byte[]> witnessStack(TransactionWitness witness) {
+        LinkedList<byte[]> stack = new LinkedList<byte[]>();
+
+        if (isSentToP2WPKH()) {
+            stack.add(witness.getPush(0));
+            stack.add(witness.getPush(1));
+        } else if (isSentToP2WSH()) {
+            for (int i = 0; i < witness.getPushCount() - 1; i++) {
+                stack.add(witness.getPush(i));
+            }
+        }
+
+        return stack;
     }
 }
