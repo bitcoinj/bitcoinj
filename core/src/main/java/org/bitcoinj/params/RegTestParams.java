@@ -37,6 +37,11 @@ public class RegTestParams extends TestNet2Params {
         subsidyDecreaseBlockCount = 150;
         port = 18444;
         id = ID_REGTEST;
+        addressHeader = 111;
+        p2shHeader = 196;
+        p2wpkhHeader = 3;
+        p2wshHeader = 40;
+        acceptableAddressCodes = new int[] { addressHeader, p2shHeader, p2wpkhHeader, p2wshHeader };
 
         majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;

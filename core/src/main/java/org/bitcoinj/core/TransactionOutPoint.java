@@ -67,7 +67,10 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     public TransactionOutPoint(NetworkParameters params, TransactionOutput connectedOutput) {
-        this(params, connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+        this(
+            params,
+            connectedOutput.getIndex(),
+            connectedOutput.getParentTransactionHash());
         this.connectedOutput = connectedOutput;
     }
 
