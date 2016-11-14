@@ -41,7 +41,6 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-import com.subgraph.orchid.TorClient;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -234,7 +233,6 @@ public class WalletTool {
         OptionSpec<String> passwordFlag = parser.accepts("password").withRequiredArg();
         OptionSpec<String> paymentRequestLocation = parser.accepts("payment-request").withRequiredArg();
         parser.accepts("no-pki");
-        parser.accepts("tor");
         parser.accepts("dump-privkeys");
         OptionSpec<String> refundFlag = parser.accepts("refund-to").withRequiredArg();
         OptionSpec<String> txHashFlag = parser.accepts("txhash").withRequiredArg();
@@ -1201,13 +1199,6 @@ public class WalletTool {
         }
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
-        if (options.has("tor")) {
-            try {
-                peers = PeerGroup.newWithTor(params, chain, new TorClient());
-            } catch (TimeoutException e) {
-                System.err.println("Tor startup timed out, falling back to clear net ...");
-            }
-        }
         if (peers == null) {
             peers = new PeerGroup(params, chain);
         }
@@ -1226,8 +1217,6 @@ public class WalletTool {
                     System.exit(1);
                 }
             }
-        } else if (!options.has("tor")) {
-            peers.addPeerDiscovery(new DnsDiscovery(params));
         }
     }
 

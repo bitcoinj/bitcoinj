@@ -23,11 +23,8 @@ import com.google.common.collect.*;
 import com.google.common.net.*;
 import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
-import com.squareup.okhttp.*;
-import com.subgraph.orchid.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.crypto.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.*;
@@ -84,7 +81,6 @@ public class PeerGroup implements TransactionBroadcaster {
      * get through.
      */
     public static final int DEFAULT_CONNECTIONS = 12;
-    private static final int TOR_TIMEOUT_SECONDS = 60;
     private volatile int vMaxPeersToDiscoverCount = 100;
     private static final long DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS = 5000;
     private volatile long vPeerDiscoveryTimeoutMillis = DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS;
@@ -113,7 +109,6 @@ public class PeerGroup implements TransactionBroadcaster {
     // Currently connecting peers.
     private final CopyOnWriteArrayList<Peer> pendingPeers;
     private final ClientConnectionManager channels;
-    @Nullable private final TorClient torClient;
 
     // The peer that has been selected for the purposes of downloading announced data.
     @GuardedBy("lock") private Peer downloadPeer;
@@ -314,95 +309,22 @@ public class PeerGroup implements TransactionBroadcaster {
         this(context, chain, new NioClientManager());
     }
 
-    /** See {@link #newWithTor(Context, AbstractBlockChain, TorClient)} */
-    public static PeerGroup newWithTor(NetworkParameters params, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
-        return newWithTor(Context.getOrCreate(params), chain, torClient);
-    }
-
-    /**
-     * <p>Creates a PeerGroup that accesses the network via the Tor network. The provided TorClient is used so you can
-     * preconfigure it beforehand. It should not have been already started. You can just use "new TorClient()" if
-     * you don't have any particular configuration requirements.</p>
-     *
-     * <p>Peer discovery is automatically configured to use DNS seeds resolved via a random selection of exit nodes.
-     * If running on the Oracle JDK the unlimited strength jurisdiction checks will also be overridden,
-     * as they no longer apply anyway and can cause startup failures due to the requirement for AES-256.</p>
-     *
-     * <p>The user does not need any additional software for this: it's all pure Java. As of April 2014 <b>this mode
-     * is experimental</b>.</p>
-     *
-     * @throws TimeoutException if Tor fails to start within 20 seconds.
-     */
-    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockChain chain, TorClient torClient) throws TimeoutException {
-        return newWithTor(context, chain, torClient, true);
-    }
-
-    /**
-     * <p>Creates a PeerGroup that accesses the network via the Tor network. The provided TorClient is used so you can
-     * preconfigure it beforehand. It should not have been already started. You can just use "new TorClient()" if
-     * you don't have any particular configuration requirements.</p>
-     *
-     * <p>If running on the Oracle JDK the unlimited strength jurisdiction checks will also be overridden,
-     * as they no longer apply anyway and can cause startup failures due to the requirement for AES-256.</p>
-     *
-     * <p>The user does not need any additional software for this: it's all pure Java. As of April 2014 <b>this mode
-     * is experimental</b>.</p>
-     *
-     * @param doDiscovery if true, DNS or HTTP peer discovery will be performed via Tor: this is almost always what you want.
-     * @throws java.util.concurrent.TimeoutException if Tor fails to start within 20 seconds.
-     */
-    public static PeerGroup newWithTor(Context context, @Nullable AbstractBlockChain chain, TorClient torClient, boolean doDiscovery) throws TimeoutException {
-        checkNotNull(torClient);
-        DRMWorkaround.maybeDisableExportControls();
-        BlockingClientManager manager = new BlockingClientManager(torClient.getSocketFactory());
-        final int CONNECT_TIMEOUT_MSEC = TOR_TIMEOUT_SECONDS * 1000;
-        manager.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
-        PeerGroup result = new PeerGroup(context, chain, manager, torClient);
-        result.setConnectTimeoutMillis(CONNECT_TIMEOUT_MSEC);
-
-        if (doDiscovery) {
-            NetworkParameters params = context.getParams();
-            HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
-            if (httpSeeds.length > 0) {
-                // Use HTTP discovery when Tor is active and there is a Cartographer seed, for a much needed speed boost.
-                OkHttpClient httpClient = new OkHttpClient();
-                httpClient.setSocketFactory(torClient.getSocketFactory());
-                List<PeerDiscovery> discoveries = Lists.newArrayList();
-                for (HttpDiscovery.Details httpSeed : httpSeeds)
-                    discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
-                result.addPeerDiscovery(new MultiplexingDiscovery(params, discoveries));
-            } else {
-                result.addPeerDiscovery(new TorDiscovery(params, torClient));
-            }
-        }
-        return result;
-    }
-
     /** See {@link #PeerGroup(Context, AbstractBlockChain, ClientConnectionManager)} */
     public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(Context.getOrCreate(params), chain, connectionManager, null);
+        this(Context.getOrCreate(params), chain, connectionManager);
     }
 
     /**
      * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
      * connections and keep track of existing ones.
      */
-    public PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(context, chain, connectionManager, null);
-    }
-
-    /**
-     * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
-     * connections and keep track of existing ones.
-     */
-    private PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, @Nullable TorClient torClient) {
+    private PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
         checkNotNull(context);
         this.params = context.getParams();
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<Wallet>();
         peerFilterProviders = new CopyOnWriteArrayList<PeerFilterProvider>();
-        this.torClient = torClient;
 
         executor = createPrivateExecutor();
 
@@ -1137,16 +1059,6 @@ public class PeerGroup implements TransactionBroadcaster {
             public void run() {
                 try {
                     log.info("Starting ...");
-                    if (torClient != null) {
-                        log.info("Starting Tor/Orchid ...");
-                        torClient.start();
-                        try {
-                            torClient.waitUntilReady(TOR_TIMEOUT_SECONDS * 1000);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        log.info("Tor ready");
-                    }
                     channels.startAsync();
                     channels.awaitRunning();
                     triggerConnections();
@@ -1182,9 +1094,6 @@ public class PeerGroup implements TransactionBroadcaster {
                     channels.awaitTerminated();
                     for (PeerDiscovery peerDiscovery : peerDiscoverers) {
                         peerDiscovery.shutdown();
-                    }
-                    if (torClient != null) {
-                        torClient.stop();
                     }
                     vRunning = false;
                     log.info("Stopped.");
@@ -2325,14 +2234,6 @@ public class PeerGroup implements TransactionBroadcaster {
         } finally {
             lock.unlock();
         }
-    }
-
-    /**
-     * Returns the {@link com.subgraph.orchid.TorClient} object for this peer group, if Tor is in use, null otherwise.
-     */
-    @Nullable
-    public TorClient getTorClient() {
-        return torClient;
     }
 
     /**
