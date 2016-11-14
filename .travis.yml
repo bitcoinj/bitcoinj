@@ -5,7 +5,7 @@ jdk: oraclejdk8
 install: true # remove default
 script:
   - mvn -q clean install -Pno-network
-  - jdk_switcher use openjdk6
+  - jdk_switcher use openjdk7
   - cd core
   - mvn -q clean package -Pno-network
 
