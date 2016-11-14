@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+import okhttp3.OkHttpClient;
+
 import static com.google.common.base.Preconditions.*;
 
 /**

@@ -19,7 +19,6 @@ package org.bitcoinj.net.discovery;
 
 import com.google.common.annotations.*;
 import com.google.protobuf.*;
-import com.squareup.okhttp.*;
 import org.bitcoin.crawler.*;
 import org.bitcoinj.core.*;
 import org.slf4j.*;
@@ -31,6 +30,11 @@ import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.zip.*;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static com.google.common.base.Preconditions.*;
 

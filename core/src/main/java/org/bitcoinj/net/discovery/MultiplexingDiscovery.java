@@ -18,7 +18,6 @@
 package org.bitcoinj.net.discovery;
 
 import com.google.common.collect.Lists;
-import com.squareup.okhttp.OkHttpClient;
 
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.VersionMessage;
@@ -33,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
+
+import okhttp3.OkHttpClient;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
