@@ -264,6 +264,29 @@ public class Transaction extends ChildMessage {
     }
 
     /**
+     * Create a new version of this transaction that serializes using the pre-SegWit method,
+     * excluding witness data.
+     */
+    public Transaction disableWitnessSerialization() {
+        if ((transactionOptions & TransactionOptions.WITNESS) == TransactionOptions.WITNESS) {
+            final Transaction tx = new Transaction(params);
+            tx.transactionOptions = transactionOptions & ~TransactionOptions.WITNESS;
+            for (TransactionInput i: getInputs()) {
+                tx.addInput(i);
+            }
+            for (TransactionOutput o: getOutputs()) {
+                tx.addOutput(o);
+            }
+            if (tx.hasWitness())
+                for (int i = 0; i < countWitnesses(); i++)
+                    tx.setWitness(i, getWitness(i));
+            return tx;
+        } else {
+            return this;
+        }
+    }
+
+    /**
      * Returns the transaction hash (aka txid) as you see them in block explorers. It is used as a reference by
      * transaction inputs via outpoints.
      */
