@@ -46,9 +46,11 @@ public class VersionMessage extends Message {
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
     /** A services flag that denotes whether the peer has a copy of the block chain or not. */
-    public static final int NODE_NETWORK = 1;
+    public static final int NODE_NETWORK = 1 << 0;
     /** A flag that denotes whether the peer supports the getutxos message or not. */
-    public static final int NODE_GETUTXOS = 2;
+    public static final int NODE_GETUTXOS = 1 << 1;
+    /** Indicates that a node can be asked for blocks and transactions including witness data. */
+    public static final int NODE_WITNESS = 1 << 3;
 
     /**
      * The version number of the protocol spoken.
@@ -289,5 +291,9 @@ public class VersionMessage extends Message {
     public boolean isGetUTXOsSupported() {
         return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
                 (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
+    }
+
+    public boolean isWitnessSupported() {
+        return (localServices & NODE_WITNESS) == NODE_WITNESS;
     }
 }
