@@ -19,17 +19,40 @@ package org.bitcoinj.core;
 import com.google.common.base.Objects;
 
 public class InventoryItem {
-    
+
     /**
      * 4 byte uint32 type field + 32 byte hash
      */
     static final int MESSAGE_LENGTH = 36;
-    
+
+    static final int WITNESS_FLAG = 1 << 30;
+
     public enum Type {
-        Error,
-        Transaction,
-        Block,
-        FilteredBlock
+        Error(0),
+        Transaction(1),
+        Block(2),
+        FilteredBlock(3),
+        WitnessBlock(Block.code | WITNESS_FLAG),
+        WitnessTransaction(Transaction.code | WITNESS_FLAG),
+        FilteredWitnessBlock(FilteredBlock.code | WITNESS_FLAG);
+
+        private int code;
+        Type(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Type parse(int code) {
+            for (Type type : values()) {
+                if (type.code() == code) {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 
     public final Type type;
@@ -56,5 +79,9 @@ public class InventoryItem {
     @Override
     public int hashCode() {
         return Objects.hashCode(type, hash);
+    }
+
+    InventoryItem toWitnessItem() {
+        return new InventoryItem(Type.parse(type.code() | WITNESS_FLAG), hash);
     }
 }

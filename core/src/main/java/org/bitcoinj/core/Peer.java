@@ -1230,7 +1230,7 @@ public class Peer extends PeerSocketHandler {
                 it.remove();
             } else {
                 log.debug("{}: getdata on tx {}", getAddress(), item.hash);
-                getdata.addItem(item);
+                getdata.addItem(vPeerVersionMessage.isWitnessSupported() ? item.toWitnessItem() : item);
                 // Register with the garbage collector that we care about the confidence data for a while.
                 pendingTxDownloads.add(conf);
             }
@@ -1270,7 +1270,7 @@ public class Peer extends PeerSocketHandler {
                                 getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
-                                getdata.addItem(item);
+                                getdata.addItem(vPeerVersionMessage.isWitnessSupported() ? item.toWitnessItem() : item);
                             }
                             pendingBlockDownloads.add(item.hash);
                         }
@@ -1458,6 +1458,7 @@ public class Peer extends PeerSocketHandler {
                     this, toHash, chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
+            //
             blockLocator.add(cursor.getHeader().getHash());
             try {
                 cursor = cursor.getPrev(store);
