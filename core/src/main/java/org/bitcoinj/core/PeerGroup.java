@@ -550,11 +550,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 for (Wallet w : wallets) {
                     Transaction tx = w.getTransaction(item.hash);
                     if (tx == null) continue;
-                    if (item.type == InventoryItem.Type.WitnessTransaction)
-                        tx.enableWitness();
+                    if (item.type == InventoryItem.Type.Transaction)
+                        transactions.add(tx.disableWitnessSerialization());
                     else
-                        tx.disableWitness();
-                    transactions.add(tx);
+                        transactions.add(tx);
                     it.remove();
                     break;
                 }
