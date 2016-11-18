@@ -49,6 +49,8 @@ public class VersionMessage extends Message {
     public static final int NODE_NETWORK = 1 << 0;
     /** A service bit that denotes whether the peer supports the getutxos message or not. */
     public static final int NODE_GETUTXOS = 1 << 1;
+    /** Indicates that a node can be asked for blocks and transactions including witness data. */
+    public static final int NODE_WITNESS = 1 << 3;
     /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
     public static final int NODE_BITCOIN_CASH = 1 << 5;
 
@@ -291,5 +293,10 @@ public class VersionMessage extends Message {
     public boolean isGetUTXOsSupported() {
         return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
                 (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
+    }
+
+    /** Returns true if a peer can be asked for blocks and transactions including witness data. */
+    public boolean isWitnessSupported() {
+        return (localServices & NODE_WITNESS) == NODE_WITNESS;
     }
 }

@@ -83,23 +83,14 @@ public abstract class ListMessage extends Message {
                 throw new ProtocolException("Ran off the end of the INV");
             }
             int typeCode = (int) readUint32();
-            InventoryItem.Type type;
+            InventoryItem.Type type = InventoryItem.Type.parse(typeCode);
             // See ppszTypeName in net.h
-            switch (typeCode) {
-                case 0:
-                    type = InventoryItem.Type.Error;
-                    break;
-                case 1:
-                    type = InventoryItem.Type.Transaction;
-                    break;
-                case 2:
-                    type = InventoryItem.Type.Block;
-                    break;
-                case 3:
-                    type = InventoryItem.Type.FilteredBlock;
-                    break;
-                default:
-                    throw new ProtocolException("Unknown CInv type: " + typeCode);
+            if (type == null
+                    || (type != InventoryItem.Type.Error
+                        && type != InventoryItem.Type.Block
+                        && type != InventoryItem.Type.Transaction
+                        && type != InventoryItem.Type.FilteredBlock)) {
+                throw new ProtocolException("Unknown CInv type: " + typeCode);
             }
             InventoryItem item = new InventoryItem(type, readHash());
             items.add(item);
@@ -112,7 +103,7 @@ public abstract class ListMessage extends Message {
         stream.write(new VarInt(items.size()).encode());
         for (InventoryItem i : items) {
             // Write out the type code.
-            Utils.uint32ToByteStreamLE(i.type.ordinal(), stream);
+            Utils.uint32ToByteStreamLE(i.type.code(), stream);
             // And now the hash.
             stream.write(i.hash.getReversedBytes());
         }
