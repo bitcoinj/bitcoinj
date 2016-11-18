@@ -38,8 +38,8 @@ public abstract class EmptyMessage extends Message {
     }
 
     public EmptyMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
-        length = 0;
+        super(params, payload, offset, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),
+                params.getDefaultSerializer(), payload.length);
     }
 
     @Override
