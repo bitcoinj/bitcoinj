@@ -179,6 +179,14 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * Sets a wallet factory which will be used when the kit creates a new wallet.
+     */
+    public WalletAppKit setWalletFactory(WalletProtobufSerializer.WalletFactory walletFactory) {
+        this.walletFactory = walletFactory;
+        return this;
+    }
+
+    /**
      * If called, then an embedded Tor client library will be used to connect to the P2P network. The user does not need
      * any additional software for this: it's all pure Java. As of April 2014 <b>this mode is experimental</b>.
      */
