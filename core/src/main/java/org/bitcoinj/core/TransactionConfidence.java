@@ -357,6 +357,8 @@ public class TransactionConfidence {
                         getAppearedAtChainHeight(), getDepthInBlocks()));
                 break;
         }
+        if (source != Source.UNKNOWN)
+            builder.append(" Source: ").append(source);
         return builder.toString();
     }
 
