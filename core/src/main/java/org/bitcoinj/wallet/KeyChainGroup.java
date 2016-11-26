@@ -1015,6 +1015,19 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
+    public String printAllPubKeysAsHex() {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (basic != null) {
+            List<ECKey> keys = basic.getKeys();
+            Collections.sort(keys, ECKey.AGE_COMPARATOR);
+            for (ECKey key : keys)
+                stringBuilder.append('"').append(Utils.HEX.encode(key.getPubKey())).append('"').append(",\n");
+        }
+        for (DeterministicKeyChain chain : chains)
+            chain.printAllPubKeysAsHex(stringBuilder);
+        return stringBuilder.toString();
+    }
+
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null)

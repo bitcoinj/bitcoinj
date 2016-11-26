@@ -1359,6 +1359,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         throw new UnsupportedOperationException();
     }
 
+    public void printAllPubKeysAsHex(StringBuilder stringBuilder) {
+        for (ECKey key : getKeys(false, false))
+            stringBuilder.append('"').append(Utils.HEX.encode(key.getPubKey())).append('"').append(",\n");
+    }
+
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
