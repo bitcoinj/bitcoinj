@@ -57,7 +57,7 @@ public class BaseTaggableObject implements TaggableObject {
         checkNotNull(tag);
         checkNotNull(value);
         if (tags == null)
-            tags = new HashMap<String, ByteString>();
+            tags = new HashMap<>();
         tags.put(tag, value);
     }
 

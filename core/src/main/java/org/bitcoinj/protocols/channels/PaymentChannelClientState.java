@@ -103,7 +103,7 @@ public abstract class PaymentChannelClientState {
     protected StoredClientChannel storedChannel;
 
     PaymentChannelClientState(StoredClientChannel storedClientChannel, Wallet wallet) throws VerificationException {
-        this.stateMachine = new StateMachine<State>(State.UNINITIALISED, getStateTransitions());
+        this.stateMachine = new StateMachine<>(State.UNINITIALISED, getStateTransitions());
         this.wallet = checkNotNull(wallet);
         this.myKey = checkNotNull(storedClientChannel.myKey);
         this.serverKey = checkNotNull(storedClientChannel.serverKey);
@@ -140,7 +140,7 @@ public abstract class PaymentChannelClientState {
      */
     public PaymentChannelClientState(Wallet wallet, ECKey myKey, ECKey serverKey,
                                      Coin value, long expiryTimeInSeconds) throws VerificationException {
-        this.stateMachine = new StateMachine<State>(State.UNINITIALISED, getStateTransitions());
+        this.stateMachine = new StateMachine<>(State.UNINITIALISED, getStateTransitions());
         this.wallet = checkNotNull(wallet);
         this.serverKey = checkNotNull(serverKey);
         this.myKey = checkNotNull(myKey);

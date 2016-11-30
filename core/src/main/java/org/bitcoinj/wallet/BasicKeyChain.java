@@ -58,9 +58,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     public BasicKeyChain(@Nullable KeyCrypter crypter) {
         this.keyCrypter = crypter;
-        hashToKeys = new LinkedHashMap<ByteString, ECKey>();
-        pubkeyToKeys = new LinkedHashMap<ByteString, ECKey>();
-        listeners = new CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>>();
+        hashToKeys = new LinkedHashMap<>();
+        pubkeyToKeys = new LinkedHashMap<>();
+        listeners = new CopyOnWriteArrayList<>();
     }
 
     /** Returns the {@link KeyCrypter} in use or null if the key chain is not encrypted. */
@@ -99,7 +99,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
             if (hashToKeys.size() < numberOfKeys) {
                 checkState(keyCrypter == null);
 
-                List<ECKey> keys = new ArrayList<ECKey>();
+                List<ECKey> keys = new ArrayList<>();
                 for (int i = 0; i < numberOfKeys - hashToKeys.size(); i++) {
                     keys.add(new ECKey());
                 }
@@ -109,7 +109,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 queueOnKeysAdded(immutableKeys);
             }
 
-            List<ECKey> keysToReturn = new ArrayList<ECKey>();
+            List<ECKey> keysToReturn = new ArrayList<>();
             int count = 0;
             while (hashToKeys.values().iterator().hasNext() && numberOfKeys != count) {
                 keysToReturn.add(hashToKeys.values().iterator().next());
@@ -125,7 +125,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public List<ECKey> getKeys() {
         lock.lock();
         try {
-            return new ArrayList<ECKey>(hashToKeys.values());
+            return new ArrayList<>(hashToKeys.values());
         } finally {
             lock.unlock();
         }
@@ -145,7 +145,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
             for (ECKey key : keys) {
                 checkKeyEncryptionStateMatches(key);
             }
-            List<ECKey> actuallyAdded = new ArrayList<ECKey>(keys.size());
+            List<ECKey> actuallyAdded = new ArrayList<>(keys.size());
             for (final ECKey key : keys) {
                 if (hasKey(key)) continue;
                 actuallyAdded.add(key);
@@ -284,7 +284,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     public List<ListenerRegistration<KeyChainEventListener>> getListeners() {
-        return new ArrayList<ListenerRegistration<KeyChainEventListener>>(listeners);
+        return new ArrayList<>(listeners);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,7 +294,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Map<ECKey, Protos.Key.Builder> serializeToEditableProtobufs() {
-        Map<ECKey, Protos.Key.Builder> result = new LinkedHashMap<ECKey, Protos.Key.Builder>();
+        Map<ECKey, Protos.Key.Builder> result = new LinkedHashMap<>();
         for (ECKey ecKey : hashToKeys.values()) {
             Protos.Key.Builder protoKey = serializeEncryptableItem(ecKey);
             protoKey.setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
@@ -306,7 +306,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public List<Protos.Key> serializeToProtobuf() {
         Collection<Protos.Key.Builder> builders = serializeToEditableProtobufs().values();
-        List<Protos.Key> result = new ArrayList<Protos.Key>(builders.size());
+        List<Protos.Key> result = new ArrayList<>(builders.size());
         for (Protos.Key.Builder builder : builders) result.add(builder.build());
         return result;
     }
@@ -407,7 +407,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     @Override
     public void addEventListener(KeyChainEventListener listener, Executor executor) {
-        listeners.add(new ListenerRegistration<KeyChainEventListener>(listener, executor));
+        listeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     @Override

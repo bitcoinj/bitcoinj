@@ -105,7 +105,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         serverKey = serverWallet.freshReceiveKey();
         chain.addWallet(serverWallet);
 
-        broadcasts = new LinkedBlockingQueue<TxFuturePair>();
+        broadcasts = new LinkedBlockingQueue<>();
         mockBroadcaster = new TransactionBroadcaster() {
             @Override
             public TransactionBroadcast broadcastTransaction(Transaction tx) {

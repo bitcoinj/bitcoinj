@@ -213,6 +213,6 @@ public class MnemonicCodeTest {
     }
 
     public static List<String> split(String words) {
-        return new ArrayList<String>(Arrays.asList(words.split("\\s+")));
+        return new ArrayList<>(Arrays.asList(words.split("\\s+")));
     }
 }

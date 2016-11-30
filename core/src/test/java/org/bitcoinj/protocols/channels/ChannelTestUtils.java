@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ChannelTestUtils {
     public static class RecordingServerConnection implements PaymentChannelServer.ServerConnection {
-        public BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
+        public BlockingQueue<Object> q = new LinkedBlockingQueue<>();
 
         @Override
         public void sendToClient(Protos.TwoWayChannelMessage msg) {
@@ -85,7 +85,7 @@ public class ChannelTestUtils {
     }
 
     public static class RecordingClientConnection implements PaymentChannelClient.ClientConnection {
-        public BlockingQueue<Object> q = new LinkedBlockingQueue<Object>();
+        public BlockingQueue<Object> q = new LinkedBlockingQueue<>();
         static final int IGNORE_EXPIRE = -1;
         private final int maxExpireTime;
 

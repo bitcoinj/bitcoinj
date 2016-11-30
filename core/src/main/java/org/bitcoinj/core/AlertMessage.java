@@ -87,7 +87,7 @@ public class AlertMessage extends Message {
         }
         // Using a hashset here is very inefficient given that this will normally be only one item. But Java doesn't
         // make it easy to do better. What we really want is just an array-backed set.
-        Set<Long> cancelSet = new HashSet<Long>((int) cancelSetSize);
+        Set<Long> cancelSet = new HashSet<>((int) cancelSetSize);
         for (long i = 0; i < cancelSetSize; i++) {
             cancelSet.add(readUint32());
         }
@@ -98,7 +98,7 @@ public class AlertMessage extends Message {
         if (subverSetSize < 0 || subverSetSize > MAX_SET_SIZE) {
             throw new ProtocolException("Bad subver set size: " + subverSetSize);
         }
-        Set<String> matchingSubVers = new HashSet<String>((int) subverSetSize);
+        Set<String> matchingSubVers = new HashSet<>((int) subverSetSize);
         for (long i = 0; i < subverSetSize; i++) {
             matchingSubVers.add(readStr());
         }

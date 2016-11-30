@@ -168,8 +168,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.schemaName = schemaName;
         this.username = username;
         this.password = password;
-        this.conn = new ThreadLocal<Connection>();
-        this.allConnections = new LinkedList<Connection>();
+        this.conn = new ThreadLocal<>();
+        this.allConnections = new LinkedList<>();
 
         try {
             Class.forName(getDatabaseDriverClass());
@@ -246,7 +246,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The SQL prepared statements.
      */
     protected List<String> getCompatibilitySQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(SELECT_COMPATIBILITY_COINBASE_SQL);
         return sqlStatements;
     }
@@ -264,7 +264,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The SQL drop statements.
      */
     protected List<String> getDropTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(DROP_SETTINGS_TABLE);
         sqlStatements.add(DROP_HEADERS_TABLE);
         sqlStatements.add(DROP_UNDOABLE_TABLE);
@@ -810,7 +810,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                         ((transactions[offset++] & 0xFF) << 8) |
                         ((transactions[offset++] & 0xFF) << 16) |
                         ((transactions[offset++] & 0xFF) << 24);
-                List<Transaction> transactionList = new LinkedList<Transaction>();
+                List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {
                     Transaction tx = params.getDefaultSerializer().makeTransaction(transactions, offset);
                     transactionList.add(tx);
@@ -1158,7 +1158,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
         PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<UTXO> outputs = new ArrayList<>();
         try {
             maybeConnect();
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());

@@ -78,7 +78,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertEquals(COIN, selection.valueGathered);
 
         // Check we ordered them correctly (by depth).
-        ArrayList<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+        ArrayList<TransactionOutput> candidates = new ArrayList<>();
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));
         DefaultCoinSelector.sortOutputs(candidates);
@@ -98,7 +98,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         Transaction t3 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT));
 
         // Should be ordered t2, t1, t3.
-        ArrayList<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+        ArrayList<TransactionOutput> candidates = new ArrayList<>();
         candidates.add(t3.getOutput(0));
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));

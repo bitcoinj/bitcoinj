@@ -77,9 +77,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        peerToMessageCount = new HashMap<Peer, AtomicInteger>();
-        connectedPeers = new LinkedBlockingQueue<Peer>();
-        disconnectedPeers = new LinkedBlockingQueue<Peer>();
+        peerToMessageCount = new HashMap<>();
+        connectedPeers = new LinkedBlockingQueue<>();
+        disconnectedPeers = new LinkedBlockingQueue<>();
         preMessageReceivedListener = new PreMessageReceivedEventListener() {
             @Override
             public Message onPreMessageReceived(Peer peer, Message m) {
@@ -207,8 +207,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         
         // Check the peer accessors.
         assertEquals(2, peerGroup.numConnectedPeers());
-        Set<Peer> tmp = new HashSet<Peer>(peerGroup.getConnectedPeers());
-        Set<Peer> expectedPeers = new HashSet<Peer>();
+        Set<Peer> tmp = new HashSet<>(peerGroup.getConnectedPeers());
+        Set<Peer> expectedPeers = new HashSet<>();
         expectedPeers.add(peerOf(p1));
         expectedPeers.add(peerOf(p2));
         assertEquals(tmp, expectedPeers);
@@ -783,7 +783,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // First, grab a load of keys from the wallet, and then recreate it so it forgets that those keys were issued.
         Wallet shadow = Wallet.fromSeed(wallet.getParams(), wallet.getKeyChainSeed());
-        List<ECKey> keys = new ArrayList<ECKey>(NUM_KEYS);
+        List<ECKey> keys = new ArrayList<>(NUM_KEYS);
         for (int i = 0; i < NUM_KEYS; i++) {
             keys.add(shadow.freshReceiveKey());
         }

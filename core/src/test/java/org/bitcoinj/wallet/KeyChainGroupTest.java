@@ -389,7 +389,7 @@ public class KeyChainGroupTest {
     public void events() throws Exception {
         // Check that events are registered with the right chains and that if a chain is added, it gets the event
         // listeners attached properly even post-hoc.
-        final AtomicReference<ECKey> ran = new AtomicReference<ECKey>(null);
+        final AtomicReference<ECKey> ran = new AtomicReference<>(null);
         final KeyChainEventListener listener = new KeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> keys) {

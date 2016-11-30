@@ -101,7 +101,7 @@ public class Script {
 
     // Used from ScriptBuilder.
     Script(List<ScriptChunk> chunks) {
-        this.chunks = Collections.unmodifiableList(new ArrayList<ScriptChunk>(chunks));
+        this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         creationTimeSeconds = Utils.currentTimeSeconds();
     }
 
@@ -177,7 +177,7 @@ public class Script {
      * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
-        chunks = new ArrayList<ScriptChunk>(5);   // Common size.
+        chunks = new ArrayList<>(5);   // Common size.
         ByteArrayInputStream bis = new ByteArrayInputStream(program);
         int initialSize = bis.available();
         while (bis.available() > 0) {
@@ -864,8 +864,8 @@ public class Script {
         int opCount = 0;
         int lastCodeSepLocation = 0;
         
-        LinkedList<byte[]> altstack = new LinkedList<byte[]>();
-        LinkedList<Boolean> ifStack = new LinkedList<Boolean>();
+        LinkedList<byte[]> altstack = new LinkedList<>();
+        LinkedList<Boolean> ifStack = new LinkedList<>();
         
         for (ScriptChunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
@@ -1487,7 +1487,7 @@ public class Script {
         if (stack.size() < pubKeyCount + 1)
             throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
 
-        LinkedList<byte[]> pubkeys = new LinkedList<byte[]>();
+        LinkedList<byte[]> pubkeys = new LinkedList<>();
         for (int i = 0; i < pubKeyCount; i++) {
             byte[] pubKey = stack.pollLast();
             pubkeys.add(pubKey);
@@ -1499,7 +1499,7 @@ public class Script {
         if (stack.size() < sigCount + 1)
             throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
 
-        LinkedList<byte[]> sigs = new LinkedList<byte[]>();
+        LinkedList<byte[]> sigs = new LinkedList<>();
         for (int i = 0; i < sigCount; i++) {
             byte[] sig = stack.pollLast();
             sigs.add(sig);
@@ -1591,12 +1591,12 @@ public class Script {
         if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
             throw new ScriptException("Script larger than 10,000 bytes");
         
-        LinkedList<byte[]> stack = new LinkedList<byte[]>();
+        LinkedList<byte[]> stack = new LinkedList<>();
         LinkedList<byte[]> p2shStack = null;
         
         executeScript(txContainingThis, scriptSigIndex, this, stack, verifyFlags);
         if (verifyFlags.contains(VerifyFlag.P2SH))
-            p2shStack = new LinkedList<byte[]>(stack);
+            p2shStack = new LinkedList<>(stack);
         executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
         
         if (stack.size() == 0)

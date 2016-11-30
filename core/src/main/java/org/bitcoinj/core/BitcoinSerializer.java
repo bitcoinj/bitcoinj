@@ -48,7 +48,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private final NetworkParameters params;
     private final boolean parseRetain;
 
-    private static final Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
+    private static final Map<Class<? extends Message>, String> names = new HashMap<>();
 
     static {
         names.put(VersionMessage.class, "version");

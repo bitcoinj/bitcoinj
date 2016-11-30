@@ -201,7 +201,7 @@ public class Block extends Message {
         this.time = time;
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
-        this.transactions = new LinkedList<Transaction>();
+        this.transactions = new LinkedList<>();
         this.transactions.addAll(transactions);
     }
 
@@ -237,7 +237,7 @@ public class Block extends Message {
 
         int numTransactions = (int) readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
-        transactions = new ArrayList<Transaction>(numTransactions);
+        transactions = new ArrayList<>(numTransactions);
         for (int i = 0; i < numTransactions; i++) {
             Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
@@ -619,7 +619,7 @@ public class Block extends Message {
         //    2     3    4  4
         //  / \   / \   / \
         // t1 t2 t3 t4 t5 t5
-        ArrayList<byte[]> tree = new ArrayList<byte[]>();
+        ArrayList<byte[]> tree = new ArrayList<>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
             tree.add(t.getHash().getBytes());
@@ -760,7 +760,7 @@ public class Block extends Message {
     void addTransaction(Transaction t, boolean runSanityChecks) {
         unCacheTransactions();
         if (transactions == null) {
-            transactions = new ArrayList<Transaction>();
+            transactions = new ArrayList<>();
         }
         t.setParent(this);
         if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
@@ -867,7 +867,7 @@ public class Block extends Message {
     @VisibleForTesting
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
-        transactions = new ArrayList<Transaction>();
+        transactions = new ArrayList<>();
         Transaction coinbase = new Transaction(params);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 

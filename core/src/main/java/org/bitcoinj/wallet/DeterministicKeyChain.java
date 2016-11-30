@@ -489,7 +489,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // and calculate the full lookahead zone there, so network requests will always use the right amount.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index, 0, 0);
             basicKeyChain.importKeys(lookahead);
-            List<DeterministicKey> keys = new ArrayList<DeterministicKey>(numberOfKeys);
+            List<DeterministicKey> keys = new ArrayList<>(numberOfKeys);
             for (int i = 0; i < numberOfKeys; i++) {
                 ImmutableList<ChildNumber> path = HDUtils.append(parentKey.getPath(), new ChildNumber(index - numberOfKeys + i, false));
                 DeterministicKey k = hierarchy.get(path, false, false);
@@ -1153,12 +1153,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
 
         if (needed <= lookaheadThreshold)
-            return new ArrayList<DeterministicKey>();
+            return new ArrayList<>();
 
         log.info("{} keys needed for {} = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
                 needed, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
 
-        List<DeterministicKey> result  = new ArrayList<DeterministicKey>(needed);
+        List<DeterministicKey> result  = new ArrayList<>(needed);
         final Stopwatch watch = Stopwatch.createStarted();
         int nextChild = numChildren;
         for (int i = 0; i < needed; i++) {
@@ -1219,7 +1219,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<ECKey> keys = basicKeyChain.getKeys();
         if (!includeLookahead) {
             int treeSize = internalParentKey.getPath().size();
-            List<ECKey> issuedKeys = new LinkedList<ECKey>();
+            List<ECKey> issuedKeys = new LinkedList<>();
             for (ECKey key : keys) {
                 DeterministicKey detkey = (DeterministicKey) key;
                 DeterministicKey parent = detkey.getParent();
@@ -1238,7 +1238,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Returns only the external keys that have been issued by this chain, lookahead not included.
      */
     public List<ECKey> getIssuedReceiveKeys() {
-        final List<ECKey> keys = new ArrayList<ECKey>(getKeys(false, false));
+        final List<ECKey> keys = new ArrayList<>(getKeys(false, false));
         for (Iterator<ECKey> i = keys.iterator(); i.hasNext();) {
             DeterministicKey parent = ((DeterministicKey) i.next()).getParent();
             if (parent == null || !externalParentKey.equals(parent))

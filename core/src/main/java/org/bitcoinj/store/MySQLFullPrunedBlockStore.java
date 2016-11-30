@@ -125,7 +125,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected List<String> getCreateTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
         sqlStatements.add(CREATE_UNDOABLE_TABLE);
@@ -135,7 +135,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected List<String> getCreateIndexesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(CREATE_UNDOABLE_TABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);

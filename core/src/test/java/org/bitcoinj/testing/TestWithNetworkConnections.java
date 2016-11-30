@@ -59,7 +59,7 @@ public class TestWithNetworkConnections {
 
     private NioServer[] peerServers = new NioServer[PEER_SERVERS];
     private final ClientConnectionManager channels;
-    protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<InboundMessageQueuer>();
+    protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<>();
 
     public enum ClientType {
         NIO_CLIENT_MANAGER,

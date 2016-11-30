@@ -62,7 +62,7 @@ public class BitcoindComparisonTool {
 
         FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
         final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
-        final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<Sha256Hash, Block>();
+        final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
         final Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
 
         try {
@@ -155,13 +155,13 @@ public class BitcoindComparisonTool {
                             log.info("Got a request for a header before we had even begun processing blocks!");
                             return null;
                         }
-                        LinkedList<Block> headers = new LinkedList<Block>();
+                        LinkedList<Block> headers = new LinkedList<>();
                         Block it = blockList.hashHeaderMap.get(currentBlock.block.getHash());
                         while (it != null) {
                             headers.addFirst(it);
                             it = blockList.hashHeaderMap.get(it.getPrevBlockHash());
                         }
-                        LinkedList<Block> sendHeaders = new LinkedList<Block>();
+                        LinkedList<Block> sendHeaders = new LinkedList<>();
                         boolean found = false;
                         for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator()) {
                             for (Block b : headers) {
@@ -207,7 +207,7 @@ public class BitcoindComparisonTool {
 
         connectedFuture.get();
 
-        ArrayList<Sha256Hash> locator = new ArrayList<Sha256Hash>(1);
+        ArrayList<Sha256Hash> locator = new ArrayList<>(1);
         locator.add(params.getGenesisBlock().getHash());
         Sha256Hash hashTo = Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000000");
                 
@@ -318,7 +318,7 @@ public class BitcoindComparisonTool {
                     log.error("ERROR: bitcoind had a non-empty mempool, but we expected an empty one on rule " + rule.ruleName);
                     rulesSinceFirstFail++;
                 } else if (mostRecentInv != null) {
-                    Set<InventoryItem> originalRuleSet = new HashSet<InventoryItem>(((MemoryPoolState)rule).mempool);
+                    Set<InventoryItem> originalRuleSet = new HashSet<>(((MemoryPoolState)rule).mempool);
                     boolean matches = mostRecentInv.items.size() == ((MemoryPoolState)rule).mempool.size();
                     for (InventoryItem item : mostRecentInv.items)
                         if (!((MemoryPoolState) rule).mempool.remove(item))

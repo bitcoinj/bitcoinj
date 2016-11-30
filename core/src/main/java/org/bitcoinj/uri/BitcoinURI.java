@@ -98,7 +98,7 @@ public class BitcoinURI {
     /**
      * Contains all the parameters in the order in which they were processed
      */
-    private final Map<String, Object> parameterMap = new LinkedHashMap<String, Object>();
+    private final Map<String, Object> parameterMap = new LinkedHashMap<>();
 
     /**
      * Constructs a new BitcoinURI from the given string. Can be for any network.
@@ -299,7 +299,7 @@ public class BitcoinURI {
      * all subsequent URLs are fallbacks.
      */
     public List<String> getPaymentRequestUrls() {
-        ArrayList<String> urls = new ArrayList<String>();
+        ArrayList<String> urls = new ArrayList<>();
         while (true) {
             int i = urls.size();
             String paramName = FIELD_PAYMENT_REQUEST_URL + (i > 0 ? Integer.toString(i) : "");

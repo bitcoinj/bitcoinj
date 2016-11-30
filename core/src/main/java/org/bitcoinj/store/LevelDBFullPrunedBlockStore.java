@@ -259,9 +259,9 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         fullStoreDepth = blockCount;
         this.instrument = instrument;
         this.exitBlock = exitBlock;
-        methodStartTime = new HashMap<String, Stopwatch>();
-        methodCalls = new HashMap<String, Long>();
-        methodTotalTime = new HashMap<String, Long>();
+        methodStartTime = new HashMap<>();
+        methodCalls = new HashMap<>();
+        methodTotalTime = new HashMap<>();
 
         this.filename = filename;
         this.leveldbReadCache = leveldbReadCache;
@@ -424,7 +424,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         // This is critical or if one address paid another could get incorrect
         // results
 
-        List<UTXO> results = new LinkedList<UTXO>();
+        List<UTXO> results = new LinkedList<>();
         for (Address a : addresses) {
             ByteBuffer bb = ByteBuffer.allocate(21);
             bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
@@ -674,7 +674,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 int offset = 0;
                 int numTxn = ((transactions[offset++] & 0xFF) << 0) | ((transactions[offset++] & 0xFF) << 8)
                         | ((transactions[offset++] & 0xFF) << 16) | ((transactions[offset++] & 0xFF) << 24);
-                List<Transaction> transactionList = new LinkedList<Transaction>();
+                List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {
                     Transaction tx = new Transaction(params, transactions, offset);
                     transactionList.add(tx);
@@ -1039,10 +1039,10 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             beginMethod("beginDatabaseBatchWrite");
 
         batch = db.createWriteBatch();
-        uncommited = new HashMap<ByteBuffer, byte[]>();
-        uncommitedDeletes = new HashSet<ByteBuffer>();
-        utxoUncommittedCache = new HashMap<ByteBuffer, UTXO>();
-        utxoUncommittedDeletedCache = new HashSet<ByteBuffer>();
+        uncommited = new HashMap<>();
+        uncommitedDeletes = new HashSet<>();
+        utxoUncommittedCache = new HashMap<>();
+        utxoUncommittedDeletedCache = new HashSet<>();
         autoCommit = false;
         if (instrument)
             endMethod("beginDatabaseBatchWrite");

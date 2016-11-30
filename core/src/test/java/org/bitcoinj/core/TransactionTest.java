@@ -299,7 +299,7 @@ public class TransactionTest {
         Transaction tx3 = FakeTxBuilder.createFakeTx(PARAMS);
         tx3.getConfidence().setAppearedAtChainHeight(3);
 
-        SortedSet<Transaction> set = new TreeSet<Transaction>(Transaction.SORT_TX_BY_HEIGHT);
+        SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
         set.add(tx2);
         set.add(tx1);
         set.add(tx3);

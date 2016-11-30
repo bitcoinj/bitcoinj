@@ -60,7 +60,7 @@ public class ExponentialBackoffTest {
 
     @Test
     public void testInQueue() {
-        PriorityQueue<ExponentialBackoff> queue = new PriorityQueue<ExponentialBackoff>();
+        PriorityQueue<ExponentialBackoff> queue = new PriorityQueue<>();
         ExponentialBackoff backoff1 = new ExponentialBackoff(params);
         backoff.trackFailure();
         backoff.trackFailure();

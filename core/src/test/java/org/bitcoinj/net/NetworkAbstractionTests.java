@@ -106,7 +106,7 @@ public class NetworkAbstractionTests {
                     return null;
                 }
 
-                return new ProtobufConnection<TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
+                return new ProtobufConnection<>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         handler.write(msg);
@@ -127,7 +127,7 @@ public class NetworkAbstractionTests {
         server.startAsync();
         server.awaitRunning();
 
-        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public synchronized void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -149,7 +149,7 @@ public class NetworkAbstractionTests {
         client1ConnectionOpened.get();
         client1Disconnected.get();
 
-        clientHandler = new ProtobufConnection<TwoWayChannelMessage>(
+        clientHandler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public synchronized void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -198,7 +198,7 @@ public class NetworkAbstractionTests {
         NioServer server = new NioServer(new StreamConnectionFactory() {
             @Override
             public ProtobufConnection<TwoWayChannelMessage> getNewConnection(InetAddress inetAddress, int port) {
-                return new ProtobufConnection<TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
+                return new ProtobufConnection<>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         handler.write(msg);
@@ -220,7 +220,7 @@ public class NetworkAbstractionTests {
         server.startAsync();
         server.awaitRunning();
 
-        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public synchronized void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -276,7 +276,7 @@ public class NetworkAbstractionTests {
         NioServer server = new NioServer(new StreamConnectionFactory() {
             @Override
             public ProtobufConnection<TwoWayChannelMessage> getNewConnection(InetAddress inetAddress, int port) {
-                return new ProtobufConnection<TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
+                return new ProtobufConnection<>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         fail.set(true);
@@ -304,7 +304,7 @@ public class NetworkAbstractionTests {
         server.startAsync();
         server.awaitRunning();
 
-        openConnection(new InetSocketAddress("localhost", 4243), new ProtobufConnection<TwoWayChannelMessage>(
+        openConnection(new InetSocketAddress("localhost", 4243), new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -329,7 +329,7 @@ public class NetworkAbstractionTests {
         serverConnection1Closed.get();
         long closeDelayFinish = System.currentTimeMillis();
 
-        ProtobufConnection<TwoWayChannelMessage> client2Handler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> client2Handler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -375,7 +375,7 @@ public class NetworkAbstractionTests {
         NioServer server = new NioServer(new StreamConnectionFactory() {
             @Override
             public ProtobufConnection<TwoWayChannelMessage> getNewConnection(InetAddress inetAddress, int port) {
-                return new ProtobufConnection<TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
+                return new ProtobufConnection<>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         handler.write(msg);
@@ -396,7 +396,7 @@ public class NetworkAbstractionTests {
         server.startAsync();
         server.awaitRunning();
 
-        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> clientHandler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public synchronized void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -526,7 +526,7 @@ public class NetworkAbstractionTests {
         NioServer server = new NioServer(new StreamConnectionFactory() {
             @Override
             public ProtobufConnection<TwoWayChannelMessage> getNewConnection(InetAddress inetAddress, int port) {
-                return new ProtobufConnection<TwoWayChannelMessage>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
+                return new ProtobufConnection<>(new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
                         handler.write(msg);
@@ -560,7 +560,7 @@ public class NetworkAbstractionTests {
         server.startAsync();
         server.awaitRunning();
 
-        ProtobufConnection<TwoWayChannelMessage> client1Handler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> client1Handler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -582,7 +582,7 @@ public class NetworkAbstractionTests {
         client1ConnectionOpen.get();
         serverConnection1Open.get();
 
-        ProtobufConnection<TwoWayChannelMessage> client2Handler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> client2Handler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {
@@ -604,7 +604,7 @@ public class NetworkAbstractionTests {
         client2ConnectionOpen.get();
         serverConnection2Open.get();
 
-        ProtobufConnection<TwoWayChannelMessage> client3Handler = new ProtobufConnection<TwoWayChannelMessage>(
+        ProtobufConnection<TwoWayChannelMessage> client3Handler = new ProtobufConnection<>(
                 new ProtobufConnection.Listener<Protos.TwoWayChannelMessage>() {
                     @Override
                     public void messageReceived(ProtobufConnection<TwoWayChannelMessage> handler, Protos.TwoWayChannelMessage msg) {

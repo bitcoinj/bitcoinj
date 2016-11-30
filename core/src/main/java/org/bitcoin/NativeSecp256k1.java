@@ -42,7 +42,7 @@ public class NativeSecp256k1 {
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private static final Lock r = rwl.readLock();
     private static final Lock w = rwl.writeLock();
-    private static ThreadLocal<ByteBuffer> nativeECDSABuffer = new ThreadLocal<ByteBuffer>();
+    private static ThreadLocal<ByteBuffer> nativeECDSABuffer = new ThreadLocal<>();
 
     /**
      * Verifies the given secp256k1 signature in native code. Calling when enabled == false is undefined (probably

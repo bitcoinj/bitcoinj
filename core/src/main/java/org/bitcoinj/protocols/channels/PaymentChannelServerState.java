@@ -117,7 +117,7 @@ public abstract class PaymentChannelServerState {
 
     PaymentChannelServerState(StoredServerChannel storedServerChannel, Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         synchronized (storedServerChannel) {
-            this.stateMachine = new StateMachine<State>(State.UNINITIALISED, getStateTransitions());
+            this.stateMachine = new StateMachine<>(State.UNINITIALISED, getStateTransitions());
             this.wallet = checkNotNull(wallet);
             this.broadcaster = checkNotNull(broadcaster);
             this.contract = checkNotNull(storedServerChannel.contract);
@@ -141,7 +141,7 @@ public abstract class PaymentChannelServerState {
      * @param minExpireTime The earliest time at which the client can claim the refund transaction (UNIX timestamp of block)
      */
     public PaymentChannelServerState(TransactionBroadcaster broadcaster, Wallet wallet, ECKey serverKey, long minExpireTime) {
-        this.stateMachine = new StateMachine<State>(State.UNINITIALISED, getStateTransitions());
+        this.stateMachine = new StateMachine<>(State.UNINITIALISED, getStateTransitions());
         this.serverKey = checkNotNull(serverKey);
         this.wallet = checkNotNull(wallet);
         this.broadcaster = checkNotNull(broadcaster);

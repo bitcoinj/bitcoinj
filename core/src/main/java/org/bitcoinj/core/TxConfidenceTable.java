@@ -72,7 +72,7 @@ public class TxConfidenceTable {
                 return size() > size;
             }
         };
-        referenceQueue = new ReferenceQueue<TransactionConfidence>();
+        referenceQueue = new ReferenceQueue<>();
     }
 
     /**

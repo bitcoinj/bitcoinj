@@ -52,7 +52,7 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         }
     }
 
-    private final LinkedBlockingQueue<TxFuturePair> broadcasts = new LinkedBlockingQueue<TxFuturePair>();
+    private final LinkedBlockingQueue<TxFuturePair> broadcasts = new LinkedBlockingQueue<>();
 
     /** Sets this mock broadcaster on the given wallet. */
     public MockTransactionBroadcaster(Wallet wallet) {

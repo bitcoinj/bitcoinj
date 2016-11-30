@@ -61,7 +61,7 @@ class ConnectionHandler implements MessageWriteTarget {
     @GuardedBy("lock") private boolean closeCalled = false;
 
     @GuardedBy("lock") private long bytesToWriteRemaining = 0;
-    @GuardedBy("lock") private final LinkedList<ByteBuffer> bytesToWrite = new LinkedList<ByteBuffer>();
+    @GuardedBy("lock") private final LinkedList<ByteBuffer> bytesToWrite = new LinkedList<>();
 
     private Set<ConnectionHandler> connectedHandlers;
 

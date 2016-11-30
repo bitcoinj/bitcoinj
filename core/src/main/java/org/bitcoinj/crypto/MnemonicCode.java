@@ -87,7 +87,7 @@ public class MnemonicCode {
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
         BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
-        this.wordList = new ArrayList<String>(2048);
+        this.wordList = new ArrayList<>(2048);
         MessageDigest md = Sha256Hash.newDigest();
         String word;
         while ((word = br.readLine()) != null) {
@@ -216,7 +216,7 @@ public class MnemonicCode {
         // which is a position in a wordlist.  We convert numbers into
         // words and use joined words as mnemonic sentence.
 
-        ArrayList<String> words = new ArrayList<String>();
+        ArrayList<String> words = new ArrayList<>();
         int nwords = concatBits.length / 11;
         for (int i = 0; i < nwords; ++i) {
             int index = 0;

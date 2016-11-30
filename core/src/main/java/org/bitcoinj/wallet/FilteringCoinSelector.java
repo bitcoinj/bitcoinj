@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class FilteringCoinSelector implements CoinSelector {
     protected CoinSelector delegate;
-    protected HashSet<TransactionOutPoint> spent = new HashSet<TransactionOutPoint>();
+    protected HashSet<TransactionOutPoint> spent = new HashSet<>();
 
     public FilteringCoinSelector(CoinSelector delegate) {
         this.delegate = delegate;
