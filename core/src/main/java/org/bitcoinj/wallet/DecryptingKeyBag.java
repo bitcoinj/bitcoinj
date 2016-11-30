@@ -54,7 +54,7 @@ public class DecryptingKeyBag implements KeyBag {
     }
 
     private RedeemData maybeDecrypt(RedeemData redeemData) {
-        List<ECKey> decryptedKeys = new ArrayList<ECKey>();
+        List<ECKey> decryptedKeys = new ArrayList<>();
         for (ECKey key : redeemData.keys) {
             decryptedKeys.add(maybeDecrypt(key));
         }

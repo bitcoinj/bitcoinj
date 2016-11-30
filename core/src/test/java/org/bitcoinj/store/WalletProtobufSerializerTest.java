@@ -233,7 +233,7 @@ public class WalletProtobufSerializerTest {
 
         BlockChain chain = new BlockChain(PARAMS, myWallet, new MemoryBlockStore(PARAMS));
 
-        final ArrayList<Transaction> txns = new ArrayList<Transaction>(2);
+        final ArrayList<Transaction> txns = new ArrayList<>(2);
         myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {

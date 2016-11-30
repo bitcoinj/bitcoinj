@@ -124,7 +124,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
         // Set up a way to monitor broadcast transactions. When you expect a broadcast, you must release a permit
         // to the broadcastTxPause semaphore so state can be queried in between.
-        broadcasts = new LinkedBlockingQueue<Transaction>();
+        broadcasts = new LinkedBlockingQueue<>();
         broadcastTxPause = new Semaphore(0);
         mockBroadcaster = new TransactionBroadcaster() {
             @Override
@@ -177,7 +177,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         // Test with network code and without any issues. We'll broadcast two txns: multisig contract and settle transaction.
         final SettableFuture<ListenableFuture<PaymentChannelV1ServerState>> serverCloseFuture = SettableFuture.create();
         final SettableFuture<Sha256Hash> channelOpenFuture = SettableFuture.create();
-        final BlockingQueue<ChannelTestUtils.UpdatePair> q = new LinkedBlockingQueue<ChannelTestUtils.UpdatePair>();
+        final BlockingQueue<ChannelTestUtils.UpdatePair> q = new LinkedBlockingQueue<>();
         final PaymentChannelServerListener server = new PaymentChannelServerListener(mockBroadcaster, serverWallet, 30, COIN,
                 new PaymentChannelServerListener.HandlerFactory() {
                     @Nullable

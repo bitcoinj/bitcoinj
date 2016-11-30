@@ -91,7 +91,7 @@ public final class HDUtils {
      */
     public static List<ChildNumber> parsePath(@Nonnull String path) {
         String[] parsedNodes = path.replace("M", "").split("/");
-        List<ChildNumber> nodes = new ArrayList<ChildNumber>();
+        List<ChildNumber> nodes = new ArrayList<>();
 
         for (String n : parsedNodes) {
             n = n.replaceAll(" ", "");

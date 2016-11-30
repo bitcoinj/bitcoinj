@@ -99,7 +99,7 @@ public class WalletProtobufSerializer {
     }
 
     public WalletProtobufSerializer(WalletFactory factory) {
-        txMap = new HashMap<ByteString, Transaction>();
+        txMap = new HashMap<>();
         this.factory = factory;
         this.keyChainFactory = new DefaultKeyChainFactory();
     }
@@ -577,7 +577,7 @@ public class WalletProtobufSerializer {
     }
 
     private void loadExtensions(Wallet wallet, WalletExtension[] extensionsList, Protos.Wallet walletProto) throws UnreadableWalletException {
-        final Map<String, WalletExtension> extensions = new HashMap<String, WalletExtension>();
+        final Map<String, WalletExtension> extensions = new HashMap<>();
         for (WalletExtension e : extensionsList)
             extensions.put(e.getWalletExtensionID(), e);
         // The Wallet object, if subclassed, might have added some extensions to itself already. In that case, don't

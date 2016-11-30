@@ -301,7 +301,7 @@ public class BloomFilter extends Message {
      */
     public synchronized FilteredBlock applyAndUpdate(Block block) {
         List<Transaction> txns = block.getTransactions();
-        List<Sha256Hash> txHashes = new ArrayList<Sha256Hash>(txns.size());
+        List<Sha256Hash> txHashes = new ArrayList<>(txns.size());
         List<Transaction> matched = Lists.newArrayList();
         byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];
         for (int i = 0; i < txns.size(); i++) {

@@ -67,7 +67,7 @@ public class UTXOsMessage extends Message {
             if (outputs.get(i) != null)
                 Utils.setBitLE(hits, i);
         }
-        this.outputs = new ArrayList<TransactionOutput>(outputs.size());
+        this.outputs = new ArrayList<>(outputs.size());
         for (TransactionOutput output : outputs) {
             if (output != null) this.outputs.add(output);
         }
@@ -111,7 +111,7 @@ public class UTXOsMessage extends Message {
         int numOuts = (int) readVarInt();
         if (numOuts < 0 || numOuts > InventoryMessage.MAX_INVENTORY_ITEMS)
             throw new ProtocolException("numOuts out of range: " + numOuts);
-        outputs = new ArrayList<TransactionOutput>(numOuts);
+        outputs = new ArrayList<>(numOuts);
         heights = new long[numOuts];
         for (int i = 0; i < numOuts; i++) {
             long version = readUint32();
@@ -135,7 +135,7 @@ public class UTXOsMessage extends Message {
 
     /** Returns the list of outputs that matched the query. */
     public List<TransactionOutput> getOutputs() {
-        return new ArrayList<TransactionOutput>(outputs);
+        return new ArrayList<>(outputs);
     }
 
     /** Returns the block heights of each output returned in getOutputs(), or MEMPOOL_HEIGHT if not confirmed yet. */

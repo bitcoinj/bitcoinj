@@ -42,7 +42,7 @@ public class TransactionOutputChanges {
                              ((in.read() & 0xFF) << 8) |
                              ((in.read() & 0xFF) << 16) |
                              ((in.read() & 0xFF) << 24);
-        txOutsCreated = new LinkedList<UTXO>();
+        txOutsCreated = new LinkedList<>();
         for (int i = 0; i < numOutsCreated; i++)
             txOutsCreated.add(new UTXO(in));
         
@@ -50,7 +50,7 @@ public class TransactionOutputChanges {
                            ((in.read() & 0xFF) << 8) |
                            ((in.read() & 0xFF) << 16) |
                            ((in.read() & 0xFF) << 24);
-        txOutsSpent = new LinkedList<UTXO>();
+        txOutsSpent = new LinkedList<>();
         for (int i = 0; i < numOutsSpent; i++)
             txOutsSpent.add(new UTXO(in));
     }

@@ -38,6 +38,6 @@ public class NotFoundMessage extends InventoryMessage {
 
     public NotFoundMessage(NetworkParameters params, List<InventoryItem> items) {
         super(params);
-        this.items = new ArrayList<InventoryItem>(items);
+        this.items = new ArrayList<>(items);
     }
 }

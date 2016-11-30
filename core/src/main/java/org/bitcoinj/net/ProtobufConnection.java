@@ -77,7 +77,7 @@ public class ProtobufConnection<MessageType extends MessageLite> extends Abstrac
     @GuardedBy("lock") private byte[] messageBytes;
     private final ReentrantLock lock = Threading.lock("ProtobufConnection");
 
-    @VisibleForTesting final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<MessageWriteTarget>();
+    @VisibleForTesting final AtomicReference<MessageWriteTarget> writeTarget = new AtomicReference<>();
 
     /**
      * Creates a new protobuf handler.

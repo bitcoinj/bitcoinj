@@ -217,14 +217,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
         blockStore.beginDatabaseBatchWrite();
 
-        LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
-        LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
+        LinkedList<UTXO> txOutsSpent = new LinkedList<>();
+        LinkedList<UTXO> txOutsCreated = new LinkedList<>();
         long sigOps = 0;
 
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(block.transactions.size());
+        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(block.transactions.size());
         try {
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
@@ -247,7 +247,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 boolean isCoinBase = tx.isCoinBase();
                 Coin valueIn = Coin.ZERO;
                 Coin valueOut = Coin.ZERO;
-                final List<Script> prevOutScripts = new LinkedList<Script>();
+                final List<Script> prevOutScripts = new LinkedList<>();
                 final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
@@ -308,7 +308,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                 if (!isCoinBase && runScripts) {
                     // Because correctlySpends modifies transactions, this must come after we are done with tx
-                    FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifier(tx, prevOutScripts, verifyFlags));
+                    FutureTask<VerificationException> future = new FutureTask<>(new Verifier(tx, prevOutScripts, verifyFlags));
                     scriptVerificationExecutor.execute(future);
                     listScriptVerificationResults.add(future);
                 }
@@ -361,8 +361,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         try {
             List<Transaction> transactions = block.getTransactions();
             if (transactions != null) {
-                LinkedList<UTXO> txOutsSpent = new LinkedList<UTXO>();
-                LinkedList<UTXO> txOutsCreated = new LinkedList<UTXO>();
+                LinkedList<UTXO> txOutsSpent = new LinkedList<>();
+                LinkedList<UTXO> txOutsCreated = new LinkedList<>();
                 long sigOps = 0;
 
                 if (!params.isCheckpoint(newBlock.getHeight())) {
@@ -377,14 +377,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                 if (scriptVerificationExecutor.isShutdown())
                     scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-                List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<Future<VerificationException>>(transactions.size());
+                List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(transactions.size());
                 for (final Transaction tx : transactions) {
                     final Set<VerifyFlag> verifyFlags =
                         params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
                     boolean isCoinBase = tx.isCoinBase();
                     Coin valueIn = Coin.ZERO;
                     Coin valueOut = Coin.ZERO;
-                    final List<Script> prevOutScripts = new LinkedList<Script>();
+                    final List<Script> prevOutScripts = new LinkedList<>();
 
                     if (!isCoinBase) {
                         for (int index = 0; index < tx.getInputs().size(); index++) {
@@ -439,7 +439,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                     if (!isCoinBase) {
                         // Because correctlySpends modifies transactions, this must come after we are done with tx
-                        FutureTask<VerificationException> future = new FutureTask<VerificationException>(new Verifier(tx, prevOutScripts, verifyFlags));
+                        FutureTask<VerificationException> future = new FutureTask<>(new Verifier(tx, prevOutScripts, verifyFlags));
                         scriptVerificationExecutor.execute(future);
                         listScriptVerificationResults.add(future);
                     }

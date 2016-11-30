@@ -57,7 +57,7 @@ import static com.google.common.collect.Lists.newArrayList;
 public class MarriedKeyChain extends DeterministicKeyChain {
     // The map holds P2SH redeem script and corresponding ECKeys issued by this KeyChainGroup (including lookahead)
     // mapped to redeem script hashes.
-    private LinkedHashMap<ByteString, RedeemData> marriedKeysRedeemData = new LinkedHashMap<ByteString, RedeemData>();
+    private LinkedHashMap<ByteString, RedeemData> marriedKeysRedeemData = new LinkedHashMap<>();
 
     private List<DeterministicKeyChain> followingKeyChains;
 

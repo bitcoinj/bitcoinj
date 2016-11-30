@@ -90,7 +90,7 @@ public class ScriptTest {
         assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
         assertTrue(script.isSentToMultiSig());
-        List<ECKey> pubkeys = new ArrayList<ECKey>(3);
+        List<ECKey> pubkeys = new ArrayList<>(3);
         for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key.getPubKeyPoint()));
         assertEquals(script.getPubKeys(), pubkeys);
         assertFalse(ScriptBuilder.createOutputScript(new ECKey()).isSentToMultiSig());
@@ -228,7 +228,7 @@ public class ScriptTest {
         tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
         Script script = new ScriptBuilder().smallNum(0).build();
 
-        LinkedList<byte[]> stack = new LinkedList<byte[]>();
+        LinkedList<byte[]> stack = new LinkedList<>();
         Script.executeScript(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS);
         assertEquals("OP_0 push length", 0, stack.get(0).length);
     }
@@ -321,7 +321,7 @@ public class ScriptTest {
     }
     
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
-        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<TransactionOutPoint, Script>();
+        Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
             String hash = input.get(0).asText();
             int index = input.get(1).asInt();
@@ -383,7 +383,7 @@ public class ScriptTest {
 
             // Bitcoin Core checks this case in CheckTransaction, but we leave it to
             // later where we will see an attempt to double-spend, so we explicitly check here
-            HashSet<TransactionOutPoint> set = new HashSet<TransactionOutPoint>();
+            HashSet<TransactionOutPoint> set = new HashSet<>();
             for (TransactionInput input : transaction.getInputs()) {
                 if (set.contains(input.getOutpoint()))
                     valid = false;

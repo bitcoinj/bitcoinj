@@ -193,12 +193,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock.solve();
         
         chain.add(rollingBlock);
-        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
+        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<>(store.getUndoBlock(rollingBlock.getHash()));
 
         StoredUndoableBlock storedUndoableBlock = undoBlock.get();
         assertNotNull(storedUndoableBlock);
         assertNull(storedUndoableBlock.getTransactions());
-        WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(storedUndoableBlock.getTxOutChanges());
+        WeakReference<TransactionOutputChanges> changes = new WeakReference<>(storedUndoableBlock.getTxOutChanges());
         assertNotNull(changes.get());
         storedUndoableBlock = null;   // Blank the reference so it can be GCd.
         

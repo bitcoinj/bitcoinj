@@ -165,14 +165,14 @@ public class TransactionInput extends ChildMessage {
         Script script = scriptSig == null ? null : scriptSig.get();
         if (script == null) {
             script = new Script(scriptBytes);
-            scriptSig = new WeakReference<Script>(script);
+            scriptSig = new WeakReference<>(script);
         }
         return script;
     }
 
     /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
     public void setScriptSig(Script scriptSig) {
-        this.scriptSig = new WeakReference<Script>(checkNotNull(scriptSig));
+        this.scriptSig = new WeakReference<>(checkNotNull(scriptSig));
         // TODO: This should all be cleaned up so we have a consistent internal representation.
         setScriptBytes(scriptSig.getProgram());
     }

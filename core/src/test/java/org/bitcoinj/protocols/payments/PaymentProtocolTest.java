@@ -121,7 +121,7 @@ public class PaymentProtocolTest {
     @Test
     public void testPaymentMessage() throws Exception {
         // Create
-        List<Transaction> transactions = new LinkedList<Transaction>();
+        List<Transaction> transactions = new LinkedList<>();
         transactions.add(FakeTxBuilder.createFakeTx(NETWORK_PARAMS, AMOUNT, TO_ADDRESS));
         Coin refundAmount = Coin.SATOSHI;
         Address refundAddress = new ECKey().toAddress(NETWORK_PARAMS);

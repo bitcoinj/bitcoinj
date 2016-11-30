@@ -44,7 +44,7 @@ public class BtcFormatTest {
 
     @Parameters
     public static Set<Locale[]> data() {
-        Set<Locale[]> localeSet = new HashSet<Locale[]>();
+        Set<Locale[]> localeSet = new HashSet<>();
         for (Locale locale : Locale.getAvailableLocales()) {
             localeSet.add(new Locale[]{locale});
         }

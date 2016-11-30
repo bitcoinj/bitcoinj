@@ -47,7 +47,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     static final String EXTENSION_ID = StoredPaymentChannelServerStates.class.getName();
     static final int MAX_SECONDS_TO_WAIT_FOR_BROADCASTER_TO_BE_SET = 10;
 
-    @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<Sha256Hash, StoredServerChannel>();
+    @GuardedBy("lock") @VisibleForTesting final Map<Sha256Hash, StoredServerChannel> mapChannels = new HashMap<>();
     private Wallet wallet;
     private final SettableFuture<TransactionBroadcaster> broadcasterFuture = SettableFuture.create();
 

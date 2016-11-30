@@ -145,8 +145,8 @@ public class TransactionConfidence {
 
     public TransactionConfidence(Sha256Hash hash) {
         // Assume a default number of peers for our set.
-        broadcastBy = new CopyOnWriteArrayList<PeerAddress>();
-        listeners = new CopyOnWriteArrayList<ListenerRegistration<Listener>>();
+        broadcastBy = new CopyOnWriteArrayList<>();
+        listeners = new CopyOnWriteArrayList<>();
         this.hash = hash;
     }
 
@@ -206,7 +206,7 @@ public class TransactionConfidence {
      */
     public void addEventListener(Executor executor, Listener listener) {
         checkNotNull(listener);
-        listeners.addIfAbsent(new ListenerRegistration<Listener>(listener, executor));
+        listeners.addIfAbsent(new ListenerRegistration<>(listener, executor));
         pinnedConfidenceObjects.add(this);
     }
 

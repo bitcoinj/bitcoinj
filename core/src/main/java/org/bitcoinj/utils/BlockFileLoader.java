@@ -61,7 +61,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
             defaultDataDir = System.getProperty("user.home") + "/.bitcoin/blocks/";
         }
         
-        List<File> list = new LinkedList<File>();
+        List<File> list = new LinkedList<>();
         for (int i = 0; true; i++) {
             File file = new File(defaultDataDir + String.format(Locale.US, "blk%05d.dat", i));
             if (!file.exists())

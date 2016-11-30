@@ -46,7 +46,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
 
         PendingConnect(SocketChannel sc, StreamConnection connection, SocketAddress address) { this.sc = sc; this.connection = connection; this.address = address; }
     }
-    final Queue<PendingConnect> newConnectionChannels = new LinkedBlockingQueue<PendingConnect>();
+    final Queue<PendingConnect> newConnectionChannels = new LinkedBlockingQueue<>();
 
     // Added to/removed from by the individual ConnectionHandler's, thus must by synchronized on its own.
     private final Set<ConnectionHandler> connectedHandlers = Collections.synchronizedSet(new HashSet<ConnectionHandler>());

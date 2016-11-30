@@ -157,7 +157,7 @@ public final class MonetaryFormat {
      *            any number numbers of decimals, one for each group
      */
     public MonetaryFormat optionalDecimals(int... groups) {
-        List<Integer> decimalGroups = new ArrayList<Integer>(groups.length);
+        List<Integer> decimalGroups = new ArrayList<>(groups.length);
         for (int group : groups)
             decimalGroups.add(group);
         return new MonetaryFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,
@@ -183,7 +183,7 @@ public final class MonetaryFormat {
      */
     public MonetaryFormat repeatOptionalDecimals(int decimals, int repetitions) {
         checkArgument(repetitions >= 0);
-        List<Integer> decimalGroups = new ArrayList<Integer>(repetitions);
+        List<Integer> decimalGroups = new ArrayList<>(repetitions);
         for (int i = 0; i < repetitions; i++)
             decimalGroups.add(decimals);
         return new MonetaryFormat(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups,

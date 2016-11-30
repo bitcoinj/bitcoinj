@@ -89,8 +89,8 @@ public class PartialMerkleTree extends Message {
         int height = 0;
         while (getTreeWidth(allLeafHashes.size(), height) > 1)
             height++;
-        List<Boolean> bitList = new ArrayList<Boolean>();
-        List<Sha256Hash> hashes = new ArrayList<Sha256Hash>();
+        List<Boolean> bitList = new ArrayList<>();
+        List<Sha256Hash> hashes = new ArrayList<>();
         traverseAndBuild(height, 0, allLeafHashes, includeBits, bitList, hashes);
         byte[] bits = new byte[(int)Math.ceil(bitList.size() / 8.0)];
         for (int i = 0; i < bitList.size(); i++)
@@ -116,7 +116,7 @@ public class PartialMerkleTree extends Message {
         transactionCount = (int)readUint32();
 
         int nHashes = (int) readVarInt();
-        hashes = new ArrayList<Sha256Hash>(nHashes);
+        hashes = new ArrayList<>(nHashes);
         for (int i = 0; i < nHashes; i++)
             hashes.add(readHash());
 

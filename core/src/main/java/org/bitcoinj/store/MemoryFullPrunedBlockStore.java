@@ -90,10 +90,10 @@ class TransactionalHashMap<KeyType, ValueType> {
     HashMap<KeyType, ValueType> map;
     
     public TransactionalHashMap() {
-        tempMap = new ThreadLocal<HashMap<KeyType, ValueType>>();
-        tempSetRemoved = new ThreadLocal<HashSet<KeyType>>();
-        inTransaction = new ThreadLocal<Boolean>();
-        map = new HashMap<KeyType, ValueType>();
+        tempMap = new ThreadLocal<>();
+        tempSetRemoved = new ThreadLocal<>();
+        inTransaction = new ThreadLocal<>();
+        map = new HashMap<>();
     }
     
     public void beginDatabaseBatchWrite() {
@@ -131,7 +131,7 @@ class TransactionalHashMap<KeyType, ValueType> {
     }
 
     public List<ValueType> values() {
-        List<ValueType> valueTypes = new ArrayList<ValueType>();
+        List<ValueType> valueTypes = new ArrayList<>();
         for (KeyType keyType : map.keySet()) {
             valueTypes.add(get(keyType));
         }
@@ -182,8 +182,8 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
     HashMap<MultiKeyType, Set<UniqueKeyType>> mapKeys;
     
     public TransactionalMultiKeyHashMap() {
-        mapValues = new TransactionalHashMap<UniqueKeyType, ValueType>();
-        mapKeys = new HashMap<MultiKeyType, Set<UniqueKeyType>>();
+        mapValues = new TransactionalHashMap<>();
+        mapKeys = new HashMap<>();
     }
     
     public void BeginTransaction() {
@@ -207,7 +207,7 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
         mapValues.put(uniqueKey, value);
         Set<UniqueKeyType> set = mapKeys.get(multiKey);
         if (set == null) {
-            set = new HashSet<UniqueKeyType>();
+            set = new HashSet<>();
             set.add(uniqueKey);
             mapKeys.put(multiKey, set);
         }else{
@@ -253,9 +253,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      * @param fullStoreDepth The depth of blocks to keep FullStoredBlocks instead of StoredBlocks
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
-        blockMap = new TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag>();
-        fullBlockMap = new TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock>();
-        transactionOutputMap = new TransactionalHashMap<StoredTransactionOutPoint, UTXO>();
+        blockMap = new TransactionalHashMap<>();
+        fullBlockMap = new TransactionalMultiKeyHashMap<>();
+        transactionOutputMap = new TransactionalHashMap<>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
         try {
@@ -415,7 +415,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
         // This is *NOT* optimal: We go through all the outputs and select the ones we are looking for.
         // If someone uses this store for production then they have a lot more to worry about than an inefficient impl :)
-        List<UTXO> foundOutputs = new ArrayList<UTXO>();
+        List<UTXO> foundOutputs = new ArrayList<>();
         List<UTXO> outputsList = transactionOutputMap.values();
         for (UTXO output : outputsList) {
             for (Address address : addresses) {

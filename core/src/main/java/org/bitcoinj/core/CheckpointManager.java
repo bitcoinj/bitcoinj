@@ -76,7 +76,7 @@ public class CheckpointManager {
     private static final int MAX_SIGNATURES = 256;
 
     // Map of block header time to data.
-    protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<Long, StoredBlock>();
+    protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<>();
 
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;

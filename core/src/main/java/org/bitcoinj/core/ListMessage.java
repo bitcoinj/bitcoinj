@@ -47,7 +47,7 @@ public abstract class ListMessage extends Message {
 
     public ListMessage(NetworkParameters params) {
         super(params);
-        items = new ArrayList<InventoryItem>();
+        items = new ArrayList<>();
         length = 1; //length of 0 varint;
     }
 
@@ -77,7 +77,7 @@ public abstract class ListMessage extends Message {
         length = (int) (cursor - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));
 
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
-        items = new ArrayList<InventoryItem>((int) arrayLen);
+        items = new ArrayList<>((int) arrayLen);
         for (int i = 0; i < arrayLen; i++) {
             if (cursor + InventoryItem.MESSAGE_LENGTH > payload.length) {
                 throw new ProtocolException("Ran off the end of the INV");

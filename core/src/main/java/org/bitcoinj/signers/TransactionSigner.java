@@ -54,7 +54,7 @@ public interface TransactionSigner {
 
         public ProposedTransaction(Transaction partialTx) {
             this.partialTx = partialTx;
-            this.keyPaths = new HashMap<Script, List<ChildNumber>>();
+            this.keyPaths = new HashMap<>();
         }
     }
 

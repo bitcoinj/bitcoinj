@@ -147,10 +147,10 @@ public class FullBlockTestGenerator {
     private byte[] coinbaseOutKeyPubKey;
 
     // Used to double-check that we are always using the right next-height
-    private Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<Sha256Hash, Integer>();
+    private Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<>();
 
-    private Map<Sha256Hash, Block> hashHeaderMap = new HashMap<Sha256Hash, Block>();
-    private Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<Sha256Hash, Sha256Hash>();
+    private Map<Sha256Hash, Block> hashHeaderMap = new HashMap<>();
+    private Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<>();
 
     public FullBlockTestGenerator(NetworkParameters params) {
         this.params = params;
@@ -190,7 +190,7 @@ public class FullBlockTestGenerator {
         };
         RuleList ret = new RuleList(blocks, hashHeaderMap, 10);
 
-        Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
+        Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<>();
 
         int chainHeadHeight = 1;
         Block chainHead = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
@@ -958,7 +958,7 @@ public class FullBlockTestGenerator {
         // A block with no txn
         Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS);
         {
-            b46.transactions = new ArrayList<Transaction>();
+            b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.getDifficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
@@ -1510,7 +1510,7 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(b82, true, false, b82.getHash(), chainHeadHeight + 28, "b82"));
         spendableOutputs.offer(b82.getCoinbaseOutput());
 
-        HashSet<InventoryItem> post82Mempool = new HashSet<InventoryItem>();
+        HashSet<InventoryItem> post82Mempool = new HashSet<>();
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b78tx.getHash()));
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
@@ -1693,7 +1693,7 @@ public class FullBlockTestGenerator {
             int blockCountAfter1001;
             int nextHeight = heightAfter1001;
 
-            List<Sha256Hash> hashesToSpend = new LinkedList<Sha256Hash>(); // all index 0
+            List<Sha256Hash> hashesToSpend = new LinkedList<>(); // all index 0
             final int TRANSACTION_CREATION_BLOCKS = 100;
             for (blockCountAfter1001 = 0; blockCountAfter1001 < TRANSACTION_CREATION_BLOCKS; blockCountAfter1001++) {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);

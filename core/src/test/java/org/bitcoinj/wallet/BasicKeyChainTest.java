@@ -50,7 +50,7 @@ public class BasicKeyChainTest {
     @Before
     public void setup() {
         chain = new BasicKeyChain();
-        onKeysAdded = new AtomicReference<List<ECKey>>();
+        onKeysAdded = new AtomicReference<>();
         onKeysAddedRan = new AtomicBoolean();
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override

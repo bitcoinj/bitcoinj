@@ -71,7 +71,7 @@ public class HeadersMessage extends Message {
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                                          MAX_HEADERS);
 
-        blockHeaders = new ArrayList<Block>();
+        blockHeaders = new ArrayList<>();
         final BitcoinSerializer serializer = this.params.getSerializer(true);
 
         for (int i = 0; i < numHeaders; ++i) {

@@ -97,12 +97,12 @@ public class KeyChainGroup implements KeyBag {
                           @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
         this.params = params;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
-        this.chains = new LinkedList<DeterministicKeyChain>(checkNotNull(chains));
+        this.chains = new LinkedList<>(checkNotNull(chains));
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
                 ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
                 : currentKeys;
-        this.currentAddresses = new EnumMap<KeyChain.KeyPurpose, Address>(KeyChain.KeyPurpose.class);
+        this.currentAddresses = new EnumMap<>(KeyChain.KeyPurpose.class);
         maybeLookaheadScripts();
 
         if (isMarried()) {
@@ -491,7 +491,7 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(aesKey);
         // This code must be exception safe.
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
-        List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
+        List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
         if (chains.isEmpty() && basic.numKeys() == 0) {
             // No HD chains and no random keys: encrypting an entirely empty keychain group. But we can't do that, we
             // must have something to encrypt: so instantiate a new HD chain here.
@@ -515,7 +515,7 @@ public class KeyChainGroup implements KeyBag {
         // This code must be exception safe.
         checkNotNull(aesKey);
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
-        List<DeterministicKeyChain> newChains = new ArrayList<DeterministicKeyChain>(chains.size());
+        List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
         for (DeterministicKeyChain chain : chains)
             newChains.add(chain.toDecrypted(aesKey));
 
@@ -746,7 +746,7 @@ public class KeyChainGroup implements KeyBag {
     private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {
         DeterministicKeyChain activeChain = chains.get(chains.size() - 1);
 
-        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class);
+        EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = new EnumMap<>(KeyChain.KeyPurpose.class);
 
         // assuming that only RECEIVE and CHANGE keys are being used at the moment, we will treat latest issued external key
         // as current RECEIVE key and latest issued internal key as CHANGE key. This should be changed as soon as other
@@ -801,7 +801,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** Returns a copy of the current list of chains. */
     public List<DeterministicKeyChain> getDeterministicKeyChains() {
-        return new ArrayList<DeterministicKeyChain>(chains);
+        return new ArrayList<>(chains);
     }
     /**
      * Returns a counter that increases (by an arbitrary amount) each time new keys have been calculated due to

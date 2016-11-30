@@ -89,7 +89,7 @@ public class Context {
 
     private static volatile Context lastConstructed;
     private static boolean isStrictMode;
-    private static final ThreadLocal<Context> slot = new ThreadLocal<Context>();
+    private static final ThreadLocal<Context> slot = new ThreadLocal<>();
 
     /**
      * Returns the current context that is associated with the <b>calling thread</b>. BitcoinJ is an API that has thread

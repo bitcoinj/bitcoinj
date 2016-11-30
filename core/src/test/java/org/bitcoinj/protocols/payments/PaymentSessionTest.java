@@ -69,7 +69,7 @@ public class PaymentSessionTest {
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
         tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
-        ArrayList<Transaction> txns = new ArrayList<Transaction>();
+        ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
@@ -109,7 +109,7 @@ public class PaymentSessionTest {
         // Send the payment and verify that an exception is thrown.
         // Add a dummy input to tx so it is considered valid.
         tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
-        ArrayList<Transaction> txns = new ArrayList<Transaction>();
+        ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         try {
             paymentSession.sendPayment(txns, null, null);
@@ -140,7 +140,7 @@ public class PaymentSessionTest {
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
         tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
-        ArrayList<Transaction> txns = new ArrayList<Transaction>();
+        ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
@@ -187,7 +187,7 @@ public class PaymentSessionTest {
     }
 
     private class MockPaymentSession extends PaymentSession {
-        private ArrayList<PaymentLogItem> paymentLog = new ArrayList<PaymentLogItem>();
+        private ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
 
         public MockPaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
             super(request);

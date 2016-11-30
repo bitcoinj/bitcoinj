@@ -400,7 +400,7 @@ public class ChainSplitTest {
     public void txConfidenceLevels() throws Exception {
         // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
         // maintained correctly.
-        final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
+        final ArrayList<Transaction> txns = new ArrayList<>(3);
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
@@ -558,7 +558,7 @@ public class ChainSplitTest {
         // Check that a coinbase tx is marked as dead after a reorg rather than pending as normal non-double-spent
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
-        final ArrayList<Transaction> txns = new ArrayList<Transaction>(3);
+        final ArrayList<Transaction> txns = new ArrayList<>(3);
         wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {

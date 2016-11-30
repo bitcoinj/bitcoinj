@@ -923,7 +923,7 @@ public abstract class BtcFormat extends Format {
     public static BtcFormat getCoinInstance() { return getCoinInstance(defaultLocale()); }
 
     private static List<Integer> boxAsList(int[] elements) throws IllegalArgumentException {
-        List<Integer> list = new ArrayList<Integer>(elements.length);
+        List<Integer> list = new ArrayList<>(elements.length);
         for (int e : elements) {
             checkArgument(e > 0, "Size of decimal group must be at least one.");
             list.add(e);

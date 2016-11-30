@@ -192,17 +192,17 @@ public class Wallet extends BaseTaggableObject
     private long lastBlockSeenTimeSecs;
 
     private final CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>> changeListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsReceivedEventListener>> coinsReceivedListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<WalletCoinsReceivedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsSentEventListener>> coinsSentListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<WalletCoinsSentEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<WalletReorganizeEventListener>> reorganizeListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<WalletReorganizeEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<ScriptsChangeEventListener>> scriptChangeListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<ScriptsChangeEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<TransactionConfidenceEventListener>> transactionConfidenceListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<TransactionConfidenceEventListener>>();
+        = new CopyOnWriteArrayList<>();
 
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
     // as a convenience to API users so they don't have to register on every transaction themselves.
@@ -319,21 +319,21 @@ public class Wallet extends BaseTaggableObject
         if (this.keyChainGroup.numKeys() == 0)
             this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
-        unspent = new HashMap<Sha256Hash, Transaction>();
-        spent = new HashMap<Sha256Hash, Transaction>();
-        pending = new HashMap<Sha256Hash, Transaction>();
-        dead = new HashMap<Sha256Hash, Transaction>();
-        transactions = new HashMap<Sha256Hash, Transaction>();
-        extensions = new HashMap<String, WalletExtension>();
+        unspent = new HashMap<>();
+        spent = new HashMap<>();
+        pending = new HashMap<>();
+        dead = new HashMap<>();
+        transactions = new HashMap<>();
+        extensions = new HashMap<>();
         // Use a linked hash map to ensure ordering of event listeners is correct.
-        confidenceChanged = new LinkedHashMap<Transaction, TransactionConfidence.Listener.ChangeReason>();
-        signers = new ArrayList<TransactionSigner>();
+        confidenceChanged = new LinkedHashMap<>();
+        signers = new ArrayList<>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
     }
 
     private void createTransientState() {
-        ignoreNextNewBlock = new HashSet<Sha256Hash>();
+        ignoreNextNewBlock = new HashSet<>();
         txConfidenceListener = new TransactionConfidence.Listener() {
             @Override
             public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
@@ -532,7 +532,7 @@ public class Wallet extends BaseTaggableObject
      */
     public List<Address> getIssuedReceiveAddresses() {
         final List<ECKey> keys = getIssuedReceiveKeys();
-        List<Address> addresses = new ArrayList<Address>(keys.size());
+        List<Address> addresses = new ArrayList<>(keys.size());
         for (ECKey key : keys)
             addresses.add(key.toAddress(getParams()));
         return addresses;
@@ -593,7 +593,7 @@ public class Wallet extends BaseTaggableObject
     public List<Script> getWatchedScripts() {
         keyChainGroupLock.lock();
         try {
-            return new ArrayList<Script>(watchedScripts);
+            return new ArrayList<>(watchedScripts);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -961,7 +961,7 @@ public class Wallet extends BaseTaggableObject
     public List<Address> getWatchedAddresses() {
         keyChainGroupLock.lock();
         try {
-            List<Address> addresses = new LinkedList<Address>();
+            List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (script.isSentToAddress())
                     addresses.add(script.getToAddress(params));
@@ -1546,7 +1546,7 @@ public class Wallet extends BaseTaggableObject
         try {
             Set<Transaction> transactions = getTransactions(true);
 
-            Set<Sha256Hash> hashes = new HashSet<Sha256Hash>();
+            Set<Sha256Hash> hashes = new HashSet<>();
             for (Transaction tx : transactions) {
                 hashes.add(tx.getHash());
             }
@@ -1813,7 +1813,7 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
         if (tx.isCoinBase()) return Sets.newHashSet();
         // Compile a set of outpoints that are spent by tx.
-        HashSet<TransactionOutPoint> outpoints = new HashSet<TransactionOutPoint>();
+        HashSet<TransactionOutPoint> outpoints = new HashSet<>();
         for (TransactionInput input : tx.getInputs()) {
             outpoints.add(input.getOutpoint());
         }
@@ -1838,7 +1838,7 @@ public class Wallet extends BaseTaggableObject
      * and all txns spending the outputs of those txns, recursively.
      */
     void addTransactionsDependingOn(Set<Transaction> txSet, Set<Transaction> txPool) {
-        Map<Sha256Hash, Transaction> txQueue = new LinkedHashMap<Sha256Hash, Transaction>();
+        Map<Sha256Hash, Transaction> txQueue = new LinkedHashMap<>();
         for (Transaction tx : txSet) {
             txQueue.put(tx.getHash(), tx);
         }
@@ -2053,7 +2053,7 @@ public class Wallet extends BaseTaggableObject
      * as there is no guarantee on the order of the returned txns besides what was already stated.
      */
     List<Transaction> sortTxnsByDependency(Set<Transaction> inputSet) {
-        ArrayList<Transaction> result = new ArrayList<Transaction>(inputSet);
+        ArrayList<Transaction> result = new ArrayList<>(inputSet);
         for (int i = 0; i < result.size()-1; i++) {
             boolean txAtISpendsOtherTxInTheList;
             do {
@@ -2315,7 +2315,7 @@ public class Wallet extends BaseTaggableObject
 
     // Updates the wallet when a double spend occurs. overridingTx can be null for the case of coinbases
     private void killTxns(Set<Transaction> txnsToKill, @Nullable Transaction overridingTx) {
-        LinkedList<Transaction> work = new LinkedList<Transaction>(txnsToKill);
+        LinkedList<Transaction> work = new LinkedList<>(txnsToKill);
         while (!work.isEmpty()) {
             final Transaction tx = work.poll();
             log.warn("TX {} killed{}", tx.getHashAsString(),
@@ -2544,7 +2544,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addChangeEventListener(Executor executor, WalletChangeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        changeListeners.add(new ListenerRegistration<WalletChangeEventListener>(listener, executor));
+        changeListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2561,7 +2561,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addCoinsReceivedEventListener(Executor executor, WalletCoinsReceivedEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        coinsReceivedListeners.add(new ListenerRegistration<WalletCoinsReceivedEventListener>(listener, executor));
+        coinsReceivedListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2578,7 +2578,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addCoinsSentEventListener(Executor executor, WalletCoinsSentEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        coinsSentListeners.add(new ListenerRegistration<WalletCoinsSentEventListener>(listener, executor));
+        coinsSentListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2611,7 +2611,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addReorganizeEventListener(Executor executor, WalletReorganizeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        reorganizeListeners.add(new ListenerRegistration<WalletReorganizeEventListener>(listener, executor));
+        reorganizeListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2628,7 +2628,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addScriptChangeEventListener(Executor executor, ScriptsChangeEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        scriptChangeListeners.add(new ListenerRegistration<ScriptsChangeEventListener>(listener, executor));
+        scriptChangeListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2645,7 +2645,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void addTransactionConfidenceEventListener(Executor executor, TransactionConfidenceEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
-        transactionConfidenceListeners.add(new ListenerRegistration<TransactionConfidenceEventListener>(listener, executor));
+        transactionConfidenceListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /**
@@ -2812,7 +2812,7 @@ public class Wallet extends BaseTaggableObject
     public Set<Transaction> getTransactions(boolean includeDead) {
         lock.lock();
         try {
-            Set<Transaction> all = new HashSet<Transaction>();
+            Set<Transaction> all = new HashSet<>();
             all.addAll(unspent.values());
             all.addAll(spent.values());
             all.addAll(pending.values());
@@ -2830,7 +2830,7 @@ public class Wallet extends BaseTaggableObject
     public Iterable<WalletTransaction> getWalletTransactions() {
         lock.lock();
         try {
-            Set<WalletTransaction> all = new HashSet<WalletTransaction>();
+            Set<WalletTransaction> all = new HashSet<>();
             addWalletTransactionsToSet(all, Pool.UNSPENT, unspent.values());
             addWalletTransactionsToSet(all, Pool.SPENT, spent.values());
             addWalletTransactionsToSet(all, Pool.DEAD, dead.values());
@@ -2919,7 +2919,7 @@ public class Wallet extends BaseTaggableObject
             if (numTransactions > size || numTransactions == 0) {
                 numTransactions = size;
             }
-            ArrayList<Transaction> all = new ArrayList<Transaction>(getTransactions(includeDead));
+            ArrayList<Transaction> all = new ArrayList<>(getTransactions(includeDead));
             // Order by update time.
             Collections.sort(all, Transaction.SORT_TX_BY_UPDATE_TIME);
             if (numTransactions == all.size()) {
@@ -3158,7 +3158,7 @@ public class Wallet extends BaseTaggableObject
     public List<TransactionOutput> getUnspents() {
         lock.lock();
         try {
-            return new ArrayList<TransactionOutput>(myUnspents);
+            return new ArrayList<>(myUnspents);
         } finally {
             lock.unlock();
         }
@@ -3256,7 +3256,7 @@ public class Wallet extends BaseTaggableObject
 
         final Collection<Transaction> txns;
         if (sortOrder != null) {
-            txns = new TreeSet<Transaction>(sortOrder);
+            txns = new TreeSet<>(sortOrder);
             txns.addAll(transactionMap.values());
         } else {
             txns = transactionMap.values();
@@ -3941,7 +3941,7 @@ public class Wallet extends BaseTaggableObject
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
             value = value.subtract(totalInput);
 
-            List<TransactionInput> originalInputs = new ArrayList<TransactionInput>(req.tx.getInputs());
+            List<TransactionInput> originalInputs = new ArrayList<>(req.tx.getInputs());
 
             // Check for dusty sends and the OP_RETURN limit.
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
@@ -4120,7 +4120,7 @@ public class Wallet extends BaseTaggableObject
         try {
             List<TransactionOutput> candidates;
             if (vUTXOProvider == null) {
-                candidates = new ArrayList<TransactionOutput>(myUnspents.size());
+                candidates = new ArrayList<>(myUnspents.size());
                 for (TransactionOutput output : myUnspents) {
                     if (excludeUnsignable && !canSignFor(output.getScriptPubKey())) continue;
                     Transaction transaction = checkNotNull(output.getParentTransaction());
@@ -4223,10 +4223,10 @@ public class Wallet extends BaseTaggableObject
      */
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-        List<UTXO> candidates = new ArrayList<UTXO>();
+        List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
-        List<Address> addresses = new ArrayList<Address>();
+        List<Address> addresses = new ArrayList<>();
         for (ECKey key : keys) {
             Address address = new Address(params, key.getPubKeyHash());
             addresses.add(address);
@@ -4421,7 +4421,7 @@ public class Wallet extends BaseTaggableObject
             for (Sha256Hash blockHash : mapBlockTx.keySet())
                 Collections.sort(mapBlockTx.get(blockHash));
 
-            List<Sha256Hash> oldBlockHashes = new ArrayList<Sha256Hash>(oldBlocks.size());
+            List<Sha256Hash> oldBlockHashes = new ArrayList<>(oldBlocks.size());
             log.info("Old part of chain (top to bottom):");
             for (StoredBlock b : oldBlocks) {
                 log.info("  {}", b.getHeader().getHashAsString());
@@ -4567,7 +4567,7 @@ public class Wallet extends BaseTaggableObject
     private void calcBloomOutPointsLocked() {
         // TODO: This could be done once and then kept up to date.
         bloomOutPoints.clear();
-        Set<Transaction> all = new HashSet<Transaction>();
+        Set<Transaction> all = new HashSet<>();
         all.addAll(unspent.values());
         all.addAll(spent.values());
         all.addAll(pending.values());
@@ -4848,7 +4848,7 @@ public class Wallet extends BaseTaggableObject
             // Of the coins we could spend, pick some that we actually will spend.
             CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
             // selector is allowed to modify candidates list.
-            CoinSelection selection = selector.select(valueNeeded, new LinkedList<TransactionOutput>(candidates));
+            CoinSelection selection = selector.select(valueNeeded, new LinkedList<>(candidates));
             // Can we afford this?
             if (selection.valueGathered.compareTo(valueNeeded) < 0) {
                 valueMissing = valueNeeded.subtract(selection.valueGathered);
@@ -5155,7 +5155,7 @@ public class Wallet extends BaseTaggableObject
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
-        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<ListenableFuture<Transaction>>(txns.size());
+        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<>(txns.size());
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         for (Transaction tx : txns) {
             try {

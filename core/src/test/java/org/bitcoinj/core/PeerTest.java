@@ -224,7 +224,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
 
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
-        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
+        List<Sha256Hash> expectedLocator = new ArrayList<>();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(PARAMS.getGenesisBlock().getHash());
         
@@ -395,7 +395,7 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         peer.startBlockChainDownload();
 
-        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
+        List<Sha256Hash> expectedLocator = new ArrayList<>();
         expectedLocator.add(b2.getHash());
         expectedLocator.add(b1.getHash());
         expectedLocator.add(PARAMS.getGenesisBlock().getHash());
@@ -477,7 +477,7 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.setDownloadParameters(Utils.currentTimeSeconds() - (600*2) + 1, false);
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
-        List<Sha256Hash> expectedLocator = new ArrayList<Sha256Hash>();
+        List<Sha256Hash> expectedLocator = new ArrayList<>();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(PARAMS.getGenesisBlock().getHash());
         assertEquals(getheaders.getLocator(), expectedLocator);

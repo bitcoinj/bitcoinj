@@ -39,7 +39,7 @@ public class RedeemData {
 
     private RedeemData(List<ECKey> keys, Script redeemScript) {
         this.redeemScript = redeemScript;
-        List<ECKey> sortedKeys = new ArrayList<ECKey>(keys);
+        List<ECKey> sortedKeys = new ArrayList<>(keys);
         Collections.sort(sortedKeys, ECKey.PUBKEY_COMPARATOR);
         this.keys = sortedKeys;
     }
