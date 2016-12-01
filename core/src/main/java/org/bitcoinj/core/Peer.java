@@ -123,7 +123,7 @@ public class Peer extends PeerSocketHandler {
     //
     // It is important to avoid a nasty edge case where we can end up with parallel chain downloads proceeding
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
-    private final HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
+    protected final HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
     // Keep references to TransactionConfidence objects for transactions that were announced by a remote peer, but
     // which we haven't downloaded yet. These objects are de-duplicated by the TxConfidenceTable class.
     // Once the tx is downloaded (by some peer), the Transaction object that is created will have a reference to
