@@ -32,7 +32,7 @@ var listener = Java.extend(bcj.wallet.listeners.AbstractWalletEventListener);
 wallet.addEventListener(new listener() {
     onCoinsReceived: function(wallet, tx, prevBalance, newBalance) {
         print("Received money! " + newBalance.toFriendlyString());
-        var sendReq = bcj.core.Wallet.SendRequest.emptyWallet(forwardingAddr);
+        var sendReq = bcj.wallet.SendRequest.emptyWallet(forwardingAddr);
         var sendResult = wallet.sendCoins(sendReq);
         print("Sending back in tx " + sendResult.tx.hash);
     }
