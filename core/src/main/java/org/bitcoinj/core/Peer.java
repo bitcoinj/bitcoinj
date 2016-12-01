@@ -19,9 +19,9 @@ package org.bitcoinj.core;
 import com.google.common.base.*;
 import com.google.common.base.Objects;
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.strategies.BlockLocatorStrategy;
+import org.bitcoinj.core.strategies.LinearBlockLocatorStrategy;
 import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -78,6 +78,7 @@ public class Peer extends PeerSocketHandler {
         = new CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>>();
     private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners
         = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
+    private BlockLocatorStrategy blockLocatorStrategy;
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -226,6 +227,7 @@ public class Peer extends PeerSocketHandler {
                 @Nullable AbstractBlockChain chain, int downloadTxDependencyDepth) {
         super(params, remoteAddress);
         this.params = Preconditions.checkNotNull(params);
+        this.setBlockLocatorStrategy(new LinearBlockLocatorStrategy());
         this.versionMessage = Preconditions.checkNotNull(ver);
         this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;
         this.blockChain = chain;  // Allowed to be null.
@@ -1426,16 +1428,7 @@ public class Peer extends PeerSocketHandler {
         // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
         // sends us the data we requested in a "headers" message.
 
-        // TODO: Block locators should be abstracted out rather than special cased here.
-        List<Sha256Hash> blockLocator = new ArrayList<Sha256Hash>(51);
-        // For now we don't do the exponential thinning as suggested here:
-        //
-        //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
-        //
-        // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
-        // 100 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
-        // must always put the genesis block as the first entry.
-        BlockStore store = checkNotNull(blockChain).getBlockStore();
+
         StoredBlock chainHead = blockChain.getChainHead();
         Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
@@ -1449,19 +1442,8 @@ public class Peer extends PeerSocketHandler {
         if (log.isDebugEnabled())
             log.debug("{}: blockChainDownloadLocked({}) current head = {}",
                     this, toHash, chainHead.getHeader().getHashAsString());
-        StoredBlock cursor = chainHead;
-        for (int i = 100; cursor != null && i > 0; i--) {
-            blockLocator.add(cursor.getHeader().getHash());
-            try {
-                cursor = cursor.getPrev(store);
-            } catch (BlockStoreException e) {
-                log.error("Failed to walk the block chain whilst constructing a locator");
-                throw new RuntimeException(e);
-            }
-        }
-        // Only add the locator if we didn't already do so. If the chain is < 50 blocks we already reached it.
-        if (cursor != null)
-            blockLocator.add(params.getGenesisBlock().getHash());
+
+        List<Sha256Hash> blockLocator = blockLocatorStrategy.createBlockLocator(blockChain);
 
         // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
         // block being solved during chain download.
@@ -1847,5 +1829,10 @@ public class Peer extends PeerSocketHandler {
      */
     public void setDownloadTxDependencies(int depth) {
         vDownloadTxDependencyDepth = depth;
+    }
+
+    public void setBlockLocatorStrategy(BlockLocatorStrategy blockLocatorStrategy) {
+        checkNotNull(blockLocatorStrategy).setNetworkParameters(params);
+        this.blockLocatorStrategy = blockLocatorStrategy;
     }
 }

@@ -970,4 +970,9 @@ public class PeerTest extends TestWithNetworkConnections {
                     || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
         }
     }
+
+    @Test(expected = NullPointerException.class)
+    public void testNullBlockLocatorStrategy() {
+        peer.setBlockLocatorStrategy(null);
+    }
 }
