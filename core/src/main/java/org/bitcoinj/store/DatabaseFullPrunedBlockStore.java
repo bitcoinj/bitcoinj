@@ -135,6 +135,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     // Compatibility SQL.
     private static final String SELECT_COMPATIBILITY_COINBASE_SQL               = "SELECT coinbase FROM openoutputs WHERE 1 = 2";
 
+    private static final int DEFAULT_VALID_DB_TIMEOUT = 2;
+
     protected Sha256Hash chainHeadHash;
     protected StoredBlock chainHeadBlock;
     protected Sha256Hash verifiedChainHeadHash;
@@ -419,12 +421,38 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * <p>If there isn't a connection on the {@link ThreadLocal} then create and store it.</p>
      * <p>This will also automatically set up the schema if it does not exist within the DB.</p>
+     *
+     * <p>This will call {@link #maybeConnect(int connectionValidTimeout)} with a default timeout</p>
+     * <p>in seconds of DEFAULT_VALID_DB_TIMEOUT</p>
      * @throws BlockStoreException if successful connection to the DB couldn't be made.
      */
     protected synchronized final void maybeConnect() throws BlockStoreException {
+        maybeConnect(DEFAULT_VALID_DB_TIMEOUT);
+    }
+
+    /**
+     * <p>If there isn't a connection on the {@link ThreadLocal} then create and store it.</p>
+     * <p>This will also automatically set up the schema if it does not exist within the DB.</p>
+     *
+     * @param connectionValidTimeout Timeout in seconds to wait for the validation of the db connection
+     *                               before closing the current connection and removing from it from the ThreadLocal
+     * @throws BlockStoreException if successful connection to the DB couldn't be made.
+     */
+    protected synchronized final void maybeConnect(int connectionValidTimeout) throws BlockStoreException {
         try {
-            if (conn.get() != null && !conn.get().isClosed())
+            if (conn.get() != null && !conn.get().isClosed()) {
+                if (conn.get().isValid(connectionValidTimeout)) {
+                    return;
+                } else {
+                    try {
+                        conn.get().close();
+                    } finally {
+                        conn.remove();
+                    }
+                }
                 return;
+            }
+
 
             if (username == null || password == null) {
                 conn.set(DriverManager.getConnection(connectionURL));
