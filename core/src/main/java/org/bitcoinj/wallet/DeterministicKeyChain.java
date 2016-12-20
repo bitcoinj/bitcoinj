@@ -104,6 +104,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicHierarchy hierarchy;
     @Nullable private DeterministicKey rootKey;
     @Nullable private DeterministicSeed seed;
+    @Nullable private ImmutableList<ChildNumber> accountPath;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -326,12 +327,33 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
+     * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
+     * balances and generally follow along, but spending is not possible with such a chain.
+     */
+    public DeterministicKeyChain(DeterministicKey watchingKey, ImmutableList<ChildNumber> accountPath) {
+        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
+        checkArgument(watchingKey.getPath().size() == accountPath.size(), "You can only watch an account key currently");
+        basicKeyChain = new BasicKeyChain();
+        this.seed = null;
+        rootKey = null;
+        addToBasicChain(watchingKey);
+        setAccountPath(accountPath);
+        hierarchy = new DeterministicHierarchy(watchingKey);
+        initializeHierarchyUnencrypted(watchingKey, accountPath);
+    }
+
+    /**
      * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
      * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
      * <p>Watch key has to be an account key.</p>
      */
     protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
         this(watchKey);
+        this.isFollowing = isFollowing;
+    }
+    
+    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing, ImmutableList<ChildNumber> accountPath) {
+        this(watchKey, accountPath);
         this.isFollowing = isFollowing;
     }
 
@@ -349,6 +371,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
         return new DeterministicKeyChain(accountKey);
+    }
+
+    /**
+     * Creates a key chain that watches the given account key.
+     */
+    public static DeterministicKeyChain watch(DeterministicKey accountKey, ImmutableList<ChildNumber> accountPath) {
+        return new DeterministicKeyChainAccountPath(accountKey, accountPath);
     }
 
     /**
@@ -420,7 +449,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Override in subclasses to use a different account derivation path */
     protected ImmutableList<ChildNumber> getAccountPath() {
+    		if (accountPath != null) {
+    			return accountPath;
+    		}
+    		
         return ACCOUNT_ZERO_PATH;
+    }
+    
+    protected void setAccountPath(ImmutableList<ChildNumber> accountPath) {
+    		this.accountPath = accountPath;
     }
 
     private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
@@ -437,6 +474,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private void initializeHierarchyUnencrypted(DeterministicKey baseKey) {
         externalParentKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ZERO);
         internalParentKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ONE);
+        addToBasicChain(externalParentKey);
+        addToBasicChain(internalParentKey);
+    }
+
+    // Derives the account path keys and inserts them into the basic key chain. This is important to preserve their
+    // order for serialization, amongst other things. Don't assume that account path is zero
+    private void initializeHierarchyUnencrypted(DeterministicKey baseKey, ImmutableList<ChildNumber> accountPath) {
+    		externalParentKey = hierarchy.deriveChild(accountPath, false, false, ChildNumber.ZERO);
+        internalParentKey = hierarchy.deriveChild(accountPath, false, false, ChildNumber.ONE);
         addToBasicChain(externalParentKey);
         addToBasicChain(internalParentKey);
     }
