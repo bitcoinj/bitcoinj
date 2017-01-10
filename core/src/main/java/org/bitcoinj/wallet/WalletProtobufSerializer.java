@@ -800,8 +800,9 @@ public class WalletProtobufSerializer {
                 throw new UnreadableWalletException("Peer IP address does not have the right length", e);
             }
             int port = proto.getPort();
-            PeerAddress address = new PeerAddress(params, ip, port);
-            address.setServices(BigInteger.valueOf(proto.getServices()));
+            int protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+            BigInteger services = BigInteger.valueOf(proto.getServices());
+            PeerAddress address = new PeerAddress(params, ip, port, protocolVersion, services);
             confidence.markBroadcastBy(address);
         }
         if (confidenceProto.hasLastBroadcastedAt())

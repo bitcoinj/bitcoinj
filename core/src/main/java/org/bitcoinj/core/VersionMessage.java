@@ -22,6 +22,7 @@ import com.google.common.net.InetAddresses;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
@@ -100,8 +101,8 @@ public class VersionMessage extends Message {
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
-        myAddr = new PeerAddress(params, localhost, params.getPort(), 0);
-        theirAddr = new PeerAddress(params, localhost, params.getPort(), 0);
+        myAddr = new PeerAddress(params, localhost, params.getPort(), 0, BigInteger.ZERO);
+        theirAddr = new PeerAddress(params, localhost, params.getPort(), 0, BigInteger.ZERO);
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         relayTxesBeforeFilter = true;

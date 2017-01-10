@@ -71,12 +71,12 @@ public class PeerAddress extends ChildMessage {
     /**
      * Construct a peer address from a memorized or hardcoded address.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, int protocolVersion) {
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, int protocolVersion, BigInteger services) {
         super(params);
         this.addr = checkNotNull(addr);
         this.port = port;
         this.protocolVersion = protocolVersion;
-        this.services = BigInteger.ZERO;
+        this.services = services;
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
@@ -84,7 +84,8 @@ public class PeerAddress extends ChildMessage {
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT));
+        this(params, addr, port, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),
+                BigInteger.ZERO);
     }
 
     /**
@@ -178,36 +179,16 @@ public class PeerAddress extends ChildMessage {
         return new InetSocketAddress(getAddr(), getPort());
     }
 
-    public void setAddr(InetAddress addr) {
-        unCache();
-        this.addr = addr;
-    }
-
     public int getPort() {
         return port;
-    }
-
-    public void setPort(int port) {
-        unCache();
-        this.port = port;
     }
 
     public BigInteger getServices() {
         return services;
     }
 
-    public void setServices(BigInteger services) {
-        unCache();
-        this.services = services;
-    }
-
     public long getTime() {
         return time;
-    }
-
-    public void setTime(long time) {
-        unCache();
-        this.time = time;
     }
 
     @Override
@@ -224,7 +205,6 @@ public class PeerAddress extends ChildMessage {
         if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
         return other.addr.equals(addr) && other.port == port && other.time == time && other.services.equals(services);
-        //TODO: including services and time could cause same peer to be added multiple times in collections
     }
 
     @Override
