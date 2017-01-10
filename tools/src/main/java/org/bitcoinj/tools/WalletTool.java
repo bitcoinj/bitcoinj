@@ -1211,7 +1211,7 @@ public class WalletTool {
             String[] peerAddrs = peersFlag.split(",");
             for (String peer : peerAddrs) {
                 try {
-                    peers.addAddress(new PeerAddress(InetAddress.getByName(peer), params.getPort()));
+                    peers.addAddress(new PeerAddress(params, InetAddress.getByName(peer)));
                 } catch (UnknownHostException e) {
                     System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
                     System.exit(1);

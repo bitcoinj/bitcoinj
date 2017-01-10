@@ -39,7 +39,7 @@ public class PeerAddressTest
 
     @Test
     public void testBitcoinSerialize() throws Exception {
-        PeerAddress pa = new PeerAddress(InetAddress.getByName(null), 8333, 0);
+        PeerAddress pa = new PeerAddress(MainNetParams.get(), InetAddress.getByName(null), 8333, 0);
         assertEquals("000000000000000000000000000000000000ffff7f000001208d",
                 Utils.HEX.encode(pa.bitcoinSerialize()));
     }

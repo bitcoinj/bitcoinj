@@ -71,7 +71,8 @@ public class PeerAddress extends ChildMessage {
     /**
      * Construct a peer address from a memorized or hardcoded address.
      */
-    public PeerAddress(InetAddress addr, int port, int protocolVersion) {
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, int protocolVersion) {
+        super(params);
         this.addr = checkNotNull(addr);
         this.port = port;
         this.protocolVersion = protocolVersion;
@@ -80,31 +81,15 @@ public class PeerAddress extends ChildMessage {
     }
 
     /**
-     * Constructs a peer address from the given IP address and port. Protocol version is the default
-     * for Bitcoin.
-     */
-    public PeerAddress(InetAddress addr, int port) {
-        this(addr, port, NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion());
-    }
-
-    /**
-     * Constructs a peer address from the given IP address and port.
+     * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(addr, port, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT));
+        this(params, addr, port, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT));
     }
 
     /**
-     * Constructs a peer address from the given IP address. Port and version number
-     * are default for Bitcoin mainnet.
-     */
-    public PeerAddress(InetAddress addr) {
-        this(addr, MainNetParams.get().getPort());
-    }
-
-    /**
-     * Constructs a peer address from the given IP address. Port is default for
-     * Bitcoin mainnet, version number is default for the given parameters.
+     * Constructs a peer address from the given IP address. Port and version number are default for the given
+     * parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr) {
         this(params, addr, MainNetParams.get().getPort());
@@ -113,30 +98,9 @@ public class PeerAddress extends ChildMessage {
     /**
      * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
      * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
-     * Protocol version is the default.  Protocol version is the default
-     * for Bitcoin.
-     */
-    public PeerAddress(InetSocketAddress addr) {
-        this(addr.getAddress(), addr.getPort(), NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion());
-    }
-
-    /**
-     * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
-     * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
      */
     public PeerAddress(NetworkParameters params, InetSocketAddress addr) {
         this(params, addr.getAddress(), addr.getPort());
-    }
-
-    /**
-     * Constructs a peer address from a stringified hostname+port. Use this if you want to connect to a Tor .onion address.
-     * Protocol version is the default for Bitcoin.
-     */
-    public PeerAddress(String hostname, int port) {
-        this.hostname = hostname;
-        this.port = port;
-        this.protocolVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
-        this.services = BigInteger.ZERO;
     }
 
     /**

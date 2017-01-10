@@ -82,7 +82,7 @@ public class PrintPeers {
         NioClientManager clientManager = new NioClientManager();
         for (final InetAddress addr : addrs) {
             InetSocketAddress address = new InetSocketAddress(addr, params.getPort());
-            final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new PeerAddress(address));
+            final Peer peer = new Peer(params, new VersionMessage(params, 0), null, new PeerAddress(params, address));
             final SettableFuture<Void> future = SettableFuture.create();
             // Once the connection has completed version handshaking ...
             peer.addConnectedEventListener(new PeerConnectedEventListener() {

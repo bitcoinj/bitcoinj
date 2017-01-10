@@ -39,7 +39,7 @@ public class FetchBlock {
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(params, chain);
         peerGroup.start();
-        PeerAddress addr = new PeerAddress(InetAddress.getLocalHost(), params.getPort());
+        PeerAddress addr = new PeerAddress(params, InetAddress.getLocalHost());
         peerGroup.addAddress(addr);
         peerGroup.waitForPeers(1).get();
         Peer peer = peerGroup.getConnectedPeers().get(0);
