@@ -105,6 +105,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicHierarchy hierarchy;
     @Nullable private DeterministicKey rootKey;
     @Nullable private DeterministicSeed seed;
+    @Nullable private ImmutableList<ChildNumber> accountPath;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -312,12 +313,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /**
      * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
-     * balances and generally follow along, but spending is not possible with such a chain. Currently you can't use
-     * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
+     * balances and generally follow along, but spending is not possible with such a chain.
      */
     public DeterministicKeyChain(DeterministicKey watchingKey) {
+        this(watchingKey, ACCOUNT_ZERO_PATH);
+    }
+
+    /**
+     * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
+     * balances and generally follow along, but spending is not possible with such a chain.
+     */
+    public DeterministicKeyChain(DeterministicKey watchingKey, ImmutableList<ChildNumber> accountPath) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
-        checkArgument(watchingKey.getPath().size() == getAccountPath().size(), "You can only watch an account key currently");
+        checkArgument(watchingKey.getPath().size() == accountPath.size(), "You can only watch an account key currently");
+        setAccountPath(accountPath);
         basicKeyChain = new BasicKeyChain();
         this.seed = null;
         this.rootKey = null;
@@ -332,7 +341,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * <p>Watch key has to be an account key.</p>
      */
     protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
-        this(watchKey);
+        this(watchKey, isFollowing,  ACCOUNT_ZERO_PATH);
+    }
+    
+    /**
+     * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
+     * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
+     * <p>Watch key has to be an account key.</p>
+     */
+    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing, ImmutableList<ChildNumber> accountPath) {
+        this(watchKey, accountPath);
         this.isFollowing = isFollowing;
     }
 
@@ -349,7 +367,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Creates a key chain that watches the given account key.
      */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return new DeterministicKeyChain(accountKey);
+        return watch(accountKey, ACCOUNT_ZERO_PATH);
+    }
+
+    /**
+     * Creates a key chain that watches the given account key.
+     */
+    public static DeterministicKeyChain watch(DeterministicKey accountKey, ImmutableList<ChildNumber> accountPath) {
+        return new DeterministicKeyChain(accountKey, accountPath);
     }
 
     /**
@@ -421,7 +446,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Override in subclasses to use a different account derivation path */
     protected ImmutableList<ChildNumber> getAccountPath() {
+        if (accountPath != null) {
+            return accountPath;
+        }
+
         return ACCOUNT_ZERO_PATH;
+    }
+    
+    /*
+     * Store account path of this DeterministicKey
+     */
+    protected void setAccountPath(ImmutableList<ChildNumber> accountPath) {
+        this.accountPath = accountPath;
     }
 
     private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
