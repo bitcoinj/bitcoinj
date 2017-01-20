@@ -84,6 +84,14 @@ public class KeyChainGroup implements KeyBag {
         this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
     }
 
+    public KeyChainGroup(NetworkParameters params, byte[] privKeyBytes, byte[] chainCode, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(privKeyBytes, chainCode, creationTimeSeconds, accountPath)), null, null);	
+    }
+
+    public KeyChainGroup(NetworkParameters params, String base58, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(base58, params, creationTimeSeconds, accountPath)), null, null);	
+    }
+
     /**
      * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.

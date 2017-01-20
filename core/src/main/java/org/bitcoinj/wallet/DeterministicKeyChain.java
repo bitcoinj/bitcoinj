@@ -310,6 +310,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(seed, null);
     }
 
+    public DeterministicKeyChain(byte[] privKeyBytes, byte[] chainCode, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        this(privKeyBytes, chainCode, null, creationTimeSeconds, accountPath);
+    }
+
+    public DeterministicKeyChain(String base58, NetworkParameters params, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        this(base58, params, null, creationTimeSeconds, accountPath);
+    }
+
     /**
      * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
      * balances and generally follow along, but spending is not possible with such a chain.
@@ -323,6 +331,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * balances and generally follow along, but spending is not possible with such a chain.
      */
     public DeterministicKeyChain(DeterministicKey watchingKey, ImmutableList<ChildNumber> accountPath) {
+        // TODO giuseppe check this!!! 
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         checkArgument(watchingKey.getPath().size() == accountPath.size(), "You can only watch an account key currently");
         setAccountPath(accountPath);
@@ -396,6 +405,34 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
         // rest of the setup (loading the root key).
     }
+
+    protected DeterministicKeyChain(byte[] privKeyBytes, byte[] chainCode, @Nullable KeyCrypter crypter, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        setAccountPath(accountPath);
+
+        basicKeyChain = new BasicKeyChain(crypter);
+        rootKey = HDKeyDerivation.createMasterPrivKeyFromBytes(privKeyBytes, chainCode);
+        rootKey.setCreationTimeSeconds(creationTimeSeconds);
+        addToBasicChain(rootKey);
+        hierarchy = new DeterministicHierarchy(rootKey);
+        for (int i = 1; i <= getAccountPath().size(); i++) {
+            addToBasicChain(hierarchy.get(getAccountPath().subList(0, i), false, true));
+        }
+        initializeHierarchyUnencrypted(rootKey);
+    }
+
+    protected DeterministicKeyChain(String base58, NetworkParameters params, @Nullable KeyCrypter crypter, long creationTimeSeconds, ImmutableList<ChildNumber> accountPath) {
+        setAccountPath(accountPath);
+
+        basicKeyChain = new BasicKeyChain(crypter);
+        rootKey = DeterministicKey.deserializeB58(base58, params);
+        rootKey.setCreationTimeSeconds(creationTimeSeconds);
+        addToBasicChain(rootKey);
+        hierarchy = new DeterministicHierarchy(rootKey);
+        for (int i = 1; i <= getAccountPath().size(); i++) {
+            addToBasicChain(hierarchy.get(getAccountPath().subList(0, i), false, true));
+        }
+        initializeHierarchyUnencrypted(rootKey);
+	}
 
     /**
      * For use in encryption when {@link #toEncrypted(KeyCrypter, KeyParameter)} is called, so that
@@ -773,6 +810,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
         for (Map.Entry<ECKey, Protos.Key.Builder> entry : keys.entrySet()) {
             DeterministicKey key = (DeterministicKey) entry.getKey();
+            if (key.isPubKeyOnly()){
+            		System.out.println();
+            }
+            if (key.isWatching()) {
+            		System.out.println();
+            }
             Protos.Key.Builder proto = entry.getValue();
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
