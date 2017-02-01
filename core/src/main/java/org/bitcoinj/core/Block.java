@@ -789,7 +789,7 @@ public class Block extends Message {
      * blocks and using different compression techniques to make blocks smaller. If recalc is true
      * then the merkleRoot and block hash will be recalculated. Default is false.
      * @param txList New list of transactions. Can be null.
-     * @param recalc Force a recalculation next time the values are needed
+     * @param recalc Force a recalculation next time merkleRoot and block hash are needed
      */
     public void replaceTransactionList(List<Transaction> txList, boolean recalc) {
         transactions = txList;
