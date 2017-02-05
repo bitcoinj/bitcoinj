@@ -1136,11 +1136,13 @@ public class Transaction extends ChildMessage {
         this.lockTime = lockTime;
     }
 
-    /**
-     * @return the version
-     */
     public long getVersion() {
         return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+        unCache();
     }
 
     /** Returns an unmodifiable view of all inputs. */
