@@ -38,6 +38,8 @@ import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
+import org.bitcoinj.wallet.WalletTransaction;
+import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.junit.Before;
 import org.junit.Test;
@@ -356,6 +358,18 @@ public class WalletProtobufSerializerTest {
         assertEquals(Coin.ZERO, wallet1.getBalance());
         assertEquals(2, wallet1.getActiveKeyChain().getSigsRequiredToSpend());
         assertEquals(myAddress, wallet1.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS));
+    }
+
+    @Test
+    public void roundtripVersionTwoTransaction() throws Exception {
+        Transaction tx = new Transaction(PARAMS, Utils.HEX.decode(
+                "0200000001d7902864af9310420c6e606b814c8f89f7902d40c130594e85df2e757a7cc301070000006b483045022100ca1757afa1af85c2bb014382d9ce411e1628d2b3d478df9d5d3e9e93cb25dcdd02206c5d272b31a23baf64e82793ee5c816e2bbef251e733a638b630ff2331fc83ba0121026ac2316508287761befbd0f7495ea794b396dbc5b556bf276639f56c0bd08911feffffff0274730700000000001976a91456da2d038a098c42390c77ef163e1cc23aedf24088ac91062300000000001976a9148ebf3467b9a8d7ae7b290da719e61142793392c188ac22e00600"));
+        assertEquals(tx.getVersion(), 2);
+        assertEquals(tx.getHashAsString(), "0321b1413ed9048199815bd6bc2650cab1a9e8d543f109a42c769b1f18df4174");
+        myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
+        Wallet wallet1 = roundTrip(myWallet);
+        Transaction tx2 = wallet1.getTransaction(tx.getHash());
+        assertEquals(checkNotNull(tx2).getVersion(), 2);
     }
 
     @Test
