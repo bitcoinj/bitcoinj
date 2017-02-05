@@ -637,6 +637,8 @@ public class Transaction extends ChildMessage {
         s.append("  ").append(getHashAsString()).append('\n');
         if (updatedAt != null)
             s.append("  updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
+        if (version != 1)
+            s.append("  version ").append(version).append('\n');
         if (isTimeLocked()) {
             s.append("  time locked until ");
             if (lockTime < LOCKTIME_THRESHOLD) {
