@@ -85,11 +85,27 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
+     * Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. Account path is
+     * provided.
+     */
+    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed, accountPath)), null, null);
+    }
+
+    /**
      * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey) {
         this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null);
+    }
+
+    /**
+     * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
+     * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
+     */
+    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey, ImmutableList<ChildNumber> accountPath) {
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, accountPath)), null, null);
     }
 
     // Used for deserialization.

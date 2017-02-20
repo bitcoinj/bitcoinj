@@ -81,11 +81,21 @@ public final class HDKeyDerivation {
     /**
      * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
      */
-    public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
+    public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode)
+            throws HDDerivationException {
+        // childNumberPath is an empty list because we are creating the root key.
+        return createMasterPrivKeyFromBytes(privKeyBytes, chainCode, ImmutableList.<ChildNumber> of());
+    }
+
+    /**
+     * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
+     */
+    public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode,
+            ImmutableList<ChildNumber> childNumberPath) throws HDDerivationException {
         BigInteger priv = new BigInteger(1, privKeyBytes);
         assertNonZero(priv, "Generated master key is invalid.");
         assertLessThanN(priv, "Generated master key is invalid.");
-        return new DeterministicKey(ImmutableList.<ChildNumber>of(), chainCode, priv, null);
+        return new DeterministicKey(childNumberPath, chainCode, priv, null);
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
