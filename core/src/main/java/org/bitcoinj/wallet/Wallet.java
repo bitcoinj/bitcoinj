@@ -4829,8 +4829,7 @@ public class Wallet extends BaseTaggableObject
         TransactionOutput selection2Change = null;
         CoinSelection selection1 = null;
         TransactionOutput selection1Change = null;
-        // We keep track of the last size of the transaction we calculated but only if the act of adding inputs and
-        // change resulted in the size crossing a 1000 byte boundary. Otherwise it stays at zero.
+        // We keep track of the last size of the transaction we calculated.
         int lastCalculatedSize = 0;
         Coin valueNeeded, valueMissing = null;
         while (true) {
