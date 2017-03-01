@@ -93,7 +93,7 @@ public class PeerAddress extends ChildMessage {
      * parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr) {
-        this(params, addr, MainNetParams.get().getPort());
+        this(params, addr, params.getPort());
     }
 
     /**
