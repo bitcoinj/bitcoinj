@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2017 Thomas König
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -490,5 +491,15 @@ public class ScriptTest {
             0x01,        // Length of the pushed data
             ((byte) 133) // Pushed data
         }, builder.build().getProgram());
+    }
+
+    @Test
+    public void numberBuilder16() {
+        ScriptBuilder builder = new ScriptBuilder();
+        // Numbers greater than 16 must be encoded with PUSHDATA
+        builder.number(15).number(16).number(17);
+        builder.number(0, 17).number(1, 16).number(2, 15);
+        Script script = builder.build();
+        assertEquals("PUSHDATA(1)[11] 16 15 15 16 PUSHDATA(1)[11]", script.toString());
     }
 }
