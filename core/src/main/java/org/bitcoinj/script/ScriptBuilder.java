@@ -125,7 +125,7 @@ public class ScriptBuilder {
      */
     public ScriptBuilder number(int index, long num) {
         if (num >= 0 && num <= 16) {
-            return addChunk(index, new ScriptChunk(Script.encodeToOpN((int) num), null));
+            return smallNum(index, (int) num);
         } else {
             return bigNum(index, num);
         }
