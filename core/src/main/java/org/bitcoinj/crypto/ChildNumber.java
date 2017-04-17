@@ -52,6 +52,14 @@ public class ChildNumber implements Comparable<ChildNumber> {
         this.i = i;
     }
 
+    public static ChildNumber createHardened(int childNumber) {
+        return new ChildNumber(childNumber, true);
+    }
+
+    public static ChildNumber createNonHardened(int childNumber) {
+        return new ChildNumber(childNumber, false);
+    }
+
     /** Returns the uint32 encoded form of the path element, including the most significant bit. */
     public int getI() {
         return i;
