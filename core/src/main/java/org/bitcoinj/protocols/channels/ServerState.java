@@ -3,6 +3,7 @@
 
 package org.bitcoinj.protocols.channels;
 
+@SuppressWarnings("ALL")
 public final class ServerState {
   private ServerState() {}
   public static void registerAllExtensions(

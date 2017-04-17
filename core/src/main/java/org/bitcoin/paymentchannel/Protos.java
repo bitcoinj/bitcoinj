@@ -3,6 +3,7 @@
 
 package org.bitcoin.paymentchannel;
 
+@SuppressWarnings("ALL")
 public final class Protos {
   private Protos() {}
   public static void registerAllExtensions(
