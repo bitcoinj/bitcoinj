@@ -211,7 +211,16 @@ public class BuildCheckpoints {
     }
 
     private static void sanityCheck(File file, int expectedSize) throws IOException {
-        CheckpointManager manager = new CheckpointManager(params, new FileInputStream(file));
+    	FileInputStream fis = new FileInputStream(file);
+        CheckpointManager manager;
+
+        try {
+            manager = new CheckpointManager(params, fis);
+        } catch (IOException ioe){
+            fis.close();
+            throw ioe;
+        }
+
         checkState(manager.numCheckpoints() == expectedSize);
 
         if (params.getId().equals(NetworkParameters.ID_MAINNET)) {
@@ -225,6 +234,8 @@ public class BuildCheckpoints {
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
         }
+        
+        fis.close();
     }
 
     private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
