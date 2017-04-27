@@ -216,9 +216,8 @@ public class BuildCheckpoints {
 
         try {
             manager = new CheckpointManager(params, fis);
-        } catch (IOException ioe){
+        } finally {
             fis.close();
-            throw ioe;
         }
 
         checkState(manager.numCheckpoints() == expectedSize);
@@ -234,8 +233,6 @@ public class BuildCheckpoints {
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
         }
-        
-        fis.close();
     }
 
     private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
