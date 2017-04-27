@@ -102,12 +102,10 @@ public class HttpDiscovery implements PeerDiscovery {
             PeerSeedProtos.SignedPeerSeeds proto;
             try {
                 proto = PeerSeedProtos.SignedPeerSeeds.parseDelimitedFrom(zip);
-            } catch (IOException ioe){
+            } finally {
                 zip.close(); // will close InputStream as well
-                throw ioe;
             }
             
-            zip.close(); // will close InputStream as well
             return protoToAddrs(proto);
         } catch (PeerDiscoveryException e1) {
             throw e1;
