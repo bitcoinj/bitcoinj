@@ -107,10 +107,7 @@ public class HttpDiscovery implements PeerDiscovery {
                 throw ioe;
             }
             
-            if (zip != null){
-                zip.close(); // will close InputStream as well
-            }
-
+            zip.close(); // will close InputStream as well
             return protoToAddrs(proto);
         } catch (PeerDiscoveryException e1) {
             throw e1;
