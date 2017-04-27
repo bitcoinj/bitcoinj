@@ -211,7 +211,7 @@ public class BuildCheckpoints {
     }
 
     private static void sanityCheck(File file, int expectedSize) throws IOException {
-    	FileInputStream fis = new FileInputStream(file);
+        FileInputStream fis = new FileInputStream(file);
         CheckpointManager manager;
 
         try {
