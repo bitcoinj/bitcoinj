@@ -185,18 +185,18 @@ public class ECKey implements EncryptableItem {
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this(priv, new LazyECPoint(checkNotNull(pub)));
+    }
+
+    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
+            checkArgument(priv.bitLength() <= 32 * 8, "private key exceeds 32 bytes: {} bits", priv.bitLength());
             // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
             // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
             // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
             checkArgument(!priv.equals(BigInteger.ZERO));
             checkArgument(!priv.equals(BigInteger.ONE));
         }
-        this.priv = priv;
-        this.pub = new LazyECPoint(checkNotNull(pub));
-    }
-
-    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         this.priv = priv;
         this.pub = checkNotNull(pub);
     }
