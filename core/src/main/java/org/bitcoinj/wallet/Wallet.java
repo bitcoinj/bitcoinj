@@ -2209,6 +2209,14 @@ public class Wallet extends BaseTaggableObject
         if (!doubleSpendTxns.isEmpty()) {
             // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
             killTxns(doubleSpendTxns, tx);
+
+            // disconnect irrelevant inputs (otherwise might cause serialization issue)
+            for(TransactionInput input : tx.getInputs()) {
+                TransactionOutput output = input.getOutpoint().getConnectedOutput();
+                if(output != null && !output.isMine(this)) {
+                    input.disconnect();
+                }
+            }
         }
     }
 

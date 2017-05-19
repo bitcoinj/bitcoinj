@@ -3441,4 +3441,38 @@ public class WalletTest extends TestWithWallet {
 
         // TODO: test shared wallet calculation here
     }
+
+    @Test
+    public void testIrrelevantDoubleSpend() throws Exception {
+        Transaction tx0 = createFakeTx(PARAMS);
+        Transaction tx1 = createFakeTx(PARAMS);
+
+        Transaction tx2 = new Transaction(PARAMS);
+        tx2.addInput(tx0.getOutput(0));
+        tx2.addOutput(COIN, myAddress);
+        tx2.addOutput(COIN, OTHER_ADDRESS);
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx2, tx1, tx0);
+
+        // tx3 and tx4 double spend each other
+        Transaction tx3 = new Transaction(PARAMS);
+        tx3.addInput(tx1.getOutput(0));
+        tx3.addOutput(COIN, myAddress);
+        tx3.addOutput(COIN, OTHER_ADDRESS);
+        wallet.receivePending(tx3, null);
+
+        // tx4 also spends irrelevant output from tx2
+        Transaction tx4 = new Transaction(PARAMS);
+        tx4.addInput(tx1.getOutput(0)); // spends same output
+        tx4.addInput(tx2.getOutput(1));
+        tx4.addOutput(COIN, OTHER_ADDRESS);
+
+        // tx4 does not actually get added to wallet here since it by itself is irrelevant
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx4);
+
+        // since tx4 is not saved, tx2 output 1 will have bad spentBy
+        wallet = roundTrip(wallet);
+
+        assertTrue(wallet.isConsistent());
+    }
 }
