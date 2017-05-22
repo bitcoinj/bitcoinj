@@ -3498,20 +3498,27 @@ public class WalletTest extends TestWithWallet {
 
         // irrelevant to the wallet
         Transaction tx3 = new Transaction(PARAMS);
-        tx3.addInput(tx1.getOutput(0)); // spends same output as tx3
+        tx3.addInput(tx1.getOutput(0)); // spends same output as tx2
         tx3.addOutput(COIN, OTHER_ADDRESS);
 
         // irrelevant to the wallet
         Transaction tx4 = new Transaction(PARAMS);
-        tx4.addInput(tx1.getOutput(1)); // spends different output, but also in tx3
+        tx4.addInput(tx1.getOutput(1)); // spends different output, but also in tx2
         tx4.addOutput(COIN, OTHER_ADDRESS);
 
+        assertUnspent(tx1);
+        assertPending(tx2);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx3);
-        // by now, tx2 is DEAD
+        assertUnspent(tx1);
+        assertDead(tx2);
+        assertEquals(2, wallet.transactions.size()); // tx3 not saved
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx4);
+        assertUnspent(tx1);
+        assertDead(tx2);
+        assertEquals(2, wallet.transactions.size()); // tx4 not saved
 
+        // this will fail if tx4 does not get disconnected from tx1
         wallet = roundTrip(wallet);
-        // this will fail since tx4 does not get disconnected from tx1
         assertTrue(wallet.isConsistent());
     }
 }

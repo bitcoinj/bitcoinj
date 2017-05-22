@@ -2188,6 +2188,7 @@ public class Wallet extends BaseTaggableObject
         // against our pending transactions. Note that a tx may double spend our pending transactions and also send
         // us money/spend our money.
         boolean hasOutputsToMe = tx.getValueSentToMe(this).signum() > 0;
+        boolean hasOutputsFromMe = false;
         if (hasOutputsToMe) {
             // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
             if (tx.isEveryOwnedOutputSpent(this)) {
@@ -2198,6 +2199,7 @@ public class Wallet extends BaseTaggableObject
                 addWalletTransaction(Pool.UNSPENT, tx);
             }
         } else if (tx.getValueSentFromMe(this).signum() > 0) {
+            hasOutputsFromMe = true;
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  tx {} ->spent", tx.getHashAsString());
             addWalletTransaction(Pool.SPENT, tx);
@@ -2207,16 +2209,20 @@ public class Wallet extends BaseTaggableObject
             addWalletTransaction(Pool.SPENT, tx);
         }
 
-        if(!findDoubleSpendsAgainst(tx, transactions).isEmpty()) {
-            // Kill txns in conflict with this tx
-            Set<Transaction> doubleSpendTxns = findDoubleSpendsAgainst(tx, pending);
-            if (!doubleSpendTxns.isEmpty()) {
-                // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
-                killTxns(doubleSpendTxns, tx);
-            }
+        // Kill txns in conflict with this tx
+        Set<Transaction> doubleSpendTxns = findDoubleSpendsAgainst(tx, pending);
+        if (!doubleSpendTxns.isEmpty()) {
+            // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
+            killTxns(doubleSpendTxns, tx);
+        }
+        if( !hasOutputsToMe
+            && !hasOutputsFromMe
+            && !forceAddToPool
+            && !findDoubleSpendsAgainst(tx, transactions).isEmpty())
+        {
             // disconnect irrelevant inputs (otherwise might cause serialization issue)
-            for(TransactionInput input : tx.getInputs()) {
-                TransactionOutput output = input.getOutpoint().getConnectedOutput();
+            for (TransactionInput input : tx.getInputs()) {
+                TransactionOutput output = input.getConnectedOutput();
                 if(output != null && !output.isMineOrWatched(this)) {
                     input.disconnect();
                 }
