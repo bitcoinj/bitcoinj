@@ -1820,6 +1820,9 @@ public class Wallet extends BaseTaggableObject
         // Now for each pending transaction, see if it shares any outpoints with this tx.
         Set<Transaction> doubleSpendTxns = Sets.newHashSet();
         for (Transaction p : candidates.values()) {
+            if(p.getHash().equals(tx.getHash())) {
+                continue;
+            }
             for (TransactionInput input : p.getInputs()) {
                 // This relies on the fact that TransactionOutPoint equality is defined at the protocol not object
                 // level - outpoints from two different inputs that point to the same output compare the same.
@@ -2204,16 +2207,17 @@ public class Wallet extends BaseTaggableObject
             addWalletTransaction(Pool.SPENT, tx);
         }
 
-        // Kill txns in conflict with this tx
-        Set<Transaction> doubleSpendTxns = findDoubleSpendsAgainst(tx, pending);
-        if (!doubleSpendTxns.isEmpty()) {
-            // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
-            killTxns(doubleSpendTxns, tx);
-
+        if(!findDoubleSpendsAgainst(tx, transactions).isEmpty()) {
+            // Kill txns in conflict with this tx
+            Set<Transaction> doubleSpendTxns = findDoubleSpendsAgainst(tx, pending);
+            if (!doubleSpendTxns.isEmpty()) {
+                // no need to addTransactionsDependingOn(doubleSpendTxns) because killTxns() already kills dependencies;
+                killTxns(doubleSpendTxns, tx);
+            }
             // disconnect irrelevant inputs (otherwise might cause serialization issue)
             for(TransactionInput input : tx.getInputs()) {
                 TransactionOutput output = input.getOutpoint().getConnectedOutput();
-                if(output != null && !output.isMine(this)) {
+                if(output != null && !output.isMineOrWatched(this)) {
                     input.disconnect();
                 }
             }

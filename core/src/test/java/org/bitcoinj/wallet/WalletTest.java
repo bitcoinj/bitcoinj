@@ -3475,4 +3475,43 @@ public class WalletTest extends TestWithWallet {
 
         assertTrue(wallet.isConsistent());
     }
+
+    @Test
+    public void overridingDeadTxTest() throws Exception {
+        Transaction tx0 = createFakeTx(PARAMS);
+
+        Transaction tx1 = new Transaction(PARAMS);
+        tx1.addInput(tx0.getOutput(0));
+        tx1.addOutput(COIN, OTHER_ADDRESS);
+        tx1.addOutput(COIN, OTHER_ADDRESS);
+        tx1.addOutput(COIN, myAddress); // to save this in wallet
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx0, tx1);
+
+        // tx2, tx3 and tx4 double spend each other
+        Transaction tx2 = new Transaction(PARAMS);
+        tx2.addInput(tx1.getOutput(0));
+        tx2.addInput(tx1.getOutput(1));
+        tx2.addOutput(COIN, myAddress);
+        tx2.addOutput(COIN, OTHER_ADDRESS);
+        wallet.receivePending(tx2, null);
+
+        // irrelevant to the wallet
+        Transaction tx3 = new Transaction(PARAMS);
+        tx3.addInput(tx1.getOutput(0)); // spends same output as tx3
+        tx3.addOutput(COIN, OTHER_ADDRESS);
+
+        // irrelevant to the wallet
+        Transaction tx4 = new Transaction(PARAMS);
+        tx4.addInput(tx1.getOutput(1)); // spends different output, but also in tx3
+        tx4.addOutput(COIN, OTHER_ADDRESS);
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx3);
+        // by now, tx2 is DEAD
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx4);
+
+        wallet = roundTrip(wallet);
+        // this will fail since tx4 does not get disconnected from tx1
+        assertTrue(wallet.isConsistent());
+    }
 }
