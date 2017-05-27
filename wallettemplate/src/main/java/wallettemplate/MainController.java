@@ -57,7 +57,7 @@ public class MainController {
     public void onBitcoinSetup() {
         model.setWallet(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
-        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.BTC.noCode().format(coin).toString()));
+        balance.textProperty().bind(EasyBind.map(model.balanceProperty(), coin -> MonetaryFormat.LTC.noCode().format(coin).toString()));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
 

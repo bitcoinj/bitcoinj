@@ -863,7 +863,7 @@ public class WalletTest extends TestWithWallet {
             }
         });
 
-        // Receive 1 BTC.
+        // Receive 1 LTC.
         Coin nanos = COIN;
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, nanos);
         Transaction received = wallet.getTransactions(false).iterator().next();
@@ -1393,7 +1393,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(t2, txn[0]);
         assertEquals(nanos, bigints[0]);
         assertEquals(halfNanos, bigints[1]);
-        // Our balance is now 0.50 BTC
+        // Our balance is now 0.50 LTC
         assertEquals(halfNanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
@@ -1530,7 +1530,7 @@ public class WalletTest extends TestWithWallet {
         // We should have a zero available balance before the next block.
         assertEquals(ZERO, wallet.getBalance());
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, outbound1);
-        // We should have a balance of 1 BTC after the block is received.
+        // We should have a balance of 1 LTC after the block is received.
         assertEquals(coin1, wallet.getBalance());
     }
 
@@ -2188,7 +2188,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void opReturnTwoOutputsTest() throws Exception {
-        // Tests sending transaction where one output transfers BTC, the other one writes OP_RETURN.
+        // Tests sending transaction where one output transfers LTC, the other one writes OP_RETURN.
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(PARAMS);
         Coin messagePrice = Coin.ZERO;
@@ -3420,7 +3420,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void totalReceivedSent() throws Exception {
-        // Receive 4 BTC in 2 separate transactions
+        // Receive 4 LTC in 2 separate transactions
         Transaction toMe1 = createFakeTxWithoutChangeAddress(PARAMS, COIN.multiply(2), myAddress);
         Transaction toMe2 = createFakeTxWithoutChangeAddress(PARAMS, COIN.multiply(2), myAddress);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, toMe1, toMe2);
@@ -3428,7 +3428,7 @@ public class WalletTest extends TestWithWallet {
         // Check we calculate the total received correctly
         assertEquals(Coin.COIN.multiply(4), wallet.getTotalReceived());
 
-        // Send 3 BTC in a single transaction
+        // Send 3 LTC in a single transaction
         SendRequest req = SendRequest.to(OTHER_ADDRESS, Coin.COIN.multiply(3));
         wallet.completeTx(req);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, req.tx);

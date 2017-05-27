@@ -77,8 +77,8 @@ import java.util.regex.Pattern;
  *
  * <blockquote><pre>
  * BtcFormat f = BtcFormat.getInstance();
- * String c = f.format(Coin.COIN);                <strong>// "BTC 1.00"</strong>
- * String k = f.format(Coin.COIN.multiply(1000)); <strong>// "BTC 1,000.00"</strong>
+ * String c = f.format(Coin.COIN);                <strong>// "LTC 1.00"</strong>
+ * String k = f.format(Coin.COIN.multiply(1000)); <strong>// "LTC 1,000.00"</strong>
  * String m = f.format(Coin.COIN.divide(1000));   <strong>// "mBTC 1.00"</strong>
  * Coin all = f.parseObject("M฿ 21");             <strong>// All the money in the world</strong>
  * </pre></blockquote>
@@ -97,7 +97,7 @@ import java.util.regex.Pattern;
  * values of {@link BtcAutoFormat.Style}.  There are two styles constants: {@link
  * BtcAutoFormat.Style#CODE} (the default), and {@link BtcAutoFormat.Style#SYMBOL}.  The
  * difference is that the <code>CODE</code> style uses an internationally-distinct currency
- * code, such as <code>"BTC"</code>, to indicate the units of denomination, while the
+ * code, such as <code>"LTC"</code>, to indicate the units of denomination, while the
  * <code>SYMBOL</code> style uses a possibly-ambiguous currency symbol such as
  * <code>"฿"</code>.
  *
@@ -115,7 +115,7 @@ import java.util.regex.Pattern;
  * increasing precision to convert the representation of a given quantity of bitcoins into a
  * representation of the same value denominated in the formatter's units.  For example, a scale
  * value of <code>3</code> specifies a denomination of millibitcoins, because to represent
- * <code>1.0000 BTC</code>, or one bitcoin, in millibitcoins, one shifts the decimal point
+ * <code>1.0000 LTC</code>, or one bitcoin, in millibitcoins, one shifts the decimal point
  * three places, that is, to <code>1000.0 mBTC</code>.
  *
  * <h3>Construction</h3>
@@ -148,7 +148,7 @@ import java.util.regex.Pattern;
  *
  * <blockquote><pre>
  * BtcFormat f = BtcFormat.getInstance();
- * String s = f.format(Coin.COIN); <strong>// "BTC 1.00"</strong>
+ * String s = f.format(Coin.COIN); <strong>// "LTC 1.00"</strong>
  * </pre></blockquote>
  *
  * <p>The first argument to <code>getInstance()</code> can determine
@@ -199,7 +199,7 @@ import java.util.regex.Pattern;
  * differently the same one-bitcoin value:
  *
  * <blockquote><pre>
- * <strong>// Next line returns "1,00 BTC"</strong>
+ * <strong>// Next line returns "1,00 LTC"</strong>
  * BtcFormat.getInstance(Locale.GERMANY).format(Coin.COIN);
  * <strong>// Next line returns "1,00 ฿"</strong>
  * BtcFormat.getInstance(SYMBOL, Locale.GERMANY).format(Coin.COIN);
@@ -493,7 +493,7 @@ public abstract class BtcFormat extends Format {
      * comparisons.
      */
 
-    /** The conventional international currency code for bitcoins: "BTC" */
+    /** The conventional international currency code for bitcoins: "LTC" */
     private static final String COIN_CODE = "BTC";
     /** The default currency symbols for bitcoins */
     private static final String COIN_SYMBOL = "฿";
@@ -762,7 +762,7 @@ public abstract class BtcFormat extends Format {
     /**
      * Return a new instance of this class using all defaults.  The returned formatter will
      * auto-denominate values so as to minimize zeros without loss of precision and display a
-     * currency code, for example "<code>BTC</code>", to indicate that denomination.  The
+     * currency code, for example "<code>LTC</code>", to indicate that denomination.  The
      * returned object will uses the default locale for formatting the number and placement of
      * the currency-code.  Two fractional decimal places will be displayed in all formatted numbers.
      */
@@ -777,7 +777,7 @@ public abstract class BtcFormat extends Format {
 
     /**
      * Return a new auto-denominating instance that will indicate units using a currency
-     * code, for example, <code>"BTC"</code>.  Formatting and parsing will be done
+     * code, for example, <code>"LTC"</code>.  Formatting and parsing will be done
      * according to the default locale.
      */
     public static BtcFormat getCodeInstance() { return getCodeInstance(defaultLocale()); }
@@ -797,7 +797,7 @@ public abstract class BtcFormat extends Format {
     /**
      * Return a new code-style auto-formatter with the given number of fractional decimal
      * places.  Denominational units will be indicated using a currency code, for example,
-     * <code>"BTC"</code>.  The returned object will format the fraction-part of numbers using
+     * <code>"LTC"</code>.  The returned object will format the fraction-part of numbers using
      * the given number of decimal places, or fewer as necessary to avoid giving a place to
      * fractional satoshis.  Formatting and parsing will be done according to the default
      * locale.
@@ -890,7 +890,7 @@ public abstract class BtcFormat extends Format {
      * Return a new auto-formatter with the given style for the given locale.
      * The returned object that will auto-denominate each formatted value, and
      * will indicate that denomination using either a currency code, such as
-     * "<code>BTC</code>", or symbol, such as "<code>฿</code>", depending on the value
+     * "<code>LTC</code>", or symbol, such as "<code>฿</code>", depending on the value
      * of the first argument. 
      * <p>The number of fractional decimal places in formatted number will be two, or fewer
      * as necessary to avoid giving a place to fractional satoshis.

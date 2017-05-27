@@ -372,7 +372,7 @@ public class BlockChainTest {
         assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
         assertTrue(coinbaseTransaction.isMature());
 
-        // Create a spend with the coinbase BTC to the address in the second wallet - this should now succeed.
+        // Create a spend with the coinbase LTC to the address in the second wallet - this should now succeed.
         Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, 0));
         assertNotNull(coinbaseSend2);
 

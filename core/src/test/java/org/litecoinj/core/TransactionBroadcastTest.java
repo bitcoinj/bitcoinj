@@ -226,7 +226,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
             t1 = (Transaction) m;
         }
         assertNotNull(t1);
-        // 49 BTC in change.
+        // 49 LTC in change.
         assertEquals(valueOf(49, 0), t1.getValueSentToMe(wallet));
         // The future won't complete until it's heard back from the network on p2.
         InventoryMessage inv = new InventoryMessage(PARAMS);

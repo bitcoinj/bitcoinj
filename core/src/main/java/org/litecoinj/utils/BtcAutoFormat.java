@@ -78,7 +78,7 @@ public final class BtcAutoFormat extends BtcFormat {
          * These patterns are explained in the documentation for java.text.DecimalFormat.
          */
 
-        /** Constant for the formatting style that uses a currency code, e.g., "BTC". */
+        /** Constant for the formatting style that uses a currency code, e.g., "LTC". */
         CODE {
             @Override void apply(DecimalFormat decimalFormat) {
                 /* To switch to using codes from symbols, we replace each single occurrence of the

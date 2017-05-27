@@ -278,7 +278,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return this.value;
     }
 
-    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
+    private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.LTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
 
     /**
      * Returns the value as a 0.12 type string. More digits after the decimal place will be used
@@ -288,13 +288,13 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         return FRIENDLY_FORMAT.format(this).toString();
     }
 
-    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.BTC.minDecimals(0).repeatOptionalDecimals(1, 8).noCode();
+    private static final MonetaryFormat PLAIN_FORMAT = MonetaryFormat.LTC.minDecimals(0).repeatOptionalDecimals(1, 8).noCode();
 
     /**
      * <p>
-     * Returns the value as a plain string denominated in BTC.
+     * Returns the value as a plain string denominated in LTC.
      * The result is unformatted with no trailing zeroes.
-     * For instance, a value of 150000 satoshis gives an output string of "0.0015" BTC
+     * For instance, a value of 150000 satoshis gives an output string of "0.0015" LTC
      * </p>
      */
     public String toPlainString() {
