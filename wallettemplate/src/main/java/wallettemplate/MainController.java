@@ -16,9 +16,9 @@
 
 package wallettemplate;
 
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.utils.MonetaryFormat;
+import org.litecoinj.core.listeners.DownloadProgressTracker;
+import org.litecoinj.core.Coin;
+import org.litecoinj.utils.MonetaryFormat;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;

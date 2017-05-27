@@ -25,7 +25,7 @@
 
 package wallet;
 
-option java_package = "org.bitcoinj.wallet";
+option java_package = "org.litecoinj.wallet";
 option java_outer_classname = "Protos";
 
 message PeerAddress {
