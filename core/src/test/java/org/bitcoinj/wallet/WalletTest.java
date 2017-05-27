@@ -3441,4 +3441,84 @@ public class WalletTest extends TestWithWallet {
 
         // TODO: test shared wallet calculation here
     }
+
+    @Test
+    public void testIrrelevantDoubleSpend() throws Exception {
+        Transaction tx0 = createFakeTx(PARAMS);
+        Transaction tx1 = createFakeTx(PARAMS);
+
+        Transaction tx2 = new Transaction(PARAMS);
+        tx2.addInput(tx0.getOutput(0));
+        tx2.addOutput(COIN, myAddress);
+        tx2.addOutput(COIN, OTHER_ADDRESS);
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx2, tx1, tx0);
+
+        // tx3 and tx4 double spend each other
+        Transaction tx3 = new Transaction(PARAMS);
+        tx3.addInput(tx1.getOutput(0));
+        tx3.addOutput(COIN, myAddress);
+        tx3.addOutput(COIN, OTHER_ADDRESS);
+        wallet.receivePending(tx3, null);
+
+        // tx4 also spends irrelevant output from tx2
+        Transaction tx4 = new Transaction(PARAMS);
+        tx4.addInput(tx1.getOutput(0)); // spends same output
+        tx4.addInput(tx2.getOutput(1));
+        tx4.addOutput(COIN, OTHER_ADDRESS);
+
+        // tx4 does not actually get added to wallet here since it by itself is irrelevant
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx4);
+
+        // since tx4 is not saved, tx2 output 1 will have bad spentBy
+        wallet = roundTrip(wallet);
+
+        assertTrue(wallet.isConsistent());
+    }
+
+    @Test
+    public void overridingDeadTxTest() throws Exception {
+        Transaction tx0 = createFakeTx(PARAMS);
+
+        Transaction tx1 = new Transaction(PARAMS);
+        tx1.addInput(tx0.getOutput(0));
+        tx1.addOutput(COIN, OTHER_ADDRESS);
+        tx1.addOutput(COIN, OTHER_ADDRESS);
+        tx1.addOutput(COIN, myAddress); // to save this in wallet
+
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx0, tx1);
+
+        // tx2, tx3 and tx4 double spend each other
+        Transaction tx2 = new Transaction(PARAMS);
+        tx2.addInput(tx1.getOutput(0));
+        tx2.addInput(tx1.getOutput(1));
+        tx2.addOutput(COIN, myAddress);
+        tx2.addOutput(COIN, OTHER_ADDRESS);
+        wallet.receivePending(tx2, null);
+
+        // irrelevant to the wallet
+        Transaction tx3 = new Transaction(PARAMS);
+        tx3.addInput(tx1.getOutput(0)); // spends same output as tx2
+        tx3.addOutput(COIN, OTHER_ADDRESS);
+
+        // irrelevant to the wallet
+        Transaction tx4 = new Transaction(PARAMS);
+        tx4.addInput(tx1.getOutput(1)); // spends different output, but also in tx2
+        tx4.addOutput(COIN, OTHER_ADDRESS);
+
+        assertUnspent(tx1);
+        assertPending(tx2);
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx3);
+        assertUnspent(tx1);
+        assertDead(tx2);
+        assertEquals(2, wallet.transactions.size()); // tx3 not saved
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx4);
+        assertUnspent(tx1);
+        assertDead(tx2);
+        assertEquals(2, wallet.transactions.size()); // tx4 not saved
+
+        // this will fail if tx4 does not get disconnected from tx1
+        wallet = roundTrip(wallet);
+        assertTrue(wallet.isConsistent());
+    }
 }
