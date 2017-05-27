@@ -58,10 +58,10 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         alertSigningKey = Utils.HEX.decode("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
 
         dnsSeeds = new String[] {
-                "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
+                "testnet-seed.litecoin.jonasschnelli.ch", // Jonas Schnelli
                 "testnet-seed.bluematt.me",              // Matt Corallo
-                "testnet-seed.bitcoin.petertodd.org",    // Peter Todd
-                "testnet-seed.bitcoin.schildbach.de",    // Andreas Schildbach
+                "testnet-seed.litecoin.petertodd.org",    // Peter Todd
+                "testnet-seed.litecoin.schildbach.de",    // Andreas Schildbach
         };
         addrSeeds = null;
         bip32HeaderPub = 0x043587CF;
@@ -98,7 +98,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
             final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
-            // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+            // There is an integer underflow bug in litecoin-qt that means mindiff blocks are accepted when time
             // goes backwards.
             if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
         	// Walk backwards until we find a block that doesn't have the easiest proof of work, then check

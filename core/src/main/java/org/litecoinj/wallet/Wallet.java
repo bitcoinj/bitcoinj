@@ -3597,7 +3597,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns the amount of bitcoin ever received via output. <b>This is not the balance!</b> If an output spends from a
+     * Returns the amount of litecoin ever received via output. <b>This is not the balance!</b> If an output spends from a
      * transaction whose inputs are also to our wallet, the input amounts are deducted from the outputs contribution, with a minimum of zero
      * contribution. The idea behind this is we avoid double counting money sent to us.
      * @return the total amount of satoshis received, regardless of whether it was spent or not.
@@ -3628,7 +3628,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns the amount of bitcoin ever sent via output. If an output is sent to our own wallet, because of change or
+     * Returns the amount of litecoin ever sent via output. If an output is sent to our own wallet, because of change or
      * rotating keys or whatever, we do not count it. If the wallet was
      * involved in a shared transaction, i.e. there is some input to the transaction that we don't have the key for, then
      * we multiply the sum of the output values by the proportion of satoshi coming in to our inputs. Essentially we treat

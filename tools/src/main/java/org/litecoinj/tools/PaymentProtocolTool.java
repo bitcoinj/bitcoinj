@@ -22,7 +22,7 @@ import org.litecoinj.protocols.payments.PaymentProtocolException;
 import org.litecoinj.protocols.payments.PaymentSession;
 import org.litecoinj.uri.BitcoinURI;
 import org.litecoinj.uri.BitcoinURIParseException;
-import org.bitcoin.protocols.payments.Protos;
+import org.litecoin.protocols.payments.Protos;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,11 +36,11 @@ import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
 
-/** Takes a URL or bitcoin URI and prints information about the payment request. */
+/** Takes a URL or litecoin URI and prints information about the payment request. */
 public class PaymentProtocolTool {
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.err.println("Provide a bitcoin URI or URL as the argument.");
+            System.err.println("Provide a litecoin URI or URL as the argument.");
             return;
         }
         dump(args[0]);
@@ -57,11 +57,11 @@ public class PaymentProtocolTool {
                 session = new PaymentSession(request);
             } else if ("http".equals(uri.getScheme())) {
                 session = PaymentSession.createFromUrl(arg).get();
-            } else if ("bitcoin".equals(uri.getScheme())) {
+            } else if ("litecoin".equals(uri.getScheme())) {
                 BitcoinURI bcuri = new BitcoinURI(arg);
                 final String paymentRequestUrl = bcuri.getPaymentRequestUrl();
                 if (paymentRequestUrl == null) {
-                    System.err.println("No r= param in bitcoin URI");
+                    System.err.println("No r= param in litecoin URI");
                     return;
                 }
                 session = PaymentSession.createFromBitcoinUri(bcuri).get();

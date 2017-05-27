@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import org.bitcoin.paymentchannel.Protos;
+import org.litecoin.paymentchannel.Protos;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ import static org.litecoinj.core.Coin.*;
 import static org.litecoinj.protocols.channels.PaymentChannelClient.VersionSelector.*;
 import static org.litecoinj.protocols.channels.PaymentChannelCloseException.CloseReason;
 import static org.litecoinj.testing.FakeTxBuilder.createFakeBlock;
-import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
+import static org.litecoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)

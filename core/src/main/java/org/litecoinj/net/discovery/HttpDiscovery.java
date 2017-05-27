@@ -19,7 +19,7 @@ package org.litecoinj.net.discovery;
 
 import com.google.common.annotations.*;
 import com.google.protobuf.*;
-import org.bitcoin.crawler.*;
+import org.litecoin.crawler.*;
 import org.litecoinj.core.*;
 import org.slf4j.*;
 

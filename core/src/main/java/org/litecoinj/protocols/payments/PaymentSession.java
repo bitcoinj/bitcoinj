@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import org.bitcoin.protocols.payments.Protos;
+import org.litecoin.protocols.payments.Protos;
 
 import javax.annotation.Nullable;
 
@@ -61,7 +61,7 @@ import java.util.concurrent.Callable;
  *
  * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
  * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
- * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
+ * transactions to the litecoin network. Instead it returns a ListenableFuture that will be notified when a
  * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
  * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
  * tx itself later if needed.</p>
@@ -307,7 +307,7 @@ public class PaymentSession {
     /**
      * Generates a Payment message and sends the payment to the merchant who sent the PaymentRequest.
      * Provide transactions built by the wallet.
-     * NOTE: This does not broadcast the transactions to the bitcoin network, it merely sends a Payment message to the
+     * NOTE: This does not broadcast the transactions to the litecoin network, it merely sends a Payment message to the
      * merchant confirming the payment.
      * Returns an object wrapping PaymentACK once received.
      * If the PaymentRequest did not specify a payment_url, returns null and does nothing.

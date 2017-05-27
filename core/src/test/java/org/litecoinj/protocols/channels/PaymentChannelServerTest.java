@@ -20,7 +20,7 @@ import org.litecoinj.core.Coin;
 import org.litecoinj.core.TransactionBroadcaster;
 import org.litecoinj.core.Utils;
 import org.litecoinj.wallet.Wallet;
-import org.bitcoin.paymentchannel.Protos;
+import org.litecoin.paymentchannel.Protos;
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage;
-import static org.bitcoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
+import static org.litecoin.paymentchannel.Protos.TwoWayChannelMessage;
+import static org.litecoin.paymentchannel.Protos.TwoWayChannelMessage.MessageType;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 

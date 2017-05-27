@@ -467,7 +467,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 ECKey encryptedKey = key.encrypt(keyCrypter, aesKey);
                 // Check that the encrypted key can be successfully decrypted.
                 // This is done as it is a critical failure if the private key cannot be decrypted successfully
-                // (all bitcoin controlled by that private key is lost forever).
+                // (all litecoin controlled by that private key is lost forever).
                 // For a correctly constructed keyCrypter the encryption should always be reversible so it is just
                 // being as cautious as possible.
                 if (!ECKey.encryptionIsReversible(key, encryptedKey, keyCrypter, aesKey))

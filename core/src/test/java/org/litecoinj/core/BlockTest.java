@@ -137,7 +137,7 @@ public class BlockTest {
         // We have to be able to reserialize everything exactly as we found it for hashing to work. This test also
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
-        // NB: This tests the bitcoin serialization protocol.
+        // NB: This tests the litecoin serialization protocol.
         Block block = PARAMS.getDefaultSerializer().makeBlock(blockBytes);
         assertTrue(Arrays.equals(blockBytes, block.bitcoinSerialize()));
     }

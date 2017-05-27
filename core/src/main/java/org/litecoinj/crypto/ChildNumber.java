@@ -38,6 +38,7 @@ public class ChildNumber implements Comparable<ChildNumber> {
     public static final ChildNumber ZERO = new ChildNumber(0);
     public static final ChildNumber ONE = new ChildNumber(1);
     public static final ChildNumber ZERO_HARDENED = new ChildNumber(0, true);
+    public static final ChildNumber TWO_HARDENED = new ChildNumber(2, true); //Litecoin
 
     /** Integer i as per BIP 32 spec, including the MSB denoting derivation type (0 = public, 1 = private) **/
     private final int i;

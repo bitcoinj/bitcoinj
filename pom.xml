@@ -19,8 +19,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.bitcoinj</groupId>
-  <artifactId>bitcoinj-parent</artifactId>
+  <groupId>org.litecoinj</groupId>
+  <artifactId>litecoinj-parent</artifactId>
   <version>0.15-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -38,14 +38,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://github.com/bitcoinj/bitcoinj</connection>
-    <developerConnection>scm:git:https://github.com/bitcoinj/bitcoinj</developerConnection>
-    <url>scm:git:https://github.com/bitcoinj/bitcoinj</url>
+    <connection>scm:git:https://github.com/litecoinj/litecoinj</connection>
+    <developerConnection>scm:git:https://github.com/litecoinj/litecoinj</developerConnection>
+    <url>scm:git:https://github.com/litecoinj/litecoinj</url>
   </scm>
 
-  <name>bitcoinj Parent</name>
-  <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://www.bitcoinj.org/</url>
+  <name>litecoinj Parent</name>
+  <description>Provides the common configuration for the litecoinj modules</description>
+  <url>http://www.litecoinj.org/</url>
 
   <licenses>
     <license>
@@ -58,13 +58,13 @@
 
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/bitcoinj/bitcoinj/issues</url>
+    <url>https://github.com/litecoinj/litecoinj/issues</url>
   </issueManagement>
 
   <mailingLists>
     <mailingList>
-      <name>bitcoinj Google Group</name>
-      <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
+      <name>litecoinj Google Group</name>
+      <post>https://groups.google.com/forum/#!forum/litecoinj</post>
     </mailingList>
   </mailingLists>
 

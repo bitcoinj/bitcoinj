@@ -22,7 +22,7 @@ import org.litecoinj.core.InsufficientMoneyException;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import com.google.protobuf.ByteString;
-import org.bitcoin.paymentchannel.Protos;
+import org.litecoin.paymentchannel.Protos;
 import org.litecoinj.wallet.SendRequest;
 import org.spongycastle.crypto.params.KeyParameter;
 

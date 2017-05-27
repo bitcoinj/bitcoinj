@@ -25,10 +25,10 @@ import org.litecoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.litecoinj.protocols.payments.PaymentProtocolException.PkiVerificationException;
 import org.litecoinj.script.ScriptBuilder;
 import org.litecoinj.testing.FakeTxBuilder;
-import org.bitcoin.protocols.payments.Protos;
-import org.bitcoin.protocols.payments.Protos.Payment;
-import org.bitcoin.protocols.payments.Protos.PaymentACK;
-import org.bitcoin.protocols.payments.Protos.PaymentRequest;
+import org.litecoin.protocols.payments.Protos;
+import org.litecoin.protocols.payments.Protos.Payment;
+import org.litecoin.protocols.payments.Protos.PaymentACK;
+import org.litecoin.protocols.payments.Protos.PaymentRequest;
 import org.junit.Before;
 import org.junit.Test;
 

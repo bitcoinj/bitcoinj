@@ -112,14 +112,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // that feature yet. In future we might hand out different accounts for cases where we wish to hand payers
     // a payment request that can generate lots of addresses independently.
     // The account path may be overridden by subclasses.
-    public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
+    public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> EXTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ONE);
     public static final ImmutableList<ChildNumber> EXTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, EXTERNAL_SUBPATH);
     public static final ImmutableList<ChildNumber> INTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, INTERNAL_SUBPATH);
-    // m / 44' / 0' / 0'
+    // m / 44' / 2' / 0'
     public static final ImmutableList<ChildNumber> BIP44_ACCOUNT_ZERO_PATH =
-            ImmutableList.of(new ChildNumber(44, true), ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
+            ImmutableList.of(new ChildNumber(44, true), ChildNumber.TWO_HARDENED, ChildNumber.ZERO_HARDENED);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated

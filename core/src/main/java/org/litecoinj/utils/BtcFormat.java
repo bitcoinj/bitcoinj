@@ -101,10 +101,10 @@ import java.util.regex.Pattern;
  * <code>SYMBOL</code> style uses a possibly-ambiguous currency symbol such as
  * <code>"฿"</code>.
  *
- * <p>The denomination used when formatting will be either bitcoin, millicoin
+ * <p>The denomination used when formatting will be either litecoin, millicoin
  * or microcoin, depending on the value being represented, chosen so as to minimize the number
  * of consecutive zeros displayed without losing precision.  For example, depending on the
- * locale, a value of one bitcoin might be formatted as <pre>฿1.00</pre> where a value
+ * locale, a value of one litecoin might be formatted as <pre>฿1.00</pre> where a value
  * exceeding that by one satoshi would be <pre>µ฿1,000,000.01</pre>
  *
  * <h5>Fixed Denomination</h5>
@@ -115,7 +115,7 @@ import java.util.regex.Pattern;
  * increasing precision to convert the representation of a given quantity of bitcoins into a
  * representation of the same value denominated in the formatter's units.  For example, a scale
  * value of <code>3</code> specifies a denomination of millibitcoins, because to represent
- * <code>1.0000 LTC</code>, or one bitcoin, in millibitcoins, one shifts the decimal point
+ * <code>1.0000 LTC</code>, or one litecoin, in millibitcoins, one shifts the decimal point
  * three places, that is, to <code>1000.0 mBTC</code>.
  *
  * <h3>Construction</h3>
@@ -196,7 +196,7 @@ import java.util.regex.Pattern;
  * is an optional <code>Locale</code> value.
  *
  * For example, here we construct four instances for the same locale that each format
- * differently the same one-bitcoin value:
+ * differently the same one-litecoin value:
  *
  * <blockquote><pre>
  * <strong>// Next line returns "1,00 LTC"</strong>
@@ -1112,7 +1112,7 @@ public abstract class BtcFormat extends Format {
     /***********************/
 
     /**
-     * Formats a bitcoin monetary value and returns an {@link java.text.AttributedCharacterIterator}.
+     * Formats a litecoin monetary value and returns an {@link java.text.AttributedCharacterIterator}.
      * By iterating, you can examine what fields apply to each character.  This can be useful
      * since a character may be part of more than one field, for example a grouping separator
      * that is also part of the integer field.
@@ -1131,7 +1131,7 @@ public abstract class BtcFormat extends Format {
     }}
 
     /**
-     * Formats a bitcoin value as a number and possibly a units indicator and appends the
+     * Formats a litecoin value as a number and possibly a units indicator and appends the
      * resulting text to the given string buffer.  The type of monetary value argument can be
      * any one of any of the following classes: <code>{@link Coin}</code>,
      * <code>Integer</code>, <code>Long</code>, <code>BigInteger</code>,
@@ -1147,7 +1147,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Formats a bitcoin value as a number and possibly a units indicator to a
+     * Formats a litecoin value as a number and possibly a units indicator to a
      * <code>String</code>.The type of monetary value argument can be any one of any of the
      * following classes: <code>{@link Coin}</code>, <code>Integer</code>, <code>Long</code>,
      * <code>BigInteger</code>, <code>BigDecimal</code>.  Numeric types that can represent only
@@ -1164,7 +1164,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Formats a bitcoin value as a number and possibly a units indicator and appends the
+     * Formats a litecoin value as a number and possibly a units indicator and appends the
      * resulting text to the given string buffer.  The type of monetary value argument can be
      * any one of any of the following classes: <code>{@link Coin}</code>,
      * <code>Integer</code>, <code>Long</code>, <code>BigInteger</code>,
@@ -1215,7 +1215,7 @@ public abstract class BtcFormat extends Format {
     protected abstract int scale();
 
     /**
-     * Takes a bitcoin monetary value that the client wants to format and returns the number of
+     * Takes a litecoin monetary value that the client wants to format and returns the number of
      * denominational units having the equal value, rounded to the appropriate number of
      * decimal places.  Calls the scale() method of the subclass, which may have the
      * side-effect of changing the currency symbol and code of the underlying `NumberFormat`
@@ -1274,7 +1274,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Takes an object representing a bitcoin quantity of any type the
+     * Takes an object representing a litecoin quantity of any type the
      * client is permitted to pass us, and return a BigInteger representing the
      * number of satoshis having the equivalent value. */
     private static BigInteger inSatoshis(Object qty) {

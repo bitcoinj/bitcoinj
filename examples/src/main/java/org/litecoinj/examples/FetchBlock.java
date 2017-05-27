@@ -50,12 +50,13 @@ public class FetchBlock {
         peerGroup.setConnectTimeoutMillis(2 * 60 * 1000);
         peerGroup.setStallThreshold(10, Block.HEADER_SIZE * 20);
         peerGroup.setUserAgent("BitRafael", "2.0.0");
+        peerGroup.addAddress(InetAddress.getLocalHost());
         peerGroup.start();
 
         peerGroup.waitForPeers(1).get();
         Peer peer = peerGroup.getConnectedPeers().get(0);
 
-        Sha256Hash blockHash = Sha256Hash.wrap("000000000000000000f9bd5d6a8e4ad2752df3f9073f0be52e1b068827ff9476");
+        Sha256Hash blockHash = Sha256Hash.wrap("7fd90d37349af9057e0dea890971a8c2fa34457f63edb7db116aec9fb0670874");
         Future<Block> future = peer.getBlock(blockHash);
         System.out.println("Waiting for node to send us the requested block: " + blockHash);
         Block block = future.get();

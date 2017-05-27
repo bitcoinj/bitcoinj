@@ -104,7 +104,7 @@ public class WalletTool {
     private static File chainFileName;
     private static ValidationMode mode;
     private static String password;
-    private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
+    private static org.litecoin.protocols.payments.Protos.PaymentRequest paymentRequest;
     private static OptionSpec<Integer> lookaheadSize;
 
     public static class Condition {
@@ -990,7 +990,7 @@ public class WalletTool {
     }
 
     private static void sendPaymentRequest(String location, boolean verifyPki) {
-        if (location.startsWith("http") || location.startsWith("bitcoin")) {
+        if (location.startsWith("http") || location.startsWith("litecoin")) {
             try {
                 ListenableFuture<PaymentSession> future;
                 if (location.startsWith("http")) {
@@ -1010,7 +1010,7 @@ public class WalletTool {
                 System.err.println("Error creating payment session " + e.getMessage());
                 System.exit(1);
             } catch (BitcoinURIParseException e) {
-                System.err.println("Invalid bitcoin uri: " + e.getMessage());
+                System.err.println("Invalid litecoin uri: " + e.getMessage());
                 System.exit(1);
             } catch (InterruptedException e) {
                 // Ignore.
@@ -1028,7 +1028,7 @@ public class WalletTool {
                 System.exit(1);
             }
             try {
-                paymentRequest = org.bitcoin.protocols.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
+                paymentRequest = org.litecoin.protocols.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
             } catch(IOException e) {
                 System.err.println("Failed to parse payment request from file " + e.getMessage());
                 System.exit(1);

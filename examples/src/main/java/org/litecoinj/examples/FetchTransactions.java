@@ -18,11 +18,13 @@
 package org.litecoinj.examples;
 
 import org.litecoinj.core.*;
+import org.litecoinj.params.MainNetParams;
 import org.litecoinj.params.TestNet3Params;
 import org.litecoinj.store.BlockStore;
 import org.litecoinj.store.MemoryBlockStore;
 import org.litecoinj.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.ListenableFuture;
+import sun.applet.Main;
 
 import java.net.InetAddress;
 import java.util.List;
@@ -34,7 +36,7 @@ public class FetchTransactions {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         System.out.println("Connecting to node");
-        final NetworkParameters params = TestNet3Params.get();
+        final NetworkParameters params = MainNetParams.get();
 
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
@@ -44,7 +46,7 @@ public class FetchTransactions {
         peerGroup.waitForPeers(1).get();
         Peer peer = peerGroup.getConnectedPeers().get(0);
 
-        Sha256Hash txHash = Sha256Hash.wrap(args[0]);
+        Sha256Hash txHash = Sha256Hash.wrap("ffd26b8e5212b442d9cd0241a53c4fd1381bb24937844eb31b839b31c23dd057");
         ListenableFuture<Transaction> future = peer.getPeerMempoolTransaction(txHash);
         System.out.println("Waiting for node to send us the requested transaction: " + txHash);
         Transaction tx = future.get();

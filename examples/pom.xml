@@ -19,21 +19,21 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.bitcoinj</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <groupId>org.litecoinj</groupId>
+        <artifactId>litecoinj-parent</artifactId>
         <version>0.15-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>bitcoinj-examples</artifactId>
+    <artifactId>litecoinj-examples</artifactId>
 
-    <name>bitcoinj Examples</name>
-    <description>A collection of examples using the bitcoinj library</description>
+    <name>litecoinj Examples</name>
+    <description>A collection of examples using the litecoinj library</description>
 
     <dependencies>
         <dependency>
-            <groupId>org.bitcoinj</groupId>
-            <artifactId>bitcoinj-core</artifactId>
+            <groupId>org.litecoinj</groupId>
+            <artifactId>litecoinj-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

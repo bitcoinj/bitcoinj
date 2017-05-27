@@ -40,7 +40,7 @@ public class TransactionOutPoint extends ChildMessage {
     /** Which output of that transaction we are talking about. */
     private long index;
 
-    // This is not part of bitcoin serialization. It points to the connected transaction.
+    // This is not part of litecoin serialization. It points to the connected transaction.
     Transaction fromTx;
 
     // The connected output.

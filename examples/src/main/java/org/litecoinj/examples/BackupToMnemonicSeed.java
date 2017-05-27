@@ -16,8 +16,10 @@
 
 package org.litecoinj.examples;
 
+import org.litecoinj.core.Address;
 import org.litecoinj.core.NetworkParameters;
 import org.litecoinj.core.Utils;
+import org.litecoinj.params.MainNetParams;
 import org.litecoinj.params.TestNet3Params;
 import org.litecoinj.wallet.DeterministicSeed;
 import org.litecoinj.wallet.Wallet;
@@ -34,11 +36,13 @@ public class BackupToMnemonicSeed {
 
     public static void main(String[] args) {
 
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = MainNetParams.get();
         Wallet wallet = new Wallet(params);
 
         DeterministicSeed seed = wallet.getKeyChainSeed();
         System.out.println("seed: " + seed.toString());
+        final Address address = wallet.currentReceiveAddress();
+        System.out.println("address = " + address);
 
         System.out.println("creation time: " + seed.getCreationTimeSeconds());
         System.out.println("mnemonicCode: " + Utils.join(seed.getMnemonicCode()));

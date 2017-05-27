@@ -2662,7 +2662,7 @@ public final class Protos {
        * <code>ORIGINAL = 1;</code>
        *
        * <pre>
-       ** Unencrypted - Original bitcoin secp256k1 curve 
+       ** Unencrypted - Original litecoin secp256k1 curve
        * </pre>
        */
       ORIGINAL(0, 1),
@@ -2670,7 +2670,7 @@ public final class Protos {
        * <code>ENCRYPTED_SCRYPT_AES = 2;</code>
        *
        * <pre>
-       ** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve 
+       ** Encrypted with Scrypt and AES - Original litecoin secp256k1 curve
        * </pre>
        */
       ENCRYPTED_SCRYPT_AES(1, 2),
@@ -2703,7 +2703,7 @@ public final class Protos {
        * <code>ORIGINAL = 1;</code>
        *
        * <pre>
-       ** Unencrypted - Original bitcoin secp256k1 curve 
+       ** Unencrypted - Original litecoin secp256k1 curve
        * </pre>
        */
       public static final int ORIGINAL_VALUE = 1;
@@ -2711,7 +2711,7 @@ public final class Protos {
        * <code>ENCRYPTED_SCRYPT_AES = 2;</code>
        *
        * <pre>
-       ** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve 
+       ** Encrypted with Scrypt and AES - Original litecoin secp256k1 curve
        * </pre>
        */
       public static final int ENCRYPTED_SCRYPT_AES_VALUE = 2;
@@ -14430,7 +14430,7 @@ public final class Protos {
    * Protobuf type {@code wallet.Wallet}
    *
    * <pre>
-   ** A bitcoin wallet 
+   ** A litecoin wallet
    * </pre>
    */
   public static final class Wallet extends
@@ -15516,7 +15516,7 @@ public final class Protos {
      * Protobuf type {@code wallet.Wallet}
      *
      * <pre>
-     ** A bitcoin wallet 
+     ** A litecoin wallet
      * </pre>
      */
     public static final class Builder extends

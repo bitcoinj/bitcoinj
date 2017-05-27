@@ -409,7 +409,7 @@ public abstract class NetworkParameters {
     public abstract MonetaryFormat getMonetaryFormat();
 
     /**
-     * Scheme part for URIs, for example "bitcoin".
+     * Scheme part for URIs, for example "litecoin".
      */
     public abstract String getUriScheme();
 

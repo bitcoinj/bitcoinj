@@ -113,7 +113,7 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(2730); // satoshis
 
-    // These are bitcoin serialized.
+    // These are litecoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
