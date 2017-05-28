@@ -50,9 +50,9 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         majorityRejectBlockOutdated = MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = MAINNET_MAJORITY_WINDOW;
 
-        genesisBlock.setDifficultyTarget(504365040);
+        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
         genesisBlock.setTime(1317972665L);
-        genesisBlock.setNonce(2084524493);
+        genesisBlock.setNonce(2084524493L);
         id = ID_MAINNET;
         subsidyDecreaseBlockCount = 840000;
         spendableCoinbaseDepth = 100;
