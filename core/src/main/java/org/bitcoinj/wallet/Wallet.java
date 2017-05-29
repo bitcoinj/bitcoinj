@@ -3914,9 +3914,9 @@ public class Wallet extends BaseTaggableObject
      */
     public static class MultipleOpReturnRequested extends CompletionException {}
     /**
-     * Thrown when we were trying to empty the wallet, and the total amount of money we were trying to empty after
-     * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
-     * case.
+     * Thrown when we were trying to empty the wallet or were using recipients pay fees feature, and the total amount 
+     * of money we were trying to send after being reduced for the fee was smaller than the min payment. Note that the
+     * missing field will be null in this case.
      */
     public static class CouldNotAdjustDownwards extends CompletionException {}
     /**
