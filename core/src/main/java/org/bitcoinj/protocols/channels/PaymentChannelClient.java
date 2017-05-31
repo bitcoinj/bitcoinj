@@ -694,7 +694,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                     increasePaymentFuture = null;
                     lock.unlock();
                 }
-            }, MoreExecutors.sameThreadExecutor());
+            }, MoreExecutors.directExecutor());
 
             conn.sendToServer(Protos.TwoWayChannelMessage.newBuilder()
                     .setUpdatePayment(updatePaymentBuilder)
