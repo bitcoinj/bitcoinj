@@ -657,10 +657,6 @@ public class Transaction extends ChildMessage {
         if (isOptInFullRBF()) {
             s.append("  opts into full replace-by-fee\n");
         }
-        if (inputs.size() == 0) {
-            s.append("  INCOMPLETE: No inputs!\n");
-            return s.toString();
-        }
         if (isCoinBase()) {
             String script;
             String script2;
@@ -675,36 +671,41 @@ public class Transaction extends ChildMessage {
                 .append(")  (scriptPubKey ").append(script2).append(")\n");
             return s.toString();
         }
-        for (TransactionInput in : inputs) {
-            s.append("     ");
-            s.append("in   ");
+        if (!inputs.isEmpty()) {
+            for (TransactionInput in : inputs) {
+                s.append("     ");
+                s.append("in   ");
 
-            try {
-                Script scriptSig = in.getScriptSig();
-                s.append(scriptSig);
-                if (in.getValue() != null)
-                    s.append(" ").append(in.getValue().toFriendlyString());
-                s.append("\n          ");
-                s.append("outpoint:");
-                final TransactionOutPoint outpoint = in.getOutpoint();
-                s.append(outpoint.toString());
-                final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
-                if (connectedOutput != null) {
-                    Script scriptPubKey = connectedOutput.getScriptPubKey();
-                    if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
-                        s.append(" hash160:");
-                        s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                try {
+                    Script scriptSig = in.getScriptSig();
+                    s.append(scriptSig);
+                    if (in.getValue() != null)
+                        s.append(" ").append(in.getValue().toFriendlyString());
+                    s.append("\n          ");
+                    s.append("outpoint:");
+                    final TransactionOutPoint outpoint = in.getOutpoint();
+                    s.append(outpoint.toString());
+                    final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+                    if (connectedOutput != null) {
+                        Script scriptPubKey = connectedOutput.getScriptPubKey();
+                        if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
+                            s.append(" hash160:");
+                            s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                        }
                     }
+                    if (in.hasSequence()) {
+                        s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
+                        if (in.isOptInFullRBF())
+                            s.append(", opts into full RBF");
+                    }
+                } catch (Exception e) {
+                    s.append("[exception: ").append(e.getMessage()).append("]");
                 }
-                if (in.hasSequence()) {
-                    s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
-                    if (in.isOptInFullRBF())
-                        s.append(", opts into full RBF");
-                }
-            } catch (Exception e) {
-                s.append("[exception: ").append(e.getMessage()).append("]");
+                s.append('\n');
             }
-            s.append('\n');
+        } else {
+            s.append("     ");
+            s.append("INCOMPLETE: No inputs!\n");
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
