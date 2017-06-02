@@ -135,7 +135,7 @@ public class Script {
      */
     @Override
     public String toString() {
-        return Utils.join(chunks);
+        return Utils.SPACE_JOINER.join(chunks);
     }
 
     /** Returns the serialized program as a newly created byte array. */

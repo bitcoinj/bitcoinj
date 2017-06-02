@@ -134,7 +134,7 @@ public class DeterministicSeed implements EncryptableItem {
     public String toString() {
         return isEncrypted()
             ? "DeterministicSeed [encrypted]"
-            : "DeterministicSeed " + toHexString() + " " + Utils.join(mnemonicCode);
+            : "DeterministicSeed " + toHexString() + " " + Utils.SPACE_JOINER.join(mnemonicCode);
     }
 
     /** Returns the seed as hex or null if encrypted. */
@@ -188,7 +188,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private byte[] getMnemonicAsBytes() {
-        return Utils.join(mnemonicCode).getBytes(Charsets.UTF_8);
+        return Utils.SPACE_JOINER.join(mnemonicCode).getBytes(Charsets.UTF_8);
     }
 
     public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {

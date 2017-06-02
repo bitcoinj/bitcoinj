@@ -1319,7 +1319,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 builder.append("Seed is encrypted\n");
             } else if (includePrivateKeys) {
                 final List<String> words = seed.getMnemonicCode();
-                builder.append("Seed as words: ").append(Utils.join(words)).append('\n');
+                builder.append("Seed as words: ").append(Utils.SPACE_JOINER.join(words)).append('\n');
                 builder.append("Seed as hex:   ").append(seed.toHexString()).append('\n');
             }
             builder.append("Seed birthday: ").append(seed.getCreationTimeSeconds()).append("  [")

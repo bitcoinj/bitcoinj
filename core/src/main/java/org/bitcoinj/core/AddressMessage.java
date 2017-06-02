@@ -126,6 +126,6 @@ public class AddressMessage extends Message {
 
     @Override
     public String toString() {
-        return "addr: " + Utils.join(addresses);
+        return "addr: " + Utils.SPACE_JOINER.join(addresses);
     }
 }

@@ -70,7 +70,7 @@ public class GetBlocksMessage extends Message {
 
     @Override
     public String toString() {
-        return "getblocks: " + Utils.join(locator);
+        return "getblocks: " + Utils.SPACE_JOINER.join(locator);
     }
 
     @Override
