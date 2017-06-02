@@ -27,6 +27,7 @@ import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -677,8 +678,8 @@ public class Transaction extends ChildMessage {
                 s.append("in   ");
 
                 try {
-                    Script scriptSig = in.getScriptSig();
-                    s.append(scriptSig);
+                    String scriptSigStr = in.getScriptSig().toString();
+                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
                     if (in.getValue() != null)
                         s.append(" ").append(in.getValue().toFriendlyString());
                     s.append("\n          ");
@@ -711,8 +712,8 @@ public class Transaction extends ChildMessage {
             s.append("     ");
             s.append("out  ");
             try {
-                Script scriptPubKey = out.getScriptPubKey();
-                s.append(scriptPubKey);
+                String scriptPubKeyStr = out.getScriptPubKey().toString();
+                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
                 if (!out.isAvailableForSpending()) {
