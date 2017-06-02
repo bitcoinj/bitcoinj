@@ -680,8 +680,9 @@ public class Transaction extends ChildMessage {
                 try {
                     Script scriptSig = in.getScriptSig();
                     s.append(scriptSig);
-                    if (in.getValue() != null)
-                        s.append(" ").append(in.getValue().toFriendlyString());
+                    final Coin value = in.getValue();
+                    if (value != null)
+                        s.append(" ").append(value.toFriendlyString());
                     s.append("\n          ");
                     s.append("outpoint:");
                     final TransactionOutPoint outpoint = in.getOutpoint();
@@ -719,9 +720,10 @@ public class Transaction extends ChildMessage {
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }
-                if (out.getSpentBy() != null) {
+                final TransactionInput spentBy = out.getSpentBy();
+                if (spentBy != null) {
                     s.append(" by ");
-                    s.append(out.getSpentBy().getParentTransaction().getHashAsString());
+                    s.append(spentBy.getParentTransaction().getHashAsString());
                 }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
