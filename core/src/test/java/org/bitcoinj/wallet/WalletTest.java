@@ -2922,8 +2922,8 @@ public class WalletTest extends TestWithWallet {
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         try {
             request = SendRequest.emptyWallet(OTHER_ADDRESS);
-            assertEquals(ZERO, request.tx.getFee());
             wallet.completeTx(request);
+            assertEquals(ZERO, request.tx.getFee());
             fail();
         } catch (Wallet.CouldNotAdjustDownwards e) {}
     }
