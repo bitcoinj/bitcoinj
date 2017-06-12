@@ -974,7 +974,7 @@ public class Script {
                     break;
                 case OP_FROMALTSTACK:
                     if (altstack.size() < 1)
-                        throw new ScriptException("Attempted OP_TOALTSTACK on an empty altstack");
+                        throw new ScriptException("Attempted OP_FROMALTSTACK on an empty altstack");
                     stack.add(altstack.pollLast());
                     break;
                 case OP_2DROP:
@@ -1125,7 +1125,7 @@ public class Script {
                     throw new ScriptException("Attempted to use disabled Script Op.");
                 case OP_EQUAL:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_EQUALVERIFY on a stack with size < 2");
+                        throw new ScriptException("Attempted OP_EQUAL on a stack with size < 2");
                     stack.add(Arrays.equals(stack.pollLast(), stack.pollLast()) ? new byte[] {1} : new byte[] {});
                     break;
                 case OP_EQUALVERIFY:
