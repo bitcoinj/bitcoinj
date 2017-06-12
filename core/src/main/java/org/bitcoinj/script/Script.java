@@ -974,7 +974,7 @@ public class Script {
                     break;
                 case OP_FROMALTSTACK:
                     if (altstack.size() < 1)
-                        throw new ScriptException("Attempted OP_TOALTSTACK on an empty altstack");
+                        throw new ScriptException("Attempted OP_FROMALTSTACK on an empty altstack");
                     stack.add(altstack.pollLast());
                     break;
                 case OP_2DROP:
