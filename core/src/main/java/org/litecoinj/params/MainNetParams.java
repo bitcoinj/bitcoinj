@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.*;
  * Parameters for the main production network on which people trade goods and services.
  */
 public class MainNetParams extends AbstractBitcoinNetParams {
+    private int p2shHeader2;
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
@@ -40,7 +41,9 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         addressHeader = 48;
         dumpedPrivateKeyHeader = 128 + addressHeader;
         p2shHeader = 5;
-        acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
+        p2shHeader2 = 50;
+
+        acceptableAddressCodes = new int[] { addressHeader, p2shHeader,p2shHeader2 };
         port = 9333;
         packetMagic = 0xfbc0b6dbl;
         bip32HeaderPub = 0x019da462; //The 4 byte header that serializes in base58 to "xpub".
