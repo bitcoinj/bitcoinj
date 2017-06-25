@@ -78,8 +78,12 @@ public class Transaction extends ChildMessage {
     public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
         @Override
         public int compare(final Transaction tx1, final Transaction tx2) {
-            final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
-            final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
+            final TransactionConfidence confidence1 = tx1.getConfidence();
+            final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
+                    ? confidence1.getAppearedAtChainHeight() : -1;
+            final TransactionConfidence confidence2 = tx2.getConfidence();
+            final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
+                    ? confidence2.getAppearedAtChainHeight() : -1;
             final int heightComparison = -(Ints.compare(height1, height2));
             //If height1==height2, compare by tx hash to make comparator consistent with equals
             return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());
