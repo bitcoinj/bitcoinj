@@ -66,12 +66,19 @@ public class Block extends Message {
      * avoid somebody creating a titanically huge but valid block and forcing everyone to download/store it forever.
      */
     public static final int MAX_BLOCK_SIZE = 1 * 1000 * 1000;
+
+    /**
+     * Segwit blocks have a block weight defined as three times base size (block without witness data) plus total size
+     * (block including witness data). It must be less than 4 MB.
+     */
+    public static final int MAX_BLOCK_WEIGHT = 4 * 1000 * 1000;
     /**
      * A "sigop" is a signature verification operation. Because they're expensive we also impose a separate limit on
      * the number in a block to prevent somebody mining a huge block that has way more sigops than normal, so is very
-     * expensive/slow to verify.
+     * expensive/slow to verify. Segwit makes this four times larger, and makes every operation four times more
+     * expensive in non-segwit parts of scripts.
      */
-    public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
+    public static final int MAX_BLOCK_SIGOPS = 80 * 1000;
 
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
