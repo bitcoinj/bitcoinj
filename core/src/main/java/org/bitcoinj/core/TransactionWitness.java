@@ -40,4 +40,11 @@ public class TransactionWitness {
         witness.setPush(1, pubKeyBytes);
         return witness;
     }
+
+    public byte[] getScriptBytes() {
+        if (getPushCount() == 0)
+            return new byte[0];
+        else
+            return pushes[pushes.length - 1];
+    }
 }
