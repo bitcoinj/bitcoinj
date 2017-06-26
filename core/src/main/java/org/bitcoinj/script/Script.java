@@ -653,15 +653,19 @@ public class Script {
      * Gets the count of regular SigOps in the script program (counting multisig ops as 20)
      */
     public static int getSigOpCount(byte[] program) throws ScriptException {
+        return getSigOpCount(program, false);
+    }
+
+    public static int getSigOpCount(byte[] program, boolean accurate) throws ScriptException {
         Script script = new Script();
         try {
             script.parse(program);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
-        return getSigOpCount(script.chunks, false);
+        return getSigOpCount(script.chunks, accurate);
     }
-    
+
     /**
      * Gets the count of P2SH Sig Ops in the Script scriptSig
      */
