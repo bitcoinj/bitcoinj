@@ -120,6 +120,11 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(2730); // satoshis
 
+    /**
+     * Segwit makes sigop limit four times higher and scales regular sigops by four.
+     */
+    public static final int WITNESS_SCALE_FACTOR = 4;
+
     // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
@@ -1532,6 +1537,30 @@ public class Transaction extends ChildMessage {
             sigOps += Script.getSigOpCount(input.getScriptBytes());
         for (TransactionOutput output : outputs)
             sigOps += Script.getSigOpCount(output.getScriptBytes());
+        return sigOps * WITNESS_SCALE_FACTOR;
+    }
+
+    public int getSigOpCount(boolean segwit) throws ScriptException {
+        int sigOps = getSigOpCount();
+        if (segwit && !isCoinBase()) {
+            for (int i = 0; i < inputs.size(); i++) {
+                final TransactionInput input = inputs.get(i);
+                final TransactionOutput output = inputs.get(i).getConnectedOutput();
+                final TransactionWitness witness = witnesses.get(i);
+                final Script scriptPubKey = output.getScriptPubKey();
+                if (scriptPubKey.isWitnessProgram()) {
+                    final Script.ScriptType scriptType = scriptPubKey.getScriptType();
+                    switch (scriptType) {
+                        case P2WPKH:
+                            sigOps++;
+                            break;
+                        case P2WSH:
+                            sigOps += Script.getSigOpCount(witness.getScriptBytes(), true);
+                            break;
+                    }
+                }
+            }
+        }
         return sigOps;
     }
 
