@@ -40,7 +40,7 @@ public class BlockChain extends AbstractBlockChain {
     /**
      * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}</p>
+     * {@link Wallet#loadFromFile}</p>
      *
      * <p>For the store, you should use {@link org.bitcoinj.store.SPVBlockStore} or you could also try a
      * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
