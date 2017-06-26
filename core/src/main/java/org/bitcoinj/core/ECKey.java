@@ -574,13 +574,13 @@ public class ECKey implements EncryptableItem {
             }
         }
 
-        public static ECDSASignature decodeFromDER(byte[] bytes) {
+        public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
             ASN1InputStream decoder = null;
             try {
                 decoder = new ASN1InputStream(bytes);
                 DLSequence seq = (DLSequence) decoder.readObject();
                 if (seq == null)
-                    throw new RuntimeException("Reached past end of ASN.1 stream.");
+                    throw new IllegalArgumentException("Reached past end of ASN.1 stream.");
                 ASN1Integer r, s;
                 try {
                     r = (ASN1Integer) seq.getObjectAt(0);
@@ -592,7 +592,7 @@ public class ECKey implements EncryptableItem {
                 // Thus, we always use the positive versions. See: http://r6.ca/blog/20111119T211504Z.html
                 return new ECDSASignature(r.getPositiveValue(), s.getPositiveValue());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalArgumentException(e);
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
