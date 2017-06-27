@@ -350,7 +350,7 @@ public class FullBlockTestGenerator {
             for (Transaction tx : b15.block.getTransactions())
                 sigOps += tx.getSigOpCount();
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps];
+            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b15);
@@ -375,7 +375,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + 1];
+            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b16);
@@ -384,7 +384,7 @@ public class FullBlockTestGenerator {
             sigOps = 0;
             for (Transaction tx2 : b16.block.getTransactions())
                 sigOps += tx2.getSigOpCount();
-            checkState(sigOps == Block.MAX_BLOCK_SIGOPS + 1);
+            checkState(sigOps == Block.MAX_BLOCK_SIGOPS + Transaction.WITNESS_SCALE_FACTOR);
         }
         b16.solve();
 
@@ -540,7 +540,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20];
+            byte[] outputScript = new byte[((Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR) / 20];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIG);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b31);
@@ -560,9 +560,11 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20 + (Block.MAX_BLOCK_SIGOPS - sigOps)%20 + 1];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / 20 * Transaction.WITNESS_SCALE_FACTOR +
+                            (Block.MAX_BLOCK_SIGOPS - sigOps) % 20 * Transaction.WITNESS_SCALE_FACTOR + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIG);
-            for (int i = 0; i < (Block.MAX_BLOCK_SIGOPS - sigOps)%20; i++)
+            for (int i = 0; i < (Block.MAX_BLOCK_SIGOPS - sigOps) % 20 * Transaction.WITNESS_SCALE_FACTOR; i++)
                 outputScript[i] = (byte) OP_CHECKSIG;
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b32);
@@ -578,7 +580,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20];
+            byte[] outputScript = new byte[((Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR) / 20];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIGVERIFY);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b33);
@@ -598,9 +600,11 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20 + (Block.MAX_BLOCK_SIGOPS - sigOps)%20 + 1];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / 20 * Transaction.WITNESS_SCALE_FACTOR +
+                            (Block.MAX_BLOCK_SIGOPS - sigOps) % 20 * Transaction.WITNESS_SCALE_FACTOR + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIGVERIFY);
-            for (int i = 0; i < (Block.MAX_BLOCK_SIGOPS - sigOps)%20; i++)
+            for (int i = 0; i < (Block.MAX_BLOCK_SIGOPS - sigOps) % 20 * Transaction.WITNESS_SCALE_FACTOR; i++)
                 outputScript[i] = (byte) OP_CHECKSIG;
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b34);
@@ -616,7 +620,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps];
+            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR];
             Arrays.fill(outputScript, (byte) OP_CHECKSIGVERIFY);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b35);
@@ -636,7 +640,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + 1];
+            byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIGVERIFY);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b36);
@@ -680,7 +684,7 @@ public class FullBlockTestGenerator {
         //
         // Create some P2SH outputs that will require 6 sigops to spend
         byte[] b39p2shScriptPubKey;
-        int b39numP2SHOutputs = 0, b39sigOpsPerOutput = 6;
+        int b39numP2SHOutputs = 0, b39sigOpsPerOutput = 6 * Transaction.WITNESS_SCALE_FACTOR;
         NewBlock b39 = createNextBlock(b35, chainHeadHeight + 12, null, null);
         {
             ByteArrayOutputStream p2shScriptPubKey = new UnsafeByteArrayOutputStream();
@@ -801,7 +805,7 @@ public class FullBlockTestGenerator {
             sigOps += numTxes * b39sigOpsPerOutput;
             Transaction tx = new Transaction(params);
             tx.addInput(new TransactionInput(params, tx, new byte[]{OP_1}, lastOutPoint));
-            byte[] scriptPubKey = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + 1];
+            byte[] scriptPubKey = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1];
             Arrays.fill(scriptPubKey, (byte) OP_CHECKSIG);
             tx.addOutput(new TransactionOutput(params, tx, ZERO, scriptPubKey));
             b40.addTransaction(tx);
@@ -878,7 +882,7 @@ public class FullBlockTestGenerator {
                 Transaction tx = new Transaction(params);
                 tx.addInput(new TransactionInput(params, tx,
                         new byte[] {OP_1}, lastOutPoint));
-                byte[] scriptPubKey = new byte[Block.MAX_BLOCK_SIGOPS - sigOps];
+                byte[] scriptPubKey = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR];
                 Arrays.fill(scriptPubKey, (byte) OP_CHECKSIG);
                 tx.addOutput(new TransactionOutput(params, tx, ZERO, scriptPubKey));
                 b41.addTransaction(tx);
@@ -1384,11 +1388,16 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR +
+                            (int) Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is too large, the CHECKSIGs after that push are still counted
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR] = OP_PUSHDATA4;
+            Utils.uint32ToByteArrayLE(
+                    Script.MAX_SCRIPT_ELEMENT_SIZE + 1,
+                    outputScript,
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b73);
             b73.addTransaction(tx);
@@ -1403,14 +1412,16 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR +
+                            (int) Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an invalid element, all previous CHECKSIGs are counted
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 1] = OP_PUSHDATA4;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 2] = (byte)0xfe;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 3] = (byte)0xff;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 4] = (byte)0xff;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 5] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1] = OP_PUSHDATA4;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 2] = (byte)0xfe;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 3] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 4] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 5] = (byte)0xff;
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b74);
             b74.addTransaction(tx);
@@ -1425,14 +1436,16 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR +
+                            (int) Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an invalid element, all subsequent CHECKSIGs are not counted
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 1] = (byte)0xff;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 2] = (byte)0xff;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 3] = (byte)0xff;
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 4] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR] = OP_PUSHDATA4;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 2] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 3] = (byte)0xff;
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 4] = (byte)0xff;
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b75);
             b75.addTransaction(tx);
@@ -1450,11 +1463,16 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction(params);
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
+            byte[] outputScript = new byte[
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR +
+                    (int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
-            outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            outputScript[(Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR] = OP_PUSHDATA4;
+            Utils.uint32ToByteArrayLE(
+                    Block.MAX_BLOCK_SIGOPS / Transaction.WITNESS_SCALE_FACTOR,
+                    outputScript,
+                    (Block.MAX_BLOCK_SIGOPS - sigOps) / Transaction.WITNESS_SCALE_FACTOR + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b76);
             b76.addTransaction(tx);
