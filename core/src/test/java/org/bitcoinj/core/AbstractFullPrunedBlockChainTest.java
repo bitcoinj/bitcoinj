@@ -79,7 +79,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
         
         store = createStore(PARAMS, blockList.maximumReorgBlockCount);
         chain = new FullPrunedBlockChain(PARAMS, store);
-
         for (Rule rule : blockList.list) {
             if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
                 continue;

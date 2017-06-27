@@ -89,7 +89,10 @@ public abstract class ListMessage extends Message {
                     || (type != InventoryItem.Type.Error
                         && type != InventoryItem.Type.Block
                         && type != InventoryItem.Type.Transaction
-                        && type != InventoryItem.Type.FilteredBlock)) {
+                        && type != InventoryItem.Type.FilteredBlock
+                        && type != InventoryItem.Type.WitnessBlock
+                        && type != InventoryItem.Type.WitnessTransaction
+                        && type != InventoryItem.Type.FilteredWitnessBlock)) {
                 throw new ProtocolException("Unknown CInv type: " + typeCode);
             }
             InventoryItem item = new InventoryItem(type, readHash());

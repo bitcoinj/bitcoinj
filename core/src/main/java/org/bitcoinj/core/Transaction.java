@@ -209,7 +209,6 @@ public class Transaction extends ChildMessage {
         witnesses = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
-        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
     }
 
     /**
@@ -614,8 +613,7 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        boolean witSupported = (protocolVersion >= NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion())
-                && (transactionOptions & TransactionOptions.WITNESS) != 0;
+        boolean witSupported = (transactionOptions & TransactionOptions.WITNESS) != 0;
         cursor = offset;
 
         version = readUint32();
@@ -920,7 +918,7 @@ public class Transaction extends ChildMessage {
         TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut);
         addInput(input);
         Sha256Hash hash;
-        // P2WSH not supported by this script
+        // P2WSH not supported
         if (scriptPubKey.isSentToP2WPKH() || scriptPubKey.isSentToP2WPKHP2SH(sigKey) || scriptPubKey.isSentToP2WSH()) {
             if (prevOut.getConnectedOutput().getValue() == null)
                 throw new ScriptException("Cannot sign segwit script without value of previous output");
@@ -1371,8 +1369,7 @@ public class Transaction extends ChildMessage {
     }
 
     protected void bitcoinSerializeToStream(OutputStream stream, int transactionOptions) throws IOException {
-        boolean witSupported = (protocolVersion >= NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion())
-                && (transactionOptions & TransactionOptions.WITNESS) != 0;
+        boolean witSupported = (transactionOptions & TransactionOptions.WITNESS) != 0;
         boolean serializeWit = hasWitness() && witSupported;
         uint32ToByteStreamLE(version, stream);
         if (serializeWit) {
@@ -1540,14 +1537,19 @@ public class Transaction extends ChildMessage {
         return sigOps * WITNESS_SCALE_FACTOR;
     }
 
-    public int getSigOpCount(boolean segwit) throws ScriptException {
-        int sigOps = getSigOpCount();
-        if (segwit && !isCoinBase()) {
+    public int getWitnessSigOpCount() throws ScriptException {
+        int sigOps = 0;
+        if (!isCoinBase()) {
             for (int i = 0; i < inputs.size(); i++) {
                 final TransactionInput input = inputs.get(i);
                 final TransactionOutput output = inputs.get(i).getConnectedOutput();
                 final TransactionWitness witness = witnesses.get(i);
-                final Script scriptPubKey = output.getScriptPubKey();
+                final Script scriptPubKey;
+                if (output.getScriptPubKey().isPayToScriptHash()) {
+                    scriptPubKey = input.getScriptSig().getRedeemScript();
+                } else {
+                    scriptPubKey = output.getScriptPubKey();
+                }
                 if (scriptPubKey.isWitnessProgram()) {
                     final Script.ScriptType scriptType = scriptPubKey.getScriptType();
                     switch (scriptType) {

@@ -78,7 +78,7 @@ public class Block extends Message {
      * expensive/slow to verify. Segwit makes this four times larger, and makes every operation four times more
      * expensive in non-segwit parts of scripts.
      */
-    public static final int MAX_BLOCK_SIGOPS = 80 * 1000;
+    public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_WEIGHT / 50;
 
     /** A value for difficultyTarget (nBits) that allows half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;

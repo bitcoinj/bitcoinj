@@ -37,7 +37,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.*;
 
@@ -596,7 +595,7 @@ public class Script {
             }
         }
 
-        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + HEX.encode(signatureBytes));
+        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
     }
 
 
@@ -667,22 +666,38 @@ public class Script {
     }
 
     /**
-     * Gets the count of P2SH Sig Ops in the Script scriptSig
+     * Gets the count of P2SH Sig Ops in the Script scriptSig scaled by WITNESS_SCALE_FACTOR
      */
     public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
-        Script script = new Script();
+        final Script script = new Script();
         try {
             script.parse(scriptSig);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
-        for (int i = script.chunks.size() - 1; i >= 0; i--)
-            if (!script.chunks.get(i).isOpCode()) {
-                Script subScript =  new Script();
-                subScript.parse(script.chunks.get(i).data);
-                return getSigOpCount(subScript.chunks, true);
-            }
-        return 0;
+        try {
+            final Script redeem = script.getRedeemScript();
+            return getSigOpCount(redeem.chunks, true) * Transaction.WITNESS_SCALE_FACTOR;
+        } catch (ScriptException e) {
+            // Behave like the previous version of this function
+            return 0;
+        }
+    }
+
+    /**
+     * Get the redeem script from a sigScript that spends a P2SH output.
+     * @return parsed redeem script
+     * @throws ScriptException
+     */
+    public Script getRedeemScript() throws ScriptException {
+        if (this.chunks.size() == 0)
+            throw new ScriptException("SigScript is empty");
+        final ScriptChunk chunk = this.chunks.get(this.chunks.size() - 1);
+        if (chunk.isOpCode())
+            throw new ScriptException("Redeem script is an opcode");
+        final Script redeem = new Script();
+        redeem.parse(chunk.data);
+        return redeem;
     }
 
     /**
