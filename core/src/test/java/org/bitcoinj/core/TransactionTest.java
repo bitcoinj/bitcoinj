@@ -26,6 +26,8 @@ import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 import static org.bitcoinj.core.Utils.HEX;
@@ -841,5 +843,72 @@ public class TransactionTest {
                 Script.VerifyFlag.CLEANSTACK,
                 Script.VerifyFlag.CHECKLOCKTIMEVERIFY,
                 Script.VerifyFlag.SEGWIT)); // LOW_S should cannot be enforced on this signature
+    }
+
+    /**
+     * Transaction weight calculation following BIP-141.
+     */
+    @Test
+    public void testSegWitWeight() {
+        final byte[] binaryTx = HEX.decode("01000000000102fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f00000000494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac000247304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee0121025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee635711000000");
+        final Transaction tx = new Transaction(MainNetParams.get(), binaryTx);
+
+        final int baseSize;
+        {
+            final ByteArrayOutputStream base = new UnsafeByteArrayOutputStream();
+            try {
+                tx.bitcoinSerializeToStream(base, TransactionOptions.NONE);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            baseSize = base.size();
+        }
+        assertEquals(233, baseSize);
+
+        final int totalSize;
+        {
+            final ByteArrayOutputStream total = new UnsafeByteArrayOutputStream();
+            try {
+                tx.bitcoinSerializeToStream(total, TransactionOptions.WITNESS);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            totalSize = total.size();
+        }
+        assertEquals(343, totalSize);
+
+        assertEquals(233 * 3 + 343, tx.getWeight());
+    }
+
+    @Test
+    public void testNoSegWitWeight() {
+        final byte[] binaryTx = HEX.decode("0100000001c36ca0f28b0fa5b56b20d69f3300c8e13b92db21d1f7965fb2b32e7c4eb85267000000006b483045022100fa8198bcb0e49ddd71ba2aa6a565db95db71338be8f971d4d39c5724f489e8bc02207e1cf456c7521ce5523fe597ec50c196fd4b94b0381e693fc467602246490a08012103aa6309cbe70e76597867806abe0751cf116bec865e374d445b6d85337a015bc0ffffffff027e090000000000001976a91424af560bbec150aeeea15ee798ad907c8b7b74cb88acf6d90600000000001976a9149a90ec63dba41ede9ada81bb62a0a46ba59a16f888ac00000000");
+        final Transaction tx = new Transaction(MainNetParams.get(), binaryTx);
+
+        final int baseSize;
+        {
+            final ByteArrayOutputStream base = new UnsafeByteArrayOutputStream();
+            try {
+                tx.bitcoinSerializeToStream(base, TransactionOptions.NONE);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            baseSize = base.size();
+        }
+        assertEquals(226, baseSize);
+
+        final int totalSize;
+        {
+            final ByteArrayOutputStream total = new UnsafeByteArrayOutputStream();
+            try {
+                tx.bitcoinSerializeToStream(total, TransactionOptions.WITNESS);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            totalSize = total.size();
+        }
+        assertEquals(226, totalSize);
+
+        assertEquals(226 * 4, tx.getWeight());
     }
 }

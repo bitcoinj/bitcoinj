@@ -1755,4 +1755,36 @@ public class Transaction extends ChildMessage {
     public void setMemo(String memo) {
         this.memo = memo;
     }
+
+    /**
+     * Transaction weight is a segwit-related computation 3b+t where b is the size of a transaction serialized in the
+     * traditional manner without witness data, and t is the size of a transaction serialized in the segwit format
+     * with witness data.
+     */
+    // TODO: write tests for this
+    public int getWeight() {
+        final int baseLength;
+        {
+            final ByteArrayOutputStream base = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+            try {
+                bitcoinSerializeToStream(base, TransactionOptions.NONE);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            baseLength = base.size();
+        }
+
+        final int totalLength;
+        {
+            final ByteArrayOutputStream total = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+            try {
+                bitcoinSerializeToStream(total, TransactionOptions.WITNESS);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream
+            }
+            totalLength = total.size();
+        }
+
+        return baseLength * 3 + totalLength;
+    }
 }
