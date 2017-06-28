@@ -1458,7 +1458,6 @@ public class Peer extends PeerSocketHandler {
                     this, toHash, chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
-            //
             blockLocator.add(cursor.getHeader().getHash());
             try {
                 cursor = cursor.getPrev(store);
