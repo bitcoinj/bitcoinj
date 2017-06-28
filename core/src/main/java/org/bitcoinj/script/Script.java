@@ -666,22 +666,21 @@ public class Script {
     }
 
     /**
-     * Gets the count of P2SH Sig Ops in the Script scriptSig scaled by WITNESS_SCALE_FACTOR
+     * Gets the count of P2SH Sig Ops in the Script scriptSig
      */
     public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
-        final Script script = new Script();
         try {
-            script.parse(scriptSig);
+            final Script redeem = getRedeemScript(scriptSig);
+            return getSigOpCount(redeem.chunks, true);
         } catch (ScriptException e) {
-            // Ignore errors and count up to the parse-able length
-        }
-        try {
-            final Script redeem = script.getRedeemScript();
-            return getSigOpCount(redeem.chunks, true) * Transaction.WITNESS_SCALE_FACTOR;
-        } catch (ScriptException e) {
-            // Behave like the previous version of this function
             return 0;
         }
+    }
+
+    public static Script getRedeemScript(byte[] scriptSig) throws ScriptException {
+        final Script script = new Script();
+        script.parse(scriptSig);
+        return getRedeemScript(script);
     }
 
     /**
@@ -689,12 +688,12 @@ public class Script {
      * @return parsed redeem script
      * @throws ScriptException
      */
-    public Script getRedeemScript() throws ScriptException {
-        if (this.chunks.size() == 0)
+    public static Script getRedeemScript(Script scriptSig) throws ScriptException {
+        if (scriptSig.chunks.size() == 0)
             throw new ScriptException("SigScript is empty");
-        final ScriptChunk chunk = this.chunks.get(this.chunks.size() - 1);
+        final ScriptChunk chunk = scriptSig.chunks.get(scriptSig.chunks.size() - 1);
         if (chunk.isOpCode())
-            throw new ScriptException("Redeem script is an opcode");
+            throw new ScriptException("Expected redeem script is an opcode");
         final Script redeem = new Script();
         redeem.parse(chunk.data);
         return redeem;
