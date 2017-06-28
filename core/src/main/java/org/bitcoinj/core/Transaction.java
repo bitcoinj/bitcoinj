@@ -1526,7 +1526,9 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Gets the count of regular SigOps in this transactions
+     * Gets the count of regular SigOps in this transaction. Scaled for segwit compatibilty.
+     *
+     * @see Transaction#WITNESS_SCALE_FACTOR
      */
     public int getSigOpCount() throws ScriptException {
         int sigOps = 0;
@@ -1537,33 +1539,29 @@ public class Transaction extends ChildMessage {
         return sigOps * WITNESS_SCALE_FACTOR;
     }
 
-    public int getWitnessSigOpCount() throws ScriptException {
-        int sigOps = 0;
-        if (!isCoinBase()) {
-            for (int i = 0; i < inputs.size(); i++) {
-                final TransactionInput input = inputs.get(i);
-                final TransactionOutput output = inputs.get(i).getConnectedOutput();
-                final TransactionWitness witness = witnesses.get(i);
-                final Script scriptPubKey;
-                if (output.getScriptPubKey().isPayToScriptHash()) {
-                    scriptPubKey = input.getScriptSig().getRedeemScript();
-                } else {
-                    scriptPubKey = output.getScriptPubKey();
-                }
-                if (scriptPubKey.isWitnessProgram()) {
-                    final Script.ScriptType scriptType = scriptPubKey.getScriptType();
-                    switch (scriptType) {
-                        case P2WPKH:
-                            sigOps++;
-                            break;
-                        case P2WSH:
-                            sigOps += Script.getSigOpCount(witness.getScriptBytes(), true);
-                            break;
-                    }
-                }
+    public int getWitnessSigOpCount(int index, Script pkScript) {
+        final TransactionInput in = inputs.get(index);
+        final Script program;
+        if (pkScript.isPayToScriptHash())
+            try {
+                program = Script.getRedeemScript(in.getScriptBytes());
+            } catch (ScriptException e) {
+                return 0;
             }
-        }
-        return sigOps;
+        else
+            program = pkScript;
+        if (program.isWitnessProgram())
+            switch (program.getScriptType()) {
+                case P2PKH:
+                    return 1;
+                case P2WSH:
+                    if (witnesses.size() < 1)
+                        return 0;
+                    final TransactionWitness witness = getWitness(index);
+                    final byte[] scriptBytes = witness.getScriptBytes();
+                    return Script.getSigOpCount(scriptBytes, true);
+            }
+        return 0;
     }
 
     /**
@@ -1785,6 +1783,6 @@ public class Transaction extends ChildMessage {
             totalLength = total.size();
         }
 
-        return baseLength * 3 + totalLength;
+        return baseLength * (WITNESS_SCALE_FACTOR - 1) + totalLength;
     }
 }
