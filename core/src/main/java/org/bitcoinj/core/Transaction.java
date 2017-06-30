@@ -237,16 +237,29 @@ public class Transaction extends ChildMessage {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, MessageSerializer setSerializer, int length)
-            throws ProtocolException {
+    public Transaction(
+            NetworkParameters params,
+            byte[] payload,
+            int offset,
+            @Nullable Message parent,
+            MessageSerializer setSerializer,
+            int length)
+            throws ProtocolException
+    {
         super(params, payload, offset, parent, setSerializer, length);
     }
 
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
-            throws ProtocolException {
+    public Transaction(
+            NetworkParameters params,
+            byte[] payload,
+            @Nullable Message parent,
+            MessageSerializer setSerializer,
+            int length)
+            throws ProtocolException
+    {
         super(params, payload, 0, parent, setSerializer, length);
     }
 
@@ -726,7 +739,8 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required coinbase depth, or a non-coinbase tx.
+     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required
+     * coinbase depth, or a non-coinbase tx.
      */
     public boolean isMature() {
         if (!isCoinBase())
@@ -900,7 +914,12 @@ public class Transaction extends ChildMessage {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(params, this, script.getProgram(), new TransactionOutPoint(params, outputIndex, spendTxHash)));
+        return addInput(
+                new TransactionInput(
+                        params,
+                        this,
+                        script.getProgram(),
+                        new TransactionOutPoint(params, outputIndex, spendTxHash)));
     }
 
     /**
@@ -911,15 +930,23 @@ public class Transaction extends ChildMessage {
      *
      * @throws ScriptException if the scriptPubKey is not P2PKH, P2PK, P2WPKH, or P2WPKH wrapped in P2SH.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
-                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
+    public TransactionInput addSignedInput(
+            TransactionOutPoint prevOut,
+            Script scriptPubKey,
+            ECKey sigKey,
+            SigHash sigHash,
+            boolean anyoneCanPay)
+            throws ScriptException
+    {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), "Attempting to sign tx without outputs.");
         TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut);
         addInput(input);
         Sha256Hash hash;
         // P2WSH not supported
-        if (scriptPubKey.isSentToP2WPKH() || scriptPubKey.isSentToP2WPKHP2SH(sigKey) || scriptPubKey.isSentToP2WSH()) {
+        if (       scriptPubKey.isSentToP2WPKH()
+                || scriptPubKey.isSentToP2WPKHP2SH(sigKey)
+                || scriptPubKey.isSentToP2WSH()) {
             if (prevOut.getConnectedOutput().getValue() == null)
                 throw new ScriptException("Cannot sign segwit script without value of previous output");
             Script scriptCode;
@@ -960,7 +987,8 @@ public class Transaction extends ChildMessage {
      * Same as {@link #addSignedInput(TransactionOutPoint, org.bitcoinj.script.Script, ECKey, org.bitcoinj.core.Transaction.SigHash, boolean)}
      * but defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey)
+            throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false);
     }
 
@@ -976,7 +1004,12 @@ public class Transaction extends ChildMessage {
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
      */
-    public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey, SigHash sigHash, boolean anyoneCanPay) {
+    public TransactionInput addSignedInput(
+            TransactionOutput output,
+            ECKey signingKey,
+            SigHash sigHash,
+            boolean anyoneCanPay)
+    {
         return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay);
     }
 
@@ -1042,17 +1075,25 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                                byte[] redeemScript,
-                                                                SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateSignature(
+            int inputIndex,
+            ECKey key,
+            byte[] redeemScript,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
-    public TransactionSignature calculateWitnessSignature(int inputIndex, ECKey key,
-                                                          byte[] redeemScript,
-                                                          Coin value,
-                                                          SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateWitnessSignature(
+            int inputIndex,
+            ECKey key,
+            byte[] redeemScript,
+            Coin value,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
@@ -1069,17 +1110,25 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                                 Script redeemScript,
-                                                                 SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateSignature(
+            int inputIndex,
+            ECKey key,
+            Script redeemScript,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
-    public TransactionSignature calculateWitnessSignature(int inputIndex, ECKey key,
-                                                          Script redeemScript,
-                                                          Coin value,
-                                                          SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateWitnessSignature(
+            int inputIndex,
+            ECKey key,
+            Script redeemScript,
+            Coin value,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript.getProgram(), value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
@@ -1098,19 +1147,27 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                   @Nullable KeyParameter aesKey,
-                                                   byte[] redeemScript,
-                                                   SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateSignature(
+            int inputIndex,
+            ECKey key,
+            @Nullable KeyParameter aesKey,
+            byte[] redeemScript,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
-    public TransactionSignature calculateWitnessSignature(int inputIndex, ECKey key,
-                                                          @Nullable KeyParameter aesKey,
-                                                          byte[] redeemScript,
-                                                          Coin value,
-                                                          SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateWitnessSignature(
+            int inputIndex,
+            ECKey key,
+            @Nullable KeyParameter aesKey,
+            byte[] redeemScript,
+            Coin value,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
@@ -1128,19 +1185,27 @@ public class Transaction extends ChildMessage {
      * @param anyoneCanPay Signing mode, see the SigHash enum for documentation.
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
-    public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                   @Nullable KeyParameter aesKey,
-                                                   Script redeemScript,
-                                                   SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateSignature(
+            int inputIndex,
+            ECKey key,
+            @Nullable KeyParameter aesKey,
+            Script redeemScript,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
-    public TransactionSignature calculateWitnessSignature(int inputIndex, ECKey key,
-                                                          @Nullable KeyParameter aesKey,
-                                                          Script redeemScript,
-                                                          Coin value,
-                                                          SigHash hashType, boolean anyoneCanPay) {
+    public TransactionSignature calculateWitnessSignature(
+            int inputIndex,
+            ECKey key,
+            @Nullable KeyParameter aesKey,
+            Script redeemScript,
+            Coin value,
+            SigHash hashType,
+            boolean anyoneCanPay)
+    {
         Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript.getProgram(), value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
@@ -1159,8 +1224,12 @@ public class Transaction extends ChildMessage {
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public Sha256Hash hashForSignature(int inputIndex, byte[] redeemScript,
-                                                    SigHash type, boolean anyoneCanPay) {
+    public Sha256Hash hashForSignature(
+            int inputIndex,
+            byte[] redeemScript,
+            SigHash type,
+            boolean anyoneCanPay)
+    {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
         return hashForSignature(inputIndex, redeemScript, sigHashType);
     }
@@ -1179,8 +1248,12 @@ public class Transaction extends ChildMessage {
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
-                                                    SigHash type, boolean anyoneCanPay) {
+    public Sha256Hash hashForSignature(
+            int inputIndex,
+            Script redeemScript,
+            SigHash type,
+            boolean anyoneCanPay)
+    {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
         return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
     }
@@ -1290,14 +1363,24 @@ public class Transaction extends ChildMessage {
      * @param type Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignatureWitness(int inputIndex, Script scriptCode, Coin prevValue,
-                                                           SigHash type, boolean anyoneCanPay) {
+    public synchronized Sha256Hash hashForSignatureWitness(
+            int inputIndex,
+            Script scriptCode,
+            Coin prevValue,
+            SigHash type,
+            boolean anyoneCanPay)
+    {
         byte[] connectedScript = scriptCode.getProgram();
         return hashForSignatureWitness(inputIndex, connectedScript, prevValue, type, anyoneCanPay);
     }
 
-    public synchronized Sha256Hash hashForSignatureWitness(int inputIndex, byte[] connectedScript, Coin prevValue,
-                                                           SigHash type, boolean anyoneCanPay) {
+    public synchronized Sha256Hash hashForSignatureWitness(
+            int inputIndex,
+            byte[] connectedScript,
+            Coin prevValue,
+            SigHash type,
+            boolean anyoneCanPay)
+    {
         byte sigHashType = (byte) TransactionSignature.calcSigHashValue(type, anyoneCanPay);
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
         try {
@@ -1426,7 +1509,9 @@ public class Transaction extends ChildMessage {
         if (lockTime != 0 && (!seqNumSet || inputs.isEmpty())) {
             // At least one input must have a non-default sequence number for lock times to have any effect.
             // For instance one of them can be set to zero to make this feature work.
-            log.warn("You are setting the lock time on a transaction but none of the inputs have non-default sequence numbers. This will not do what you expect!");
+            log.warn("You are setting the lock time on a transaction but none "
+                    + "of the inputs have non-default sequence numbers. "
+                    + "This will not do what you expect!");
         }
         this.lockTime = lockTime;
     }
@@ -1458,7 +1543,7 @@ public class Transaction extends ChildMessage {
      * @param transactionBag The wallet that controls addresses and watches scripts.
      * @return linked list of outputs relevant to the wallet in this transaction
      */
-    public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
+    public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag) {
         List<TransactionOutput> walletOutputs = new LinkedList<>();
         for (TransactionOutput o : outputs) {
             if (!o.isMineOrWatched(transactionBag)) continue;
@@ -1525,43 +1610,38 @@ public class Transaction extends ChildMessage {
         return getHash().hashCode();
     }
 
+    private int getWitnessSigOpCount(int index, Script pkScript)
+            throws VerificationException
+    {
+        final TransactionInput in = inputs.get(index);
+        final Script program;
+        if (pkScript.isPayToScriptHash())
+            program = Script.getRedeemScript(in.getScriptBytes());
+        else
+            program = pkScript;
+        if (program.isSentToP2WSH()) {
+            if (witnesses.size() < index + 1)
+                throw new VerificationException("Expected witness not found");
+            final TransactionWitness witness = getWitness(index);
+            final byte[] scriptBytes = witness.getScriptBytes();
+            return Script.getSigOpCount(scriptBytes, true);
+        } else {
+            return 0;
+        }
+    }
+
     /**
-     * Gets the count of regular SigOps in this transaction. Scaled for segwit compatibilty.
+     * Gets the count of regular SigOps in this transaction.
      *
      * @see Transaction#WITNESS_SCALE_FACTOR
      */
     public int getSigOpCount() throws ScriptException {
         int sigOps = 0;
         for (TransactionInput input : inputs)
-            sigOps += Script.getSigOpCount(input.getScriptBytes());
+            sigOps += input.countSigOps();
         for (TransactionOutput output : outputs)
-            sigOps += Script.getSigOpCount(output.getScriptBytes());
-        return sigOps * WITNESS_SCALE_FACTOR;
-    }
-
-    public int getWitnessSigOpCount(int index, Script pkScript) {
-        final TransactionInput in = inputs.get(index);
-        final Script program;
-        if (pkScript.isPayToScriptHash())
-            try {
-                program = Script.getRedeemScript(in.getScriptBytes());
-            } catch (ScriptException e) {
-                return 0;
-            }
-        else
-            program = pkScript;
-        if (program.isWitnessProgram())
-            switch (program.getScriptType()) {
-                case P2PKH:
-                    return 1;
-                case P2WSH:
-                    if (witnesses.size() < 1)
-                        return 0;
-                    final TransactionWitness witness = getWitness(index);
-                    final byte[] scriptBytes = witness.getScriptBytes();
-                    return Script.getSigOpCount(scriptBytes, true);
-            }
-        return 0;
+            sigOps += output.countSigOps();
+        return sigOps;
     }
 
     /**

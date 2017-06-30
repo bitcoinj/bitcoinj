@@ -401,6 +401,10 @@ public class TransactionOutput extends ChildMessage {
         return -1;
     }
 
+    public int countSigOps() {
+        return Script.getSigOpCount(getScriptBytes()) * Transaction.WITNESS_SCALE_FACTOR;
+    }
+
     /**
      * Returns a new {@link TransactionOutPoint}, which is essentially a structure pointing to this output.
      * Requires that this output is not detached.

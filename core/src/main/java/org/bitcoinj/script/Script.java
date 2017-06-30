@@ -66,7 +66,7 @@ public class Script {
         P2WSH
     }
 
-    /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
+    /** Flags to pass to {@link Script#correctlySpends}.
      * Note currently only P2SH, DERSIG and NULLDUMMY are actually supported.
      */
     public enum VerifyFlag {
@@ -94,6 +94,7 @@ public class Script {
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
+    public static final int MAX_PUBKEYS_PER_MULTISIG = 20;
 
     // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
     protected List<ScriptChunk> chunks;
@@ -617,7 +618,7 @@ public class Script {
                     if (accurate && lastOpCode >= OP_1 && lastOpCode <= OP_16)
                         sigOps += decodeFromOpN(lastOpCode);
                     else
-                        sigOps += 20;
+                        sigOps += MAX_PUBKEYS_PER_MULTISIG;
                     break;
                 default:
                     break;
@@ -926,8 +927,8 @@ public class Script {
 
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
-     * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
-     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link org.bitcoinj.core.TransactionInput#verify} or
+     * {@link org.bitcoinj.script.Script#correctlySpends}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      *
@@ -952,8 +953,8 @@ public class Script {
 
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
-     * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
-     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script, Coin, Set<VerifyFlag>)}. This method
+     * {@link org.bitcoinj.core.TransactionInput#verify} or
+     * {@link org.bitcoinj.script.Script#correctlySpends}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      */
@@ -1764,7 +1765,7 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @deprecated Use {@link #correctlySpends(org.bitcoinj.core.Transaction, long, org.bitcoinj.script.Script, java.util.Set)}
+     * @deprecated Use {@link #correctlySpends(org.bitcoinj.core.Transaction, long, org.bitcoinj.script.Script, Coin, java.util.Set)}
      * instead so that verification flags do not change as new verification options
      * are added.
      */

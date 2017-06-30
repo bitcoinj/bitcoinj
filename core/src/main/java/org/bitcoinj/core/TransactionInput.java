@@ -32,7 +32,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -436,6 +438,7 @@ public class TransactionInput extends ChildMessage {
         verify(output);
     }
 
+
     /**
      * Verifies that this input can spend the given output. Note that this input must be a part of a transaction.
      * Also note that the consistency of the outpoint will be checked, even if this input has not been connected.
@@ -445,15 +448,28 @@ public class TransactionInput extends ChildMessage {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify(TransactionOutput output) throws VerificationException {
+        verify(output, Script.ALL_VERIFY_FLAGS);
+    }
+
+    /**
+     * Verifies that this input can spend the given output. Note that this input must be a part of a transaction.
+     * Also note that the consistency of the outpoint will be checked, even if this input has not been connected.
+     *
+     * @param output the output that this input is supposed to spend.
+     * @param flagSet flags for script interpreter.
+     * @throws ScriptException If the script doesn't verify.
+     * @throws VerificationException If the outpoint doesn't match the given output.
+     */
+    public void verify(TransactionOutput output, Set<Script.VerifyFlag> flagSet) throws VerificationException {
         if (output.parent != null) {
             if (!getOutpoint().getHash().equals(output.getParentTransaction().getHash()))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
             if (getOutpoint().getIndex() != output.getIndex())
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
-        Script pubKey = output.getScriptPubKey();
+        Script pkScript = output.getScriptPubKey();
         int myIndex = getParentTransaction().getInputs().indexOf(this);
-        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey);
+        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pkScript, output.getValue(), flagSet);
     }
 
     /**
@@ -490,6 +506,60 @@ public class TransactionInput extends ChildMessage {
      */
     public DefaultRiskAnalysis.RuleViolation isStandard() {
         return DefaultRiskAnalysis.isInputStandard(this);
+    }
+
+    /**
+     * Count regular SigOps for this input. Does not activate any verification flags such as P2SH or SEGWIT.
+     *
+     * @return regular SigOps count.
+     */
+    public int countSigOps() {
+        return countSigOps(EnumSet.noneOf(Script.VerifyFlag.class), null, null);
+    }
+
+    /**
+     *
+     * @param flags P2SH and SEGWIT flags require pkScript to be set
+     * @param pkScript scriptPubKey of output being spent (only required if P2SH or SEGWIT are set)
+     * @param witness witness of transaction (required if SEGWIT set and input has a corresponding witness)
+     * @return count of SigOps.
+     * @throws VerificationException
+     */
+    public int countSigOps(
+            Set<Script.VerifyFlag> flags,
+            @Nullable final Script pkScript,
+            @Nullable final TransactionWitness witness)
+            throws VerificationException
+    {
+        int sigOps = 0;
+        sigOps += Script.getSigOpCount(getScriptBytes()) * Transaction.WITNESS_SCALE_FACTOR;
+        if ((flags.contains(Script.VerifyFlag.P2SH) || flags.contains(Script.VerifyFlag.SEGWIT)) && pkScript == null)
+            throw new VerificationException("P2SH flag enabled and connected scriptPubKey not provided");
+        if (flags.contains(Script.VerifyFlag.P2SH) && pkScript.isPayToScriptHash())
+            sigOps += Script.getP2SHSigOpCount(getScriptBytes()) * Transaction.WITNESS_SCALE_FACTOR;
+        if (flags.contains(Script.VerifyFlag.SEGWIT))
+            sigOps += getWitnessSigOpCount(pkScript, witness);
+        return sigOps;
+    }
+
+    private int getWitnessSigOpCount(
+            final Script pkScript,
+            final TransactionWitness witness)
+            throws VerificationException
+    {
+        final Script program;
+        if (pkScript.isPayToScriptHash())
+            program = Script.getRedeemScript(getScriptBytes());
+        else
+            program = pkScript;
+        if (program.isSentToP2WSH()) {
+            final byte[] scriptBytes = witness.getScriptBytes();
+            return Script.getSigOpCount(scriptBytes, true);
+        } else if (program.isSentToP2WPKH()) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     @Override
