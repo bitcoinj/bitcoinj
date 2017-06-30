@@ -610,7 +610,7 @@ public class ECKey implements EncryptableItem {
                 return new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalArgumentException(e);
             }
         }
 
