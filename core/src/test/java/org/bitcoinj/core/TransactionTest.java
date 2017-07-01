@@ -16,7 +16,6 @@
  */
 
 package org.bitcoinj.core;
-import static org.bitcoinj.script.ScriptOpCodes.*;
 
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -26,8 +25,6 @@ import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 import static org.bitcoinj.core.Utils.HEX;
