@@ -263,7 +263,7 @@ public class ScriptTest {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
-                throw new RuntimeException("Invalid Data");
+                throw new RuntimeException("Invalid Data '"+w+"'");
             }                        
         }
         
@@ -284,6 +284,15 @@ public class ScriptTest {
         return flags;
     }
     
+    private void setTxParams(Transaction tx, JsonNode txParams) {
+        if (txParams==null)
+            return;
+        JsonNode nSequence = txParams.findValue("nSequence");
+        JsonNode txVersion = txParams.findValue("version");
+        if (nSequence!=null) tx.getInput(0).setSequenceNumber(nSequence.asLong());
+        if (txVersion!=null) tx.setVersion(txVersion.asInt());
+    }
+    
     @Test
     public void dataDrivenValidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
@@ -292,8 +301,12 @@ public class ScriptTest {
             Script scriptSig = parseScriptString(test.get(0).asText());
             Script scriptPubKey = parseScriptString(test.get(1).asText());
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+            Transaction tx = new Transaction(PARAMS);
+            TransactionInput txInput = new TransactionInput(PARAMS, null, scriptSig.getProgram());
+            tx.addInput(txInput);
+            setTxParams(tx, test.get(5));
             try {
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
+                scriptSig.correctlySpends(tx, 0, scriptPubKey, verifyFlags);
             } catch (ScriptException e) {
                 System.err.println(test);
                 System.err.flush();
@@ -310,8 +323,15 @@ public class ScriptTest {
             try {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
+                Transaction tx = new Transaction(PARAMS);
+                TransactionInput txInput = new TransactionInput(PARAMS, null, scriptSig.getProgram());
+                
+                txInput.setSequenceNumber(0);   // enables test for CHECKSEQUENCEVERIFY
+                tx.setVersion(0);
+                tx.addInput(txInput);
+                
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
+                scriptSig.correctlySpends(tx, 0, scriptPubKey, verifyFlags);
                 System.err.println(test);
                 System.err.flush();
                 fail();
