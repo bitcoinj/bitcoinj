@@ -300,7 +300,7 @@ public class ScriptTest {
                 Transaction txSpend = buildSpendingTransaction(txCredit, scriptSig);
                 scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
                 if (!expectedError.equals("OK"))
-                    fail();
+                    fail(test + " is expected to fail");
             } catch (ScriptException e) {
                 if (expectedError.equals("OK")) {
                     // TODO check for specific error
