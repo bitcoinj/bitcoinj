@@ -388,10 +388,12 @@ public class ScriptTest {
                 Transaction txSpend = getSpendingTransaction(txCredit, scriptSig);
 
                 scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
-                assertTrue(test+" expected to be OK", expectedOK);
+                assertTrue(test+" expected to fail", expectedOK);
             }
             catch (VerificationException e) {
-                assertTrue(test+" expected to fail", !expectedOK);
+                if (expectedOK)
+                    e.printStackTrace();
+                assertFalse(test+" expected to be OK", expectedOK);
             }
         }
     }
