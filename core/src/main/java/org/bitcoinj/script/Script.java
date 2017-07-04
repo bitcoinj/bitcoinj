@@ -75,7 +75,8 @@ public class Script {
         MINIMALDATA, // Require minimal encodings for all push operations
         DISCOURAGE_UPGRADABLE_NOPS, // Discourage use of NOPs reserved for upgrades (NOP1-10)
         CLEANSTACK, // Require that only a single stack element remains after evaluation.
-        CHECKLOCKTIMEVERIFY // Enable CHECKLOCKTIMEVERIFY operation
+        CHECKLOCKTIMEVERIFY, // Enable CHECKLOCKTIMEVERIFY operation
+        CHECKSEQUENCEVERIFY // Enable CHECKSEQUENCEVERIFY operation
     }
     public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
 
@@ -816,7 +817,7 @@ public class Script {
     /**
      * Cast a script chunk to a BigInteger. Normally you would want
      * {@link #castToBigInteger(byte[])} instead, this is only for cases where
-     * the normal maximum length does not apply (i.e. CHECKLOCKTIMEVERIFY).
+     * the normal maximum length does not apply (i.e. CHECKLOCKTIMEVERIFY, CHECKSEQUENCEVERIFY).
      *
      * @param maxLength the maximum length in bytes.
      * @throws ScriptException if the chunk is longer than the specified maximum.
@@ -1353,10 +1354,19 @@ public class Script {
                         }
                         break;
                     }
-                    executeCheckLockTimeVerify(txContainingThis, (int) index, script, stack, lastCodeSepLocation, opcode, verifyFlags);
+                    executeCheckLockTimeVerify(txContainingThis, (int) index, stack);
+                    break;
+                case OP_CHECKSEQUENCEVERIFY:
+                    if (!verifyFlags.contains(VerifyFlag.CHECKSEQUENCEVERIFY)) {
+                        // not enabled; treat as a NOP3
+                        if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
+                            throw new ScriptException("Script used a reserved opcode " + opcode);
+                        }
+                        break;
+                    }
+                    executeCheckSequenceVerify(txContainingThis, (int) index, stack);
                     break;
                 case OP_NOP1:
-                case OP_NOP3:
                 case OP_NOP4:
                 case OP_NOP5:
                 case OP_NOP6:
@@ -1383,9 +1393,8 @@ public class Script {
     }
 
     // This is more or less a direct translation of the code in Bitcoin Core
-    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
-                                        int lastCodeSepLocation, int opcode,
-                                        Set<VerifyFlag> verifyFlags) throws ScriptException {
+    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack) throws ScriptException {
+        
         if (stack.size() < 1)
             throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
 
@@ -1421,7 +1430,84 @@ public class Script {
         if (!txContainingThis.getInput(index).hasSequence())
             throw new ScriptException("Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
     }
+    
+    private static void executeCheckSequenceVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack) throws ScriptException {
 
+        if (stack.size() < 1)
+            throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
+
+        // Note that elsewhere numeric opcodes are limited to
+        // operands in the range -2**31+1 to 2**31-1, however it is
+        // legal for opcodes to produce results exceeding that
+        // range. This limitation is implemented by CScriptNum's
+        // default 4-byte limit.
+        //
+        // Thus as a special case we tell CScriptNum to accept up
+        // to 5-byte bignums, which are good until 2**39-1, well
+        // beyond the 2**32-1 limit of the nSequence field itself.
+        final long nSequence = castToBigInteger(stack.getLast(), 5).longValue();
+
+        // In the rare event that the argument may be < 0 due to
+        // some arithmetic being done first, you can always use
+        // 0 MAX CHECKSEQUENCEVERIFY.
+        if (nSequence < 0)
+            throw new ScriptException("Negative sequence");
+
+        // To provide for future soft-fork extensibility, if the
+        // operand has the disabled lock-time flag set,
+        // CHECKSEQUENCEVERIFY behaves as a NOP.
+        if ((nSequence & Transaction.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
+            return;
+
+        // Compare the specified sequence number with the input.
+        if (!checkSequence(nSequence, txContainingThis, index))
+            throw new ScriptException("Unsatisfied CHECKLOCKTIMEVERIFY lock time");
+	}
+
+    private static boolean checkSequence(long nSequence, Transaction txContainingThis, int index) {
+        
+        // Relative lock times are supported by comparing the passed
+        // in operand to the sequence number of the input.
+        long txToSequence = txContainingThis.getInput(index).getSequenceNumber();
+
+        // Fail if the transaction's version number is not set high
+        // enough to trigger BIP 68 rules.
+        if (txContainingThis.getVersion() < 2)
+            return false;
+
+        // Sequence numbers with their most significant bit set are not
+        // consensus constrained. Testing that the transaction's sequence
+        // number do not have this bit set prevents using this property
+        // to get around a CHECKSEQUENCEVERIFY check.
+        if ((txToSequence & Transaction.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
+            return false;
+
+        // Mask off any bits that do not have consensus-enforced meaning
+        // before doing the integer comparisons
+        long nLockTimeMask =  Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG | Transaction.SEQUENCE_LOCKTIME_MASK;
+        long txToSequenceMasked = txToSequence & nLockTimeMask;
+        long nSequenceMasked = nSequence & nLockTimeMask;
+
+        // There are two kinds of nSequence: lock-by-blockheight
+        // and lock-by-blocktime, distinguished by whether
+        // nSequenceMasked < CTxIn::SEQUENCE_LOCKTIME_TYPE_FLAG.
+        //
+        // We want to compare apples to apples, so fail the script
+        // unless the type of nSequenceMasked being tested is the same as
+        // the nSequenceMasked in the transaction.
+        if (!((txToSequenceMasked < Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked < Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG) ||
+              (txToSequenceMasked >= Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked >= Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG))) {
+            return false;
+        }
+
+        // Now that we know we're comparing apples-to-apples, the
+        // comparison is a simple numeric one.
+        if (nSequenceMasked > txToSequenceMasked)
+            return false;
+
+        return true;
+    }
+    
     private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
                                         int lastCodeSepLocation, int opcode, 
                                         Set<VerifyFlag> verifyFlags) throws ScriptException {
