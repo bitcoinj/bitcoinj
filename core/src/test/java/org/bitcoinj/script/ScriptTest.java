@@ -48,6 +48,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import org.junit.Ignore;
 
 public class ScriptTest {
     // From tx 05e04c26c12fe408a3c1b71aa7996403f6acad1045252b1c62e055496f4d2cb1 on the testnet.
@@ -263,7 +264,7 @@ public class ScriptTest {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
-                throw new RuntimeException("Invalid Data");
+                throw new RuntimeException("Invalid Data "+w);
             }                        
         }
         
@@ -284,7 +285,9 @@ public class ScriptTest {
         return flags;
     }
     
+    @Deprecated
     @Test
+    @Ignore
     public void dataDrivenValidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "script_valid.json"), Charsets.UTF_8));
@@ -302,7 +305,9 @@ public class ScriptTest {
         }
     }
     
+    @Deprecated
     @Test
+    @Ignore
     public void dataDrivenInvalidScripts() throws Exception {
         JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
                 "script_invalid.json"), Charsets.UTF_8));
@@ -319,6 +324,88 @@ public class ScriptTest {
                 // Expected.
             }
         }
+    }
+    
+    @Test
+    public void scriptJsonTest() throws Exception {
+        // Read tests from test/data/script_tests.json
+        // Format is an array of arrays
+        // Inner arrays are [ ["wit"..., nValue]?, "scriptSig", "scriptPubKey", "flags", "expected_scripterror" ]
+        // ... where scriptSig and scriptPubKey are stringified
+        // scripts.
+        // If a witness is given, then the last value in the array should be the
+        // amount (nValue) to use in the crediting tx
+        JsonNode tests = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream("script_tests.json"), Charsets.UTF_8));
+        
+        for (JsonNode test : tests) {
+            
+            boolean witExtra = test.get(0).isArray();
+            if (test.size()>0 && witExtra) {
+                // TODO: witness extra (implement it when merging with `segwit`)
+                continue;
+            }
+            
+            if (test.size() < 4 + (witExtra? 1: 0)) {   // Allow size > 3; extra stuff ignored (useful for comments)
+                if (test.size() != 1) {
+                    fail("Bad test: "+test.toString());
+                }
+                continue;
+            }
+            
+            String scriptSigString = test.get(0).asText();
+            String scriptPubKeyString = test.get(1).asText();
+            String flags = test.get(2).asText();
+            boolean expectedOK = "OK".equals(test.get(3).asText());
+            
+            Script scriptSig = parseScriptString(scriptSigString);
+            Script scriptPubKey = parseScriptString(scriptPubKeyString);
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(flags);
+
+            Transaction txCredit = getCreditingTransaction(scriptPubKey);
+            Transaction txSpend = getSpendingTransaction(txCredit, scriptSig);
+            
+            try {
+                scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
+                assertTrue(test+" expected to be OK", expectedOK);
+            }
+            catch (VerificationException e) {
+                assertTrue(test+" expected to fail", !expectedOK);
+            }
+        }
+    }
+
+    private Transaction getCreditingTransaction(Script scriptPubKey) {
+        return getCreditingTransaction(scriptPubKey, 0);
+    }
+    
+    private Transaction getCreditingTransaction(Script scriptPubKey, int nValue) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+        
+        TransactionInput txInput = new TransactionInput(PARAMS, null, new ScriptBuilder().number(0).number(0).build().getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, Coin.valueOf(nValue), scriptPubKey.getProgram());
+        tx.addOutput(txOutput);
+        
+        return tx;
+    }
+    
+    private Transaction getSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+        
+        TransactionInput txInput = new TransactionInput(PARAMS, creditingTransaction, scriptSig.getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, creditingTransaction.getOutput(0).getValue(), new Script(new byte[]{}).getProgram());
+        tx.addOutput(txOutput);
+
+        return tx;
     }
     
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
