@@ -263,7 +263,7 @@ public class ScriptTest {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
-                throw new RuntimeException("Invalid Data");
+                throw new RuntimeException("Invalid word: '" + w + "'");
             }                        
         }
         
@@ -283,44 +283,35 @@ public class ScriptTest {
         }
         return flags;
     }
-    
+
     @Test
-    public void dataDrivenValidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_valid.json"), Charsets.UTF_8));
+    public void dataDrivenScripts() throws Exception {
+        JsonNode json = new ObjectMapper()
+                .readTree(new InputStreamReader(getClass().getResourceAsStream("script_tests.json"), Charsets.UTF_8));
         for (JsonNode test : json) {
-            Script scriptSig = parseScriptString(test.get(0).asText());
-            Script scriptPubKey = parseScriptString(test.get(1).asText());
+            if (test.size() == 1)
+                continue; // skip comment
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-            try {
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
-            } catch (ScriptException e) {
-                System.err.println(test);
-                System.err.flush();
-                throw e;
-            }
-        }
-    }
-    
-    @Test
-    public void dataDrivenInvalidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_invalid.json"), Charsets.UTF_8));
-        for (JsonNode test : json) {
+            String expectedError = test.get(3).asText();
             try {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
-                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
-                System.err.println(test);
-                System.err.flush();
-                fail();
-            } catch (VerificationException e) {
-                // Expected.
+                Transaction txCredit = buildCreditingTransaction(scriptPubKey);
+                Transaction txSpend = buildSpendingTransaction(txCredit, scriptSig);
+                scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
+                if (!expectedError.equals("OK"))
+                    fail();
+            } catch (ScriptException e) {
+                if (expectedError.equals("OK")) {
+                    // TODO check for specific error
+                    System.err.println(test);
+                    System.err.flush();
+                    throw e;
+                }
             }
         }
     }
-    
+
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
@@ -331,6 +322,38 @@ public class ScriptTest {
             scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
+    }
+
+    private Transaction buildCreditingTransaction(Script scriptPubKey) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+
+        TransactionInput txInput = new TransactionInput(PARAMS, null,
+                new ScriptBuilder().number(0).number(0).build().getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, Coin.ZERO, scriptPubKey.getProgram());
+        tx.addOutput(txOutput);
+
+        return tx;
+    }
+
+    private Transaction buildSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+
+        TransactionInput txInput = new TransactionInput(PARAMS, creditingTransaction, scriptSig.getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, creditingTransaction.getOutput(0).getValue(),
+                new Script(new byte[] {}).getProgram());
+        tx.addOutput(txOutput);
+
+        return tx;
     }
 
     @Test
