@@ -285,6 +285,15 @@ public class ScriptTest {
         return flags;
     }
     
+    private void setTxParams(Transaction tx, JsonNode txParams) {
+        if (txParams==null)
+            return;
+        JsonNode nSequence = txParams.findValue("nSequence");
+        JsonNode txVersion = txParams.findValue("version");
+        if (nSequence!=null) tx.getInput(0).setSequenceNumber(nSequence.asLong());
+        if (txVersion!=null) tx.setVersion(txVersion.asInt());
+    }
+    
     @Deprecated
     @Test
     @Ignore
@@ -295,8 +304,12 @@ public class ScriptTest {
             Script scriptSig = parseScriptString(test.get(0).asText());
             Script scriptPubKey = parseScriptString(test.get(1).asText());
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+            Transaction tx = new Transaction(PARAMS);
+            TransactionInput txInput = new TransactionInput(PARAMS, null, scriptSig.getProgram());
+            tx.addInput(txInput);
+            setTxParams(tx, test.get(5));
             try {
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
+                scriptSig.correctlySpends(tx, 0, scriptPubKey, verifyFlags);
             } catch (ScriptException e) {
                 System.err.println(test);
                 System.err.flush();
@@ -315,8 +328,15 @@ public class ScriptTest {
             try {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
+                Transaction tx = new Transaction(PARAMS);
+                TransactionInput txInput = new TransactionInput(PARAMS, null, scriptSig.getProgram());
+                
+                txInput.setSequenceNumber(0);   // enables test for CHECKSEQUENCEVERIFY
+                tx.setVersion(0);
+                tx.addInput(txInput);
+                
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
+                scriptSig.correctlySpends(tx, 0, scriptPubKey, verifyFlags);
                 System.err.println(test);
                 System.err.flush();
                 fail();
@@ -336,9 +356,9 @@ public class ScriptTest {
         // If a witness is given, then the last value in the array should be the
         // amount (nValue) to use in the crediting tx
         JsonNode tests = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream("script_tests.json"), Charsets.UTF_8));
-        
+        int i=0;
         for (JsonNode test : tests) {
-            
+            i++;
             boolean witExtra = test.get(0).isArray();
             if (test.size()>0 && witExtra) {
                 // TODO: witness extra (implement it when merging with `segwit`)
@@ -357,14 +377,16 @@ public class ScriptTest {
             String flags = test.get(2).asText();
             boolean expectedOK = "OK".equals(test.get(3).asText());
             
-            Script scriptSig = parseScriptString(scriptSigString);
-            Script scriptPubKey = parseScriptString(scriptPubKeyString);
-            Set<VerifyFlag> verifyFlags = parseVerifyFlags(flags);
-
-            Transaction txCredit = getCreditingTransaction(scriptPubKey);
-            Transaction txSpend = getSpendingTransaction(txCredit, scriptSig);
-            
+            System.out.println(i+":"+test);
+            System.out.println(expectedOK);
             try {
+                Script scriptSig = parseScriptString(scriptSigString);
+                Script scriptPubKey = parseScriptString(scriptPubKeyString);
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(flags);
+                
+                Transaction txCredit = getCreditingTransaction(scriptPubKey);
+                Transaction txSpend = getSpendingTransaction(txCredit, scriptSig);
+
                 scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
                 assertTrue(test+" expected to be OK", expectedOK);
             }
