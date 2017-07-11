@@ -83,6 +83,10 @@ public class Script {
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+    private static final int MAX_OPS_PER_SCRIPT = 201;
+    private static final int MAX_STACK_SIZE = 1000;
+    private static final int MAX_PUBKEYS_PER_MULTISIG = 20;
+    private static final int MAX_SCRIPT_SIZE = 10000;
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
@@ -889,45 +893,37 @@ public class Script {
         
         for (ScriptChunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
+            int opcode = chunk.opcode;
 
-            if (chunk.opcode == OP_0) {
-                if (!shouldExecute)
-                    continue;
+            // Check stack element size
+            if (chunk.data != null && chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
+                throw new ScriptException(ScriptError.SCRIPT_ERR_PUSH_SIZE, "Attempted to push a data string larger than 520 bytes");
 
-                // Check minimal push
-                if (verifyFlags.contains(VerifyFlag.MINIMALDATA) && !chunk.isShortestPossiblePushData())
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_MINIMALDATA, "Script included a not minimal push operation.");
+            // Note how OP_RESERVED does not count towards the opcode limit.
+            if (opcode > OP_16) {
+                opCount++;
+                if (opCount > MAX_OPS_PER_SCRIPT)
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_OP_COUNT, "More script operations than is allowed");
+            }
 
-                stack.add(new byte[] {});
-            } else if (!chunk.isOpCode()) {
-                if (chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_PUSH_SIZE, "Attempted to push a data string larger than 520 bytes");
-                
-                if (!shouldExecute)
-                    continue;
-                
-                // Check minimal push
-                if (verifyFlags.contains(VerifyFlag.MINIMALDATA) && !chunk.isShortestPossiblePushData())
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_MINIMALDATA, "Script included a not minimal push operation.");
-
-                stack.add(chunk.data);
-            } else {
-                int opcode = chunk.opcode;
-                if (opcode > OP_16) {
-                    opCount++;
-                    if (opCount > 201)
-                        throw new ScriptException(ScriptError.SCRIPT_ERR_OP_COUNT, "More script operations than is allowed");
-                }
-                
-                if (opcode == OP_VERIF || opcode == OP_VERNOTIF)
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Script included OP_VERIF or OP_VERNOTIF");
-                
-                if (opcode == OP_CAT || opcode == OP_SUBSTR || opcode == OP_LEFT || opcode == OP_RIGHT ||
+            // Disabled opcodes.
+            if (opcode == OP_CAT || opcode == OP_SUBSTR || opcode == OP_LEFT || opcode == OP_RIGHT ||
                     opcode == OP_INVERT || opcode == OP_AND || opcode == OP_OR || opcode == OP_XOR ||
                     opcode == OP_2MUL || opcode == OP_2DIV || opcode == OP_MUL || opcode == OP_DIV ||
                     opcode == OP_MOD || opcode == OP_LSHIFT || opcode == OP_RSHIFT)
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Script included a disabled Script Op.");
-                
+                throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Script included a disabled Script Op.");
+
+            if (shouldExecute && OP_0 <= opcode && opcode <= OP_PUSHDATA4) {
+                // Check minimal push
+                if (verifyFlags.contains(VerifyFlag.MINIMALDATA) && !chunk.isShortestPossiblePushData())
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_MINIMALDATA, "Script included a not minimal push operation.");
+
+                if (opcode == OP_0)
+                    stack.add(new byte[]{});
+                else
+                    stack.add(chunk.data);
+            } else if (shouldExecute || (OP_IF <= opcode && opcode <= OP_ENDIF)){
+
                 switch (opcode) {
                 case OP_IF:
                     if (!shouldExecute) {
@@ -957,12 +953,7 @@ public class Script {
                         throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ENDIF without OP_IF/NOTIF");
                     ifStack.pollLast();
                     continue;
-                }
-                
-                if (!shouldExecute)
-                    continue;
-                
-                switch(opcode) {
+
                 // OP_0 is no opcode
                 case OP_1NEGATE:
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
@@ -1392,7 +1383,7 @@ public class Script {
                 }
             }
             
-            if (stack.size() + altstack.size() > 1000 || stack.size() + altstack.size() < 0)
+            if (stack.size() + altstack.size() > MAX_STACK_SIZE || stack.size() + altstack.size() < 0)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_STACK_SIZE, "Stack size exceeded range");
         }
         
@@ -1570,10 +1561,10 @@ public class Script {
         if (stack.size() < 1)
             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
         int pubKeyCount = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).intValue();
-        if (pubKeyCount < 0 || pubKeyCount > 20)
+        if (pubKeyCount < 0 || pubKeyCount > MAX_PUBKEYS_PER_MULTISIG)
             throw new ScriptException(ScriptError.SCRIPT_ERR_PUBKEY_COUNT, "OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
         opCount += pubKeyCount;
-        if (opCount > 201)
+        if (opCount > MAX_OPS_PER_SCRIPT)
             throw new ScriptException(ScriptError.SCRIPT_ERR_OP_COUNT, "Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
         if (stack.size() < pubKeyCount + 1)
             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
@@ -1679,7 +1670,7 @@ public class Script {
         } catch (ProtocolException e) {
             throw new RuntimeException(e);   // Should not happen unless we were given a totally broken transaction.
         }
-        if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
+        if (getProgram().length > MAX_SCRIPT_SIZE || scriptPubKey.getProgram().length > MAX_SCRIPT_SIZE)
             throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<>();
