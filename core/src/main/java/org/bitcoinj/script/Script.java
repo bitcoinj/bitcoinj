@@ -1136,21 +1136,11 @@ public class Script {
                     if (opcode == OP_TUCK)
                         stack.add(OPSWAPtmpChunk2);
                     break;
-                case OP_CAT:
-                case OP_SUBSTR:
-                case OP_LEFT:
-                case OP_RIGHT:
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_SIZE:
                     if (stack.size() < 1)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack");
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
                     break;
-                case OP_INVERT:
-                case OP_AND:
-                case OP_OR:
-                case OP_XOR:
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_EQUAL:
                     if (stack.size() < 2)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUAL on a stack with size < 2");
@@ -1204,9 +1194,6 @@ public class Script {
                     
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPnum, false)));
                     break;
-                case OP_2MUL:
-                case OP_2DIV:
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_ADD:
                 case OP_SUB:
                 case OP_BOOLAND:
@@ -1298,12 +1285,6 @@ public class Script {
                     
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPresult, false)));
                     break;
-                case OP_MUL:
-                case OP_DIV:
-                case OP_MOD:
-                case OP_LSHIFT:
-                case OP_RSHIFT:
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_NUMEQUALVERIFY:
                     if (stack.size() < 2)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NUMEQUALVERIFY on a stack with size < 2");
