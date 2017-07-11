@@ -21,6 +21,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
@@ -827,7 +828,7 @@ public class Transaction extends ChildMessage {
         else if (scriptPubKey.isSentToAddress())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
         else
-            throw new ScriptException("Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
         return input;
     }
 

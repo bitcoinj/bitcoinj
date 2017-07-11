@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
@@ -186,6 +187,7 @@ public class TransactionInput extends ChildMessage {
     public Address getFromAddress() throws ScriptException {
         if (isCoinBase()) {
             throw new ScriptException(
+                    ScriptError.SCRIPT_ERR_UNKNOWN_ERROR,
                     "This is a coinbase transaction which generates new coins. It does not have a from address.");
         }
         return getScriptSig().getFromAddress(params);

@@ -299,7 +299,7 @@ public class TransactionTest {
         TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
-                throw new ScriptException("");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");
             }
         };
 
