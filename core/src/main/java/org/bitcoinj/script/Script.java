@@ -2,6 +2,7 @@
  * Copyright 2011 Google Inc.
  * Copyright 2012 Matt Corallo.
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2017 Nicola Atzei
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,16 +191,16 @@ public class Script {
                 // Read some bytes of data, where how many is the opcode value itself.
                 dataToRead = opcode;
             } else if (opcode == OP_PUSHDATA1) {
-                if (bis.available() < 1) throw new ScriptException("Unexpected end of script");
+                if (bis.available() < 1) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                 dataToRead = bis.read();
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
-                if (bis.available() < 2) throw new ScriptException("Unexpected end of script");
+                if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                 dataToRead = bis.read() | (bis.read() << 8);
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
-                if (bis.available() < 4) throw new ScriptException("Unexpected end of script");
+                if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
                 dataToRead = ((long)bis.read()) | (((long)bis.read()) << 8) | (((long)bis.read()) << 16) | (((long)bis.read()) << 24);
             }
 
@@ -208,7 +209,7 @@ public class Script {
                 chunk = new ScriptChunk(opcode, null, startLocationInProgram);
             } else {
                 if (dataToRead > bis.available())
-                    throw new ScriptException("Push of data element that is larger than remaining data");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Push of data element that is larger than remaining data");
                 byte[] data = new byte[(int)dataToRead];
                 checkState(dataToRead == 0 || bis.read(data, 0, (int)dataToRead) == dataToRead);
                 chunk = new ScriptChunk(opcode, data, startLocationInProgram);
@@ -273,7 +274,7 @@ public class Script {
         else if (isPayToScriptHash())
             return chunks.get(1).data;
         else
-            throw new ScriptException("Script not in the standard scriptPubKey form");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
 
     /**
@@ -286,7 +287,7 @@ public class Script {
      */
     public byte[] getPubKey() throws ScriptException {
         if (chunks.size() != 2) {
-            throw new ScriptException("Script not of right size, expecting 2 but got " + chunks.size());
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not of right size, expecting 2 but got " + chunks.size());
         }
         final ScriptChunk chunk0 = chunks.get(0);
         final byte[] chunk0data = chunk0.data;
@@ -299,7 +300,7 @@ public class Script {
             // A large constant followed by an OP_CHECKSIG is the key.
             return chunk0data;
         } else {
-            throw new ScriptException("Script did not match expected form: " + this);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script did not match expected form: " + this);
         }
     }
 
@@ -310,7 +311,7 @@ public class Script {
      */
     public byte[] getCLTVPaymentChannelSenderPubKey() throws ScriptException {
         if (!isSentToCLTVPaymentChannel()) {
-            throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(8).data;
     }
@@ -322,16 +323,16 @@ public class Script {
      */
     public byte[] getCLTVPaymentChannelRecipientPubKey() throws ScriptException {
         if (!isSentToCLTVPaymentChannel()) {
-            throw new ScriptException("Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(1).data;
     }
 
     public BigInteger getCLTVPaymentChannelExpiry() {
         if (!isSentToCLTVPaymentChannel()) {
-            throw new ScriptException("Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
         }
-        return castToBigInteger(chunks.get(4).data, 5);
+        return castToBigInteger(chunks.get(4).data, 5, false);
     }
 
     /**
@@ -366,7 +367,7 @@ public class Script {
         else if (forcePayToPubKey && isSentToRawPubKey())
             return ECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
-            throw new ScriptException("Cannot cast this script to a pay-to-address type");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
@@ -454,7 +455,7 @@ public class Script {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
-            throw new ScriptException("Do not understand script type: " + this);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
         }
     }
 
@@ -522,7 +523,7 @@ public class Script {
      */
     public List<ECKey> getPubKeys() {
         if (!isSentToMultiSig())
-            throw new ScriptException("Only usable for multisig scripts.");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
 
         ArrayList<ECKey> result = Lists.newArrayList();
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
@@ -800,7 +801,7 @@ public class Script {
         }
         return false;
     }
-    
+
     /**
      * Cast a script chunk to a BigInteger.
      *
@@ -808,10 +809,8 @@ public class Script {
      * sizes.
      * @throws ScriptException if the chunk is longer than 4 bytes.
      */
-    private static BigInteger castToBigInteger(byte[] chunk) throws ScriptException {
-        if (chunk.length > 4)
-            throw new ScriptException("Script attempted to use an integer larger than 4 bytes");
-        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+    private static BigInteger castToBigInteger(byte[] chunk, final boolean requireMinimal) throws ScriptException {
+        return castToBigInteger(chunk, 4, requireMinimal);
     }
 
     /**
@@ -820,12 +819,32 @@ public class Script {
      * the normal maximum length does not apply (i.e. CHECKLOCKTIMEVERIFY, CHECKSEQUENCEVERIFY).
      *
      * @param maxLength the maximum length in bytes.
+     * @param requireMinimal check if the number is encoded with the minimum possible number of bytes
      * @throws ScriptException if the chunk is longer than the specified maximum.
      */
-    private static BigInteger castToBigInteger(final byte[] chunk, final int maxLength) throws ScriptException {
+    private static BigInteger castToBigInteger(final byte[] chunk, final int maxLength, final boolean requireMinimal) throws ScriptException {
         if (chunk.length > maxLength)
-            throw new ScriptException("Script attempted to use an integer larger than "
-                + maxLength + " bytes");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script attempted to use an integer larger than " + maxLength + " bytes");
+
+        if (requireMinimal && chunk.length > 0) {
+            // Check that the number is encoded with the minimum possible
+            // number of bytes.
+            //
+            // If the most-significant-byte - excluding the sign bit - is zero
+            // then we're not minimal. Note how this test also rejects the
+            // negative-zero encoding, 0x80.
+            if ((chunk[chunk.length - 1] & 0x7f) == 0) {
+                // One exception: if there's more than one byte and the most
+                // significant bit of the second-most-significant-byte is set
+                // it would conflict with the sign bit. An example of this case
+                // is +-255, which encode to 0xff00 and 0xff80 respectively.
+                // (big-endian).
+                if (chunk.length <= 1 || (chunk[chunk.length - 2] & 0x80) == 0) {
+                    throw  new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "non-minimally encoded script number");
+                }
+            }
+        }
+
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
 
@@ -875,31 +894,39 @@ public class Script {
                 if (!shouldExecute)
                     continue;
 
+                // Check minimal push
+                if (verifyFlags.contains(VerifyFlag.MINIMALDATA) && !chunk.isShortestPossiblePushData())
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_MINIMALDATA, "Script included a not minimal push operation.");
+
                 stack.add(new byte[] {});
             } else if (!chunk.isOpCode()) {
                 if (chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
-                    throw new ScriptException("Attempted to push a data string larger than 520 bytes");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_PUSH_SIZE, "Attempted to push a data string larger than 520 bytes");
                 
                 if (!shouldExecute)
                     continue;
                 
+                // Check minimal push
+                if (verifyFlags.contains(VerifyFlag.MINIMALDATA) && !chunk.isShortestPossiblePushData())
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_MINIMALDATA, "Script included a not minimal push operation.");
+
                 stack.add(chunk.data);
             } else {
                 int opcode = chunk.opcode;
                 if (opcode > OP_16) {
                     opCount++;
                     if (opCount > 201)
-                        throw new ScriptException("More script operations than is allowed");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_OP_COUNT, "More script operations than is allowed");
                 }
                 
                 if (opcode == OP_VERIF || opcode == OP_VERNOTIF)
-                    throw new ScriptException("Script included OP_VERIF or OP_VERNOTIF");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Script included OP_VERIF or OP_VERNOTIF");
                 
                 if (opcode == OP_CAT || opcode == OP_SUBSTR || opcode == OP_LEFT || opcode == OP_RIGHT ||
                     opcode == OP_INVERT || opcode == OP_AND || opcode == OP_OR || opcode == OP_XOR ||
                     opcode == OP_2MUL || opcode == OP_2DIV || opcode == OP_MUL || opcode == OP_DIV ||
                     opcode == OP_MOD || opcode == OP_LSHIFT || opcode == OP_RSHIFT)
-                    throw new ScriptException("Script included a disabled Script Op.");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Script included a disabled Script Op.");
                 
                 switch (opcode) {
                 case OP_IF:
@@ -908,7 +935,7 @@ public class Script {
                         continue;
                     }
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_IF on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_IF on an empty stack");
                     ifStack.add(castToBool(stack.pollLast()));
                     continue;
                 case OP_NOTIF:
@@ -917,17 +944,17 @@ public class Script {
                         continue;
                     }
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_NOTIF on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_NOTIF on an empty stack");
                     ifStack.add(!castToBool(stack.pollLast()));
                     continue;
                 case OP_ELSE:
                     if (ifStack.isEmpty())
-                        throw new ScriptException("Attempted OP_ELSE without OP_IF/NOTIF");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ELSE without OP_IF/NOTIF");
                     ifStack.add(!ifStack.pollLast());
                     continue;
                 case OP_ENDIF:
                     if (ifStack.isEmpty())
-                        throw new ScriptException("Attempted OP_ENDIF without OP_IF/NOTIF");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_ENDIF without OP_IF/NOTIF");
                     ifStack.pollLast();
                     continue;
                 }
@@ -962,31 +989,31 @@ public class Script {
                     break;
                 case OP_VERIFY:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_VERIFY on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_VERIFY on an empty stack");
                     if (!castToBool(stack.pollLast()))
-                        throw new ScriptException("OP_VERIFY failed");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_VERIFY, "OP_VERIFY failed");
                     break;
                 case OP_RETURN:
-                    throw new ScriptException("Script called OP_RETURN");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_OP_RETURN, "Script called OP_RETURN");
                 case OP_TOALTSTACK:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_TOALTSTACK on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_TOALTSTACK on an empty stack");
                     altstack.add(stack.pollLast());
                     break;
                 case OP_FROMALTSTACK:
                     if (altstack.size() < 1)
-                        throw new ScriptException("Attempted OP_FROMALTSTACK on an empty altstack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_ALTSTACK_OPERATION, "Attempted OP_FROMALTSTACK on an empty altstack");
                     stack.add(altstack.pollLast());
                     break;
                 case OP_2DROP:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_2DROP on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DROP on a stack with size < 2");
                     stack.pollLast();
                     stack.pollLast();
                     break;
                 case OP_2DUP:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_2DUP on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2DUP on a stack with size < 2");
                     Iterator<byte[]> it2DUP = stack.descendingIterator();
                     byte[] OP2DUPtmpChunk2 = it2DUP.next();
                     stack.add(it2DUP.next());
@@ -994,7 +1021,7 @@ public class Script {
                     break;
                 case OP_3DUP:
                     if (stack.size() < 3)
-                        throw new ScriptException("Attempted OP_3DUP on a stack with size < 3");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_3DUP on a stack with size < 3");
                     Iterator<byte[]> it3DUP = stack.descendingIterator();
                     byte[] OP3DUPtmpChunk3 = it3DUP.next();
                     byte[] OP3DUPtmpChunk2 = it3DUP.next();
@@ -1004,7 +1031,7 @@ public class Script {
                     break;
                 case OP_2OVER:
                     if (stack.size() < 4)
-                        throw new ScriptException("Attempted OP_2OVER on a stack with size < 4");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2OVER on a stack with size < 4");
                     Iterator<byte[]> it2OVER = stack.descendingIterator();
                     it2OVER.next();
                     it2OVER.next();
@@ -1014,7 +1041,7 @@ public class Script {
                     break;
                 case OP_2ROT:
                     if (stack.size() < 6)
-                        throw new ScriptException("Attempted OP_2ROT on a stack with size < 6");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2ROT on a stack with size < 6");
                     byte[] OP2ROTtmpChunk6 = stack.pollLast();
                     byte[] OP2ROTtmpChunk5 = stack.pollLast();
                     byte[] OP2ROTtmpChunk4 = stack.pollLast();
@@ -1030,7 +1057,7 @@ public class Script {
                     break;
                 case OP_2SWAP:
                     if (stack.size() < 4)
-                        throw new ScriptException("Attempted OP_2SWAP on a stack with size < 4");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_2SWAP on a stack with size < 4");
                     byte[] OP2SWAPtmpChunk4 = stack.pollLast();
                     byte[] OP2SWAPtmpChunk3 = stack.pollLast();
                     byte[] OP2SWAPtmpChunk2 = stack.pollLast();
@@ -1042,7 +1069,7 @@ public class Script {
                     break;
                 case OP_IFDUP:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_IFDUP on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_IFDUP on an empty stack");
                     if (castToBool(stack.getLast()))
                         stack.add(stack.getLast());
                     break;
@@ -1051,24 +1078,24 @@ public class Script {
                     break;
                 case OP_DROP:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_DROP on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DROP on an empty stack");
                     stack.pollLast();
                     break;
                 case OP_DUP:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_DUP on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DUP on an empty stack");
                     stack.add(stack.getLast());
                     break;
                 case OP_NIP:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_NIP on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NIP on a stack with size < 2");
                     byte[] OPNIPtmpChunk = stack.pollLast();
                     stack.pollLast();
                     stack.add(OPNIPtmpChunk);
                     break;
                 case OP_OVER:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_OVER on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_OVER on a stack with size < 2");
                     Iterator<byte[]> itOVER = stack.descendingIterator();
                     itOVER.next();
                     stack.add(itOVER.next());
@@ -1076,10 +1103,10 @@ public class Script {
                 case OP_PICK:
                 case OP_ROLL:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_PICK/OP_ROLL on an empty stack");
-                    long val = castToBigInteger(stack.pollLast()).longValue();
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_PICK/OP_ROLL on an empty stack");
+                    long val = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).longValue();
                     if (val < 0 || val >= stack.size())
-                        throw new ScriptException("OP_PICK/OP_ROLL attempted to get data deeper than stack size");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "OP_PICK/OP_ROLL attempted to get data deeper than stack size");
                     Iterator<byte[]> itPICK = stack.descendingIterator();
                     for (long i = 0; i < val; i++)
                         itPICK.next();
@@ -1090,7 +1117,7 @@ public class Script {
                     break;
                 case OP_ROT:
                     if (stack.size() < 3)
-                        throw new ScriptException("Attempted OP_ROT on a stack with size < 3");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_ROT on a stack with size < 3");
                     byte[] OPROTtmpChunk3 = stack.pollLast();
                     byte[] OPROTtmpChunk2 = stack.pollLast();
                     byte[] OPROTtmpChunk1 = stack.pollLast();
@@ -1101,7 +1128,7 @@ public class Script {
                 case OP_SWAP:
                 case OP_TUCK:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_SWAP on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SWAP on a stack with size < 2");
                     byte[] OPSWAPtmpChunk2 = stack.pollLast();
                     byte[] OPSWAPtmpChunk1 = stack.pollLast();
                     stack.add(OPSWAPtmpChunk2);
@@ -1113,27 +1140,27 @@ public class Script {
                 case OP_SUBSTR:
                 case OP_LEFT:
                 case OP_RIGHT:
-                    throw new ScriptException("Attempted to use disabled Script Op.");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_SIZE:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_SIZE on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack");
                     stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
                     break;
                 case OP_INVERT:
                 case OP_AND:
                 case OP_OR:
                 case OP_XOR:
-                    throw new ScriptException("Attempted to use disabled Script Op.");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_EQUAL:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_EQUAL on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUAL on a stack with size < 2");
                     stack.add(Arrays.equals(stack.pollLast(), stack.pollLast()) ? new byte[] {1} : new byte[] {});
                     break;
                 case OP_EQUALVERIFY:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_EQUALVERIFY on a stack with size < 2");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_EQUALVERIFY on a stack with size < 2");
                     if (!Arrays.equals(stack.pollLast(), stack.pollLast()))
-                        throw new ScriptException("OP_EQUALVERIFY: non-equal data");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "OP_EQUALVERIFY: non-equal data");
                     break;
                 case OP_1ADD:
                 case OP_1SUB:
@@ -1142,8 +1169,8 @@ public class Script {
                 case OP_NOT:
                 case OP_0NOTEQUAL:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted a numeric op on an empty stack");
-                    BigInteger numericOPnum = castToBigInteger(stack.pollLast());
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on an empty stack");
+                    BigInteger numericOPnum = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                                         
                     switch (opcode) {
                     case OP_1ADD:
@@ -1179,7 +1206,7 @@ public class Script {
                     break;
                 case OP_2MUL:
                 case OP_2DIV:
-                    throw new ScriptException("Attempted to use disabled Script Op.");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_ADD:
                 case OP_SUB:
                 case OP_BOOLAND:
@@ -1193,9 +1220,9 @@ public class Script {
                 case OP_MIN:
                 case OP_MAX:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted a numeric op on a stack with size < 2");
-                    BigInteger numericOPnum2 = castToBigInteger(stack.pollLast());
-                    BigInteger numericOPnum1 = castToBigInteger(stack.pollLast());
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on a stack with size < 2");
+                    BigInteger numericOPnum2 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
+                    BigInteger numericOPnum1 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
 
                     BigInteger numericOPresult;
                     switch (opcode) {
@@ -1276,22 +1303,22 @@ public class Script {
                 case OP_MOD:
                 case OP_LSHIFT:
                 case OP_RSHIFT:
-                    throw new ScriptException("Attempted to use disabled Script Op.");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Attempted to use disabled Script Op.");
                 case OP_NUMEQUALVERIFY:
                     if (stack.size() < 2)
-                        throw new ScriptException("Attempted OP_NUMEQUALVERIFY on a stack with size < 2");
-                    BigInteger OPNUMEQUALVERIFYnum2 = castToBigInteger(stack.pollLast());
-                    BigInteger OPNUMEQUALVERIFYnum1 = castToBigInteger(stack.pollLast());
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_NUMEQUALVERIFY on a stack with size < 2");
+                    BigInteger OPNUMEQUALVERIFYnum2 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
+                    BigInteger OPNUMEQUALVERIFYnum1 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     
                     if (!OPNUMEQUALVERIFYnum1.equals(OPNUMEQUALVERIFYnum2))
-                        throw new ScriptException("OP_NUMEQUALVERIFY failed");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_NUMEQUALVERIFY, "OP_NUMEQUALVERIFY failed");
                     break;
                 case OP_WITHIN:
                     if (stack.size() < 3)
-                        throw new ScriptException("Attempted OP_WITHIN on a stack with size < 3");
-                    BigInteger OPWITHINnum3 = castToBigInteger(stack.pollLast());
-                    BigInteger OPWITHINnum2 = castToBigInteger(stack.pollLast());
-                    BigInteger OPWITHINnum1 = castToBigInteger(stack.pollLast());
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_WITHIN on a stack with size < 3");
+                    BigInteger OPWITHINnum3 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
+                    BigInteger OPWITHINnum2 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
+                    BigInteger OPWITHINnum1 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     if (OPWITHINnum2.compareTo(OPWITHINnum1) <= 0 && OPWITHINnum1.compareTo(OPWITHINnum3) < 0)
                         stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE, false)));
                     else
@@ -1299,7 +1326,7 @@ public class Script {
                     break;
                 case OP_RIPEMD160:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_RIPEMD160 on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_RIPEMD160 on an empty stack");
                     RIPEMD160Digest digest = new RIPEMD160Digest();
                     byte[] dataToHash = stack.pollLast();
                     digest.update(dataToHash, 0, dataToHash.length);
@@ -1309,7 +1336,7 @@ public class Script {
                     break;
                 case OP_SHA1:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_SHA1 on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA1 on an empty stack");
                     try {
                         stack.add(MessageDigest.getInstance("SHA-1").digest(stack.pollLast()));
                     } catch (NoSuchAlgorithmException e) {
@@ -1318,17 +1345,17 @@ public class Script {
                     break;
                 case OP_SHA256:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_SHA256 on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack");
                     stack.add(Sha256Hash.hash(stack.pollLast()));
                     break;
                 case OP_HASH160:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_HASH160 on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH160 on an empty stack");
                     stack.add(Utils.sha256hash160(stack.pollLast()));
                     break;
                 case OP_HASH256:
                     if (stack.size() < 1)
-                        throw new ScriptException("Attempted OP_SHA256 on an empty stack");
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack");
                     stack.add(Sha256Hash.hashTwice(stack.pollLast()));
                     break;
                 case OP_CODESEPARATOR:
@@ -1350,21 +1377,21 @@ public class Script {
                     if (!verifyFlags.contains(VerifyFlag.CHECKLOCKTIMEVERIFY)) {
                         // not enabled; treat as a NOP2
                         if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
-                            throw new ScriptException("Script used a reserved opcode " + opcode);
+                            throw new ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, "Script used a reserved opcode " + opcode);
                         }
                         break;
                     }
-                    executeCheckLockTimeVerify(txContainingThis, (int) index, stack);
+                    executeCheckLockTimeVerify(txContainingThis, (int) index, stack, verifyFlags);
                     break;
                 case OP_CHECKSEQUENCEVERIFY:
                     if (!verifyFlags.contains(VerifyFlag.CHECKSEQUENCEVERIFY)) {
                         // not enabled; treat as a NOP3
                         if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
-                            throw new ScriptException("Script used a reserved opcode " + opcode);
+                            throw new ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, "Script used a reserved opcode " + opcode);
                         }
                         break;
                     }
-                    executeCheckSequenceVerify(txContainingThis, (int) index, stack);
+                    executeCheckSequenceVerify(txContainingThis, (int) index, stack, verifyFlags);
                     break;
                 case OP_NOP1:
                 case OP_NOP4:
@@ -1375,46 +1402,46 @@ public class Script {
                 case OP_NOP9:
                 case OP_NOP10:
                     if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
-                        throw new ScriptException("Script used a reserved opcode " + opcode);
+                        throw new ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, "Script used a reserved opcode " + opcode);
                     }
                     break;
                     
                 default:
-                    throw new ScriptException("Script used a reserved opcode " + opcode);
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Script used a reserved opcode " + opcode);
                 }
             }
             
             if (stack.size() + altstack.size() > 1000 || stack.size() + altstack.size() < 0)
-                throw new ScriptException("Stack size exceeded range");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_STACK_SIZE, "Stack size exceeded range");
         }
         
         if (!ifStack.isEmpty())
-            throw new ScriptException("OP_IF/OP_NOTIF without OP_ENDIF");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "OP_IF/OP_NOTIF without OP_ENDIF");
     }
 
     // This is more or less a direct translation of the code in Bitcoin Core
-    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack) throws ScriptException {
+    private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
         if (stack.size() < 1)
-            throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
 
         // Thus as a special case we tell CScriptNum to accept up
         // to 5-byte bignums to avoid year 2038 issue.
-        final BigInteger nLockTime = castToBigInteger(stack.getLast(), 5);
+        final BigInteger nLockTime = castToBigInteger(stack.getLast(), 5, verifyFlags.contains(VerifyFlag.MINIMALDATA));
 
         if (nLockTime.compareTo(BigInteger.ZERO) < 0)
-            throw new ScriptException("Negative locktime");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_NEGATIVE_LOCKTIME, "Negative locktime");
 
         // There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
         if (!(
             ((txContainingThis.getLockTime() <  Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
             ((txContainingThis.getLockTime() >= Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
         )
-            throw new ScriptException("Locktime requirement type mismatch");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Locktime requirement type mismatch");
 
         // Now that we know we're comparing apples-to-apples, the
         // comparison is a simple numeric one.
         if (nLockTime.compareTo(BigInteger.valueOf(txContainingThis.getLockTime())) > 0)
-            throw new ScriptException("Locktime requirement not satisfied");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Locktime requirement not satisfied");
 
         // Finally the nLockTime feature can be disabled and thus
         // CHECKLOCKTIMEVERIFY bypassed if every txin has been
@@ -1427,12 +1454,12 @@ public class Script {
         // inputs, but testing just this input minimizes the data
         // required to prove correct CHECKLOCKTIMEVERIFY execution.
         if (!txContainingThis.getInput(index).hasSequence())
-            throw new ScriptException("Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Transaction contains a final transaction input for a CHECKLOCKTIMEVERIFY script.");
     }
 
-    private static void executeCheckSequenceVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack) throws ScriptException {
+    private static void executeCheckSequenceVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
         if (stack.size() < 1)
-            throw new ScriptException("Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKSEQUENCEVERIFY on a stack with size < 1");
 
         // Note that elsewhere numeric opcodes are limited to
         // operands in the range -2**31+1 to 2**31-1, however it is
@@ -1443,13 +1470,13 @@ public class Script {
         // Thus as a special case we tell CScriptNum to accept up
         // to 5-byte bignums, which are good until 2**39-1, well
         // beyond the 2**32-1 limit of the nSequence field itself.
-        final long nSequence = castToBigInteger(stack.getLast(), 5).longValue();
+        final long nSequence = castToBigInteger(stack.getLast(), 5, verifyFlags.contains(VerifyFlag.MINIMALDATA)).longValue();
 
         // In the rare event that the argument may be < 0 due to
         // some arithmetic being done first, you can always use
         // 0 MAX CHECKSEQUENCEVERIFY.
         if (nSequence < 0)
-            throw new ScriptException("Negative sequence");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_NEGATIVE_LOCKTIME, "Negative sequence");
 
         // To provide for future soft-fork extensibility, if the
         // operand has the disabled lock-time flag set,
@@ -1459,8 +1486,8 @@ public class Script {
 
         // Compare the specified sequence number with the input.
         if (!checkSequence(nSequence, txContainingThis, index))
-            throw new ScriptException("Unsatisfied CHECKLOCKTIMEVERIFY lock time");
-	}
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Unsatisfied CHECKLOCKTIMEVERIFY lock time");
+    }
 
     private static boolean checkSequence(long nSequence, Transaction txContainingThis, int index) {
         // Relative lock times are supported by comparing the passed
@@ -1512,7 +1539,7 @@ public class Script {
             || verifyFlags.contains(VerifyFlag.DERSIG)
             || verifyFlags.contains(VerifyFlag.LOW_S);
         if (stack.size() < 2)
-            throw new ScriptException("Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKSIG(VERIFY) on a stack with size < 2");
         byte[] pubKey = stack.pollLast();
         byte[] sigBytes = stack.pollLast();
 
@@ -1550,7 +1577,7 @@ public class Script {
             stack.add(sigValid ? new byte[] {1} : new byte[] {});
         else if (opcode == OP_CHECKSIGVERIFY)
             if (!sigValid)
-                throw new ScriptException("Script failed OP_CHECKSIGVERIFY");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Script failed OP_CHECKSIGVERIFY");
     }
 
     private static int executeMultiSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
@@ -1559,16 +1586,16 @@ public class Script {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
             || verifyFlags.contains(VerifyFlag.DERSIG)
             || verifyFlags.contains(VerifyFlag.LOW_S);
-        if (stack.size() < 2)
-            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
-        int pubKeyCount = castToBigInteger(stack.pollLast()).intValue();
+        if (stack.size() < 1)
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
+        int pubKeyCount = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).intValue();
         if (pubKeyCount < 0 || pubKeyCount > 20)
-            throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_PUBKEY_COUNT, "OP_CHECKMULTISIG(VERIFY) with pubkey count out of range");
         opCount += pubKeyCount;
         if (opCount > 201)
-            throw new ScriptException("Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_OP_COUNT, "Total op count > 201 during OP_CHECKMULTISIG(VERIFY)");
         if (stack.size() < pubKeyCount + 1)
-            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + 2");
 
         LinkedList<byte[]> pubkeys = new LinkedList<>();
         for (int i = 0; i < pubKeyCount; i++) {
@@ -1576,11 +1603,11 @@ public class Script {
             pubkeys.add(pubKey);
         }
 
-        int sigCount = castToBigInteger(stack.pollLast()).intValue();
+        int sigCount = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).intValue();
         if (sigCount < 0 || sigCount > pubKeyCount)
-            throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with sig count out of range");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_COUNT, "OP_CHECKMULTISIG(VERIFY) with sig count out of range");
         if (stack.size() < sigCount + 1)
-            throw new ScriptException("Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < num_of_pubkeys + num_of_signatures + 3");
 
         LinkedList<byte[]> sigs = new LinkedList<>();
         for (int i = 0; i < sigCount; i++) {
@@ -1625,13 +1652,13 @@ public class Script {
         // We uselessly remove a stack object to emulate a Bitcoin Core bug.
         byte[] nullDummy = stack.pollLast();
         if (verifyFlags.contains(VerifyFlag.NULLDUMMY) && nullDummy.length > 0)
-            throw new ScriptException("OP_CHECKMULTISIG(VERIFY) with non-null nulldummy: " + Arrays.toString(nullDummy));
+            throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_NULLFAIL, "OP_CHECKMULTISIG(VERIFY) with non-null nulldummy: " + Arrays.toString(nullDummy));
 
         if (opcode == OP_CHECKMULTISIG) {
             stack.add(valid ? new byte[] {1} : new byte[] {});
         } else if (opcode == OP_CHECKMULTISIGVERIFY) {
             if (!valid)
-                throw new ScriptException("Script failed OP_CHECKMULTISIGVERIFY");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_NULLFAIL, "Script failed OP_CHECKMULTISIGVERIFY");
         }
         return opCount;
     }
@@ -1672,7 +1699,7 @@ public class Script {
             throw new RuntimeException(e);   // Should not happen unless we were given a totally broken transaction.
         }
         if (getProgram().length > 10000 || scriptPubKey.getProgram().length > 10000)
-            throw new ScriptException("Script larger than 10,000 bytes");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<>();
         LinkedList<byte[]> p2shStack = null;
@@ -1683,10 +1710,10 @@ public class Script {
         executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
         
         if (stack.size() == 0)
-            throw new ScriptException("Stack empty at end of script execution.");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Stack empty at end of script execution.");
         
         if (!castToBool(stack.pollLast()))
-            throw new ScriptException("Script resulted in a non-true stack: " + stack);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Script resulted in a non-true stack: " + stack);
 
         // P2SH is pay to script hash. It means that the scriptPubKey has a special form which is a valid
         // program but it has "useless" form that if evaluated as a normal program always returns true.
@@ -1704,7 +1731,7 @@ public class Script {
         if (verifyFlags.contains(VerifyFlag.P2SH) && scriptPubKey.isPayToScriptHash()) {
             for (ScriptChunk chunk : chunks)
                 if (chunk.isOpCode() && chunk.opcode > OP_16)
-                    throw new ScriptException("Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
             
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
             Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
@@ -1712,10 +1739,10 @@ public class Script {
             executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
             
             if (p2shStack.size() == 0)
-                throw new ScriptException("P2SH stack empty at end of script execution.");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.");
             
             if (!castToBool(p2shStack.pollLast()))
-                throw new ScriptException("P2SH script execution resulted in a non-true stack");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH script execution resulted in a non-true stack");
         }
     }
 
