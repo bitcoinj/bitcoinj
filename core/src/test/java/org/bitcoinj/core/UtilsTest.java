@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Thilo Planz
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2017 Nicola Atzei
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 package org.bitcoinj.core;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Date;
 
 import org.junit.Test;
@@ -60,5 +62,61 @@ public class UtilsTest {
     public void dateTimeFormat() {
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertNegativeNumber() {
+        BigInteger b = BigInteger.valueOf(-1);
+        Utils.bigIntegerToBytes(b, 32);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertWithNegativeLength() {
+        BigInteger b = BigInteger.valueOf(10);
+        Utils.bigIntegerToBytes(b, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertWithZeroLength() {
+        BigInteger b = BigInteger.valueOf(10);
+        Utils.bigIntegerToBytes(b, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_insufficientLength() {
+        BigInteger b = BigInteger.valueOf(0b1000__0000_0000);   // base 2
+        Utils.bigIntegerToBytes(b, 1);
+    }
+
+    @Test
+    public void bigIntegerToBytes_convertZero() {
+        BigInteger b = BigInteger.valueOf(0);
+        byte[] expected = new byte[]{0b0000_0000};
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_singleByteSignFit() {
+        BigInteger b = BigInteger.valueOf(0b0000_1111);
+        byte[] expected = new byte[]{0b0000_1111};
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_paddedSingleByte() {
+        BigInteger b = BigInteger.valueOf(0b0000_1111);
+        byte[] expected = new byte[]{0, 0b0000_1111};
+        byte[] actual = Utils.bigIntegerToBytes(b, 2);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_singleByteSignDoesNotFit() {
+        BigInteger b = BigInteger.valueOf(0b1000_0000);     // 128 (2-compl does not fit in one byte)
+        byte[] expected = new byte[]{-128};                 // -128 == 1000_0000 (compl-2)
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
     }
 }
