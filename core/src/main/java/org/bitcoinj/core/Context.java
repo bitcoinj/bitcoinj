@@ -58,14 +58,7 @@ public class Context {
      * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
-        log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
-        this.params = params;
-        this.eventHorizon = DEFAULT_EVENT_HORIZON;
-        this.ensureMinRequiredFee = true;
-        this.feePerKb = Transaction.DEFAULT_TX_FEE;
-        lastConstructed = this;
-        slot.set(this);
+        this(params, DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true);
     }
 
     /**
