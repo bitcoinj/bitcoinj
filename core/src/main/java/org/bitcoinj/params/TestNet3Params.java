@@ -134,4 +134,16 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         if (height >= SEGWIT_ENFORCE_HEIGHT) flags.add(Script.VerifyFlag.SEGWIT);
         return flags;
     }
+
+    // TODO: implement BIP-9 instead
+    @Override
+    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(
+            final Block block,
+            final VersionTally tally,
+            final Integer height)
+    {
+        EnumSet<Block.VerifyFlag> flags = super.getBlockVerificationFlags(block, tally, height);
+        if (height >= SEGWIT_ENFORCE_HEIGHT) flags.add(Block.VerifyFlag.SEGWIT);
+        return flags;
+    }
 }

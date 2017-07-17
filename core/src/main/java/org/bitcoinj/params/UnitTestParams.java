@@ -17,8 +17,11 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.VersionTally;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
@@ -67,5 +70,30 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     @Override
     public String getPaymentProtocolId() {
         return "unittest";
+    }
+
+    // TODO: implement BIP-9 instead
+    @Override
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(
+            final Block block,
+            final Transaction transaction,
+            final VersionTally tally,
+            final Integer height)
+    {
+        final EnumSet<Script.VerifyFlag> flags = super.getTransactionVerificationFlags(block, transaction, tally, height);
+        flags.add(Script.VerifyFlag.SEGWIT);
+        return flags;
+    }
+
+    // TODO: implement BIP-9 instead
+    @Override
+    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(
+            final Block block,
+            final VersionTally tally,
+            final Integer height)
+    {
+        EnumSet<Block.VerifyFlag> flags = super.getBlockVerificationFlags(block, tally, height);
+        flags.add(Block.VerifyFlag.SEGWIT);
+        return flags;
     }
 }
