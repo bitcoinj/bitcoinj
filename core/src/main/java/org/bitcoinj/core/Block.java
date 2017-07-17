@@ -30,6 +30,7 @@ import java.util.*;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Sha256Hash.*;
+import static org.bitcoinj.core.Utils.HEX;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -50,7 +51,9 @@ public class Block extends Message {
      */
     public enum VerifyFlag {
         /** Check that block height is in coinbase transaction (BIP 34). */
-        HEIGHT_IN_COINBASE
+        HEIGHT_IN_COINBASE,
+        /** Compute block weight and verify witness commitment structure in coinbase. */
+        SEGWIT
     }
 
     private static final Logger log = LoggerFactory.getLogger(Block.class);
@@ -95,6 +98,11 @@ public class Block extends Message {
     public static final long BLOCK_VERSION_BIP66 = 3;
     /** Block version introduced in BIP 65: OP_CHECKLOCKTIMEVERIFY */
     public static final long BLOCK_VERSION_BIP65 = 4;
+
+    /** Segwit pubKeyScript header
+     *  OP_RETURN 36 (push to stack) 0xaa21a9ed { 32 bytes commitment structure }
+     * */
+    private static final byte[] SEGWIT_HEADER = HEX.decode("6a24aa21a9ed");
 
     // Fields defined as part of the protocol format.
     private long version;
@@ -590,12 +598,58 @@ public class Block extends Message {
         }
     }
 
+    private void checkSegwitCommit() throws VerificationException {
+        if (transactions == null)
+            throw new VerificationException("No transactions in block");
+        final Transaction coinBase = transactions.get(0);
+        byte[] rootHash = null;
+        for (TransactionOutput out : coinBase.getOutputs()) {
+            final byte[] pkScript = out.getScriptBytes();
+            if (pkScript.length < 38) continue;
+            final byte[] start = Arrays.copyOfRange(pkScript, 0, 6);
+            if (Arrays.equals(start, SEGWIT_HEADER)) {
+                rootHash = Arrays.copyOfRange(pkScript, 6, 38);
+            }
+        }
+        if (rootHash != null
+                && (coinBase.countWitnesses() != 1
+                || coinBase.getWitness(0).getPushCount() != 1
+                || coinBase.getWitness(0).getPush(0).length != 32))
+            throw new VerificationException("Coinbase witness invalid");
+        for (int i = 1; i < transactions.size(); i++) {
+            final Transaction tx = transactions.get(i);
+            if (tx.hasWitness()) {
+                if (rootHash == null)
+                    throw new VerificationException("Transaction witness found but no witness commitment present");
+                break;
+            }
+        }
+        if (rootHash != null) {
+            final byte[] witnessMerkle = calculateMerkleRoot(true).getReversedBytes();
+            final byte[] witnessNonce = coinBase.getWitness(0).getPush(0);
+            final byte[] witnessRoot = Sha256Hash.hashTwice(
+                    witnessMerkle, 0, 32,
+                    witnessNonce, 0, 32);
+            if (!Arrays.equals(witnessRoot, rootHash))
+                throw new VerificationException("Witness merkle root invalid. Expected "
+                        + HEX.encode(rootHash) + " but got " + HEX.encode(witnessRoot));
+        }
+    }
+
     private Sha256Hash calculateMerkleRoot() {
-        List<byte[]> tree = buildMerkleTree();
+        return calculateMerkleRoot(false);
+    }
+
+    private Sha256Hash calculateMerkleRoot(boolean segwit) {
+        List<byte[]> tree = buildMerkleTree(segwit);
         return Sha256Hash.wrap(tree.get(tree.size() - 1));
     }
 
     private List<byte[]> buildMerkleTree() {
+        return buildMerkleTree(false);
+    }
+
+    private List<byte[]> buildMerkleTree(boolean segwit) {
         // The Merkle root is based on a tree of hashes calculated from the transactions:
         //
         //     root
@@ -629,7 +683,7 @@ public class Block extends Message {
         ArrayList<byte[]> tree = new ArrayList<>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
-            tree.add(t.getHash().getBytes());
+            tree.add(t.getHash(segwit).getBytes());
         }
         int levelOffset = 0; // Offset in the list where the currently processed level starts.
         // Step through each level, stopping when we reach the root (levelSize == 1).
@@ -710,6 +764,7 @@ public class Block extends Message {
         checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
+        if (flags.contains(VerifyFlag.SEGWIT)) checkSegwitCommit();
         for (Transaction transaction : transactions)
             transaction.verify();
         }
