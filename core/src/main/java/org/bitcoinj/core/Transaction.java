@@ -264,7 +264,21 @@ public class Transaction extends ChildMessage {
      */
     @Override
     public Sha256Hash getHash() {
-        if (hash == null) {
+        return getHash(false);
+    }
+
+    public Sha256Hash getHash(boolean segwit) {
+        if (segwit) {
+            if (isCoinBase()) return Sha256Hash.ZERO_HASH;
+            ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+            try {
+                bitcoinSerializeToStream(stream, TransactionOptions.WITNESS);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream.
+            }
+            byte[] bits = stream.toByteArray();
+            return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bits));
+        } else if (hash == null) {
             ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
             try {
                 bitcoinSerializeToStream(stream, TransactionOptions.NONE);
@@ -457,6 +471,16 @@ public class Transaction extends ChildMessage {
                 return true;
         }
         return false;
+    }
+
+    /**
+     * Count witnesses in this transaction.
+     *
+     * @return number of witnesses
+     */
+    public int countWitnesses() {
+        if (witnesses == null) return 0;
+        else return witnesses.size();
     }
 
     @Nullable private Coin cachedValue;
@@ -1435,7 +1459,7 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        bitcoinSerializeToStream(stream, this.transactionOptions);
+        bitcoinSerializeToStream(stream, transactionOptions);
     }
 
     protected void bitcoinSerializeToStream(OutputStream stream, int transactionOptions) throws IOException {
@@ -1836,5 +1860,9 @@ public class Transaction extends ChildMessage {
         }
 
         return baseLength * (WITNESS_SCALE_FACTOR - 1) + totalLength;
+    }
+
+    public int getVirtualTransactionSize() {
+        return (getWeight() + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
     }
 }
