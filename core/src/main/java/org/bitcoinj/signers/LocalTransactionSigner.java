@@ -18,12 +18,12 @@ package org.bitcoinj.signers;
 
 import java.util.EnumSet;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;

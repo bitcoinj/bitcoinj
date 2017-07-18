@@ -27,6 +27,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptError;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;

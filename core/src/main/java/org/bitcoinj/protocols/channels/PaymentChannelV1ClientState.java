@@ -23,6 +23,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
