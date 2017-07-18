@@ -89,12 +89,11 @@ public class Script {
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
     private static final int MAX_OPS_PER_SCRIPT = 201;
     private static final int MAX_STACK_SIZE = 1000;
-    private static final int MAX_PUBKEYS_PER_MULTISIG = 20;
+    public static final int MAX_PUBKEYS_PER_MULTISIG = 20;
     private static final int MAX_SCRIPT_SIZE = 10000;
     public static final int SIG_SIZE = 75;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
-    public static final int MAX_PUBKEYS_PER_MULTISIG = 20;
 
     // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
     protected List<ScriptChunk> chunks;
@@ -691,10 +690,10 @@ public class Script {
      */
     public static Script getRedeemScript(Script scriptSig) throws ScriptException {
         if (scriptSig.chunks.size() == 0)
-            throw new ScriptException("SigScript is empty");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY, "SigScript is empty");
         final ScriptChunk chunk = scriptSig.chunks.get(scriptSig.chunks.size() - 1);
         if (chunk.isOpCode())
-            throw new ScriptException("Expected redeem script is an opcode");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH, "Expected redeem script is an opcode");
         final Script redeem = new Script();
         redeem.parse(chunk.data);
         return redeem;
@@ -1924,15 +1923,15 @@ public class Script {
             if (witness.getPushCount() == 2 && Arrays.equals(expectedHash, pubKeyHash))
                 return scriptCode();
             else
-                throw new ScriptException("Incorrect public key hash or P2WPKH witness push count");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_UNEXPECTED, "Incorrect public key hash or P2WPKH witness push count");
         } else if (isSentToP2WSH()) {
             byte[] scriptHash = Sha256Hash.hash(pubKeyOrScript);
             if (Arrays.equals(expectedHash, scriptHash))
                 return new Script(pubKeyOrScript);
             else
-                throw new ScriptException("Incorrect witness script hash");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_UNEXPECTED, "Incorrect witness script hash");
         } else {
-            throw new ScriptException("Not a valid witness program");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_UNEXPECTED, "Not a valid witness program");
         }
     }
 

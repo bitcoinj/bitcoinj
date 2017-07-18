@@ -972,7 +972,7 @@ public class Transaction extends ChildMessage {
                 || scriptPubKey.isSentToP2WPKHP2SH(sigKey)
                 || scriptPubKey.isSentToP2WSH()) {
             if (prevOut.getConnectedOutput().getValue() == null)
-                throw new ScriptException("Cannot sign segwit script without value of previous output");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_UNEXPECTED, "Cannot sign segwit script without value of previous output");
             Script scriptCode;
             if (scriptPubKey.isSentToP2WPKHP2SH(sigKey))
                 scriptCode = ScriptBuilder.createP2WPKHOutputScript(sigKey).scriptCode();
