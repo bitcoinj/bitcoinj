@@ -475,8 +475,10 @@ public class PaymentChannelClient implements IPaymentChannelClient {
             } catch (VerificationException e) {
                 log.error("Caught verification exception handling message from server", e);
                 errorBuilder = Protos.Error.newBuilder()
-                        .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION)
-                        .setExplanation(e.getMessage());
+                        .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION);
+                final String message = e.getMessage();
+                if (message != null)
+                    errorBuilder.setExplanation(message);
                 closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
             } catch (IllegalStateException e) {
                 log.error("Caught illegal state exception handling message from server", e);

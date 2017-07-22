@@ -526,8 +526,9 @@ public class PaymentChannelServer {
         log.error(message);
         Protos.Error.Builder errorBuilder;
         errorBuilder = Protos.Error.newBuilder()
-                .setCode(errorCode)
-                .setExplanation(message);
+                .setCode(errorCode);
+        if (message != null)
+            errorBuilder.setExplanation(message);
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setError(errorBuilder)
                 .setType(Protos.TwoWayChannelMessage.MessageType.ERROR)
