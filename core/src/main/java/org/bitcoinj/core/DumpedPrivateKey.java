@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
  * bytes with a header byte and 4 checksum bytes at the end. If there are 33 private key bytes instead of 32, then
  * the last byte is a discriminator value for the compressed pubkey.
  */
-/* TODO: to be checked: all consumers need to call destroy(), if no longer needed */
 public class DumpedPrivateKey extends VersionedChecksummedBytes {
     private boolean compressed;
 

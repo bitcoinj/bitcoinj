@@ -44,13 +44,19 @@ public class PrivateKeys {
             // compressed pub key. Otherwise assume it's a raw key.
             ECKey key;
             if (args[0].length() == 51 || args[0].length() == 52) {
-                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params, args[0]);
-                key = dumpedPrivateKey.getKey();
+                DumpedPrivateKey dumpedPrivateKey = null;
+                try {
+                    dumpedPrivateKey = DumpedPrivateKey.fromBase58(params, args[0]);
+                    key = dumpedPrivateKey.getKey();
+                } finally {
+                    dumpedPrivateKey.destroy();
+                }
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
             System.out.println("Address from private key is: " + key.toAddress(params).toString());
+
             // And the address ...
             Address destination = Address.fromBase58(params, args[1]);
 
@@ -68,6 +74,10 @@ public class PrivateKeys {
             peerGroup.downloadBlockChain();
             peerGroup.stopAsync();
 
+            // QUALMS security: contents of variable "key" cannot be destroyed properly
+            // Here in this case, however, not to be considered an issue, as
+            // anyhow JVM will be stopped in a second
+            
             // And take them!
             System.out.println("Claiming " + wallet.getBalance().toFriendlyString());
             wallet.sendCoins(peerGroup, destination, wallet.getBalance());
