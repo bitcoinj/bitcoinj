@@ -18,6 +18,7 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.DestructionUtils;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -244,10 +245,17 @@ public class DeterministicKey extends ECKey {
      * Returns private key bytes, padded with zeros to 33 bytes.
      * @throws java.lang.IllegalStateException if the private key bytes are missing.
      */
+    // TODO: also that result here needs to be checked for further destruction cases!
     public byte[] getPrivKeyBytes33() {
         byte[] bytes33 = new byte[33];
-        byte[] priv = getPrivKeyBytes();
-        System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
+        
+        byte[] priv = null;
+        try {
+            priv = getPrivKeyBytes();
+            System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
+        } finally {
+            DestructionUtils.destroyByteArray(priv);
+        }
         return bytes33;
     }
 
@@ -298,9 +306,15 @@ public class DeterministicKey extends ECKey {
         checkNotNull(keyCrypter);
         if (newParent != null)
             checkArgument(newParent.isEncrypted());
-        final byte[] privKeyBytes = getPrivKeyBytes();
-        checkState(privKeyBytes != null, "Private key is not available");
-        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        byte[] privKeyBytes = null;
+        EncryptedData encryptedPrivateKey = null;
+        try {
+            privKeyBytes = getPrivKeyBytes();
+            checkState(privKeyBytes != null, "Private key is not available");
+            encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        } finally {
+            DestructionUtils.destroyByteArray(privKeyBytes);
+        }
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
         if (newParent == null)
             key.setCreationTimeSeconds(getCreationTimeSeconds());
@@ -324,6 +338,7 @@ public class DeterministicKey extends ECKey {
 
     @Nullable
     @Override
+    // TODO: also this method here needs to be checked, if further consumers need to be adjusted for destroying the result of this method
     public byte[] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
