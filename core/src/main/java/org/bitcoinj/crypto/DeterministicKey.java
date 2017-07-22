@@ -245,7 +245,6 @@ public class DeterministicKey extends ECKey {
      * Returns private key bytes, padded with zeros to 33 bytes.
      * @throws java.lang.IllegalStateException if the private key bytes are missing.
      */
-    // TODO: also that result here needs to be checked for further destruction cases!
     public byte[] getPrivKeyBytes33() {
         byte[] bytes33 = new byte[33];
         
@@ -338,7 +337,6 @@ public class DeterministicKey extends ECKey {
 
     @Nullable
     @Override
-    // TODO: also this method here needs to be checked, if further consumers need to be adjusted for destroying the result of this method
     public byte[] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
@@ -370,7 +368,7 @@ public class DeterministicKey extends ECKey {
     public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
         if (isEncrypted()) {
             // If the key is encrypted, ECKey.sign will decrypt it first before rerunning sign. Decryption walks the
-            // key heirarchy to find the private key (see below), so, we can just run the inherited method.
+            // key hierarchy to find the private key (see below), so, we can just run the inherited method.
             return super.sign(input, aesKey);
         } else {
             // If it's not encrypted, derive the private via the parents.
@@ -477,9 +475,18 @@ public class DeterministicKey extends ECKey {
     }
 
     public byte[] serializePublic(NetworkParameters params) {
+        // Hint: Check on destruction not necessary here, as it only contains the public key
         return serialize(params, true);
     }
 
+    /**
+     * serializes the private key part to a byte array in the BIP32 format.
+     * <p><b>Warning!</b> The caller of this method is responsible for properly destroying
+     * the returned byte array after usage!
+     * </p> 
+     * @param params the network parameters to use for the serialization
+     * @return the byte array containing the private key in the BIP32 format.
+     */
     public byte[] serializePrivate(NetworkParameters params) {
         return serialize(params, false);
     }
@@ -491,17 +498,36 @@ public class DeterministicKey extends ECKey {
         ser.putInt(getParentFingerprint());
         ser.putInt(getChildNumber().i());
         ser.put(getChainCode());
-        ser.put(pub ? getPubKey() : getPrivKeyBytes33());
+        
+        byte[] privKey = null;
+        try {
+            if (pub) {
+                ser.put(getPubKey());
+            } else {
+                privKey = getPrivKeyBytes33();
+            }
+        } finally {
+            DestructionUtils.destroyByteArray(privKey);
+        }
+        ser.put(privKey);
         checkState(ser.position() == 78);
         return ser.array();
     }
 
     public String serializePubB58(NetworkParameters params) {
+        // Hint: Check on destruction not necessary here, as it only contains the public key
         return toBase58(serialize(params, true));
     }
 
     public String serializePrivB58(NetworkParameters params) {
         return toBase58(serialize(params, false));
+        /* 
+         * QUALMS security: the string which is returned contains the private key in an 
+         * unencrypted way. Strings are immutable and thus may be swapped to disk and can
+         * only be destroyed using garbage collection (whose time of execution is out of 
+         * control of this coding).
+         */
+        
     }
 
     static String toBase58(byte[] ser) {
