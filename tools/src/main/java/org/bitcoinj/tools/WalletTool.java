@@ -1367,8 +1367,8 @@ public class WalletTool {
                     return;
                 } finally {
                     try {
-	                    if (dpk != null) 
-	                        dpk.destroy();
+                        if (dpk != null) 
+                            dpk.destroy();
                     } catch (DestroyFailedException e) {
                         // condition can never be reached - left blank intentionally
                     }
