@@ -244,11 +244,10 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                         (!hasMaxMoney || channel.bestValueToMe.compareTo(networkMaxMoney) <= 0));
                 checkState(channel.refundTransactionUnlockTimeSecs > 0);
                 
-                
-                ServerState.StoredServerPaymentChannel.Builder channelBuilder = null;
                 myKeyPrivKeyBytes = channel.myKey.getPrivKeyBytes();
                 checkNotNull(myKeyPrivKeyBytes);
-                channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
+                
+                ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
                         .setMajorVersion(channel.majorVersion)
                         .setBestValueToMe(channel.bestValueToMe.value)
                         .setRefundTransactionUnlockTimeSecs(channel.refundTransactionUnlockTimeSecs)
