@@ -16,11 +16,11 @@ public class DestructionUtilsTest {
         
         DestructionUtils.destroyByteArray(test);
         
-        assertEquals(90, test[0]);
-        assertEquals(90, test[1]);
-        assertEquals(90, test[2]);
-        assertEquals(90, test[3]);
-        assertEquals(90, test[4]);
+        assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, test[0]);
+        assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, test[1]);
+        assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, test[2]);
+        assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, test[3]);
+        assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, test[4]);
     }
 
     @Test

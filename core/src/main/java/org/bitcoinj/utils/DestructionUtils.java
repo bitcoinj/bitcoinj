@@ -23,7 +23,8 @@ package org.bitcoinj.utils;
  *
  */
 public class DestructionUtils {
-
+	public static final byte BYTE_VALUE_USED_FOR_DESTRUCTION = 90; // arbitrary value
+	
 	/**
 	 * destroys the contents of an arbitrary byte array (which contains security-relevant 
 	 * data, such as a private key) to ensure that it cannot be abused by an attacker.
@@ -39,7 +40,7 @@ public class DestructionUtils {
 		}
 		
 		for (int i = 0; i<subject.length; i++) {
-			subject[i] = 90; // arbitrary value
+			subject[i] = BYTE_VALUE_USED_FOR_DESTRUCTION;
 		}
 	}
 }

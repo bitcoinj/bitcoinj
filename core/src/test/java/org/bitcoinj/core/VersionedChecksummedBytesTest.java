@@ -18,12 +18,15 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.utils.DestructionUtils;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+
+import javax.security.auth.DestroyFailedException;
 
 /**
  *
@@ -57,5 +60,22 @@ public class VersionedChecksummedBytesTest {
         VersionedChecksummedBytes b = a.clone();
 
         assertTrue(a.compareTo(b) == 0);
+    }
+    
+    @Test
+    public void properDestruction() throws DestroyFailedException {
+        VersionedChecksummedBytes subject = new VersionedChecksummedBytes(testParams.getAddressHeader(), HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        
+        assertTrue(!subject.isDestroyed());
+        subject.destroy(); // exception shall not be thrown
+        
+        for (int i = 0; i<subject.bytes.length; i++) {
+            assertEquals(DestructionUtils.BYTE_VALUE_USED_FOR_DESTRUCTION, subject.bytes[i]);
+        }
+        
+        assertTrue(subject.isDestroyed());
+        
+        String toBase58destroyed = subject.toBase58();
+        assertEquals("mokhM9inegFGeyHpj52nQj8fNwH6eoBxT6", toBase58destroyed);
     }
 }
