@@ -505,13 +505,13 @@ public class DeterministicKey extends ECKey {
                 ser.put(getPubKey());
             } else {
                 privKey = getPrivKeyBytes33();
+                ser.put(privKey);
             }
+            checkState(ser.position() == 78);
+            return ser.array();
         } finally {
             DestructionUtils.destroyByteArray(privKey);
         }
-        ser.put(privKey);
-        checkState(ser.position() == 78);
-        return ser.array();
     }
 
     public String serializePubB58(NetworkParameters params) {
