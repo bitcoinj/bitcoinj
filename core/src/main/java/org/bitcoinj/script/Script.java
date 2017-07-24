@@ -711,7 +711,7 @@ public class Script {
             }
             // First chunk must be an OP_N opcode too.
             if (decodeFromOpN(chunks.get(0).opcode) < 1) return false;
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException e) { // thrown by decodeFromOpN()
             return false;   // Not an OP_N opcode.
         }
         return true;
