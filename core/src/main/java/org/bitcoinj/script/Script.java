@@ -1541,7 +1541,7 @@ public class Script {
 
             // This RuntimeException occurs when signing as we run partial/invalid scripts to see if they need more
             // signing work to be done inside LocalTransactionSigner.signInputs.
-            if (!e1.getMessage().contains("Reached past end of ASN.1 stream"))
+            if (e1.getMessage() != null && !e1.getMessage().contains("Reached past end of ASN.1 stream"))
                 log.warn("Signature checking failed!", e1);
         }
 
