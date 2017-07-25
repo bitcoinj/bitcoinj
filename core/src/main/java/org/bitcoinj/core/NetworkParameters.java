@@ -145,7 +145,7 @@ public abstract class NetworkParameters {
      * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
      */
     public static final int BIP16_ENFORCE_TIME = 1333238400;
-    
+
     /**
      * The maximum number of coins to be generated
      */
@@ -527,7 +527,8 @@ public abstract class NetworkParameters {
         MINIMUM(70000),
         PONG(60001),
         BLOOM_FILTER(70000),
-        CURRENT(70001);
+        WITNESS_VERSION(70012),
+        CURRENT(70012);
 
         private final int bitcoinProtocol;
 

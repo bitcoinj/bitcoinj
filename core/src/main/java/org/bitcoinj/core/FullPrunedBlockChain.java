@@ -58,7 +58,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     * {@link Wallet#loadFromFile}
      */
     public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
@@ -68,7 +68,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     * {@link Wallet#loadFromFile}
      */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);
@@ -237,8 +237,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     // being added twice (bug) or the block is a BIP30 violator.
                     if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
                         throw new VerificationException("Block failed BIP30 test!");
-                    if (verifyFlags.contains(VerifyFlag.P2SH)) // We already check non-BIP16 sigops in Block.verifyTransactions(true)
-                        sigOps += tx.getSigOpCount();
                 }
             }
             Coin totalFees = Coin.ZERO;
@@ -249,13 +247,20 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 Coin valueOut = Coin.ZERO;
                 final List<Script> prevOutScripts = new LinkedList<>();
                 final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
-                if (!isCoinBase) {
+                if (isCoinBase) {
+                    for (TransactionInput in : tx.getInputs())
+                        sigOps += in.countSigOps();
+                    if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                        throw new VerificationException("Too many SigOps in block");
+                } else {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
                     for (int index = 0; index < tx.getInputs().size(); index++) {
                         TransactionInput in = tx.getInputs().get(index);
-                        UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getHash(),
-                                in.getOutpoint().getIndex());
+                        UTXO prevOut =
+                                blockStore.getTransactionOutput(
+                                        in.getOutpoint().getHash(),
+                                        in.getOutpoint().getIndex());
                         if (prevOut == null)
                             throw new VerificationException("Attempted to spend a non-existent or already spent output!");
                         // Coinbases can't be spent until they mature, to avoid re-orgs destroying entire transaction
@@ -268,12 +273,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         }
                         // TODO: Check we're not spending the genesis transaction here. Bitcoin Core won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
-                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
-                            if (prevOut.getScript().isPayToScriptHash())
-                                sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
-                            if (sigOps > Block.MAX_BLOCK_SIGOPS)
-                                throw new VerificationException("Too many P2SH SigOps in block");
-                        }
+
+                        final TransactionWitness witness = tx.hasWitness() ? tx.getWitness(index) : null;
+                        sigOps += in.countSigOps(verifyFlags, prevOut.getScript(), witness);
+                        if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                            throw new VerificationException("Too many SigOps in block");
 
                         prevOutScripts.add(prevOut.getScript());
                         blockStore.removeUnspentTransactionOutput(prevOut);
@@ -282,10 +286,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 }
                 Sha256Hash hash = tx.getHash();
                 for (TransactionOutput out : tx.getOutputs()) {
+                    sigOps += out.countSigOps();
+                    if (sigOps > Block.MAX_BLOCK_SIGOPS)
+                        throw new VerificationException("Too many SigOps in block");
                     valueOut = valueOut.add(out.getValue());
                     // For each output, add it to the set of unspent outputs so it can be consumed in future.
                     Script script = getScript(out.getScriptBytes());
-                    UTXO newOut = new UTXO(hash,
+                    UTXO newOut = new UTXO(
+                            hash,
                             out.getIndex(),
                             out.getValue(),
                             height, isCoinBase,
@@ -398,7 +406,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             valueIn = valueIn.add(prevOut.getValue());
                             if (verifyFlags.contains(VerifyFlag.P2SH)) {
                                 if (prevOut.getScript().isPayToScriptHash())
-                                    sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
+                                    sigOps += Script.getP2SHSigOpCount(in.getScriptBytes())
+                                            * Transaction.WITNESS_SCALE_FACTOR;
                                 if (sigOps > Block.MAX_BLOCK_SIGOPS)
                                     throw new VerificationException("Too many P2SH SigOps in block");
                             }
