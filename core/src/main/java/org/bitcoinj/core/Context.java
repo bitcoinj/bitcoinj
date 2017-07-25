@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.wallet.SendRequest;
 import org.slf4j.*;
 
 import static com.google.common.base.Preconditions.*;

@@ -123,7 +123,7 @@ public class NioServer extends AbstractExecutionThreadService {
     /**
      * Invoked by the Execution service when it's time to stop.
      * Calling this method directly will NOT stop the service, call
-     * {@link com.google.common.util.concurrent.AbstractExecutionThreadService#stop()} instead.
+     * {@link com.google.common.util.concurrent.AbstractExecutionThreadService#stopAsync()} instead.
      */
     @Override
     public void triggerShutdown() {

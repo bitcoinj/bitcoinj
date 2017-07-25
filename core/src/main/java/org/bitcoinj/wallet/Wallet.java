@@ -3443,7 +3443,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Get the description of the wallet. See {@link Wallet#setDescription(String))}
+     * Get the description of the wallet. See {@link Wallet#setDescription(String)}
      */
     public String getDescription() {
         return description;
@@ -3720,7 +3720,7 @@ public class Wallet extends BaseTaggableObject
         USE_DUMMY_SIG,
         /**
          * If signature is missing, {@link org.bitcoinj.signers.TransactionSigner.MissingSignatureException}
-         * will be thrown for P2SH and {@link ECKey.MissingPrivateKeyException} for other tx types.
+         * will be thrown for P2SH and {@link org.bitcoinj.core.ECKey.MissingPrivateKeyException} for other tx types.
          */
         THROW
     }
@@ -3735,7 +3735,7 @@ public class Wallet extends BaseTaggableObject
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
      * <p>This is a helper method that is equivalent to using {@link SendRequest#to(Address, Coin)}
-     * followed by {@link Wallet#completeTx(Wallet.SendRequest)} and returning the requests transaction object.
+     * followed by {@link Wallet#completeTx(SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
      *
@@ -3768,7 +3768,7 @@ public class Wallet extends BaseTaggableObject
      * Sends coins to the given address but does not broadcast the resulting pending transaction. It is still stored
      * in the wallet, so when the wallet is added to a {@link PeerGroup} or {@link Peer} the transaction will be
      * announced to the network. The given {@link SendRequest} is completed first using
-     * {@link Wallet#completeTx(Wallet.SendRequest)} to make it valid.
+     * {@link Wallet#completeTx(SendRequest)} to make it valid.
      *
      * @return the Transaction that was created
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
@@ -4675,7 +4675,7 @@ public class Wallet extends BaseTaggableObject
      * <p>This is used to generate a BloomFilter which can be {@link BloomFilter#merge(BloomFilter)}d with another.
      * It could also be used if you have a specific target for the filter's size.</p>
      * 
-     * <p>See the docs for {@link BloomFilter(int, double)} for a brief explanation of anonymity when using bloom
+     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long, org.bitcoinj.core.BloomFilter.BloomUpdate)} for a brief explanation of anonymity when using bloom
      * filters.</p>
      */
     @Override @GuardedBy("keyChainGroupLock")

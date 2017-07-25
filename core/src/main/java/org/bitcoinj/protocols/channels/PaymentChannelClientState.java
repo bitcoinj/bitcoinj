@@ -60,7 +60,7 @@ import static com.google.common.base.Preconditions.*;
  * the given time (within a few hours), the channel must be closed or else the client will broadcast the refund
  * transaction and take back all the money once the expiry time is reached.</p>
  *
- * <p>To begin, the client calls {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)}, which moves the channel into state
+ * <p>To begin, the client calls {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)}, which moves the channel into state
  * INITIATED and creates the initial multi-sig contract and refund transaction. If the wallet has insufficient funds an
  * exception will be thrown at this point. Once this is done, call
  * {@link PaymentChannelV1ClientState#getIncompleteRefundTransaction()} and pass the resultant transaction through to the
@@ -126,9 +126,9 @@ public abstract class PaymentChannelClientState {
 
     /**
      * Creates a state object for a payment channel client. It is expected that you be ready to
-     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} after construction (to avoid creating objects for channels which are
+     * {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)} after construction (to avoid creating objects for channels which are
      * not going to finish opening) and thus some parameters provided here are only used in
-     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} to create the Multisig contract and refund transaction.
+     * {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)} to create the Multisig contract and refund transaction.
      *
      * @param wallet a wallet that contains at least the specified amount of value.
      * @param myKey a freshly generated private key for this channel.
@@ -383,7 +383,7 @@ public abstract class PaymentChannelClientState {
 
     /**
      * Returns the fees that will be paid if the refund transaction has to be claimed because the server failed to settle
-     * the channel properly. May only be called after {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)}
+     * the channel properly. May only be called after {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)}
      */
     public abstract Coin getRefundTxFees();
 
@@ -415,7 +415,7 @@ public abstract class PaymentChannelClientState {
 
     /**
      * Gets the contract without changing the state machine
-     * @return
+     * @return the contract.
      */
     protected abstract Transaction getContractInternal();
 
@@ -424,7 +424,7 @@ public abstract class PaymentChannelClientState {
     /**
      * Gets the script that is signed. In the case of a P2SH contract this is the
      * script inside the P2SH script.
-     * @return
+     * @return the signed script.
      */
     protected abstract Script getSignedScript();
 }
