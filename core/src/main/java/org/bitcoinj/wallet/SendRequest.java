@@ -58,7 +58,7 @@ public class SendRequest {
      *
      * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
      * otherwise their value will be added to fee.  Also ensure they are either signed or are spendable by a wallet
-     * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest)} is undefined (likely
+     * key, otherwise the behavior of {@link Wallet#completeTx(SendRequest)} is undefined (likely
      * RuntimeException).</p>
      */
     public Transaction tx;

@@ -128,7 +128,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * If you want to learn about the sync process, you can provide a listener here. For instance, a
-     * {@link org.bitcoinj.core.DownloadProgressTracker} is a good choice. This has no effect unless setBlockingStartup(false) has been called
+     * {@link DownloadProgressTracker} is a good choice. This has no effect unless setBlockingStartup(false) has been called
      * too, due to some missing implementation code.
      */
     public WalletAppKit setDownloadListener(DownloadProgressTracker listener) {

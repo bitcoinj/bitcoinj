@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * </p>
  * <p>This signer is always implicitly added into every wallet and it is the first signer to be executed during tx
  * completion. As the first signer to create a signature, it stores derivation path of the signing key in a given
- * {@link ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
+ * {@link org.bitcoinj.signers.TransactionSigner.ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
  * signers to use correct signing key for P2SH inputs, because all the keys involved in a single P2SH address have
  * the same derivation path.</p>
  * <p>This signer always uses {@link org.bitcoinj.core.Transaction.SigHash#ALL} signing mode.</p>

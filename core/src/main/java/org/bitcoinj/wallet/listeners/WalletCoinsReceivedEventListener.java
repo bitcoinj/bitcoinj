@@ -18,6 +18,7 @@ package org.bitcoinj.wallet.listeners;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.wallet.Wallet;
 
 /**

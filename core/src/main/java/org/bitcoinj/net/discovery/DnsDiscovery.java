@@ -31,7 +31,7 @@ import java.util.concurrent.*;
  * However, if all hosts passed fail to resolve a PeerDiscoveryException will be thrown during getPeers().
  * </p>
  *
- * <p>DNS seeds do not attempt to enumerate every peer on the network. {@link DnsDiscovery#getPeers(long, java.util.concurrent.TimeUnit)}
+ * <p>DNS seeds do not attempt to enumerate every peer on the network. {@link DnsDiscovery#getPeers(long, long, TimeUnit)}
  * will return up to 30 random peers from the set of those returned within the timeout period. If you want more peers
  * to connect to, you need to discover them via other means (like addr broadcasts).</p>
  */

@@ -84,7 +84,7 @@ public class ProtobufConnection<MessageType extends MessageLite> extends Abstrac
      *
      * @param handler The callback listener
      * @param prototype The default instance of the message type used in both directions of this channel.
-     *                  This should be the return value from {@link MessageType#getDefaultInstanceForType()}
+     *                  This should be the return value from {@link MessageLite#getDefaultInstanceForType()}
      * @param maxMessageSize The maximum message size (not including the 4-byte length prefix).
      *                       Note that this has an upper bound of {@link Integer#MAX_VALUE} - 4
      * @param timeoutMillis The timeout between messages before the connection is automatically closed. Only enabled

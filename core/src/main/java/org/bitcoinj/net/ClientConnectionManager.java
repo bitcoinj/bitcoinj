@@ -25,7 +25,7 @@ import java.net.SocketAddress;
  * <p>A generic interface for an object which keeps track of a set of open client connections, creates new ones and
  * ensures they are serviced properly.</p>
  *
- * <p>When the service is {@link com.google.common.util.concurrent.Service#stop()}ed, all connections will be closed and
+ * <p>When the service is stopped via {@link com.google.common.util.concurrent.Service#stopAsync()}, all connections will be closed and
  * the appropriate connectionClosed() calls must be made.</p>
  */
 public interface ClientConnectionManager extends Service {

@@ -149,7 +149,7 @@
                 <configuration>
                     <detectLinks/>
                     <links>
-                        <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
+                        <link>https://google.github.io/guava/releases/22.0/api/docs/</link>
                     </links>
                     <detectJavaApiLink/>
                     <quiet>true</quiet>
