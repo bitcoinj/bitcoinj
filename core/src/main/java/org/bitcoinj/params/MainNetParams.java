@@ -19,8 +19,11 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.*;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.VersionTally;
 
 import java.net.*;
+import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -31,6 +34,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
+    public static final int SEGWIT_ENFORCE_HEIGHT = 481824;
 
     public MainNetParams() {
         super();
@@ -144,5 +148,30 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_MAINNET;
+    }
+
+    // TODO: implement BIP-9 instead
+    @Override
+    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(
+            final Block block,
+            final Transaction transaction,
+            final VersionTally tally,
+            final Integer height)
+    {
+        final EnumSet<Script.VerifyFlag> flags = super.getTransactionVerificationFlags(block, transaction, tally, height);
+        if (height >= SEGWIT_ENFORCE_HEIGHT) flags.add(Script.VerifyFlag.SEGWIT);
+        return flags;
+    }
+
+    // TODO: implement BIP-9 instead
+    @Override
+    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(
+            final Block block,
+            final VersionTally tally,
+            final Integer height)
+    {
+        EnumSet<Block.VerifyFlag> flags = super.getBlockVerificationFlags(block, tally, height);
+        if (height >= SEGWIT_ENFORCE_HEIGHT) flags.add(Block.VerifyFlag.SEGWIT);
+        return flags;
     }
 }
