@@ -3,6 +3,9 @@ package org.bitcoinj.core;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class TransactionWitness {
     static TransactionWitness empty = new TransactionWitness(0);
@@ -46,5 +49,19 @@ public class TransactionWitness {
             return new byte[0];
         else
             return pushes[pushes.length - 1];
+    }
+
+    @Override
+    public String toString() {
+        List<String> stringPushes = new ArrayList<>();
+        for (int j = 0; j < this.getPushCount(); j++) {
+            byte[] push = this.getPush(j);
+            if (push != null) {
+                stringPushes.add(Utils.HEX.encode(push));
+            } else {
+                stringPushes.add("NULL");
+            }
+        }
+        return Utils.SPACE_JOINER.join(stringPushes);
     }
 }
