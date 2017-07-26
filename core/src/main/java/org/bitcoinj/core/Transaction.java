@@ -832,6 +832,7 @@ public class Transaction extends ChildMessage {
             return s.toString();
         }
         if (!inputs.isEmpty()) {
+            int i = 0;
             for (TransactionInput in : inputs) {
                 s.append("     ");
                 s.append("in   ");
@@ -859,10 +860,16 @@ public class Transaction extends ChildMessage {
                         if (in.isOptInFullRBF())
                             s.append(", opts into full RBF");
                     }
+                    if (this.hasWitness() && witnesses.get(i).getPushCount() > 0) {
+                        s.append("\n          ");
+                        s.append("witness:");
+                        s.append(witnesses.get(i));
+                    }
                 } catch (Exception e) {
                     s.append("[exception: ").append(e.getMessage()).append("]");
                 }
                 s.append('\n');
+                i++;
             }
         } else {
             s.append("     ");
