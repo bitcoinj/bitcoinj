@@ -550,6 +550,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 for (Wallet w : wallets) {
                     Transaction tx = w.getTransaction(item.hash);
                     if (tx == null) continue;
+                    if (item.type == InventoryItem.Type.WitnessTransaction)
+                        tx.enableWitness();
+                    else
+                        tx.disableWitness();
                     transactions.add(tx);
                     it.remove();
                     break;
@@ -727,7 +731,6 @@ public class PeerGroup implements TransactionBroadcaster {
             peer.addDisconnectedEventListener(executor, listener);
     }
 
-    /** See {@link Peer#addDiscoveredEventListener(PeerDiscoveredEventListener)} */
     public void addDiscoveredEventListener(PeerDiscoveredEventListener listener) {
         addDiscoveredEventListener(Threading.USER_THREAD, listener);
     }
