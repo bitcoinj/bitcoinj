@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// TODO: test peer with segwit
+
 package org.bitcoinj.core;
 
 import com.google.common.base.*;
@@ -918,7 +920,10 @@ public class Peer extends PeerSocketHandler {
             if (needToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
             for (Sha256Hash hash : needToRequest) {
-                getdata.addTransaction(hash);
+                if (vPeerVersionMessage.isWitnessSupported())
+                    getdata.addWitnessTransaction(hash);
+                else
+                    getdata.addTransaction(hash);
                 GetDataRequest req = new GetDataRequest(hash, SettableFuture.create());
                 futures.add(req.future);
                 getDataFutures.add(req);
@@ -1308,7 +1313,10 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
-        getdata.addBlock(blockHash);
+        if (vPeerVersionMessage.isWitnessSupported())
+            getdata.addWitnessBlock(blockHash);
+        else
+            getdata.addBlock(blockHash);
         return sendSingleGetData(getdata);
     }
 
@@ -1326,7 +1334,10 @@ public class Peer extends PeerSocketHandler {
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = new GetDataMessage(params);
-        getdata.addTransaction(hash);
+        if (vPeerVersionMessage.isWitnessSupported())
+            getdata.addWitnessTransaction(hash);
+        else
+            getdata.addTransaction(hash);
         return sendSingleGetData(getdata);
     }
 
