@@ -62,7 +62,7 @@ import java.util.Comparator;
 import static com.google.common.base.Preconditions.*;
 
 // TODO: Move this class to tracking compression state itself.
-// The Bouncy Castle guys are deprecating their own tracking of the compression state.
+// The Bouncy Castle developers are deprecating their own tracking of the compression state.
 
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
