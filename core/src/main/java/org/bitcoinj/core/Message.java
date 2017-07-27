@@ -376,4 +376,12 @@ public abstract class Message {
             this.serializer = params.getDefaultSerializer();
         }
     }
+
+    public void disableWitness() {
+        transactionOptions &= ~TransactionOptions.WITNESS;
+    }
+
+    public void enableWitness() {
+        transactionOptions |= TransactionOptions.WITNESS;
+    }
 }
