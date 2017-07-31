@@ -55,6 +55,12 @@ public class TransactionSignature extends ECKey.ECDSASignature {
         sighashFlags = calcSigHashValue(mode, anyoneCanPay);
     }
 
+    /** Constructs a transaction signature based on the ECDSA signature for Bitcoin Cash (BCC). */
+    public TransactionSignature(ECKey.ECDSASignature signature, Transaction.SigHash mode, boolean anyoneCanPay, boolean forkIdEnabled) {
+        super(signature.r, signature.s);
+        sighashFlags = calcSigHashValue(mode, anyoneCanPay, forkIdEnabled);
+    }
+
     /**
      * Returns a dummy invalid signature whose R/S values are set such that they will take up the same number of
      * encoded bytes as a real signature. This can be useful when you want to fill out a transaction to be of the
@@ -72,6 +78,14 @@ public class TransactionSignature extends ECKey.ECDSASignature {
         int sighashFlags = mode.value;
         if (anyoneCanPay)
             sighashFlags |= Transaction.SigHash.ANYONECANPAY.value;
+        return sighashFlags;
+    }
+
+    public static int calcSigHashValue(Transaction.SigHash mode, boolean anyoneCanPay, boolean forkIdEnabled) {
+        int sighashFlags = calcSigHashValue(mode, anyoneCanPay);
+        if (forkIdEnabled) {
+            sighashFlags |= Transaction.SIGHASH_FORKID;
+        }
         return sighashFlags;
     }
 
