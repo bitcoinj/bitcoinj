@@ -305,11 +305,13 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset,
-        int length, byte[] hash) throws ProtocolException {
+    public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] payloadHash)
+            throws ProtocolException {
         Transaction tx = new Transaction(params, payloadBytes, offset, null, this, length);
-        if (hash != null)
-            tx.setHash(Sha256Hash.wrapReversed(hash));
+        if (payloadHash != null && !tx.hasWitness())
+            // We can only use this optimization if payloadHash equals the transaction hash (aka txid). This is not the
+            // case for transactions with witnesses. In this case, the transaction hash will be computed later.
+            tx.setHash(Sha256Hash.wrapReversed(payloadHash));
         return tx;
     }
 
