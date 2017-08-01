@@ -308,7 +308,10 @@ public class BitcoinSerializer extends MessageSerializer {
     public Transaction makeTransaction(byte[] payloadBytes, int offset,
         int length, byte[] hash) throws ProtocolException {
         Transaction tx = new Transaction(params, payloadBytes, offset, null, this, length);
-        if (hash != null)
+        // here hash is the hash of the payload (i.e the tx serialized with its witness if any)
+        // if the tx has witnesses then its 'bitcoin hash' is different (it use the pre-segwit serialization format)
+        // so we don't set it now, it will be computed later
+        if (hash != null && !tx.hasWitness())
             tx.setHash(Sha256Hash.wrapReversed(hash));
         return tx;
     }
