@@ -455,4 +455,17 @@ public class WalletProtobufSerializerTest {
         proto.setVersion(2);
         new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build());
     }
+
+    @Test
+    public void storeWitnessTransactions() throws Exception {
+        // 3 inputs, inputs 0 and 2 have witnesses but not input 1
+        Transaction tx = new Transaction(PARAMS, Utils.HEX.decode(
+                "02000000000103fc8a5bea59392369e8a1b635395e507a5cbaeffd926e6967a00d17c669aef1d3010000001716001403c80a334ed6a92cf400d8c708522ea0d6fa5593ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0100000000ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0200000000ffffffff01a086010000000000220020eb72e573a9513d982a01f0e6a6b53e92764db81a0c26d2be94c5fc5b69a0db7d02473044022048e895b7af715303ce273a2be03d6110ed69b5700679f4f036000f8ba6eddd2802205f780423fcce9b3632ed41681b0a86f5d123766b71f303558c39c1be5fe43e2601210259eb16169df80dbe5856d082a226d84a97d191c895f8046c3544df525028a874000220c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f20c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f00000000"));
+        assertTrue(tx.hasWitness());
+        assertEquals(tx.getHashAsString(), "1c687396f4710f26206dbdd8bf07a28c76398be6750226ddfaf05a1a80d30034");
+        myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
+        Wallet wallet1 = roundTrip(myWallet);
+        Transaction tx2 = wallet1.getTransaction(tx.getHash());
+        assertEquals(tx.getWitness(0), tx2.getWitness(0));
+    }
 }
