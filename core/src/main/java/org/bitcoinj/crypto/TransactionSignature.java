@@ -107,6 +107,9 @@ public class TransactionSignature extends ECKey.ECDSASignature {
             return false;
 
         int hashType = (signature[signature.length-1] & 0xff) & ~Transaction.SigHash.ANYONECANPAY.value; // mask the byte to prevent sign-extension hurting us
+
+        // ignore FORKID (0x40) for Bitcoin Cash
+        hashType = hashType & 0x3f;
         if (hashType < Transaction.SigHash.ALL.value || hashType > Transaction.SigHash.SINGLE.value)
             return false;
 
