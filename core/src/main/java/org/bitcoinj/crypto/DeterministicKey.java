@@ -615,13 +615,14 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+            NetworkParameters params) {
         final Address address = toAddress(params);
         builder.append("  addr:").append(address);
         builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString()).append(")\n");
         if (includePrivateKeys) {
-            builder.append("  ").append(toStringWithPrivate(params)).append("\n");
+            builder.append("  ").append(toStringWithPrivate(aesKey, params)).append("\n");
         }
     }
 }

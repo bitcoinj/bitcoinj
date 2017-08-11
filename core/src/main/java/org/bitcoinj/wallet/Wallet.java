@@ -3183,20 +3183,29 @@ public class Wallet extends BaseTaggableObject
 
     @Override
     public String toString() {
-        return toString(false, true, true, null);
+        return toString(false, null, true, true, null);
     }
 
+    /**
+     * @deprecated Use {@link #toString(boolean, KeyParameter, boolean, boolean, AbstractBlockChain)} instead.
+     */
+    @Deprecated
+    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
+            @Nullable AbstractBlockChain chain) {
+        return toString(includePrivateKeys, includeTransactions, includeExtensions, chain);
+    }
 
     /**
      * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
      * stable or human readable.
      * @param includePrivateKeys Whether raw private key data should be included.
+     * @param key for decrypting private key data for if the wallet is encrypted.
      * @param includeTransactions Whether to print transaction data.
      * @param includeExtensions Whether to print extension data.
      * @param chain If set, will be used to estimate lock times for block timelocked transactions.
      */
-    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
-                           @Nullable AbstractBlockChain chain) {
+    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, boolean includeTransactions,
+                           boolean includeExtensions, @Nullable AbstractBlockChain chain) {
         lock.lock();
         keyChainGroupLock.lock();
         try {
@@ -3226,7 +3235,7 @@ public class Wallet extends BaseTaggableObject
             final Date keyRotationTime = getKeyRotationTime();
             if (keyRotationTime != null)
                 builder.append("Key rotation time:      ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
-            builder.append(keyChainGroup.toString(includePrivateKeys));
+            builder.append(keyChainGroup.toString(includePrivateKeys, aesKey));
 
             if (!watchedScripts.isEmpty()) {
                 builder.append("\nWatched scripts:\n");

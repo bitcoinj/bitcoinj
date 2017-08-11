@@ -28,6 +28,7 @@ import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
@@ -234,7 +235,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder2) {
+    protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
+            StringBuilder builder2) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
             builder2.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params))
                     .append('\n');

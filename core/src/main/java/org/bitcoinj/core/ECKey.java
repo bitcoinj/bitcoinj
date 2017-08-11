@@ -1224,15 +1224,15 @@ public class ECKey implements EncryptableItem {
 
     @Override
     public String toString() {
-        return toString(false, null);
+        return toString(false, null, null);
     }
 
     /**
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
      */
-    public String toStringWithPrivate(NetworkParameters params) {
-        return toString(true, params);
+    public String toStringWithPrivate(@Nullable KeyParameter aesKey, NetworkParameters params) {
+        return toString(true, aesKey, params);
     }
 
     public String getPrivateKeyAsHex() {
@@ -1247,13 +1247,14 @@ public class ECKey implements EncryptableItem {
         return getPrivateKeyEncoded(params).toString();
     }
 
-    private String toString(boolean includePrivate, NetworkParameters params) {
+    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, NetworkParameters params) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
+            ECKey decryptedKey = isEncrypted() ? decrypt(checkNotNull(aesKey)) : this;
             try {
-                helper.add("priv HEX", getPrivateKeyAsHex());
-                helper.add("priv WIF", getPrivateKeyAsWiF(params));
+                helper.add("priv HEX", decryptedKey.getPrivateKeyAsHex());
+                helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(params));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
             } catch (Exception e) {
@@ -1271,7 +1272,8 @@ public class ECKey implements EncryptableItem {
         return helper.toString();
     }
 
-    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+            NetworkParameters params) {
         final Address address = toAddress(params);
         builder.append("  addr:");
         builder.append(address.toString());
@@ -1282,7 +1284,7 @@ public class ECKey implements EncryptableItem {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toStringWithPrivate(params));
+            builder.append(toStringWithPrivate(aesKey, params));
             builder.append("\n");
         }
     }
