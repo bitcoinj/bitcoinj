@@ -28,7 +28,6 @@ import static com.google.common.base.Preconditions.*;
 // TODO: Move Threading.USER_THREAD to here and leave behind just a source code stub. Allow different instantiations of the library to use different user threads.
 // TODO: Keep a URI to where library internal data files can be found, to abstract over the lack of JAR files on Android.
 // TODO: Stash anything else that resembles global library configuration in here and use it to clean up the rest of the API without breaking people.
-// TODO: Move the TorClient into Context, so different parts of the library can read data over Tor without having to request it directly. (or maybe a general socket factory??)
 
 /**
  * <p>The Context object holds various objects and pieces of configuration that are scoped to a specific instantiation of
