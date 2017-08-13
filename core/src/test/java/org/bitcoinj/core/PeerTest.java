@@ -18,7 +18,6 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.*;
 import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
@@ -42,7 +41,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -55,7 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.*;
 import static org.junit.Assert.*;
 
@@ -972,21 +969,5 @@ public class PeerTest extends TestWithNetworkConnections {
             assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
                     || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
         }
-    }
-
-    @Test
-    public void sendHeadersMessageTest() throws Exception {
-        String message = "00000000fabfb5da73656e646865616465727300000000005df6e0e2fabfb5da70696e670000000000000000080000009a" +
-                "65b9cc9840c9729e4502b200000000000000000000000000000d000000000000000000000000000000000000000000000000007ad82" +
-                "872c28ac782102f5361746f7368693a302e31342e312fe41d000001fabfb5da76657261636b000000000000000000005df6e0e2fabf" +
-                "b5da616c65727400000000000000a80000001bf9aaea60010000000000000000000000ffffff7f00000000ffffff7ffeffff7f01fff" +
-                "fff7f00000000ffffff7f00ffffff7f002f555247454e543a20416c657274206b657920636f6d70726f6d697365642c207570677261" +
-                "6465207265717569726564004630440220653febd6410f470f6bae11cad19c48413becb1ac2c17f908fd0fd53bdc3abd5202206d0e9" +
-                "c96fe88d4a0f01ed9dedae2b6f9e00da94cad0fecaae66ecf689bf71b50000000000000000000000000000000000000000000000000";
-
-        ByteBuffer buffer = ByteBuffer.wrap(HEX.decode(message));
-        RegTestParams params = org.bitcoinj.params.RegTestParams.get();
-        BitcoinSerializer serializer = new BitcoinSerializer(params, false);
-        assertTrue(serializer.deserialize(buffer) instanceof org.bitcoinj.core.SendHeadersMessage);
     }
 }
