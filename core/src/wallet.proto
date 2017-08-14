@@ -25,7 +25,7 @@
 
 package wallet;
 
-option java_package = "org.bitcoinj.wallet";
+option java_package = "org.bitcoincashj.wallet";
 option java_outer_classname = "Protos";
 
 message PeerAddress {
@@ -352,8 +352,8 @@ message Wallet {
   }
 
   required string network_identifier = 1; // the network used by this wallet
-  // org.bitcoin.production = main, production network (Satoshi genesis block)
-  // org.bitcoin.test = test network (Andresen genesis block)
+  // org.bitcoincash.production = main, production network (Satoshi genesis block)
+  // org.bitcoincash.test = test network (Andresen genesis block)
 
   // The SHA256 hash of the head of the best chain seen by this wallet.
   optional bytes last_seen_block_hash = 2;

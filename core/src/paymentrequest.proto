@@ -31,7 +31,7 @@
 //
 
 package payments;
-option java_package = "org.bitcoin.protocols.payments";
+option java_package = "org.bitcoincash.protocols.payments";
 option java_outer_classname = "Protos";
 
 // Generalized form of "send payment to this/these bitcoin addresses"

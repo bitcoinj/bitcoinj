@@ -21,10 +21,9 @@
  * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian
  * - To regenerate after editing, run mvn clean package -DupdateProtobuf
  */
-
 package paymentchannels;
 
-option java_package = "org.bitcoin.paymentchannel";
+option java_package = "org.bitcoincash.paymentchannel";
 option java_outer_classname = "Protos";
 
 // This message is designed to be either sent raw over the network (e.g. length prefixed) or embedded inside another
