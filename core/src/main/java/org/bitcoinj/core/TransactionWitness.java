@@ -4,7 +4,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TransactionWitness {
