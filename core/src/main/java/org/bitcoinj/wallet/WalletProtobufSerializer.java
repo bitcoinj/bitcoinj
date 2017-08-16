@@ -266,7 +266,8 @@ public class WalletProtobufSerializer {
         }
 
         // Handle inputs.
-        for (TransactionInput input : tx.getInputs()) {
+        for (int i = 0; i < tx.getInputs().size(); i++) {
+            TransactionInput input = tx.getInput(i);
             Protos.TransactionInput.Builder inputBuilder = Protos.TransactionInput.newBuilder()
                 .setScriptBytes(ByteString.copyFrom(input.getScriptBytes()))
                 .setTransactionOutPointHash(hashToByteString(input.getOutpoint().getHash()))
@@ -275,6 +276,14 @@ public class WalletProtobufSerializer {
                 inputBuilder.setSequence((int) input.getSequenceNumber());
             if (input.getValue() != null)
                 inputBuilder.setValue(input.getValue().value);
+            if (tx.hasWitness() && tx.getWitness(i).getPushCount() > 0) {
+                TransactionWitness witness = tx.getWitness(i);
+                Protos.ScriptWitness.Builder witnessBuilder = Protos.ScriptWitness.newBuilder();
+                for(int j = 0; j < witness.getPushCount(); j++) {
+                    witnessBuilder.addData(ByteString.copyFrom(witness.getPush(j)));
+                }
+                inputBuilder.setWitness(witnessBuilder);
+            }
             txBuilder.addTransactionInput(inputBuilder);
         }
 
@@ -653,6 +662,17 @@ public class WalletProtobufSerializer {
             if (inputProto.hasSequence())
                 input.setSequenceNumber(0xffffffffL & inputProto.getSequence());
             tx.addInput(input);
+        }
+
+        for (int i = 0; i < txProto.getTransactionInputCount(); i++) {
+            Protos.ScriptWitness witnessProto = txProto.getTransactionInput(i).getWitness();
+            if (witnessProto.getDataCount() > 0) {
+                TransactionWitness witness = new TransactionWitness(witnessProto.getDataCount());
+                for(int j = 0; j < witnessProto.getDataCount(); j++) {
+                    witness.setPush(j, witnessProto.getData(j).toByteArray());
+                }
+                tx.setWitness(i, witness);
+            }
         }
 
         for (int i = 0; i < txProto.getBlockHashCount(); i++) {

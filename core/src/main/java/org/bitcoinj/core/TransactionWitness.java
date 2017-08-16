@@ -64,4 +64,19 @@ public class TransactionWitness {
         }
         return Utils.SPACE_JOINER.join(stringPushes);
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+
+        TransactionWitness that = (TransactionWitness) other;
+
+        return Arrays.deepEquals(pushes, that.pushes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(pushes);
+    }
 }
