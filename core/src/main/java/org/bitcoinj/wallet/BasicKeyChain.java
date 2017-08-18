@@ -46,6 +46,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     // Maps used to let us quickly look up a key given data we find in transcations or the block chain.
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;
+    private final LinkedHashMap<ByteString, ECKey> scriptHashToKeys;
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
     @Nullable private final KeyCrypter keyCrypter;
     private boolean isWatching;
@@ -68,6 +69,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         this.keyCrypter = crypter;
         this.useSegwit  = useSegwit;
         hashToKeys = new LinkedHashMap<>();
+        scriptHashToKeys = new LinkedHashMap<>();
         pubkeyToKeys = new LinkedHashMap<>();
         listeners = new CopyOnWriteArrayList<>();
     }
@@ -191,13 +193,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 throw new IllegalArgumentException("Key is not watching but chain is");
         }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
+        hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
         if (useSegwit) {
             if (key.isCompressed()) {
                 // only compressed public keys are accepted in P2WPKH and P2WSH, see BIP 143
-                hashToKeys.put(ByteString.copyFrom(key.getSegwitHash()), key);
+                scriptHashToKeys.put(ByteString.copyFrom(key.getSegwitHash()), key);
             }
-        } else {
-            hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
         }
         checkState(previousKey == null);
     }
@@ -226,7 +227,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
         lock.lock();
         try {
-            return hashToKeys.get(ByteString.copyFrom(pubkeyHash));
+            ECKey key = hashToKeys.get(ByteString.copyFrom(pubkeyHash));
+            if (key != null)
+                return key;
+
+            return scriptHashToKeys.get(ByteString.copyFrom(pubkeyHash));
         } finally {
             lock.unlock();
         }
@@ -281,8 +286,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public boolean removeKey(ECKey key) {
         lock.lock();
         try {
-            boolean a = hashToKeys.remove(ByteString.copyFrom(useSegwit ? key.getSegwitHash() : key.getPubKeyHash())) != null;
+            boolean a = hashToKeys.remove(ByteString.copyFrom(key.getPubKeyHash())) != null;
             boolean b = pubkeyToKeys.remove(ByteString.copyFrom(key.getPubKey())) != null;
+            boolean c = scriptHashToKeys.remove(ByteString.copyFrom(key.getSegwitHash())) != null;
             checkState((useSegwit && !key.isCompressed()) || a == b);   // Should be in both maps or neither.
             return a;
         } finally {

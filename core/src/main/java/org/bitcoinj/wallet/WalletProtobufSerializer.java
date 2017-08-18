@@ -493,14 +493,19 @@ public class WalletProtobufSerializer {
         if (!walletProto.getNetworkIdentifier().equals(params.getId()))
             throw new UnreadableWalletException.WrongNetwork();
 
+        boolean useSegwit = false;
+        for (Protos.Tag tag: walletProto.getTagsList()) {
+            if (tag.getTag() == "useSegwit") useSegwit = true;
+        }
+
         // Read the scrypt parameters that specify how encryption and decryption is performed.
         KeyChainGroup keyChainGroup;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter, keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter, keyChainFactory, useSegwit);
         } else {
-            keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory, useSegwit);
         }
         Wallet wallet = factory.create(params, keyChainGroup);
 

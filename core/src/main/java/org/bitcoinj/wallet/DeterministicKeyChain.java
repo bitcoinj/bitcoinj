@@ -22,6 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
@@ -1374,6 +1375,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Returns the redeem script by its hash or null if this keychain did not generate the script. */
     @Nullable
     public RedeemData findRedeemDataByScriptHash(ByteString bytes) {
+        if (this.useSegwit) {
+            for(ECKey key: getKeys(false, true)) {
+                // see if this is a P2SH-of-P2WPKH for one of our keys
+                Script pay2wpkh = ScriptBuilder.createP2WPKHOutputScript(key);
+                Script pay2sh = ScriptBuilder.createP2SHOutputScript(pay2wpkh);
+                if (Arrays.equals(pay2sh.getPubKeyHash(), bytes.toByteArray())) {
+                    return RedeemData.of(key, pay2wpkh, true);
+                }
+            }
+        }
         return null;
     }
 }

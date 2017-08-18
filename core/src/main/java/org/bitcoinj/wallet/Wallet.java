@@ -253,8 +253,12 @@ public class Wallet extends BaseTaggableObject
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
      */
+    public Wallet(NetworkParameters params, boolean useSegwit) {
+        this(Context.getOrCreate(params), useSegwit);
+    }
+
     public Wallet(NetworkParameters params) {
-        this(Context.getOrCreate(params));
+        this(params, false);
     }
 
     /**
@@ -262,20 +266,32 @@ public class Wallet extends BaseTaggableObject
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
      */
+    public Wallet(Context context, boolean useSegwit) {
+        this(context, new KeyChainGroup(context.getParams(), useSegwit));
+    }
+
     public Wallet(Context context) {
-        this(context, new KeyChainGroup(context.getParams()));
+        this(context, false);
+    }
+
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, boolean useSegwit) {
+        return new Wallet(params, new KeyChainGroup(params, seed, useSegwit));
     }
 
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        return new Wallet(params, new KeyChainGroup(params, seed));
+        return fromSeed(params, seed, false);
     }
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. A
      * watching key corresponds to account zero in the recommended BIP32 key hierarchy.
      */
+    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey, boolean useSegwit) {
+        return new Wallet(params, new KeyChainGroup(params, watchKey, useSegwit));
+    }
+
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        return new Wallet(params, new KeyChainGroup(params, watchKey));
+        return fromWatchingKey(params, watchKey, false);
     }
 
     /**
@@ -284,22 +300,30 @@ public class Wallet extends BaseTaggableObject
      * notation and the creation time of the key. If you don't know the creation time, you can pass
      * {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
      */
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds, boolean useSegwit) {
         final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
         watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey);
+        return fromWatchingKey(params, watchKey, useSegwit);
+    }
+
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
+        return fromWatchingKeyB58(params, watchKeyB58, creationTimeSeconds, false);
     }
 
     /**
      * Creates a wallet containing a given set of keys. All further keys will be derived from the oldest key.
      */
-    public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
+    public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys, boolean useSegwit) {
         for (ECKey key : keys)
             checkArgument(!(key instanceof DeterministicKey));
 
-        KeyChainGroup group = new KeyChainGroup(params);
+        KeyChainGroup group = new KeyChainGroup(params, useSegwit);
         group.importKeys(keys);
         return new Wallet(params, group);
+    }
+
+    public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
+        return fromKeys(params, keys, false);
     }
 
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {

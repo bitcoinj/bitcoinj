@@ -84,21 +84,28 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected volatile Context context;
 
+    protected final boolean useSegwit;
+
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      */
+    public WalletAppKit(NetworkParameters params, File directory, String filePrefix, boolean useSegwit) {
+        this(new Context(params), directory, filePrefix, useSegwit);
+    }
+
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), directory, filePrefix);
+        this(params, directory, filePrefix, false);
     }
 
     /**
      * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
      */
-    public WalletAppKit(Context context, File directory, String filePrefix) {
+    public WalletAppKit(Context context, File directory, String filePrefix, boolean useSegwit) {
         this.context = context;
         this.params = checkNotNull(context.getParams());
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
+        this.useSegwit = useSegwit;
     }
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
@@ -409,9 +416,9 @@ public class WalletAppKit extends AbstractIdleService {
     protected Wallet createWallet() {
         KeyChainGroup kcg;
         if (restoreFromSeed != null)
-            kcg = new KeyChainGroup(params, restoreFromSeed);
+            kcg = new KeyChainGroup(params, restoreFromSeed, useSegwit);
         else
-            kcg = new KeyChainGroup(params);
+            kcg = new KeyChainGroup(params, useSegwit);
         if (walletFactory != null) {
             return walletFactory.create(params, kcg);
         } else {

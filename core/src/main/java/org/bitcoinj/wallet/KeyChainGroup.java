@@ -369,6 +369,7 @@ public class KeyChainGroup implements KeyBag {
                 if (k == null) continue;
                 chain.markKeyAsUsed(k);
                 maybeMarkCurrentAddressAsUsed(address);
+                if (data.isP2SHofP2WPKH) maybeMarkCurrentKeyAsUsed(k);
             }
         }
     }

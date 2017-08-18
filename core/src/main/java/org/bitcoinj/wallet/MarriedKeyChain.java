@@ -124,20 +124,20 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter) {
-        super(seed, crypter);
+        super(seed, crypter, false);
     }
 
     // Builder constructors
     private MarriedKeyChain(SecureRandom random, int bits, String passphrase, long seedCreationTimeSecs) {
-        super(random, bits, passphrase, seedCreationTimeSecs);
+        super(random, bits, passphrase, seedCreationTimeSecs, false);
     }
 
     private MarriedKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs) {
-        super(entropy, passphrase, seedCreationTimeSecs);
+        super(entropy, passphrase, seedCreationTimeSecs, false);
     }
 
     private MarriedKeyChain(DeterministicSeed seed) {
-        super(seed);
+        super(seed, false);
     }
 
     void setFollowingKeyChains(List<DeterministicKeyChain> followingKeyChains) {

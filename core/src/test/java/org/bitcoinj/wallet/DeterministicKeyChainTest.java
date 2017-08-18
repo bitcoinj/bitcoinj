@@ -84,7 +84,11 @@ public class DeterministicKeyChainTest {
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
-        assertEquals(useSegwit ? "2MvHTTtujn9hFkTrVRPgwjxv1dvFLbVsjcc" : "mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", useSegwit ? key3.toSegwitAddress(UnitTestParams.get()).toString() : key3.toAddress(UnitTestParams.get()).toString());
+        if (useSegwit) {
+            assertEquals("2MvHTTtujn9hFkTrVRPgwjxv1dvFLbVsjcc", key3.toSegwitAddress(UnitTestParams.get()).toString());
+        } else {
+            assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
+        }
         key3.sign(Sha256Hash.ZERO_HASH);
         assertFalse(key3.isPubKeyOnly());
     }
@@ -106,7 +110,11 @@ public class DeterministicKeyChainTest {
 
         final Address address = Address.fromBase58(UnitTestParams.get(), useSegwit ? "2NEYuJZp13zBmmCpBCaFqE6egZqbsaid4cH" : "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
         assertEquals(address, useSegwit ? key1.toSegwitAddress(UnitTestParams.get()) : key1.toAddress(UnitTestParams.get()));
-        assertEquals(useSegwit ? "2Mvp3QRx1wKdra2ypwak3KYcbDXLxXChm5P" : "mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", useSegwit ? key2.toSegwitAddress(UnitTestParams.get()).toString() : key2.toAddress(UnitTestParams.get()).toString());
+        if (useSegwit) {
+            assertEquals("2Mvp3QRx1wKdra2ypwak3KYcbDXLxXChm5P", key2.toSegwitAddress(UnitTestParams.get()).toString());
+        } else {
+            assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(UnitTestParams.get()).toString());
+        }
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
@@ -159,7 +167,12 @@ public class DeterministicKeyChainTest {
         chain1 = DeterministicKeyChain.fromProtobuf(keys, null, factory, useSegwit).get(0);
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(useSegwit ? "2Mvp3QRx1wKdra2ypwak3KYcbDXLxXChm5P" : "mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", useSegwit ? key2.toSegwitAddress(UnitTestParams.get()).toString() : key2.toAddress(UnitTestParams.get()).toString());
+        if (useSegwit) {
+            assertEquals("2Mvp3QRx1wKdra2ypwak3KYcbDXLxXChm5P", key2.toSegwitAddress(UnitTestParams.get()).toString());
+
+        } else {
+            assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(UnitTestParams.get()).toString());
+        }
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
