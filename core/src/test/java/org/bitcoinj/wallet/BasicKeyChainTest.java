@@ -32,8 +32,11 @@ import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,14 +45,25 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class BasicKeyChainTest {
     private BasicKeyChain chain;
     private AtomicReference<List<ECKey>> onKeysAdded;
     private AtomicBoolean onKeysAddedRan;
+    private boolean useSegwit;
+
+    public BasicKeyChainTest(boolean useSegwit) {
+        this.useSegwit = useSegwit;
+    }
+
+    @Parameterized.Parameters(name= "useSegwit {0}")
+    public static Iterable<Boolean> data() {
+        return Arrays.asList(false, true);
+    }
 
     @Before
     public void setup() {
-        chain = new BasicKeyChain();
+        chain = new BasicKeyChain(this.useSegwit);
         onKeysAdded = new AtomicReference<>();
         onKeysAddedRan = new AtomicBoolean();
         chain.addEventListener(new AbstractKeyChainEventListener() {
@@ -88,7 +102,7 @@ public class BasicKeyChainTest {
 
         assertTrue(chain.hasKey(key1));
         assertTrue(chain.hasKey(key2));
-        assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
+        assertEquals(key1, chain.findKeyFromPubHash(useSegwit ? key1.getSegwitHash() : key1.getPubKeyHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
         assertNull(chain.findKeyFromPubKey(key2.getPubKeyHash()));
     }
@@ -208,7 +222,7 @@ public class BasicKeyChainTest {
         assertEquals(normTime, keys.get(0).getCreationTimestamp());
         assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
 
-        chain = BasicKeyChain.fromProtobufUnencrypted(keys);
+        chain = BasicKeyChain.fromProtobufUnencrypted(keys, false);
         assertEquals(2, chain.getKeys().size());
         assertEquals(key1, chain.getKeys().get(0));
         assertEquals(key2, chain.getKeys().get(1));
@@ -225,7 +239,7 @@ public class BasicKeyChainTest {
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
         assertFalse(keys.get(0).hasSecretBytes());
         assertTrue(keys.get(0).hasEncryptedData());
-        chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()));
+        chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()), false);
         assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
         assertTrue(chain.checkPassword("foo bar"));
     }
@@ -240,7 +254,7 @@ public class BasicKeyChainTest {
         assertEquals(1, keys.size());
         assertTrue(keys.get(0).hasPublicKey());
         assertFalse(keys.get(0).hasSecretBytes());
-        chain = BasicKeyChain.fromProtobufUnencrypted(keys);
+        chain = BasicKeyChain.fromProtobufUnencrypted(keys, false);
         assertEquals(1, chain.numKeys());
         assertFalse(chain.findKeyFromPubKey(pub.getPubKey()).hasPrivKey());
     }
@@ -254,9 +268,9 @@ public class BasicKeyChainTest {
         assertEquals(4, chain.numBloomFilterEntries());
         BloomFilter filter = chain.getFilter(4, 0.001, 100);
         assertTrue(filter.contains(key1.getPubKey()));
-        assertTrue(filter.contains(key1.getPubKeyHash()));
+        assertTrue(filter.contains(useSegwit ? key1.getSegwitHash() : key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));
-        assertTrue(filter.contains(key2.getPubKeyHash()));
+        assertTrue(filter.contains(useSegwit ? key2.getSegwitHash() : key2.getPubKeyHash()));
         ECKey key3 = new ECKey();
         assertFalse(filter.contains(key3.getPubKey()));
     }

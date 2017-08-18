@@ -28,6 +28,8 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -476,6 +478,18 @@ public class ECKey implements EncryptableItem {
         return pubKeyHash;
     }
 
+    /** Gets the P2SH-of-P2WPKH script for this key*/
+    public Script getSegwitScript() {
+        Script p2wpkhScript = ScriptBuilder.createP2WPKHOutputScript(this);
+        Script p2shScript = ScriptBuilder.createP2SHOutputScript(p2wpkhScript);
+        return p2shScript;
+    }
+
+    /** Gets the hash of the p2sh-of-p2wpkh script for this key */
+    public byte[] getSegwitHash() {
+        return getSegwitScript().getPubKeyHash();
+    }
+
     /**
      * Gets the raw public key value. This appears in transaction scriptSigs. Note that this is <b>not</b> the same
      * as the pubKeyHash/address.
@@ -514,6 +528,14 @@ public class ECKey implements EncryptableItem {
      */
     public Address toAddress(NetworkParameters params) {
         return new Address(params, getPubKeyHash());
+    }
+
+    /**
+     * Return a P2SH-P2WPKH address for this key
+     * This is the recommended way of implementing segwit atm
+     */
+    public Address toSegwitAddress(NetworkParameters params) {
+        return Address.fromP2SHScript(params, getSegwitScript());
     }
 
     /**

@@ -49,15 +49,24 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
     @Nullable private final KeyCrypter keyCrypter;
     private boolean isWatching;
+    final private boolean useSegwit;
 
     private final CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
 
     public BasicKeyChain() {
-        this(null);
+        this(null, false);
     }
 
+    public BasicKeyChain(boolean useSegwit) {
+        this(null, useSegwit);
+    }
     public BasicKeyChain(@Nullable KeyCrypter crypter) {
+        this(crypter, false);
+    }
+
+    public BasicKeyChain(@Nullable KeyCrypter crypter, boolean useSegwit) {
         this.keyCrypter = crypter;
+        this.useSegwit  = useSegwit;
         hashToKeys = new LinkedHashMap<>();
         pubkeyToKeys = new LinkedHashMap<>();
         listeners = new CopyOnWriteArrayList<>();
@@ -159,6 +168,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    public boolean useSegwit() {
+        return useSegwit;
+    }
+
     private void checkKeyEncryptionStateMatches(ECKey key) {
         if (keyCrypter == null && key.isEncrypted())
             throw new KeyCrypterException("Key is encrypted but chain is not");
@@ -178,7 +191,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 throw new IllegalArgumentException("Key is not watching but chain is");
         }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
-        hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+        if (useSegwit) {
+            if (key.isCompressed()) {
+                // only compressed public keys are accepted in P2WPKH and P2WSH, see BIP 143
+                hashToKeys.put(ByteString.copyFrom(key.getSegwitHash()), key);
+            }
+        } else {
+            hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+        }
         checkState(previousKey == null);
     }
 
@@ -261,9 +281,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public boolean removeKey(ECKey key) {
         lock.lock();
         try {
-            boolean a = hashToKeys.remove(ByteString.copyFrom(key.getPubKeyHash())) != null;
+            boolean a = hashToKeys.remove(ByteString.copyFrom(useSegwit ? key.getSegwitHash() : key.getPubKeyHash())) != null;
             boolean b = pubkeyToKeys.remove(ByteString.copyFrom(key.getPubKey())) != null;
-            checkState(a == b);   // Should be in both maps or neither.
+            checkState((useSegwit && !key.isCompressed()) || a == b);   // Should be in both maps or neither.
             return a;
         } finally {
             lock.unlock();
@@ -340,8 +360,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * Returns a new BasicKeyChain that contains all basic, ORIGINAL type keys extracted from the list. Unrecognised
      * key types are ignored.
      */
-    public static BasicKeyChain fromProtobufUnencrypted(List<Protos.Key> keys) throws UnreadableWalletException {
-        BasicKeyChain chain = new BasicKeyChain();
+    public static BasicKeyChain fromProtobufUnencrypted(List<Protos.Key> keys, boolean useSegwit) throws UnreadableWalletException {
+        BasicKeyChain chain = new BasicKeyChain(useSegwit);
         chain.deserializeFromProtobuf(keys);
         return chain;
     }
@@ -352,8 +372,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws org.bitcoinj.wallet.UnreadableWalletException.BadPassword if the password doesn't seem to match
      * @throws org.bitcoinj.wallet.UnreadableWalletException if the data structures are corrupted/inconsistent
      */
-    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
-        BasicKeyChain chain = new BasicKeyChain(checkNotNull(crypter));
+    public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter, boolean useSegwit) throws UnreadableWalletException {
+        BasicKeyChain chain = new BasicKeyChain(checkNotNull(crypter), useSegwit);
         chain.deserializeFromProtobuf(keys);
         return chain;
     }
@@ -564,7 +584,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
             for (ECKey key : hashToKeys.values())
-                filter.insert(key);
+                filter.insert(key, useSegwit);
             return filter;
         } finally {
             lock.unlock();

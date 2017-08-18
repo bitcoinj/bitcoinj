@@ -235,9 +235,23 @@ public class BloomFilter extends Message {
     }
 
     /** Inserts the given key and equivalent hashed form (for the address). */
-    public synchronized void insert(ECKey key) {
+    public synchronized void insert(ECKey key, boolean useSegwit) {
         insert(key.getPubKey());
-        insert(key.getPubKeyHash());
+        if (useSegwit) {
+            if (key.isCompressed()) {
+                Script p2sh = key.getSegwitScript();
+                for (ScriptChunk chunk : p2sh.getChunks()) {
+                    if (!chunk.isOpCode() && chunk.data != null && chunk.data.length >= 8) {
+                        insert(chunk.data);
+                    }
+                }
+            }
+        } else {
+            insert(key.getPubKeyHash());
+        }
+    }
+    public synchronized void insert(ECKey key) {
+        insert(key, false);
     }
 
     /**
