@@ -73,30 +73,36 @@ public class KeyChainGroup implements KeyBag {
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
     private int lookaheadThreshold = -1;
+    private boolean useSegwit;
 
     /** Creates a keychain group with no basic chain, and a single, lazily created HD chain. */
+    public KeyChainGroup(NetworkParameters params, boolean useSegwit) {
+        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null, useSegwit);
+    }
+
     public KeyChainGroup(NetworkParameters params) {
-        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null);
+        this(params, false);
     }
 
     /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. */
-    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed) {
-        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
+    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, boolean useSegwit) {
+        this(params, null, ImmutableList.of(new DeterministicKeyChain(seed, useSegwit)), null, null, useSegwit);
     }
 
     /**
      * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
      * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
-    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey) {
-        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey)), null, null);
+    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey, boolean useSegwit) {
+        this(params, null, ImmutableList.of(DeterministicKeyChain.watch(watchKey, useSegwit)), null, null, useSegwit);
     }
 
     // Used for deserialization.
     private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains,
-                          @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
+                          @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter, boolean useSegwit) {
         this.params = params;
-        this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
+        this.useSegwit = useSegwit;
+        this.basic = basicKeyChain == null ? new BasicKeyChain(useSegwit) : basicKeyChain;
         this.chains = new LinkedList<>(checkNotNull(chains));
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
@@ -113,6 +119,10 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
+    public boolean useSegwit() {
+        return this.useSegwit;
+    }
+
     // This keeps married redeem data in sync with the number of keys issued
     private void maybeLookaheadScripts() {
         for (DeterministicKeyChain chain : chains) {
@@ -123,7 +133,7 @@ public class KeyChainGroup implements KeyBag {
     /** Adds a new HD chain to the chains list, and make it the default chain (from which keys are issued). */
     public void createAndActivateNewHDChain() {
         // We can't do auto upgrade here because we don't know the rotation time, if any.
-        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom());
+        final DeterministicKeyChain chain = new DeterministicKeyChain(new SecureRandom(), useSegwit);
         addAndActivateHDChain(chain);
     }
 
@@ -180,7 +190,7 @@ public class KeyChainGroup implements KeyBag {
             }
             return current;
         } else {
-            return currentKey(purpose).toAddress(params);
+            return useSegwit ? currentKey(purpose).toSegwitAddress(params) : currentKey(purpose).toAddress(params);
         }
     }
 
@@ -234,7 +244,7 @@ public class KeyChainGroup implements KeyBag {
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
-            return freshKey(purpose).toAddress(params);
+            return useSegwit ? freshKey(purpose).toSegwitAddress(params) : freshKey(purpose).toAddress(params);
         }
     }
 
@@ -638,33 +648,33 @@ public class KeyChainGroup implements KeyBag {
         return result;
     }
 
-    static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
-        return fromProtobufUnencrypted(params, keys, new DefaultKeyChainFactory());
+    static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, boolean useSegwit) throws UnreadableWalletException {
+        return fromProtobufUnencrypted(params, keys, new DefaultKeyChainFactory(), useSegwit);
     }
 
-    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, KeyChainFactory factory) throws UnreadableWalletException {
-        BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
-        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null, factory);
+    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, KeyChainFactory factory, boolean useSegwit) throws UnreadableWalletException {
+        BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys, useSegwit);
+        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null, factory, useSegwit);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, null);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, null, useSegwit);
     }
 
-    static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
-        return fromProtobufEncrypted(params, keys, crypter, new DefaultKeyChainFactory());
+    static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, boolean useSegwit) throws UnreadableWalletException {
+        return fromProtobufEncrypted(params, keys, crypter, new DefaultKeyChainFactory(), useSegwit);
     }
 
-    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
+    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory, boolean useSegwit) throws UnreadableWalletException {
         checkNotNull(crypter);
-        BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
-        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory);
+        BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter, useSegwit);
+        List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory, useSegwit);
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
         if (!chains.isEmpty())
             currentKeys = createCurrentKeysMap(chains);
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, crypter);
+        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, crypter, useSegwit);
     }
 
     /**
@@ -729,7 +739,7 @@ public class KeyChainGroup implements KeyBag {
         entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
         checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
         String passphrase = ""; // FIXME allow non-empty passphrase
-        DeterministicKeyChain chain = new DeterministicKeyChain(entropy, passphrase, keyToUse.getCreationTimeSeconds());
+        DeterministicKeyChain chain = new DeterministicKeyChain(entropy, passphrase, keyToUse.getCreationTimeSeconds(), useSegwit);
         if (aesKey != null) {
             chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
         }

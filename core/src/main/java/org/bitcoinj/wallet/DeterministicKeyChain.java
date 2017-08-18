@@ -106,6 +106,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Nullable private DeterministicKey rootKey;
     @Nullable private DeterministicSeed seed;
 
+    final boolean useSegwit;
+
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
     // is somewhat arbitrary but can be useful for audits. The first number is the "account number" but we don't use
@@ -169,6 +171,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected byte[] entropy;
         protected DeterministicSeed seed;
         protected DeterministicKey watchingKey;
+        protected boolean useSegwit = false;
 
         protected Builder() {
         }
@@ -194,6 +197,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          */
         public T seed(DeterministicSeed seed) {
             this.seed = seed;
+            return self();
+        }
+
+        public T useSegwit(boolean useSegwit) {
+            this.useSegwit = useSegwit;
             return self();
         }
 
@@ -245,15 +253,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
             if (random != null) {
                 // Default passphrase to "" if not specified
-                chain = new DeterministicKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs);
+                chain = new DeterministicKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs, useSegwit);
             } else if (entropy != null) {
-                chain = new DeterministicKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
+                chain = new DeterministicKeyChain(entropy, getPassphrase(), seedCreationTimeSecs, useSegwit);
             } else if (seed != null) {
                 seed.setCreationTimeSeconds(seedCreationTimeSecs);
-                chain = new DeterministicKeyChain(seed);
+                chain = new DeterministicKeyChain(seed, useSegwit);
             } else {
                 watchingKey.setCreationTimeSeconds(seedCreationTimeSecs);
-                chain = new DeterministicKeyChain(watchingKey);
+                chain = new DeterministicKeyChain(watchingKey, useSegwit);
             }
 
             return chain;
@@ -272,16 +280,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Generates a new key chain with entropy selected randomly from the given {@link java.security.SecureRandom}
      * object and the default entropy size.
      */
+    public DeterministicKeyChain(SecureRandom random, boolean useSegwit) {
+        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds(), useSegwit);
+    }
+
     public DeterministicKeyChain(SecureRandom random) {
-        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
+        this(random, false);
     }
 
     /**
      * Generates a new key chain with entropy selected randomly from the given {@link java.security.SecureRandom}
      * object and of the requested size in bits.
      */
-    public DeterministicKeyChain(SecureRandom random, int bits) {
-        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
+    public DeterministicKeyChain(SecureRandom random, int bits, boolean useSegwit) {
+        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds(), useSegwit);
     }
 
     /**
@@ -289,8 +301,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and of the requested size in bits.  The derived seed is further protected with a user selected passphrase
      * (see BIP 39).
      */
-    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase, long seedCreationTimeSecs) {
-        this(new DeterministicSeed(random, bits, passphrase, seedCreationTimeSecs));
+    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase, long seedCreationTimeSecs, boolean useSegwit) {
+        this(new DeterministicSeed(random, bits, passphrase, seedCreationTimeSecs), useSegwit);
     }
 
     /**
@@ -298,16 +310,16 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * if the starting seed is the same. You should provide the creation time in seconds since the UNIX epoch for the
      * seed: this lets us know from what part of the chain we can expect to see derived keys appear.
      */
-    public DeterministicKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs) {
-        this(new DeterministicSeed(entropy, passphrase, seedCreationTimeSecs));
+    public DeterministicKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs, boolean useSegwit) {
+        this(new DeterministicSeed(entropy, passphrase, seedCreationTimeSecs), useSegwit);
     }
 
     /**
      * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
      * if the starting seed is the same.
      */
-    protected DeterministicKeyChain(DeterministicSeed seed) {
-        this(seed, null);
+    protected DeterministicKeyChain(DeterministicSeed seed, boolean useSegwit) {
+        this(seed, null, useSegwit);
     }
 
     /**
@@ -315,10 +327,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * balances and generally follow along, but spending is not possible with such a chain. Currently you can't use
      * this method to watch an arbitrary fragment of some other tree, this limitation may be removed in future.
      */
-    public DeterministicKeyChain(DeterministicKey watchingKey) {
+    public DeterministicKeyChain(DeterministicKey watchingKey, boolean useSegwit) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         checkArgument(watchingKey.getPath().size() == getAccountPath().size(), "You can only watch an account key currently");
-        basicKeyChain = new BasicKeyChain();
+        this.useSegwit = useSegwit;
+        basicKeyChain = new BasicKeyChain(useSegwit);
         this.seed = null;
         this.rootKey = null;
         basicKeyChain.importKey(watchingKey);
@@ -331,8 +344,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
      * <p>Watch key has to be an account key.</p>
      */
-    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
-        this(watchKey);
+    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing, boolean useSegwit) {
+        this(watchKey, useSegwit);
         this.isFollowing = isFollowing;
     }
 
@@ -342,22 +355,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Watch key has to be an account key.
      */
     public static DeterministicKeyChain watchAndFollow(DeterministicKey watchKey) {
-        return new DeterministicKeyChain(watchKey, true);
+        return new DeterministicKeyChain(watchKey, true, false);
     }
 
     /**
      * Creates a key chain that watches the given account key.
      */
-    public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return new DeterministicKeyChain(accountKey);
+    public static DeterministicKeyChain watch(DeterministicKey accountKey, boolean useSegwit) {
+        return new DeterministicKeyChain(accountKey, useSegwit);
     }
 
     /**
      * For use in {@link KeyChainFactory} during deserialization.
      */
-    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
+    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter, boolean useSegwit) {
         this.seed = seed;
-        basicKeyChain = new BasicKeyChain(crypter);
+        this.useSegwit = useSegwit;
+        basicKeyChain = new BasicKeyChain(crypter, useSegwit);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
@@ -393,7 +407,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.lookaheadThreshold = chain.lookaheadThreshold;
 
         this.seed = chain.seed.encrypt(crypter, aesKey);
-        basicKeyChain = new BasicKeyChain(crypter);
+        this.useSegwit = chain.useSegwit;
+
+        basicKeyChain = new BasicKeyChain(crypter, this.useSegwit);
         // The first number is the "account number" but we don't use that feature.
         rootKey = chain.rootKey.encrypt(crypter, aesKey, null);
         hierarchy = new DeterministicHierarchy(rootKey);
@@ -762,15 +778,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return entries;
     }
 
-    static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter) throws UnreadableWalletException {
-        return fromProtobuf(keys, crypter, new DefaultKeyChainFactory());
+    static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter, boolean useSegwit) throws UnreadableWalletException {
+        return fromProtobuf(keys, crypter, new DefaultKeyChainFactory(), useSegwit);
     }
 
     /**
      * Returns all the key chains found in the given list of keys. Typically there will only be one, but in the case of
      * key rotation it can happen that there are multiple chains found.
      */
-    public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
+    public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter, KeyChainFactory factory, boolean useSegwit) throws UnreadableWalletException {
         List<DeterministicKeyChain> chains = newLinkedList();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
@@ -852,10 +868,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
-                        chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
+                        chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried, useSegwit);
                         isWatchingAccountKey = true;
                     } else {
-                        chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried);
+                        chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried, useSegwit);
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded
@@ -967,7 +983,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
-        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed);
+        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, useSegwit);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
             throw new KeyCrypterException("Provided AES key is wrong");
@@ -994,8 +1010,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed) {
-        return new DeterministicKeyChain(seed);
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, boolean useSegwit) {
+        return new DeterministicKeyChain(seed, useSegwit);
     }
 
     @Override
