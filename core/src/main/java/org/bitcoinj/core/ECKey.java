@@ -50,6 +50,7 @@ import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.spongycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -574,29 +575,47 @@ public class ECKey implements EncryptableItem {
             }
         }
 
-        public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
-            ASN1InputStream decoder = null;
-            try {
-                decoder = new ASN1InputStream(bytes);
-                DLSequence seq = (DLSequence) decoder.readObject();
-                if (seq == null)
-                    throw new IllegalArgumentException("Reached past end of ASN.1 stream.");
-                ASN1Integer r, s;
-                try {
-                    r = (ASN1Integer) seq.getObjectAt(0);
-                    s = (ASN1Integer) seq.getObjectAt(1);
-                } catch (ClassCastException e) {
-                    throw new IllegalArgumentException(e);
+        private static int readLength(ByteArrayInputStream input) {
+            int len = input.read();
+            if ((len & 0x80) == 0) {
+                return len;
+            } else {
+                int n = len - 0x80;
+                int len1 = 0;
+
+                while (n > 0) {
+                    len1 = (len1 << 8) + input.read();
+                    n = n - 1;
                 }
-                // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
-                // Thus, we always use the positive versions. See: http://r6.ca/blog/20111119T211504Z.html
-                return new ECDSASignature(r.getPositiveValue(), s.getPositiveValue());
+
+                return len1;
+            }
+        }
+
+        private static ECDSASignature decodeSignatureLax(ByteArrayInputStream input) {
+            checkArgument(input.read() == 0x30);
+            try {
+                readLength(input);
+
+                checkArgument(input.read() == 0x02);
+                int lenR = readLength(input);
+                byte[] r = new byte[lenR];
+                input.read(r);
+
+                checkArgument(input.read() == 0x02);
+                int lenS = readLength(input);
+                byte[] s = new byte[lenS];
+                input.read(s);
+
+                return new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
+
             } catch (IOException e) {
                 throw new IllegalArgumentException(e);
-            } finally {
-                if (decoder != null)
-                    try { decoder.close(); } catch (IOException x) {}
             }
+        }
+
+        public static ECDSASignature decodeFromDER(byte[] bytes) {
+            return decodeSignatureLax(new ByteArrayInputStream(bytes));
         }
 
         protected ByteArrayOutputStream derByteStream() throws IOException {
