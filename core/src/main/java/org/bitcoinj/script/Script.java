@@ -707,7 +707,7 @@ public class Script {
             // for N of M CHECKMULTISIG script we will need N signatures to spend
             ScriptChunk nChunk = chunks.get(0);
             return Script.decodeFromOpN(nChunk.opcode);
-        } else if (isSentToAddress() || isSentToRawPubKey()) {
+        } else if (isSentToAddress() || isSentToRawPubKey() || isSentToP2WPKH()) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
         } else if (isPayToScriptHash()) {

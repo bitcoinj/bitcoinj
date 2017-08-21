@@ -53,21 +53,28 @@ public class PaymentChannelStateTest extends TestWithWallet {
     private PaymentChannelClientState clientState;
     private TransactionBroadcaster mockBroadcaster;
     private BlockingQueue<TxFuturePair> broadcasts;
+    private PaymentChannelClient.VersionSelector versionSelector;
     private static final Coin HALF_COIN = Coin.valueOf(0, 50);
+
+    public PaymentChannelStateTest(PaymentChannelClient.VersionSelector versionSelector, boolean useSegwit) {
+        super(useSegwit);
+        this.versionSelector = versionSelector;
+    }
 
     /**
      * We use parameterized tests to run the channel connection tests with each
      * version of the channel.
      */
-    @Parameterized.Parameters(name = "{index}: PaymentChannelStateTest({0})")
-    public static Collection<PaymentChannelClient.VersionSelector> data() {
-        return Arrays.asList(
-                PaymentChannelClient.VersionSelector.VERSION_1,
-                PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1);
+    @Parameterized.Parameters(name = "{index}: PaymentChannelStateTest({0}), useSegwit({1})")
+    public static Collection data() {
+        return Arrays.asList(new Object[][]{
+                {PaymentChannelClient.VersionSelector.VERSION_1, false},
+                {PaymentChannelClient.VersionSelector.VERSION_1, true},
+                {PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1, false},
+                {PaymentChannelClient.VersionSelector.VERSION_2_ALLOW_1, true}
+        });
     }
 
-    @Parameterized.Parameter
-    public PaymentChannelClient.VersionSelector versionSelector;
 
     /**
      * Returns <code>true</code> if we are using a protocol version that requires the exchange of refunds.
@@ -260,7 +267,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(script.isPayToScriptHash());
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(useSegwit ? script.isPayToScriptHash() : script.isSentToAddress());
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -385,7 +392,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(script.isPayToScriptHash());
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(useSegwit ? script.isPayToScriptHash() : script.isSentToAddress());
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -731,7 +738,9 @@ public class PaymentChannelStateTest extends TestWithWallet {
         clientState.initiate();
         // Hardcoded tx length because actual length may vary depending on actual signature length
         // The value is close to clientState.getContractInternal().unsafeBitcoinSerialize().length;
-        int contractSize = versionSelector == PaymentChannelClient.VersionSelector.VERSION_1 ? 273 : 225;
+        int contractSize = useSegwit
+                ? versionSelector == PaymentChannelClient.VersionSelector.VERSION_1 ? 260 : 212
+                : versionSelector == PaymentChannelClient.VersionSelector.VERSION_1 ? 273 : 225;
         Coin expectedFees = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(contractSize).divide(1000).add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
         assertEquals(expectedFees, clientState.getRefundTxFees());
         assertEquals(getInitialClientState(), clientState.getState());
@@ -861,7 +870,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(script.isPayToScriptHash());
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(useSegwit ? script.isPayToScriptHash() : script.isSentToAddress());
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -955,7 +964,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             assertTrue(script.isPayToScriptHash());
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(useSegwit ? script.isPayToScriptHash() : script.isSentToAddress());
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.

@@ -58,7 +58,7 @@ public class DecryptingKeyBag implements KeyBag {
         for (ECKey key : redeemData.keys) {
             decryptedKeys.add(maybeDecrypt(key));
         }
-        return RedeemData.of(decryptedKeys, redeemData.redeemScript);
+        return RedeemData.of(decryptedKeys, redeemData.redeemScript, redeemData.isP2SHofP2WPKH);
     }
 
     @Nullable

@@ -120,6 +120,9 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(2730); // satoshis
 
+    public static Coin minNonDustOutput(boolean useSegwit) {
+        return useSegwit ? Coin.valueOf(2700) : Coin.valueOf(2730);
+    }
     /**
      * Segwit makes sigop limit four times higher and scales regular sigops by four.
      */

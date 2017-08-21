@@ -20,6 +20,8 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.testing.*;
 import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.net.*;
 import java.util.*;
@@ -28,8 +30,18 @@ import static com.google.common.base.Preconditions.*;
 import static org.bitcoinj.core.Coin.*;
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class DefaultCoinSelectorTest extends TestWithWallet {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
+
+    public DefaultCoinSelectorTest(boolean useSegwit) {
+        super(useSegwit);
+    }
+
+    @Parameterized.Parameters(name= "useSegwit {0}")
+    public static Iterable<Boolean> data() {
+        return Arrays.asList(false, true);
+    }
 
     @Before
     @Override

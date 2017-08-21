@@ -21,8 +21,22 @@ import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+
+@RunWith(Parameterized.class)
 public class WalletExtensionsTest extends TestWithWallet {
+
+    public WalletExtensionsTest(boolean useSegwit) {
+        super(useSegwit);
+    }
+
+    @Parameterized.Parameters(name= "useSegwit {0}")
+    public static Iterable<Boolean> data() {
+        return Arrays.asList(false, true);
+    }
 
     @Before
     @Override

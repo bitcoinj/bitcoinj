@@ -26,10 +26,24 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class TransactionOutputTest extends TestWithWallet {
+
+    public TransactionOutputTest(boolean useSegwit) {
+        super(useSegwit);
+    }
+
+    @Parameterized.Parameters(name= "useSegwit {0}")
+    public static Iterable<Boolean> data() {
+        return Arrays.asList(false, true);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -85,6 +99,6 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void getMinNonDustValue() throws Exception {
         TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, myAddress);
-        assertEquals(Transaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
+        assertEquals(Transaction.minNonDustOutput(useSegwit), payToAddressOutput.getMinNonDustValue());
     }
 }

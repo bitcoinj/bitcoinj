@@ -63,6 +63,12 @@ public class ChannelConnectionTest extends TestWithWallet {
     private BlockingQueue<Transaction> broadcasts;
     private TransactionBroadcaster mockBroadcaster;
     private Semaphore broadcastTxPause;
+    private IPaymentChannelClient.ClientChannelProperties clientChannelProperties;
+
+    public ChannelConnectionTest(IPaymentChannelClient.ClientChannelProperties clientChannelProperties, boolean useSegwit) {
+        super(useSegwit);
+        this.clientChannelProperties = clientChannelProperties;
+    }
 
     private static final TransactionBroadcaster failBroadcaster = new TransactionBroadcaster() {
         @Override
@@ -76,21 +82,25 @@ public class ChannelConnectionTest extends TestWithWallet {
      * We use parameterized tests to run the channel connection tests with each
      * version of the channel.
      */
-    @Parameterized.Parameters(name = "{index}: ChannelConnectionTest({0})")
-    public static Collection<PaymentChannelClient.DefaultClientChannelProperties> data() {
-        return Arrays.asList(
-                new PaymentChannelClient.DefaultClientChannelProperties() {
-                    @Override
-                    public VersionSelector versionSelector() { return VERSION_1;}
-                },
-                new PaymentChannelClient.DefaultClientChannelProperties() {
-                    @Override
-                    public VersionSelector versionSelector() { return VERSION_2_ALLOW_1;}
-                });
+    @Parameterized.Parameters(name = "{index}: ChannelConnectionTest({0}), useSegwit({1})")
+    public static Collection vdata() {
+        PaymentChannelClient.DefaultClientChannelProperties v1 = new PaymentChannelClient.DefaultClientChannelProperties() {
+            @Override
+            public VersionSelector versionSelector() {
+                return VERSION_1;
+            }
+        };
+        PaymentChannelClient.DefaultClientChannelProperties v2 = new PaymentChannelClient.DefaultClientChannelProperties() {
+            @Override
+            public VersionSelector versionSelector() {
+                return VERSION_2_ALLOW_1;
+            }
+        };
+        return Arrays.asList(new Object[][]{
+                {v1, false}, {v1, true}, {v2, false}, {v2, true}
+        });
     }
 
-    @Parameterized.Parameter
-    public IPaymentChannelClient.ClientChannelProperties clientChannelProperties;
 
     /**
      * Returns <code>true</code> if we are using a protocol version that requires the exchange of refunds.

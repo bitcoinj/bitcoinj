@@ -43,13 +43,18 @@ public class TestWithWallet {
     protected Wallet wallet;
     protected BlockChain chain;
     protected BlockStore blockStore;
+    protected final boolean useSegwit;
+
+    public TestWithWallet(boolean useSegwit) {
+        this.useSegwit = useSegwit;
+    }
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
-        wallet = new Wallet(PARAMS);
+        wallet = new Wallet(PARAMS, useSegwit);
         myKey = wallet.currentReceiveKey();
-        myAddress = myKey.toAddress(PARAMS);
+        myAddress = useSegwit ? myKey.toSegwitAddress(PARAMS) : myKey.toAddress(PARAMS);
         blockStore = new MemoryBlockStore(PARAMS);
         chain = new BlockChain(PARAMS, wallet, blockStore);
     }

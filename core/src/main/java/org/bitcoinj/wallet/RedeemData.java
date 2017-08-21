@@ -36,25 +36,38 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class RedeemData {
     public final Script redeemScript;
     public final List<ECKey> keys;
+    public final boolean isP2SHofP2WPKH;
 
-    private RedeemData(List<ECKey> keys, Script redeemScript) {
+    private RedeemData(List<ECKey> keys, Script redeemScript, boolean isP2SHofP2WPKH) {
         this.redeemScript = redeemScript;
+        this.isP2SHofP2WPKH = isP2SHofP2WPKH;
         List<ECKey> sortedKeys = new ArrayList<>(keys);
         Collections.sort(sortedKeys, ECKey.PUBKEY_COMPARATOR);
         this.keys = sortedKeys;
     }
 
+    public static RedeemData of(List<ECKey> keys, Script redeemScript, boolean isP2SHofP2WPKH) {
+        return new RedeemData(keys, redeemScript, isP2SHofP2WPKH);
+    }
+
     public static RedeemData of(List<ECKey> keys, Script redeemScript) {
-        return new RedeemData(keys, redeemScript);
+        return of(keys, redeemScript, false);
     }
 
     /**
      * Creates RedeemData for pay-to-address or pay-to-pubkey input. Provided key is a single private key needed
      * to spend such inputs and provided program should be a proper CHECKSIG program.
      */
+    public static RedeemData of(ECKey key, Script program, boolean isP2SHofP2WPKH) {
+        if (isP2SHofP2WPKH)
+            checkArgument(program.isSentToP2WPKH());
+        else
+            checkArgument(program.isSentToAddress() || program.isSentToRawPubKey());
+        return key != null ? new RedeemData(Collections.singletonList(key), program, isP2SHofP2WPKH) : null;
+    }
+
     public static RedeemData of(ECKey key, Script program) {
-        checkArgument(program.isSentToAddress() || program.isSentToRawPubKey());
-        return key != null ? new RedeemData(Collections.singletonList(key), program) : null;
+        return of(key, program, false);
     }
 
     /**

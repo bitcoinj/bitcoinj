@@ -334,6 +334,9 @@ public class Wallet extends BaseTaggableObject
         this.context = context;
         this.params = context.getParams();
         this.keyChainGroup = checkNotNull(keyChainGroup);
+        if (keyChainGroup.useSegwit()) {
+            this.setTag("useSegwit", ByteString.EMPTY);
+        }
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             this.keyChainGroup.setLookaheadSize(5);  // Cut down excess computation for unit tests.
         // If this keyChainGroup was created fresh just now (new wallet), make HD so a backup can be made immediately
@@ -353,6 +356,10 @@ public class Wallet extends BaseTaggableObject
         signers = new ArrayList<>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
+    }
+
+    public boolean useSegwit() {
+        return this.keyChainGroup.useSegwit();
     }
 
     private void createTransientState() {
@@ -4122,7 +4129,11 @@ public class Wallet extends BaseTaggableObject
                 Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
                 checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
-                txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+                if (!redeemData.isP2SHofP2WPKH) {
+                    // for P2SHofP2WPKH the sig script is the P2PKH script that maches the P2WPKH script and the actual signature
+                    // is in the input witness (see BIP 143)
+                    txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+                }
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
@@ -4228,6 +4239,9 @@ public class Wallet extends BaseTaggableObject
                 return true;
             }
             return false;
+        } else if (script.isSentToP2WPKH()) {
+            ECKey key = findKeyFromPubHash(script.getPubKeyHash());
+            return key != null && (key.isEncrypted() || key.hasPrivKey());
         }
         return false;
     }

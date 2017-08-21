@@ -495,7 +495,7 @@ public class WalletProtobufSerializer {
 
         boolean useSegwit = false;
         for (Protos.Tag tag: walletProto.getTagsList()) {
-            if (tag.getTag() == "useSegwit") useSegwit = true;
+            if (tag.getTag().equals("useSegwit")) useSegwit = true;
         }
 
         // Read the scrypt parameters that specify how encryption and decryption is performed.
