@@ -20,7 +20,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.*;
 import org.junit.*;
-import org.spongycastle.crypto.params.*;
+import org.bouncycastle.crypto.params.*;
 
 import static org.bitcoinj.core.Utils.*;
 import static org.junit.Assert.*;

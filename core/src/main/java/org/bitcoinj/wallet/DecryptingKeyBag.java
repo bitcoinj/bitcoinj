@@ -17,7 +17,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.ECKey;
-import org.spongycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 

@@ -38,7 +38,7 @@ import com.google.common.io.Resources;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.spongycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.KeyParameter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

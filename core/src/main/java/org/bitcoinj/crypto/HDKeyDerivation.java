@@ -18,7 +18,7 @@ package org.bitcoinj.crypto;
 
 import com.google.common.collect.*;
 import org.bitcoinj.core.*;
-import org.spongycastle.math.ec.*;
+import org.bouncycastle.math.ec.*;
 
 import java.math.*;
 import java.nio.*;

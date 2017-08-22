@@ -31,7 +31,7 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import com.google.protobuf.ByteString;
 import org.bitcoin.paymentchannel.Protos;
-import org.spongycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

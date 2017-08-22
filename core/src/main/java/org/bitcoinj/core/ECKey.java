@@ -31,23 +31,23 @@ import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.asn1.*;
-import org.spongycastle.asn1.x9.X9ECParameters;
-import org.spongycastle.asn1.x9.X9IntegerConverter;
-import org.spongycastle.crypto.AsymmetricCipherKeyPair;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.ec.CustomNamedCurves;
-import org.spongycastle.crypto.generators.ECKeyPairGenerator;
-import org.spongycastle.crypto.params.*;
-import org.spongycastle.crypto.signers.ECDSASigner;
-import org.spongycastle.crypto.signers.HMacDSAKCalculator;
-import org.spongycastle.math.ec.ECAlgorithms;
-import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.math.ec.FixedPointCombMultiplier;
-import org.spongycastle.math.ec.FixedPointUtil;
-import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
-import org.spongycastle.util.Properties;
-import org.spongycastle.util.encoders.Base64;
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.asn1.x9.X9IntegerConverter;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.ec.CustomNamedCurves;
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.params.*;
+import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
+import org.bouncycastle.math.ec.ECAlgorithms;
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.math.ec.FixedPointCombMultiplier;
+import org.bouncycastle.math.ec.FixedPointUtil;
+import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.bouncycastle.util.Properties;
+import org.bouncycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -571,7 +571,7 @@ public class ECKey implements EncryptableItem {
             try {
                 // BouncyCastle by default is strict about parsing ASN.1 integers. We relax this check, because some
                 // Bitcoin signatures would not parse.
-                Properties.setThreadOverride("org.spongycastle.asn1.allow_unsafe_integer", true);
+                Properties.setThreadOverride("org.bouncycastle.asn1.allow_unsafe_integer", true);
                 decoder = new ASN1InputStream(bytes);
                 final ASN1Primitive seqObj = decoder.readObject();
                 if (seqObj == null)
@@ -594,7 +594,7 @@ public class ECKey implements EncryptableItem {
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
-                Properties.removeThreadOverride("org.spongycastle.asn1.allow_unsafe_integer");
+                Properties.removeThreadOverride("org.bouncycastle.asn1.allow_unsafe_integer");
             }
         }
 
