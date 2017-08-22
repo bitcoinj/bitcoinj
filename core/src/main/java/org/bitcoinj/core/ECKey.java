@@ -47,6 +47,7 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.math.ec.FixedPointUtil;
 import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.spongycastle.util.Properties;
 import org.spongycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
@@ -568,6 +569,9 @@ public class ECKey implements EncryptableItem {
         public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
             ASN1InputStream decoder = null;
             try {
+                // BouncyCastle by default is strict about parsing ASN.1 integers. We relax this check, because some
+                // Bitcoin signatures would not parse.
+                Properties.setThreadOverride("org.spongycastle.asn1.allow_unsafe_integer", true);
                 decoder = new ASN1InputStream(bytes);
                 final ASN1Primitive seqObj = decoder.readObject();
                 if (seqObj == null)
@@ -590,6 +594,7 @@ public class ECKey implements EncryptableItem {
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
+                Properties.removeThreadOverride("org.spongycastle.asn1.allow_unsafe_integer");
             }
         }
 
