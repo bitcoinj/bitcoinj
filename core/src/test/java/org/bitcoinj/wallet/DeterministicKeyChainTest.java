@@ -73,9 +73,12 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = Address.fromBase58(UnitTestParams.get(), useSegwit ? "2NDKtsuvzWkzUbbarGwjYUFSxSfazZELQMp" : "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        final Address address = Address.fromBase58(UnitTestParams.get(), useSegwit ? "2NEvUNQrJUsYwbDkvHH7JJHz6S5JhhuWCoP" : "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, useSegwit ? key1.toSegwitAddress(UnitTestParams.get()) : key1.toAddress(UnitTestParams.get()));
-        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
+        if (useSegwit)
+            assertEquals("2N4BkNT6egJoz34fpKrfJ7bcTeZU6GVUBAV", key2.toSegwitAddress(UnitTestParams.get()).toString());
+        else
+            assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(UnitTestParams.get()).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
@@ -85,7 +88,7 @@ public class DeterministicKeyChainTest {
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
         if (useSegwit) {
-            assertEquals("2MvHTTtujn9hFkTrVRPgwjxv1dvFLbVsjcc", key3.toSegwitAddress(UnitTestParams.get()).toString());
+            assertEquals("2MwyPHDPxDVzSo6ETcnrBECmYVtatcHWSTn", key3.toSegwitAddress(UnitTestParams.get()).toString());
         } else {
             assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(UnitTestParams.get()).toString());
         }
@@ -258,7 +261,7 @@ public class DeterministicKeyChainTest {
         // Get another key that will be lost during round-tripping, to ensure we can derive it again.
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
-        final String EXPECTED_SERIALIZATION = checkSerialization(keys, "deterministic-wallet-serialization.txt");
+        final String EXPECTED_SERIALIZATION = checkSerialization(keys, useSegwit ? "deterministic-wallet-serialization-segwit.txt" : "deterministic-wallet-serialization.txt");
 
         // Round trip the data back and forth to check it is preserved.
         int oldLookaheadSize = chain.getLookaheadSize();
@@ -346,7 +349,10 @@ public class DeterministicKeyChainTest {
         NetworkParameters params = MainNetParams.get();
         DeterministicKey watchingKey = chain.getWatchingKey();
         final String pub58 = watchingKey.serializePubB58(params);
-        assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
+        if (useSegwit)
+            assertEquals("xpub69KR9epSNBM5B7rReBBuMcrhbHTEmEuLJ1FbSjrjgcMS1kVCNULE7PTEg2wxoomtcbmQ5uGcQ1dWBdJn4ycW2VTWQhxb114PLaRwFYeHuui", pub58);
+        else
+            assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58, params);
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.watch(watchingKey, useSegwit);
@@ -367,7 +373,7 @@ public class DeterministicKeyChainTest {
         }
         // Test we can serialize and deserialize a watching chain OK.
         List<Protos.Key> serialization = chain.serializeToProtobuf();
-        checkSerialization(serialization, "watching-wallet-serialization.txt");
+        checkSerialization(serialization, useSegwit ? "watching-wallet-serialization-segwit.txt" : "watching-wallet-serialization.txt");
         chain = DeterministicKeyChain.fromProtobuf(serialization, null, useSegwit).get(0);
         final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
@@ -375,7 +381,7 @@ public class DeterministicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
-        final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
+        final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.accountZeroPath(useSegwit));
         chain = DeterministicKeyChain.watch(accountKey.dropPrivateBytes().dropParent(), useSegwit);
         chain = chain.toEncrypted("this doesn't make any sense");
     }

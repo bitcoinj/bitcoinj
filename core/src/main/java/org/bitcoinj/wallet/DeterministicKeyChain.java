@@ -115,11 +115,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // that feature yet. In future we might hand out different accounts for cases where we wish to hand payers
     // a payment request that can generate lots of addresses independently.
     // The account path may be overridden by subclasses.
-    public static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
+    private static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH = ImmutableList.of(ChildNumber.ZERO_HARDENED);
+    private static final ImmutableList<ChildNumber> ACCOUNT_ZERO_PATH_SEGWIT = ImmutableList.of(ChildNumber.ONE_HARDENED);
+
+    public static final ImmutableList<ChildNumber> accountZeroPath(boolean useSegwit) {
+        return useSegwit ? ACCOUNT_ZERO_PATH_SEGWIT : ACCOUNT_ZERO_PATH;
+    }
+
     public static final ImmutableList<ChildNumber> EXTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ZERO);
     public static final ImmutableList<ChildNumber> INTERNAL_SUBPATH = ImmutableList.of(ChildNumber.ONE);
-    public static final ImmutableList<ChildNumber> EXTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, EXTERNAL_SUBPATH);
-    public static final ImmutableList<ChildNumber> INTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, INTERNAL_SUBPATH);
+    //public static final ImmutableList<ChildNumber> EXTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, EXTERNAL_SUBPATH);
+    //public static final ImmutableList<ChildNumber> INTERNAL_PATH = HDUtils.concat(ACCOUNT_ZERO_PATH, INTERNAL_SUBPATH);
     // m / 44' / 0' / 0'
     public static final ImmutableList<ChildNumber> BIP44_ACCOUNT_ZERO_PATH =
             ImmutableList.of(new ChildNumber(44, true), ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
@@ -438,7 +444,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Override in subclasses to use a different account derivation path */
     protected ImmutableList<ChildNumber> getAccountPath() {
-        return ACCOUNT_ZERO_PATH;
+        return accountZeroPath(useSegwit);
     }
 
     private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,

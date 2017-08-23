@@ -1612,7 +1612,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void isWatching() {
         assertFalse(wallet.isWatching());
-        Wallet watchingWallet = Wallet.fromWatchingKey(PARAMS, wallet.getWatchingKey().dropPrivateBytes().dropParent());
+        Wallet watchingWallet = Wallet.fromWatchingKey(PARAMS, wallet.getWatchingKey().dropPrivateBytes().dropParent(), useSegwit);
         assertTrue(watchingWallet.isWatching());
         wallet.encrypt(PASSWORD1);
         assertFalse(wallet.isWatching());
@@ -1624,7 +1624,7 @@ public class WalletTest extends TestWithWallet {
         String serialized = watchKey.serializePubB58(PARAMS);
 
         // Construct watching wallet.
-        Wallet watchingWallet = Wallet.fromWatchingKey(PARAMS, DeterministicKey.deserializeB58(null, serialized, PARAMS));
+        Wallet watchingWallet = Wallet.fromWatchingKey(PARAMS, DeterministicKey.deserializeB58(null, serialized, PARAMS), useSegwit);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -1649,7 +1649,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingWalletWithCreationTime() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(PARAMS);
-        Wallet watchingWallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 1415282801);
+        Wallet watchingWallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 1415282801, useSegwit);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -3129,7 +3129,7 @@ public class WalletTest extends TestWithWallet {
         // Delete the sigs
         for (TransactionInput input : req.tx.getInputs())
             input.clearScriptBytes();
-        Wallet watching = Wallet.fromWatchingKey(PARAMS, wallet.getWatchingKey().dropParent().dropPrivateBytes());
+        Wallet watching = Wallet.fromWatchingKey(PARAMS, wallet.getWatchingKey().dropParent().dropPrivateBytes(), useSegwit);
         watching.completeTx(SendRequest.forTx(req.tx));
     }
 
@@ -3340,7 +3340,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(PARAMS);
-        Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 0);
+        Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, serialized, 0, useSegwit);
         blockStore = new MemoryBlockStore(PARAMS);
         chain = new BlockChain(PARAMS, wallet, blockStore);
 
@@ -3357,7 +3357,7 @@ public class WalletTest extends TestWithWallet {
             public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
                 assertEquals(propTx.partialTx.getInputs().size(), propTx.keyPaths.size());
                 List<ChildNumber> externalZeroLeaf = ImmutableList.<ChildNumber>builder()
-                        .addAll(DeterministicKeyChain.ACCOUNT_ZERO_PATH)
+                        .addAll(DeterministicKeyChain.accountZeroPath(false))
                         .addAll(DeterministicKeyChain.EXTERNAL_SUBPATH).add(ChildNumber.ZERO).build();
                 for (TransactionInput input : propTx.partialTx.getInputs()) {
                     List<ChildNumber> keypath = propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey());
