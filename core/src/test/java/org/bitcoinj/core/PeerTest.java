@@ -94,7 +94,7 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     private void connect() throws Exception {
-        connectWithVersion(70001, VersionMessage.NODE_NETWORK);
+        connectWithVersion(70012, VersionMessage.NODE_NETWORK | VersionMessage.NODE_WITNESS);
     }
 
     private void connectWithVersion(int version, int flags) throws Exception {
@@ -373,7 +373,7 @@ public class PeerTest extends TestWithNetworkConnections {
         List<InventoryItem> items = getdata.getItems();
         assertEquals(1, items.size());
         assertEquals(b2.getHash(), items.get(0).hash);
-        assertEquals(InventoryItem.Type.Block, items.get(0).type);
+        assertEquals(InventoryItem.Type.WitnessBlock, items.get(0).type);
     }
 
     // Check that it starts downloading the block chain correctly on request.
