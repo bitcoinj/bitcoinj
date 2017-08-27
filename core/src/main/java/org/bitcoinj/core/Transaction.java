@@ -277,6 +277,10 @@ public class Transaction extends ChildMessage {
         super(params, payload, 0, parent, setSerializer, length);
     }
 
+    /**
+     * Create a new version of this transaction that serializes using the pre-SegWit method,
+     * excluding witness data.
+     */
     public Transaction disableWitnessSerialization() {
         if ((transactionOptions & TransactionOptions.WITNESS) == TransactionOptions.WITNESS) {
             final Transaction tx = new Transaction(params);
