@@ -28,6 +28,7 @@ import org.junit.*;
 
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 import static org.junit.Assert.*;
@@ -230,5 +231,38 @@ public class DefaultRiskAnalysisTest {
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx, analysis.getNonFinal());
+    }
+
+    @Test
+    public void relativeLockTime() throws Exception {
+        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        tx.setVersion(2);
+        checkState(!tx.hasRelativeLockTime());
+
+        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+
+        tx.getInput(0).setSequenceNumber(0);
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
+        assertEquals(tx, analysis.getNonFinal());
+    }
+
+    @Test
+    public void transactionVersions() throws Exception {
+        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        tx.setVersion(1);
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+
+        tx.setVersion(2);
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
+
+        tx.setVersion(3);
+        analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
+        assertEquals(RiskAnalysis.Result.NON_STANDARD, analysis.analyze());
+        assertEquals(tx, analysis.getNonStandard());
     }
 }

@@ -416,6 +416,14 @@ public class TransactionInput extends ChildMessage {
     }
 
     /**
+     * Returns whether this input, if it belongs to a version 2 (or higher) transaction, has
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">relative lock-time</a> enabled.
+     */
+    public boolean hasRelativeLockTime() {
+        return (sequence & SEQUENCE_LOCKTIME_DISABLE_FLAG) == 0;
+    }
+
+    /**
      * For a connected transaction, runs the script against the connected pubkey and verifies they are correct.
      * @throws ScriptException if the script did not verify.
      * @throws VerificationException If the outpoint doesn't match the given output.
