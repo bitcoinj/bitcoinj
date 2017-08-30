@@ -1453,7 +1453,7 @@ public class Script {
         // To provide for future soft-fork extensibility, if the
         // operand has the disabled lock-time flag set,
         // CHECKSEQUENCEVERIFY behaves as a NOP.
-        if ((nSequence & Transaction.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
+        if ((nSequence & TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
             return;
 
         // Compare the specified sequence number with the input.
@@ -1475,12 +1475,12 @@ public class Script {
         // consensus constrained. Testing that the transaction's sequence
         // number do not have this bit set prevents using this property
         // to get around a CHECKSEQUENCEVERIFY check.
-        if ((txToSequence & Transaction.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
+        if ((txToSequence & TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
             return false;
 
         // Mask off any bits that do not have consensus-enforced meaning
         // before doing the integer comparisons
-        long nLockTimeMask =  Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG | Transaction.SEQUENCE_LOCKTIME_MASK;
+        long nLockTimeMask =  TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG | TransactionInput.SEQUENCE_LOCKTIME_MASK;
         long txToSequenceMasked = txToSequence & nLockTimeMask;
         long nSequenceMasked = nSequence & nLockTimeMask;
 
@@ -1491,8 +1491,8 @@ public class Script {
         // We want to compare apples to apples, so fail the script
         // unless the type of nSequenceMasked being tested is the same as
         // the nSequenceMasked in the transaction.
-        if (!((txToSequenceMasked < Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked < Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG) ||
-              (txToSequenceMasked >= Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked >= Transaction.SEQUENCE_LOCKTIME_TYPE_FLAG))) {
+        if (!((txToSequenceMasked < TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked < TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG) ||
+              (txToSequenceMasked >= TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked >= TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG))) {
             return false;
         }
 
