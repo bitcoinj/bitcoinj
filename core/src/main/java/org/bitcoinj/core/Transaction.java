@@ -659,6 +659,9 @@ public class Transaction extends ChildMessage {
             }
             s.append('\n');
         }
+        if (hasRelativeLockTime()) {
+            s.append("  has relative lock time\n");
+        }
         if (isOptInFullRBF()) {
             s.append("  opts into full replace-by-fee\n");
         }
@@ -702,6 +705,8 @@ public class Transaction extends ChildMessage {
                         s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
                         if (in.isOptInFullRBF())
                             s.append(", opts into full RBF");
+                        if (version >=2 && in.hasRelativeLockTime())
+                            s.append(", has RLT");
                     }
                 } catch (Exception e) {
                     s.append("[exception: ").append(e.getMessage()).append("]");
@@ -1287,7 +1292,8 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * <p>A transaction is time locked if at least one of its inputs is non-final and it has a lock time</p>
+     * <p>A transaction is time-locked if at least one of its inputs is non-final and it has a lock time. A transaction can
+     * also have a relative lock time which this method doesn't tell. Use {@link #hasRelativeLockTime()} to find out.</p>
      *
      * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, long)}
      * </p>
@@ -1297,6 +1303,20 @@ public class Transaction extends ChildMessage {
             return false;
         for (TransactionInput input : getInputs())
             if (input.hasSequence())
+                return true;
+        return false;
+    }
+
+    /**
+     * A transaction has a relative lock time
+     * (<a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">BIP 68</a>) if it is version 2 or
+     * higher and at least one of its inputs has its {@link TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
+     */
+    public boolean hasRelativeLockTime() {
+        if (version < 2)
+            return false;
+        for (TransactionInput input : getInputs())
+            if (input.hasRelativeLockTime())
                 return true;
         return false;
     }

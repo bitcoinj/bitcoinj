@@ -46,6 +46,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TransactionInput extends ChildMessage {
     /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
+    /**
+     * BIP68: If this flag set, sequence is NOT interpreted as a relative lock-time.
+     */
+    public static final long SEQUENCE_LOCKTIME_DISABLE_FLAG = 1L << 31;
+
     private static final byte[] EMPTY_ARRAY = new byte[0];
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
@@ -383,6 +388,14 @@ public class TransactionInput extends ChildMessage {
      */
     public boolean isOptInFullRBF() {
         return sequence < NO_SEQUENCE - 1;
+    }
+
+    /**
+     * Returns whether this input, if it belongs to a version 2 (or higher) transaction, has
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">relative lock-time</a> enabled.
+     */
+    public boolean hasRelativeLockTime() {
+        return (sequence & SEQUENCE_LOCKTIME_DISABLE_FLAG) == 0;
     }
 
     /**
