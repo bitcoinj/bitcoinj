@@ -1458,7 +1458,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** If auto saving is enabled, do an immediate sync write to disk ignoring any delays. */
-    protected void saveNow() {
+    public void saveNow() {
         WalletFiles files = vFileManager;
         if (files != null) {
             try {
