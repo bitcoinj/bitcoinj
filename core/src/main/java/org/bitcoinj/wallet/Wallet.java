@@ -1404,8 +1404,8 @@ public class Wallet extends BaseTaggableObject
      * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
      * frequently, eg if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
      * writes. Note that when a new key is added, that always results in an immediate save regardless of
-     * delayTime. <b>You should still save the wallet manually when your program is about to shut down as the JVM
-     * will not wait for the background thread.</b></p>
+     * delayTime. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
+     * is about to shut down as the JVM will not wait for the background thread.</b></p>
      *
      * <p>An event listener can be provided. If a delay >0 was specified, it will be called on a background thread
      * with the wallet locked when an auto-save occurs. If delay is zero or you do something that always triggers
