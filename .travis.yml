@@ -1,6 +1,11 @@
 # configuration for https://travis-ci.org/bitcoinj/bitcoinj
 sudo: false
+dist: precise
 language: java
+addons:
+  hosts:
+    - host
+  hostname: host
 jdk: oraclejdk8
 install: true # remove default
 script:
