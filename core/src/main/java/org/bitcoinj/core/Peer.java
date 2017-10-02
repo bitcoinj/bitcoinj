@@ -564,8 +564,10 @@ public class Peer extends PeerSocketHandler {
             close();
             return;
         }
-        if ((vPeerVersionMessage.localServices
-                & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH) {
+        if (((vPeerVersionMessage.localServices
+                & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH) ||
+            ((vPeerVersionMessage.localServices
+                & VersionMessage.NODE_SEGWIT2X) == VersionMessage.NODE_SEGWIT2X)) {
             log.info("{}: Peer follows an incompatible block chain.", this);
             // Shut down the channel gracefully.
             close();
