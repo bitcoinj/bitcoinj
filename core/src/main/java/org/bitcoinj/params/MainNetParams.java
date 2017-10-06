@@ -79,6 +79,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "bitseed.xf2.org",              // Jeff Garzik
                 "seed.bitcoin.jonasschnelli.ch",// Jonas Schnelli
                 "bitcoin.bloqseeds.net",        // Bloq
+                "seed.ob1.io",                  // OpenBazaar
         };
         httpSeeds = new HttpDiscovery.Details[] {
                 // Andreas Schildbach
