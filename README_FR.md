@@ -3,9 +3,9 @@ La bibliothèque bitcoinj est une implémentation du protocole Bitcoin en Java, 
 
 ## Technologies
 
-•	Java 6 pour les modules principaux, Java 8 pour le reste
-•	[Maven 3+](http://maven.apache.org/) - pour construire le projet
-•	[Google Protocol Buffers](https://github.com/google/protobuf) -  for use with serialization and hardware communications
+* Java 6 pour les modules principaux, Java 8 pour le reste
+* [Maven 3+](http://maven.apache.org/) - pour construire le projet
+* [Google Protocol Buffers](https://github.com/google/protobuf) -  for use with serialization and hardware communications
 
 ## Démarrer
 Pour démarrer, il est recommendé d’avoir les dernières version du JDK et de Maven installées. La tête de la branche master contient le dernier code de développement, et diverses versions de production sont fournies dans les branches des différentes fonctionnalités.
