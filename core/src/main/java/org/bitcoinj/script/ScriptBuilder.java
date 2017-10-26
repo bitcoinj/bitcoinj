@@ -112,11 +112,7 @@ public class ScriptBuilder {
      * shortest encoding possible.
      */
     public ScriptBuilder number(long num) {
-        if (num >= 0 && num <= 16) {
-            return smallNum((int) num);
-        } else {
-            return bigNum(num);
-        }
+        return number(chunks.size(), num);
     }
 
     /**
@@ -124,7 +120,9 @@ public class ScriptBuilder {
      * uses shortest encoding possible.
      */
     public ScriptBuilder number(int index, long num) {
-        if (num >= 0 && num <= 16) {
+        if (num == -1) {
+            return op(index, OP_1NEGATE);
+        } else if (num >= 0 && num <= 16) {
             return smallNum(index, (int) num);
         } else {
             return bigNum(index, num);
