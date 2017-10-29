@@ -193,8 +193,8 @@ public class PaymentProtocol {
 
             // Retrieves the most-trusted CAs from keystore.
             PKIXParameters params = new PKIXParameters(trustStore);
-            // Revocation not supported in the current version.
-            params.setRevocationEnabled(false);
+            // Revocation is supported in the current version.
+            params.setRevocationEnabled(true);
 
             // Now verify the certificate chain is correct and trusted. This let's us get an identity linked pubkey.
             CertPathValidator validator = CertPathValidator.getInstance("PKIX");
