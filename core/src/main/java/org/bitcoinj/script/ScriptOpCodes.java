@@ -145,13 +145,16 @@ public class ScriptOpCodes {
     // block state
     /** Check lock time of the block. Introduced in BIP 65, replacing OP_NOP2 */
     public static final int OP_CHECKLOCKTIMEVERIFY = 0xb1;
+    public static final int OP_CHECKSEQUENCEVERIFY = 0xb2;
 
     // expansion
     public static final int OP_NOP1 = 0xb0;
     /** Deprecated by BIP 65 */
     @Deprecated
     public static final int OP_NOP2 = OP_CHECKLOCKTIMEVERIFY;
-    public static final int OP_NOP3 = 0xb2;
+    /** Deprecated by BIP 112 */
+    @Deprecated
+    public static final int OP_NOP3 = OP_CHECKSEQUENCEVERIFY;
     public static final int OP_NOP4 = 0xb3;
     public static final int OP_NOP5 = 0xb4;
     public static final int OP_NOP6 = 0xb5;
@@ -265,7 +268,7 @@ public class ScriptOpCodes {
         .put(OP_CHECKMULTISIGVERIFY, "CHECKMULTISIGVERIFY")
         .put(OP_NOP1, "NOP1")
         .put(OP_CHECKLOCKTIMEVERIFY, "CHECKLOCKTIMEVERIFY")
-        .put(OP_NOP3, "NOP3")
+        .put(OP_CHECKSEQUENCEVERIFY, "CHECKSEQUENCEVERIFY")
         .put(OP_NOP4, "NOP4")
         .put(OP_NOP5, "NOP5")
         .put(OP_NOP6, "NOP6")
@@ -378,6 +381,7 @@ public class ScriptOpCodes {
         .put("CHECKMULTISIGVERIFY", OP_CHECKMULTISIGVERIFY)
         .put("NOP1", OP_NOP1)
         .put("CHECKLOCKTIMEVERIFY", OP_CHECKLOCKTIMEVERIFY)
+        .put("CHECKSEQUENCEVERIFY", OP_CHECKSEQUENCEVERIFY)
         .put("NOP2", OP_NOP2)
         .put("NOP3", OP_NOP3)
         .put("NOP4", OP_NOP4)

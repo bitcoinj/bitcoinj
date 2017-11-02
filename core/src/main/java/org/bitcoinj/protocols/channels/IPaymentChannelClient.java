@@ -47,7 +47,7 @@ public interface IPaymentChannelClient {
      * intending to reopen the channel later. There is likely little reason to use this in a stateless protocol.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
-     * {@link PaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)} or
+     * {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)} or
      * {@link IPaymentChannelClient#settle()} is called, to actually handle the connection close logic.</p>
      */
     void connectionClosed();
@@ -56,7 +56,7 @@ public interface IPaymentChannelClient {
      * <p>Settles the channel, notifying the server it can broadcast the most recent payment transaction.</p>
      *
      * <p>Note that this only generates a CLOSE message for the server and calls
-     * {@link PaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)}
+     * {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)}
      * to settle the connection, it does not actually handle connection close logic, and
      * {@link PaymentChannelClient#connectionClosed()} must still be called after the connection fully settles.</p>
      *

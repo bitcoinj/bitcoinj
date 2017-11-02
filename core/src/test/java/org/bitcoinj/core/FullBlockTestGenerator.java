@@ -22,6 +22,8 @@ import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
+
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;

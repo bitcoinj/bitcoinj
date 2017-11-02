@@ -112,7 +112,6 @@
 
     <build>
         <plugins>
-            <!-- Ensure compilation is done under Java 6 for backwards compatibility -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -150,7 +149,7 @@
                 <configuration>
                     <detectLinks/>
                     <links>
-                        <link>http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/</link>
+                        <link>https://google.github.io/guava/releases/22.0/api/docs/</link>
                     </links>
                     <detectJavaApiLink/>
                     <quiet>true</quiet>
@@ -187,7 +186,9 @@
                                         <urn>com.fasterxml.jackson.core:jackson-core:2.5.1:jar:null:test:e2a00ad1d7e540ec395e9296a34da484c8888d4d</urn>
                                         <urn>com.fasterxml.jackson.core:jackson-databind:2.5.2:jar:null:test:2b4dd13fbe6f8c6b146d4c3b7fd70862f136802d</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
-                                        <urn>com.google.guava:guava:18.0:jar:null:compile:cce0823396aa693798f8882e64213b1772032b09</urn>
+                                        <urn>com.google.guava:guava:22.0-android:jar:null:compile:7b2fc7ef242f35bc2c9a3b816ed846c9345e3f95</urn>
+                                        <urn>com.google.errorprone:error_prone_annotations:2.0.18:jar:null:compile:5f65affce1684999e2f4024983835efc3504012e</urn>
+                                        <urn>com.google.j2objc:j2objc-annotations:1.1:jar:null:compile:ed28ded51a8b1c6b112568def5f4b455e6809019</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.6.1:jar:null:compile:d9521f2aecb909835746b7a5facf612af5e890e8</urn>
                                         <urn>com.h2database:h2:1.3.167:jar:null:compile:d3867d586f087e53eb12fc65e5693d8ee9a5da17</urn>
                                         <urn>com.lambdaworks:scrypt:1.4.0:jar:null:compile:906506b74f30c8c20bccd9ed4a11112d8941fe87</urn>
@@ -320,7 +321,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>-Xmx1024m ${surefireArgLine}</argLine><!-- Last argument is required for code coverage to work. -->
+                    <!-- First argument increases the maximum heap size, second argument disables a nasty HotSpot optimization
+                         (see http://jawspeak.com/2010/05/26/hotspot-caused-exceptions-to-lose-their-stack-traces-in-production-and-the-fix/)
+                         and last argument is required for code coverage to work. -->
+                    <argLine>-Xmx1024m -XX:-OmitStackTraceInFastThrow ${surefireArgLine}</argLine>
                     <runOrder>alphabetical</runOrder>
                     <systemProperties>
                         <property>
@@ -387,7 +391,13 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>18.0</version>
+            <version>22.0-android</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

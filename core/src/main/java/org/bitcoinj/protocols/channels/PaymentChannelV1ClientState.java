@@ -23,6 +23,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -72,9 +73,9 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
 
     /**
      * Creates a state object for a payment channel client. It is expected that you be ready to
-     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} after construction (to avoid creating objects for channels which are
+     * {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)} after construction (to avoid creating objects for channels which are
      * not going to finish opening) and thus some parameters provided here are only used in
-     * {@link PaymentChannelClientState#initiate(KeyParameter, ClientChannelProperties)} to create the Multisig contract and refund transaction.
+     * {@link PaymentChannelClientState#initiate(KeyParameter, org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties)} to create the Multisig contract and refund transaction.
      *
      * @param wallet a wallet that contains at least the specified amount of value.
      * @param myKey a freshly generated private key for this channel.

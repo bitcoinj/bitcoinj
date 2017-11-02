@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2017 Thomas König
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,7 +263,7 @@ public class ScriptTest {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
-                throw new RuntimeException("Invalid Data");
+                throw new RuntimeException("Invalid word: '" + w + "'");
             }                        
         }
         
@@ -282,44 +283,35 @@ public class ScriptTest {
         }
         return flags;
     }
-    
+
     @Test
-    public void dataDrivenValidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_valid.json"), Charsets.UTF_8));
+    public void dataDrivenScripts() throws Exception {
+        JsonNode json = new ObjectMapper()
+                .readTree(new InputStreamReader(getClass().getResourceAsStream("script_tests.json"), Charsets.UTF_8));
         for (JsonNode test : json) {
-            Script scriptSig = parseScriptString(test.get(0).asText());
-            Script scriptPubKey = parseScriptString(test.get(1).asText());
+            if (test.size() == 1)
+                continue; // skip comment
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-            try {
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
-            } catch (ScriptException e) {
-                System.err.println(test);
-                System.err.flush();
-                throw e;
-            }
-        }
-    }
-    
-    @Test
-    public void dataDrivenInvalidScripts() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "script_invalid.json"), Charsets.UTF_8));
-        for (JsonNode test : json) {
+            ScriptError expectedError = ScriptError.fromMnemonic(test.get(3).asText());
             try {
                 Script scriptSig = parseScriptString(test.get(0).asText());
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
-                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-                scriptSig.correctlySpends(new Transaction(PARAMS), 0, scriptPubKey, verifyFlags);
-                System.err.println(test);
-                System.err.flush();
-                fail();
-            } catch (VerificationException e) {
-                // Expected.
+                Transaction txCredit = buildCreditingTransaction(scriptPubKey);
+                Transaction txSpend = buildSpendingTransaction(txCredit, scriptSig);
+                scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
+                if (!expectedError.equals(ScriptError.SCRIPT_ERR_OK))
+                    fail(test + " is expected to fail");
+            } catch (ScriptException e) {
+                if (!e.getError().equals(expectedError)) {
+                    System.err.println(test);
+                    e.printStackTrace();
+                    System.err.flush();
+                    throw e;
+                }
             }
         }
     }
-    
+
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
@@ -330,6 +322,38 @@ public class ScriptTest {
             scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
+    }
+
+    private Transaction buildCreditingTransaction(Script scriptPubKey) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+
+        TransactionInput txInput = new TransactionInput(PARAMS, null,
+                new ScriptBuilder().number(0).number(0).build().getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, Coin.ZERO, scriptPubKey.getProgram());
+        tx.addOutput(txOutput);
+
+        return tx;
+    }
+
+    private Transaction buildSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
+        Transaction tx = new Transaction(PARAMS);
+        tx.setVersion(1);
+        tx.setLockTime(0);
+
+        TransactionInput txInput = new TransactionInput(PARAMS, creditingTransaction, scriptSig.getProgram());
+        txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.addInput(txInput);
+
+        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, creditingTransaction.getOutput(0).getValue(),
+                new Script(new byte[] {}).getProgram());
+        tx.addOutput(txOutput);
+
+        return tx;
     }
 
     @Test
@@ -490,5 +514,15 @@ public class ScriptTest {
             0x01,        // Length of the pushed data
             ((byte) 133) // Pushed data
         }, builder.build().getProgram());
+    }
+
+    @Test
+    public void numberBuilder16() {
+        ScriptBuilder builder = new ScriptBuilder();
+        // Numbers greater than 16 must be encoded with PUSHDATA
+        builder.number(15).number(16).number(17);
+        builder.number(0, 17).number(1, 16).number(2, 15);
+        Script script = builder.build();
+        assertEquals("PUSHDATA(1)[11] 16 15 15 16 PUSHDATA(1)[11]", script.toString());
     }
 }

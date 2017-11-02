@@ -564,6 +564,13 @@ public class Peer extends PeerSocketHandler {
             close();
             return;
         }
+        if ((vPeerVersionMessage.localServices
+                & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH) {
+            log.info("{}: Peer follows an incompatible block chain.", this);
+            // Shut down the channel gracefully.
+            close();
+            return;
+        }
         if (vPeerVersionMessage.bestHeight < 0)
             // In this case, it's a protocol violation.
             throw new ProtocolException("Peer reports invalid best height: " + vPeerVersionMessage.bestHeight);
@@ -643,9 +650,9 @@ public class Peer extends PeerSocketHandler {
     protected void processAlert(AlertMessage m) {
         try {
             if (m.isSignatureValid()) {
-                log.info("Received alert from peer {}: {}", this, m.getStatusBar());
+                log.debug("Received alert from peer {}: {}", this, m.getStatusBar());
             } else {
-                log.warn("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
+                log.debug("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
             }
         } catch (Throwable t) {
             // Signature checking can FAIL on Android platforms before Gingerbread apparently due to bugs in their

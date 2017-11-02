@@ -84,7 +84,7 @@ public class WalletSettingsController {
         // Set the mnemonic seed words.
         final List<String> mnemonicCode = seed.getMnemonicCode();
         checkNotNull(mnemonicCode);    // Already checked for encryption.
-        String origWords = Utils.join(mnemonicCode);
+        String origWords = Utils.SPACE_JOINER.join(mnemonicCode);
         wordsArea.setText(origWords);
 
         // Validate words as they are being typed.

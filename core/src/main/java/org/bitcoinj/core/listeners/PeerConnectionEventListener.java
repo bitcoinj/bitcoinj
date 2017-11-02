@@ -17,6 +17,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerGroup;
 
 /**
  * <p>Implementors can listen to events like peer discovery, connect or disconnects.</p>

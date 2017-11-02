@@ -78,7 +78,7 @@ public class NativeSecp256k1 {
      * libsecp256k1 Create an ECDSA signature.
      *
      * @param data Message hash, 32 bytes
-     * @param key Secret key, 32 bytes
+     * @param sec Secret key, 32 bytes
      * @return sig byte array of signature
      */
     public static byte[] sign(byte[] data, byte[] sec) throws AssertFailException {
@@ -200,7 +200,7 @@ public class NativeSecp256k1 {
      * libsecp256k1 PrivKey Tweak-Mul - Tweak privkey by multiplying to it
      *
      * @param tweak some bytes to tweak with
-     * @param seckey 32-byte seckey
+     * @param privkey 32-byte seckey
      */
     public static byte[] privKeyTweakMul(byte[] privkey, byte[] tweak) throws AssertFailException {
         Preconditions.checkArgument(privkey.length == 32);
@@ -239,7 +239,7 @@ public class NativeSecp256k1 {
      * libsecp256k1 PrivKey Tweak-Add - Tweak privkey by adding to it
      *
      * @param tweak some bytes to tweak with
-     * @param seckey 32-byte seckey
+     * @param privkey 32-byte seckey
      */
     public static byte[] privKeyTweakAdd(byte[] privkey, byte[] tweak) throws AssertFailException {
         Preconditions.checkArgument(privkey.length == 32);

@@ -112,11 +112,7 @@ public class ScriptBuilder {
      * shortest encoding possible.
      */
     public ScriptBuilder number(long num) {
-        if (num >= 0 && num < 16) {
-            return smallNum((int) num);
-        } else {
-            return bigNum(num);
-        }
+        return number(chunks.size(), num);
     }
 
     /**
@@ -124,8 +120,10 @@ public class ScriptBuilder {
      * uses shortest encoding possible.
      */
     public ScriptBuilder number(int index, long num) {
-        if (num >= 0 && num < 16) {
-            return addChunk(index, new ScriptChunk(Script.encodeToOpN((int) num), null));
+        if (num == -1) {
+            return op(index, OP_1NEGATE);
+        } else if (num >= 0 && num <= 16) {
+            return smallNum(index, (int) num);
         } else {
             return bigNum(index, num);
         }
@@ -135,7 +133,7 @@ public class ScriptBuilder {
      * Adds the given number as a OP_N opcode to the end of the program.
      * Only handles values 0-16 inclusive.
      * 
-     * @see #number(int)
+     * @see #number(long)
      */
     public ScriptBuilder smallNum(int num) {
         return smallNum(chunks.size(), num);
@@ -146,7 +144,7 @@ public class ScriptBuilder {
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 
-     * @see #number(int)
+     * @see #number(long)
      */
     protected ScriptBuilder bigNum(long num) {
         return bigNum(chunks.size(), num);
@@ -156,7 +154,7 @@ public class ScriptBuilder {
      * Adds the given number as a OP_N opcode to the given index in the program.
      * Only handles values 0-16 inclusive.
      * 
-     * @see #number(int)
+     * @see #number(long)
      */
     public ScriptBuilder smallNum(int index, int num) {
         checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
@@ -170,7 +168,7 @@ public class ScriptBuilder {
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 
-     * @see #number(int)
+     * @see #number(long)
      */
     protected ScriptBuilder bigNum(int index, long num) {
         final byte[] data;

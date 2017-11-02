@@ -526,8 +526,9 @@ public class PaymentChannelServer {
         log.error(message);
         Protos.Error.Builder errorBuilder;
         errorBuilder = Protos.Error.newBuilder()
-                .setCode(errorCode)
-                .setExplanation(message);
+                .setCode(errorCode);
+        if (message != null)
+            errorBuilder.setExplanation(message);
         conn.sendToClient(Protos.TwoWayChannelMessage.newBuilder()
                 .setError(errorBuilder)
                 .setType(Protos.TwoWayChannelMessage.MessageType.ERROR)
@@ -554,7 +555,7 @@ public class PaymentChannelServer {
         ListenableFuture<KeyParameter> keyFuture = conn.getUserKey();
         ListenableFuture<Transaction> result;
         if (keyFuture != null) {
-            result = Futures.transform(conn.getUserKey(), new AsyncFunction<KeyParameter, Transaction>() {
+            result = Futures.transformAsync(conn.getUserKey(), new AsyncFunction<KeyParameter, Transaction>() {
                 @Override
                 public ListenableFuture<Transaction> apply(KeyParameter userKey) throws Exception {
                     return state.close(userKey);
@@ -594,7 +595,7 @@ public class PaymentChannelServer {
      * resume this channel in the future and stops generating messages for the client.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
-     * {@link ServerConnection#destroyConnection(CloseReason)} or
+     * {@link org.bitcoinj.protocols.channels.PaymentChannelServer.ServerConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)} or
      * {@link PaymentChannelServer#close()} is called to actually handle the connection close logic.</p>
      */
     public void connectionClosed() {
@@ -637,7 +638,7 @@ public class PaymentChannelServer {
 
     /**
      * <p>Closes the connection by generating a settle message for the client and calls
-     * {@link ServerConnection#destroyConnection(CloseReason)}. Note that this does not broadcast
+     * {@link org.bitcoinj.protocols.channels.PaymentChannelServer.ServerConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)}. Note that this does not broadcast
      * the payment transaction and the client may still resume the same channel if they reconnect</p>
      * <p>
      * <p>Note that {@link PaymentChannelServer#connectionClosed()} must still be called after the connection fully

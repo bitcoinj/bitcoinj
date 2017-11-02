@@ -171,7 +171,7 @@ public class MnemonicCodeTest {
             byte[] entropy = mc.toEntropy(split(vecCode));
 
             assertEquals(vecData, HEX.encode(entropy));
-            assertEquals(vecCode, Utils.join(code));
+            assertEquals(vecCode, Utils.SPACE_JOINER.join(code));
             assertEquals(vecSeed, HEX.encode(seed));
         }
     }

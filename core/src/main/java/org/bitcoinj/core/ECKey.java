@@ -62,7 +62,7 @@ import java.util.Comparator;
 import static com.google.common.base.Preconditions.*;
 
 // TODO: Move this class to tracking compression state itself.
-// The Bouncy Castle guys are deprecating their own tracking of the compression state.
+// The Bouncy Castle developers are deprecating their own tracking of the compression state.
 
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
@@ -185,18 +185,18 @@ public class ECKey implements EncryptableItem {
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this(priv, new LazyECPoint(checkNotNull(pub)));
+    }
+
+    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
+            checkArgument(priv.bitLength() <= 32 * 8, "private key exceeds 32 bytes: %s bits", priv.bitLength());
             // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
             // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
             // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
             checkArgument(!priv.equals(BigInteger.ZERO));
             checkArgument(!priv.equals(BigInteger.ONE));
         }
-        this.priv = priv;
-        this.pub = new LazyECPoint(checkNotNull(pub));
-    }
-
-    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         this.priv = priv;
         this.pub = checkNotNull(pub);
     }
@@ -574,13 +574,16 @@ public class ECKey implements EncryptableItem {
             }
         }
 
-        public static ECDSASignature decodeFromDER(byte[] bytes) {
+        public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
             ASN1InputStream decoder = null;
             try {
                 decoder = new ASN1InputStream(bytes);
-                DLSequence seq = (DLSequence) decoder.readObject();
-                if (seq == null)
-                    throw new RuntimeException("Reached past end of ASN.1 stream.");
+                final ASN1Primitive seqObj = decoder.readObject();
+                if (seqObj == null)
+                    throw new IllegalArgumentException("Reached past end of ASN.1 stream.");
+                if (!(seqObj instanceof DLSequence))
+                    throw new IllegalArgumentException("Read unexpected class: " + seqObj.getClass().getName());
+                final DLSequence seq = (DLSequence) seqObj;
                 ASN1Integer r, s;
                 try {
                     r = (ASN1Integer) seq.getObjectAt(0);
@@ -592,7 +595,7 @@ public class ECKey implements EncryptableItem {
                 // Thus, we always use the positive versions. See: http://r6.ca/blog/20111119T211504Z.html
                 return new ECDSASignature(r.getPositiveValue(), s.getPositiveValue());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalArgumentException(e);
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
@@ -1224,15 +1227,15 @@ public class ECKey implements EncryptableItem {
 
     @Override
     public String toString() {
-        return toString(false, null);
+        return toString(false, null, null);
     }
 
     /**
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
      */
-    public String toStringWithPrivate(NetworkParameters params) {
-        return toString(true, params);
+    public String toStringWithPrivate(@Nullable KeyParameter aesKey, NetworkParameters params) {
+        return toString(true, aesKey, params);
     }
 
     public String getPrivateKeyAsHex() {
@@ -1247,13 +1250,14 @@ public class ECKey implements EncryptableItem {
         return getPrivateKeyEncoded(params).toString();
     }
 
-    private String toString(boolean includePrivate, NetworkParameters params) {
+    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, NetworkParameters params) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
+            ECKey decryptedKey = isEncrypted() ? decrypt(checkNotNull(aesKey)) : this;
             try {
-                helper.add("priv HEX", getPrivateKeyAsHex());
-                helper.add("priv WIF", getPrivateKeyAsWiF(params));
+                helper.add("priv HEX", decryptedKey.getPrivateKeyAsHex());
+                helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(params));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
             } catch (Exception e) {
@@ -1271,7 +1275,8 @@ public class ECKey implements EncryptableItem {
         return helper.toString();
     }
 
-    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+            NetworkParameters params) {
         final Address address = toAddress(params);
         builder.append("  addr:");
         builder.append(address.toString());
@@ -1282,7 +1287,7 @@ public class ECKey implements EncryptableItem {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toStringWithPrivate(params));
+            builder.append(toStringWithPrivate(aesKey, params));
             builder.append("\n");
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
+ * Copyright 2017 Nicola Atzei
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.script;
 
-@SuppressWarnings("serial")
-public class ScriptException extends VerificationException {
+import static org.junit.Assert.assertTrue;
 
-    public ScriptException(String msg) {
-        super(msg);
-    }
+import org.junit.Test;
 
-    public ScriptException(String msg, Exception e) {
-        super(msg, e);
+public class ScriptBuilderTest {
+
+    @Test
+    public void testNumber() {
+        for (int i = -100; i <= 100; i++) {
+            Script s = new ScriptBuilder().number(i).build();
+            for (ScriptChunk ch : s.chunks) {
+                assertTrue(Integer.toString(i), ch.isShortestPossiblePushData());
+            }
+        }
     }
 }

@@ -58,7 +58,7 @@ public class SendRequest {
      *
      * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
      * otherwise their value will be added to fee.  Also ensure they are either signed or are spendable by a wallet
-     * key, otherwise the behavior of {@link Wallet#completeTx(Wallet.SendRequest)} is undefined (likely
+     * key, otherwise the behavior of {@link Wallet#completeTx(SendRequest)} is undefined (likely
      * RuntimeException).</p>
      */
     public Transaction tx;
@@ -145,6 +145,12 @@ public class SendRequest {
      * of the payment request that initiated the transaction.
      */
     public String memo = null;
+
+    /**
+     * If false (default value), tx fee is paid by the sender If true, tx fee is paid by the recipient/s. If there is
+     * more than one recipient, the tx fee is split equally between them regardless of output value and size.
+     */
+    public boolean recipientsPayFees = false;
 
     // Tracks if this has been passed to wallet.completeTx already: just a safety check.
     boolean completed;
@@ -262,6 +268,7 @@ public class SendRequest {
         helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
         helper.add("coinSelector", coinSelector);
         helper.add("shuffleOutputs", shuffleOutputs);
+        helper.add("recipientsPayFees", recipientsPayFees);
         return helper.toString();
     }
 }

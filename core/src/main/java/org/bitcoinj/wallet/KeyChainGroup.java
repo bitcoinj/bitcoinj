@@ -606,7 +606,6 @@ public class KeyChainGroup implements KeyBag {
         return filter;
     }
 
-    /** {@inheritDoc} */
     public boolean isRequiringUpdateAllBloomFilter() {
         throw new UnsupportedOperationException();   // Unused.
     }
@@ -798,16 +797,16 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    public String toString(boolean includePrivateKeys) {
+    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null) {
             List<ECKey> keys = basic.getKeys();
             Collections.sort(keys, ECKey.AGE_COMPARATOR);
             for (ECKey key : keys)
-                key.formatKeyWithAddress(includePrivateKeys, builder, params);
+                key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params);
         }
         for (DeterministicKeyChain chain : chains)
-            builder.append(chain.toString(includePrivateKeys, params)).append('\n');
+            builder.append(chain.toString(includePrivateKeys, aesKey, params)).append('\n');
         return builder.toString();
     }
 
