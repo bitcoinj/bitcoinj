@@ -17,12 +17,15 @@
 package org.bitcoinj.core;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 
 import org.junit.Test;
 import org.bitcoinj.params.MainNetParams;
@@ -66,7 +69,37 @@ public class DumpedPrivateKeyTest {
 
     @Test
     public void roundtripBase58() throws Exception {
-        String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk";
+        String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk";      // 32-bytes key
         assertEquals(base58, DumpedPrivateKey.fromBase58(null, base58).toBase58());
+    }
+
+    @Test
+    public void roundtripBase58_compressed() throws Exception {
+        String base58 = "cSthBXr8YQAexpKeh22LB9PdextVE1UJeahmyns5LzcmMDSy59L4";     // 33-bytes, compressed == true
+        assertEquals(base58, DumpedPrivateKey.fromBase58(null, base58).toBase58());
+    }
+
+    @Test(expected=AddressFormatException.class)
+    public void roundtripBase58_invalidCompressed() {
+        String base58 = "5Kg5shEQWrf1TojaHTdc2kLuz5Mfh4uvp3cYu8uJHaHgfTGUbTD";      // 32-bytes key
+        byte[] bytes = Base58.decodeChecked(base58);
+        bytes = Arrays.copyOf(bytes, bytes.length+1);   // append a "compress" byte
+        bytes[bytes.length-1] = 0;                      // set it to false
+        base58 = Base58.encode(bytes);                  // 33-bytes key, compressed == false
+        DumpedPrivateKey.fromBase58(null, base58);      // fail
+    }
+
+    @Test
+    public void roundtripBase58_getKey() throws Exception {
+        ECKey k = new ECKey().decompress();
+        assertFalse(k.isCompressed());
+        assertEquals(k.getPrivKey(), DumpedPrivateKey.fromBase58(null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
+    }
+
+    @Test
+    public void roundtripBase58_compressed_getKey() throws Exception {
+        ECKey k = new ECKey();
+        assertTrue(k.isCompressed());
+        assertEquals(k.getPrivKey(), DumpedPrivateKey.fromBase58(null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
     }
 }
