@@ -775,8 +775,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            // save account path
-            mnemonicEntry.setAccountPath(HDUtils.formatPath(getAccountPath()));
+            // TODO this is a current workaround!!! Please move it to a dedicated entry
+            mnemonicEntry.setLabel(HDUtils.formatPath(getAccountPath()));
             entries.add(mnemonicEntry.build());
         }
         Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
@@ -826,15 +826,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        String originalAccountPath = HDUtils.formatPath(ACCOUNT_ZERO_PATH);
+        String originalAccountPath = "";
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 // recover original account path size
-                if (key.hasAccountPath()) {
-                    originalAccountPath = key.getAccountPath();
+                if (key.hasLabel()) {
+                    originalAccountPath = key.getLabel();
                 }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
