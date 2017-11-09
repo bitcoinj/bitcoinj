@@ -21,12 +21,15 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptError;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -78,8 +81,12 @@ public class Transaction extends ChildMessage {
     public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
         @Override
         public int compare(final Transaction tx1, final Transaction tx2) {
-            final int height1 = tx1.getConfidence().getAppearedAtChainHeight();
-            final int height2 = tx2.getConfidence().getAppearedAtChainHeight();
+            final TransactionConfidence confidence1 = tx1.getConfidence();
+            final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
+                    ? confidence1.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
+            final TransactionConfidence confidence2 = tx2.getConfidence();
+            final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
+                    ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
             final int heightComparison = -(Ints.compare(height1, height2));
             //If height1==height2, compare by tx hash to make comparator consistent with equals
             return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());
@@ -102,9 +109,9 @@ public class Transaction extends ChildMessage {
 
     /**
      * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
-     * This should be adjusted from time to time. Last adjustment: March 2016.
+     * This should be adjusted from time to time. Last adjustment: February 2017.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(50000); // 0.5 mBTC
+    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
@@ -126,7 +133,8 @@ public class Transaction extends ChildMessage {
     // list of transactions from a wallet, which is helpful for presenting to users.
     private Date updatedAt;
 
-    // This is an in memory helper only.
+    // This is an in memory helper only. It contains the transaction hash (aka txid), used as a reference by transaction
+    // inputs via outpoints.
     private Sha256Hash hash;
 
     // Data about how confirmed this tx is. Serialized, may be null.
@@ -216,9 +224,8 @@ public class Transaction extends ChildMessage {
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param parseRetain Whether to retain the backing byte array for quick reserialization.
-     * If true and the backing byte array is invalidated due to modification of a field then
-     * the cached bytes may be repopulated and retained if the message is serialized again in the future.
+     * @param parent The parent of the transaction.
+     * @param setSerializer The serializer to use for this transaction.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
@@ -237,7 +244,8 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Returns the transaction hash as you see them in the block explorer.
+     * Returns the transaction hash (aka txid) as you see them in block explorers. It is used as a reference by
+     * transaction inputs via outpoints.
      */
     @Override
     public Sha256Hash getHash() {
@@ -257,6 +265,9 @@ public class Transaction extends ChildMessage {
         this.hash = hash;
     }
 
+    /**
+     * Returns the transaction hash (aka txid) as you see them in block explorers, as a hex string.
+     */
     public String getHashAsString() {
         return getHash().toString();
     }
@@ -415,6 +426,8 @@ public class Transaction extends ChildMessage {
      */
     public Coin getFee() {
         Coin fee = Coin.ZERO;
+        if (inputs.isEmpty() || outputs.isEmpty()) // Incomplete transaction
+            return null;
         for (TransactionInput input : inputs) {
             if (input.getValue() == null)
                 return null;
@@ -653,12 +666,11 @@ public class Transaction extends ChildMessage {
             }
             s.append('\n');
         }
+        if (hasRelativeLockTime()) {
+            s.append("  has relative lock time\n");
+        }
         if (isOptInFullRBF()) {
             s.append("  opts into full replace-by-fee\n");
-        }
-        if (inputs.size() == 0) {
-            s.append("  INCOMPLETE: No inputs!\n");
-            return s.toString();
         }
         if (isCoinBase()) {
             String script;
@@ -674,51 +686,60 @@ public class Transaction extends ChildMessage {
                 .append(")  (scriptPubKey ").append(script2).append(")\n");
             return s.toString();
         }
-        for (TransactionInput in : inputs) {
-            s.append("     ");
-            s.append("in   ");
+        if (!inputs.isEmpty()) {
+            for (TransactionInput in : inputs) {
+                s.append("     ");
+                s.append("in   ");
 
-            try {
-                Script scriptSig = in.getScriptSig();
-                s.append(scriptSig);
-                if (in.getValue() != null)
-                    s.append(" ").append(in.getValue().toFriendlyString());
-                s.append("\n          ");
-                s.append("outpoint:");
-                final TransactionOutPoint outpoint = in.getOutpoint();
-                s.append(outpoint.toString());
-                final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
-                if (connectedOutput != null) {
-                    Script scriptPubKey = connectedOutput.getScriptPubKey();
-                    if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
-                        s.append(" hash160:");
-                        s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                try {
+                    String scriptSigStr = in.getScriptSig().toString();
+                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
+                    final Coin value = in.getValue();
+                    if (value != null)
+                        s.append(" ").append(value.toFriendlyString());
+                    s.append("\n          ");
+                    s.append("outpoint:");
+                    final TransactionOutPoint outpoint = in.getOutpoint();
+                    s.append(outpoint.toString());
+                    final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+                    if (connectedOutput != null) {
+                        Script scriptPubKey = connectedOutput.getScriptPubKey();
+                        if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
+                            s.append(" hash160:");
+                            s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                        }
                     }
+                    if (in.hasSequence()) {
+                        s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
+                        if (in.isOptInFullRBF())
+                            s.append(", opts into full RBF");
+                        if (version >=2 && in.hasRelativeLockTime())
+                            s.append(", has RLT");
+                    }
+                } catch (Exception e) {
+                    s.append("[exception: ").append(e.getMessage()).append("]");
                 }
-                if (in.hasSequence()) {
-                    s.append("\n          sequence:").append(Long.toHexString(in.getSequenceNumber()));
-                    if (in.isOptInFullRBF())
-                        s.append(", opts into full RBF");
-                }
-            } catch (Exception e) {
-                s.append("[exception: ").append(e.getMessage()).append("]");
+                s.append('\n');
             }
-            s.append('\n');
+        } else {
+            s.append("     ");
+            s.append("INCOMPLETE: No inputs!\n");
         }
         for (TransactionOutput out : outputs) {
             s.append("     ");
             s.append("out  ");
             try {
-                Script scriptPubKey = out.getScriptPubKey();
-                s.append(scriptPubKey);
+                String scriptPubKeyStr = out.getScriptPubKey().toString();
+                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
                 if (!out.isAvailableForSpending()) {
                     s.append(" Spent");
                 }
-                if (out.getSpentBy() != null) {
+                final TransactionInput spentBy = out.getSpentBy();
+                if (spentBy != null) {
                     s.append(" by ");
-                    s.append(out.getSpentBy().getParentTransaction().getHashAsString());
+                    s.append(spentBy.getParentTransaction().getHashAsString());
                 }
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
@@ -752,8 +773,8 @@ public class Transaction extends ChildMessage {
 
     /**
      * Adds an input to this transaction that imports value from the given output. Note that this input is <i>not</i>
-     * complete and after every input is added with {@link #addInput()} and every output is added with
-     * {@link #addOutput()}, a {@link TransactionSigner} must be used to finalize the transaction and finish the inputs
+     * complete and after every input is added with {@link #addInput(TransactionInput)} and every output is added with
+     * {@link #addOutput(TransactionOutput)}, a {@link TransactionSigner} must be used to finalize the transaction and finish the inputs
      * off. Otherwise it won't be accepted by the network.
      * @return the newly created input.
      */
@@ -803,7 +824,7 @@ public class Transaction extends ChildMessage {
         else if (scriptPubKey.isSentToAddress())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
         else
-            throw new ScriptException("Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
         return input;
     }
 
@@ -1323,7 +1344,8 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * <p>A transaction is time locked if at least one of its inputs is non-final and it has a lock time</p>
+     * <p>A transaction is time-locked if at least one of its inputs is non-final and it has a lock time. A transaction can
+     * also have a relative lock time which this method doesn't tell. Use {@link #hasRelativeLockTime()} to find out.</p>
      *
      * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, long)}
      * </p>
@@ -1333,6 +1355,20 @@ public class Transaction extends ChildMessage {
             return false;
         for (TransactionInput input : getInputs())
             if (input.hasSequence())
+                return true;
+        return false;
+    }
+
+    /**
+     * A transaction has a relative lock time
+     * (<a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">BIP 68</a>) if it is version 2 or
+     * higher and at least one of its inputs has its {@link TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
+     */
+    public boolean hasRelativeLockTime() {
+        if (version < 2)
+            return false;
+        for (TransactionInput input : getInputs())
+            if (input.hasRelativeLockTime())
                 return true;
         return false;
     }

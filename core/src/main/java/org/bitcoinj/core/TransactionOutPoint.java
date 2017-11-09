@@ -148,7 +148,7 @@ public class TransactionOutPoint extends ChildMessage {
             byte[] pubkeyBytes = connectedScript.getPubKey();
             return keyBag.findKeyFromPubKey(pubkeyBytes);
         } else {
-            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
         }
     }
 
@@ -174,7 +174,7 @@ public class TransactionOutPoint extends ChildMessage {
             byte[] scriptHash = connectedScript.getPubKeyHash();
             return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
-            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
         }
     }
 

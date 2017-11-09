@@ -118,7 +118,7 @@ public class PaymentChannelV2ServerState extends PaymentChannelServerState {
 
     /**
      * Creates a P2SH script outputting to the client and server pubkeys
-     * @return
+     * @return a P2SH script.
      */
     @Override
     protected Script createOutputScript() {

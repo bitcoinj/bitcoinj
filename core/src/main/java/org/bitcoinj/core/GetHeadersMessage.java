@@ -37,7 +37,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
 
     @Override
     public String toString() {
-        return "getheaders: " + Utils.join(locator);
+        return "getheaders: " + Utils.SPACE_JOINER.join(locator);
     }
 
     /**

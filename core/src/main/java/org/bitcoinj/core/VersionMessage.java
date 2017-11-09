@@ -45,10 +45,12 @@ public class VersionMessage extends Message {
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
-    /** A services flag that denotes whether the peer has a copy of the block chain or not. */
-    public static final int NODE_NETWORK = 1;
-    /** A flag that denotes whether the peer supports the getutxos message or not. */
-    public static final int NODE_GETUTXOS = 2;
+    /** A service bit that denotes whether the peer has a copy of the block chain or not. */
+    public static final int NODE_NETWORK = 1 << 0;
+    /** A service bit that denotes whether the peer supports the getutxos message or not. */
+    public static final int NODE_GETUTXOS = 1 << 1;
+    /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
+    public static final int NODE_BITCOIN_CASH = 1 << 5;
 
     /**
      * The version number of the protocol spoken.

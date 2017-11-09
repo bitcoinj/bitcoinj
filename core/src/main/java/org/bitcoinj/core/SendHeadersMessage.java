@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
+ * Copyright 2017 Anton Kumaigorodski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core.listeners;
-
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerGroup;
+package org.bitcoinj.core;
 
 /**
- * <p>Implementors can listen to events indicating a new peer connecting.</p>
+ * <p>
+ * A new message, "sendheaders", which indicates that a node prefers to receive new block announcements via a "headers"
+ * message rather than an "inv".
+ * </p>
+ *
+ * <p>
+ * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0130.mediawiki">BIP 130</a>.
+ * </p>
  */
-public interface PeerConnectedEventListener {
+public class SendHeadersMessage extends EmptyMessage {
+    public SendHeadersMessage() {
+    }
 
-    /**
-     * Called when a peer is connected. If this listener is registered to a {@link Peer} instead of a {@link PeerGroup},
-     * peerCount will always be 1.
-     *
-     * @param peer
-     * @param peerCount the total number of connected peers
-     */
-    void onPeerConnected(Peer peer, int peerCount);
+    // this is needed by the BitcoinSerializer
+    public SendHeadersMessage(NetworkParameters params, byte[] payload) {
+    }
 }

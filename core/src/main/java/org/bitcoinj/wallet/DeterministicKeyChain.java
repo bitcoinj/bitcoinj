@@ -775,8 +775,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            // save account path
-            mnemonicEntry.setAccountPath(HDUtils.formatPath(getAccountPath()));
+            // TODO this is a current workaround!!! Please move it to a dedicated entry
+            mnemonicEntry.setLabel(HDUtils.formatPath(getAccountPath()));
             entries.add(mnemonicEntry.build());
         }
         Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
@@ -826,15 +826,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        String originalAccountPath = HDUtils.formatPath(ACCOUNT_ZERO_PATH);
+        String originalAccountPath = "";
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 // recover original account path size
-                if (key.hasAccountPath()) {
-                    originalAccountPath = key.getAccountPath();
+                if (key.hasLabel()) {
+                    originalAccountPath = key.getLabel();
                 }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
@@ -1364,16 +1364,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         throw new UnsupportedOperationException();
     }
 
-    public String toString(boolean includePrivateKeys, NetworkParameters params) {
+    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
         final DeterministicKey watchingKey = getWatchingKey();
         final StringBuilder builder = new StringBuilder();
         if (seed != null) {
-            if (seed.isEncrypted()) {
-                builder.append("Seed is encrypted\n");
-            } else if (includePrivateKeys) {
-                final List<String> words = seed.getMnemonicCode();
-                builder.append("Seed as words: ").append(Utils.join(words)).append('\n');
-                builder.append("Seed as hex:   ").append(seed.toHexString()).append('\n');
+            if (includePrivateKeys) {
+                DeterministicSeed decryptedSeed = seed.isEncrypted()
+                        ? seed.decrypt(getKeyCrypter(), DEFAULT_PASSPHRASE_FOR_MNEMONIC, aesKey) : seed;
+                final List<String> words = decryptedSeed.getMnemonicCode();
+                builder.append("Seed as words: ").append(Utils.SPACE_JOINER.join(words)).append('\n');
+                builder.append("Seed as hex:   ").append(decryptedSeed.toHexString()).append('\n');
+            } else {
+                if (seed.isEncrypted())
+                    builder.append("Seed is encrypted\n");
             }
             builder.append("Seed birthday: ").append(seed.getCreationTimeSeconds()).append("  [")
                     .append(Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
@@ -1382,13 +1385,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     .append(Utils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
         }
         builder.append("Key to watch:  ").append(watchingKey.serializePubB58(params)).append('\n');
-        formatAddresses(includePrivateKeys, params, builder);
+        formatAddresses(includePrivateKeys, aesKey, params, builder);
         return builder.toString();
     }
 
-    protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder) {
+    protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
+            StringBuilder builder) {
         for (ECKey key : getKeys(false, true))
-            key.formatKeyWithAddress(includePrivateKeys, builder, params);
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params);
     }
 
     /** The number of signatures required to spend coins received by this keychain. */

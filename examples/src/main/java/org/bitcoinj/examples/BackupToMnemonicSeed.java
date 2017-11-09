@@ -41,6 +41,6 @@ public class BackupToMnemonicSeed {
         System.out.println("seed: " + seed.toString());
 
         System.out.println("creation time: " + seed.getCreationTimeSeconds());
-        System.out.println("mnemonicCode: " + Utils.join(seed.getMnemonicCode()));
+        System.out.println("mnemonicCode: " + Utils.SPACE_JOINER.join(seed.getMnemonicCode()));
     }
 }

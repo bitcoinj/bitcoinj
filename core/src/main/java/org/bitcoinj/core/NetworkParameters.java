@@ -422,7 +422,7 @@ public abstract class NetworkParameters {
 
     /**
      * Return the default serializer for this network. This is a shared serializer.
-     * @return 
+     * @return the default serializer for this network.
      */
     public final MessageSerializer getDefaultSerializer() {
         // Construct a default serializer if we don't have one
@@ -448,7 +448,7 @@ public abstract class NetworkParameters {
     public abstract BitcoinSerializer getSerializer(boolean parseRetain);
 
     /**
-     * The number of blocks in the last {@link getMajorityWindow()} blocks
+     * The number of blocks in the last {@link #getMajorityWindow()} blocks
      * at which to trigger a notice to the user to upgrade their client, where
      * the client does not understand those blocks.
      */
@@ -457,7 +457,7 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * The number of blocks in the last {@link getMajorityWindow()} blocks
+     * The number of blocks in the last {@link #getMajorityWindow()} blocks
      * at which to enforce the requirement that all new blocks are of the
      * newer type (i.e. outdated blocks are rejected).
      */
@@ -527,7 +527,7 @@ public abstract class NetworkParameters {
         MINIMUM(70000),
         PONG(60001),
         BLOOM_FILTER(70000),
-        CURRENT(70001);
+        CURRENT(70012);
 
         private final int bitcoinProtocol;
 

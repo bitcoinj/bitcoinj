@@ -317,7 +317,7 @@ public class ECKeyTest {
         ECKey key = ECKey.fromPrivate(BigInteger.TEN).decompress(); // An example private key.
         NetworkParameters params = MainNetParams.get();
         assertEquals("ECKey{pub HEX=04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7, isEncrypted=false, isPubKeyOnly=false}", key.toString());
-        assertEquals("ECKey{pub HEX=04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7, priv HEX=000000000000000000000000000000000000000000000000000000000000000a, priv WIF=5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreBoNWTw6, isEncrypted=false, isPubKeyOnly=false}", key.toStringWithPrivate(params));
+        assertEquals("ECKey{pub HEX=04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7, priv HEX=000000000000000000000000000000000000000000000000000000000000000a, priv WIF=5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreBoNWTw6, isEncrypted=false, isPubKeyOnly=false}", key.toStringWithPrivate(null, params));
     }
 
     @Test
@@ -463,5 +463,12 @@ public class ECKeyTest {
         ECKey pubKey2 = pubKey1.decompress();
         assertEquals(pubKey1, pubKey2);
         assertEquals(pubKey1.hashCode(), pubKey2.hashCode());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void fromPrivate_exceedsSize() {
+        final byte[] bytes = new byte[33];
+        bytes[0] = 42;
+        ECKey.fromPrivate(bytes);
     }
 }

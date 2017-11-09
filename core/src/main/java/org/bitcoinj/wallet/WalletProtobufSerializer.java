@@ -22,6 +22,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
@@ -125,7 +126,7 @@ public class WalletProtobufSerializer {
     }
 
     /**
-     * Change buffer size for writing wallet to output stream. Default is {@link com.google.protobuf.CodedOutputStream.DEFAULT_BUFFER_SIZE}
+     * Change buffer size for writing wallet to output stream. Default is {@link com.google.protobuf.CodedOutputStream#DEFAULT_BUFFER_SIZE}
      * @param walletWriteBufferSize - buffer size in bytes
      */
     public void setWalletWriteBufferSize(int walletWriteBufferSize) {
@@ -418,7 +419,7 @@ public class WalletProtobufSerializer {
      * Wallet object with {@code forceReset} set {@code true}. It won't work.</p>
      *
      * <p>If {@code forceReset} is {@code true}, then no transactions are loaded from the wallet, and it is configured
-     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet.reset}
+     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet#reset()}
      * had been called immediately thereafter).
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally
@@ -467,7 +468,7 @@ public class WalletProtobufSerializer {
      * Wallet object with {@code forceReset} set {@code true}. It won't work.</p>
      *
      * <p>If {@code forceReset} is {@code true}, then no transactions are loaded from the wallet, and it is configured
-     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet.reset}
+     * to replay transactions from the blockchain (as if the wallet had been loaded and {@link Wallet#reset()}
      * had been called immediately thereafter).
      *
      * <p>A wallet can be unreadable for various reasons, such as inability to open the file, corrupt data, internally

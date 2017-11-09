@@ -132,9 +132,6 @@ message Key {
 
   // Encrypted version of the seed
   optional EncryptedData encrypted_deterministic_seed = 9;
-
-  // The original account path
-  optional string account_path = 10;
 }
 
 message Script {

@@ -27,6 +27,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
@@ -1447,7 +1448,21 @@ public class WalletTool {
         // there just for the dump case.
         if (chainFileName.exists())
             setup();
-        System.out.println(wallet.toString(options.has("dump-privkeys"), true, true, chain));
+
+        final boolean dumpPrivkeys = options.has("dump-privkeys");
+        if (dumpPrivkeys && wallet.isEncrypted()) {
+            if (password != null) {
+                final KeyParameter aesKey = passwordToKey(true);
+                if (aesKey == null)
+                    return; // Error message already printed.
+                System.out.println(wallet.toString(true, aesKey, true, true, chain));
+            } else {
+                System.err.println("Can't dump privkeys, wallet is encrypted.");
+                return;
+            }
+        } else {
+            System.out.println(wallet.toString(dumpPrivkeys, null, true, true, chain));
+        }
     }
 
     private static void setCreationTime() {

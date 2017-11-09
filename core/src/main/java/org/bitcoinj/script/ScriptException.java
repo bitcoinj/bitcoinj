@@ -1,6 +1,6 @@
 /*
- * Copyright by the original author or authors.
- * 
+ * Copyright 2011 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,26 @@
  * limitations under the License.
  */
 
-/**
- * Classes that know how to discover peers in the P2P network using DNS or HTTP.
- */
-package org.bitcoinj.net.discovery;
+package org.bitcoinj.script;
+
+import org.bitcoinj.core.VerificationException;
+
+@SuppressWarnings("serial")
+public class ScriptException extends VerificationException {
+
+    private final ScriptError err;
+
+    public ScriptException(ScriptError err, String msg) {
+        super(msg);
+        this.err = err;
+    }
+
+    public ScriptException(ScriptError err, String msg, Exception e) {
+        super(msg, e);
+        this.err = err;
+    }
+
+    public ScriptError getError() {
+        return err;
+    }
+}

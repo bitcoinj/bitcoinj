@@ -177,11 +177,11 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
     /**
      * <p>Closes this channel and broadcasts the highest value payment transaction on the network.</p>
      *
-     * <p>This will set the state to {@link State#CLOSED} if the transaction is successfully broadcast on the network.
-     * If we fail to broadcast for some reason, the state is set to {@link State#ERROR}.</p>
+     * <p>This will set the state to {@link org.bitcoinj.protocols.channels.PaymentChannelServerState.State#CLOSED} if the transaction is successfully broadcast on the network.
+     * If we fail to broadcast for some reason, the state is set to {@link org.bitcoinj.protocols.channels.PaymentChannelServerState.State#ERROR}.</p>
      *
-     * <p>If the current state is before {@link State#READY} (ie we have not finished initializing the channel), we
-     * simply set the state to {@link State#CLOSED} and let the client handle getting its refund transaction confirmed.
+     * <p>If the current state is before {@link org.bitcoinj.protocols.channels.PaymentChannelServerState.State#READY} (ie we have not finished initializing the channel), we
+     * simply set the state to {@link org.bitcoinj.protocols.channels.PaymentChannelServerState.State#CLOSED} and let the client handle getting its refund transaction confirmed.
      * </p>
      *
      * @param userKey The AES key to use for decryption of the private key. If null then no decryption is required.

@@ -386,7 +386,7 @@ public abstract class PaymentChannelServerState {
     /**
      * Gets the script that signatures should sign against. This is never a P2SH
      * script, rather the script that would be inside a P2SH script.
-     * @return
+     * @return the script that signatures should sign against.
      */
     protected abstract Script getSignedScript();
 
