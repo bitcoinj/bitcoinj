@@ -84,6 +84,9 @@ public class KeyChainGroup implements KeyBag {
         this(params, null, ImmutableList.of(new DeterministicKeyChain(seed)), null, null);
     }
 
+    /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed.
+     * Account path is provided.
+     **/
     public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
         this(params, null, ImmutableList.of(new DeterministicKeyChain(seed, accountPath)), null, null);
     }
