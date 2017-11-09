@@ -51,6 +51,8 @@ public class VersionMessage extends Message {
     public static final int NODE_GETUTXOS = 1 << 1;
     /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
     public static final int NODE_BITCOIN_CASH = 1 << 5;
+    /** A service bit used by BTC1 to announce Segwit2x nodes. */
+    public static final int NODE_SEGWIT2X = 1 << 7;
 
     /**
      * The version number of the protocol spoken.
