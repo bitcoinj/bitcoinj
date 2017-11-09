@@ -311,6 +311,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(seed, null, ACCOUNT_ZERO_PATH);
     }
 
+    /**
+     * Creates a deterministic key chain starting from the given seed. This deterministic Key chain
+     * will follow the account path defined.
+     */
     public DeterministicKeyChain(DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
         this(seed, null, accountPath);
     }
@@ -388,7 +392,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this(seed, crypter, ACCOUNT_ZERO_PATH);
     }
 
-    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter, ImmutableList<ChildNumber> accountPath) {
+    /**
+     * Creates a deterministic key chain with an encrypted deterministic seed using the provided account path.
+     *  Using {@link org.bitcoinj.crypto.KeyCrypter KeyCrypter} to decrypt.
+     */
+    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
+                                    ImmutableList<ChildNumber> accountPath) {
         setAccountPath(accountPath);
 
         this.seed = seed;

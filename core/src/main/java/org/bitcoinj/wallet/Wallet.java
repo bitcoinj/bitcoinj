@@ -266,10 +266,22 @@ public class Wallet extends BaseTaggableObject
         this(context, new KeyChainGroup(context.getParams()));
     }
 
+    /**
+     * @param params network parameters
+     * @param seed deterministic seed
+     * @return a wallet from a deterministic seed with a
+     * {@link org.bitcoinj.wallet.DeterministicKeyChain#ACCOUNT_ZERO_PATH 0 hardened path}
+     */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
         return new Wallet(params, new KeyChainGroup(params, seed));
     }
 
+    /**
+     * @param params network parameters
+     * @param seed deterministic seed
+     * @param accountPath account path
+     * @return an instance of a wallet from a deterministic seed.
+     */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
         return new Wallet(params, new KeyChainGroup(params, seed, accountPath));
     }
