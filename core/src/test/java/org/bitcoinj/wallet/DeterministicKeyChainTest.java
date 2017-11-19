@@ -152,6 +152,11 @@ public class DeterministicKeyChainTest {
             public DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public DeterministicKeyChain makeSpendingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isMarried) {
+                throw new UnsupportedOperationException();
+            }
         };
 
         chain1 = DeterministicKeyChain.fromProtobuf(keys, null, factory).get(0);
@@ -468,6 +473,180 @@ public class DeterministicKeyChainTest {
         chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
         final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+    }
+
+    @Test
+    public void spendingChain() throws UnreadableWalletException {
+        Utils.setMockClock();
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        NetworkParameters params = MainNetParams.get();
+        DeterministicKey watchingKey = chain.getWatchingKey();
+        final String prv58 = watchingKey.serializePrivB58(params);
+        assertEquals("xprv9vL4k9HYXonmvqGSUrRM6wGEmx3ruGTXi4JxHRiwEvwDwYmTocPbQNpjN89gpqPrFofmfvALwgnNFBCH2grse1YDf8ERAwgdvbjRtoMfsbV", prv58);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey.setCreationTimeSeconds(100000);
+        chain = DeterministicKeyChain.spend(watchingKey);
+        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        chain.setLookaheadSize(10);
+        chain.maybeLookAhead();
+
+        assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), key.getPubKeyPoint());
+        try {
+            // We can sign with a key from a spending chain.
+            key.sign(Sha256Hash.ZERO_HASH);
+        } catch (ECKey.MissingPrivateKeyException e) {
+            fail();
+        }
+        // Test we can serialize and deserialize a watching chain OK.
+        List<Protos.Key> serialization = chain.serializeToProtobuf();
+        checkSerialization(serialization, "spending-wallet-serialization.txt");
+        chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
+        final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+    }
+    static class AccountTwoChain extends DeterministicKeyChain {
+        public AccountTwoChain(byte[] entropy, String s, long secs) {
+            super(entropy, s, secs);
+        }
+
+        public AccountTwoChain(KeyCrypter crypter, DeterministicSeed seed) {
+            super(seed, crypter);
+        }
+
+        @Override
+        protected ImmutableList<ChildNumber> getAccountPath() {
+            return ImmutableList.of(new ChildNumber(2, true));
+        }
+    }
+
+    @Test
+    public void spendingChainAccountTwo() throws UnreadableWalletException {
+        Utils.setMockClock();
+        long secs = 1389353062L;
+        chain = new AccountTwoChain(ENTROPY, "", secs);
+        DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        NetworkParameters params = MainNetParams.get();
+        DeterministicKey watchingKey = chain.getWatchingKey();
+
+        final String prv58 = watchingKey.serializePrivB58(params);
+        assertEquals("xprv9vL4k9HYXonmzR7UC1ngJ3hTjxkmjLLUo3RexSfUGSWcACHzghWBLJAwW6xzs59XeFizQxFQWtscoTfrF9PSXrUgAtBgr13Nuojax8xTBRz", prv58);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey.setCreationTimeSeconds(secs);
+        chain = DeterministicKeyChain.spend(watchingKey);
+        assertEquals(secs, chain.getEarliestKeyCreationTime());
+        chain.setLookaheadSize(10);
+        chain.maybeLookAhead();
+
+        assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), key.getPubKeyPoint());
+        try {
+            // We can sign with a key from a spending chain.
+            key.sign(Sha256Hash.ZERO_HASH);
+        } catch (ECKey.MissingPrivateKeyException e) {
+            fail();
+        }
+        // Test we can serialize and deserialize a spending chain OK.
+        List<Protos.Key> serialization = chain.serializeToProtobuf();
+        checkSerialization(serialization, "spending-wallet-account-two-serialization.txt");
+        chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
+        final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+    }
+
+    @Test
+    public void masterKeyAccount() throws UnreadableWalletException {
+        Utils.setMockClock();
+        long secs = 1389353062L;
+        DeterministicKey key1 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        DeterministicKey key4 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        NetworkParameters params = MainNetParams.get();
+        DeterministicKey watchingKey = bip44chain.getWatchingKey(); //m/44'/1'/0'
+        DeterministicKey coinLevelKey = bip44chain.getWatchingKey().getParent(); //m/44'/1'
+
+        //Simulate Wallet.fromSpendingKeyB58(PARAMS, prv58, secs)
+        final String prv58 = watchingKey.serializePrivB58(params);
+        assertEquals("xprv9yYQhynAmWWuz62PScx5Q2frBET2F1raaXna5A2E9Lj8XWgmKBL7S98Yand8F736j9UCTNWQeiB4yL5pLZP7JDY2tY8eszGQkiKDwBkezeS", prv58);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey.setCreationTimeSeconds(secs);
+        bip44chain = DeterministicKeyChain.spend(watchingKey);
+        assertEquals(secs, bip44chain.getEarliestKeyCreationTime());
+        bip44chain.setLookaheadSize(10);
+        bip44chain.maybeLookAhead();
+
+        //Simulate Wallet.fromMasterKey(params, coinLevelKey, 0)
+
+        DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(coinLevelKey, new ChildNumber(0, true));
+        accountKey = accountKey.dropParent();
+        accountKey.setCreationTimeSeconds(watchingKey.getCreationTimeSeconds());
+        KeyChainGroup group = new KeyChainGroup(params, accountKey, false);
+        DeterministicKeyChain bip44chain2 = group.getActiveKeyChain();
+        assertEquals(secs, bip44chain2.getEarliestKeyCreationTime());
+        bip44chain2.setLookaheadSize(10);
+        bip44chain2.maybeLookAhead();
+
+        //verify that the keys are the same as the original bip44chain (from serializedB58)
+        assertEquals(key1.getPubKeyPoint(), bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey key = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), key.getPubKeyPoint());
+        try {
+            // We can sign with a key from a spending chain.
+            key.sign(Sha256Hash.ZERO_HASH);
+        } catch (ECKey.MissingPrivateKeyException e) {
+            fail();
+        }
+
+        //verify that the keys are the same as the original bip44chain
+        assertEquals(key1.getPubKeyPoint(), bip44chain2.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), bip44chain2.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey keyToSign = bip44chain2.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), keyToSign.getPubKeyPoint());
+        try {
+            // We can sign with a key from a spending chain.
+            keyToSign.sign(Sha256Hash.ZERO_HASH);
+        } catch (ECKey.MissingPrivateKeyException e) {
+            fail();
+        }
+
+        // Test we can serialize and deserialize a spending chain OK (from serializedB58)
+        List<Protos.Key> serialization = bip44chain.serializeToProtobuf();
+        checkSerialization(serialization, "spending-wallet-from-bip44-serialization.txt");
+
+        bip44chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
+        final DeterministicKey rekey4 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+
+        // Test we can serialize and deserialize a spending chain OK
+        List<Protos.Key> serialization2 = bip44chain2.serializeToProtobuf();
+        checkSerialization(serialization2, "spending-wallet-from-bip44-serialization-two.txt");
+
+        bip44chain2 = DeterministicKeyChain.fromProtobuf(serialization2, null).get(0);
+
+        assertEquals(secs, bip44chain2.getEarliestKeyCreationTime());
+
+        // Test we can serialize and deserialize a spending chain OK, after it was already serialized and deserialized.
+
+        List<Protos.Key> serialization3 = bip44chain2.serializeToProtobuf();
+        checkSerialization(serialization3, "spending-wallet-from-bip44-serialization-two.txt");
+
+        final DeterministicKey rekey4a = bip44chain2.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4a.getPubKeyPoint());
     }
 
     @Test(expected = IllegalStateException.class)

@@ -333,6 +333,31 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
+     * Creates a deterministic key chain from a watched or spendable account key.  If  <code>isWatching</code> flag is set,
+     * then creates a deterministic key chain that watches the given (public only) root key.  You can use this to calculate
+     * balances and generally follow along, but spending is not possible with such a chain.  If it is not set, then this
+     * creates a deterministic key chain that allows spending. If <code>isFollowing</code> flag is set(only allowed
+     * if <code>isWatching</code> is set) then this keychain follows some other keychain.  In a married wallet following
+     * keychain represents "spouse's" keychain.
+     */
+    public DeterministicKeyChain(DeterministicKey key, boolean isFollowing, boolean isWatching) {
+        if(isWatching)
+            checkArgument(key.isPubKeyOnly(), "Private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
+        else
+            checkArgument(key.hasPrivKey(), "Private subtrees are required.");
+        checkArgument(isWatching ? true : !isFollowing, "Can only follow a key that is watched");
+
+        basicKeyChain = new BasicKeyChain();
+        this.seed = null;
+        this.rootKey = null;
+        basicKeyChain.importKey(key);
+        hierarchy = new DeterministicHierarchy(key);
+        setAccountPath(key.getPath());
+        initializeHierarchyUnencrypted(key);
+        this.isFollowing = isFollowing;
+    }
+
+    /**
      * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
      * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
      * <p>Watch key has to be an account key.</p>
@@ -356,6 +381,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
         return new DeterministicKeyChain(accountKey);
+    }
+
+    /**
+     * Creates a key chain that can spend from the given account key.
+     */
+    public static DeterministicKeyChain spend(DeterministicKey accountKey) {
+        return new DeterministicKeyChain(accountKey, false, false);
     }
 
     /**
@@ -865,6 +897,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Possibly create the chain, if we didn't already do so yet.
                 boolean isWatchingAccountKey = false;
                 boolean isFollowingKey = false;
+                boolean isSpendingKey = false;
                 // save previous chain if any if the key is marked as following. Current key and the next ones are to be
                 // placed in new following key chain
                 if (key.getDeterministicKey().getIsFollowing()) {
@@ -882,7 +915,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (chain == null) {
                     // If this is not a following chain and previous was, this must be married
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
-                    if (seed == null) {
+                    // If this has a private key but no seed, then all we know is the spending key H
+                    if (seed == null & key.hasSecretBytes())
+                    {
+                        DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, new BigInteger(1, key.getSecretBytes().toByteArray()), null);
+                        accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
+                        chain = factory.makeSpendingKeyChain(key, iter.peek(), accountKey, isMarried);
+                        isSpendingKey = true;
+                    }
+                    else if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
@@ -898,7 +939,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 }
                 // Find the parent key assuming this is not the root key, and not an account key for a watching chain.
                 DeterministicKey parent = null;
-                if (!path.isEmpty() && !isWatchingAccountKey) {
+                if (!path.isEmpty() && !isWatchingAccountKey & !isSpendingKey) {
                     ChildNumber index = path.removeLast();
                     parent = chain.hierarchy.get(path, false, false);
                     path.add(index);
@@ -936,7 +977,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                             chain.rootKey = detkey;
                             chain.hierarchy = new DeterministicHierarchy(detkey);
                         }
-                    } else if (path.size() == chain.getAccountPath().size() + 1) {
+                    } else if ((path.size() == chain.getAccountPath().size() + 1) || isSpendingKey) {
                         // Constant 0 is used for external chain and constant 1 for internal chain
                         // (also known as change addresses). https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
                         if (detkey.getChildNumber().num() == 0) {

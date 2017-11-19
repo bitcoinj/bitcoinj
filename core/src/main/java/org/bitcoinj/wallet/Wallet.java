@@ -305,6 +305,35 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * This wallet can also spend.
+     */
+    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
+        return new Wallet(params, new KeyChainGroup(params, spendKey, false));
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * The key is specified in base58 notation and the creation time of the key. If you don't know the creation time,
+     * you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     */
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
+        final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params);
+        spendKey.setCreationTimeSeconds(creationTimeSeconds);
+        return fromSpendingKey(params, spendKey);
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     */
+    public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey, ChildNumber accountNumber) {
+        DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
+        accountKey = accountKey.dropParent();
+        accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
+        return new Wallet(params, new KeyChainGroup(params, accountKey, false));
+    }
+
+    /**
      * Creates a wallet containing a given set of keys. All further keys will be derived from the oldest key.
      */
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
