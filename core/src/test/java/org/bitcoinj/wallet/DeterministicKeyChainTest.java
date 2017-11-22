@@ -39,6 +39,7 @@ import static org.junit.Assert.*;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
+    private DeterministicKeyChain bip44chain;
     private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
 
     @Before
@@ -50,6 +51,13 @@ public class DeterministicKeyChainTest {
         chain = new DeterministicKeyChain(ENTROPY, "", secs);
         chain.setLookaheadSize(10);
         assertEquals(secs, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
+
+        bip44chain = new DeterministicKeyChain(new DeterministicSeed(ENTROPY, "", secs),
+                ImmutableList.of(new ChildNumber(44, true),
+                        new ChildNumber(1, true),
+                        new ChildNumber(0, true)));
+        bip44chain.setLookaheadSize(10);
+        assertEquals(secs, checkNotNull(bip44chain.getSeed()).getCreationTimeSeconds());
     }
 
     @Test
@@ -253,6 +261,44 @@ public class DeterministicKeyChainTest {
         key3.sign(Sha256Hash.ZERO_HASH);
         key4.sign(Sha256Hash.ZERO_HASH);
         assertEquals(oldLookaheadSize, chain.getLookaheadSize());
+    }
+
+    @Test
+    public void serializeUnencryptedBIP44() throws UnreadableWalletException {
+        bip44chain.maybeLookAhead();
+        DeterministicKey key1 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        List<Protos.Key> keys = bip44chain.serializeToProtobuf();
+        // 1 mnemonic/seed, 1 master key, 1 account key, 2 internal keys, 3 derived, 20 lookahead and 5 lookahead threshold.
+        int numItems =
+                3  // mnemonic/seed
+                        + 1  // master key
+                        + 1  // account key
+                        + 2  // ext/int parent keys
+                        + (bip44chain.getLookaheadSize() + bip44chain.getLookaheadThreshold()) * 2
+                // lookahead zone on each chain
+                ;
+        assertEquals(numItems, keys.size());
+
+        // Get another key that will be lost during round-tripping, to ensure we can derive it again.
+        DeterministicKey key4 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        final String EXPECTED_SERIALIZATION = checkSerialization(keys, "deterministic-walletbip44-serialization.txt");
+
+        // Round trip the data back and forth to check it is preserved.
+        int oldLookaheadSize = bip44chain.getLookaheadSize();
+        bip44chain = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
+        assertEquals(EXPECTED_SERIALIZATION, protoToString(bip44chain.serializeToProtobuf()));
+        assertEquals(key1, bip44chain.findKeyFromPubHash(key1.getPubKeyHash()));
+        assertEquals(key2, bip44chain.findKeyFromPubHash(key2.getPubKeyHash()));
+        assertEquals(key3, bip44chain.findKeyFromPubHash(key3.getPubKeyHash()));
+        assertEquals(key4, bip44chain.getKey(KeyChain.KeyPurpose.CHANGE));
+        key1.sign(Sha256Hash.ZERO_HASH);
+        key2.sign(Sha256Hash.ZERO_HASH);
+        key3.sign(Sha256Hash.ZERO_HASH);
+        key4.sign(Sha256Hash.ZERO_HASH);
+        assertEquals(oldLookaheadSize, bip44chain.getLookaheadSize());
     }
 
     @Test(expected = IllegalStateException.class)
