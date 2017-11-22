@@ -847,6 +847,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 for (int i : key.getOriginalAccountPathList()) {
                     originalAccountPath.add(new ChildNumber(i));
                 }
+                if(originalAccountPath.isEmpty()) {
+                    originalAccountPath = ACCOUNT_ZERO_PATH;
+                }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
                     chain.setLookaheadSize(lookaheadSize);
