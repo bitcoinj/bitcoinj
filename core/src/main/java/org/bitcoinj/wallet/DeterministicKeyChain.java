@@ -784,8 +784,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            // TODO this is a current workaround!!! Please move it to a dedicated entry
-            mnemonicEntry.setLabel(HDUtils.formatPath(getAccountPath()));
+            for (ChildNumber childNumber : getAccountPath()) {
+                mnemonicEntry.addOriginalAccountPath(childNumber.i());
+            }
             entries.add(mnemonicEntry.build());
         }
         Map<ECKey, Protos.Key.Builder> keys = basicKeyChain.serializeToEditableProtobufs();
@@ -795,6 +796,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
+            // key.getPath() is the path relative from the root.
             for (ChildNumber num : key.getPath())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
@@ -835,15 +837,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        String originalAccountPath = "";
+        List<ChildNumber> originalAccountPath = newArrayList();
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                // recover original account path size
-                if (key.hasLabel()) {
-                    originalAccountPath = key.getLabel();
+                originalAccountPath = newArrayList();
+                for (int i : key.getOriginalAccountPathList()) {
+                    originalAccountPath.add(new ChildNumber(i));
                 }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
@@ -917,7 +919,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
                         isWatchingAccountKey = true;
                     } else {
-                        chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried, originalAccountPath);
+                        chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried,
+                                ImmutableList.<ChildNumber>builder().addAll(originalAccountPath).build());
+
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded
@@ -958,19 +962,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     // been rederived and inserted at this point. In the encrypted case though,
                     // we can't rederive and we must reinsert, potentially building the heirarchy object
                     // if need be.
-                    if (path.size() == 0) {
+                    if (path.isEmpty()) {
                         // Master key.
                         if (chain.rootKey == null) {
                             chain.rootKey = detkey;
                             chain.hierarchy = new DeterministicHierarchy(detkey);
                         }
                     } else if (path.size() == chain.getAccountPath().size() + 1) {
+                        // Constant 0 is used for external chain and constant 1 for internal chain
+                        // (also known as change addresses). https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
                         if (detkey.getChildNumber().num() == 0) {
+                            // External chain is used for addresses that are meant to be visible outside of the wallet
+                            // (e.g. for receiving payments).
                             chain.externalParentKey = detkey;
                             chain.issuedExternalKeys = key.getDeterministicKey().getIssuedSubkeys();
                             lookaheadSize = Math.max(lookaheadSize, key.getDeterministicKey().getLookaheadSize());
                             sigsRequiredToSpend = key.getDeterministicKey().getSigsRequiredToSpend();
                         } else if (detkey.getChildNumber().num() == 1) {
+                            // Internal chain is used for addresses which are not meant to be visible outside of the
+                            // wallet and is used for return transaction change.
                             chain.internalParentKey = detkey;
                             chain.issuedInternalKeys = key.getDeterministicKey().getIssuedSubkeys();
                         }

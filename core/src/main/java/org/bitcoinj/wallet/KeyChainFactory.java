@@ -16,6 +16,8 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.collect.ImmutableList;
+import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 
@@ -44,7 +46,9 @@ public interface KeyChainFactory {
      * @param isMarried whether the keychain is leading in a marriage
      * @param originalAccountPath the specified account path
      */
-    DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried, String originalAccountPath);
+    DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
+                                       KeyCrypter crypter, boolean isMarried,
+                                       ImmutableList<ChildNumber> originalAccountPath);
 
     /**
      * Make a watching keychain.

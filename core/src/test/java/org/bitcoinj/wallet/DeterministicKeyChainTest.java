@@ -132,7 +132,9 @@ public class DeterministicKeyChainTest {
         List<Protos.Key> keys = chain1.serializeToProtobuf();
         KeyChainFactory factory = new KeyChainFactory() {
             @Override
-            public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried, String originalAccountPath) {
+            public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
+                                                      KeyCrypter crypter, boolean isMarried,
+                                                      ImmutableList<ChildNumber> originalAccountPath) {
                 return new AccountOneChain(crypter, seed);
             }
 
