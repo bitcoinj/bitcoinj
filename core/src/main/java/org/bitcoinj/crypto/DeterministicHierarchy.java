@@ -58,7 +58,7 @@ public class DeterministicHierarchy {
     }
 
     /**
-     * Inserts a key into the heirarchy. Used during deserialization: you normally don't need this. Keys must be
+     * Inserts a key into the hierarchy. Used during deserialization: you normally don't need this. Keys must be
      * inserted in order.
      */
     public final void putKey(DeterministicKey key) {
