@@ -38,12 +38,12 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
 
     @Override
     public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
-                                              KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> originalCoinTypePath) {
+                                              KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> accountPath) {
         DeterministicKeyChain chain;
         if (isMarried)
             chain = new MarriedKeyChain(seed, crypter);
         else
-            chain = new DeterministicKeyChain(seed, crypter, originalCoinTypePath);
+            chain = new DeterministicKeyChain(seed, crypter, accountPath);
         return chain;
     }
 

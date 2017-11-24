@@ -785,7 +785,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
             for (ChildNumber childNumber : getAccountPath()) {
-                mnemonicEntry.addOriginalCoinTypePath(childNumber.i());
+                mnemonicEntry.addAccountPath(childNumber.i());
             }
             entries.add(mnemonicEntry.build());
         }
@@ -836,18 +836,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        List<ChildNumber> originalCoinTypePath = newArrayList();
+        List<ChildNumber> accountPath = newArrayList();
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                originalCoinTypePath = newArrayList();
-                for (int i : key.getOriginalCoinTypePathList()) {
-                    originalCoinTypePath.add(new ChildNumber(i));
+                accountPath = newArrayList();
+                for (int i : key.getAccountPathList()) {
+                    accountPath.add(new ChildNumber(i));
                 }
-                if(originalCoinTypePath.isEmpty()) {
-                    originalCoinTypePath = ACCOUNT_ZERO_PATH;
+                if(accountPath.isEmpty()) {
+                    accountPath = ACCOUNT_ZERO_PATH;
                 }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
@@ -922,7 +922,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         isWatchingAccountKey = true;
                     } else {
                         chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried,
-                                ImmutableList.<ChildNumber>builder().addAll(originalCoinTypePath).build());
+                                ImmutableList.<ChildNumber>builder().addAll(accountPath).build());
 
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load

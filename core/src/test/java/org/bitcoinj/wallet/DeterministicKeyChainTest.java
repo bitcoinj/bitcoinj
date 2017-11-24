@@ -142,7 +142,7 @@ public class DeterministicKeyChainTest {
             @Override
             public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
                                                       KeyCrypter crypter, boolean isMarried,
-                                                      ImmutableList<ChildNumber> originalCoinTypePath) {
+                                                      ImmutableList<ChildNumber> accountPath) {
                 return new AccountOneChain(crypter, seed);
             }
 

@@ -2,9 +2,9 @@ type: DETERMINISTIC_MNEMONIC
 secret_bytes: "aerobic toe save section draw warm cute upon raccoon mother priority pilot taste sweet next traffic fatal sword dentist original crisp team caution rebel"
 creation_timestamp: 1389353062000
 deterministic_seed: "E\032\356\206\230,\275\263\364=\334^f\307\037\350\321X7R\262z\205\3564\371tp\2639R\342\027 J\266\253\250\320\022\031\233\271~O$\330\260\214\fz\231tI\353\215*\037\355\205\213.\224?"
-originalCoinTypePath: 2147483692
-originalCoinTypePath: 2147483649
-originalCoinTypePath: 2147483648
+accountPath: 2147483692
+accountPath: 2147483649
+accountPath: 2147483648
 
 type: DETERMINISTIC_KEY
 secret_bytes: "\270E0\202(\362b\023\276\264\347\226E2\360\221\347\325\233L\203\3276\272\213\2436&\304\373\221\025"
