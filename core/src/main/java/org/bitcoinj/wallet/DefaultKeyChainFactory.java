@@ -42,9 +42,8 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
         DeterministicKeyChain chain;
         if (isMarried)
             chain = new MarriedKeyChain(seed, crypter);
-        else {
+        else
             chain = new DeterministicKeyChain(seed, crypter, originalCoinTypePath);
-        }
         return chain;
     }
 
