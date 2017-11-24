@@ -897,7 +897,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (!isWatchingAccountKey) {
                     // If the non-encrypted case, the non-leaf keys (account, internal, external) have already
                     // been rederived and inserted at this point. In the encrypted case though,
-                    // we can't rederive and we must reinsert, potentially building the heirarchy object
+                    // we can't rederive and we must reinsert, potentially building the hierarchy object
                     // if need be.
                     if (path.size() == 0) {
                         // Master key.
