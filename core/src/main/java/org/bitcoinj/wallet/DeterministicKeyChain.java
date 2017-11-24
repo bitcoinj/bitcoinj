@@ -796,7 +796,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            // key.getPath() is the path relative from the root.
             for (ChildNumber num : key.getPath())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
