@@ -145,9 +145,13 @@ public class BlockingClient implements MessageWriteTarget {
     @Override
     public synchronized ListenableFuture writeBytes(byte[] message) throws IOException {
         try {
-            OutputStream stream = socket.getOutputStream();
-            stream.write(message);
-            stream.flush();
+            if(!socket.isClosed()) {
+                OutputStream stream = socket.getOutputStream();
+                stream.write(message);
+                stream.flush();
+            } else {
+                log.warn("Attempted to write to a closed socket.");
+            }
             return Futures.immediateFuture(null);
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);

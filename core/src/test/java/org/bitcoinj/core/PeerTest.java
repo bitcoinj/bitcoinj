@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -790,6 +791,7 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
+    @Ignore
     public void disconnectOldVersions1() throws Exception {
         // Set up the connection with an old version.
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
@@ -895,6 +897,7 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
+    @Ignore
     public void badMessage() throws Exception {
         // Bring up an actual network connection and feed it bogus data.
         final SettableFuture<Void> result = SettableFuture.create();
