@@ -785,7 +785,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
             for (ChildNumber childNumber : getAccountPath()) {
-                mnemonicEntry.addOriginalAccountPath(childNumber.i());
+                mnemonicEntry.addAccountPath(childNumber.i());
             }
             entries.add(mnemonicEntry.build());
         }
@@ -796,7 +796,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKeyBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            // key.getPath() is the path relative from the root.
             for (ChildNumber num : key.getPath())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
@@ -837,18 +836,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        List<ChildNumber> originalAccountPath = newArrayList();
+        List<ChildNumber> accountPath = newArrayList();
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                originalAccountPath = newArrayList();
-                for (int i : key.getOriginalAccountPathList()) {
-                    originalAccountPath.add(new ChildNumber(i));
+                accountPath = newArrayList();
+                for (int i : key.getAccountPathList()) {
+                    accountPath.add(new ChildNumber(i));
                 }
-                if(originalAccountPath.isEmpty()) {
-                    originalAccountPath = ACCOUNT_ZERO_PATH;
+                if(accountPath.isEmpty()) {
+                    accountPath = ACCOUNT_ZERO_PATH;
                 }
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
@@ -923,7 +922,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         isWatchingAccountKey = true;
                     } else {
                         chain = factory.makeKeyChain(key, iter.peek(), seed, crypter, isMarried,
-                                ImmutableList.<ChildNumber>builder().addAll(originalAccountPath).build());
+                                ImmutableList.<ChildNumber>builder().addAll(accountPath).build());
 
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
@@ -963,7 +962,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (!isWatchingAccountKey) {
                     // If the non-encrypted case, the non-leaf keys (account, internal, external) have already
                     // been rederived and inserted at this point. In the encrypted case though,
-                    // we can't rederive and we must reinsert, potentially building the heirarchy object
+                    // we can't rederive and we must reinsert, potentially building the hierarchy object
                     // if need be.
                     if (path.isEmpty()) {
                         // Master key.

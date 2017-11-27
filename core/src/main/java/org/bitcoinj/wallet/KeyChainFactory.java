@@ -44,11 +44,11 @@ public interface KeyChainFactory {
      * @param seed the seed
      * @param crypter the encrypted/decrypter
      * @param isMarried whether the keychain is leading in a marriage
-     * @param originalAccountPath the specified account path
+     * @param accountPath the specified account path
      */
     DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
                                        KeyCrypter crypter, boolean isMarried,
-                                       ImmutableList<ChildNumber> originalAccountPath);
+                                       ImmutableList<ChildNumber> accountPath);
 
     /**
      * Make a watching keychain.
