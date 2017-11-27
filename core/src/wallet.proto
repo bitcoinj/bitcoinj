@@ -132,6 +132,9 @@ message Key {
 
   // Encrypted version of the seed
   optional EncryptedData encrypted_deterministic_seed = 9;
+
+  // The path to the root.
+  repeated uint32 accountPath = 10 [packed=true];
 }
 
 message Script {
