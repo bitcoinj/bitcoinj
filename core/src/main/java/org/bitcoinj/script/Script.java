@@ -1457,11 +1457,10 @@ public class Script {
             return;
 
         // Compare the specified sequence number with the input.
-        if (!checkSequence(nSequence, txContainingThis, index))
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Unsatisfied CHECKLOCKTIMEVERIFY lock time");
+        checkSequence(nSequence, txContainingThis, index);
     }
 
-    private static boolean checkSequence(long nSequence, Transaction txContainingThis, int index) {
+    private static void checkSequence(long nSequence, Transaction txContainingThis, int index) {
         // Relative lock times are supported by comparing the passed
         // in operand to the sequence number of the input.
         long txToSequence = txContainingThis.getInput(index).getSequenceNumber();
@@ -1469,14 +1468,14 @@ public class Script {
         // Fail if the transaction's version number is not set high
         // enough to trigger BIP 68 rules.
         if (txContainingThis.getVersion() < 2)
-            return false;
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Transaction version is < 2");
 
         // Sequence numbers with their most significant bit set are not
         // consensus constrained. Testing that the transaction's sequence
         // number do not have this bit set prevents using this property
         // to get around a CHECKSEQUENCEVERIFY check.
         if ((txToSequence & TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0)
-            return false;
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Sequence disable flag is set");
 
         // Mask off any bits that do not have consensus-enforced meaning
         // before doing the integer comparisons
@@ -1493,15 +1492,13 @@ public class Script {
         // the nSequenceMasked in the transaction.
         if (!((txToSequenceMasked < TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked < TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG) ||
               (txToSequenceMasked >= TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG && nSequenceMasked >= TransactionInput.SEQUENCE_LOCKTIME_TYPE_FLAG))) {
-            return false;
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Relative locktime requirement type mismatch");
         }
 
         // Now that we know we're comparing apples-to-apples, the
         // comparison is a simple numeric one.
         if (nSequenceMasked > txToSequenceMasked)
-            return false;
-
-        return true;
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Relative locktime requirement not satisfied");
     }
 
     private static void executeCheckSig(Transaction txContainingThis, int index, Script script, LinkedList<byte[]> stack,
