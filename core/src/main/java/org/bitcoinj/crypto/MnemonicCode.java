@@ -140,7 +140,7 @@ public class MnemonicCode {
          * function. The length of the derived key is 512 bits (= 64 bytes)
          */
 
-        String pass = Utils.SPACE_JOINER.join(words);
+        String pass = Normalizer.normalize(Utils.SPACE_JOINER.join(words), Normalizer.Form.NFKD);
         String salt = "mnemonic" + Normalizer.normalize(passphrase, Normalizer.Form.NFKD);
 
         final Stopwatch watch = Stopwatch.createStarted();
