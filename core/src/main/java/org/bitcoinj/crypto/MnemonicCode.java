@@ -17,12 +17,11 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.MessageDigest;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -120,15 +120,28 @@ public class MnemonicCode {
      */
     public static byte[] toSeed(List<String> words, String passphrase) {
 
-        // To create binary seed from mnemonic, we use PBKDF2 function
-        // with mnemonic sentence (in UTF-8) used as a password and
-        // string "mnemonic" + passphrase (again in UTF-8) used as a
-        // salt. Iteration count is set to 4096 and HMAC-SHA512 is
-        // used as a pseudo-random function. Desired length of the
-        // derived key is 512 bits (= 64 bytes).
-        //
+        /*
+         * The following null check was added due to a likely undesirable outcome
+         * when supplying a null passphrase. If allowed, the salt will be
+         * "mnemonicnull", when one would expect only "mnemonic" due to the following from BIP39
+         * "If a passphrase is not present, an empty string "" is used instead."
+         */
+
+        if (passphrase == null) {
+            throw new NullPointerException("A null passphrase is no not allowed." +
+                    " If no passphrase is desired, use an empty string (\"\")");
+        }
+
+        /*
+         * To create a binary seed from the mnemonic, we use the PBKDF2 function
+         * with a mnemonic sentence (in UTF-8 NFKD) used as the password and the
+         * string "mnemonic" + passphrase (again in UTF-8 NFKD) used as the salt.
+         * The iteration count is set to 2048 and HMAC-SHA512 is used as the pseudo-random
+         * function. The length of the derived key is 512 bits (= 64 bytes)
+         */
+
         String pass = Utils.SPACE_JOINER.join(words);
-        String salt = "mnemonic" + passphrase;
+        String salt = "mnemonic" + Normalizer.normalize(passphrase, Normalizer.Form.NFKD);
 
         final Stopwatch watch = Stopwatch.createStarted();
         byte[] seed = PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
