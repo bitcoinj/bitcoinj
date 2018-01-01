@@ -128,7 +128,7 @@ public class MnemonicCode {
          */
 
         if (passphrase == null) {
-            throw new NullPointerException("A null passphrase is no not allowed." +
+            throw new NullPointerException("A null passphrase is not allowed." +
                     " If no passphrase is desired, use an empty string (\"\")");
         }
 
