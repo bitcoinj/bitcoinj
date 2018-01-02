@@ -34,28 +34,28 @@ public class CheckpointManagerTest {
 
     @Test(expected = NullPointerException.class)
     public void shouldThrowNullPointerExceptionWhenCheckpointsNotFound() throws IOException {
-        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointsManagerTest/notFound");
+        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointManagerTest/notFound");
         replay(params);
         new CheckpointManager(params, null);
     }
 
     @Test(expected = IOException.class)
     public void shouldThrowNullPointerExceptionWhenCheckpointsInUnknownFormat() throws IOException {
-        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointsManagerTest/unsupportedFormat");
+        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointManagerTest/unsupportedFormat");
         replay(params);
         new CheckpointManager(params, null);
     }
 
     @Test(expected = IllegalStateException.class)
     public void shouldThrowIllegalStateExceptionWithNoCheckpoints() throws IOException {
-        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointsManagerTest/noCheckpoints");
+        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointManagerTest/noCheckpoints");
         replay(params);
         new CheckpointManager(params, null);
     }
 
     @Test
     public void canReadTextualStream() throws IOException {
-        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointsManagerTest/validTextualFormat");
+        expect(params.getId()).andReturn("org/bitcoinj/core/CheckpointManagerTest/validTextualFormat");
         expect(params.getSerializer(false)).andReturn(
                 new BitcoinSerializer(params, false));
         expect(params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT))
