@@ -22,6 +22,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
+
 import org.junit.Test;
 
 public class ScriptBuilderTest {
@@ -31,7 +33,9 @@ public class ScriptBuilderTest {
         for (int i = -100; i <= 100; i++) {
             Script s = new ScriptBuilder().number(i).build();
             for (ScriptChunk ch : s.chunks) {
-                assertTrue(Integer.toString(i), ch.isShortestPossiblePushData());
+                assertTrue(Integer.toString(i)+" minimal", ch.isShortestPossiblePushData());
+                assertTrue(Integer.toString(i)+" data-value-present", ch.getDataValue().isPresent());
+                assertEquals(Integer.toString(i)+" data-value", BigInteger.valueOf(i), ch.getDataValue().get());
             }
         }
     }

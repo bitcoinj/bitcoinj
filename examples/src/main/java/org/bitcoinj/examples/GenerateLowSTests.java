@@ -100,7 +100,7 @@ public class GenerateLowSTests {
             EnumSet.of(Script.VerifyFlag.DERSIG, Script.VerifyFlag.P2SH));
 
         final Script scriptSig = input.getScriptSig();
-        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(scriptSig.getChunks().get(0).data, true, false);
+        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(scriptSig.getChunks().get(0).getData().get(), true, false);
 
         // First output a conventional low-S transaction with the LOW_S flag, for the tx_valid.json set
         System.out.println("[\"A transaction with a low-S signature.\"],");
@@ -113,7 +113,7 @@ public class GenerateLowSTests {
 
         final BigInteger highS = HIGH_S_DIFFERENCE.subtract(signature.s);
         final TransactionSignature highSig = new TransactionSignature(signature.r, highS);
-        input.setScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.getChunks().get(1).data).build());
+        input.setScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.getChunks().get(1).getData().get()).build());
         input.getScriptSig().correctlySpends(outputTransaction, 0, output.getScriptPubKey(),
             EnumSet.of(Script.VerifyFlag.P2SH));
 
@@ -158,12 +158,12 @@ public class GenerateLowSTests {
                 buf.append(" ");
             }
             if (chunk.isOpCode()) {
-                buf.append(getOpCodeName(chunk.opcode));
-            } else if (chunk.data != null) {
+                buf.append(getOpCodeName(chunk.getOpcode()));
+            } else if (chunk.getData().isPresent()) {
                 // Data chunk
                 buf.append("0x")
-                    .append(Integer.toString(chunk.opcode, 16)).append(" 0x")
-                    .append(Utils.HEX.encode(chunk.data));
+                    .append(Integer.toString(chunk.getOpcode(), 16)).append(" 0x")
+                    .append(Utils.HEX.encode(chunk.getData().get()));
             } else {
                 buf.append(chunk.toString());
             }

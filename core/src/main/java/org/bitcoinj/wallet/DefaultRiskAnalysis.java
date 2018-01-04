@@ -184,18 +184,18 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     /** Checks if the given input passes some of the AreInputsStandard checks. Not complete. */
     public static RuleViolation isInputStandard(TransactionInput input) {
         for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
-            if (chunk.data != null && !chunk.isShortestPossiblePushData())
+            if (chunk.getData().isPresent() && !chunk.isShortestPossiblePushData())
                 return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
             if (chunk.isPushData()) {
                 ECDSASignature signature;
                 try {
-                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.data);
+                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.getData().get());
                 } catch (IllegalArgumentException x) {
                     // Doesn't look like a signature.
                     signature = null;
                 }
                 if (signature != null) {
-                    if (!TransactionSignature.isEncodingCanonical(chunk.data))
+                    if (!TransactionSignature.isEncodingCanonical(chunk.getData().get()))
                         return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
                     if (!signature.isCanonical())
                         return RuleViolation.SIGNATURE_CANONICAL_ENCODING;

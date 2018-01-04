@@ -17,41 +17,93 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Utils;
-import com.google.common.base.Objects;
-
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_16;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.getOpCodeName;
+import static org.bitcoinj.script.ScriptOpCodes.getPushDataName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Utils;
+
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 
 /**
  * A script element that is either a data push (signature, pubkey, etc) or a non-push (logic, numeric, etc) operation.
  */
-public class ScriptChunk {
-    /** Operation to be executed. Opcodes are defined in {@link ScriptOpCodes}. */
-    public final int opcode;
-    /**
-     * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
-     * empty. Null for non-push operations.
-     */
+public final class ScriptChunk {
+    private final int opcode;
     @Nullable
-    public final byte[] data;
+    private final byte[] data;
     private int startLocationInProgram;
+
+    private static final byte[] OP_0_BYTE_ARRAY = new byte[]{};
 
     public ScriptChunk(int opcode, byte[] data) {
         this(opcode, data, -1);
+        if (isPushData() && (opcode == OP_0 || opcode == OP_1NEGATE || (opcode >= OP_1 && opcode <= OP_16)))
+            checkArgument(data == null, "Data must be null for opcode "+opcode);
     }
 
     public ScriptChunk(int opcode, byte[] data, int startLocationInProgram) {
         this.opcode = opcode;
-        this.data = data;
+        this.data = data == null? null : Arrays.copyOf(data, data.length);
         this.startLocationInProgram = startLocationInProgram;
+    }
+
+    /**
+     * Operation to be executed. Opcodes are defined in {@link ScriptOpCodes}.
+     * @return the opcode for this operation.
+     */
+    public int getOpcode() {
+        return opcode;
+    }
+
+    /**
+     * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
+     * empty. Return an empty optional for non-push operations.
+     * <p>The data is represented in little-endian.</p>
+     * @return an {@link Optional} with the data for push operations, empty otherwise.
+     * @see ScriptChunk#isPushData()
+     */
+    public Optional<byte[]> getData() {
+        if (opcode == OP_0)
+            return Optional.of(OP_0_BYTE_ARRAY);
+        if (opcode == OP_1NEGATE)
+            return Optional.of(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
+        if (opcode >= OP_1 && opcode <= OP_16)
+            return Optional.of(new byte[]{(byte)(opcode + 1 - OP_1)});
+        return data == null? Optional.<byte[]>absent(): Optional.of(Arrays.copyOf(data, data.length));
+    }
+
+    /**
+     * Decode the data vector for push operations.
+     * @return the {@link Optional} value obtained decoding getData().
+     * @see Utils#decodeMPI(byte[], boolean)
+     * @see Utils#reverseBytes(byte[])
+     */
+    public Optional<BigInteger> getDataValue() {
+        if (opcode == OP_0)
+            return Optional.of(BigInteger.ZERO);
+        if (opcode == OP_1NEGATE)
+            return Optional.of(BigInteger.ONE.negate());
+        if (opcode >= OP_1 && opcode <= OP_16)
+            return Optional.of(BigInteger.valueOf(opcode + 1 - OP_1));
+        return data == null? Optional.<BigInteger>absent(): Optional.of(Utils.decodeMPI(Utils.reverseBytes(data), false));
     }
 
     public boolean equalsOpCode(int opcode) {

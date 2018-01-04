@@ -421,17 +421,17 @@ public class Script {
         // and any placeholder OP_0 sigs.
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
         ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
-        checkNotNull(redeemScriptChunk.data);
-        Script redeemScript = new Script(redeemScriptChunk.data);
+        checkState(redeemScriptChunk.getData().isPresent());
+        Script redeemScript = new Script(redeemScriptChunk.getData().get());
 
         int sigCount = 0;
         int myIndex = redeemScript.findKeyInRedeem(signingKey);
         for (ScriptChunk chunk : existingChunks) {
-            if (chunk.opcode == OP_0) {
+            if (chunk.getOpcode() == OP_0) {
                 // OP_0, skip
             } else {
-                checkNotNull(chunk.data);
-                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash))
+                checkState(chunk.getData().isPresent());
+                if (myIndex < redeemScript.findSigInRedeem(chunk.getData().get(), hash))
                     return sigCount;
                 sigCount++;
             }
@@ -441,9 +441,9 @@ public class Script {
 
     private int findKeyInRedeem(ECKey key) {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).getOpcode());
         for (int i = 0 ; i < numKeys ; i++) {
-            if (Arrays.equals(chunks.get(1 + i).data, key.getPubKey())) {
+            if (Arrays.equals(chunks.get(1 + i).getData().get(), key.getPubKey())) {
                 return i;
             }
         }
@@ -461,18 +461,18 @@ public class Script {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
 
         ArrayList<ECKey> result = Lists.newArrayList();
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).getOpcode());
         for (int i = 0 ; i < numKeys ; i++)
-            result.add(ECKey.fromPublicOnly(chunks.get(1 + i).data));
+            result.add(ECKey.fromPublicOnly(chunks.get(1 + i).getData().get()));
         return result;
     }
 
     private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
-        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
+        int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).getOpcode());
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
         for (int i = 0 ; i < numKeys ; i++) {
-            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            if (ECKey.fromPublicOnly(chunks.get(i + 1).getData().get()).verify(hash, signature)) {
                 return i;
             }
         }
@@ -489,7 +489,7 @@ public class Script {
         int lastOpCode = OP_INVALIDOPCODE;
         for (ScriptChunk chunk : chunks) {
             if (chunk.isOpCode()) {
-                switch (chunk.opcode) {
+                switch (chunk.getOpcode()) {
                 case OP_CHECKSIG:
                 case OP_CHECKSIGVERIFY:
                     sigOps++;
@@ -504,7 +504,7 @@ public class Script {
                 default:
                     break;
                 }
-                lastOpCode = chunk.opcode;
+                lastOpCode = chunk.getOpcode();
             }
         }
         return sigOps;
@@ -557,7 +557,7 @@ public class Script {
         for (int i = script.chunks.size() - 1; i >= 0; i--)
             if (!script.chunks.get(i).isOpCode()) {
                 Script subScript =  new Script();
-                subScript.parse(script.chunks.get(i).data);
+                subScript.parse(script.chunks.get(i).getData().get());
                 return getSigOpCount(subScript.chunks, true);
             }
         return 0;
@@ -570,7 +570,7 @@ public class Script {
         if (ScriptPattern.isSentToMultisig(this)) {
             // for N of M CHECKMULTISIG script we will need N signatures to spend
             ScriptChunk nChunk = chunks.get(0);
-            return Script.decodeFromOpN(nChunk.opcode);
+            return Script.decodeFromOpN(nChunk.getOpcode());
         } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
             // P2PKH and P2PK require single sig
             return 1;
@@ -771,10 +771,10 @@ public class Script {
         
         for (ScriptChunk chunk : script.chunks) {
             boolean shouldExecute = !ifStack.contains(false);
-            int opcode = chunk.opcode;
+            int opcode = chunk.getOpcode();
 
             // Check stack element size
-            if (chunk.data != null && chunk.data.length > MAX_SCRIPT_ELEMENT_SIZE)
+            if (chunk.getData().isPresent() && chunk.getData().get().length > MAX_SCRIPT_ELEMENT_SIZE)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_PUSH_SIZE, "Attempted to push a data string larger than 520 bytes");
 
             // Note how OP_RESERVED does not count towards the opcode limit.
@@ -798,8 +798,10 @@ public class Script {
 
                 if (opcode == OP_0)
                     stack.add(new byte[]{});
-                else
-                    stack.add(chunk.data);
+                else {
+                    checkState(chunk.getData().isPresent());
+                    stack.add(chunk.getData().get());
+                }
             } else if (shouldExecute || (OP_IF <= opcode && opcode <= OP_ENDIF)){
 
                 switch (opcode) {
@@ -1580,7 +1582,7 @@ public class Script {
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
         if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isPayToScriptHash(scriptPubKey)) {
             for (ScriptChunk chunk : chunks)
-                if (chunk.isOpCode() && chunk.opcode > OP_16)
+                if (chunk.isOpCode() && chunk.getOpcode() > OP_16)
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
             
             byte[] scriptPubKeyBytes = p2shStack.pollLast();

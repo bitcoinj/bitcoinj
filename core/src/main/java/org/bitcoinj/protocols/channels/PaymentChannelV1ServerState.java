@@ -58,7 +58,7 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
     PaymentChannelV1ServerState(StoredServerChannel storedServerChannel, Wallet wallet, TransactionBroadcaster broadcaster) throws VerificationException {
         super(storedServerChannel, wallet, broadcaster);
         synchronized (storedServerChannel) {
-            this.clientKey = ECKey.fromPublicOnly(getContractScript().getChunks().get(1).data);
+            this.clientKey = ECKey.fromPublicOnly(getContractScript().getChunks().get(1).getData().get());
             this.clientOutput = checkNotNull(storedServerChannel.clientOutput);
             this.refundTransactionUnlockTimeSecs = storedServerChannel.refundTransactionUnlockTimeSecs;
             stateMachine.transition(State.READY);

@@ -47,7 +47,7 @@ public class ScriptPattern {
             return false;
         if (!chunks.get(1).equalsOpCode(OP_HASH160))
             return false;
-        byte[] chunk2data = chunks.get(2).data;
+        byte[] chunk2data = chunks.get(2).getData().get();
         if (chunk2data == null)
             return false;
         if (chunk2data.length != LegacyAddress.LENGTH)
@@ -64,7 +64,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isPayToPubKeyHash(Script)}.
      */
     public static byte[] extractHashFromPayToPubKeyHash(Script script) {
-        return script.chunks.get(2).data;
+        return script.chunks.get(2).getData().get();
     }
 
     /**
@@ -89,9 +89,9 @@ public class ScriptPattern {
         if (!chunks.get(0).equalsOpCode(OP_HASH160))
             return false;
         ScriptChunk chunk1 = chunks.get(1);
-        if (chunk1.opcode != 0x14)
+        if (chunk1.getOpcode() != 0x14)
             return false;
-        byte[] chunk1data = chunk1.data;
+        byte[] chunk1data = chunk1.getData().get();
         if (chunk1data == null)
             return false;
         if (chunk1data.length != LegacyAddress.LENGTH)
@@ -106,7 +106,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isPayToScriptHash(Script)}.
      */
     public static byte[] extractHashFromPayToScriptHash(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks.get(1).getData().get();
     }
 
     /**
@@ -122,7 +122,7 @@ public class ScriptPattern {
         ScriptChunk chunk0 = chunks.get(0);
         if (chunk0.isOpCode())
             return false;
-        byte[] chunk0data = chunk0.data;
+        byte[] chunk0data = chunk0.getData().get();
         if (chunk0data == null)
             return false;
         if (chunk0data.length <= 1)
@@ -137,7 +137,7 @@ public class ScriptPattern {
      * want to guard calls to this method with {@link #isPayToPubKey(Script)}.
      */
     public static byte[] extractKeyFromPayToPubKey(Script script) {
-        return script.chunks.get(0).data;
+        return script.chunks.get(0).getData().get();
     }
 
     /**
@@ -150,7 +150,7 @@ public class ScriptPattern {
             return false;
         if (!chunks.get(0).equalsOpCode(OP_0))
             return false;
-        byte[] chunk1data = chunks.get(1).data;
+        byte[] chunk1data = chunks.get(1).getData().get();
         if (chunk1data == null)
             return false;
         if (chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH
@@ -169,7 +169,7 @@ public class ScriptPattern {
         List<ScriptChunk> chunks = script.chunks;
         if (!chunks.get(0).equalsOpCode(OP_0))
             return false;
-        byte[] chunk1data = chunks.get(1).data;
+        byte[] chunk1data = chunks.get(1).getData().get();
         return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH;
     }
 
@@ -183,7 +183,7 @@ public class ScriptPattern {
         List<ScriptChunk> chunks = script.chunks;
         if (!chunks.get(0).equalsOpCode(OP_0))
             return false;
-        byte[] chunk1data = chunks.get(1).data;
+        byte[] chunk1data = chunks.get(1).getData().get();
         return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH;
     }
 
@@ -193,7 +193,7 @@ public class ScriptPattern {
      * {@link #isPayToWitnessHash(Script)}.
      */
     public static byte[] extractHashFromPayToWitnessHash(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks.get(1).getData().get();
     }
 
     /**
@@ -211,13 +211,13 @@ public class ScriptPattern {
             // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
             ScriptChunk m = chunks.get(chunks.size() - 2);
             if (!m.isOpCode()) return false;
-            int numKeys = decodeFromOpN(m.opcode);
+            int numKeys = decodeFromOpN(m.getOpcode());
             if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
             for (int i = 1; i < chunks.size() - 2; i++) {
                 if (chunks.get(i).isOpCode()) return false;
             }
             // First chunk must be an OP_N opcode too.
-            if (decodeFromOpN(chunks.get(0).opcode) < 1) return false;
+            if (decodeFromOpN(chunks.get(0).getOpcode()) < 1) return false;
         } catch (IllegalStateException e) {
             return false;   // Not an OP_N opcode.
         }
@@ -250,7 +250,7 @@ public class ScriptPattern {
      * {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static byte[] extractSenderPubKeyFromCltvPaymentChannel(Script script) {
-        return script.chunks.get(8).data;
+        return script.chunks.get(8).getData().get();
     }
 
     /**
@@ -259,7 +259,7 @@ public class ScriptPattern {
      * {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static byte[] extractRecipientPubKeyFromCltvPaymentChannel(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks.get(1).getData().get();
     }
 
     /**
@@ -267,7 +267,7 @@ public class ScriptPattern {
      * so you will want to guard calls to this method with {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static BigInteger extractExpiryFromCltvPaymentChannel(Script script) {
-        return Script.castToBigInteger(script.chunks.get(4).data, 5, false);
+        return Script.castToBigInteger(script.chunks.get(4).getData().get(), 5, false);
     }
 
     /**
@@ -290,7 +290,7 @@ public class ScriptPattern {
             return false;
         if (!chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN))
             return false;
-        byte[] chunkData = chunks.get(1).data;
+        byte[] chunkData = chunks.get(1).getData().get();
         if (chunkData == null || chunkData.length != 36)
             return false;
         if (!Arrays.equals(Arrays.copyOfRange(chunkData, 0, 4), SEGWIT_COMMITMENT_HEADER))
@@ -302,6 +302,6 @@ public class ScriptPattern {
      * Retrieves the hash from a segwit commitment (in an output of the coinbase transaction).
      */
     public static Sha256Hash extractSegwitCommitmentHash(Script script) {
-        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).data, 4, 36));
+        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).getData().get(), 4, 36));
     }
 }

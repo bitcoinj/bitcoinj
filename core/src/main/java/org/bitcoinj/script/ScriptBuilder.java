@@ -84,6 +84,8 @@ public class ScriptBuilder {
     public ScriptBuilder data(byte[] data) {
         if (data.length == 0)
             return smallNum(0);
+        else if (data.length == 1)
+            return number(data[0]);   // ensure minimal encoding
         else
             return data(chunks.size(), data);
     }
