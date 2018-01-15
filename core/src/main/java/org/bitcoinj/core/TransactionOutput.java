@@ -83,9 +83,9 @@ public class TransactionOutput extends ChildMessage {
     /**
      * Creates an output that sends 'value' to the given address (public key hash). The amount should be created with
      * something like {@link Coin#valueOf(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
+     * {@link Transaction#addOutput(Coin, AddressScript)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, AddressScript to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 

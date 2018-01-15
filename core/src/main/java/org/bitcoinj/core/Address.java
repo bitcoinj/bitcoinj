@@ -2,6 +2,7 @@
  * Copyright 2011 Google Inc.
  * Copyright 2014 Giannis Dzegoutanis
  * Copyright 2015 Andreas Schildbach
+ * Copyright 2018 John Jegutanis
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +25,15 @@ import java.io.ObjectOutputStream;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.bitcoinj.core.AddressScript.AddressFormat.BASE58;
+import static org.bitcoinj.script.Script.ScriptType.P2PKH;
+import static org.bitcoinj.script.Script.ScriptType.P2SH;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
@@ -41,7 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
  * type) can contain a hash of a script instead.</p>
  */
-public class Address extends VersionedChecksummedBytes {
+public class Address extends VersionedChecksummedBytes implements AddressScript {
     /**
      * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
      */
@@ -61,6 +66,28 @@ public class Address extends VersionedChecksummedBytes {
         if (!isAcceptableVersion(params, version))
             throw new WrongNetworkException(version, params.getAcceptableAddressCodes());
         this.params = params;
+    }
+
+    /**
+     * Construct an address from parameters, the address script type, and the hash160 form. Example:<p>
+     *
+     * <pre>new Address(MainNetParams.get(), ScriptType.P2PKH, Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
+     */
+    public Address(NetworkParameters params, ScriptType scriptType, byte[] hash160) {
+        super(scriptTypeToVersion(params, scriptType), hash160);
+        checkArgument(hash160.length == LENGTH, "Addresses are 160-bit hashes, so you must provide 20 bytes");
+        this.params = params;
+    }
+
+    private static int scriptTypeToVersion(NetworkParameters params, ScriptType scriptType) {
+        switch (scriptType) {
+            case P2PKH:
+                return params.getAddressHeader();
+            case P2SH:
+                return params.getP2SHHeader();
+            default:
+                throw new IllegalArgumentException("Unsupported script type: " + scriptType);
+        }
     }
 
     /** Returns an Address that represents the given P2SH script hash. */
@@ -199,5 +226,20 @@ public class Address extends VersionedChecksummedBytes {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         params = NetworkParameters.fromID(in.readUTF());
+    }
+
+    @Override
+    public AddressFormat getAddressFormat() {
+        return BASE58;
+    }
+
+    @Override
+    public ScriptType getScriptType() {
+        return isP2SHAddress() ? P2SH : P2PKH;
+    }
+
+    @Override
+    public byte[] getValue() {
+        return bytes;
     }
 }

@@ -31,7 +31,10 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.bitcoinj.core.AddressScript.AddressFormat.BASE58;
 import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.script.Script.ScriptType.P2PKH;
+import static org.bitcoinj.script.Script.ScriptType.P2SH;
 import static org.junit.Assert.*;
 
 public class AddressTest {
@@ -251,5 +254,67 @@ public class AddressTest {
         int resultsString = a.toString().compareTo(b.toString());
         assertTrue( resultBytes < 0 );
         assertTrue( resultsString < 0 );
+    }
+
+
+    @Test
+    public void addressScript() {
+        // P2PKH
+        AddressScript mainAddress = Address.fromBase58(mainParams, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        assertEquals(BASE58, mainAddress.getAddressFormat());
+        assertEquals(P2PKH, mainAddress.getScriptType());
+        assertArrayEquals(HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"), mainAddress.getValue());
+        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", mainAddress.toString());
+        assertEquals(mainParams, mainAddress.getParameters());
+
+        mainAddress = new Address(mainParams, P2PKH, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        assertEquals(BASE58, mainAddress.getAddressFormat());
+        assertEquals(P2PKH, mainAddress.getScriptType());
+        assertArrayEquals(HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"), mainAddress.getValue());
+        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", mainAddress.toString());
+        assertEquals(mainParams, mainAddress.getParameters());
+
+        AddressScript testAddress = Address.fromBase58(testParams, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        assertEquals(BASE58, testAddress.getAddressFormat());
+        assertEquals(P2PKH, testAddress.getScriptType());
+        assertArrayEquals(HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"), testAddress.getValue());
+        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", testAddress.toString());
+        assertEquals(testParams, testAddress.getParameters());
+
+        testAddress = new Address(testParams, P2PKH, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        assertEquals(BASE58, testAddress.getAddressFormat());
+        assertEquals(P2PKH, testAddress.getScriptType());
+        assertArrayEquals(HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"), testAddress.getValue());
+        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", testAddress.toString());
+        assertEquals(testParams, testAddress.getParameters());
+
+        // P2SH
+        AddressScript mainNetP2SHAddress = Address.fromBase58(mainParams, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        assertEquals(BASE58, mainNetP2SHAddress.getAddressFormat());
+        assertEquals(P2SH, mainNetP2SHAddress.getScriptType());
+        assertArrayEquals(HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e"), mainNetP2SHAddress.getValue());
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", mainNetP2SHAddress.toString());
+        assertEquals(mainParams, mainNetP2SHAddress.getParameters());
+
+        mainNetP2SHAddress = new Address(mainParams, P2SH, HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e"));
+        assertEquals(BASE58, mainNetP2SHAddress.getAddressFormat());
+        assertEquals(P2SH, mainNetP2SHAddress.getScriptType());
+        assertArrayEquals(HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e"), mainNetP2SHAddress.getValue());
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", mainNetP2SHAddress.toString());
+        assertEquals(mainParams, mainNetP2SHAddress.getParameters());
+
+        AddressScript testNetP2SHAddress = Address.fromBase58(testParams, "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        assertEquals(BASE58, testNetP2SHAddress.getAddressFormat());
+        assertEquals(P2SH, testNetP2SHAddress.getScriptType());
+        assertArrayEquals(HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"), testNetP2SHAddress.getValue());
+        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", testNetP2SHAddress.toString());
+        assertEquals(testParams, testNetP2SHAddress.getParameters());
+
+        testNetP2SHAddress = new Address(testParams, P2SH, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        assertEquals(BASE58, testNetP2SHAddress.getAddressFormat());
+        assertEquals(P2SH, testNetP2SHAddress.getScriptType());
+        assertArrayEquals(HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"), testNetP2SHAddress.getValue());
+        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", testNetP2SHAddress.toString());
+        assertEquals(testParams, testNetP2SHAddress.getParameters());
     }
 }
