@@ -118,6 +118,9 @@ public class PeerAddress extends ChildMessage {
     public static PeerAddress localhost(NetworkParameters params) {
         return new PeerAddress(params, InetAddresses.forString("127.0.0.1"), params.getPort());
     }
+    public static PeerAddress localhost(NetworkParameters params, int port) {
+        return new PeerAddress(params, InetAddresses.forString("127.0.0.1"), port);
+    }
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
