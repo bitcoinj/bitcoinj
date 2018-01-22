@@ -1377,6 +1377,16 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.unlock();
         }
     }
+    public Peer connectToLocalHost(int port) {
+        lock.lock();
+        try {
+            final PeerAddress localhost = PeerAddress.localhost(params,port);
+            backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
+            return connectTo(localhost, true, vConnectTimeoutMillis);
+        } finally {
+            lock.unlock();
+        }
+    }
 
     /**
      * Creates a version message to send, constructs a Peer object and attempts to connect it. Returns the peer on
