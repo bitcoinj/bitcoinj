@@ -224,6 +224,7 @@ public class WalletTool {
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
         parser.accepts("value").withRequiredArg();
         OptionSpec<String> feePerKbOption = parser.accepts("fee-per-kb").withRequiredArg();
+        OptionSpec<String> feeSatPerByteOption = parser.accepts("fee-sat-per-byte").withRequiredArg();
         unixtimeFlag = parser.accepts("unixtime").withRequiredArg().ofType(Long.class);
         OptionSpec<String> conditionFlag = parser.accepts("condition").withRequiredArg();
         parser.accepts("locktime").withRequiredArg();
@@ -359,10 +360,15 @@ public class WalletTool {
                 if (options.has(paymentRequestLocation) && options.has(outputFlag)) {
                     System.err.println("--payment-request and --output cannot be used together.");
                     return;
+                } else if (options.has(feePerKbOption) && options.has(feeSatPerByteOption)) {
+                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
+                    return;
                 } else if (options.has(outputFlag)) {
                     Coin feePerKb = null;
                     if (options.has(feePerKbOption))
                         feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                    if (options.has(feeSatPerByteOption))
+                        feePerKb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerByteOption)) * 1000);
                     String lockTime = null;
                     if (options.has("locktime")) {
                         lockTime = (String) options.valueOf("locktime");
@@ -377,6 +383,10 @@ public class WalletTool {
                 }
                 break;
             case SEND_CLTVPAYMENTCHANNEL: {
+                if (options.has(feePerKbOption) && options.has(feeSatPerByteOption)) {
+                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
+                    return;
+                }
                 if (!options.has(outputFlag)) {
                     System.err.println("You must specify a --output=addr:value");
                     return;
@@ -384,6 +394,8 @@ public class WalletTool {
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                if (options.has(feeSatPerByteOption))
+                    feePerKb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerByteOption)) * 1000);
                 if (!options.has("locktime")) {
                     System.err.println("You must specify a --locktime");
                     return;
@@ -397,6 +409,10 @@ public class WalletTool {
                 sendCLTVPaymentChannel(refundFlag.value(options), outputFlag.value(options), feePerKb, lockTime, allowUnconfirmed);
                 } break;
             case SETTLE_CLTVPAYMENTCHANNEL: {
+                if (options.has(feePerKbOption) && options.has(feeSatPerByteOption)) {
+                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
+                    return;
+                }
                 if (!options.has(outputFlag)) {
                     System.err.println("You must specify a --output=addr:value");
                     return;
@@ -404,6 +420,8 @@ public class WalletTool {
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                if (options.has(feeSatPerByteOption))
+                    feePerKb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerByteOption)) * 1000);
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
                 if (!options.has(txHashFlag)) {
                     System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
@@ -412,6 +430,10 @@ public class WalletTool {
                 settleCLTVPaymentChannel(txHashFlag.value(options), outputFlag.value(options), feePerKb, allowUnconfirmed);
                 } break;
             case REFUND_CLTVPAYMENTCHANNEL: {
+                if (options.has(feePerKbOption) && options.has(feeSatPerByteOption)) {
+                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
+                    return;
+                }
                 if (!options.has(outputFlag)) {
                     System.err.println("You must specify a --output=addr:value");
                     return;
@@ -419,6 +441,8 @@ public class WalletTool {
                 Coin feePerKb = null;
                 if (options.has(feePerKbOption))
                     feePerKb = parseCoin((String) options.valueOf(feePerKbOption));
+                if (options.has(feeSatPerByteOption))
+                    feePerKb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerByteOption)) * 1000);
                 boolean allowUnconfirmed = options.has("allow-unconfirmed");
                 if (!options.has(txHashFlag)) {
                     System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
