@@ -322,17 +322,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * balances and generally follow along, but spending is not possible with such a chain.
      */
     public DeterministicKeyChain(DeterministicKey watchingKey) {
-        this(watchingKey, ACCOUNT_ZERO_PATH);
-    }
-
-    /**
-     * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
-     * balances and generally follow along, but spending is not possible with such a chain.
-     */
-    public DeterministicKeyChain(DeterministicKey watchingKey, ImmutableList<ChildNumber> accountPath) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
-        checkArgument(watchingKey.getPath().size() == accountPath.size(), "You can only watch an account key currently");
-        setAccountPath(accountPath);
+        checkArgument(watchingKey.getPath().size() == getAccountPath().size(), "You can only watch an account key currently");
+        setAccountPath(watchingKey.getPath());
         basicKeyChain = new BasicKeyChain();
         this.seed = null;
         this.rootKey = null;
@@ -347,17 +339,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * <p>Watch key has to be an account key.</p>
      */
     protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
-        this(watchKey, isFollowing, ACCOUNT_ZERO_PATH);
-    }
-
-    /**
-     * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
-     * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
-     * <p>Watch key has to be an account key.</p>
-     */
-    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing,
-            ImmutableList<ChildNumber> accountPath) {
-        this(watchKey, accountPath);
+        this(watchKey);
         this.isFollowing = isFollowing;
     }
 
@@ -374,14 +356,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Creates a key chain that watches the given account key.
      */
     public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return watch(accountKey, ACCOUNT_ZERO_PATH);
-    }
-
-    /**
-     * Creates a key chain that watches the given account key.
-     */
-    public static DeterministicKeyChain watch(DeterministicKey accountKey, ImmutableList<ChildNumber> accountPath) {
-        return new DeterministicKeyChain(accountKey, accountPath);
+        return new DeterministicKeyChain(accountKey);
     }
 
     /**
