@@ -395,6 +395,45 @@ public class DeterministicKeyChainTest {
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
     }
 
+    @Test
+    public void watchingChainAccountOne() throws UnreadableWalletException {
+        Utils.setMockClock();
+        DeterministicKeyChain chain1 = new AccountOneChain(chain.getKeyCrypter(), chain.getSeed());
+        DeterministicKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        DeterministicKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
+        DeterministicKey key4 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
+
+        NetworkParameters params = MainNetParams.get();
+        DeterministicKey watchingKey = chain1.getWatchingKey();
+        final String pub58 = watchingKey.serializePubB58(params);
+        assertEquals("xpub69KR9epJ2Wp6ywiv4Xu5WfBUpX4GLu6D5NUMd4oUkCFoZoRNyk3ZCxfKPDkkGvCPa16dPgEdY63qoyLqEa5TQQy1nmfSmgWcagRzimyV7uA", pub58);
+        watchingKey = DeterministicKey.deserializeB58(null, pub58, params);
+        watchingKey.setCreationTimeSeconds(100000);
+        chain = DeterministicKeyChain.watch(watchingKey);
+        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        chain.setLookaheadSize(10);
+        chain.maybeLookAhead();
+
+        assertEquals(key1.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        assertEquals(key2.getPubKeyPoint(), chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());
+        final DeterministicKey key = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key3.getPubKeyPoint(), key.getPubKeyPoint());
+        try {
+            // Can't sign with a key from a watching chain.
+            key.sign(Sha256Hash.ZERO_HASH);
+            fail();
+        } catch (ECKey.MissingPrivateKeyException e) {
+            // Ignored.
+        }
+        // Test we can serialize and deserialize a watching chain OK.
+        List<Protos.Key> serialization = chain.serializeToProtobuf();
+        checkSerialization(serialization, "watching-wallet-serialization-account-one.txt");
+        chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
+        final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
+        assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
+    }
+
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);

@@ -287,30 +287,10 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. A
-     * watching key corresponds to account zero in the recommended BIP32 key hierarchy.
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key.
      */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
         return new Wallet(params, new KeyChainGroup(params, watchKey));
-    }
-
-    /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The account path is specified.
-     */
-    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey, ImmutableList<ChildNumber> accountPath) {
-        return new Wallet(params, new KeyChainGroup(params, watchKey, accountPath));
-    }
-
-    /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. A
-     * watching key corresponds to account zero in the recommended BIP32 key hierarchy. The key is specified in base58
-     * notation and the creation time of the key. If you don't know the creation time, you can pass
-     * {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
-     */
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
-        final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
-        watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey);
     }
 
     /**
@@ -318,11 +298,10 @@ public class Wallet extends BaseTaggableObject
      * account path is specified. The key is specified in base58 notation and the creation time of the key. If you don't
      * know the creation time, you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
      */
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds,
-            ImmutableList<ChildNumber> accountPath) {
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
         final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
         watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey, accountPath);
+        return fromWatchingKey(params, watchKey);
     }
 
     /**
