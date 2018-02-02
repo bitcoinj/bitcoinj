@@ -323,7 +323,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     public DeterministicKeyChain(DeterministicKey watchingKey) {
         checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
-        checkArgument(watchingKey.getPath().size() == getAccountPath().size(), "You can only watch an account key currently");
         setAccountPath(watchingKey.getPath());
         basicKeyChain = new BasicKeyChain();
         this.seed = null;
