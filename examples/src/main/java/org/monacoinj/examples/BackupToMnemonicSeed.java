@@ -18,7 +18,7 @@ package org.monacoinj.examples;
 
 import org.monacoinj.core.NetworkParameters;
 import org.monacoinj.core.Utils;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.wallet.DeterministicSeed;
 import org.monacoinj.wallet.Wallet;
 
@@ -34,7 +34,7 @@ public class BackupToMnemonicSeed {
 
     public static void main(String[] args) {
 
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = TestNet4Params.get();
         Wallet wallet = new Wallet(params);
 
         DeterministicSeed seed = wallet.getKeyChainSeed();

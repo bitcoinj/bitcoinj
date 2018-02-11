@@ -87,7 +87,7 @@ class SenderListener(AbstractWalletEventListener):
         Futures.addCallback(tx.getConfidence().getDepthFuture(confirm_wait), myFutureCallback())
 
 if __name__ == "__main__":
-    params = org.monacoinj.params.TestNet3Params.get()
+    params = org.monacoinj.params.TestNet4Params.get()
     my_address = Address(params,my_address_text)
     filePrefix = "forwarding-service-testnet"
     f = java.io.File(".")

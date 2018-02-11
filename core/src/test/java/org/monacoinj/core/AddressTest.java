@@ -19,7 +19,7 @@ package org.monacoinj.core;
 
 import org.monacoinj.params.MainNetParams;
 import org.monacoinj.params.Networks;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.script.Script;
 import org.monacoinj.script.ScriptBuilder;
 import org.junit.Test;
@@ -35,7 +35,7 @@ import static org.monacoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
 public class AddressTest {
-    static final NetworkParameters testParams = TestNet3Params.get();
+    static final NetworkParameters testParams = TestNet4Params.get();
     static final NetworkParameters mainParams = MainNetParams.get();
 
     @Test
@@ -105,7 +105,7 @@ public class AddressTest {
         } catch (WrongNetworkException e) {
             // Success.
             assertEquals(e.verCode, MainNetParams.get().getAddressHeader());
-            assertTrue(Arrays.equals(e.acceptableVersions, TestNet3Params.get().getAcceptableAddressCodes()));
+            assertTrue(Arrays.equals(e.acceptableVersions, TestNet4Params.get().getAcceptableAddressCodes()));
         } catch (AddressFormatException e) {
             fail();
         }
@@ -116,7 +116,7 @@ public class AddressTest {
         NetworkParameters params = Address.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
         assertEquals(MainNetParams.get().getId(), params.getId());
         params = Address.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        assertEquals(TestNet3Params.get().getId(), params.getId());
+        assertEquals(TestNet4Params.get().getId(), params.getId());
     }
 
     @Test
@@ -154,15 +154,15 @@ public class AddressTest {
         Address mainNetP2SHAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(mainNetP2SHAddress.version, MainNetParams.get().p2shHeader);
         assertTrue(mainNetP2SHAddress.isP2SHAddress());
-        Address testNetP2SHAddress = Address.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(testNetP2SHAddress.version, TestNet3Params.get().p2shHeader);
+        Address testNetP2SHAddress = Address.fromBase58(TestNet4Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        assertEquals(testNetP2SHAddress.version, TestNet4Params.get().p2shHeader);
         assertTrue(testNetP2SHAddress.isP2SHAddress());
 
         // Test that we can determine what network a P2SH address belongs to
         NetworkParameters mainNetParams = Address.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(MainNetParams.get().getId(), mainNetParams.getId());
         NetworkParameters testNetParams = Address.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(TestNet3Params.get().getId(), testNetParams.getId());
+        assertEquals(TestNet4Params.get().getId(), testNetParams.getId());
 
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");

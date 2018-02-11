@@ -54,7 +54,7 @@ var bcj = org.monacoinj;
 var ECKey = bcj.core.ECKey;
 
 // We'll use the testnet for now.
-var params = bcj.params.TestNet3Params.get();
+var params = bcj.params.TestNet4Params.get();
 
 // Most basic operation: make a key and print its address form to the screen.
 var key = new ECKey();

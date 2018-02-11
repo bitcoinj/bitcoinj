@@ -21,8 +21,8 @@ import com.google.common.io.ByteStreams;
 
 import org.monacoinj.core.AbstractBlockChain.NewBlockType;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet2Params;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet2Params; //TODO Mona
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.params.UnitTestParams;
 import org.monacoinj.script.ScriptOpCodes;
 import org.monacoinj.wallet.Wallet;
@@ -181,7 +181,7 @@ public class BlockTest {
         // contains a coinbase transaction whose height is two bytes, which is
         // shorter than we see in most other cases.
 
-        Block block = TestNet3Params.get().getDefaultSerializer().makeBlock(
+        Block block = TestNet4Params.get().getDefaultSerializer().makeBlock(
             ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat")));
 
         // Check block.
@@ -193,7 +193,7 @@ public class BlockTest {
         // fit in two bytes. This test primarily ensures script encoding checks
         // are applied correctly.
 
-        block = TestNet3Params.get().getDefaultSerializer().makeBlock(
+        block = TestNet4Params.get().getDefaultSerializer().makeBlock(
             ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat")));
 
         // Check block.

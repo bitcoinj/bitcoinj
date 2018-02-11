@@ -51,8 +51,8 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
 public class Utils {
 
     /** The string that prefixes all text messages signed using Monacoin keys. */
-    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Monacoin Signed Message:\n";
-    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
+    public static final String MONACOIN_SIGNED_MESSAGE_HEADER = "Monacoin Signed Message:\n";
+    public static final byte[] MONACOIN_SIGNED_MESSAGE_HEADER_BYTES = MONACOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
 
@@ -507,8 +507,8 @@ public class Utils {
     public static byte[] formatMessageForSigning(String message) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
+            bos.write(MONACOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
+            bos.write(MONACOIN_SIGNED_MESSAGE_HEADER_BYTES);
             byte[] messageBytes = message.getBytes(Charsets.UTF_8);
             VarInt size = new VarInt(messageBytes.length);
             bos.write(size.encode());

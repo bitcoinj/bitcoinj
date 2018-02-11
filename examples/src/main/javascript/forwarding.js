@@ -19,7 +19,7 @@
 // This example shows how to implement the forwarding service demo from the Getting Started tutorial.
 
 var bcj = org.monacoinj;
-var params = bcj.params.TestNet3Params.get();
+var params = bcj.params.TestNet4Params.get();
 
 // Address where we'll send received coins (minus the miner fee)
 var FORWARD_TO = "mfZCyhQUQXy2S91hnGepdaJxfaNjMg15AV";  // faucet.xeno-genesis.com

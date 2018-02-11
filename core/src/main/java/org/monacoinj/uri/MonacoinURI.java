@@ -85,12 +85,12 @@ public class MonacoinURI {
     public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
     /**
-     * URI for Monacoin network. Use {@link org.monacoinj.params.AbstractMonacoinNetParams#BITCOIN_SCHEME} if you specifically
+     * URI for Monacoin network. Use {@link org.monacoinj.params.AbstractMonacoinNetParams#MONACOIN_SCHEME} if you specifically
      * need Monacoin, or use {@link org.monacoinj.core.NetworkParameters#getUriScheme} to get the scheme
      * from network parameters.
      */
     @Deprecated
-    public static final String BITCOIN_SCHEME = "monacoin";
+    public static final String MONACOIN_SCHEME = "monacoin";
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
@@ -123,7 +123,7 @@ public class MonacoinURI {
         checkNotNull(input);
 
         String scheme = null == params
-            ? AbstractMonacoinNetParams.BITCOIN_SCHEME
+            ? AbstractMonacoinNetParams.MONACOIN_SCHEME
             : params.getUriScheme();
 
         // Attempt to form the URI (fail fast syntax checking to official standards).

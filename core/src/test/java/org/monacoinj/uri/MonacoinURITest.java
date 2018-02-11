@@ -18,7 +18,7 @@ package org.monacoinj.uri;
 
 import org.monacoinj.core.Address;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class MonacoinURITest {
 
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
-    private static final String BITCOIN_SCHEME = MAINNET.getUriScheme();
+    private static final String MONACOIN_SCHEME = MAINNET.getUriScheme();
 
     @Test
     public void testConvertToMonacoinURI() throws Exception {
@@ -83,7 +83,7 @@ public class MonacoinURITest {
 
     @Test
     public void testGood_Simple() throws MonacoinURIParseException {
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
         assertNotNull(testObject);
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
@@ -109,14 +109,14 @@ public class MonacoinURITest {
     public void testBad_BadSyntax() {
         // Various illegal characters
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + "|" + MAINNET_GOOD_ADDRESS);
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + "|" + MAINNET_GOOD_ADDRESS);
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
         }
 
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "\\");
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "\\");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
@@ -124,7 +124,7 @@ public class MonacoinURITest {
 
         // Separator without field
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":");
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
@@ -137,7 +137,7 @@ public class MonacoinURITest {
     @Test
     public void testBad_Address() {
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME);
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME);
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
         }
@@ -149,7 +149,7 @@ public class MonacoinURITest {
     @Test
     public void testBad_IncorrectAddressType() {
         try {
-            testObject = new MonacoinURI(TestNet3Params.get(), BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
+            testObject = new MonacoinURI(TestNet4Params.get(), MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad address"));
@@ -165,17 +165,17 @@ public class MonacoinURITest {
     @Test
     public void testGood_Amount() throws MonacoinURIParseException {
         // Test the decimal parsing
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210.12345678");
         assertEquals("654321012345678", testObject.getAmount().toString());
 
         // Test the decimal parsing
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=.12345678");
         assertEquals("12345678", testObject.getAmount().toString());
 
         // Test the integer parsing
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210");
         assertEquals("654321000000000", testObject.getAmount().toString());
     }
@@ -188,7 +188,7 @@ public class MonacoinURITest {
      */
     @Test
     public void testGood_Label() throws MonacoinURIParseException {
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?label=Hello%20World");
         assertEquals("Hello World", testObject.getLabel());
     }
@@ -203,7 +203,7 @@ public class MonacoinURITest {
     public void testGood_LabelWithAmpersandAndPlus() throws MonacoinURIParseException {
         String testString = "Hello Earth & Mars + Venus";
         String encodedLabel = MonacoinURI.encodeURLString(testString);
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
                 + encodedLabel);
         assertEquals(testString, testObject.getLabel());
     }
@@ -219,7 +219,7 @@ public class MonacoinURITest {
         // Moscow in Russian in Cyrillic
         String moscowString = "\u041c\u043e\u0441\u043a\u0432\u0430";
         String encodedLabel = MonacoinURI.encodeURLString(moscowString); 
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
                 + encodedLabel);
         assertEquals(moscowString, testObject.getLabel());
     }
@@ -232,7 +232,7 @@ public class MonacoinURITest {
      */
     @Test
     public void testGood_Message() throws MonacoinURIParseException {
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?message=Hello%20World");
         assertEquals("Hello World", testObject.getMessage());
     }
@@ -245,7 +245,7 @@ public class MonacoinURITest {
      */
     @Test
     public void testGood_Combinations() throws MonacoinURIParseException {
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210&label=Hello%20World&message=Be%20well");
         assertEquals(
                 "MonacoinURI['amount'='654321000000000','label'='Hello World','message'='Be well','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']",
@@ -262,7 +262,7 @@ public class MonacoinURITest {
     public void testBad_Amount() throws MonacoinURIParseException {
         // Missing
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?amount=");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
@@ -271,7 +271,7 @@ public class MonacoinURITest {
 
         // Non-decimal (BIP 21)
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?amount=12X4");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
@@ -281,13 +281,13 @@ public class MonacoinURITest {
 
     @Test
     public void testEmpty_Label() throws MonacoinURIParseException {
-        assertNull(new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        assertNull(new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?label=").getLabel());
     }
 
     @Test
     public void testEmpty_Message() throws MonacoinURIParseException {
-        assertNull(new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        assertNull(new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?message=").getMessage());
     }
 
@@ -300,7 +300,7 @@ public class MonacoinURITest {
     @Test
     public void testBad_Duplicated() throws MonacoinURIParseException {
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?address=aardvark");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
@@ -310,7 +310,7 @@ public class MonacoinURITest {
 
     @Test
     public void testGood_ManyEquals() throws MonacoinURIParseException {
-        assertEquals("aardvark=zebra", new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":"
+        assertEquals("aardvark=zebra", new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":"
                 + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra").getLabel());
     }
     
@@ -323,7 +323,7 @@ public class MonacoinURITest {
     @Test
     public void testUnknown() throws MonacoinURIParseException {
         // Unknown not required field
-        testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?aardvark=true");
         assertEquals("MonacoinURI['aardvark'='true','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']", testObject.toString());
 
@@ -331,7 +331,7 @@ public class MonacoinURITest {
 
         // Unknown not required field (isolated)
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?aardvark");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
@@ -340,7 +340,7 @@ public class MonacoinURITest {
 
         // Unknown and required field
         try {
-            testObject = new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+            testObject = new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?req-aardvark=true");
             fail("Expecting MonacoinURIParseException");
         } catch (MonacoinURIParseException e) {
@@ -359,26 +359,26 @@ public class MonacoinURITest {
 
     @Test(expected = MonacoinURIParseException.class)
     public void testBad_AmountTooPrecise() throws MonacoinURIParseException {
-        new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=0.123456789");
     }
 
     @Test(expected = MonacoinURIParseException.class)
     public void testBad_NegativeAmount() throws MonacoinURIParseException {
-        new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=-1");
     }
 
     @Test(expected = MonacoinURIParseException.class)
     public void testBad_TooLargeAmount() throws MonacoinURIParseException {
-        new MonacoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+        new MonacoinURI(MAINNET, MONACOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=100000000");
     }
 
     @Test
     public void testPaymentProtocolReq() throws Exception {
         // Non-backwards compatible form ...
-        MonacoinURI uri = new MonacoinURI(TestNet3Params.get(), "monacoin:?r=https%3A%2F%2Fmonacoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
+        MonacoinURI uri = new MonacoinURI(TestNet4Params.get(), "monacoin:?r=https%3A%2F%2Fmonacoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
         assertEquals("https://monacoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
         assertEquals(ImmutableList.of("https://monacoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
                 uri.getPaymentRequestUrls());
@@ -403,7 +403,7 @@ public class MonacoinURITest {
 
     @Test
     public void testUnescapedPaymentProtocolReq() throws Exception {
-        MonacoinURI uri = new MonacoinURI(TestNet3Params.get(),
+        MonacoinURI uri = new MonacoinURI(TestNet4Params.get(),
                 "monacoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe");
         assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
         assertEquals(ImmutableList.of("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());

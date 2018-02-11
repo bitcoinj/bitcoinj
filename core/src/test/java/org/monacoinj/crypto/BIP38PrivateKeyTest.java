@@ -19,7 +19,7 @@ package org.monacoinj.crypto;
 import org.monacoinj.core.ECKey;
 import org.monacoinj.crypto.BIP38PrivateKey.BadPassphraseException;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNotSame;
 public class BIP38PrivateKeyTest {
 
     private static final MainNetParams MAINNET = MainNetParams.get();
-    private static final TestNet3Params TESTNET = TestNet3Params.get();
+    private static final TestNet4Params TESTNET = TestNet4Params.get();
 
     @Test
     public void bip38testvector_noCompression_noEcMultiply_test1() throws Exception {

@@ -20,7 +20,7 @@ package org.monacoinj.examples;
 import org.monacoinj.core.NetworkParameters;
 import org.monacoinj.params.MainNetParams;
 import org.monacoinj.params.RegTestParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 
 public enum NetworkEnum {
     MAIN,
@@ -34,7 +34,7 @@ public enum NetworkEnum {
             case PROD:
                 return MainNetParams.get();
             case TEST:
-                return TestNet3Params.get();
+                return TestNet4Params.get();
             case REGTEST:
             default:
                 return RegTestParams.get();

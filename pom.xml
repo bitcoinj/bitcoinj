@@ -44,7 +44,7 @@
   </scm>
 
   <name>monacoinj Parent</name>
-  <description>Provides the common configuration for the BitCoinJ modules</description>
+  <description>Provides the common configuration for the MonaCoinJ modules</description>
   <url>http://www.monacoinj.org/</url>
 
   <licenses>

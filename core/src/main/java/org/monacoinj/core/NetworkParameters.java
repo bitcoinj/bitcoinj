@@ -118,7 +118,7 @@ public abstract class NetworkParameters {
         try {
             // A script containing the difficulty bits and the following message:
             //
-            //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
+            //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks" TODO Mona
             byte[] bytes = Utils.HEX.decode
                     ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
             t.addInput(new TransactionInput(n, t, bytes));
@@ -135,8 +135,8 @@ public abstract class NetworkParameters {
         return genesisBlock;
     }
 
-    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
-    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    public static final int TARGET_TIMESPAN = (int)(1.1 * 24 * 60 * 60);  // 1.1d per difficulty cycle, on average.
+    public static final int TARGET_SPACING = (int)(1.5 * 60);  // 1.5 minutes per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
     
     /**
@@ -149,17 +149,17 @@ public abstract class NetworkParameters {
     /**
      * The maximum number of coins to be generated
      */
-    public static final long MAX_COINS = 21000000;
+    public static final long MAX_COINS = 105120000;
 
     /**
      * The maximum money to be generated
      */
     public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
-    /** Alias for TestNet3Params.get(), use that instead. */
+    /** Alias for TestNet4Params.get(), use that instead. */
     @Deprecated
     public static NetworkParameters testNet() {
-        return TestNet3Params.get();
+        return TestNet4Params.get();
     }
 
     /** Alias for TestNet2Params.get(), use that instead. */
@@ -168,10 +168,10 @@ public abstract class NetworkParameters {
         return TestNet2Params.get();
     }
 
-    /** Alias for TestNet3Params.get(), use that instead. */
+    /** Alias for TestNet4Params.get(), use that instead. */
     @Deprecated
     public static NetworkParameters testNet3() {
-        return TestNet3Params.get();
+        return TestNet4Params.get();
     }
 
     /** Alias for MainNetParams.get(), use that instead */
@@ -219,7 +219,7 @@ public abstract class NetworkParameters {
         if (id.equals(ID_MAINNET)) {
             return MainNetParams.get();
         } else if (id.equals(ID_TESTNET)) {
-            return TestNet3Params.get();
+            return TestNet4Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
         } else if (id.equals(ID_REGTEST)) {
@@ -235,7 +235,7 @@ public abstract class NetworkParameters {
         if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
             return MainNetParams.get();
         } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
-            return TestNet3Params.get();
+            return TestNet4Params.get();
         } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
             return UnitTestParams.get();
         } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
@@ -527,7 +527,7 @@ public abstract class NetworkParameters {
         MINIMUM(70000),
         PONG(60001),
         BLOOM_FILTER(70000),
-        CURRENT(70012);
+        CURRENT(70015);
 
         private final int monacoinProtocol;
 

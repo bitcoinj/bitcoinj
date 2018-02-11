@@ -18,7 +18,7 @@ package org.monacoinj.core;
 
 import com.google.common.collect.*;
 import org.monacoinj.core.listeners.*;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.testing.FakeTxBuilder;
 import org.monacoinj.testing.InboundMessageQueuer;
 import org.monacoinj.testing.TestWithNetworkConnections;
@@ -934,7 +934,7 @@ public class PeerTest extends TestWithNetworkConnections {
                 peerDisconnected.set(null);
             }
         });
-        final NetworkParameters params = TestNet3Params.get();
+        final NetworkParameters params = TestNet4Params.get();
         MessageSerializer serializer = params.getDefaultSerializer();
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();

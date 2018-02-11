@@ -34,49 +34,48 @@ import static com.google.common.base.Preconditions.checkState;
  * Parameters for the testnet, a separate public instance of Monacoin that has relaxed rules suitable for development
  * and testing of applications and new Monacoin versions.
  */
-public class TestNet3Params extends AbstractMonacoinNetParams {
-    public TestNet3Params() {
+public class TestNet4Params extends AbstractMonacoinNetParams {
+    public TestNet4Params() {
         super();
         id = ID_TESTNET;
         // Genesis hash is 000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943
-        packetMagic = 0x0b110907;
+        packetMagic = 0xfcc1b7dc;
         interval = INTERVAL;
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
-        port = 18333;
+        maxTarget = Utils.decodeCompactBits(0x1e0fffffL);
+        port = 19403;
         addressHeader = 111;
         p2shHeader = 196;
+        p2shHeaderAlt = 117;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
         dumpedPrivateKeyHeader = 239;
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setNonce(414098458);
+        genesisBlock.setTime(1388479759L);
+        genesisBlock.setDifficultyTarget(0x1e0fffffL);
+        genesisBlock.setNonce(600389L);
         spendableCoinbaseDepth = 100;
-        subsidyDecreaseBlockCount = 210000;
+        subsidyDecreaseBlockCount = 1051200;
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
-        alertSigningKey = Utils.HEX.decode("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
+        checkState(genesisHash.equals("a0d810b45c92ac12e8c5b312a680caafba52216e5d9649b9dd86f7ad6550a43f"));
+        alertSigningKey = Utils.HEX.decode("04887665070e79d20f722857e58ec8f402733f710135521a0b63441419bf5665ba4623bed13fca0cb2338682ab2a54ad13ce07fbc81c3c2f0912a4eb8521dd3cfb");
 
         dnsSeeds = new String[] {
-                "testnet-seed.monacoin.jonasschnelli.ch", // Jonas Schnelli
-                "testnet-seed.bluematt.me",              // Matt Corallo
-                "testnet-seed.monacoin.petertodd.org",    // Peter Todd
-                "testnet-seed.monacoin.schildbach.de",    // Andreas Schildbach
-                "monacoin-testnet.bloqseeds.net",         // Bloq
+                "test-dnsseed.monacoin.org",
+                "electrumx1.testnet.monacoin.nl",
+                "electrumx1.testnet.monacoin.ninja",
         };
         addrSeeds = null;
         bip32HeaderPub = 0x043587CF;
         bip32HeaderPriv = 0x04358394;
 
-        majorityEnforceBlockUpgrade = TestNet2Params.TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
-        majorityRejectBlockOutdated = TestNet2Params.TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
-        majorityWindow = TestNet2Params.TESTNET_MAJORITY_WINDOW;
+        majorityEnforceBlockUpgrade = 51;
+        majorityRejectBlockOutdated = 75;
+        majorityWindow = 100;
     }
 
-    private static TestNet3Params instance;
-    public static synchronized TestNet3Params get() {
+    private static TestNet4Params instance;
+    public static synchronized TestNet4Params get() {
         if (instance == null) {
-            instance = new TestNet3Params();
+            instance = new TestNet4Params();
         }
         return instance;
     }
@@ -86,7 +85,7 @@ public class TestNet3Params extends AbstractMonacoinNetParams {
         return PAYMENT_PROTOCOL_ID_TESTNET;
     }
 
-    // February 16th 2012
+    // February 16th 2012 TODO Mona
     private static final Date testnetDiffDate = new Date(1329264000000L);
 
     @Override

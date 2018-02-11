@@ -18,7 +18,7 @@ package org.monacoinj.protocols.payments;
 
 import org.monacoinj.core.*;
 import org.monacoinj.crypto.X509Utils;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.params.UnitTestParams;
 import org.monacoinj.protocols.payments.PaymentProtocol.Output;
 import org.monacoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
@@ -102,7 +102,7 @@ public class PaymentProtocolTest {
     @Test
     public void testPaymentRequest() throws Exception {
         // Create
-        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet3Params.get(), AMOUNT, TO_ADDRESS, MEMO,
+        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet4Params.get(), AMOUNT, TO_ADDRESS, MEMO,
                 PAYMENT_URL, MERCHANT_DATA).build();
         byte[] paymentRequestBytes = paymentRequest.toByteArray();
 

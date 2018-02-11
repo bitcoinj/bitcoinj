@@ -17,7 +17,7 @@
 package org.monacoinj.core;
 
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.junit.Test;
 
 import static org.monacoinj.core.Utils.HEX;
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
  *
  */
 public class VersionedChecksummedBytesTest {
-    static final NetworkParameters testParams = TestNet3Params.get();
+    static final NetworkParameters testParams = TestNet4Params.get();
     static final NetworkParameters mainParams = MainNetParams.get();
 
     @Test

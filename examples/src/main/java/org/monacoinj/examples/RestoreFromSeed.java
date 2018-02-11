@@ -19,7 +19,7 @@ package org.monacoinj.examples;
 import org.monacoinj.core.listeners.DownloadProgressTracker;
 import org.monacoinj.core.*;
 import org.monacoinj.net.discovery.DnsDiscovery;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.store.SPVBlockStore;
 import org.monacoinj.wallet.DeterministicSeed;
 import org.monacoinj.wallet.Wallet;
@@ -33,7 +33,7 @@ import java.io.File;
 public class RestoreFromSeed {
 
     public static void main(String[] args) throws Exception {
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = TestNet4Params.get();
 
         // Monacoinj supports hierarchical deterministic wallets (or "HD Wallets"): https://github.com/monacoin/bips/blob/master/bip-0032.mediawiki
         // HD wallets allow you to restore your wallet simply from a root seed. This seed can be represented using a short mnemonic sentence as described in BIP 39: https://github.com/monacoin/bips/blob/master/bip-0039.mediawiki

@@ -22,7 +22,7 @@ import org.monacoinj.core.*;
 import org.monacoinj.net.discovery.DnsDiscovery;
 import org.monacoinj.params.MainNetParams;
 import org.monacoinj.params.RegTestParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.store.BlockStore;
 import org.monacoinj.store.MemoryBlockStore;
 import org.monacoinj.utils.BriefLogFormatter;
@@ -81,7 +81,7 @@ public class BuildCheckpoints {
                 suffix = "";
                 break;
             case TEST:
-                params = TestNet3Params.get();
+                params = TestNet4Params.get();
                 suffix = "-testnet";
                 break;
             case REGTEST:

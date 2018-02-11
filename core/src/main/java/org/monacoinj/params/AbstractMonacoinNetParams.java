@@ -48,7 +48,7 @@ public abstract class AbstractMonacoinNetParams extends NetworkParameters {
     /**
      * Scheme part for Monacoin URIs.
      */
-    public static final String BITCOIN_SCHEME = "monacoin";
+    public static final String MONACOIN_SCHEME = "monacoin";
     public static final int REWARD_HALVING_INTERVAL = 210000;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractMonacoinNetParams.class);
@@ -170,7 +170,7 @@ public abstract class AbstractMonacoinNetParams extends NetworkParameters {
 
     @Override
     public String getUriScheme() {
-        return BITCOIN_SCHEME;
+        return MONACOIN_SCHEME;
     }
 
     @Override

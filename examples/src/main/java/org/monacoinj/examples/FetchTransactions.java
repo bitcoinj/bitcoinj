@@ -18,7 +18,7 @@
 package org.monacoinj.examples;
 
 import org.monacoinj.core.*;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.store.BlockStore;
 import org.monacoinj.store.MemoryBlockStore;
 import org.monacoinj.utils.BriefLogFormatter;
@@ -34,7 +34,7 @@ public class FetchTransactions {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         System.out.println("Connecting to node");
-        final NetworkParameters params = TestNet3Params.get();
+        final NetworkParameters params = TestNet4Params.get();
 
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);

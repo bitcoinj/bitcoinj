@@ -18,7 +18,7 @@ package org.monacoinj.examples;
 
 import org.monacoinj.core.*;
 import org.monacoinj.kits.WalletAppKit;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.script.Script;
 import org.monacoinj.wallet.Wallet;
 import org.monacoinj.wallet.listeners.KeyChainEventListener;
@@ -44,13 +44,13 @@ public class Kit {
         // First we configure the network we want to use.
         // The available options are:
         // - MainNetParams
-        // - TestNet3Params
+        // - TestNet4Params
         // - RegTestParams
         // While developing your application you probably want to use the Regtest mode and run your local monacoin network. Run monacoind with the -regtest flag
         // To test you app with a real network you can use the testnet. The testnet is an alternative monacoin network that follows the same rules as main network. Coins are worth nothing and you can get coins for example from http://faucet.xeno-genesis.com/
         // 
         // For more information have a look at: https://monacoinj.github.io/testing and https://monacoin.org/en/developer-examples#testing-applications
-        NetworkParameters params = TestNet3Params.get();
+        NetworkParameters params = TestNet4Params.get();
 
         // Now we initialize a new WalletAppKit. The kit handles all the boilerplate for us and is the easiest way to get everything up and running.
         // Have a look at the WalletAppKit documentation and its source to understand what's happening behind the scenes: https://github.com/monacoinj/monacoinj/blob/master/core/src/main/java/org/monacoinj/kits/WalletAppKit.java

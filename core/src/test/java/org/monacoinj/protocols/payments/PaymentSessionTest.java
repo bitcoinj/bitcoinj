@@ -20,7 +20,7 @@ package org.monacoinj.protocols.payments;
 import org.monacoinj.core.*;
 import org.monacoinj.crypto.TrustStoreLoader;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.monacoin.protocols.payments.Protos;
@@ -36,7 +36,7 @@ import static org.monacoinj.core.Coin.COIN;
 import static org.junit.Assert.*;
 
 public class PaymentSessionTest {
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
+    private static final NetworkParameters PARAMS = TestNet4Params.get();
     private static final String simplePaymentUrl = "http://a.simple.url.com/";
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
     private static final String paymentMemo = "take ze coinz";

@@ -23,7 +23,7 @@ import org.monacoinj.crypto.KeyCrypter;
 import org.monacoinj.crypto.KeyCrypterScrypt;
 import org.monacoinj.crypto.TransactionSignature;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.params.UnitTestParams;
 import org.monacoinj.utils.BriefLogFormatter;
 import com.google.common.collect.Lists;
@@ -184,16 +184,16 @@ public class ECKeyTest {
     public void base58Encoding() throws Exception {
         String addr = "mqAJmaxMcG5pPHHc3H3NtyXzY7kGbJLuMF";
         String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
-        ECKey key = DumpedPrivateKey.fromBase58(TestNet3Params.get(), privkey).getKey();
-        assertEquals(privkey, key.getPrivateKeyEncoded(TestNet3Params.get()).toString());
-        assertEquals(addr, key.toAddress(TestNet3Params.get()).toString());
+        ECKey key = DumpedPrivateKey.fromBase58(TestNet4Params.get(), privkey).getKey();
+        assertEquals(privkey, key.getPrivateKeyEncoded(TestNet4Params.get()).toString());
+        assertEquals(addr, key.toAddress(TestNet4Params.get()).toString());
     }
 
     @Test
     public void base58Encoding_leadingZero() throws Exception {
         String privkey = "91axuYLa8xK796DnBXXsMbjuc8pDYxYgJyQMvFzrZ6UfXaGYuqL";
-        ECKey key = DumpedPrivateKey.fromBase58(TestNet3Params.get(), privkey).getKey();
-        assertEquals(privkey, key.getPrivateKeyEncoded(TestNet3Params.get()).toString());
+        ECKey key = DumpedPrivateKey.fromBase58(TestNet4Params.get(), privkey).getKey();
+        assertEquals(privkey, key.getPrivateKeyEncoded(TestNet4Params.get()).toString());
         assertEquals(0, key.getPrivKeyBytes()[0]);
     }
 
@@ -202,8 +202,8 @@ public class ECKeyTest {
         // Replace the loop bound with 1000 to get some keys with leading zero byte
         for (int i = 0 ; i < 20 ; i++) {
             ECKey key = new ECKey();
-            ECKey key1 = DumpedPrivateKey.fromBase58(TestNet3Params.get(),
-                    key.getPrivateKeyEncoded(TestNet3Params.get()).toString()).getKey();
+            ECKey key1 = DumpedPrivateKey.fromBase58(TestNet4Params.get(),
+                    key.getPrivateKeyEncoded(TestNet4Params.get()).toString()).getKey();
             assertEquals(Utils.HEX.encode(key.getPrivKeyBytes()),
                     Utils.HEX.encode(key1.getPrivKeyBytes()));
         }

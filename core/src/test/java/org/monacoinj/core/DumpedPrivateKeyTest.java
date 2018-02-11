@@ -29,12 +29,12 @@ import java.util.Arrays;
 
 import org.junit.Test;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 
 public class DumpedPrivateKeyTest {
 
     private static final MainNetParams MAINNET = MainNetParams.get();
-    private static final TestNet3Params TESTNET = TestNet3Params.get();
+    private static final TestNet4Params TESTNET = TestNet4Params.get();
 
     @Test
     public void checkNetwork() throws Exception {

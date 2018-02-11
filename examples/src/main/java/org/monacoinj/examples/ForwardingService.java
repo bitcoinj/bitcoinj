@@ -22,7 +22,7 @@ import org.monacoinj.crypto.KeyCrypterException;
 import org.monacoinj.kits.WalletAppKit;
 import org.monacoinj.params.MainNetParams;
 import org.monacoinj.params.RegTestParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.utils.BriefLogFormatter;
 import org.monacoinj.wallet.Wallet;
 import org.monacoinj.wallet.listeners.WalletCoinsReceivedEventListener;
@@ -55,7 +55,7 @@ public class ForwardingService {
         NetworkParameters params;
         String filePrefix;
         if (args.length > 1 && args[1].equals("testnet")) {
-            params = TestNet3Params.get();
+            params = TestNet4Params.get();
             filePrefix = "forwarding-service-testnet";
         } else if (args.length > 1 && args[1].equals("regtest")) {
             params = RegTestParams.get();

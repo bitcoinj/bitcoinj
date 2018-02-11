@@ -18,7 +18,7 @@
 package org.monacoinj.examples;
 
 import org.monacoinj.core.*;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.store.BlockStore;
 import org.monacoinj.store.MemoryBlockStore;
 import org.monacoinj.wallet.Wallet;
@@ -37,7 +37,7 @@ public class RefreshWallet {
         System.out.println(wallet.toString());
 
         // Set up the components and link them together.
-        final NetworkParameters params = TestNet3Params.get();
+        final NetworkParameters params = TestNet4Params.get();
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
 

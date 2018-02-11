@@ -18,7 +18,7 @@ package org.monacoinj.tools;
 
 import org.monacoinj.core.*;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.store.*;
 import org.monacoinj.utils.BlockFileLoader;
 import com.google.common.base.Preconditions;
@@ -36,7 +36,7 @@ public class BlockImporter {
         
         NetworkParameters params;
         if (args[0].equals("test"))
-            params = TestNet3Params.get();
+            params = TestNet4Params.get();
         else
             params = MainNetParams.get();
         

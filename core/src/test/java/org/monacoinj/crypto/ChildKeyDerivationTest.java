@@ -193,7 +193,7 @@ public class ChildKeyDerivationTest {
         String priv58 = key1.serializePrivB58(params);
         assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
         assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
-        params = TestNet3Params.get();
+        params = TestNet4Params.get();
         pub58 = key1.serializePubB58(params);
         priv58 = key1.serializePrivB58(params);
         assertEquals("tpubD6NzVbkrYhZ4WuxgZMdpw1Hvi7MKg6YDjDMXVohmZCFfF17hXBPYpc56rCY1KXFMovN29ik37nZimQseiykRTBTJTZJmjENyv2k3R12BJ1M", pub58);

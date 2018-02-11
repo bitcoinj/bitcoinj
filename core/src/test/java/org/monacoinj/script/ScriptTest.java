@@ -24,7 +24,7 @@ import org.monacoinj.core.*;
 import org.monacoinj.core.Transaction.SigHash;
 import org.monacoinj.crypto.TransactionSignature;
 import org.monacoinj.params.MainNetParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.script.Script.VerifyFlag;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -56,7 +56,7 @@ public class ScriptTest {
 
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
+    private static final NetworkParameters PARAMS = TestNet4Params.get();
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 

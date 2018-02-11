@@ -22,7 +22,7 @@ import org.monacoinj.crypto.*;
 import org.monacoinj.net.discovery.DnsDiscovery;
 import org.monacoinj.params.MainNetParams;
 import org.monacoinj.params.RegTestParams;
-import org.monacoinj.params.TestNet3Params;
+import org.monacoinj.params.TestNet4Params;
 import org.monacoinj.protocols.payments.PaymentProtocol;
 import org.monacoinj.protocols.payments.PaymentProtocolException;
 import org.monacoinj.protocols.payments.PaymentSession;
@@ -271,7 +271,7 @@ public class WalletTool {
                 chainFileName = new File("mainnet.chain");
                 break;
             case TEST:
-                params = TestNet3Params.get();
+                params = TestNet4Params.get();
                 chainFileName = new File("testnet.chain");
                 break;
             case REGTEST:
