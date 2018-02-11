@@ -18,12 +18,12 @@ package wallettemplate;
 
 import com.google.common.util.concurrent.*;
 import javafx.scene.input.*;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.*;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.DeterministicSeed;
+import org.monacoinj.core.NetworkParameters;
+import org.monacoinj.kits.WalletAppKit;
+import org.monacoinj.params.*;
+import org.monacoinj.utils.BriefLogFormatter;
+import org.monacoinj.utils.Threading;
+import org.monacoinj.wallet.DeterministicSeed;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -49,7 +49,7 @@ public class Main extends Application {
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();
 
-    public static WalletAppKit bitcoin;
+    public static WalletAppKit monacoin;
     public static Main instance;
 
     private StackPane uiStack;
@@ -100,7 +100,7 @@ public class Main extends Application {
 
         // Make log output concise.
         BriefLogFormatter.init();
-        // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
+        // Tell monacoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
         // a future version.
@@ -108,7 +108,7 @@ public class Main extends Application {
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         setupWalletKit(null);
 
-        if (bitcoin.isChainFileLocked()) {
+        if (monacoin.isChainFileLocked()) {
             informationalAlert("Already running", "This application is already running and cannot be started twice.");
             Platform.exit();
             return;
@@ -118,38 +118,38 @@ public class Main extends Application {
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
 
-        bitcoin.addListener(new Service.Listener() {
+        monacoin.addListener(new Service.Listener() {
             @Override
             public void failed(Service.State from, Throwable failure) {
                 GuiUtils.crashAlert(failure);
             }
         }, Platform::runLater);
-        bitcoin.startAsync();
+        monacoin.startAsync();
 
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
+        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> monacoin.peerGroup().getDownloadPeer().close());
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File("."), WALLET_FILE_NAME) {
+        monacoin = new WalletAppKit(params, new File("."), WALLET_FILE_NAME) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
                 // their own money!
-                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-                Platform.runLater(controller::onBitcoinSetup);
+                monacoin.wallet().allowSpendingUnconfirmedTransactions();
+                Platform.runLater(controller::onMonacoinSetup);
             }
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
         if (params == RegTestParams.get()) {
-            bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
+            monacoin.connectToLocalHost();   // You should run a regtest mode monacoind locally.
         }
-        bitcoin.setDownloadListener(controller.progressBarUpdater())
+        monacoin.setDownloadListener(controller.progressBarUpdater())
                .setBlockingStartup(false)
                .setUserAgent(APP_NAME, "1.0");
         if (seed != null)
-            bitcoin.restoreWalletFromSeed(seed);
+            monacoin.restoreWalletFromSeed(seed);
     }
 
     private Node stopClickPane = new Pane();
@@ -243,8 +243,8 @@ public class Main extends Application {
 
     @Override
     public void stop() throws Exception {
-        bitcoin.stopAsync();
-        bitcoin.awaitTerminated();
+        monacoin.stopAsync();
+        monacoin.awaitTerminated();
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
     }

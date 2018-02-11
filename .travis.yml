@@ -1,4 +1,4 @@
-# configuration for https://travis-ci.org/bitcoinj/bitcoinj
+# configuration for https://travis-ci.org/monacoinj/monacoinj
 sudo: false
 dist: trusty
 language: java
@@ -16,5 +16,5 @@ after_success:
 
 notifications:
   irc:
-    channels: "irc.freenode.net#bitcoinj"
+    channels: "irc.freenode.net#monacoinj"
     skip_join: true

@@ -18,7 +18,7 @@
 //
 // This example shows how to implement the forwarding service demo from the Getting Started tutorial.
 
-var bcj = org.bitcoinj;
+var bcj = org.monacoinj;
 var params = bcj.params.TestNet3Params.get();
 
 // Address where we'll send received coins (minus the miner fee)
@@ -38,7 +38,7 @@ kit.awaitRunning()
 
 var wallet = kit.wallet();
 var myAddr = wallet.currentReceiveAddress()
-var uri = "bitcoin:" + myAddr;
+var uri = "monacoin:" + myAddr;
 print("Send coins to: " + myAddr);
 print("QRcode: http://qrickit.com/api/qr?d=" + uri);
 

@@ -19,8 +19,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.bitcoinj</groupId>
-  <artifactId>bitcoinj-parent</artifactId>
+  <groupId>org.monacoinj</groupId>
+  <artifactId>monacoinj-parent</artifactId>
   <version>0.15-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -38,14 +38,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://github.com/bitcoinj/bitcoinj</connection>
-    <developerConnection>scm:git:https://github.com/bitcoinj/bitcoinj</developerConnection>
-    <url>scm:git:https://github.com/bitcoinj/bitcoinj</url>
+    <connection>scm:git:https://github.com/monacoinj/monacoinj</connection>
+    <developerConnection>scm:git:https://github.com/monacoinj/monacoinj</developerConnection>
+    <url>scm:git:https://github.com/monacoinj/monacoinj</url>
   </scm>
 
-  <name>bitcoinj Parent</name>
+  <name>monacoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://www.bitcoinj.org/</url>
+  <url>http://www.monacoinj.org/</url>
 
   <licenses>
     <license>
@@ -58,13 +58,13 @@
 
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/bitcoinj/bitcoinj/issues</url>
+    <url>https://github.com/monacoinj/monacoinj/issues</url>
   </issueManagement>
 
   <mailingLists>
     <mailingList>
-      <name>bitcoinj Google Group</name>
-      <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
+      <name>monacoinj Google Group</name>
+      <post>https://groups.google.com/forum/#!forum/monacoinj</post>
     </mailingList>
   </mailingLists>
 
@@ -190,7 +190,7 @@
         <artifactId>slf4j-api</artifactId>
         <version>1.7.20</version>
       </dependency>
-      <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
+      <!-- monacoinj consumers are expected to provide their own SLF4J adapters
     such as logback, slf4j-log4j12, slf4j-jcl and so on
     see http://www.slf4j.org/faq.html -->
       <dependency>

@@ -66,7 +66,7 @@ From a user interface design perspective, it does not make much sense to have a 
 "subwallets", as it would rapidly get confusing especially when trying to spend money from multiple kinds of
 hierarchy at once. Key rotation is a special case because it is expected that (a) the private key material is always
 available on a rotating chain and (b) the only spends crafted for keys in these chains will be created internally by
-bitcoinj and thus there is virtually no added complexity to the API or UI to handle it.
+monacoinj and thus there is virtually no added complexity to the API or UI to handle it.
 
 When chains are encrypted, they must all be encrypted under exactly the same key. This is also true of rotating chains.
 The API will not support the case of multiple keychains in the same wallet that have a different password, as this would
@@ -82,12 +82,12 @@ Chain structure
 ---------------
 
 We follow the suggested chain structure outlined in BIP32 in which there is the notion of a top-level account, though
-in bitcoinj this will always be zero as it won't be exposed in the API for now. Under the account are two keys, one
+in monacoinj this will always be zero as it won't be exposed in the API for now. Under the account are two keys, one
 for receiving of funds (i.e. exposed to the use) and one which is used for "internal purposes", typically change keys
 though it may also be used for things like micropayment channels and, in future, de/refragmentation.
 
 In the most obvious implementation, a standard key chain would have all private or all pubkey only nodes. However,
-this will not be the case in bitcoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
+this will not be the case in monacoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
 
 1) When a chain is encrypted, the private key/seed bytes are not available, yet the chain still needs to be extended
    on demand. In this sense an encrypted wallet is somewhat like a watching wallet.
@@ -163,7 +163,7 @@ reused so we must keep it in RAM forever.
 Encryption
 ----------
 
-bitcoinj allows private keys to be encrypted under an AES key derived from a password using scrypt. We need to keep
+monacoinj allows private keys to be encrypted under an AES key derived from a password using scrypt. We need to keep
 this function working for deterministic wallets. Also, to achieve the goal of silent/automatic upgrade, we need to
 perform the upgrade once the AES key is provided by the user and keep it synchronizable in the previous state until
 then.
