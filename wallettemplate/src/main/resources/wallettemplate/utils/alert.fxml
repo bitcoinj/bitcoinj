@@ -13,7 +13,7 @@
   <children>
     <ImageView fitHeight="60.0" fitWidth="60.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.valignment="TOP">
       <image>
-        <Image url="@../bitcoin_logo_plain.png" />
+        <Image url="@../monacoin_logo_plain.png" />
         <!-- place holder -->
       </image>
     </ImageView>

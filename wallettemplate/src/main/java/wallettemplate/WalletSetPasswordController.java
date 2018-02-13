@@ -22,8 +22,8 @@ import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import org.bitcoinj.crypto.*;
-import org.bitcoinj.wallet.*;
+import org.monacoinj.crypto.*;
+import org.monacoinj.wallet.*;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
 import wallettemplate.utils.*;
@@ -107,7 +107,7 @@ public class WalletSetPasswordController {
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                Main.bitcoin.wallet().encrypt(scrypt, aesKey);
+                Main.monacoin.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");

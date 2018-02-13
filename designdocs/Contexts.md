@@ -6,15 +6,15 @@ This design doc describes the Context class that is new in 0.13.
 
 - To centralise various bits of configuration that are presently duplicated throughout the API, such as directories for
   storing files, the depth at which a tx is considered un-reorgable, the chosen network parameters and so on.
-- To simplify bitcoinj programming in future.
+- To simplify monacoinj programming in future.
 - To avoid the temptation to overload NetworkParameters with tweakable bits and pieces of misc configuration.
 - Unblock various bits of API evolution that are currently made difficult by the desire to avoid too many source code
   changes by developers.
 
 ## Background
 
-Since the very first version bitcoinj has had the concept of "network parameters": a class that wrapped various
-constants and magic numbers that distinguish the Bitcoin main network from the test network, and later, from settings
+Since the very first version monacoinj has had the concept of "network parameters": a class that wrapped various
+constants and magic numbers that distinguish the Monacoin main network from the test network, and later, from settings
 meant only for unit tests and local regression testing.
 
 However unlike many APIs, we have never had a more general notion of context and as the library has grown we have
@@ -41,10 +41,10 @@ of a transaction and currently the only way to obtain this is via the getConfide
 (renamed from MemoryPool) acts as a global map of txhash to confidence object, but we can't adjust the prototype of
 Transaction.getConfidence() to take one without breaking lots of code.
 
-This proliferation of global variables makes it harder for developers to use multiple instances of bitcoinj
+This proliferation of global variables makes it harder for developers to use multiple instances of monacoinj
 simultaneously, for example, to do cross-chain trading of different cryptocurrencies against each other.
 
-Finally, several bitcoinj objects currently need to be plugged together in ways that aren't always obvious for full
+Finally, several monacoinj objects currently need to be plugged together in ways that aren't always obvious for full
 functionality to work. The constructors try to guide the developer but it's still a common source of mistakes.
 
 We can resolve these problems by introducing a notion of a global Context object, used in the same places and ways as
@@ -75,7 +75,7 @@ Dependency injection would seem to be an attractive solution, but:
 
 ## Transition plan
 
-NetworkParameters appears everywhere in the bitcoinj API, and so introducing Context will have a major impact on it
+NetworkParameters appears everywhere in the monacoinj API, and so introducing Context will have a major impact on it
 as well. We aim to keep API churn under control, to avoid losing developers across difficult upgrades. As such,
 Context will be phased in gradually over one or two releases.
 

@@ -20,14 +20,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.bitcoinj</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <groupId>org.monacoinj</groupId>
+        <artifactId>monacoinj-parent</artifactId>
         <version>0.15-SNAPSHOT</version>
     </parent>
 
     <artifactId>wallettemplate</artifactId>
 
-    <name>bitcoinj Wallet-Template</name>
+    <name>monacoinj Wallet-Template</name>
 
     <build>
         <plugins>
@@ -72,8 +72,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.bitcoinj</groupId>
-            <artifactId>bitcoinj-core</artifactId>
+            <groupId>org.monacoinj</groupId>
+            <artifactId>monacoinj-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

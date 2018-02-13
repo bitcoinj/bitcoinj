@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-// This file shows how to use bitcoinj from Javascript.
-// To run, grab the bitcoinj bundled JAR and then do something like this:
+// This file shows how to use monacoinj from Javascript.
+// To run, grab the monacoinj bundled JAR and then do something like this:
 //
-//   jjs -cp bitcoinj-0.12-bundled.jar demo.js
+//   jjs -cp monacoinj-0.12-bundled.jar demo.js
 //
 // This will run this file using the Nashorn Javascript engine, which is not quite as fast as V8 but still very
 // competitive, speed wise. You can also get a repl/interpreter by doing this:
 //
-//   jjs -cp bitcoinj-0.12-bundled.jar
+//   jjs -cp monacoinj-0.12-bundled.jar
 //
 // and then you can play around in the interpreter.
 //
@@ -40,7 +40,7 @@
 //
 //   export slf4j=/path/to/slf4j-jdk14-1.7.7.jar
 //
-//   jjs -cp bitcoinj-0.12-bundled.jar:$slf4fj demo.js
+//   jjs -cp monacoinj-0.12-bundled.jar:$slf4fj demo.js
 //
 // Nashorn implements a slightly extended form of Javascript, you can learn the details of the java interop here:
 //
@@ -50,11 +50,11 @@
 
 
 // Import some stuff.
-var bcj = org.bitcoinj;
+var bcj = org.monacoinj;
 var ECKey = bcj.core.ECKey;
 
 // We'll use the testnet for now.
-var params = bcj.params.TestNet3Params.get();
+var params = bcj.params.TestNet4Params.get();
 
 // Most basic operation: make a key and print its address form to the screen.
 var key = new ECKey();
@@ -106,7 +106,7 @@ connectedPeers.forEach(function(peer) {
     // just started up.
 });
 
-// Nashorn, unlike V8, is thread safe (because it runs on the JVM). And bitcoinj is a threaded library. This means you
+// Nashorn, unlike V8, is thread safe (because it runs on the JVM). And monacoinj is a threaded library. This means you
 // can freely run code in parallel and mix and match concurrent constructs to use your preferred style. Above we used
 // blocking code. This is convenient in scripts and so on, but sometimes we want to keep the main thread free. Let's
 // do the same thing but in an async style:

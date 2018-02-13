@@ -17,7 +17,7 @@
 package wallettemplate;
 
 import javafx.application.Platform;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
+import org.monacoinj.crypto.KeyCrypterScrypt;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -70,13 +70,13 @@ public class WalletPasswordController {
             return;
         }
 
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.monacoin.wallet().getKeyCrypter();
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
             protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
-                if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
+                if (Main.monacoin.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
                 } else {
                     log.warn("User entered incorrect password");
@@ -113,11 +113,11 @@ public class WalletPasswordController {
     // Writes the given time to the wallet as a tag so we can find it again in this class.
     public static void setTargetTime(Duration targetTime) {
         ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-        Main.bitcoin.wallet().setTag(TAG, bytes);
+        Main.monacoin.wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
     public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+        return Duration.ofMillis(Longs.fromByteArray(Main.monacoin.wallet().getTag(TAG).toByteArray()));
     }
 }

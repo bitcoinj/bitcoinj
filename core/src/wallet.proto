@@ -25,7 +25,7 @@
 
 package wallet;
 
-option java_package = "org.bitcoinj.wallet";
+option java_package = "org.monacoinj.wallet";
 option java_outer_classname = "Protos";
 
 message PeerAddress {
@@ -73,7 +73,7 @@ message DeterministicKey {
 }
 
 /**
- * A key used to control Bitcoin spending.
+ * A key used to control Monacoin spending.
  *
  * Either the private key, the public key or both may be present.  It is recommended that
  * if the private key is provided that the public key is provided too because deriving it is slow.
@@ -83,10 +83,10 @@ message DeterministicKey {
  */
 message Key {
   enum Type {
-    /** Unencrypted - Original bitcoin secp256k1 curve */
+    /** Unencrypted - Original monacoin secp256k1 curve */
     ORIGINAL = 1;
 
-    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    /** Encrypted with Scrypt and AES - Original monacoin secp256k1 curve */
     ENCRYPTED_SCRYPT_AES = 2;
 
     /**
@@ -222,7 +222,7 @@ message TransactionConfidence {
   // Next tag: 9
 }
 
-/** A bitcoin transaction */
+/** A monacoin transaction */
 
 message Transaction {
   /**
@@ -340,7 +340,7 @@ message TransactionSigner {
 	optional bytes data = 2;
 }
 
-/** A bitcoin wallet */
+/** A monacoin wallet */
 message Wallet {
   /**
    * The encryption type of the wallet.
@@ -355,8 +355,8 @@ message Wallet {
   }
 
   required string network_identifier = 1; // the network used by this wallet
-  // org.bitcoin.production = main, production network (Satoshi genesis block)
-  // org.bitcoin.test = test network (Andresen genesis block)
+  // org.monacoin.production = main, production network (Satoshi genesis block)
+  // org.monacoin.test = test network (Andresen genesis block)
 
   // The SHA256 hash of the head of the best chain seen by this wallet.
   optional bytes last_seen_block_hash = 2;
@@ -399,7 +399,7 @@ message Wallet {
   // Next tag: 18
 }
 
-/** An exchange rate between Bitcoin and some fiat currency. */
+/** An exchange rate between Monacoin and some fiat currency. */
 message ExchangeRate {
   // This much of satoshis (1E-8 fractions)…
   required int64 coin_value = 1;

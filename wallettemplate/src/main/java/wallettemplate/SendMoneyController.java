@@ -17,9 +17,9 @@
 package wallettemplate;
 
 import javafx.scene.layout.HBox;
-import org.bitcoinj.core.*;
-import org.bitcoinj.wallet.SendRequest;
-import org.bitcoinj.wallet.Wallet;
+import org.monacoinj.core.*;
+import org.monacoinj.wallet.SendRequest;
+import org.monacoinj.wallet.Wallet;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -28,7 +28,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import org.spongycastle.crypto.params.KeyParameter;
-import wallettemplate.controls.BitcoinAddressValidator;
+import wallettemplate.controls.MonacoinAddressValidator;
 import wallettemplate.utils.TextFieldValidator;
 import wallettemplate.utils.WTUtils;
 
@@ -43,7 +43,7 @@ public class SendMoneyController {
     public TextField address;
     public Label titleLabel;
     public TextField amountEdit;
-    public Label btcLabel;
+    public Label monaLabel;
 
     public Main.OverlayUI overlayUI;
 
@@ -52,9 +52,9 @@ public class SendMoneyController {
 
     // Called by FXMLLoader
     public void initialize() {
-        Coin balance = Main.bitcoin.wallet().getBalance();
+        Coin balance = Main.monacoin.wallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(Main.params, address, sendBtn);
+        new MonacoinAddressValidator(Main.params, address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
@@ -70,12 +70,12 @@ public class SendMoneyController {
             Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = Address.fromBase58(Main.params, address.getText());
             SendRequest req;
-            if (amount.equals(Main.bitcoin.wallet().getBalance()))
+            if (amount.equals(Main.monacoin.wallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);
             req.aesKey = aesKey;
-            sendResult = Main.bitcoin.wallet().sendCoins(req);
+            sendResult = Main.monacoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
@@ -96,7 +96,7 @@ public class SendMoneyController {
             sendBtn.setDisable(true);
             address.setDisable(true);
             ((HBox)amountEdit.getParent()).getChildren().remove(amountEdit);
-            ((HBox)btcLabel.getParent()).getChildren().remove(btcLabel);
+            ((HBox)monaLabel.getParent()).getChildren().remove(monaLabel);
             updateTitleForBroadcast();
         } catch (InsufficientMoneyException e) {
             informationalAlert("Could not empty the wallet",

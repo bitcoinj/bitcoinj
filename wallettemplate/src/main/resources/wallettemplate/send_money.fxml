@@ -19,7 +19,7 @@
                 </font>
               </Label>
                   <TextField fx:id="amountEdit" />
-                  <Label fx:id="btcLabel" text="BTC">
+                  <Label fx:id="monaLabel" text="MONA">
                      <font>
                         <Font size="24.0" />
                      </font>
