@@ -95,7 +95,7 @@ public class MainNetParams extends AbstractMonacoinNetParams {
         //        )
         //};
 
-        addrSeeds = null // TODO Mona
+        addrSeeds = null; // TODO Mona
     }
 
     private static MainNetParams instance;
