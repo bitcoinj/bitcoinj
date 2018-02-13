@@ -16,9 +16,9 @@
 
 package wallettemplate;
 
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.wallet.DeterministicSeed;
+import org.monacoinj.core.Utils;
+import org.monacoinj.crypto.MnemonicCode;
+import org.monacoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
@@ -61,7 +61,7 @@ public class WalletSettingsController {
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = Main.monacoin.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
@@ -71,7 +71,7 @@ public class WalletSettingsController {
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(Main.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(checkNotNull(Main.monacoin.wallet().getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -149,7 +149,7 @@ public class WalletSettingsController {
     public void restoreClicked(ActionEvent event) {
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
-        if (Main.bitcoin.wallet().getBalance().value > 0) {
+        if (Main.monacoin.wallet().getBalance().value > 0) {
             informationalAlert("Wallet is not empty",
                     "You must empty this wallet out before attempting to restore an older one, as mixing wallets " +
                             "together can lead to invalidated backups.");
@@ -164,21 +164,21 @@ public class WalletSettingsController {
 
         log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
         informationalAlert("Wallet restore in progress",
-                "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
+                "Your wallet will now be resynced from the Monacoin network. This can take a long time for old wallets.");
         overlayUI.done();
         Main.instance.controller.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
-        // Shut down bitcoinj and restart it with the new seed.
-        Main.bitcoin.addListener(new Service.Listener() {
+        // Shut down monacoinj and restart it with the new seed.
+        Main.monacoin.addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
                 Main.instance.setupWalletKit(seed);
-                Main.bitcoin.startAsync();
+                Main.monacoin.startAsync();
             }
         }, Platform::runLater);
-        Main.bitcoin.stopAsync();
+        Main.monacoin.stopAsync();
     }
 
 
@@ -186,7 +186,7 @@ public class WalletSettingsController {
         if (aesKey == null) {
             Main.instance.overlayUI("wallet_set_password.fxml");
         } else {
-            Main.bitcoin.wallet().decrypt(aesKey);
+            Main.monacoin.wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
             passwordButton.setText("Set password");
             aesKey = null;

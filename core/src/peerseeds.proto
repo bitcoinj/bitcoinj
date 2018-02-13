@@ -1,10 +1,10 @@
-package org.bitcoin.crawler;
+package org.monacoin.crawler;
 
 //
 // A simple protocol for describing signed sets of IP addresses. Intended to be distributed via HTTP[S] or in files.
 //
 
-option java_package = "org.bitcoin.crawler";
+option java_package = "org.monacoin.crawler";
 option java_outer_classname = "PeerSeedProtos";
 
 message PeerSeedData {

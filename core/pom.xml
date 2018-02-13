@@ -20,19 +20,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.bitcoinj</groupId>
-        <artifactId>bitcoinj-parent</artifactId>
+        <groupId>org.monacoinj</groupId>
+        <artifactId>monacoinj-parent</artifactId>
         <version>0.15-SNAPSHOT</version>
     </parent>
 
-    <artifactId>bitcoinj-core</artifactId>
+    <artifactId>monacoinj-core</artifactId>
 
-    <name>bitcoinj</name>
-    <description>A Java Bitcoin library</description>
+    <name>monacoinj</name>
+    <description>A Java Monacoin library</description>
 
     <packaging>jar</packaging>
 
-    <url>https://bitcoinj.github.io</url>
+    <url>https://monacoinj.github.io</url>
 
     <licenses>
         <license>
@@ -45,8 +45,8 @@
     <!-- Dummy block to make Maven Central happy: authors list is in AUTHORS -->
     <developers>
         <developer>
-            <name>The bitcoinj team</name>
-            <email>bitcoinj@googlegroups.com</email>
+            <name>The monacoinj team</name>
+            <email>monacoinj@googlegroups.com</email>
         </developer>
     </developers>
 
@@ -156,7 +156,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Verify the dependency chain: see https://github.com/gary-rowe/BitcoinjEnforcerRules for
+            <!-- Verify the dependency chain: see https://github.com/gary-rowe/MonacoinjEnforcerRules for
                more information on this.
             -->
             <plugin>
@@ -280,8 +280,8 @@
                 <configuration>
                     <excludes>
                         <exclude>**/Protos*.class</exclude> <!-- Exclude generated protobuf classes -->
-                        <exclude>org/bitcoinj/jni/*</exclude> <!-- Exclude JNI classes -->
-                        <exclude>org/bitcoin/*</exclude> <!-- Exclude native classes -->
+                        <exclude>org/monacoinj/jni/*</exclude> <!-- Exclude JNI classes -->
+                        <exclude>org/monacoin/*</exclude> <!-- Exclude native classes -->
                     </excludes>
                 </configuration>
                 <executions>
@@ -335,7 +335,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Coveralls is a online code coverage tool, you can track code coverage here: https://coveralls.io/r/bitcoinj/bitcoinj -->
+            <!-- Coveralls is a online code coverage tool, you can track code coverage here: https://coveralls.io/r/monacoinj/monacoinj -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
@@ -357,7 +357,7 @@
             <version>3.2</version>
             <scope>test</scope>
         </dependency>
-        <!-- bitcoinj consumers are expected to provide their own SLF4J adapters
+        <!-- monacoinj consumers are expected to provide their own SLF4J adapters
              such as logback, slf4j-log4j12, slf4j-jcl and so on
              see http://www.slf4j.org/faq.html -->
         <dependency>
