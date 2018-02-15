@@ -17,12 +17,13 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import java.util.Arrays;
 
 import javax.annotation.Nullable;
+
+import org.bitcoinj.params.Networks;
 
 /**
  * Parses and generates private keys in the form used by the Bitcoin "dumpprivkey" command. This is the private key
@@ -42,13 +43,37 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      * @throws WrongNetworkException
      *             if the given private key is valid but for a different chain (eg testnet vs mainnet)
      */
-    public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params,String base58) throws AddressFormatException {
-        return new DumpedPrivateKey(params, base58);
+    public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
+            throws AddressFormatException {
+        byte[] versionAndDataBytes = Base58.decodeChecked(base58);
+        int version = versionAndDataBytes[0] & 0xFF;
+        byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
+        if (params == null) {
+            for (NetworkParameters p : Networks.get())
+                if (version == p.getDumpedPrivateKeyHeader())
+                    return new DumpedPrivateKey(p, bytes);
+            throw new AddressFormatException("No network found for " + base58);
+        } else {
+            if (version == params.getDumpedPrivateKeyHeader())
+                return new DumpedPrivateKey(params, bytes);
+            throw new WrongNetworkException(version);
+        }
+    }
+
+    private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
+        super(params, bytes);
+        if (bytes.length != 32 && bytes.length != 33)
+            throw new AddressFormatException("Wrong number of bytes for a private key, not 32 or 33");
     }
 
     // Used by ECKey.getPrivateKeyEncoded()
     DumpedPrivateKey(NetworkParameters params, byte[] keyBytes, boolean compressed) {
-        super(params.getDumpedPrivateKeyHeader(), encode(keyBytes, compressed));
+        this(params, encode(keyBytes, compressed));
+    }
+
+    @Override
+    protected int getVersion() {
+        return params.getDumpedPrivateKeyHeader();
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {
@@ -64,17 +89,6 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
         }
     }
 
-    /** @deprecated Use {@link #fromBase58(NetworkParameters, String)} */
-    @Deprecated
-    public DumpedPrivateKey(@Nullable NetworkParameters params, String encoded) throws AddressFormatException {
-        super(encoded);
-        if (params != null && version != params.getDumpedPrivateKeyHeader())
-            throw new WrongNetworkException(version);
-        if (bytes.length != 32 && bytes.length != 33) {
-            throw new AddressFormatException("Wrong number of bytes for a private key, not 32 or 33");
-        }
-    }
-
     /**
      * Returns an ECKey created from this encoded private key.
      */
@@ -87,18 +101,5 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      */
     public boolean isPubKeyCompressed() {
         return bytes.length == 33 && bytes[32] == 1;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DumpedPrivateKey other = (DumpedPrivateKey) o;
-        return version == other.version && Arrays.equals(bytes, other.bytes);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(version, Arrays.hashCode(bytes));
     }
 }

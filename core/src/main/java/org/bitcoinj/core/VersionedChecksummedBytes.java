@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +17,44 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import com.google.common.base.Objects;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * <p>In Bitcoin the following format is often used to represent some type of key:</p>
- * <p/>
- * <pre>[one version byte] [data bytes] [4 checksum bytes]</pre>
- * <p/>
- * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
- * dumpprivkey command.</p>
+ * <p>
+ * The following format is often used to represent some type of data (e.g. key or hash of key):
+ * </p>
+ * 
+ * <pre>
+ * [prefix] [data bytes] [checksum]
+ * </pre>
+ * <p>
+ * and the result is then encoded with some variant of base. This format is most commonly used for addresses and private
+ * keys exported using Bitcoin Core's dumpprivkey command.
+ * </p>
  */
-public class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
-    protected final int version;
-    protected byte[] bytes;
+public abstract class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
+    protected final transient NetworkParameters params;
+    protected final byte[] bytes;
 
-    protected VersionedChecksummedBytes(String encoded) throws AddressFormatException {
-        byte[] versionAndDataBytes = Base58.decodeChecked(encoded);
-        byte versionByte = versionAndDataBytes[0];
-        version = versionByte & 0xFF;
-        bytes = new byte[versionAndDataBytes.length - 1];
-        System.arraycopy(versionAndDataBytes, 1, bytes, 0, versionAndDataBytes.length - 1);
+    protected VersionedChecksummedBytes(NetworkParameters params, byte[] bytes) {
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(bytes);
     }
 
-    protected VersionedChecksummedBytes(int version, byte[] bytes) {
-        checkArgument(version >= 0 && version < 256);
-        this.version = version;
-        this.bytes = bytes;
+    /**
+     * @return network this data is valid for
+     */
+    public final NetworkParameters getParameters() {
+        return params;
     }
 
     /**
@@ -56,8 +62,10 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
      * object, including version and checksum bytes.
      */
     public final String toBase58() {
-        return Base58.encodeChecked(version, bytes);
+        return Base58.encodeChecked(getVersion(), bytes);
     }
+
+    protected abstract int getVersion();
 
     @Override
     public String toString() {
@@ -66,7 +74,7 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(version, Arrays.hashCode(bytes));
+        return Objects.hashCode(params, Arrays.hashCode(bytes));
     }
 
     @Override
@@ -74,12 +82,10 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VersionedChecksummedBytes other = (VersionedChecksummedBytes) o;
-        return this.version == other.version && Arrays.equals(this.bytes, other.bytes);
+        return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
-     * {@inheritDoc}
-     *
      * This implementation narrows the return type to <code>VersionedChecksummedBytes</code>
      * and allows subclasses to throw <code>CloneNotSupportedException</code> even though it
      * is never thrown by this implementation.
@@ -90,23 +96,30 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
     }
 
     /**
-     * {@inheritDoc}
-     *
      * This implementation uses an optimized Google Guava method to compare <code>bytes</code>.
      */
     @Override
     public int compareTo(VersionedChecksummedBytes o) {
-        int result = Ints.compare(this.version, o.version);
+        int result = this.params.getId().compareTo(o.params.getId());
         return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
     }
 
-    /**
-     * Returns the "version" or "header" byte: the first byte of the data. This is used to disambiguate what the
-     * contents apply to, for example, which network the key or address is valid on.
-     *
-     * @return A positive number between 0 and 255.
-     */
-    public int getVersion() {
-        return version;
+    // Java serialization
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeUTF(params.getId());
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        try {
+            Field paramsField = VersionedChecksummedBytes.class.getDeclaredField("params");
+            paramsField.setAccessible(true);
+            paramsField.set(this, checkNotNull(NetworkParameters.fromID(in.readUTF())));
+            paramsField.setAccessible(false);
+        } catch (NoSuchFieldException | IllegalAccessException x) {
+            throw new RuntimeException(x);
+        }
     }
 }
