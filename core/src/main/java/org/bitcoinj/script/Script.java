@@ -60,7 +60,9 @@ public class Script {
         NO_TYPE,
         P2PKH,
         PUB_KEY,
-        P2SH
+        P2SH,
+        P2WPKH,
+        P2WSH
     }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
@@ -507,8 +509,9 @@ public class Script {
         return sigOps;
     }
 
-    static int decodeFromOpN(int opcode) {
-        checkArgument((opcode == OP_0 || opcode == OP_1NEGATE) || (opcode >= OP_1 && opcode <= OP_16), "decodeFromOpN called on non OP_N opcode");
+    public static int decodeFromOpN(int opcode) {
+        checkArgument((opcode == OP_0 || opcode == OP_1NEGATE) || (opcode >= OP_1 && opcode <= OP_16),
+                "decodeFromOpN called on non OP_N opcode: %s", ScriptOpCodes.getOpCodeName(opcode));
         if (opcode == OP_0)
             return 0;
         else if (opcode == OP_1NEGATE)
@@ -517,7 +520,7 @@ public class Script {
             return opcode + 1 - OP_1;
     }
 
-    static int encodeToOpN(int value) {
+    public static int encodeToOpN(int value) {
         checkArgument(value >= -1 && value <= 16, "encodeToOpN called for " + value + " which we cannot encode in an opcode.");
         if (value == 0)
             return OP_0;

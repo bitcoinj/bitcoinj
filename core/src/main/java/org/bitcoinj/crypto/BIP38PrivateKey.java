@@ -105,9 +105,13 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
         this.content = content;
     }
 
-    @Override
-    protected int getVersion() {
-        return 1;
+    /**
+     * Returns the base58-encoded textual form, including version and checksum bytes.
+     * 
+     * @return textual form
+     */
+    public String toBase58() {
+        return Base58.encodeChecked(1, bytes);
     }
 
     public ECKey decrypt(String passphrase) throws BadPassphraseException {
@@ -185,5 +189,10 @@ public class BIP38PrivateKey extends VersionedChecksummedBytes {
         } catch (GeneralSecurityException x) {
             throw new RuntimeException(x);
         }
+    }
+
+    @Override
+    public String toString() {
+        return toBase58();
     }
 }

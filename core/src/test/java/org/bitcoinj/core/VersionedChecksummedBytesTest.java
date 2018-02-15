@@ -35,8 +35,8 @@ public class VersionedChecksummedBytesTest {
         }
 
         @Override
-        protected int getVersion() {
-            return params.getAddressHeader();
+        public String toString() {
+            return Base58.encodeChecked(params.getAddressHeader(), bytes);
         }
     }
 

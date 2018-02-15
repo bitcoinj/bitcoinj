@@ -71,9 +71,13 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
         this(params, encode(keyBytes, compressed));
     }
 
-    @Override
-    protected int getVersion() {
-        return params.getDumpedPrivateKeyHeader();
+    /**
+     * Returns the base58-encoded textual form, including version and checksum bytes.
+     * 
+     * @return textual form
+     */
+    public String toBase58() {
+        return Base58.encodeChecked(params.getDumpedPrivateKeyHeader(), bytes);
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {
@@ -101,5 +105,10 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
      */
     public boolean isPubKeyCompressed() {
         return bytes.length == 33 && bytes[32] == 1;
+    }
+
+    @Override
+    public String toString() {
+        return toBase58();
     }
 }

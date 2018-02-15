@@ -104,7 +104,6 @@ public class AddressTest {
             fail();
         } catch (WrongNetworkException e) {
             // Success.
-            assertEquals(e.verCode, MAINNET.getAddressHeader());
         } catch (AddressFormatException e) {
             fail();
         }

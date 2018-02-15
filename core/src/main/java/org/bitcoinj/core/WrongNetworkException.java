@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +23,11 @@ package org.bitcoinj.core;
  * different chains, an operation that is guaranteed to destroy the money.
  */
 public class WrongNetworkException extends AddressFormatException {
-    /** The version code that was provided in the address. */
-    public int verCode;
-    
     public WrongNetworkException(int verCode) {
         super("Version code of address did not match acceptable versions for network: " + verCode);
-        this.verCode = verCode;
+    }
+
+    public WrongNetworkException(String hrp) {
+        super("Human readable part of address did not match acceptable HRPs for network: " + hrp);
     }
 }

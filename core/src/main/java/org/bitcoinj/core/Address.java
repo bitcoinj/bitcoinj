@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptPattern;
 
 import com.google.common.base.Objects;
@@ -41,7 +42,7 @@ import com.google.common.base.Objects;
  * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
  * type) can contain a hash of a script instead.</p>
  */
-public class Address extends VersionedChecksummedBytes {
+public class Address extends AbstractAddress {
     /**
      * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
      */
@@ -167,14 +168,44 @@ public class Address extends VersionedChecksummedBytes {
         this(params, false, hash160);
     }
 
-    @Override
-    protected int getVersion() {
+    /**
+     * Get the version header of an address. This is the first byte of a base58 encoded address.
+     * 
+     * @return version header as one byte
+     */
+    public int getVersion() {
         return p2sh ? params.getP2SHHeader() : params.getAddressHeader();
+    }
+
+    /**
+     * Returns the base58-encoded textual form, including version and checksum bytes.
+     * 
+     * @return textual form
+     */
+    public String toBase58() {
+        return Base58.encodeChecked(getVersion(), bytes);
     }
 
     /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
     public byte[] getHash160() {
+        return getHash();
+    }
+
+    /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
+    @Override
+    public byte[] getHash() {
         return bytes;
+    }
+
+    /**
+     * Get the type of output script that will be used for sending to the address. This is either
+     * {@link ScriptType#P2PKH} or {@link ScriptType#P2SH}.
+     * 
+     * @return type of output script
+     */
+    @Override
+    public ScriptType getOutputScriptType() {
+        return p2sh ? ScriptType.P2SH : ScriptType.P2PKH;
     }
 
     /**
@@ -214,6 +245,11 @@ public class Address extends VersionedChecksummedBytes {
     @Override
     public int hashCode() {
         return Objects.hashCode(super.hashCode(), p2sh);
+    }
+
+    @Override
+    public String toString() {
+        return toBase58();
     }
 
     @Override

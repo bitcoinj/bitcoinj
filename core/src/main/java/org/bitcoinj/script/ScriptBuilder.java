@@ -18,10 +18,14 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
+
+import org.bitcoinj.core.AbstractAddress;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script.ScriptType;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -248,24 +252,35 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
-    public static Script createOutputScript(Address to) {
-        if (to.isP2SHAddress()) {
-            // OP_HASH160 <scriptHash> OP_EQUAL
-            return new ScriptBuilder()
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUAL)
-                .build();
+    public static Script createOutputScript(AbstractAddress to) {
+        ScriptBuilder builder = new ScriptBuilder();
+        if (to instanceof Address) {
+            Address toLegacy = (Address) to;
+            ScriptType scriptType = toLegacy.getOutputScriptType();
+            if (scriptType == ScriptType.P2PKH) {
+                // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+                builder.op(OP_DUP);
+                builder.op(OP_HASH160);
+                builder.data(toLegacy.getHash160());
+                builder.op(OP_EQUALVERIFY);
+                builder.op(OP_CHECKSIG);
+            } else if (scriptType == ScriptType.P2SH) {
+                // OP_HASH160 <scriptHash> OP_EQUAL
+                builder.op(OP_HASH160);
+                builder.data(toLegacy.getHash160());
+                builder.op(OP_EQUAL);
+            } else {
+                throw new IllegalStateException("Cannot handle " + scriptType);
+            }
+        } else if (to instanceof SegwitAddress) {
+            // OP_0 <pubKeyHash|scriptHash>
+            SegwitAddress toSegwit = (SegwitAddress) to;
+            builder.smallNum(toSegwit.getWitnessVersion());
+            builder.data(toSegwit.getWitnessProgram());
         } else {
-            // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-            return new ScriptBuilder()
-                .op(OP_DUP)
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUALVERIFY)
-                .op(OP_CHECKSIG)
-                .build();
+            throw new IllegalStateException("Cannot handle " + to);
         }
+        return builder.build();
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */

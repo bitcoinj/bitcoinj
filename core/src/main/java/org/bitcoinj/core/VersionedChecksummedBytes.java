@@ -57,21 +57,6 @@ public abstract class VersionedChecksummedBytes implements Serializable, Cloneab
         return params;
     }
 
-    /**
-     * Returns the base-58 encoded String representation of this
-     * object, including version and checksum bytes.
-     */
-    public final String toBase58() {
-        return Base58.encodeChecked(getVersion(), bytes);
-    }
-
-    protected abstract int getVersion();
-
-    @Override
-    public String toString() {
-        return toBase58();
-    }
-
     @Override
     public int hashCode() {
         return Objects.hashCode(params, Arrays.hashCode(bytes));
