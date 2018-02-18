@@ -181,10 +181,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write(0xFF & numTxn);
-                bos.write(0xFF & (numTxn >> 8));
-                bos.write(0xFF & (numTxn >> 16));
-                bos.write(0xFF & (numTxn >> 24));
+                Utils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();

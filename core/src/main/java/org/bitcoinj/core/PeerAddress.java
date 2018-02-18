@@ -28,8 +28,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
-import static org.bitcoinj.core.Utils.uint64ToByteStreamLE;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -126,9 +124,9 @@ public class PeerAddress extends ChildMessage {
             //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
             //the address refers to this client.
             int secs = (int) (Utils.currentTimeSeconds());
-            uint32ToByteStreamLE(secs, stream);
+            Utils.uint32ToByteStreamLE(secs, stream);
         }
-        uint64ToByteStreamLE(services, stream);  // nServices.
+        Utils.uint64ToByteStreamLE(services, stream);  // nServices.
         // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by hand.
         byte[] ipBytes = addr.getAddress();
         if (ipBytes.length == 4) {
@@ -140,8 +138,7 @@ public class PeerAddress extends ChildMessage {
         }
         stream.write(ipBytes);
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
-        stream.write((byte) (0xFF & port >> 8));
-        stream.write((byte) (0xFF & port));
+        Utils.uint16ToByteStreamBE(port, stream);
     }
 
     @Override
@@ -162,7 +159,8 @@ public class PeerAddress extends ChildMessage {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-        port = ((0xFF & payload[cursor++]) << 8) | (0xFF & payload[cursor++]);
+        port = Utils.readUint16BE(payload, cursor);
+        cursor += 2;
         // The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
         length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }

@@ -668,10 +668,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write(0xFF & numTxn);
-                bos.write(0xFF & (numTxn >> 8));
-                bos.write(0xFF & (numTxn >> 16));
-                bos.write(0xFF & (numTxn >> 24));
+                Utils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
@@ -805,11 +802,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] transactions = results.getBytes(2);
             StoredUndoableBlock block;
             if (txOutChanges == null) {
-                int offset = 0;
-                int numTxn = ((transactions[offset++] & 0xFF)) |
-                        ((transactions[offset++] & 0xFF) << 8) |
-                        ((transactions[offset++] & 0xFF) << 16) |
-                        ((transactions[offset++] & 0xFF) << 24);
+                int numTxn = (int) Utils.readUint32(transactions, 0);
+                int offset = 4;
                 List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {
                     Transaction tx = params.getDefaultSerializer().makeTransaction(transactions, offset);
