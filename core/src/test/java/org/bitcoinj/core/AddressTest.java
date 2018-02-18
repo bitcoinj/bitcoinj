@@ -155,10 +155,10 @@ public class AddressTest {
     public void p2shAddress() throws Exception {
         // Test that we can construct P2SH addresses
         Address mainNetP2SHAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
-        assertEquals(mainNetP2SHAddress.version, MainNetParams.get().p2shHeader);
+        assertEquals(((Base58Address)mainNetP2SHAddress.addressScript).getVersion(), MainNetParams.get().p2shHeader);
         assertTrue(mainNetP2SHAddress.isP2SHAddress());
         Address testNetP2SHAddress = Address.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(testNetP2SHAddress.version, TestNet3Params.get().p2shHeader);
+        assertEquals(((Base58Address)testNetP2SHAddress.addressScript).getVersion(), TestNet3Params.get().p2shHeader);
         assertTrue(testNetP2SHAddress.isP2SHAddress());
 
         // Test that we can determine what network a P2SH address belongs to
@@ -205,7 +205,7 @@ public class AddressTest {
     @Test
     public void roundtripBase58() throws Exception {
         String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
-        assertEquals(base58, Address.fromBase58(null, base58).toBase58());
+        assertEquals(base58, Address.fromBase58(null, base58).toString());
     }
 
     @Test
