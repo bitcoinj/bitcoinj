@@ -105,7 +105,6 @@ public class AddressTest {
         } catch (WrongNetworkException e) {
             // Success.
             assertEquals(e.verCode, MainNetParams.get().getAddressHeader());
-            assertTrue(Arrays.equals(e.acceptableVersions, TestNet3Params.get().getAcceptableAddressCodes()));
         } catch (AddressFormatException e) {
             fail();
         }
@@ -128,7 +127,6 @@ public class AddressTest {
                 id = "alt.network";
                 addressHeader = 48;
                 p2shHeader = 5;
-                acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
             }
         }
         AltNetwork altNetwork = new AltNetwork();

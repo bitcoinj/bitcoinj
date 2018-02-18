@@ -69,7 +69,7 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
     public DumpedPrivateKey(@Nullable NetworkParameters params, String encoded) throws AddressFormatException {
         super(encoded);
         if (params != null && version != params.getDumpedPrivateKeyHeader())
-            throw new WrongNetworkException(version, new int[]{ params.getDumpedPrivateKeyHeader() });
+            throw new WrongNetworkException(version);
         if (bytes.length != 32 && bytes.length != 33) {
             throw new AddressFormatException("Wrong number of bytes for a private key, not 32 or 33");
         }
