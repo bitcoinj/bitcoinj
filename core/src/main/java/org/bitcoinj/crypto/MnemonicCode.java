@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.Utils.HEX;
 
 /**
@@ -119,6 +120,7 @@ public class MnemonicCode {
      * Convert mnemonic word list to seed.
      */
     public static byte[] toSeed(List<String> words, String passphrase) {
+        checkNotNull(passphrase, "A null passphrase is not allowed.");
 
         // To create binary seed from mnemonic, we use PBKDF2 function
         // with mnemonic sentence (in UTF-8) used as a password and
