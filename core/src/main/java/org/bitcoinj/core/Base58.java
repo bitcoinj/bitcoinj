@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +89,27 @@ public class Base58 {
         }
         // Return encoded string (including encoded leading zeros).
         return new String(encoded, outputStart, encoded.length - outputStart);
+    }
+
+    /**
+     * Encodes the given version and bytes as a base58 string. A checksum is appended.
+     * 
+     * @param version the version to encode
+     * @param payload the bytes to encode, e.g. pubkey hash
+     * @return the base58-encoded string
+     */
+    public static String encodeChecked(int version, byte[] payload) {
+        if (version < 0 || version > 255)
+            throw new IllegalArgumentException("Version not in range.");
+
+        // A stringified buffer is:
+        // 1 byte version + data bytes + 4 bytes check code (a truncated hash)
+        byte[] addressBytes = new byte[1 + payload.length + 4];
+        addressBytes[0] = (byte) version;
+        System.arraycopy(payload, 0, addressBytes, 1, payload.length);
+        byte[] checksum = Sha256Hash.hashTwice(addressBytes, 0, payload.length + 1);
+        System.arraycopy(checksum, 0, addressBytes, payload.length + 1, 4);
+        return Base58.encode(addressBytes);
     }
 
     /**
@@ -180,5 +202,4 @@ public class Base58 {
         }
         return (byte) remainder;
     }
-
 }

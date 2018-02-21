@@ -45,6 +45,18 @@ public class Base58Test {
     }
 
     @Test
+    public void testEncodeChecked_address() throws Exception {
+        String encoded = Base58.encodeChecked(111, new byte[Address.LENGTH]);
+        assertEquals("mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8", encoded);
+    }
+
+    @Test
+    public void testEncodeChecked_privateKey() throws Exception {
+        String encoded = Base58.encodeChecked(128, new byte[32]);
+        assertEquals("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", encoded);
+    }
+
+    @Test
     public void testDecode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
