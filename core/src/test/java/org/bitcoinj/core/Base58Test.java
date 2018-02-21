@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +17,16 @@
 
 package org.bitcoinj.core;
 
-import junit.framework.TestCase;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public class Base58Test extends TestCase {
+import org.junit.Test;
+
+public class Base58Test {
     @Test
     public void testEncode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
