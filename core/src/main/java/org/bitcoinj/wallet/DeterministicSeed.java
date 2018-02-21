@@ -235,11 +235,13 @@ public class DeterministicSeed implements EncryptableItem {
         return mnemonicCode;
     }
 
-    private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
+    /** Decodes mnemonic code */
+    public static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
         return decodeMnemonicCode(Utils.toString(mnemonicCode, "UTF-8"));
     }
 
-    private static List<String> decodeMnemonicCode(String mnemonicCode) {
+    /** Decodes mnemonic code */
+    public static List<String> decodeMnemonicCode(String mnemonicCode) {
         return Splitter.on(" ").splitToList(mnemonicCode);
     }
 }
