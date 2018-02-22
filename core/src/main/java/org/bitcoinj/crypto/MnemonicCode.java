@@ -22,6 +22,7 @@ import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 
 import java.io.BufferedReader;
@@ -87,7 +88,7 @@ public class MnemonicCode {
      * is supplied the digest of the words will be checked.
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, Charsets.UTF_8));
         this.wordList = new ArrayList<>(2048);
         MessageDigest md = Sha256Hash.newDigest();
         String word;
