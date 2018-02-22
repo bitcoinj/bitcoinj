@@ -402,12 +402,6 @@ public class Utils {
         return iso8601.format(dateTime);
     }
 
-    public static byte[] copyOf(byte[] in, int length) {
-        byte[] out = new byte[length];
-        System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
-        return out;
-    }
-
     /**
      * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
      * neither parse was successful.
