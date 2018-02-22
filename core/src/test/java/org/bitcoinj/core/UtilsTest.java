@@ -34,14 +34,6 @@ public class UtilsTest {
     }
 
     @Test
-    public void testReverseDwordBytes() {
-        assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6, 7, 8}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, -1));
-        assertArrayEquals(new byte[]{1, 2, 3, 4}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 4));
-        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 0));
-        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
-    }
-
-    @Test
     public void testMaxOfMostFreq() throws Exception {
         assertEquals(0, Utils.maxOfMostFreq());
         assertEquals(0, Utils.maxOfMostFreq(0, 0, 1));

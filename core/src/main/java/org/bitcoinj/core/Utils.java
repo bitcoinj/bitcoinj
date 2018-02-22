@@ -174,27 +174,6 @@ public class Utils {
         return buf;
     }
     
-    /**
-     * Returns a copy of the given byte array with the bytes of each double-word (4 bytes) reversed.
-     * 
-     * @param bytes length must be divisible by 4.
-     * @param trimLength trim output to this length.  If positive, must be divisible by 4.
-     */
-    public static byte[] reverseDwordBytes(byte[] bytes, int trimLength) {
-        checkArgument(bytes.length % 4 == 0);
-        checkArgument(trimLength < 0 || trimLength % 4 == 0);
-        
-        byte[] rev = new byte[trimLength >= 0 && bytes.length > trimLength ? trimLength : bytes.length];
-        
-        for (int i = 0; i < rev.length; i += 4) {
-            System.arraycopy(bytes, i, rev, i , 4);
-            for (int j = 0; j < 4; j++) {
-                rev[i + j] = bytes[i + 3 - j];
-            }
-        }
-        return rev;
-    }
-
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
     public static long readUint32(byte[] bytes, int offset) {
         return (bytes[offset] & 0xffl) |
