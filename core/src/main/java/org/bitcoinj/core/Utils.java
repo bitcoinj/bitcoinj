@@ -409,15 +409,6 @@ public class Utils {
     }
 
     /**
-     * Creates a copy of bytes and appends b to the end of it
-     */
-    public static byte[] appendByte(byte[] bytes, byte b) {
-        byte[] result = Arrays.copyOf(bytes, bytes.length + 1);
-        result[result.length - 1] = b;
-        return result;
-    }
-
-    /**
      * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
      * neither parse was successful.
      */
