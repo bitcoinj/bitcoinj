@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.UnsignedLongs;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.IOException;
@@ -133,20 +132,6 @@ public class Utils {
             for (int i = 0; i < 8 - bytes.length; i++)
                 stream.write(0);
         }
-    }
-
-    /**
-     * Work around lack of unsigned types in Java.
-     */
-    public static boolean isLessThanUnsigned(long n1, long n2) {
-        return UnsignedLongs.compare(n1, n2) < 0;
-    }
-
-    /**
-     * Work around lack of unsigned types in Java.
-     */
-    public static boolean isLessThanOrEqualToUnsigned(long n1, long n2) {
-        return UnsignedLongs.compare(n1, n2) <= 0;
     }
 
     /**
