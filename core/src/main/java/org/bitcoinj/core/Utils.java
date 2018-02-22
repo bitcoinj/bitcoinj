@@ -29,7 +29,6 @@ import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -624,24 +623,5 @@ public class Utils {
     public static String getResourceAsString(URL url) throws IOException {
         List<String> lines = Resources.readLines(url, Charsets.UTF_8);
         return Joiner.on('\n').join(lines);
-    }
-
-    // Can't use Closeable here because it's Java 7 only and Android devices only got that with KitKat.
-    public static InputStream closeUnchecked(InputStream stream) {
-        try {
-            stream.close();
-            return stream;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static OutputStream closeUnchecked(OutputStream stream) {
-        try {
-            stream.close();
-            return stream;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

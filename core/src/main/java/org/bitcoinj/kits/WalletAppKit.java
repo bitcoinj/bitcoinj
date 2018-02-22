@@ -18,6 +18,7 @@
 package org.bitcoinj.kits;
 
 import com.google.common.collect.*;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.*;
@@ -149,7 +150,7 @@ public class WalletAppKit extends AbstractIdleService {
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
         if (this.checkpoints != null)
-            Utils.closeUnchecked(this.checkpoints);
+            Closeables.closeQuietly(checkpoints);
         this.checkpoints = checkNotNull(checkpoints);
         return this;
     }
