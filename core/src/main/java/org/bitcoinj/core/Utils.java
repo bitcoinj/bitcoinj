@@ -27,7 +27,6 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -47,10 +46,6 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-
-    /** The string that prefixes all text messages signed using Bitcoin keys. */
-    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
-    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
 
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
 
@@ -421,26 +416,6 @@ public class Utils {
 
     public static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
-    }
-
-    /**
-     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
-     *
-     * <tt><p>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</p></tt>
-     */
-    public static byte[] formatMessageForSigning(String message) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
-            byte[] messageBytes = message.getBytes(Charsets.UTF_8);
-            VarInt size = new VarInt(messageBytes.length);
-            bos.write(size.encode());
-            bos.write(messageBytes);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
     }
     
     // 00000001, 00000010, 00000100, 00001000, ...

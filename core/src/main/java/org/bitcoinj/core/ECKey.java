@@ -865,7 +865,7 @@ public class ECKey implements EncryptableItem {
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        byte[] data = Utils.formatMessageForSigning(message);
+        byte[] data = formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.twiceOf(data);
         ECDSASignature sig = sign(hash, aesKey);
         // Now we have to work backwards to figure out the recId needed to recover the signature.
@@ -917,7 +917,7 @@ public class ECKey implements EncryptableItem {
         BigInteger r = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 1, 33));
         BigInteger s = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 33, 65));
         ECDSASignature sig = new ECDSASignature(r, s);
-        byte[] messageBytes = Utils.formatMessageForSigning(message);
+        byte[] messageBytes = formatMessageForSigning(message);
         // Note that the C++ code doesn't actually seem to specify any character encoding. Presumably it's whatever
         // JSON-SPIRIT hands back. Assume UTF-8 for now.
         Sha256Hash messageHash = Sha256Hash.twiceOf(messageBytes);
@@ -1288,6 +1288,29 @@ public class ECKey implements EncryptableItem {
             builder.append("  ");
             builder.append(toStringWithPrivate(aesKey, params));
             builder.append("\n");
+        }
+    }
+
+    /** The string that prefixes all text messages signed using Bitcoin keys. */
+    private static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
+    private static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
+
+    /**
+     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
+     * <p><tt>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</tt></p>
+     */
+    private static byte[] formatMessageForSigning(String message) {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
+            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
+            byte[] messageBytes = message.getBytes(Charsets.UTF_8);
+            VarInt size = new VarInt(messageBytes.length);
+            bos.write(size.encode());
+            bos.write(messageBytes);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 }
