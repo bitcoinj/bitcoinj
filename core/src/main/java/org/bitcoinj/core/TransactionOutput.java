@@ -24,7 +24,8 @@ import org.slf4j.*;
 
 import javax.annotation.*;
 import java.io.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -411,7 +412,7 @@ public class TransactionOutput extends ChildMessage {
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
-        return new TransactionOutput(params, null, Coin.valueOf(value), org.spongycastle.util.Arrays.clone(scriptBytes));
+        return new TransactionOutput(params, null, Coin.valueOf(value), Arrays.copyOf(scriptBytes, scriptBytes.length));
     }
 
     @Override
