@@ -17,22 +17,29 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-import com.google.common.io.BaseEncoding;
-import com.google.common.primitives.Ints;
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.io.BaseEncoding;
+import com.google.common.primitives.Ints;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
@@ -45,6 +52,8 @@ public class Utils {
 
     /** Joiner for concatenating words with a space inbetween. */
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
+    /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
+    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     private static BlockingQueue<Boolean> mockSleepQueue;
 
@@ -141,23 +150,6 @@ public class Utils {
         }
     }
 
-    /**
-     * Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence).
-     */
-    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
-
-    /**
-     * Returns a copy of the given byte array in reverse order.
-     */
-    public static byte[] reverseBytes(byte[] bytes) {
-        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
-        // performance issue the matter can be revisited.
-        byte[] buf = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++)
-            buf[i] = bytes[bytes.length - 1 - i];
-        return buf;
-    }
-    
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
     public static long readUint32(byte[] bytes, int offset) {
         return (bytes[offset] & 0xffl) |
@@ -190,6 +182,18 @@ public class Utils {
     public static int readUint16BE(byte[] bytes, int offset) {
         return ((bytes[offset] & 0xff) << 8) |
                 (bytes[offset + 1] & 0xff);
+    }
+
+    /**
+     * Returns a copy of the given byte array in reverse order.
+     */
+    public static byte[] reverseBytes(byte[] bytes) {
+        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
+        // performance issue the matter can be revisited.
+        byte[] buf = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++)
+            buf[i] = bytes[bytes.length - 1 - i];
+        return buf;
     }
 
     /**
@@ -386,10 +390,6 @@ public class Utils {
         return iso8601.format(dateTime);
     }
 
-    public static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
-    }
-    
     // 00000001, 00000010, 00000100, 00001000, ...
     private static final int[] bitMask = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
     
@@ -441,15 +441,6 @@ public class Utils {
         }
     }
 
-    private static int isAndroid = -1;
-    public static boolean isAndroidRuntime() {
-        if (isAndroid == -1) {
-            final String runtime = System.getProperty("java.runtime.name");
-            isAndroid = (runtime != null && runtime.equals("Android Runtime")) ? 1 : 0;
-        }
-        return isAndroid == 1;
-    }
-
     private static class Pair implements Comparable<Pair> {
         int item, count;
         public Pair(int item, int count) { this.count = count; this.item = item; }
@@ -487,5 +478,18 @@ public class Utils {
             maxItem = Math.max(maxItem, pair.item);
         }
         return maxItem;
+    }
+
+    private static int isAndroid = -1;
+    public static boolean isAndroidRuntime() {
+        if (isAndroid == -1) {
+            final String runtime = System.getProperty("java.runtime.name");
+            isAndroid = (runtime != null && runtime.equals("Android Runtime")) ? 1 : 0;
+        }
+        return isAndroid == 1;
+    }
+
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 }
