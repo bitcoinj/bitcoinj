@@ -20,6 +20,8 @@ package org.bitcoinj.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
@@ -364,7 +366,7 @@ public class BitcoinSerializer extends MessageSerializer {
             for (; header[cursor] != 0 && cursor < COMMAND_LEN; cursor++) ;
             byte[] commandBytes = new byte[cursor];
             System.arraycopy(header, 0, commandBytes, 0, cursor);
-            command = Utils.toString(commandBytes, "US-ASCII");
+            command = new String(commandBytes, Charsets.US_ASCII);
             cursor = COMMAND_LEN;
 
             size = (int) readUint32(header, cursor);
