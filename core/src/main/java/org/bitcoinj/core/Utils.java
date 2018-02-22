@@ -397,23 +397,6 @@ public class Utils {
         return iso8601.format(dateTime);
     }
 
-    /**
-     * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
-     * neither parse was successful.
-     */
-    public static byte[] parseAsHexOrBase58(String data) {
-        try {
-            return HEX.decode(data);
-        } catch (Exception e) {
-            // Didn't decode as hex, try base58.
-            try {
-                return Base58.decodeChecked(data);
-            } catch (AddressFormatException e1) {
-                return null;
-            }
-        }
-    }
-
     public static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
