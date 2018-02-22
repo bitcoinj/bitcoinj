@@ -105,7 +105,7 @@ public class VarInt {
             default:
                 bytes = new byte[9];
                 bytes[0] = (byte) 255;
-                Utils.uint64ToByteArrayLE(value, bytes, 1);
+                Utils.int64ToByteArrayLE(value, bytes, 1);
                 return bytes;
         }
     }

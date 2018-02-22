@@ -92,7 +92,7 @@ public class Utils {
         out[offset + 3] = (byte) (0xFF & (val >> 24));
     }
 
-    public static void uint64ToByteArrayLE(long val, byte[] out, int offset) {
+    public static void int64ToByteArrayLE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
