@@ -587,7 +587,6 @@ public class Utils {
     }
 
     public static int maxOfMostFreq(int... items) {
-        // Java 6 sucks.
         ArrayList<Integer> list = new ArrayList<>(items.length);
         for (int item : items) list.add(item);
         return maxOfMostFreq(list);
