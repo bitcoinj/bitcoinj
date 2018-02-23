@@ -16,7 +16,7 @@
 
 package org.bitcoinj.uri;
 
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
@@ -175,7 +175,7 @@ public class BitcoinURI {
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             try {
-                LegacyAddress address = LegacyAddress.fromBase58(params, addressToken);
+                Address address = Address.fromString(params, addressToken);
                 putWithValidation(FIELD_ADDRESS, address);
             } catch (final AddressFormatException e) {
                 throw new BitcoinURIParseException("Bad address", e);
@@ -260,8 +260,8 @@ public class BitcoinURI {
      * it.
      */
     @Nullable
-    public LegacyAddress getAddress() {
-        return (LegacyAddress) parameterMap.get(FIELD_ADDRESS);
+    public Address getAddress() {
+        return (Address) parameterMap.get(FIELD_ADDRESS);
     }
 
     /**
@@ -345,7 +345,7 @@ public class BitcoinURI {
      * @param message A message
      * @return A String containing the Bitcoin URI
      */
-    public static String convertToBitcoinURI(LegacyAddress address, Coin amount,
+    public static String convertToBitcoinURI(Address address, Coin amount,
                                              String label, String message) {
         return convertToBitcoinURI(address.getParameters(), address.toString(), amount, label, message);
     }

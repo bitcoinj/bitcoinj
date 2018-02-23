@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import static org.bitcoinj.core.Coin.*;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.SegwitAddress;
+
 import static org.junit.Assert.*;
 
 public class BitcoinURITest {
@@ -32,6 +34,7 @@ public class BitcoinURITest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
+    private static final String MAINNET_GOOD_SEGWIT_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
     private static final String BITCOIN_SCHEME = MAINNET.getUriScheme();
 
     @Test
@@ -83,12 +86,26 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testGood_Simple() throws BitcoinURIParseException {
+    public void testConvertToBitcoinURI_segwit() throws Exception {
+        assertEquals("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS + "?message=segwit%20rules", BitcoinURI.convertToBitcoinURI(
+                SegwitAddress.fromBech32(MAINNET, MAINNET_GOOD_SEGWIT_ADDRESS), null, null, "segwit rules"));
+    }
+
+    @Test
+    public void testGood_legacy() throws BitcoinURIParseException {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
-        assertNotNull(testObject);
+        assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
         assertEquals("Unexpected label", 20, testObject.getAddress().getHash().length);
+    }
+
+    @Test
+    public void testGood_segwit() throws BitcoinURIParseException {
+        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_SEGWIT_ADDRESS);
+        assertEquals(MAINNET_GOOD_SEGWIT_ADDRESS, testObject.getAddress().toString());
+        assertNull("Unexpected amount", testObject.getAmount());
+        assertNull("Unexpected label", testObject.getLabel());
     }
 
     /**
