@@ -728,16 +728,24 @@ public class KeyChainGroup implements KeyBag {
             log.info("Wallet with existing HD chain is being re-upgraded due to change in key rotation time.");
         }
         log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", keyToUse.toAddress(params));
-        byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
-        // Private keys should be at least 128 bits long.
-        checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-        // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
-        // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
-        // we all have bigger problems.
-        entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
-        checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-        String passphrase = ""; // FIXME allow non-empty passphrase
-        DeterministicKeyChain chain = new DeterministicKeyChain(entropy, passphrase, keyToUse.getCreationTimeSeconds());
+        byte[] entropy = null;
+        DeterministicKeyChain chain = null;
+        
+        try {
+            entropy = checkNotNull(keyToUse.getSecretBytes());
+            // Private keys should be at least 128 bits long.
+            checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+            // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
+            // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
+            // we all have bigger problems.
+            entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
+            checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+            String passphrase = ""; // FIXME allow non-empty passphrase
+            chain = new DeterministicKeyChain(entropy, passphrase, keyToUse.getCreationTimeSeconds());
+        } finally {
+            DestructionUtils.destroyByteArray(entropy);
+        }
+        
         if (aesKey != null) {
             chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
         }

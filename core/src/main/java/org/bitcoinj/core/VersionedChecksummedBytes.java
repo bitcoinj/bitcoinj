@@ -21,6 +21,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import javax.security.auth.DestroyFailedException;
+import javax.security.auth.Destroyable;
+
+import org.bitcoinj.utils.DestructionUtils;
+
 import com.google.common.base.Objects;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
@@ -33,9 +38,10 @@ import com.google.common.primitives.UnsignedBytes;
  * <p>and the result is then Base58 encoded. This format is used for addresses, and private keys exported using the
  * dumpprivkey command.</p>
  */
-public class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
+public class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes>, Destroyable {
     protected final int version;
     protected byte[] bytes;
+    private boolean destroyed = false;
 
     protected VersionedChecksummedBytes(String encoded) throws AddressFormatException {
         byte[] versionAndDataBytes = Base58.decodeChecked(encoded);
@@ -108,5 +114,16 @@ public class VersionedChecksummedBytes implements Serializable, Cloneable, Compa
      */
     public int getVersion() {
         return version;
+    }
+
+    @Override
+    public void destroy() throws DestroyFailedException {
+        DestructionUtils.destroyByteArray(this.bytes);
+        this.destroyed = true;
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return this.destroyed;
     }
 }

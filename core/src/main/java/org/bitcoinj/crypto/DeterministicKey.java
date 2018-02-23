@@ -18,6 +18,7 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.DestructionUtils;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -246,8 +247,14 @@ public class DeterministicKey extends ECKey {
      */
     public byte[] getPrivKeyBytes33() {
         byte[] bytes33 = new byte[33];
-        byte[] priv = getPrivKeyBytes();
-        System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
+        
+        byte[] priv = null;
+        try {
+            priv = getPrivKeyBytes();
+            System.arraycopy(priv, 0, bytes33, 33 - priv.length, priv.length);
+        } finally {
+            DestructionUtils.destroyByteArray(priv);
+        }
         return bytes33;
     }
 
@@ -298,9 +305,15 @@ public class DeterministicKey extends ECKey {
         checkNotNull(keyCrypter);
         if (newParent != null)
             checkArgument(newParent.isEncrypted());
-        final byte[] privKeyBytes = getPrivKeyBytes();
-        checkState(privKeyBytes != null, "Private key is not available");
-        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        byte[] privKeyBytes = null;
+        EncryptedData encryptedPrivateKey = null;
+        try {
+            privKeyBytes = getPrivKeyBytes();
+            checkState(privKeyBytes != null, "Private key is not available");
+            encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        } finally {
+            DestructionUtils.destroyByteArray(privKeyBytes);
+        }
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
         if (newParent == null)
             key.setCreationTimeSeconds(getCreationTimeSeconds());
@@ -462,9 +475,18 @@ public class DeterministicKey extends ECKey {
     }
 
     public byte[] serializePublic(NetworkParameters params) {
+        // Hint: Check on destruction not necessary here, as it only contains the public key
         return serialize(params, true);
     }
 
+    /**
+     * serializes the private key part to a byte array in the BIP32 format.
+     * <p><b>Warning!</b> The caller of this method is responsible for properly destroying
+     * the returned byte array after usage!
+     * </p> 
+     * @param params the network parameters to use for the serialization
+     * @return the byte array containing the private key in the BIP32 format.
+     */
     public byte[] serializePrivate(NetworkParameters params) {
         return serialize(params, false);
     }
@@ -476,17 +498,36 @@ public class DeterministicKey extends ECKey {
         ser.putInt(getParentFingerprint());
         ser.putInt(getChildNumber().i());
         ser.put(getChainCode());
-        ser.put(pub ? getPubKey() : getPrivKeyBytes33());
-        checkState(ser.position() == 78);
-        return ser.array();
+        
+        byte[] privKey = null;
+        try {
+            if (pub) {
+                ser.put(getPubKey());
+            } else {
+                privKey = getPrivKeyBytes33();
+                ser.put(privKey);
+            }
+            checkState(ser.position() == 78);
+            return ser.array();
+        } finally {
+            DestructionUtils.destroyByteArray(privKey);
+        }
     }
 
     public String serializePubB58(NetworkParameters params) {
+        // Hint: Check on destruction not necessary here, as it only contains the public key
         return toBase58(serialize(params, true));
     }
 
     public String serializePrivB58(NetworkParameters params) {
         return toBase58(serialize(params, false));
+        /* 
+         * QUALMS security: the string which is returned contains the private key in an 
+         * unencrypted way. Strings are immutable and thus may be swapped to disk and can
+         * only be destroyed using garbage collection (whose time of execution is out of 
+         * control of this coding).
+         */
+        
     }
 
     static String toBase58(byte[] ser) {

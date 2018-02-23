@@ -18,6 +18,7 @@ package org.bitcoinj.protocols.channels;
 
 import com.google.common.collect.ImmutableMap;
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.DestructionUtils;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
@@ -29,6 +30,7 @@ import net.jcip.annotations.GuardedBy;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -227,6 +229,8 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     @Override
     public byte[] serializeWalletExtension() {
         lock.lock();
+        
+        byte[] myKeyPrivKeyBytes = null;
         try {
             final NetworkParameters params = getNetworkParameters();
             // If we haven't attached to a wallet yet we can't check against network parameters
@@ -239,13 +243,17 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
                 checkState(channel.bestValueToMe.signum() >= 0 && 
                         (!hasMaxMoney || channel.bestValueToMe.compareTo(networkMaxMoney) <= 0));
                 checkState(channel.refundTransactionUnlockTimeSecs > 0);
-                checkNotNull(channel.myKey.getPrivKeyBytes());
+                
+                myKeyPrivKeyBytes = channel.myKey.getPrivKeyBytes();
+                checkNotNull(myKeyPrivKeyBytes);
+                
                 ServerState.StoredServerPaymentChannel.Builder channelBuilder = ServerState.StoredServerPaymentChannel.newBuilder()
                         .setMajorVersion(channel.majorVersion)
                         .setBestValueToMe(channel.bestValueToMe.value)
                         .setRefundTransactionUnlockTimeSecs(channel.refundTransactionUnlockTimeSecs)
                         .setContractTransaction(ByteString.copyFrom(channel.contract.unsafeBitcoinSerialize()))
-                        .setMyKey(ByteString.copyFrom(channel.myKey.getPrivKeyBytes()));
+                        .setMyKey(ByteString.copyFrom(myKeyPrivKeyBytes));
+                
                 if (channel.majorVersion == 1) {
                     channelBuilder.setClientOutput(ByteString.copyFrom(channel.clientOutput.unsafeBitcoinSerialize()));
                 } else {
@@ -257,6 +265,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
             }
             return builder.build().toByteArray();
         } finally {
+            DestructionUtils.destroyByteArray(myKeyPrivKeyBytes);
             lock.unlock();
         }
     }

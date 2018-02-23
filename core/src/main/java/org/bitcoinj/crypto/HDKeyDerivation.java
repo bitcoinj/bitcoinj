@@ -18,6 +18,7 @@ package org.bitcoinj.crypto;
 
 import com.google.common.collect.*;
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.DestructionUtils;
 import org.spongycastle.math.ec.*;
 
 import java.math.*;
@@ -161,14 +162,23 @@ public final class HDKeyDerivation {
         checkArgument(parent.hasPrivKey(), "Parent key must have private key bytes for this method.");
         byte[] parentPublicKey = parent.getPubKeyPoint().getEncoded(true);
         checkState(parentPublicKey.length == 33, "Parent pubkey must be 33 bytes, but is " + parentPublicKey.length);
-        ByteBuffer data = ByteBuffer.allocate(37);
-        if (childNumber.isHardened()) {
-            data.put(parent.getPrivKeyBytes33());
-        } else {
-            data.put(parentPublicKey);
+        
+        byte[] privKey = null;
+        byte[] i = null;
+        try {
+            ByteBuffer data = ByteBuffer.allocate(37);
+            if (childNumber.isHardened()) {
+                privKey = parent.getPrivKeyBytes33();
+                data.put(privKey);
+            } else {
+                data.put(parentPublicKey);
+            }
+            data.putInt(childNumber.i());
+            i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
+        } finally {
+            DestructionUtils.destroyByteArray(privKey);
         }
-        data.putInt(childNumber.i());
-        byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
+        checkNotNull(i);
         checkState(i.length == 64, i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);

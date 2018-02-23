@@ -19,6 +19,8 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.crypto.*;
+import org.bitcoinj.utils.DestructionUtils;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.MoreObjects;
@@ -422,8 +424,9 @@ public class ECKey implements EncryptableItem {
      * @throws org.bitcoinj.core.ECKey.MissingPrivateKeyException if the private key is missing or encrypted.
      */
     public byte[] toASN1() {
+        byte[] privKeyBytes = null;
         try {
-            byte[] privKeyBytes = getPrivKeyBytes();
+            privKeyBytes = getPrivKeyBytes();
             ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
 
             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
@@ -441,6 +444,8 @@ public class ECKey implements EncryptableItem {
             return baos.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
+        } finally {
+            DestructionUtils.destroyByteArray(privKeyBytes);
         }
     }
 
@@ -1039,6 +1044,7 @@ public class ECKey implements EncryptableItem {
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
         return new DumpedPrivateKey(params, getPrivKeyBytes(), isCompressed());
+        // NB: Destruction of the byte array containing the private must be taken care of by DumpedPrivateKey
     }
 
     /**
@@ -1070,8 +1076,14 @@ public class ECKey implements EncryptableItem {
      */
     public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
-        final byte[] privKeyBytes = getPrivKeyBytes();
-        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        byte[] privKeyBytes = null;
+        EncryptedData encryptedPrivateKey = null;
+        try {
+            privKeyBytes = getPrivKeyBytes();
+            encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        } finally {
+            DestructionUtils.destroyByteArray(privKeyBytes);
+        }
         ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
         result.setCreationTimeSeconds(creationTimeSeconds);
         return result;
@@ -1134,10 +1146,12 @@ public class ECKey implements EncryptableItem {
      * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
     public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
+        byte[] originalPrivateKeyBytes = null;
+        byte[] rebornKeyBytes = null;
         try {
             ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, aesKey);
-            byte[] originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
-            byte[] rebornKeyBytes = rebornUnencryptedKey.getPrivKeyBytes();
+            originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
+            rebornKeyBytes = rebornUnencryptedKey.getPrivKeyBytes();
             if (!Arrays.equals(originalPrivateKeyBytes, rebornKeyBytes)) {
                 log.error("The check that encryption could be reversed failed for {}", originalKey);
                 return false;
@@ -1146,6 +1160,9 @@ public class ECKey implements EncryptableItem {
         } catch (KeyCrypterException kce) {
             log.error(kce.getMessage());
             return false;
+        } finally {
+            DestructionUtils.destroyByteArray(originalPrivateKeyBytes);
+            DestructionUtils.destroyByteArray(rebornKeyBytes);
         }
     }
 
@@ -1238,7 +1255,13 @@ public class ECKey implements EncryptableItem {
     }
 
     public String getPrivateKeyAsHex() {
-        return Utils.HEX.encode(getPrivKeyBytes());
+        byte[] privKeyBytes = null;
+        try {
+            privKeyBytes = getPrivKeyBytes();
+            return Utils.HEX.encode(privKeyBytes);
+        } finally {
+            DestructionUtils.destroyByteArray(privKeyBytes);
+        }
     }
 
     public String getPublicKeyAsHex() {

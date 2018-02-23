@@ -65,6 +65,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
+import javax.security.auth.DestroyFailedException;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -1379,14 +1381,21 @@ public class WalletTool {
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
             if (data.startsWith("5J") || data.startsWith("5H") || data.startsWith("5K")) {
-                DumpedPrivateKey dpk;
+                DumpedPrivateKey dpk = null;
                 try {
                     dpk = DumpedPrivateKey.fromBase58(params, data);
+                    key = dpk.getKey();
                 } catch (AddressFormatException e) {
                     System.err.println("Could not parse dumped private key " + data);
                     return;
+                } finally {
+                    try {
+                        if (dpk != null) 
+                            dpk.destroy();
+                    } catch (DestroyFailedException e) {
+                        // condition can never be reached - left blank intentionally
+                    }
                 }
-                key = dpk.getKey();
             } else {
                 byte[] decode = parseAsHexOrBase58(data);
                 if (decode == null) {
