@@ -884,7 +884,7 @@ public class Transaction extends ChildMessage {
     /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(Coin value, LegacyAddress address) {
+    public TransactionOutput addOutput(Coin value, Address address) {
         return addOutput(new TransactionOutput(params, this, value, address));
     }
 

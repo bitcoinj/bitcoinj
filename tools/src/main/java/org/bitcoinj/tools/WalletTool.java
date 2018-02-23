@@ -680,7 +680,7 @@ public class WalletTool {
 
     static class OutputSpec {
         public final Coin value;
-        public final LegacyAddress addr;
+        public final Address addr;
         public final ECKey key;
 
         public OutputSpec(String spec) throws IllegalArgumentException {
@@ -700,7 +700,7 @@ public class WalletTool {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = LegacyAddress.fromBase58(params, destination);
+                addr = Address.fromString(params, destination);
                 key = null;
             }
         }

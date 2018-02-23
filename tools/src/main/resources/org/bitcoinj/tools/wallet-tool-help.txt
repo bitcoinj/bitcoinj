@@ -38,6 +38,7 @@ Usage: wallet-tool --flags action-name
                        You can repeat --output=address:value multiple times.
                        There is a magic value ALL which empties the wallet to that address, e.g.:
                          --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL
+                       The output destination can also be a native segwit address.
                        If the output destination starts with 04 and is 65 or 33 bytes long it will be
                        treated as a public key instead of an address and the send will use
                        <key> CHECKSIG as the script.
