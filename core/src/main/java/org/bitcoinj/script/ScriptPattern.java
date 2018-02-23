@@ -17,6 +17,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Base58Address;
 
 import java.util.List;
 
@@ -27,12 +28,14 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * This is a Script pattern matcher with some typical script patterns
  */
 public class ScriptPattern {
+    private static final int HASH160_LENGTH = 20;
+
     public static boolean isSentToAddress(List<ScriptChunk> chunks) {
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
                chunks.get(2).data != null &&
-               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(2).data.length == HASH160_LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
@@ -47,7 +50,7 @@ public class ScriptPattern {
                chunks.get(0).equalsOpCode(OP_HASH160) &&
                chunks.get(1).opcode == 0x14 &&
                chunks.get(1).data != null &&
-               chunks.get(1).data.length == Address.LENGTH &&
+               chunks.get(1).data.length == HASH160_LENGTH &&
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 

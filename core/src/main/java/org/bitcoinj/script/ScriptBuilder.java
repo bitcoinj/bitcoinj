@@ -18,7 +18,7 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressScript;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -248,24 +248,34 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
-    public static Script createOutputScript(Address to) {
-        if (to.isP2SHAddress()) {
-            // OP_HASH160 <scriptHash> OP_EQUAL
-            return new ScriptBuilder()
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUAL)
-                .build();
-        } else {
-            // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-            return new ScriptBuilder()
-                .op(OP_DUP)
-                .op(OP_HASH160)
-                .data(to.getHash160())
-                .op(OP_EQUALVERIFY)
-                .op(OP_CHECKSIG)
-                .build();
+    public static Script createOutputScript(AddressScript to) {
+        ScriptBuilder builder = new ScriptBuilder();
+        Script.ScriptType scriptType = to.getScriptType();
+        byte[] hash = to.getValue();
+        switch (scriptType) {
+            case P2SH:
+                checkArgument(hash.length == 20, "P2SH hash must be 20 bytes long");
+                // OP_HASH160 <scriptHash> OP_EQUAL
+                builder = builder
+                        .op(OP_HASH160)
+                        .data(hash)
+                        .op(OP_EQUAL);
+
+                break;
+            case P2PKH:
+                checkArgument(hash.length == 20, "P2PKH hash must be 20 bytes long");
+                // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+                builder = builder
+                        .op(OP_DUP)
+                        .op(OP_HASH160)
+                        .data(hash)
+                        .op(OP_EQUALVERIFY)
+                        .op(OP_CHECKSIG);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported address script type " + to.getScriptType());
         }
+        return builder.build();
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */
