@@ -200,7 +200,7 @@
                                         <urn>org.apache.maven.plugins:maven-compiler-plugin:3.7.0:maven-plugin:null:runtime:a3229c9aae47047e3a177ecfd4afa10fb5512d4e</urn>
                                         <urn>org.apache.maven.plugins:maven-dependency-plugin:3.0.2:maven-plugin:null:runtime:a372cf5cac374be969fa8d32e585b99ba1f36f7b</urn>
                                         <urn>org.apache.maven.plugins:maven-deploy-plugin:2.8.2:maven-plugin:null:runtime:3c2d83ecd387e9843142ae92a0439792c1500319</urn>
-                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.0:maven-plugin:null:runtime:ad032b7593576e9fe9305c73865633e163895b29</urn>
+                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M1:maven-plugin:null:runtime:02b46cf923a7f5c75ffae61cedff103e0def3560</urn>
                                         <urn>org.apache.maven.plugins:maven-install-plugin:2.5.2:maven-plugin:null:runtime:8a67631619fc3c1d1f036e59362ddce71e1e496f</urn>
                                         <urn>org.apache.maven.plugins:maven-jar-plugin:2.6:maven-plugin:null:runtime:618f08d0fcdd3929af846ef1b65503b5904f93e3</urn>
                                         <urn>org.apache.maven.plugins:maven-javadoc-plugin:2.10.2:maven-plugin:null:runtime:5f391697fa85cecc7e5bac7ce5a6f9d056a58ba3</urn>
