@@ -208,7 +208,7 @@
                                         <urn>org.apache.maven.plugins:maven-shade-plugin:3.1.0:maven-plugin:null:runtime:c08cd5163a49e31f6e28d6f8bb153013a2a2de79</urn>
                                         <urn>org.apache.maven.plugins:maven-site-plugin:3.7:maven-plugin:null:runtime:708c6a0fb4d8bf479c100b1283931989c3fdc6a2</urn>
                                         <urn>org.apache.maven.plugins:maven-source-plugin:3.0.1:maven-plugin:null:runtime:8693776363c0717712013747a13d087361ce4fb5</urn>
-                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.19.1:maven-plugin:null:runtime:e2ee016ce9183ffa9e86c543690cadda7b3aea15</urn>
+                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.20.1:maven-plugin:null:runtime:5f3f8f23a8c3525e64b06310b54a2f080690eb59</urn>
                                         <urn>org.easymock:easymock:3.2:jar:null:test:00c82f7fa3ef377d8954b1db25123944b5af2ba4</urn>
                                         <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
                                         <urn>org.fusesource.leveldbjni:leveldbjni-all:1.8:jar:null:compile:707350a2eeb1fa2ed77a32ddb3893ed308e941db</urn>
