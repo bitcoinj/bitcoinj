@@ -219,8 +219,8 @@
                                         <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
                                         <urn>com.squareup.okhttp3:okhttp:3.9.1:jar:null:runtime:84b4b7d1c4a238e7899972b7446c250691e65f1f</urn>
                                         <urn>com.squareup.okio:okio:1.13.0:jar:null:runtime:a9283170b7305c8d92d25aff02a6ab7e45d06cbe</urn>
-                                        <urn>org.slf4j:slf4j-api:1.7.20:jar:null:compile:867d63093eff0a0cb527bf13d397d850af3dcae3</urn>
-                                        <urn>org.slf4j:slf4j-jdk14:1.7.20:jar:null:test:b568c92eec50edc922c52b3e759982579170c2be</urn>
+                                        <urn>org.slf4j:slf4j-api:1.7.25:jar:null:compile:da76ca59f6a57ee3102f8f9bd9cee742973efa8a</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.7.25:jar:null:test:bccda40ebc8067491b32a88f49615a747d20082d</urn>
                                         <urn>org.sonatype.plugins:nexus-staging-maven-plugin:1.6.5:maven-plugin:null:runtime:455ca2aa8cd14a06608f1538bd6a1efd09561563</urn>
                                         <urn>postgresql:postgresql:9.1-901.jdbc4:jar:null:compile:153f2f92a786f12fc111d0111f709012df87c808</urn>
                                         <!-- A check for the rules themselves -->
@@ -366,7 +366,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.20</version>
+            <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
         <dependency>
