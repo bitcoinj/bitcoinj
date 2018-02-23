@@ -316,16 +316,6 @@ public class Script {
     }
 
     /**
-     * For 2-element [input] scripts assumes that the paid-to-address can be derived from the public key.
-     * The concept of a "from address" isn't well defined in Bitcoin and you should not assume the sender of a
-     * transaction can actually receive coins on it. This method may be removed in future.
-     */
-    @Deprecated
-    public Address getFromAddress(NetworkParameters params) throws ScriptException {
-        return new Address(params, Utils.sha256hash160(getPubKey()));
-    }
-
-    /**
      * Gets the destination address from this script, if it's in the required form (see getPubKey).
      */
     public Address getToAddress(NetworkParameters params) throws ScriptException {

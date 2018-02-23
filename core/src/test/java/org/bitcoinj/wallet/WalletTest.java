@@ -460,8 +460,6 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    // Having a test for deprecated method getFromAddress() is no evil so we suppress the warning here.
     public void customTransactionSpending() throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change.
         Coin v1 = valueOf(3, 0);
@@ -483,7 +481,8 @@ public class WalletTest extends TestWithWallet {
 
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());
-        assertEquals(myAddress, t2.getInput(0).getScriptSig().getFromAddress(PARAMS));
+        // check 'from address' -- in a unit test this is fine
+        assertEquals(myAddress, new Address(PARAMS, Utils.sha256hash160(t2.getInput(0).getScriptSig().getPubKey())));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
