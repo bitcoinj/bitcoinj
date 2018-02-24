@@ -1355,7 +1355,7 @@ public class WalletTool {
                 }
                 key = wallet.freshReceiveKey();
             }
-            System.out.println(key.toAddress(params) + " " + key);
+            System.out.println(Address.fromKey(params, key) + " " + key);
         }
     }
 
@@ -1420,7 +1420,7 @@ public class WalletTool {
                 key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
             }
             wallet.importKey(key);
-            System.out.println(key.toAddress(params) + " " + key);
+            System.out.println(Address.fromKey(params, key) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
@@ -1480,7 +1480,7 @@ public class WalletTool {
 
     private static void currentReceiveAddr() {
         ECKey key = wallet.currentReceiveKey();
-        System.out.println(key.toAddress(params) + " " + key);
+        System.out.println(Address.fromKey(params, key) + " " + key);
     }
 
     private static void dumpWallet() throws BlockStoreException {

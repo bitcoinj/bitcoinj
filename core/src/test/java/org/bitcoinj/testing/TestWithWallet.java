@@ -49,7 +49,7 @@ public class TestWithWallet {
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
         wallet = new Wallet(PARAMS);
         myKey = wallet.currentReceiveKey();
-        myAddress = myKey.toAddress(PARAMS);
+        myAddress = Address.fromKey(PARAMS, myKey);
         blockStore = new MemoryBlockStore(PARAMS);
         chain = new BlockChain(PARAMS, wallet, blockStore);
     }

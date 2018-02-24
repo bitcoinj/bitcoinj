@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  */
 public class TransactionTest {
     private static final NetworkParameters PARAMS = UnitTestParams.get();
-    private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
+    private static final Address ADDRESS = Address.fromKey(PARAMS, new ECKey());
 
     private Transaction tx;
 
@@ -344,7 +344,7 @@ public class TransactionTest {
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
-        Address addr = key.toAddress(PARAMS);
+        Address addr = Address.fromKey(PARAMS, key);
         Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
 
         Transaction tx = new Transaction(PARAMS);
@@ -409,7 +409,7 @@ public class TransactionTest {
     @Test
     public void testHashForSignatureThreadSafety() {
         Block genesis = UnitTestParams.get().getGenesisBlock();
-        Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
+        Block block1 = genesis.createNextBlock(Address.fromKey(UnitTestParams.get(), new ECKey()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);

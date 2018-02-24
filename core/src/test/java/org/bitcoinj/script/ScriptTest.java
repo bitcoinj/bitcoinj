@@ -439,7 +439,7 @@ public class ScriptTest {
     public void getToAddress() throws Exception {
         // pay to pubkey
         ECKey toKey = new ECKey();
-        Address toAddress = toKey.toAddress(PARAMS);
+        Address toAddress = Address.fromKey(PARAMS, toKey);
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(PARAMS, true));
         // pay to pubkey hash
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(PARAMS, true));

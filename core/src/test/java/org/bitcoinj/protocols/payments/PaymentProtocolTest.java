@@ -43,9 +43,9 @@ import static org.junit.Assert.*;
 public class PaymentProtocolTest {
 
     // static test data
-    private static final NetworkParameters NETWORK_PARAMS = UnitTestParams.get();
+    private static final NetworkParameters PARAMS = UnitTestParams.get();
     private static final Coin AMOUNT = Coin.SATOSHI;
-    private static final Address TO_ADDRESS = new ECKey().toAddress(NETWORK_PARAMS);
+    private static final Address TO_ADDRESS = Address.fromKey(PARAMS, new ECKey());
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
     private static final byte[] MERCHANT_DATA = { 0, 1, 2 };
@@ -122,16 +122,16 @@ public class PaymentProtocolTest {
     public void testPaymentMessage() throws Exception {
         // Create
         List<Transaction> transactions = new LinkedList<>();
-        transactions.add(FakeTxBuilder.createFakeTx(NETWORK_PARAMS, AMOUNT, TO_ADDRESS));
+        transactions.add(FakeTxBuilder.createFakeTx(PARAMS, AMOUNT, TO_ADDRESS));
         Coin refundAmount = Coin.SATOSHI;
-        Address refundAddress = new ECKey().toAddress(NETWORK_PARAMS);
+        Address refundAddress = Address.fromKey(PARAMS, new ECKey());
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
                 MERCHANT_DATA);
         byte[] paymentBytes = payment.toByteArray();
 
         // Parse
         Payment parsedPayment = Payment.parseFrom(paymentBytes);
-        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(NETWORK_PARAMS,
+        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(PARAMS,
                 parsedPayment);
         assertEquals(transactions, parsedTransactions);
         assertEquals(1, parsedPayment.getRefundToCount());

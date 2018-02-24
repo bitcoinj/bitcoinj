@@ -90,17 +90,17 @@ public class ParseByteCacheTest {
         
         Transaction tx1 = createFakeTx(PARAMS,
                 valueOf(2, 0),
-                wallet.currentReceiveKey().toAddress(PARAMS));
+                Address.fromKey(PARAMS, wallet.currentReceiveKey()));
         
         // add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(PARAMS);
-        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, wallet.currentReceiveKey().toAddress(PARAMS));
+        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, Address.fromKey(PARAMS, wallet.currentReceiveKey()));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
         Transaction tx2 = createFakeTx(PARAMS, COIN,
-                new ECKey().toAddress(PARAMS));
+                Address.fromKey(PARAMS, new ECKey()));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 

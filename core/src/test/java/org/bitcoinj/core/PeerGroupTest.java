@@ -245,7 +245,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         
         Wallet wallet2 = new Wallet(PARAMS);
         ECKey key2 = wallet2.freshReceiveKey();
-        Address address2 = key2.toAddress(PARAMS);
+        Address address2 = Address.fromKey(PARAMS, key2);
         
         peerGroup.addWallet(wallet2);
         blockChain.addWallet(wallet2);
@@ -804,7 +804,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Coin expectedBalance = Coin.ZERO;
         Block prev = blockStore.getChainHead().getHeader();
         for (ECKey key1 : keys) {
-            Address addr = key1.toAddress(PARAMS);
+            Address addr = Address.fromKey(PARAMS, key1);
             Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(PARAMS, Coin.FIFTY_COINS, addr));
             expectedBalance = expectedBalance.add(next.getTransactions().get(2).getOutput(0).getValue());
             blocks.add(next);

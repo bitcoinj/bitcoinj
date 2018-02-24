@@ -545,7 +545,7 @@ public class Wallet extends BaseTaggableObject
         final List<ECKey> keys = getIssuedReceiveKeys();
         List<Address> addresses = new ArrayList<>(keys.size());
         for (ECKey key : keys)
-            addresses.add(key.toAddress(getParams()));
+            addresses.add(Address.fromKey(getParams(), key));
         return addresses;
     }
 

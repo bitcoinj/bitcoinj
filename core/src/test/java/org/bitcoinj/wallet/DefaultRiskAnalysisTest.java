@@ -208,7 +208,7 @@ public class DefaultRiskAnalysisTest {
         Transaction tx = new Transaction(PARAMS);
         tx.addInput(PARAMS.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
-        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1.toAddress(PARAMS)));
+        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(Address.fromKey(PARAMS, key1)));
         // A pay to pubkey output
         tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));

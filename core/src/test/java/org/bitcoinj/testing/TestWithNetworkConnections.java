@@ -90,7 +90,7 @@ public class TestWithNetworkConnections {
         if (wallet == null) {
             wallet = new Wallet(PARAMS);
             key = wallet.freshReceiveKey();
-            address = key.toAddress(PARAMS);
+            address = Address.fromKey(PARAMS, key);
         }
         blockChain = new BlockChain(PARAMS, wallet, blockStore);
 

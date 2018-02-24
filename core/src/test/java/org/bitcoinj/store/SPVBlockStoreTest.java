@@ -29,18 +29,19 @@ import static org.junit.Assert.assertEquals;
 
 public class SPVBlockStoreTest {
 
+    private static final NetworkParameters PARAMS = UnitTestParams.get();
+
     @Test
     public void basics() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
         File f = File.createTempFile("spvblockstore", null);
         f.delete();
         f.deleteOnExit();
-        SPVBlockStore store = new SPVBlockStore(params, f);
+        SPVBlockStore store = new SPVBlockStore(PARAMS, f);
 
-        Address to = new ECKey().toAddress(params);
+        Address to = Address.fromKey(PARAMS, new ECKey());
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(params.getGenesisBlock(), genesis.getHeader());
+        assertEquals(PARAMS.getGenesisBlock(), genesis.getHeader());
         assertEquals(0, genesis.getHeight());
 
 
@@ -51,7 +52,7 @@ public class SPVBlockStoreTest {
         store.close();
 
         // Check we can get it back out again if we rebuild the store object.
-        store = new SPVBlockStore(params, f);
+        store = new SPVBlockStore(PARAMS, f);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.

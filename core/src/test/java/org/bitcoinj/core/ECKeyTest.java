@@ -186,7 +186,7 @@ public class ECKeyTest {
         String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
         ECKey key = DumpedPrivateKey.fromBase58(TestNet3Params.get(), privkey).getKey();
         assertEquals(privkey, key.getPrivateKeyEncoded(TestNet3Params.get()).toString());
-        assertEquals(addr, key.toAddress(TestNet3Params.get()).toString());
+        assertEquals(addr, Address.fromKey(TestNet3Params.get(), key).toString());
     }
 
     @Test
@@ -214,7 +214,7 @@ public class ECKeyTest {
         ECKey key = new ECKey();
         String message = "聡中本";
         String signatureBase64 = key.signMessage(message);
-        log.info("Message signed with " + key.toAddress(MainNetParams.get()) + ": " + signatureBase64);
+        log.info("Message signed with " + Address.fromKey(MainNetParams.get(), key) + ": " + signatureBase64);
         // Should verify correctly.
         key.verifyMessage(message, signatureBase64);
         try {
@@ -232,7 +232,7 @@ public class ECKeyTest {
         String sigBase64 = "HxNZdo6ggZ41hd3mM3gfJRqOQPZYcO8z8qdX2BwmpbF11CaOQV+QiZGGQxaYOncKoNW61oRuSMMF8udfK54XqI8=";
         Address expectedAddress = Address.fromBase58(MainNetParams.get(), "14YPSNPi6NSXnUxtPAsyJSuw3pv7AU3Cag");
         ECKey key = ECKey.signedMessageToKey(message, sigBase64);
-        Address gotAddress = key.toAddress(MainNetParams.get());
+        Address gotAddress = Address.fromKey(MainNetParams.get(), key);
         assertEquals(expectedAddress, gotAddress);
     }
 

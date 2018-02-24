@@ -341,7 +341,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // we can broadcast the refund and get our balance back.
 
         // Spend the client wallet's one coin
-        Transaction spendCoinTx = wallet.sendCoinsOffline(SendRequest.to(new ECKey().toAddress(PARAMS), COIN));
+        Transaction spendCoinTx = wallet.sendCoinsOffline(SendRequest.to(Address.fromKey(PARAMS, new ECKey()), COIN));
         assertEquals(Coin.ZERO, wallet.getBalance());
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), spendCoinTx, createFakeTx(PARAMS, CENT, myAddress)));
         assertEquals(CENT, wallet.getBalance());
@@ -473,7 +473,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             // Test refund transaction with any number of issues
             byte[] refundTxBytes = clientV1State().getIncompleteRefundTransaction().bitcoinSerialize();
             Transaction refund = new Transaction(PARAMS, refundTxBytes);
-            refund.addOutput(Coin.ZERO, new ECKey().toAddress(PARAMS));
+            refund.addOutput(Coin.ZERO, Address.fromKey(PARAMS, new ECKey()));
             try {
                 serverV1State().provideRefundTransaction(refund, myKey.getPubKey());
                 fail();
@@ -692,7 +692,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, true));
 
         // Spend the client wallet's one coin
-        final SendRequest request = SendRequest.to(new ECKey().toAddress(PARAMS), COIN);
+        final SendRequest request = SendRequest.to(Address.fromKey(PARAMS, new ECKey()), COIN);
         request.ensureMinRequiredFee = false;
         wallet.sendCoinsOffline(request);
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -892,7 +892,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
 
         // Now give the server enough coins to pay the fee
-        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, serverKey.toAddress(PARAMS));
+        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, Address.fromKey(PARAMS, serverKey));
 
         // The contract is still not worth redeeming - its worth less than we pay in fee
         try {
@@ -998,7 +998,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract.addOutput(HALF_COIN, myKey);
         doubleSpendContract = new Transaction(PARAMS, doubleSpendContract.bitcoinSerialize());
 
-        StoredBlock block = new StoredBlock(PARAMS.getGenesisBlock().createNextBlock(myKey.toAddress(PARAMS)), BigInteger.TEN, 1);
+        StoredBlock block = new StoredBlock(PARAMS.getGenesisBlock().createNextBlock(Address.fromKey(PARAMS, myKey)), BigInteger.TEN, 1);
         serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend

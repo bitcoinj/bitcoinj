@@ -188,7 +188,7 @@ public class KeyChainGroup implements KeyBag {
             }
             return current;
         } else {
-            return currentKey(purpose).toAddress(params);
+            return Address.fromKey(params, currentKey(purpose));
         }
     }
 
@@ -242,7 +242,7 @@ public class KeyChainGroup implements KeyBag {
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
-            return freshKey(purpose).toAddress(params);
+            return Address.fromKey(params, freshKey(purpose));
         }
     }
 
@@ -727,7 +727,7 @@ public class KeyChainGroup implements KeyBag {
         } else {
             log.info("Wallet with existing HD chain is being re-upgraded due to change in key rotation time.");
         }
-        log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", keyToUse.toAddress(params));
+        log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", Address.fromKey(params, keyToUse));
         byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
         // Private keys should be at least 128 bits long.
         checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);

@@ -345,7 +345,7 @@ public class Script {
         else if (ScriptPattern.isPayToScriptHash(this))
             return Address.fromP2SHScript(params, this);
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
-            return ECKey.fromPublicOnly(getPubKey()).toAddress(params);
+            return Address.fromKey(params, ECKey.fromPublicOnly(getPubKey()));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
     }

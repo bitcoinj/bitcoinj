@@ -508,14 +508,6 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns the address that corresponds to the public part of this ECKey. Note that an address is derived from
-     * the RIPEMD-160 hash of the public key and is not the public key itself (which is too large to be convenient).
-     */
-    public Address toAddress(NetworkParameters params) {
-        return new Address(params, getPubKeyHash());
-    }
-
-    /**
      * Groups the two components that make up a signature, and provides a way to encode to DER form, which is
      * how ECDSA signatures are represented when embedded in other data structures in the Bitcoin protocol. The raw
      * components can be useful for doing further EC maths on them.
@@ -1276,7 +1268,7 @@ public class ECKey implements EncryptableItem {
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
             NetworkParameters params) {
-        final Address address = toAddress(params);
+        final Address address = Address.fromKey(params, this);
         builder.append("  addr:");
         builder.append(address.toString());
         builder.append("  hash160:");

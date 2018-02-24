@@ -64,6 +64,14 @@ public class Address extends VersionedChecksummedBytes {
         this.params = params;
     }
 
+    /**
+     * Returns an {@link Address} that represents the public part of the given {@link ECKey}. Note that an address is
+     * derived from a hash of the public key and is not the public key itself (which is too large to be convenient).
+     */
+    public static Address fromKey(NetworkParameters params, ECKey key) {
+        return new Address(params, key.getPubKeyHash());
+    }
+
     /** Returns an Address that represents the given P2SH script hash. */
     public static Address fromP2SHHash(NetworkParameters params, byte[] hash160) {
         try {

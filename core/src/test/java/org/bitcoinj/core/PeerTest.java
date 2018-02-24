@@ -870,7 +870,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         Transaction t1 = new Transaction(PARAMS);
         t1.addInput(new TransactionInput(PARAMS, t1, new byte[]{}));
-        t1.addOutput(COIN, new ECKey().toAddress(PARAMS));
+        t1.addOutput(COIN, Address.fromKey(PARAMS, new ECKey()));
         Transaction t2 = new Transaction(PARAMS);
         t2.addInput(t1.getOutput(0));
         t2.addOutput(COIN, wallet.currentChangeAddress());

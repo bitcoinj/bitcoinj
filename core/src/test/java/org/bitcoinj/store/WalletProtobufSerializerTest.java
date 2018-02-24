@@ -78,11 +78,11 @@ public class WalletProtobufSerializerTest {
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myWallet.importKey(myKey);
-        myAddress = myKey.toAddress(PARAMS);
+        myAddress = Address.fromKey(PARAMS, myKey);
         myWallet = new Wallet(PARAMS);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-        myWallet.addWatchedAddress(myWatchedKey.toAddress(PARAMS), mScriptCreationTime);
+        myWallet.addWatchedAddress(Address.fromKey(PARAMS, myWatchedKey), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
 
@@ -101,7 +101,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(mScriptCreationTime,
                 wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
         assertEquals(1, wallet1.getWatchedScripts().size());
-        assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(PARAMS)),
+        assertEquals(ScriptBuilder.createOutputScript(Address.fromKey(PARAMS, myWatchedKey)),
                 wallet1.getWatchedScripts().get(0));
         assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
     }
@@ -176,7 +176,7 @@ public class WalletProtobufSerializerTest {
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
             myKey = new ECKey();
-            myAddress = myKey.toAddress(PARAMS);
+            myAddress = Address.fromKey(PARAMS, myKey);
             myWallet = new Wallet(PARAMS);
             myWallet.importKey(myKey);
             Wallet wallet1 = roundTrip(myWallet);

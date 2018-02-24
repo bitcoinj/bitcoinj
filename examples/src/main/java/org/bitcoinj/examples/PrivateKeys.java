@@ -50,7 +50,7 @@ public class PrivateKeys {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + key.toAddress(params).toString());
+            System.out.println("Address from private key is: " + Address.fromKey(params, key).toString());
             // And the address ...
             Address destination = Address.fromBase58(params, args[1]);
 

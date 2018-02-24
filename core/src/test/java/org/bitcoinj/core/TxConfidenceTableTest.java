@@ -38,8 +38,8 @@ public class TxConfidenceTableTest {
         Context context = new Context(PARAMS);
         table = context.getConfidenceTable();
 
-        Address to = new ECKey().toAddress(PARAMS);
-        Address change = new ECKey().toAddress(PARAMS);
+        Address to = Address.fromKey(PARAMS, new ECKey());
+        Address change = Address.fromKey(PARAMS, new ECKey());
 
         tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(PARAMS, COIN, to, change);
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(PARAMS, COIN, to, change);
