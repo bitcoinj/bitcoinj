@@ -142,7 +142,7 @@ public class TransactionOutPoint extends ChildMessage {
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return keyBag.findKeyFromPubHash(addressBytes);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = connectedScript.getPubKey();
@@ -165,13 +165,13 @@ public class TransactionOutPoint extends ChildMessage {
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = connectedScript.getPubKey();
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
         } else if (ScriptPattern.isPayToScriptHash(connectedScript)) {
-            byte[] scriptHash = connectedScript.getPubKeyHash();
+            byte[] scriptHash = ScriptPattern.extractHashFromPayToScriptHash(connectedScript);
             return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);

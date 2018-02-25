@@ -705,9 +705,12 @@ public class Transaction extends ChildMessage {
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
                     if (connectedOutput != null) {
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
-                        if (ScriptPattern.isPayToPubKeyHash(scriptPubKey) || ScriptPattern.isPayToScriptHash(scriptPubKey)) {
+                        try {
+                            byte[] pubKeyHash = scriptPubKey.getPubKeyHash();
                             s.append(" hash160:");
-                            s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
+                            s.append(Utils.HEX.encode(pubKeyHash));
+                        } catch (ScriptException x) {
+                            // ignore
                         }
                     }
                     if (in.hasSequence()) {

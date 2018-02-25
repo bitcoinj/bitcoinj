@@ -325,7 +325,7 @@ public class TransactionOutput extends ChildMessage {
                 byte[] pubkey = script.getPubKey();
                 return transactionBag.isPubKeyMine(pubkey);
             } if (ScriptPattern.isPayToScriptHash(script)) {
-                return transactionBag.isPayToScriptHashMine(script.getPubKeyHash());
+                return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromPayToScriptHash(script));
             } else {
                 byte[] pubkeyHash = script.getPubKeyHash();
                 return transactionBag.isPubKeyHashMine(pubkeyHash);

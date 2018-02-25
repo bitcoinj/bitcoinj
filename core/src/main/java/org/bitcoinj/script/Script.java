@@ -250,9 +250,9 @@ public class Script {
      */
     public byte[] getPubKeyHash() throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
-            return chunks.get(2).data;
+            return ScriptPattern.extractHashFromPayToPubKeyHash(this);
         else if (ScriptPattern.isPayToScriptHash(this))
-            return chunks.get(1).data;
+            return ScriptPattern.extractHashFromPayToScriptHash(this);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
@@ -341,7 +341,7 @@ public class Script {
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
-            return new Address(params, getPubKeyHash());
+            return new Address(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
         else if (ScriptPattern.isPayToScriptHash(this))
             return Address.fromP2SHScript(params, this);
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))

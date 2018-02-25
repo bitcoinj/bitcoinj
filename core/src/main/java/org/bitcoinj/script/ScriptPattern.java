@@ -45,6 +45,10 @@ public class ScriptPattern {
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
+    public static byte[] extractHashFromPayToPubKeyHash(Script script) {
+        return script.chunks.get(2).data;
+    }
+
     /**
      * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
      * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
@@ -63,6 +67,10 @@ public class ScriptPattern {
                chunks.get(1).data != null &&
                chunks.get(1).data.length == Address.LENGTH &&
                chunks.get(2).equalsOpCode(OP_EQUAL);
+    }
+
+    public static byte[] extractHashFromPayToScriptHash(Script script) {
+        return script.chunks.get(1).data;
     }
 
     /**
