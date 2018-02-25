@@ -21,6 +21,7 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -66,8 +67,8 @@ public class MissingSigResolutionSigner extends StatelessTransactionSigner {
 
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             Script inputScript = txIn.getScriptSig();
-            if (scriptPubKey.isPayToScriptHash() || scriptPubKey.isSentToMultiSig()) {
-                int sigSuffixCount = scriptPubKey.isPayToScriptHash() ? 1 : 0;
+            if (ScriptPattern.isPayToScriptHash(scriptPubKey) || ScriptPattern.isSentToMultisig(scriptPubKey)) {
+                int sigSuffixCount = ScriptPattern.isPayToScriptHash(scriptPubKey) ? 1 : 0;
                 // all chunks except the first one (OP_0) and the last (redeem script) are signatures
                 for (int j = 1; j < inputScript.getChunks().size() - sigSuffixCount; j++) {
                     ScriptChunk scriptChunk = inputScript.getChunks().get(j);

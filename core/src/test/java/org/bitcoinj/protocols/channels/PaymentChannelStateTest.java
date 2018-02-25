@@ -19,6 +19,7 @@ package org.bitcoinj.protocols.channels;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -255,12 +256,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(2, multisigContract.getOutputs().size());   // One multi-sig, one change.
         Script script = multisigContract.getOutput(0).getScriptPubKey();
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
-            assertTrue(script.isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(script.isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -380,12 +381,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(2, multisigContract.getOutputs().size());   // One multi-sig, one change.
         Script script = multisigContract.getOutput(0).getScriptPubKey();
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
-            assertTrue(script.isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(script.isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -856,12 +857,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(2, multisigContract.getOutputs().size());   // One multi-sig, one change.
         Script script = multisigContract.getOutput(0).getScriptPubKey();
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
-            assertTrue(script.isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(script.isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -950,12 +951,12 @@ public class PaymentChannelStateTest extends TestWithWallet {
         assertEquals(2, multisigContract.getOutputs().size());   // One multi-sig, one change.
         Script script = multisigContract.getOutput(0).getScriptPubKey();
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
-            assertTrue(script.isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(script.isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(script.isSentToAddress());
+        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.

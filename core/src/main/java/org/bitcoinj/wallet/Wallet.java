@@ -974,7 +974,7 @@ public class Wallet extends BaseTaggableObject
         try {
             List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
-                if (script.isSentToAddress())
+                if (ScriptPattern.isPayToPubKeyHash(script))
                     addresses.add(script.getToAddress(params));
             return addresses;
         } finally {
@@ -1078,13 +1078,13 @@ public class Wallet extends BaseTaggableObject
             for (TransactionOutput o : tx.getOutputs()) {
                 try {
                     Script script = o.getScriptPubKey();
-                    if (script.isSentToRawPubKey()) {
+                    if (ScriptPattern.isPayToPubKey(script)) {
                         byte[] pubkey = script.getPubKey();
                         keyChainGroup.markPubKeyAsUsed(pubkey);
-                    } else if (script.isSentToAddress()) {
+                    } else if (ScriptPattern.isPayToPubKeyHash(script)) {
                         byte[] pubkeyHash = script.getPubKeyHash();
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
-                    } else if (script.isPayToScriptHash()) {
+                    } else if (ScriptPattern.isPayToScriptHash(script)) {
                         Address a = Address.fromP2SHScript(tx.getParams(), script);
                         keyChainGroup.markP2SHAddressAsUsed(a);
                     }
@@ -3986,7 +3986,7 @@ public class Wallet extends BaseTaggableObject
                 for (TransactionOutput output : req.tx.getOutputs()) {
                     if (output.isDust())
                         throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
+                    if (ScriptPattern.isOpReturn(output.getScriptPubKey()))
                         ++opReturnCount;
                 }
                 if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
@@ -4187,23 +4187,23 @@ public class Wallet extends BaseTaggableObject
      * false if the form of the script is not known or if the script is OP_RETURN.
      */
     public boolean canSignFor(Script script) {
-        if (script.isSentToRawPubKey()) {
+        if (ScriptPattern.isPayToPubKey(script)) {
             byte[] pubkey = script.getPubKey();
             ECKey key = findKeyFromPubKey(pubkey);
             return key != null && (key.isEncrypted() || key.hasPrivKey());
-        } if (script.isPayToScriptHash()) {
+        } if (ScriptPattern.isPayToScriptHash(script)) {
             RedeemData data = findRedeemDataFromScriptHash(script.getPubKeyHash());
             return data != null && canSignFor(data.redeemScript);
-        } else if (script.isSentToAddress()) {
+        } else if (ScriptPattern.isPayToPubKeyHash(script)) {
             ECKey key = findKeyFromPubHash(script.getPubKeyHash());
             return key != null && (key.isEncrypted() || key.hasPrivKey());
-        } else if (script.isSentToMultiSig()) {
+        } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
                 ECKey key = findKeyFromPubKey(pubkey.getPubKey());
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
-        } else if (script.isSentToCLTVPaymentChannel()) {
+        } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
             // Any script for which we are the recipient or sender counts.
             byte[] sender = script.getCLTVPaymentChannelSenderPubKey();
             ECKey senderKey = findKeyFromPubKey(sender);
@@ -4724,7 +4724,7 @@ public class Wallet extends BaseTaggableObject
     // Returns true if the output is one that won't be selected by a data element matching in the scriptSig.
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
         Script script = out.getScriptPubKey();
-        boolean isScriptTypeSupported = script.isSentToRawPubKey() || script.isPayToScriptHash();
+        boolean isScriptTypeSupported = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isPayToScriptHash(script);
         return (isScriptTypeSupported && myUnspents.contains(out)) || watchedScripts.contains(script);
     }
 
@@ -4981,10 +4981,10 @@ public class Wallet extends BaseTaggableObject
                 Script script = output.getScriptPubKey();
                 ECKey key = null;
                 Script redeemScript = null;
-                if (script.isSentToAddress()) {
+                if (ScriptPattern.isPayToPubKeyHash(script)) {
                     key = findKeyFromPubHash(script.getPubKeyHash());
                     checkNotNull(key, "Coin selection includes unspendable outputs");
-                } else if (script.isPayToScriptHash()) {
+                } else if (ScriptPattern.isPayToScriptHash(script)) {
                     redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
                 }

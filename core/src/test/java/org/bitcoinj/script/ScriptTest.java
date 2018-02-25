@@ -87,13 +87,13 @@ public class ScriptTest {
     @Test
     public void testMultiSig() throws Exception {
         List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
-        assertTrue(ScriptBuilder.createMultiSigOutputScript(2, keys).isSentToMultiSig());
+        assertTrue(ScriptPattern.isSentToMultisig(ScriptBuilder.createMultiSigOutputScript(2, keys)));
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
-        assertTrue(script.isSentToMultiSig());
+        assertTrue(ScriptPattern.isSentToMultisig(script));
         List<ECKey> pubkeys = new ArrayList<>(3);
         for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key.getPubKeyPoint()));
         assertEquals(script.getPubKeys(), pubkeys);
-        assertFalse(ScriptBuilder.createOutputScript(new ECKey()).isSentToMultiSig());
+        assertFalse(ScriptPattern.isSentToMultisig(ScriptBuilder.createOutputScript(new ECKey())));
         try {
             // Fail if we ask for more signatures than keys.
             Script.createMultiSigOutputScript(4, keys);
@@ -113,14 +113,14 @@ public class ScriptTest {
     @Test
     public void testP2SHOutputScript() throws Exception {
         Address p2shAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
-        assertTrue(ScriptBuilder.createOutputScript(p2shAddress).isPayToScriptHash());
+        assertTrue(ScriptPattern.isPayToScriptHash(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
     @Test
     public void testIp() throws Exception {
         byte[] bytes = HEX.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(bytes);
-        assertTrue(s.isSentToRawPubKey());
+        assertTrue(ScriptPattern.isPayToPubKey(s));
     }
     
     @Test
@@ -432,7 +432,7 @@ public class ScriptTest {
     @Test
     public void testCLTVPaymentChannelOutput() {
         Script script = ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
-        assertTrue("script is locktime-verify", script.isSentToCLTVPaymentChannel());
+        assertTrue("script is locktime-verify", ScriptPattern.isSentToCltvPaymentChannel(script));
     }
 
     @Test

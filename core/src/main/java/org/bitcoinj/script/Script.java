@@ -226,22 +226,12 @@ public class Script {
         }
     }
 
-    /**
-     * Returns true if this script is of the form <pubkey> OP_CHECKSIG. This form was originally intended for transactions
-     * where the peers talked to each other directly via TCP/IP, but has fallen out of favor with time due to that mode
-     * of operation being susceptible to man-in-the-middle attacks. It is still used in coinbase outputs and can be
-     * useful more exotic types of transaction, but today most payments are to addresses.
-     */
+    @Deprecated
     public boolean isSentToRawPubKey() {
         return ScriptPattern.isPayToPubKey(this);
     }
 
-    /**
-     * Returns true if this script is of the form DUP HASH160 <pubkey hash> EQUALVERIFY CHECKSIG, ie, payment to an
-     * address like 1VayNert3x1KzbpzMGt2qdqrAThiRovi8. This form was originally intended for the case where you wish
-     * to send somebody money with a written code because their node is offline, but over time has become the standard
-     * way to make payments due to the short and recognizable base58 form addresses come in.
-     */
+    @Deprecated
     public boolean isSentToAddress() {
         return ScriptPattern.isPayToPubKeyHash(this);
     }
@@ -259,9 +249,9 @@ public class Script {
      *
      */
     public byte[] getPubKeyHash() throws ScriptException {
-        if (isSentToAddress())
+        if (ScriptPattern.isPayToPubKeyHash(this))
             return chunks.get(2).data;
-        else if (isPayToScriptHash())
+        else if (ScriptPattern.isPayToScriptHash(this))
             return chunks.get(1).data;
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
@@ -300,7 +290,7 @@ public class Script {
      * @throws ScriptException
      */
     public byte[] getCLTVPaymentChannelSenderPubKey() throws ScriptException {
-        if (!isSentToCLTVPaymentChannel()) {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(8).data;
@@ -312,14 +302,14 @@ public class Script {
      * @throws ScriptException
      */
     public byte[] getCLTVPaymentChannelRecipientPubKey() throws ScriptException {
-        if (!isSentToCLTVPaymentChannel()) {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
         }
         return chunks.get(1).data;
     }
 
     public BigInteger getCLTVPaymentChannelExpiry() {
-        if (!isSentToCLTVPaymentChannel()) {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
         }
         return castToBigInteger(chunks.get(4).data, 5, false);
@@ -350,11 +340,11 @@ public class Script {
      *            showing addresses rather than pubkeys.
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
-        if (isSentToAddress())
+        if (ScriptPattern.isPayToPubKeyHash(this))
             return new Address(params, getPubKeyHash());
-        else if (isPayToScriptHash())
+        else if (ScriptPattern.isPayToScriptHash(this))
             return Address.fromP2SHScript(params, this);
-        else if (forcePayToPubKey && isSentToRawPubKey())
+        else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
             return ECKey.fromPublicOnly(getPubKey()).toAddress(params);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
@@ -435,12 +425,12 @@ public class Script {
      * It is expected that this program later on will be updated with proper signatures.
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
-        if (isSentToAddress()) {
+        if (ScriptPattern.isPayToPubKeyHash(this)) {
             checkArgument(key != null, "Key required to create pay-to-address input script");
             return ScriptBuilder.createInputScript(null, key);
-        } else if (isSentToRawPubKey()) {
+        } else if (ScriptPattern.isPayToPubKey(this)) {
             return ScriptBuilder.createInputScript(null);
-        } else if (isPayToScriptHash()) {
+        } else if (ScriptPattern.isPayToScriptHash(this)) {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
@@ -454,12 +444,12 @@ public class Script {
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
         int sigsPrefixCount = 0;
         int sigsSuffixCount = 0;
-        if (isPayToScriptHash()) {
+        if (ScriptPattern.isPayToScriptHash(this)) {
             sigsPrefixCount = 1; // OP_0 <sig>* <redeemScript>
             sigsSuffixCount = 1;
-        } else if (isSentToMultiSig()) {
+        } else if (ScriptPattern.isSentToMultisig(this)) {
             sigsPrefixCount = 1; // OP_0 <sig>*
-        } else if (isSentToAddress()) {
+        } else if (ScriptPattern.isPayToPubKeyHash(this)) {
             sigsSuffixCount = 1; // <sig> <pubkey>
         }
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
@@ -511,7 +501,7 @@ public class Script {
      * @throws ScriptException if the script type is not understood or is pay to address or is P2SH (run this method on the "Redeem script" instead).
      */
     public List<ECKey> getPubKeys() {
-        if (!isSentToMultiSig())
+        if (!ScriptPattern.isSentToMultisig(this))
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
 
         ArrayList<ECKey> result = Lists.newArrayList();
@@ -620,14 +610,14 @@ public class Script {
      * Returns number of signatures required to satisfy this script.
      */
     public int getNumberOfSignaturesRequiredToSpend() {
-        if (isSentToMultiSig()) {
+        if (ScriptPattern.isSentToMultisig(this)) {
             // for N of M CHECKMULTISIG script we will need N signatures to spend
             ScriptChunk nChunk = chunks.get(0);
             return Script.decodeFromOpN(nChunk.opcode);
-        } else if (isSentToAddress() || isSentToRawPubKey()) {
+        } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
             // pay-to-address and pay-to-pubkey require single sig
             return 1;
-        } else if (isPayToScriptHash()) {
+        } else if (ScriptPattern.isPayToScriptHash(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
         } else {
             throw new IllegalStateException("Unsupported script type");
@@ -639,17 +629,17 @@ public class Script {
      * be required for certain types of script to estimate target size.
      */
     public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
-        if (isPayToScriptHash()) {
+        if (ScriptPattern.isPayToScriptHash(this)) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
             return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
-        } else if (isSentToMultiSig()) {
+        } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;
-        } else if (isSentToRawPubKey()) {
+        } else if (ScriptPattern.isPayToPubKey(this)) {
             // scriptSig: <sig>
             return SIG_SIZE;
-        } else if (isSentToAddress()) {
+        } else if (ScriptPattern.isPayToPubKeyHash(this)) {
             // scriptSig: <sig> <pubkey>
             int uncompressedPubKeySize = 65;
             return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : uncompressedPubKeySize);
@@ -658,30 +648,17 @@ public class Script {
         }
     }
 
-    /**
-     * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
-     * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
-     * spending input to provide a program matching that hash. This rule is "soft enforced" by the network as it does
-     * not exist in Bitcoin Core. It means blocks containing P2SH transactions that don't match
-     * correctly are considered valid, but won't be mined upon, so they'll be rapidly re-orgd out of the chain. This
-     * logic is defined by <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a>.</p>
-     *
-     * <p>bitcoinj does not support creation of P2SH transactions today. The goal of P2SH is to allow short addresses
-     * even for complex scripts (eg, multi-sig outputs) so they are convenient to work with in things like QRcodes or
-     * with copy/paste, and also to minimize the size of the unspent output set (which improves performance of the
-     * Bitcoin system).</p>
-     */
+    @Deprecated
     public boolean isPayToScriptHash() {
         return ScriptPattern.isPayToScriptHash(this);
     }
 
-    /**
-     * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
-     */
+    @Deprecated
     public boolean isSentToMultiSig() {
         return ScriptPattern.isSentToMultisig(this);
     }
 
+    @Deprecated
     public boolean isSentToCLTVPaymentChannel() {
         return ScriptPattern.isSentToCltvPaymentChannel(this);
     }
@@ -795,6 +772,7 @@ public class Script {
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
 
+    @Deprecated
     public boolean isOpReturn() {
         return ScriptPattern.isOpReturn(this);
     }
@@ -1643,7 +1621,7 @@ public class Script {
         //     overall scalability and performance.
 
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
-        if (verifyFlags.contains(VerifyFlag.P2SH) && scriptPubKey.isPayToScriptHash()) {
+        if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isPayToScriptHash(scriptPubKey)) {
             for (ScriptChunk chunk : chunks)
                 if (chunk.isOpCode() && chunk.opcode > OP_16)
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
@@ -1674,11 +1652,11 @@ public class Script {
      */
     public ScriptType getScriptType() {
         ScriptType type = ScriptType.NO_TYPE;
-        if (isSentToAddress()) {
+        if (ScriptPattern.isPayToPubKeyHash(this)) {
             type = ScriptType.P2PKH;
-        } else if (isSentToRawPubKey()) {
+        } else if (ScriptPattern.isPayToPubKey(this)) {
             type = ScriptType.PUB_KEY;
-        } else if (isPayToScriptHash()) {
+        } else if (ScriptPattern.isPayToScriptHash(this)) {
             type = ScriptType.P2SH;
         }
         return type;

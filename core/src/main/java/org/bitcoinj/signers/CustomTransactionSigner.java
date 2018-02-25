@@ -21,6 +21,7 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public abstract class CustomTransactionSigner extends StatelessTransactionSigner
                 continue;
             }
             Script scriptPubKey = txOut.getScriptPubKey();
-            if (!scriptPubKey.isPayToScriptHash()) {
+            if (!ScriptPattern.isPayToScriptHash(scriptPubKey)) {
                 log.warn("CustomTransactionSigner works only with P2SH transactions");
                 return false;
             }

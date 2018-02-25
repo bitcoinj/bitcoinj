@@ -28,6 +28,12 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * This is a Script pattern matcher with some typical script patterns
  */
 public class ScriptPattern {
+    /**
+     * Returns true if this script is of the form DUP HASH160 <pubkey hash> EQUALVERIFY CHECKSIG, ie, payment to an
+     * address like 1VayNert3x1KzbpzMGt2qdqrAThiRovi8. This form was originally intended for the case where you wish
+     * to send somebody money with a written code because their node is offline, but over time has become the standard
+     * way to make payments due to the short and recognizable base58 form addresses come in.
+     */
     public static boolean isPayToPubKeyHash(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 5 &&
@@ -39,6 +45,11 @@ public class ScriptPattern {
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
+    /**
+     * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
+     * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
+     * spending input to provide a program matching that hash.
+     */
     public static boolean isPayToScriptHash(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         // We check for the effective serialized form because BIP16 defines a P2SH output using an exact byte
@@ -54,6 +65,12 @@ public class ScriptPattern {
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 
+    /**
+     * Returns true if this script is of the form <pubkey> OP_CHECKSIG. This form was originally intended for transactions
+     * where the peers talked to each other directly via TCP/IP, but has fallen out of favor with time due to that mode
+     * of operation being susceptible to man-in-the-middle attacks. It is still used in coinbase outputs and can be
+     * useful more exotic types of transaction, but today most payments are to addresses.
+     */
     public static boolean isPayToPubKey(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 2 &&
@@ -63,6 +80,9 @@ public class ScriptPattern {
                chunks.get(0).data.length > 1;
     }
 
+    /**
+     * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
+     */
     public static boolean isSentToMultisig(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() < 4) return false;

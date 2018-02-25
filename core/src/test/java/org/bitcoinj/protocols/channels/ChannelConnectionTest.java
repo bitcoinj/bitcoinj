@@ -18,6 +18,7 @@ package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -540,9 +541,9 @@ public class ChannelConnectionTest extends TestWithWallet {
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         broadcastTxPause.release();
         if (isMultiSigContract()) {
-            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(broadcasts.take().getOutput(0).getScriptPubKey()));
         } else {
-            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(broadcasts.take().getOutput(0).getScriptPubKey()));
         }
         broadcastTxPause.release();
         assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());

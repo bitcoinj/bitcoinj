@@ -27,6 +27,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
@@ -831,7 +832,7 @@ public class WalletTool {
             }
             TransactionOutput lockTimeVerifyOutput = null;
             for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (out.getScriptPubKey().isSentToCLTVPaymentChannel()) {
+                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
                     lockTimeVerifyOutput = out;
                 }
             }
@@ -935,7 +936,7 @@ public class WalletTool {
             }
             TransactionOutput lockTimeVerifyOutput = null;
             for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (out.getScriptPubKey().isSentToCLTVPaymentChannel()) {
+                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
                     lockTimeVerifyOutput = out;
                 }
             }

@@ -24,6 +24,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptOpCodes;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
@@ -704,7 +705,7 @@ public class Transaction extends ChildMessage {
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
                     if (connectedOutput != null) {
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
-                        if (scriptPubKey.isSentToAddress() || scriptPubKey.isPayToScriptHash()) {
+                        if (ScriptPattern.isPayToPubKeyHash(scriptPubKey) || ScriptPattern.isPayToScriptHash(scriptPubKey)) {
                             s.append(" hash160:");
                             s.append(Utils.HEX.encode(scriptPubKey.getPubKeyHash()));
                         }
@@ -819,9 +820,9 @@ public class Transaction extends ChildMessage {
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
         TransactionSignature txSig = new TransactionSignature(ecSig, sigHash, anyoneCanPay);
-        if (scriptPubKey.isSentToRawPubKey())
+        if (ScriptPattern.isPayToPubKey(scriptPubKey))
             input.setScriptSig(ScriptBuilder.createInputScript(txSig));
-        else if (scriptPubKey.isSentToAddress())
+        else if (ScriptPattern.isPayToPubKeyHash(scriptPubKey))
             input.setScriptSig(ScriptBuilder.createInputScript(txSig, sigKey));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);

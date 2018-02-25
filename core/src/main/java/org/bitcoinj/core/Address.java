@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptPattern;
 
 import javax.annotation.Nullable;
 
@@ -74,7 +75,7 @@ public class Address extends VersionedChecksummedBytes {
 
     /** Returns an Address that represents the script hash extracted from the given scriptPubKey */
     public static Address fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
-        checkArgument(scriptPubKey.isPayToScriptHash(), "Not a P2SH script");
+        checkArgument(ScriptPattern.isPayToScriptHash(scriptPubKey), "Not a P2SH script");
         return fromP2SHHash(params, scriptPubKey.getPubKeyHash());
     }
 

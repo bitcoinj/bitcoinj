@@ -130,7 +130,7 @@ public class TransactionOutput extends ChildMessage {
      */
     @Nullable
     public Address getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
-        if (getScriptPubKey().isSentToAddress())
+        if (ScriptPattern.isPayToPubKeyHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
         return null;
@@ -150,7 +150,7 @@ public class TransactionOutput extends ChildMessage {
      */
     @Nullable
     public Address getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
-        if (getScriptPubKey().isPayToScriptHash())
+        if (ScriptPattern.isPayToScriptHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
         return null;
@@ -212,7 +212,7 @@ public class TransactionOutput extends ChildMessage {
      */
     public boolean isDust() {
         // Transactions that are OP_RETURN can't be dust regardless of their value.
-        if (getScriptPubKey().isOpReturn())
+        if (ScriptPattern.isOpReturn(getScriptPubKey()))
             return false;
         return getValue().isLessThan(getMinNonDustValue());
     }
@@ -321,10 +321,10 @@ public class TransactionOutput extends ChildMessage {
     public boolean isMine(TransactionBag transactionBag) {
         try {
             Script script = getScriptPubKey();
-            if (script.isSentToRawPubKey()) {
+            if (ScriptPattern.isPayToPubKey(script)) {
                 byte[] pubkey = script.getPubKey();
                 return transactionBag.isPubKeyMine(pubkey);
-            } if (script.isPayToScriptHash()) {
+            } if (ScriptPattern.isPayToScriptHash(script)) {
                 return transactionBag.isPayToScriptHashMine(script.getPubKeyHash());
             } else {
                 byte[] pubkeyHash = script.getPubKeyHash();
@@ -346,11 +346,11 @@ public class TransactionOutput extends ChildMessage {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
             buf.append(Coin.valueOf(value).toFriendlyString());
-            if (script.isSentToAddress() || script.isPayToScriptHash())
+            if (ScriptPattern.isPayToPubKeyHash(script) || ScriptPattern.isPayToScriptHash(script))
                 buf.append(" to ").append(script.getToAddress(params));
-            else if (script.isSentToRawPubKey())
+            else if (ScriptPattern.isPayToPubKey(script))
                 buf.append(" to pubkey ").append(Utils.HEX.encode(script.getPubKey()));
-            else if (script.isSentToMultiSig())
+            else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else
                 buf.append(" (unknown type)");
