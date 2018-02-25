@@ -233,7 +233,7 @@ public class Script {
      * useful more exotic types of transaction, but today most payments are to addresses.
      */
     public boolean isSentToRawPubKey() {
-        return ScriptPattern.isPayToPubKey(chunks);
+        return ScriptPattern.isPayToPubKey(this);
     }
 
     /**
@@ -243,7 +243,7 @@ public class Script {
      * way to make payments due to the short and recognizable base58 form addresses come in.
      */
     public boolean isSentToAddress() {
-        return ScriptPattern.isPayToPubKeyHash(chunks);
+        return ScriptPattern.isPayToPubKeyHash(this);
     }
 
     /**
@@ -680,18 +680,18 @@ public class Script {
      * Bitcoin system).</p>
      */
     public boolean isPayToScriptHash() {
-        return ScriptPattern.isPayToScriptHash(chunks);
+        return ScriptPattern.isPayToScriptHash(this);
     }
 
     /**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */
     public boolean isSentToMultiSig() {
-        return ScriptPattern.isSentToMultisig(chunks);
+        return ScriptPattern.isSentToMultisig(this);
     }
 
     public boolean isSentToCLTVPaymentChannel() {
-        return ScriptPattern.isSentToCltvPaymentChannel(chunks);
+        return ScriptPattern.isSentToCltvPaymentChannel(this);
     }
 
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
@@ -804,7 +804,7 @@ public class Script {
     }
 
     public boolean isOpReturn() {
-        return ScriptPattern.isOpReturn(chunks);
+        return ScriptPattern.isOpReturn(this);
     }
 
     /**

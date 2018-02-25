@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 John L. Jegutanis
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,22 +33,22 @@ public class ScriptPatternTest {
     @Test
     public void testCommonScripts() {
         assertTrue(ScriptPattern.isPayToPubKeyHash(
-                ScriptBuilder.createOutputScript(keys.get(0).toAddress(MainNetParams.get())).getChunks()
+                ScriptBuilder.createOutputScript(keys.get(0).toAddress(MainNetParams.get()))
         ));
         assertTrue(ScriptPattern.isPayToScriptHash(
-                ScriptBuilder.createP2SHOutputScript(2, keys).getChunks()
+                ScriptBuilder.createP2SHOutputScript(2, keys)
         ));
         assertTrue(ScriptPattern.isSentToMultisig(
-                ScriptBuilder.createMultiSigOutputScript(2, keys).getChunks()
+                ScriptBuilder.createMultiSigOutputScript(2, keys)
         ));
         assertTrue(ScriptPattern.isPayToPubKey(
-                ScriptBuilder.createOutputScript(keys.get(0)).getChunks()
+                ScriptBuilder.createOutputScript(keys.get(0))
         ));
         assertTrue(ScriptPattern.isSentToCltvPaymentChannel(
-                ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1)).getChunks()
+                ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1))
         ));
         assertTrue(ScriptPattern.isOpReturn(
-                ScriptBuilder.createOpReturnScript(new byte[10]).getChunks()
+                ScriptBuilder.createOpReturnScript(new byte[10])
         ));
     }
 }

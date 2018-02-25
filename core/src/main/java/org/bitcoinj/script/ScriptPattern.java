@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 John L. Jegutanis
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +28,8 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * This is a Script pattern matcher with some typical script patterns
  */
 public class ScriptPattern {
-    public static boolean isPayToPubKeyHash(List<ScriptChunk> chunks) {
+    public static boolean isPayToPubKeyHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
@@ -37,7 +39,8 @@ public class ScriptPattern {
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
-    public static boolean isPayToScriptHash(List<ScriptChunk> chunks) {
+    public static boolean isPayToScriptHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         // We check for the effective serialized form because BIP16 defines a P2SH output using an exact byte
         // template, not the logical program structure. Thus you can have two programs that look identical when
         // printed out but one is a P2SH script and the other isn't! :(
@@ -51,7 +54,8 @@ public class ScriptPattern {
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 
-    public static boolean isPayToPubKey(List<ScriptChunk> chunks) {
+    public static boolean isPayToPubKey(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 2 &&
                chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
                !chunks.get(0).isOpCode() &&
@@ -59,7 +63,8 @@ public class ScriptPattern {
                chunks.get(0).data.length > 1;
     }
 
-    public static boolean isSentToMultisig(List<ScriptChunk> chunks) {
+    public static boolean isSentToMultisig(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() < 4) return false;
         ScriptChunk chunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY].
@@ -82,7 +87,8 @@ public class ScriptPattern {
         return true;
     }
 
-    public static boolean isSentToCltvPaymentChannel(List<ScriptChunk> chunks) {
+    public static boolean isSentToCltvPaymentChannel(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() != 10) return false;
         // Check that opcodes match the pre-determined format.
         if (!chunks.get(0).equalsOpCode(OP_IF)) return false;
@@ -98,7 +104,8 @@ public class ScriptPattern {
         return true;
     }
 
-    public static boolean isOpReturn(List<ScriptChunk> chunks) {
+    public static boolean isOpReturn(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 }
