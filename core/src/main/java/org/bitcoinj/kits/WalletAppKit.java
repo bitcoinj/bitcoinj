@@ -198,6 +198,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.restoreFromSeed = seed;
         return this;
     }
+
     /**
      * If an account key is set here then any existing wallet that matches the file name will be renamed to a backup name,
      * the chain file will be deleted, and the wallet object will be instantiated with the given key instead of
@@ -206,7 +207,6 @@ public class WalletAppKit extends AbstractIdleService {
      * up the new kit. The next time your app starts it should work as normal (that is, don't keep calling this each
      * time).
      */
-
     public WalletAppKit restoreWalletFromKey(DeterministicKey accountKey) {
         this.restoreFromKey = accountKey;
         return this;

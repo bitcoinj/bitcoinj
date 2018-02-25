@@ -345,7 +345,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             checkArgument(key.isPubKeyOnly(), "Private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         else
             checkArgument(key.hasPrivKey(), "Private subtrees are required.");
-        checkArgument(isWatching ? true : !isFollowing, "Can only follow a key that is watched");
+        checkArgument(isWatching || !isFollowing, "Can only follow a key that is watched");
 
         basicKeyChain = new BasicKeyChain();
         this.seed = null;
@@ -916,8 +916,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     // If this is not a following chain and previous was, this must be married
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
-                    if (seed == null & key.hasSecretBytes())
-                    {
+                    if (seed == null & key.hasSecretBytes()) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, new BigInteger(1, key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeSpendingKeyChain(key, iter.peek(), accountKey, isMarried);
@@ -939,7 +938,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 }
                 // Find the parent key assuming this is not the root key, and not an account key for a watching chain.
                 DeterministicKey parent = null;
-                if (!path.isEmpty() && !isWatchingAccountKey & !isSpendingKey) {
+                if (!path.isEmpty() && !isWatchingAccountKey && !isSpendingKey) {
                     ChildNumber index = path.removeLast();
                     parent = chain.hierarchy.get(path, false, false);
                     path.add(index);
