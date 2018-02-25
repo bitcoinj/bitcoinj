@@ -1005,7 +1005,7 @@ public class Wallet extends BaseTaggableObject
             List<LegacyAddress> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (ScriptPattern.isPayToPubKeyHash(script))
-                    addresses.add(script.getToAddress(params));
+                    addresses.add(((LegacyAddress) script.getToAddress(params)));
             return addresses;
         } finally {
             keyChainGroupLock.unlock();

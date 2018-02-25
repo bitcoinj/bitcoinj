@@ -2928,7 +2928,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
-        final LegacyAddress toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
+        final LegacyAddress toAddress = (LegacyAddress) tx.getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
         final ECKey rotatingToKey = wallet.findKeyFromPubHash(toAddress.getHash());
         assertNotNull(rotatingToKey);
         assertFalse(wallet.isKeyRotating(rotatingToKey));

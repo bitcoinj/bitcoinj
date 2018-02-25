@@ -18,6 +18,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.SegwitAddress;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -103,6 +104,34 @@ public class ScriptPattern {
      */
     public static byte[] extractKeyFromPayToPubKey(Script script) {
         return script.chunks.get(0).data;
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 <hash>. This can either be a P2WPKH or P2WSH scriptPubKey. These
+     * two script types were introduced with segwit.
+     */
+    public static boolean isPayToWitnessHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
+        if (chunks.size() != 2)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        if (chunk1data == null)
+            return false;
+        if (chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH
+                && chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_SH)
+            return false;
+        return true;
+    }
+
+    /**
+     * Extract the pubkey hash from a P2WPKH or the script hash from a P2WSH scriptPubKey. It's important that the
+     * script is in the correct form, so you will want to guard calls to this method with
+     * {@link #isPayToWitnessHash(Script)}.
+     */
+    public static byte[] extractHashFromPayToWitnessHash(Script script) {
+        return script.chunks.get(1).data;
     }
 
     /**

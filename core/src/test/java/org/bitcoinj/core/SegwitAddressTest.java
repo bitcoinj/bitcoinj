@@ -28,8 +28,10 @@ import java.util.Locale;
 
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
 import org.junit.Test;
 
 import com.google.common.base.MoreObjects;
@@ -103,6 +105,11 @@ public class SegwitAddressTest {
             assertEquals(valid.expectedScriptPubKey,
                     Utils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
             assertEquals(valid.address.toLowerCase(Locale.ROOT), address.toBech32());
+            if (valid.expectedWitnessVersion == 0) {
+                Script expectedScriptPubKey = new Script(Utils.HEX.decode(valid.expectedScriptPubKey));
+                assertEquals(address, SegwitAddress.fromHash(valid.expectedParams,
+                        ScriptPattern.extractHashFromPayToWitnessHash(expectedScriptPubKey)));
+            }
             assertEquals(valid.expectedWitnessVersion, address.getWitnessVersion());
         }
     }

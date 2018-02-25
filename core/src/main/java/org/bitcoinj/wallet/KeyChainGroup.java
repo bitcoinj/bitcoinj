@@ -124,8 +124,8 @@ public class KeyChainGroup implements KeyBag {
 
         if (isMarried()) {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
-                LegacyAddress address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
-                currentAddresses.put(entry.getKey(), address);
+                Address address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
+                currentAddresses.put(entry.getKey(), (LegacyAddress) address);
             }
         }
     }

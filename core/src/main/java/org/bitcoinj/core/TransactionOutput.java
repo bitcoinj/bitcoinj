@@ -131,7 +131,7 @@ public class TransactionOutput extends ChildMessage {
     @Nullable
     public LegacyAddress getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
         if (ScriptPattern.isPayToPubKeyHash(getScriptPubKey()))
-            return getScriptPubKey().getToAddress(networkParameters);
+            return (LegacyAddress) getScriptPubKey().getToAddress(networkParameters);
 
         return null;
     }
@@ -151,7 +151,7 @@ public class TransactionOutput extends ChildMessage {
     @Nullable
     public LegacyAddress getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
         if (ScriptPattern.isPayToScriptHash(getScriptPubKey()))
-            return getScriptPubKey().getToAddress(networkParameters);
+            return (LegacyAddress) getScriptPubKey().getToAddress(networkParameters);
 
         return null;
     }

@@ -29,6 +29,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -461,7 +462,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 }
                 if (txout != null) {
                     Script sc = txout.getScript();
-                    LegacyAddress address = sc.getToAddress(params, true);
+                    Address address = sc.getToAddress(params, true);
                     UTXO output = new UTXO(txout.getHash(), txout.getIndex(), txout.getValue(), txout.getHeight(),
                             txout.isCoinbase(), txout.getScript(), address.toString());
                     results.add(output);
@@ -887,7 +888,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             String address = out.getAddress();
             if (address == null || address.equals("")) {
                 Script sc = out.getScript();
-                a = sc.getToAddress(params);
+                a = (LegacyAddress) sc.getToAddress(params);
                 hashBytes = a.getHash();
             } else {
                 a = LegacyAddress.fromBase58(params, out.getAddress());

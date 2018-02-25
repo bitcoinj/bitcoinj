@@ -239,22 +239,17 @@ public class Script {
     }
 
     /**
-     * <p>If a program matches the standard template DUP HASH160 &lt;pubkey hash&gt; EQUALVERIFY CHECKSIG
-     * then this function retrieves the third element.
-     * In this case, this is useful for fetching the destination address of a transaction.</p>
+     * <p>If the program somehow pays to a hash, returns the hash.</p>
      * 
-     * <p>If a program matches the standard template HASH160 &lt;script hash&gt; EQUAL
-     * then this function retrieves the second element.
-     * In this case, this is useful for fetching the hash of the redeem script of a transaction.</p>
-     * 
-     * <p>Otherwise it throws a ScriptException.</p>
-     *
+     * <p>Otherwise this method throws a ScriptException.</p>
      */
     public byte[] getPubKeyHash() throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
             return ScriptPattern.extractHashFromPayToPubKeyHash(this);
         else if (ScriptPattern.isPayToScriptHash(this))
             return ScriptPattern.extractHashFromPayToScriptHash(this);
+        else if (ScriptPattern.isPayToWitnessHash(this))
+            return ScriptPattern.extractHashFromPayToWitnessHash(this);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
@@ -283,7 +278,7 @@ public class Script {
     /**
      * Gets the destination address from this script, if it's in the required form.
      */
-    public LegacyAddress getToAddress(NetworkParameters params) throws ScriptException {
+    public Address getToAddress(NetworkParameters params) throws ScriptException {
         return getToAddress(params, false);
     }
 
@@ -294,13 +289,15 @@ public class Script {
      *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
      *            showing addresses rather than pubkeys.
      */
-    public LegacyAddress getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
+    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
             return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
         else if (ScriptPattern.isPayToScriptHash(this))
             return LegacyAddress.fromP2SHScript(params, this);
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
             return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromPayToPubKey(this)));
+        else if (ScriptPattern.isPayToWitnessHash(this))
+            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromPayToWitnessHash(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
     }
