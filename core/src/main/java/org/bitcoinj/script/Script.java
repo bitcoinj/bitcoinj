@@ -247,14 +247,6 @@ public class Script {
     }
 
     /**
-     * An alias for isPayToScriptHash.
-     */
-    @Deprecated
-    public boolean isSentToP2SH() {
-        return isPayToScriptHash();
-    }
-
-    /**
      * <p>If a program matches the standard template DUP HASH160 &lt;pubkey hash&gt; EQUALVERIFY CHECKSIG
      * then this function retrieves the third element.
      * In this case, this is useful for fetching the destination address of a transaction.</p>
