@@ -31,7 +31,7 @@ public class ScriptPatternTest {
 
     @Test
     public void testCommonScripts() {
-        assertTrue(ScriptPattern.isSentToAddress(
+        assertTrue(ScriptPattern.isPayToPubKeyHash(
                 ScriptBuilder.createOutputScript(keys.get(0).toAddress(MainNetParams.get())).getChunks()
         ));
         assertTrue(ScriptPattern.isPayToScriptHash(
@@ -40,7 +40,7 @@ public class ScriptPatternTest {
         assertTrue(ScriptPattern.isSentToMultisig(
                 ScriptBuilder.createMultiSigOutputScript(2, keys).getChunks()
         ));
-        assertTrue(ScriptPattern.isSentToRawPubKey(
+        assertTrue(ScriptPattern.isPayToPubKey(
                 ScriptBuilder.createOutputScript(keys.get(0)).getChunks()
         ));
         assertTrue(ScriptPattern.isSentToCltvPaymentChannel(

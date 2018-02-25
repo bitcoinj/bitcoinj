@@ -233,7 +233,7 @@ public class Script {
      * useful more exotic types of transaction, but today most payments are to addresses.
      */
     public boolean isSentToRawPubKey() {
-        return ScriptPattern.isSentToRawPubKey(chunks);
+        return ScriptPattern.isPayToPubKey(chunks);
     }
 
     /**
@@ -243,7 +243,7 @@ public class Script {
      * way to make payments due to the short and recognizable base58 form addresses come in.
      */
     public boolean isSentToAddress() {
-        return ScriptPattern.isSentToAddress(chunks);
+        return ScriptPattern.isPayToPubKeyHash(chunks);
     }
 
     /**

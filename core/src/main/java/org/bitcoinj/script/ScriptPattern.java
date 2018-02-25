@@ -27,7 +27,7 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * This is a Script pattern matcher with some typical script patterns
  */
 public class ScriptPattern {
-    public static boolean isSentToAddress(List<ScriptChunk> chunks) {
+    public static boolean isPayToPubKeyHash(List<ScriptChunk> chunks) {
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
@@ -51,7 +51,7 @@ public class ScriptPattern {
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 
-    public static boolean isSentToRawPubKey(List<ScriptChunk> chunks) {
+    public static boolean isPayToPubKey(List<ScriptChunk> chunks) {
         return chunks.size() == 2 &&
                chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
                !chunks.get(0).isOpCode() &&
