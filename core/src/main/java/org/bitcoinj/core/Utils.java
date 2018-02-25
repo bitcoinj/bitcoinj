@@ -17,29 +17,30 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Charsets;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.BaseEncoding;
-import com.google.common.io.Resources;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.UnsignedLongs;
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
@@ -50,11 +51,10 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  */
 public class Utils {
 
-    /** The string that prefixes all text messages signed using Bitcoin keys. */
-    public static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
-    public static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
-
+    /** Joiner for concatenating words with a space inbetween. */
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
+    /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
+    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     private static BlockingQueue<Boolean> mockSleepQueue;
 
@@ -89,13 +89,13 @@ public class Utils {
         return dest;
     }
 
-    public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
-        out[offset] = (byte) (0xFF & (val >> 24));
-        out[offset + 1] = (byte) (0xFF & (val >> 16));
-        out[offset + 2] = (byte) (0xFF & (val >> 8));
-        out[offset + 3] = (byte) (0xFF & val);
+    /** Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
+    public static void uint16ToByteArrayLE(int val, byte[] out, int offset) {
+        out[offset] = (byte) (0xFF & val);
+        out[offset + 1] = (byte) (0xFF & (val >> 8));
     }
 
+    /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
     public static void uint32ToByteArrayLE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
@@ -103,7 +103,16 @@ public class Utils {
         out[offset + 3] = (byte) (0xFF & (val >> 24));
     }
 
-    public static void uint64ToByteArrayLE(long val, byte[] out, int offset) {
+    /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
+    public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
+        out[offset] = (byte) (0xFF & (val >> 24));
+        out[offset + 1] = (byte) (0xFF & (val >> 16));
+        out[offset + 2] = (byte) (0xFF & (val >> 8));
+        out[offset + 3] = (byte) (0xFF & val);
+    }
+
+    /** Write 8 bytes to the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
+    public static void int64ToByteArrayLE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
@@ -114,13 +123,35 @@ public class Utils {
         out[offset + 7] = (byte) (0xFF & (val >> 56));
     }
 
+    /** Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format. */
+    public static void uint16ToByteStreamLE(int val, OutputStream stream) throws IOException {
+        stream.write((int) (0xFF & val));
+        stream.write((int) (0xFF & (val >> 8)));
+    }
+
+    /** Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format. */
+    public static void uint16ToByteStreamBE(int val, OutputStream stream) throws IOException {
+        stream.write((int) (0xFF & (val >> 8)));
+        stream.write((int) (0xFF & val));
+    }
+
+    /** Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format. */
     public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 24)));
     }
-    
+
+    /** Write 4 bytes to the output stream as unsigned 32-bit integer in big endian format. */
+    public static void uint32ToByteStreamBE(long val, OutputStream stream) throws IOException {
+        stream.write((int) (0xFF & (val >> 24)));
+        stream.write((int) (0xFF & (val >> 16)));
+        stream.write((int) (0xFF & (val >> 8)));
+        stream.write((int) (0xFF & val));
+    }
+
+    /** Write 8 bytes to the output stream as signed 64-bit integer in little endian format. */
     public static void int64ToByteStreamLE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
@@ -132,6 +163,7 @@ public class Utils {
         stream.write((int) (0xFF & (val >> 56)));
     }
 
+    /** Write 8 bytes to the output stream as unsigned 64-bit integer in little endian format. */
     public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) {
@@ -145,56 +177,10 @@ public class Utils {
         }
     }
 
-    /**
-     * Work around lack of unsigned types in Java.
-     */
-    public static boolean isLessThanUnsigned(long n1, long n2) {
-        return UnsignedLongs.compare(n1, n2) < 0;
-    }
-
-    /**
-     * Work around lack of unsigned types in Java.
-     */
-    public static boolean isLessThanOrEqualToUnsigned(long n1, long n2) {
-        return UnsignedLongs.compare(n1, n2) <= 0;
-    }
-
-    /**
-     * Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence).
-     */
-    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
-
-    /**
-     * Returns a copy of the given byte array in reverse order.
-     */
-    public static byte[] reverseBytes(byte[] bytes) {
-        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
-        // performance issue the matter can be revisited.
-        byte[] buf = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++)
-            buf[i] = bytes[bytes.length - 1 - i];
-        return buf;
-    }
-    
-    /**
-     * Returns a copy of the given byte array with the bytes of each double-word (4 bytes) reversed.
-     * 
-     * @param bytes length must be divisible by 4.
-     * @param trimLength trim output to this length.  If positive, must be divisible by 4.
-     */
-    public static byte[] reverseDwordBytes(byte[] bytes, int trimLength) {
-        checkArgument(bytes.length % 4 == 0);
-        checkArgument(trimLength < 0 || trimLength % 4 == 0);
-        
-        byte[] rev = new byte[trimLength >= 0 && bytes.length > trimLength ? trimLength : bytes.length];
-        
-        for (int i = 0; i < rev.length; i += 4) {
-            System.arraycopy(bytes, i, rev, i , 4);
-            for (int j = 0; j < 4; j++) {
-                rev[i + j] = bytes[i + 3 - j];
-            }
-        }
-        return rev;
+    /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
+    public static int readUint16(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) |
+                ((bytes[offset + 1] & 0xff) << 8);
     }
 
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
@@ -229,6 +215,40 @@ public class Utils {
     public static int readUint16BE(byte[] bytes, int offset) {
         return ((bytes[offset] & 0xff) << 8) |
                 (bytes[offset + 1] & 0xff);
+    }
+
+    /** Parse 2 bytes from the stream as unsigned 16-bit integer in little endian format. */
+    public static int readUint16FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xff) |
+                    ((is.read() & 0xff) << 8);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format. */
+    public static long readUint32FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xffl) |
+                    ((is.read() & 0xffl) << 8) |
+                    ((is.read() & 0xffl) << 16) |
+                    ((is.read() & 0xffl) << 24);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    /**
+     * Returns a copy of the given byte array in reverse order.
+     */
+    public static byte[] reverseBytes(byte[] bytes) {
+        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
+        // performance issue the matter can be revisited.
+        byte[] buf = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++)
+            buf[i] = bytes[bytes.length - 1 - i];
+        return buf;
     }
 
     /**
@@ -425,100 +445,6 @@ public class Utils {
         return iso8601.format(dateTime);
     }
 
-    public static byte[] copyOf(byte[] in, int length) {
-        byte[] out = new byte[length];
-        System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
-        return out;
-    }
-
-    /**
-     * Creates a copy of bytes and appends b to the end of it
-     */
-    public static byte[] appendByte(byte[] bytes, byte b) {
-        byte[] result = Arrays.copyOf(bytes, bytes.length + 1);
-        result[result.length - 1] = b;
-        return result;
-    }
-
-    /**
-     * Constructs a new String by decoding the given bytes using the specified charset.
-     * <p>
-     * This is a convenience method which wraps the checked exception with a RuntimeException.
-     * The exception can never occur given the charsets
-     * US-ASCII, ISO-8859-1, UTF-8, UTF-16, UTF-16LE or UTF-16BE.
-     *
-     * @param bytes the bytes to be decoded into characters
-     * @param charsetName the name of a supported {@linkplain java.nio.charset.Charset charset}
-     * @return the decoded String
-     */
-    public static String toString(byte[] bytes, String charsetName) {
-        try {
-            return new String(bytes, charsetName);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Encodes the given string into a sequence of bytes using the named charset.
-     * <p>
-     * This is a convenience method which wraps the checked exception with a RuntimeException.
-     * The exception can never occur given the charsets
-     * US-ASCII, ISO-8859-1, UTF-8, UTF-16, UTF-16LE or UTF-16BE.
-     *
-     * @param str the string to encode into bytes
-     * @param charsetName the name of a supported {@linkplain java.nio.charset.Charset charset}
-     * @return the encoded bytes
-     */
-    public static byte[] toBytes(CharSequence str, String charsetName) {
-        try {
-            return str.toString().getBytes(charsetName);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
-     * neither parse was successful.
-     */
-    public static byte[] parseAsHexOrBase58(String data) {
-        try {
-            return HEX.decode(data);
-        } catch (Exception e) {
-            // Didn't decode as hex, try base58.
-            try {
-                return Base58.decodeChecked(data);
-            } catch (AddressFormatException e1) {
-                return null;
-            }
-        }
-    }
-
-    public static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
-    }
-
-    /**
-     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
-     *
-     * <tt><p>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</p></tt>
-     */
-    public static byte[] formatMessageForSigning(String message) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
-            byte[] messageBytes = message.getBytes(Charsets.UTF_8);
-            VarInt size = new VarInt(messageBytes.length);
-            bos.write(size.encode());
-            bos.write(messageBytes);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-    }
-    
     // 00000001, 00000010, 00000100, 00001000, ...
     private static final int[] bitMask = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
     
@@ -570,15 +496,6 @@ public class Utils {
         }
     }
 
-    private static int isAndroid = -1;
-    public static boolean isAndroidRuntime() {
-        if (isAndroid == -1) {
-            final String runtime = System.getProperty("java.runtime.name");
-            isAndroid = (runtime != null && runtime.equals("Android Runtime")) ? 1 : 0;
-        }
-        return isAndroid == 1;
-    }
-
     private static class Pair implements Comparable<Pair> {
         int item, count;
         public Pair(int item, int count) { this.count = count; this.item = item; }
@@ -587,7 +504,6 @@ public class Utils {
     }
 
     public static int maxOfMostFreq(int... items) {
-        // Java 6 sucks.
         ArrayList<Integer> list = new ArrayList<>(items.length);
         for (int item : items) list.add(item);
         return maxOfMostFreq(list);
@@ -619,30 +535,16 @@ public class Utils {
         return maxItem;
     }
 
-    /**
-     * Reads and joins together with LF char (\n) all the lines from given file. It's assumed that file is in UTF-8.
-     */
-    public static String getResourceAsString(URL url) throws IOException {
-        List<String> lines = Resources.readLines(url, Charsets.UTF_8);
-        return Joiner.on('\n').join(lines);
+    private static int isAndroid = -1;
+    public static boolean isAndroidRuntime() {
+        if (isAndroid == -1) {
+            final String runtime = System.getProperty("java.runtime.name");
+            isAndroid = (runtime != null && runtime.equals("Android Runtime")) ? 1 : 0;
+        }
+        return isAndroid == 1;
     }
 
-    // Can't use Closeable here because it's Java 7 only and Android devices only got that with KitKat.
-    public static InputStream closeUnchecked(InputStream stream) {
-        try {
-            stream.close();
-            return stream;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static OutputStream closeUnchecked(OutputStream stream) {
-        try {
-            stream.close();
-            return stream;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 }

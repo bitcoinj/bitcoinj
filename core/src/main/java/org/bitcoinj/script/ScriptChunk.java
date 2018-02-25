@@ -21,6 +21,8 @@ import org.bitcoinj.core.Utils;
 import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -123,8 +125,7 @@ public class ScriptChunk {
             } else if (opcode == OP_PUSHDATA2) {
                 checkState(data.length <= 0xFFFF);
                 stream.write(OP_PUSHDATA2);
-                stream.write(0xFF & data.length);
-                stream.write(0xFF & (data.length >> 8));
+                Utils.uint16ToByteStreamLE(data.length, stream);
             } else if (opcode == OP_PUSHDATA4) {
                 checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
                 stream.write(OP_PUSHDATA4);
@@ -136,6 +137,17 @@ public class ScriptChunk {
         } else {
             stream.write(opcode); // smallNum
         }
+    }
+
+    public byte[] toByteArray() {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try {
+            write(stream);
+        } catch (IOException e) {
+            // Should not happen as ByteArrayOutputStream does not throw IOException on write
+            throw new RuntimeException(e);
+        }
+        return stream.toByteArray();
     }
 
     @Override

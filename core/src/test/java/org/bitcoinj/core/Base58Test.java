@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +17,15 @@
 
 package org.bitcoinj.core;
 
-import junit.framework.TestCase;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public class Base58Test extends TestCase {
+import org.junit.Test;
+
+public class Base58Test {
     @Test
     public void testEncode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
@@ -42,6 +45,18 @@ public class Base58Test extends TestCase {
     }
 
     @Test
+    public void testEncodeChecked_address() throws Exception {
+        String encoded = Base58.encodeChecked(111, new byte[Address.LENGTH]);
+        assertEquals("mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8", encoded);
+    }
+
+    @Test
+    public void testEncodeChecked_privateKey() throws Exception {
+        String encoded = Base58.encodeChecked(128, new byte[32]);
+        assertEquals("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", encoded);
+    }
+
+    @Test
     public void testDecode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
@@ -49,38 +64,33 @@ public class Base58Test extends TestCase {
         
         assertTrue("1", Arrays.equals(Base58.decode("1"), new byte[1]));
         assertTrue("1111", Arrays.equals(Base58.decode("1111"), new byte[4]));
-        
-        try {
-            Base58.decode("This isn't valid base58");
-            fail();
-        } catch (AddressFormatException e) {
-            // expected
-        }
-
-        Base58.decodeChecked("4stwEBjT6FYyVV");
-
-        // Checksum should fail.
-        try {
-            Base58.decodeChecked("4stwEBjT6FYyVW");
-            fail();
-        } catch (AddressFormatException e) {
-            // expected
-        }
-
-        // Input is too short.
-        try {
-            Base58.decodeChecked("4s");
-            fail();
-        } catch (AddressFormatException e) {
-            // expected
-        }
 
         // Test decode of empty String.
         assertEquals(0, Base58.decode("").length);
+    }
+
+    @Test(expected = AddressFormatException.class)
+    public void testDecode_invalidBase58() {
+        Base58.decode("This isn't valid base58");
+    }
+
+    @Test
+    public void testDecodeChecked() {
+        Base58.decodeChecked("4stwEBjT6FYyVV");
 
         // Now check we can correctly decode the case where the high bit of the first byte is not zero, so BigInteger
         // sign extends. Fix for a bug that stopped us parsing keys exported using sipas patch.
         Base58.decodeChecked("93VYUMzRG9DdbRP72uQXjaWibbQwygnvaCu9DumcqDjGybD864T");
+    }
+
+    @Test(expected = AddressFormatException.class)
+    public void testDecodeChecked_badChecksum() {
+        Base58.decodeChecked("4stwEBjT6FYyVW");
+    }
+
+    @Test(expected = AddressFormatException.class)
+    public void testDecodeChecked_shortInput() {
+        Base58.decodeChecked("4s");
     }
 
     @Test

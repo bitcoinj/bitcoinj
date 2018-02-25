@@ -236,7 +236,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
-        return decodeMnemonicCode(Utils.toString(mnemonicCode, "UTF-8"));
+        return decodeMnemonicCode(new String(mnemonicCode, Charsets.UTF_8));
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {

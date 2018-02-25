@@ -63,7 +63,6 @@ import com.google.protobuf.ByteString;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +79,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.Assert;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.*;
@@ -2690,7 +2688,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void lowerThanDefaultFee() throws InsufficientMoneyException {
-        int feeFactor = 10;
+        int feeFactor = 50;
         Coin fee = Transaction.DEFAULT_TX_FEE.divide(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);

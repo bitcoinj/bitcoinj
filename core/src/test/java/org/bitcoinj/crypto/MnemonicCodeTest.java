@@ -212,6 +212,12 @@ public class MnemonicCodeTest {
         mc.toMnemonic(entropy);
     }
 
+    @Test(expected = NullPointerException.class)
+    public void testNullPassphrase() throws Exception {
+        List<String> code = split("legal winner thank year wave sausage worth useful legal winner thank yellow");
+        MnemonicCode.toSeed(code, null);
+    }
+
     public static List<String> split(String words) {
         return new ArrayList<>(Arrays.asList(words.split("\\s+")));
     }

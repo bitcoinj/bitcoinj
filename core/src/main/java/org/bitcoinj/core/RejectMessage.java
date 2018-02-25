@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -97,11 +98,11 @@ public class RejectMessage extends Message {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        byte[] messageBytes = message.getBytes("UTF-8");
+        byte[] messageBytes = message.getBytes(Charsets.UTF_8);
         stream.write(new VarInt(messageBytes.length).encode());
         stream.write(messageBytes);
         stream.write(code.code);
-        byte[] reasonBytes = reason.getBytes("UTF-8");
+        byte[] reasonBytes = reason.getBytes(Charsets.UTF_8);
         stream.write(new VarInt(reasonBytes.length).encode());
         stream.write(reasonBytes);
         if ("block".equals(message) || "tx".equals(message))

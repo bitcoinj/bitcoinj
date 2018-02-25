@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +25,12 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -522,7 +527,8 @@ public class DeterministicKeyChainTest {
     private String checkSerialization(List<Protos.Key> keys, String filename) {
         try {
             String sb = protoToString(keys);
-            String expected = Utils.getResourceAsString(getClass().getResource(filename));
+            List<String> lines = Resources.readLines(getClass().getResource(filename), Charsets.UTF_8);
+            String expected = Joiner.on('\n').join(lines);
             assertEquals(expected, sb);
             return expected;
         } catch (IOException e) {

@@ -38,6 +38,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutputChanges;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
@@ -513,10 +514,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write((int) (0xFF & (numTxn >> 0)));
-                bos.write((int) (0xFF & (numTxn >> 8)));
-                bos.write((int) (0xFF & (numTxn >> 16)));
-                bos.write((int) (0xFF & (numTxn >> 24)));
+                Utils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
@@ -671,9 +669,8 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 int txSize = bb.getInt();
                 byte[] transactions = new byte[txSize];
                 bb.get(transactions);
-                int offset = 0;
-                int numTxn = ((transactions[offset++] & 0xFF) << 0) | ((transactions[offset++] & 0xFF) << 8)
-                        | ((transactions[offset++] & 0xFF) << 16) | ((transactions[offset++] & 0xFF) << 24);
+                int numTxn = (int) Utils.readUint32(transactions, 0);
+                int offset = 4;
                 List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {
                     Transaction tx = new Transaction(params, transactions, offset);

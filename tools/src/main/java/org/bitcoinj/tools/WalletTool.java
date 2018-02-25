@@ -19,7 +19,6 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -79,7 +78,6 @@ import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -1390,7 +1388,7 @@ public class WalletTool {
                 }
                 key = dpk.getKey();
             } else {
-                byte[] decode = Utils.parseAsHexOrBase58(data);
+                byte[] decode = parseAsHexOrBase58(data);
                 if (decode == null) {
                     System.err.println("Could not understand --privkey as either hex or base58: " + data);
                     return;
@@ -1403,7 +1401,7 @@ public class WalletTool {
             }
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else if (options.has("pubkey")) {
-            byte[] pubkey = Utils.parseAsHexOrBase58((String) options.valueOf("pubkey"));
+            byte[] pubkey = parseAsHexOrBase58((String) options.valueOf("pubkey"));
             key = ECKey.fromPublicOnly(pubkey);
             key.setCreationTimeSeconds(creationTimeSeconds);
         } else {
@@ -1424,6 +1422,23 @@ public class WalletTool {
             System.out.println(key.toAddress(params) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
+        }
+    }
+
+    /**
+     * Attempts to parse the given string as arbitrary-length hex or base58 and then return the results, or null if
+     * neither parse was successful.
+     */
+    private static byte[] parseAsHexOrBase58(String data) {
+        try {
+            return Utils.HEX.decode(data);
+        } catch (Exception e) {
+            // Didn't decode as hex, try base58.
+            try {
+                return Base58.decodeChecked(data);
+            } catch (AddressFormatException e1) {
+                return null;
+            }
         }
     }
 

@@ -79,7 +79,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>22.0-android</version>
+            <version>24.0-android</version>
         </dependency>
         <!-- Native Mac skin (there's also AeroFX, MetroFX, etc)
         <dependency>

@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.util.*;
 
 import static org.bitcoinj.core.Utils.HEX;
@@ -255,7 +254,7 @@ public class ScriptTest {
             } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
                 // Single-quoted string, pushed as data. NOTE: this is poor-man's
                 // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(Charset.forName("UTF-8")));
+                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(Charsets.UTF_8));
             } else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) {
                 // opcode, e.g. OP_ADD or OP_1:
                 out.write(ScriptOpCodes.getOpCode(w));

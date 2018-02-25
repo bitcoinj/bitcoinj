@@ -16,15 +16,24 @@
 
 package org.bitcoinj.script;
 
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Random;
+
 import org.junit.Test;
 
+import com.google.common.primitives.Bytes;
+
 public class ScriptChunkTest {
+
+    private static final Random RANDOM = new Random(42);
 
     @Test
     public void testShortestPossibleDataPush() {
@@ -45,5 +54,61 @@ public class ScriptChunkTest {
         assertFalse("push of 75 bytes", new ScriptChunk(OP_PUSHDATA1, new byte[75]).isShortestPossiblePushData());
         assertFalse("push of 255 bytes", new ScriptChunk(OP_PUSHDATA2, new byte[255]).isShortestPossiblePushData());
         assertFalse("push of 65535 bytes", new ScriptChunk(OP_PUSHDATA4, new byte[65535]).isShortestPossiblePushData());
+    }
+
+    @Test
+    public void testToByteArray_opcode() {
+        byte[] expected = new byte[] { OP_IF };
+        byte[] actual = new ScriptChunk(OP_IF, null).toByteArray();
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testToByteArray_smallNum() {
+        byte[] expected = new byte[] { OP_0 };
+        byte[] actual = new ScriptChunk(OP_0, null).toByteArray();
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testToByteArray_lt_OP_PUSHDATA1() {
+        // < OP_PUSHDATA1
+        for (byte len = 1; len < OP_PUSHDATA1; len++) {
+            byte[] bytes = new byte[len];
+            RANDOM.nextBytes(bytes);
+            byte[] expected = Bytes.concat(new byte[] { len }, bytes);
+            byte[] actual = new ScriptChunk(len, bytes).toByteArray();
+            assertArrayEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testToByteArray_OP_PUSHDATA1() {
+        // OP_PUSHDATA1
+        byte[] bytes = new byte[0xFF];
+        RANDOM.nextBytes(bytes);
+        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA1, (byte) 0xFF }, bytes);
+        byte[] actual = new ScriptChunk(OP_PUSHDATA1, bytes).toByteArray();
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testToByteArray_OP_PUSHDATA2() {
+        // OP_PUSHDATA2
+        byte[] bytes = new byte[0x0102];
+        RANDOM.nextBytes(bytes);
+        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA2, 0x02, 0x01 }, bytes);
+        byte[] actual = new ScriptChunk(OP_PUSHDATA2, bytes).toByteArray();
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    public void testToByteArray_OP_PUSHDATA4() {
+        // OP_PUSHDATA4
+        byte[] bytes = new byte[0x0102];
+        RANDOM.nextBytes(bytes);
+        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA4, 0x02, 0x01, 0x00, 0x00 }, bytes);
+        byte[] actual = new ScriptChunk(OP_PUSHDATA4, bytes).toByteArray();
+        assertArrayEquals(expected, actual);
     }
 }

@@ -186,9 +186,11 @@
                                         <urn>com.fasterxml.jackson.core:jackson-core:2.5.1:jar:null:test:e2a00ad1d7e540ec395e9296a34da484c8888d4d</urn>
                                         <urn>com.fasterxml.jackson.core:jackson-databind:2.5.2:jar:null:test:2b4dd13fbe6f8c6b146d4c3b7fd70862f136802d</urn>
                                         <urn>com.google.code.findbugs:jsr305:2.0.1:jar:null:compile:516c03b21d50a644d538de0f0369c620989cd8f0</urn>
-                                        <urn>com.google.guava:guava:22.0-android:jar:null:compile:7b2fc7ef242f35bc2c9a3b816ed846c9345e3f95</urn>
-                                        <urn>com.google.errorprone:error_prone_annotations:2.0.18:jar:null:compile:5f65affce1684999e2f4024983835efc3504012e</urn>
+                                        <urn>com.google.guava:guava:24.0-android:jar:null:compile:bfc941bd9285e7534ebde47236f14e5c7396a90c</urn>
+                                        <urn>org.checkerframework:checker-compat-qual:2.0.0:jar:null:compile:fc89b03860d11d6213d0154a62bcd1c2f69b9efa</urn>
+                                        <urn>com.google.errorprone:error_prone_annotations:2.1.3:jar:null:compile:39b109f2cd352b2d71b52a3b5a1a9850e1dc304b</urn>
                                         <urn>com.google.j2objc:j2objc-annotations:1.1:jar:null:compile:ed28ded51a8b1c6b112568def5f4b455e6809019</urn>
+                                        <urn>org.codehaus.mojo:animal-sniffer-annotations:1.14:jar:null:compile:775b7e22fb10026eed3f86e8dc556dfafe35f2d5</urn>
                                         <urn>com.google.protobuf:protobuf-java:2.6.1:jar:null:compile:d9521f2aecb909835746b7a5facf612af5e890e8</urn>
                                         <urn>com.h2database:h2:1.3.167:jar:null:compile:d3867d586f087e53eb12fc65e5693d8ee9a5da17</urn>
                                         <urn>com.lambdaworks:scrypt:1.4.0:jar:null:compile:906506b74f30c8c20bccd9ed4a11112d8941fe87</urn>
@@ -196,28 +198,29 @@
                                         <urn>junit:junit:4.12:jar:null:test:2973d150c0dc1fefe998f834810d68f278ea58ec</urn>
                                         <urn>mysql:mysql-connector-java:5.1.33:jar:null:compile:8af455a9a3267e6664cafc87ace71a4e4ef02837</urn>
                                         <urn>net.jcip:jcip-annotations:1.0:jar:null:compile:afba4942caaeaf46aab0b976afd57cc7c181467e</urn>
-                                        <urn>org.apache.maven.plugins:maven-clean-plugin:2.6.1:maven-plugin:null:runtime:bfdf7d6c2f8fc8759457e9d54f458ba56ac7b30f</urn>
-                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.2:maven-plugin:null:runtime:aec10f274ac07fafab8906cb1aa69669d753b2c2</urn>
+                                        <urn>org.apache.maven.plugins:maven-clean-plugin:3.0.0:maven-plugin:null:runtime:6653cb054e6b81705e383fbcced26c92802e40ae</urn>
+                                        <urn>org.apache.maven.plugins:maven-compiler-plugin:3.7.0:maven-plugin:null:runtime:a3229c9aae47047e3a177ecfd4afa10fb5512d4e</urn>
+                                        <urn>org.apache.maven.plugins:maven-dependency-plugin:3.0.2:maven-plugin:null:runtime:a372cf5cac374be969fa8d32e585b99ba1f36f7b</urn>
                                         <urn>org.apache.maven.plugins:maven-deploy-plugin:2.8.2:maven-plugin:null:runtime:3c2d83ecd387e9843142ae92a0439792c1500319</urn>
-                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:1.0:maven-plugin:null:runtime:ad032b7593576e9fe9305c73865633e163895b29</urn>
+                                        <urn>org.apache.maven.plugins:maven-enforcer-plugin:3.0.0-M1:maven-plugin:null:runtime:02b46cf923a7f5c75ffae61cedff103e0def3560</urn>
                                         <urn>org.apache.maven.plugins:maven-install-plugin:2.5.2:maven-plugin:null:runtime:8a67631619fc3c1d1f036e59362ddce71e1e496f</urn>
-                                        <urn>org.apache.maven.plugins:maven-jar-plugin:2.6:maven-plugin:null:runtime:618f08d0fcdd3929af846ef1b65503b5904f93e3</urn>
-                                        <urn>org.apache.maven.plugins:maven-javadoc-plugin:2.10.2:maven-plugin:null:runtime:5f391697fa85cecc7e5bac7ce5a6f9d056a58ba3</urn>
-                                        <urn>org.apache.maven.plugins:maven-resources-plugin:2.7:maven-plugin:null:runtime:94af11389943a480ecec7db01b4ded1b9cdf57c5</urn>
-                                        <urn>org.apache.maven.plugins:maven-shade-plugin:2.3:maven-plugin:null:runtime:d136adc7abccc9c12adcad6ae7a9bc51b2b7184b</urn>
-                                        <urn>org.apache.maven.plugins:maven-site-plugin:3.4:maven-plugin:null:runtime:659cd5f1dd8bff554cf52603339494cbf7f283c5</urn>
-                                        <urn>org.apache.maven.plugins:maven-source-plugin:2.4:maven-plugin:null:runtime:46f0d7f7823d729ba300d3f8929900c7e9cb5ac0</urn>
-                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.19.1:maven-plugin:null:runtime:e2ee016ce9183ffa9e86c543690cadda7b3aea15</urn>
+                                        <urn>org.apache.maven.plugins:maven-jar-plugin:3.0.2:maven-plugin:null:runtime:5518cc6a2ed1b1ec52419fa0e18f7e42b6279cb9</urn>
+                                        <urn>org.apache.maven.plugins:maven-javadoc-plugin:3.0.0:maven-plugin:null:runtime:3de9fd76fb00eef0161e8c0881e933b27bafc724</urn>
+                                        <urn>org.apache.maven.plugins:maven-resources-plugin:3.0.2:maven-plugin:null:runtime:fd30499fd734ca2c34375955973556388e4aa0ed</urn>
+                                        <urn>org.apache.maven.plugins:maven-shade-plugin:3.1.0:maven-plugin:null:runtime:c08cd5163a49e31f6e28d6f8bb153013a2a2de79</urn>
+                                        <urn>org.apache.maven.plugins:maven-site-plugin:3.7:maven-plugin:null:runtime:708c6a0fb4d8bf479c100b1283931989c3fdc6a2</urn>
+                                        <urn>org.apache.maven.plugins:maven-source-plugin:3.0.1:maven-plugin:null:runtime:8693776363c0717712013747a13d087361ce4fb5</urn>
+                                        <urn>org.apache.maven.plugins:maven-surefire-plugin:2.20.1:maven-plugin:null:runtime:5f3f8f23a8c3525e64b06310b54a2f080690eb59</urn>
                                         <urn>org.easymock:easymock:3.2:jar:null:test:00c82f7fa3ef377d8954b1db25123944b5af2ba4</urn>
                                         <urn>org.eluder.coveralls:coveralls-maven-plugin:3.1.0:maven-plugin:null:runtime:ca9d2915e2b1e99f15c9f54ad653eda893d42a69</urn>
                                         <urn>org.fusesource.leveldbjni:leveldbjni-all:1.8:jar:null:compile:707350a2eeb1fa2ed77a32ddb3893ed308e941db</urn>
                                         <urn>org.hamcrest:hamcrest-core:1.3:jar:null:test:42a25dc3219429f0e5d060061f71acb49bf010a0</urn>
                                         <urn>org.jacoco:jacoco-maven-plugin:0.7.5.201505241946:maven-plugin:null:runtime:0a5e4dbbcd9b00e5ee42d928e10ab84f6f0b0835</urn>
                                         <urn>org.objenesis:objenesis:1.2:jar:null:test:bfcb0539a071a4c5a30690388903ac48c0667f2a</urn>
-                                        <urn>com.squareup.okhttp3:okhttp:3.6.0:jar:null:runtime:69edde9fc4b01c9fd51d25b83428837478c27254</urn>
-                                        <urn>com.squareup.okio:okio:1.11.0:jar:null:runtime:840897fcd7223a8143f1d9b6f69714e7be34fd50</urn>
-                                        <urn>org.slf4j:slf4j-api:1.7.20:jar:null:compile:867d63093eff0a0cb527bf13d397d850af3dcae3</urn>
-                                        <urn>org.slf4j:slf4j-jdk14:1.7.20:jar:null:test:b568c92eec50edc922c52b3e759982579170c2be</urn>
+                                        <urn>com.squareup.okhttp3:okhttp:3.9.1:jar:null:runtime:84b4b7d1c4a238e7899972b7446c250691e65f1f</urn>
+                                        <urn>com.squareup.okio:okio:1.13.0:jar:null:runtime:a9283170b7305c8d92d25aff02a6ab7e45d06cbe</urn>
+                                        <urn>org.slf4j:slf4j-api:1.7.25:jar:null:compile:da76ca59f6a57ee3102f8f9bd9cee742973efa8a</urn>
+                                        <urn>org.slf4j:slf4j-jdk14:1.7.25:jar:null:test:bccda40ebc8067491b32a88f49615a747d20082d</urn>
                                         <urn>org.sonatype.plugins:nexus-staging-maven-plugin:1.6.5:maven-plugin:null:runtime:455ca2aa8cd14a06608f1538bd6a1efd09561563</urn>
                                         <urn>postgresql:postgresql:9.1-901.jdbc4:jar:null:compile:153f2f92a786f12fc111d0111f709012df87c808</urn>
                                         <!-- A check for the rules themselves -->
@@ -363,7 +366,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.20</version>
+            <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -391,7 +394,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>22.0-android</version>
+            <version>24.0-android</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.code.findbugs</groupId>
@@ -439,7 +442,7 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>3.6.0</version>
+            <version>3.9.1</version>
         </dependency>
     </dependencies>
 

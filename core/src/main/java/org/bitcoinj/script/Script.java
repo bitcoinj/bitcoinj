@@ -200,12 +200,12 @@ public class Script {
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = bis.read() | (bis.read() << 8);
+                dataToRead = Utils.readUint16FromStream(bis);
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = ((long)bis.read()) | (((long)bis.read()) << 8) | (((long)bis.read()) << 16) | (((long)bis.read()) << 24);
+                dataToRead = Utils.readUint32FromStream(bis);
             }
 
             ScriptChunk chunk;
@@ -384,8 +384,7 @@ public class Script {
             os.write(buf);
         } else if (buf.length < 65536) {
             os.write(OP_PUSHDATA2);
-            os.write(0xFF & (buf.length));
-            os.write(0xFF & (buf.length >> 8));
+            Utils.uint16ToByteStreamLE(buf.length, os);
             os.write(buf);
         } else {
             throw new RuntimeException("Unimplemented");
@@ -722,13 +721,9 @@ public class Script {
             } else if (opcode == OP_PUSHDATA1) {
                 additionalBytes = (0xFF & inputScript[cursor]) + 1;
             } else if (opcode == OP_PUSHDATA2) {
-                additionalBytes = ((0xFF & inputScript[cursor]) |
-                                  ((0xFF & inputScript[cursor+1]) << 8)) + 2;
+                additionalBytes = Utils.readUint16(inputScript, cursor) + 2;
             } else if (opcode == OP_PUSHDATA4) {
-                additionalBytes = ((0xFF & inputScript[cursor]) |
-                                  ((0xFF & inputScript[cursor+1]) << 8) |
-                                  ((0xFF & inputScript[cursor+1]) << 16) |
-                                  ((0xFF & inputScript[cursor+1]) << 24)) + 4;
+                additionalBytes = (int) Utils.readUint32(inputScript, cursor) + 4;
             }
             if (!skip) {
                 try {

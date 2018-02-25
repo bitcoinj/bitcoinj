@@ -22,6 +22,7 @@ import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 
 import java.io.BufferedReader;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.Utils.HEX;
 
 /**
@@ -86,7 +88,7 @@ public class MnemonicCode {
      * is supplied the digest of the words will be checked.
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, "UTF-8"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, Charsets.UTF_8));
         this.wordList = new ArrayList<>(2048);
         MessageDigest md = Sha256Hash.newDigest();
         String word;
@@ -119,6 +121,7 @@ public class MnemonicCode {
      * Convert mnemonic word list to seed.
      */
     public static byte[] toSeed(List<String> words, String passphrase) {
+        checkNotNull(passphrase, "A null passphrase is not allowed.");
 
         // To create binary seed from mnemonic, we use PBKDF2 function
         // with mnemonic sentence (in UTF-8) used as a password and

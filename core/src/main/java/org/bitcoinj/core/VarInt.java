@@ -45,7 +45,7 @@ public class VarInt {
             value = first;
             originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
-            value = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8);
+            value = Utils.readUint16(buf, offset + 1);
             originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
         } else if (first == 254) {
             value = Utils.readUint32(buf, offset + 1);
@@ -96,7 +96,10 @@ public class VarInt {
             case 1:
                 return new byte[]{(byte) value};
             case 3:
-                return new byte[]{(byte) 253, (byte) (value), (byte) (value >> 8)};
+                bytes = new byte[3];
+                bytes[0] = (byte) 253;
+                Utils.uint16ToByteArrayLE((int) value, bytes, 1);
+                return bytes;
             case 5:
                 bytes = new byte[5];
                 bytes[0] = (byte) 254;
@@ -105,7 +108,7 @@ public class VarInt {
             default:
                 bytes = new byte[9];
                 bytes[0] = (byte) 255;
-                Utils.uint64ToByteArrayLE(value, bytes, 1);
+                Utils.int64ToByteArrayLE(value, bytes, 1);
                 return bytes;
         }
     }

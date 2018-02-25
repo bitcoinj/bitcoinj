@@ -25,6 +25,9 @@ package org.bitcoinj.crypto;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+
+import com.google.common.base.Charsets;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -71,13 +74,13 @@ public class PBKDF2SHA512 {
         byte[] U_LAST = null;
         byte[] U_XOR = null;
 
-        SecretKeySpec key = new SecretKeySpec(P.getBytes("UTF-8"), "HmacSHA512");
+        SecretKeySpec key = new SecretKeySpec(P.getBytes(Charsets.UTF_8), "HmacSHA512");
         Mac mac = Mac.getInstance(key.getAlgorithm());
         mac.init(key);
 
         for (int j = 0; j < c; j++) {
             if (j == 0) {
-                byte[] baS = S.getBytes("UTF-8");
+                byte[] baS = S.getBytes(Charsets.UTF_8);
                 byte[] baI = INT(i);
                 byte[] baU = new byte[baS.length + baI.length];
 
