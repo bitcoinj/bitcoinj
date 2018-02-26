@@ -19,6 +19,7 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.core.Address;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static org.bitcoinj.script.Script.decodeFromOpN;
@@ -134,6 +135,27 @@ public class ScriptPattern {
         // chunk[8] = sender pubkey
         if (!chunks.get(9).equalsOpCode(OP_CHECKSIG)) return false;
         return true;
+    }
+
+    /**
+     * Retrieves the public key of the sender from a LOCKTIMEVERIFY transaction.
+     */
+    public static byte[] extractSenderPubKeyFromCltvPaymentChannel(Script script) {
+        return script.chunks.get(8).data;
+    }
+
+    /**
+     * Retrieves the public key of the recipient from a LOCKTIMEVERIFY transaction.
+     */
+    public static byte[] extractRecipientPubKeyFromCltvPaymentChannel(Script script) {
+        return script.chunks.get(1).data;
+    }
+
+    /**
+     * Retrieves the locktime from a LOCKTIMEVERIFY transaction.
+     */
+    public static BigInteger extractExpiryFromCltvPaymentChannel(Script script) {
+        return Script.castToBigInteger(script.chunks.get(4).data, 5, false);
     }
 
     public static boolean isOpReturn(Script script) {

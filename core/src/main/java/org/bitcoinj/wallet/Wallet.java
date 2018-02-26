@@ -4205,12 +4205,12 @@ public class Wallet extends BaseTaggableObject
             }
         } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
             // Any script for which we are the recipient or sender counts.
-            byte[] sender = script.getCLTVPaymentChannelSenderPubKey();
+            byte[] sender = ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(script);
             ECKey senderKey = findKeyFromPubKey(sender);
             if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
                 return true;
             }
-            byte[] recipient = script.getCLTVPaymentChannelRecipientPubKey();
+            byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
             ECKey recipientKey = findKeyFromPubKey(sender);
             if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
                 return true;

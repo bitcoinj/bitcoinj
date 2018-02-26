@@ -855,9 +855,9 @@ public class WalletTool {
             }
 
             ECKey key1 = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelSenderPubKey());
+                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             ECKey key2 = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelRecipientPubKey());
+                    ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             if (key1 == null || key2 == null) {
                 System.err.println("Don't own private keys for both pubkeys");
                 return;
@@ -945,7 +945,7 @@ public class WalletTool {
                 return;
             }
 
-            req.tx.setLockTime(lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelExpiry().longValue());
+            req.tx.setLockTime(ScriptPattern.extractExpiryFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()).longValue());
 
             if (!value.equals(lockTimeVerifyOutput.getValue())) {
                 System.err.println("You must spend all the money in the input transaction");
@@ -961,7 +961,7 @@ public class WalletTool {
             }
 
             ECKey key = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelSenderPubKey());
+                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             if (key == null) {
                 System.err.println("Don't own private key for pubkey");
                 return;

@@ -257,35 +257,25 @@ public class Script {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
 
-    /**
-     * Retrieves the sender public key from a LOCKTIMEVERIFY transaction
-     * @return the sender public key
-     * @throws ScriptException
-     */
+    @Deprecated
     public byte[] getCLTVPaymentChannelSenderPubKey() throws ScriptException {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
-        }
-        return chunks.get(8).data;
+        return ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(this);
     }
 
-    /**
-     * Retrieves the recipient public key from a LOCKTIMEVERIFY transaction
-     * @return the recipient public key
-     * @throws ScriptException
-     */
+    @Deprecated
     public byte[] getCLTVPaymentChannelRecipientPubKey() throws ScriptException {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
-        }
-        return chunks.get(1).data;
+        return ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(this);
     }
 
-    public BigInteger getCLTVPaymentChannelExpiry() {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this)) {
+    @Deprecated
+    public BigInteger getCLTVPaymentChannelExpiry() throws ScriptException {
+        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
-        }
-        return castToBigInteger(chunks.get(4).data, 5, false);
+        return ScriptPattern.extractExpiryFromCltvPaymentChannel(this);
     }
 
     /**
@@ -709,7 +699,7 @@ public class Script {
      * @param requireMinimal check if the number is encoded with the minimum possible number of bytes
      * @throws ScriptException if the chunk is longer than the specified maximum.
      */
-    private static BigInteger castToBigInteger(final byte[] chunk, final int maxLength, final boolean requireMinimal) throws ScriptException {
+    /* package private */ static BigInteger castToBigInteger(final byte[] chunk, final int maxLength, final boolean requireMinimal) throws ScriptException {
         if (chunk.length > maxLength)
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script attempted to use an integer larger than " + maxLength + " bytes");
 
