@@ -46,6 +46,10 @@ public class ScriptPattern {
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
+    /**
+     * Extract the pubkey hash from a P2PKH scriptPubKey. It's important that the script is in the correct form, so you
+     * will want to guard calls to this method with {@link #isPayToPubKeyHash(Script)}.
+     */
     public static byte[] extractHashFromPayToPubKeyHash(Script script) {
         return script.chunks.get(2).data;
     }
@@ -70,6 +74,10 @@ public class ScriptPattern {
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 
+    /**
+     * Extract the script hash from a P2SH scriptPubKey. It's important that the script is in the correct form, so you
+     * will want to guard calls to this method with {@link #isPayToScriptHash(Script)}.
+     */
     public static byte[] extractHashFromPayToScriptHash(Script script) {
         return script.chunks.get(1).data;
     }
@@ -89,6 +97,10 @@ public class ScriptPattern {
                chunks.get(0).data.length > 1;
     }
 
+    /**
+     * Extract the pubkey from a P2SH scriptPubKey. It's important that the script is in the correct form, so you will
+     * want to guard calls to this method with {@link #isPayToPubKey(Script)}.
+     */
     public static byte[] extractKeyFromPayToPubKey(Script script) {
         return script.chunks.get(0).data;
     }
@@ -120,6 +132,9 @@ public class ScriptPattern {
         return true;
     }
 
+    /**
+     * Returns whether this script matches the format used for LOCKTIMEVERIFY transactions.
+     */
     public static boolean isSentToCltvPaymentChannel(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() != 10) return false;
@@ -138,26 +153,34 @@ public class ScriptPattern {
     }
 
     /**
-     * Retrieves the public key of the sender from a LOCKTIMEVERIFY transaction.
+     * Retrieves the public key of the sender from a LOCKTIMEVERIFY transaction. It's important that the script is in
+     * the correct form, so you will want to guard calls to this method with
+     * {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static byte[] extractSenderPubKeyFromCltvPaymentChannel(Script script) {
         return script.chunks.get(8).data;
     }
 
     /**
-     * Retrieves the public key of the recipient from a LOCKTIMEVERIFY transaction.
+     * Retrieves the public key of the recipient from a LOCKTIMEVERIFY transaction. It's important that the script is in
+     * the correct form, so you will want to guard calls to this method with
+     * {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static byte[] extractRecipientPubKeyFromCltvPaymentChannel(Script script) {
         return script.chunks.get(1).data;
     }
 
     /**
-     * Retrieves the locktime from a LOCKTIMEVERIFY transaction.
+     * Retrieves the locktime from a LOCKTIMEVERIFY transaction. It's important that the script is in the correct form,
+     * so you will want to guard calls to this method with {@link #isSentToCltvPaymentChannel(Script)}.
      */
     public static BigInteger extractExpiryFromCltvPaymentChannel(Script script) {
         return Script.castToBigInteger(script.chunks.get(4).data, 5, false);
     }
 
+    /**
+     * Returns whether this script is using OP_RETURN to store arbitrary data.
+     */
     public static boolean isOpReturn(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
