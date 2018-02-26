@@ -39,6 +39,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.signers.StatelessTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
@@ -481,8 +482,10 @@ public class WalletTest extends TestWithWallet {
 
         // Do some basic sanity checks.
         assertEquals(1, t2.getInputs().size());
+        List<ScriptChunk> scriptSigChunks = t2.getInput(0).getScriptSig().getChunks();
         // check 'from address' -- in a unit test this is fine
-        assertEquals(myAddress, new Address(PARAMS, Utils.sha256hash160(t2.getInput(0).getScriptSig().getPubKey())));
+        assertEquals(2, scriptSigChunks.size());
+        assertEquals(myAddress, new Address(PARAMS, Utils.sha256hash160(scriptSigChunks.get(1).data)));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!

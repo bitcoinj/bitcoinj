@@ -258,9 +258,7 @@ public class Script {
     }
 
     /**
-     * Returns the public key in this script. If a script contains two constants and nothing else, it is assumed to
-     * be a scriptSig (input) for a pay-to-address output and the second constant is returned (the first is the
-     * signature). If a script contains a constant and an OP_CHECKSIG opcode, the constant is returned as it is
+     * Returns the public key in this script. If a script contains a constant and an OP_CHECKSIG opcode, the constant is returned as it is
      * assumed to be a direct pay-to-key scriptPubKey (output) and the first constant is the public key.
      *
      * @throws ScriptException if the script is none of the named forms.
@@ -272,11 +270,7 @@ public class Script {
         final ScriptChunk chunk0 = chunks.get(0);
         final byte[] chunk0data = chunk0.data;
         final ScriptChunk chunk1 = chunks.get(1);
-        final byte[] chunk1data = chunk1.data;
-        if (chunk0data != null && chunk0data.length > 2 && chunk1data != null && chunk1data.length > 2) {
-            // If we have two large constants assume the input to a pay-to-address output.
-            return chunk1data;
-        } else if (chunk1.equalsOpCode(OP_CHECKSIG) && chunk0data != null && chunk0data.length > 2) {
+        if (chunk1.equalsOpCode(OP_CHECKSIG) && chunk0data != null && chunk0data.length > 2) {
             // A large constant followed by an OP_CHECKSIG is the key.
             return chunk0data;
         } else {
