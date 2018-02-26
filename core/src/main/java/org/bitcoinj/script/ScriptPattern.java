@@ -88,6 +88,10 @@ public class ScriptPattern {
                chunks.get(0).data.length > 1;
     }
 
+    public static byte[] extractKeyFromPayToPubKey(Script script) {
+        return script.chunks.get(0).data;
+    }
+
     /**
      * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
      */

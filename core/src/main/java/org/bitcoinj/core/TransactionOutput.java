@@ -322,8 +322,7 @@ public class TransactionOutput extends ChildMessage {
         try {
             Script script = getScriptPubKey();
             if (ScriptPattern.isPayToPubKey(script)) {
-                byte[] pubkey = script.getPubKey();
-                return transactionBag.isPubKeyMine(pubkey);
+                return transactionBag.isPubKeyMine(ScriptPattern.extractKeyFromPayToPubKey(script));
             } if (ScriptPattern.isPayToScriptHash(script)) {
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromPayToScriptHash(script));
             } else {
@@ -349,7 +348,7 @@ public class TransactionOutput extends ChildMessage {
             if (ScriptPattern.isPayToPubKeyHash(script) || ScriptPattern.isPayToScriptHash(script))
                 buf.append(" to ").append(script.getToAddress(params));
             else if (ScriptPattern.isPayToPubKey(script))
-                buf.append(" to pubkey ").append(Utils.HEX.encode(script.getPubKey()));
+                buf.append(" to pubkey ").append(Utils.HEX.encode(ScriptPattern.extractKeyFromPayToPubKey(script)));
             else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else

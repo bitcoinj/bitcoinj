@@ -258,27 +258,6 @@ public class Script {
     }
 
     /**
-     * Returns the public key in this script. If a script contains a constant and an OP_CHECKSIG opcode, the constant is returned as it is
-     * assumed to be a direct pay-to-key scriptPubKey (output) and the first constant is the public key.
-     *
-     * @throws ScriptException if the script is none of the named forms.
-     */
-    public byte[] getPubKey() throws ScriptException {
-        if (chunks.size() != 2) {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not of right size, expecting 2 but got " + chunks.size());
-        }
-        final ScriptChunk chunk0 = chunks.get(0);
-        final byte[] chunk0data = chunk0.data;
-        final ScriptChunk chunk1 = chunks.get(1);
-        if (chunk1.equalsOpCode(OP_CHECKSIG) && chunk0data != null && chunk0data.length > 2) {
-            // A large constant followed by an OP_CHECKSIG is the key.
-            return chunk0data;
-        } else {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script did not match expected form: " + this);
-        }
-    }
-
-    /**
      * Retrieves the sender public key from a LOCKTIMEVERIFY transaction
      * @return the sender public key
      * @throws ScriptException
@@ -310,14 +289,14 @@ public class Script {
     }
 
     /**
-     * Gets the destination address from this script, if it's in the required form (see getPubKey).
+     * Gets the destination address from this script, if it's in the required form.
      */
     public Address getToAddress(NetworkParameters params) throws ScriptException {
         return getToAddress(params, false);
     }
 
     /**
-     * Gets the destination address from this script, if it's in the required form (see getPubKey).
+     * Gets the destination address from this script, if it's in the required form.
      * 
      * @param forcePayToPubKey
      *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
@@ -329,7 +308,7 @@ public class Script {
         else if (ScriptPattern.isPayToScriptHash(this))
             return Address.fromP2SHScript(params, this);
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
-            return Address.fromKey(params, ECKey.fromPublicOnly(getPubKey()));
+            return Address.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromPayToPubKey(this)));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
     }

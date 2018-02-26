@@ -40,6 +40,7 @@ import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.StatelessTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
@@ -2267,7 +2268,8 @@ public class WalletTest extends TestWithWallet {
     public void sendRequestP2PKTest() {
         ECKey key = new ECKey();
         SendRequest req = SendRequest.to(PARAMS, key, SATOSHI.multiply(12));
-        assertArrayEquals(key.getPubKey(), req.tx.getOutputs().get(0).getScriptPubKey().getPubKey());
+        assertArrayEquals(key.getPubKey(),
+                ScriptPattern.extractKeyFromPayToPubKey(req.tx.getOutputs().get(0).getScriptPubKey()));
     }
 
     @Test
