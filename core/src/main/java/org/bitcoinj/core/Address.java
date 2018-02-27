@@ -72,11 +72,11 @@ public class Address extends VersionedChecksummedBytes {
     }
 
     /**
-     * Construct an {@link Address} that represents the given pubkey hash. The resulting address will be a P2PKH type of
+     * Construct a {@link Address} that represents the given pubkey hash. The resulting address will be a P2PKH type of
      * address.
      * 
      * @param params
-     *            the network this address is valid for
+     *            network this address is valid for
      * @param hash160
      *            20-byte pubkey hash
      * @return constructed address
@@ -86,34 +86,58 @@ public class Address extends VersionedChecksummedBytes {
     }
 
     /**
-     * Returns an {@link Address} that represents the public part of the given {@link ECKey}. Note that an address is
-     * derived from a hash of the public key and is not the public key itself (which is too large to be convenient).
+     * Construct a {@link Address} that represents the public part of the given {@link ECKey}. Note that an address is
+     * derived from a hash of the public key and is not the public key itself.
+     * 
+     * @param params
+     *            network this address is valid for
+     * @param key
+     *            only the public part is used
+     * @return constructed address
      */
     public static Address fromKey(NetworkParameters params, ECKey key) {
         return fromPubKeyHash(params, key.getPubKeyHash());
     }
 
-    /** Returns an Address that represents the given P2SH script hash. */
+    /**
+     * Construct a {@link Address} that represents the given P2SH script hash.
+     * 
+     * @param params
+     *            network this address is valid for
+     * @param hash160
+     *            P2SH script hash
+     * @return constructed address
+     */
     public static Address fromP2SHHash(NetworkParameters params, byte[] hash160) {
         try {
             return new Address(params, params.getP2SHHeader(), hash160);
         } catch (WrongNetworkException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            throw new RuntimeException(e); // Cannot happen.
         }
     }
 
-    /** Returns an Address that represents the script hash extracted from the given scriptPubKey */
+    /**
+     * Constructs a {@link Address} that represents the script hash extracted from the given scriptPubKey.
+     * 
+     * @param params
+     *            network this address is valid for
+     * @param scriptPubKey
+     *            scriptPubKey
+     * @return constructed address
+     */
     public static Address fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(ScriptPattern.isPayToScriptHash(scriptPubKey), "Not a P2SH script");
         return fromP2SHHash(params, ScriptPattern.extractHashFromPayToScriptHash(scriptPubKey));
     }
 
     /**
-     * Construct an address from its Base58 representation.
+     * Construct a {@link Address} from its base58 form.
+     * 
      * @param params
-     *            The expected NetworkParameters or null if you don't want validation.
+     *            expected network this address is valid for, or null if if the network should be derived from the
+     *            base58
      * @param base58
-     *            The textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL".
+     *            base58-encoded textual form of the address
      * @throws AddressFormatException
      *             if the given base58 doesn't parse or the checksum is invalid
      * @throws WrongNetworkException
@@ -173,7 +197,7 @@ public class Address extends VersionedChecksummedBytes {
      * compatible with the current wallet. You should be able to handle a null response from this method. Note that the
      * parameters returned is not necessarily the same as the one the Address was created with.
      *
-     * @return a NetworkParameters representing the network the address is intended for.
+     * @return network the address is valid for
      */
     public NetworkParameters getParameters() {
         return params;
@@ -183,7 +207,8 @@ public class Address extends VersionedChecksummedBytes {
      * Given an address, examines the version byte and attempts to find a matching NetworkParameters. If you aren't sure
      * which network the address is intended for (eg, it was provided by a user), you can use this to decide if it is
      * compatible with the current wallet.
-     * @return a NetworkParameters of the address
+     * 
+     * @return network the address is valid for
      * @throws AddressFormatException if the string wasn't of a known version
      */
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
@@ -205,9 +230,6 @@ public class Address extends VersionedChecksummedBytes {
         return false;
     }
 
-    /**
-     * This implementation narrows the return type to <code>Address</code>.
-     */
     @Override
     public Address clone() throws CloneNotSupportedException {
         return (Address) super.clone();

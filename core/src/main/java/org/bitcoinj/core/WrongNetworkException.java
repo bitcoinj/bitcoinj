@@ -17,7 +17,7 @@
 package org.bitcoinj.core;
 
 /**
- * This exception is thrown by the Address class when you try and decode an address with a version code that isn't
+ * This exception is thrown by the address class when you try and decode an address with a version code that isn't
  * used by that network. You shouldn't allow the user to proceed in this case as they are trying to send money across
  * different chains, an operation that is guaranteed to destroy the money.
  */

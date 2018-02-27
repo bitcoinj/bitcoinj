@@ -255,7 +255,7 @@ public class BitcoinURI {
     }
 
     /**
-     * The Bitcoin Address from the URI, if one was present. It's possible to have Bitcoin URI's with no address if a
+     * The Bitcoin address from the URI, if one was present. It's possible to have Bitcoin URI's with no address if a
      * r= payment protocol parameter is specified, though this form is not recommended as older wallets can't understand
      * it.
      */
