@@ -294,7 +294,7 @@ public class Script {
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
-            return new Address(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
+            return Address.fromPubKeyHash(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
         else if (ScriptPattern.isPayToScriptHash(this))
             return Address.fromP2SHScript(params, this);
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))

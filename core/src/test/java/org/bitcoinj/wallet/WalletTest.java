@@ -486,7 +486,7 @@ public class WalletTest extends TestWithWallet {
         List<ScriptChunk> scriptSigChunks = t2.getInput(0).getScriptSig().getChunks();
         // check 'from address' -- in a unit test this is fine
         assertEquals(2, scriptSigChunks.size());
-        assertEquals(myAddress, new Address(PARAMS, Utils.sha256hash160(scriptSigChunks.get(1).data)));
+        assertEquals(myAddress, Address.fromPubKeyHash(PARAMS, Utils.sha256hash160(scriptSigChunks.get(1).data)));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
@@ -2147,7 +2147,7 @@ public class WalletTest extends TestWithWallet {
         Coin v = CENT;
         // 3100 outputs to a random address.
         for (int i = 0; i < 3100; i++) {
-            tx.addOutput(v, new Address(PARAMS, bits));
+            tx.addOutput(v, Address.fromPubKeyHash(PARAMS, bits));
         }
         SendRequest req = SendRequest.forTx(tx);
         wallet.completeTx(req);

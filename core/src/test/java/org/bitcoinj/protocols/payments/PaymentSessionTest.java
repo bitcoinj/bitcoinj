@@ -71,7 +71,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
+        Address refundAddr = Address.fromKey(PARAMS, serverKey);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentLog().get(0).getUrl().toString());
@@ -142,7 +142,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(PARAMS, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = new Address(PARAMS, serverKey.getPubKeyHash());
+        Address refundAddr = Address.fromKey(PARAMS, serverKey);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
     }

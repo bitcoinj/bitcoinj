@@ -52,7 +52,7 @@ public class Address extends VersionedChecksummedBytes {
 
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
-     * {@link #Address(NetworkParameters, byte[])}, {@link #fromP2SHHash(NetworkParameters, byte[])} or
+     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromP2SHHash(NetworkParameters, byte[])} or
      * {@link #fromKey(NetworkParameters, ECKey)}.
      * 
      * @param params
@@ -72,11 +72,25 @@ public class Address extends VersionedChecksummedBytes {
     }
 
     /**
+     * Construct an {@link Address} that represents the given pubkey hash. The resulting address will be a P2PKH type of
+     * address.
+     * 
+     * @param params
+     *            the network this address is valid for
+     * @param hash160
+     *            20-byte pubkey hash
+     * @return constructed address
+     */
+    public static Address fromPubKeyHash(NetworkParameters params, byte[] hash160) {
+        return new Address(params, params.getAddressHeader(), hash160);
+    }
+
+    /**
      * Returns an {@link Address} that represents the public part of the given {@link ECKey}. Note that an address is
      * derived from a hash of the public key and is not the public key itself (which is too large to be convenient).
      */
     public static Address fromKey(NetworkParameters params, ECKey key) {
-        return new Address(params, key.getPubKeyHash());
+        return fromPubKeyHash(params, key.getPubKeyHash());
     }
 
     /** Returns an Address that represents the given P2SH script hash. */
@@ -109,15 +123,10 @@ public class Address extends VersionedChecksummedBytes {
         return new Address(params, base58);
     }
 
-    /**
-     * Construct an address from parameters and the hash160 form. Example:<p>
-     *
-     * <pre>new Address(MainNetParams.get(), Hex.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));</pre>
-     */
+    /** @deprecated use {@link #fromPubKeyHash(NetworkParameters, byte[])} */
+    @Deprecated
     public Address(NetworkParameters params, byte[] hash160) {
-        super(params.getAddressHeader(), hash160);
-        checkArgument(hash160.length == 20, "Addresses are 160-bit hashes, so you must provide 20 bytes");
-        this.params = params;
+        this(params, params.getAddressHeader(), hash160);
     }
 
     /** @deprecated Use {@link #fromBase58(NetworkParameters, String)} */

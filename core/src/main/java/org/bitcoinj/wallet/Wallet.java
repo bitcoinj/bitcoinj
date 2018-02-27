@@ -4273,7 +4273,7 @@ public class Wallet extends BaseTaggableObject
         keys.addAll(getActiveKeyChain().getLeafKeys());
         List<Address> addresses = new ArrayList<>();
         for (ECKey key : keys) {
-            Address address = new Address(params, key.getPubKeyHash());
+            Address address = Address.fromKey(params, key);
             addresses.add(address);
         }
         candidates.addAll(utxoProvider.getOpenTransactionOutputs(addresses));
