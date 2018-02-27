@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.*;
 public class BitcoindComparisonTool {
     private static final Logger log = LoggerFactory.getLogger(BitcoindComparisonTool.class);
 
-    private static NetworkParameters params;
+    private static final NetworkParameters PARAMS = RegTestParams.get();
     private static FullPrunedBlockChain chain;
     private static Sha256Hash bitcoindChainHead;
     private static volatile InventoryMessage mostRecentInv = null;
@@ -54,31 +54,30 @@ public class BitcoindComparisonTool {
         System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
-        params = RegTestParams.get();
-        Context ctx = new Context(params);
+        Context ctx = new Context(PARAMS);
 
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
 
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(params);
+        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
-        final Iterator<Block> blocks = new BlockFileLoader(params, Arrays.asList(blockFile));
+        final Iterator<Block> blocks = new BlockFileLoader(PARAMS, Arrays.asList(blockFile));
 
         try {
-            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(params, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
+            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(PARAMS, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
             store.resetStore();
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
-            chain = new FullPrunedBlockChain(params, store);
+            chain = new FullPrunedBlockChain(PARAMS, store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
             System.exit(1);
         }
 
-        VersionMessage ver = new VersionMessage(params, 42);
+        VersionMessage ver = new VersionMessage(PARAMS, 42);
         ver.appendToSubVer("BlockAcceptanceComparisonTool", "1.1", null);
         ver.localServices = VersionMessage.NODE_NETWORK;
-        final Peer bitcoind = new Peer(params, ver, new BlockChain(params, new MemoryBlockStore(params)), new PeerAddress(params, InetAddress.getLocalHost()));
+        final Peer bitcoind = new Peer(PARAMS, ver, new BlockChain(PARAMS, new MemoryBlockStore(PARAMS)), new PeerAddress(PARAMS, InetAddress.getLocalHost()));
         Preconditions.checkState(bitcoind.getVersionMessage().hasBlockChain());
 
         final BlockWrapper currentBlock = new BlockWrapper();
@@ -180,8 +179,8 @@ public class BitcoindComparisonTool {
                         }
                         if (!found)
                             sendHeaders = headers;
-                        bitcoind.sendMessage(new HeadersMessage(params, sendHeaders));
-                        InventoryMessage i = new InventoryMessage(params);
+                        bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
+                        InventoryMessage i = new InventoryMessage(PARAMS);
                         for (Block b : sendHeaders)
                             i.addBlock(b);
                         bitcoind.sendMessage(i);
@@ -200,15 +199,15 @@ public class BitcoindComparisonTool {
             }
         });
         
-        bitcoindChainHead = params.getGenesisBlock().getHash();
+        bitcoindChainHead = PARAMS.getGenesisBlock().getHash();
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        new NioClient(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), args.length > 2 ? Integer.parseInt(args[2]) : params.getPort()), bitcoind, 1000);
+        new NioClient(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), args.length > 2 ? Integer.parseInt(args[2]) : PARAMS.getPort()), bitcoind, 1000);
 
         connectedFuture.get();
 
         ArrayList<Sha256Hash> locator = new ArrayList<>(1);
-        locator.add(params.getGenesisBlock().getHash());
+        locator.add(PARAMS.getGenesisBlock().getHash());
         Sha256Hash hashTo = Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000000");
                 
         int rulesSinceFirstFail = 0;
@@ -266,7 +265,7 @@ public class BitcoindComparisonTool {
                 boolean shouldntRequest = blocksRequested.contains(nextBlock.getHash());
                 if (shouldntRequest)
                     blocksRequested.remove(nextBlock.getHash());
-                InventoryMessage message = new InventoryMessage(params);
+                InventoryMessage message = new InventoryMessage(PARAMS);
                 message.addBlock(nextBlock);
                 bitcoind.sendMessage(message);
                 log.info("Sent inv with block " + nextBlock.getHashAsString());
@@ -298,7 +297,7 @@ public class BitcoindComparisonTool {
                 //bitcoind.sendMessage(nextBlock);
                 locator.clear();
                 locator.add(bitcoindChainHead);
-                bitcoind.sendMessage(new GetHeadersMessage(params, locator, hashTo));
+                bitcoind.sendMessage(new GetHeadersMessage(PARAMS, locator, hashTo));
                 bitcoind.ping().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
                     rulesSinceFirstFail++;

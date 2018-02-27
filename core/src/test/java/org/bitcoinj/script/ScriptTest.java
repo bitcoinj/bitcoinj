@@ -55,13 +55,14 @@ public class ScriptTest {
 
     static final String pubkeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac";
 
-    private static final NetworkParameters PARAMS = TestNet3Params.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
+        Context context = new Context(TESTNET);
     }
 
     @Test
@@ -79,7 +80,7 @@ public class ScriptTest {
         byte[] pubkeyBytes = HEX.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
-        Address toAddr = Address.fromPubKeyHash(PARAMS, ScriptPattern.extractHashFromPayToPubKeyHash(pubkey));
+        Address toAddr = Address.fromPubKeyHash(TESTNET, ScriptPattern.extractHashFromPayToPubKeyHash(pubkey));
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
     }
 
@@ -111,7 +112,7 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() throws Exception {
-        Address p2shAddress = Address.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        Address p2shAddress = Address.fromBase58(MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertTrue(ScriptPattern.isPayToScriptHash(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
@@ -125,15 +126,15 @@ public class ScriptTest {
     @Test
     public void testCreateMultiSigInputScript() {
         // Setup transaction and signatures
-        ECKey key1 = DumpedPrivateKey.fromBase58(PARAMS, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
-        ECKey key2 = DumpedPrivateKey.fromBase58(PARAMS, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
-        ECKey key3 = DumpedPrivateKey.fromBase58(PARAMS, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
+        ECKey key1 = DumpedPrivateKey.fromBase58(TESTNET, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
+        ECKey key2 = DumpedPrivateKey.fromBase58(TESTNET, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
+        ECKey key3 = DumpedPrivateKey.fromBase58(TESTNET, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
         byte[] bytes = HEX.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
-        Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(bytes);
+        Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(bytes);
         TransactionOutput output = transaction.getOutput(1);
-        Transaction spendTx = new Transaction(PARAMS);
-        Address address = Address.fromBase58(PARAMS, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
+        Transaction spendTx = new Transaction(TESTNET);
+        Address address = Address.fromBase58(TESTNET, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
         spendTx.addInput(output);
@@ -223,8 +224,8 @@ public class ScriptTest {
     @Test
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
-        Transaction tx = new Transaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        Transaction tx = new Transaction(TESTNET);
+        tx.addInput(new TransactionInput(TESTNET, tx, new byte[] {}));
         Script script = new ScriptBuilder().smallNum(0).build();
 
         LinkedList<byte[]> stack = new LinkedList<>();
@@ -317,37 +318,37 @@ public class ScriptTest {
             int index = input.get(1).asInt();
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(HEX.decode(hash));
-            scriptPubKeys.put(new TransactionOutPoint(PARAMS, index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint(TESTNET, index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
     }
 
     private Transaction buildCreditingTransaction(Script scriptPubKey) {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(TESTNET);
         tx.setVersion(1);
         tx.setLockTime(0);
 
-        TransactionInput txInput = new TransactionInput(PARAMS, null,
+        TransactionInput txInput = new TransactionInput(TESTNET, null,
                 new ScriptBuilder().number(0).number(0).build().getProgram());
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, Coin.ZERO, scriptPubKey.getProgram());
+        TransactionOutput txOutput = new TransactionOutput(TESTNET, tx, Coin.ZERO, scriptPubKey.getProgram());
         tx.addOutput(txOutput);
 
         return tx;
     }
 
     private Transaction buildSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(TESTNET);
         tx.setVersion(1);
         tx.setLockTime(0);
 
-        TransactionInput txInput = new TransactionInput(PARAMS, creditingTransaction, scriptSig.getProgram());
+        TransactionInput txInput = new TransactionInput(TESTNET, creditingTransaction, scriptSig.getProgram());
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(PARAMS, tx, creditingTransaction.getOutput(0).getValue(),
+        TransactionOutput txOutput = new TransactionOutput(TESTNET, tx, creditingTransaction.getOutput(0).getValue(),
                 new Script(new byte[] {}).getProgram());
         tx.addOutput(txOutput);
 
@@ -364,7 +365,7 @@ public class ScriptTest {
             Transaction transaction = null;
             try {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-                transaction = PARAMS.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
+                transaction = TESTNET.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
                 transaction.verify();
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
@@ -393,7 +394,7 @@ public class ScriptTest {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
                 continue; // This is a comment.
             Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-            Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
+            Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
             boolean valid = true;
@@ -438,18 +439,18 @@ public class ScriptTest {
     public void getToAddress() throws Exception {
         // pay to pubkey
         ECKey toKey = new ECKey();
-        Address toAddress = Address.fromKey(PARAMS, toKey);
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(PARAMS, true));
+        Address toAddress = Address.fromKey(TESTNET, toKey);
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toKey).getToAddress(TESTNET, true));
         // pay to pubkey hash
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(PARAMS, true));
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET, true));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        Address scriptAddress = Address.fromP2SHScript(PARAMS, p2shScript);
-        assertEquals(scriptAddress, p2shScript.getToAddress(PARAMS, true));
+        Address scriptAddress = Address.fromP2SHScript(TESTNET, p2shScript);
+        assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET, true));
     }
 
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() throws Exception {
-        ScriptBuilder.createOutputScript(new ECKey()).getToAddress(PARAMS, false);
+        ScriptBuilder.createOutputScript(new ECKey()).getToAddress(TESTNET, false);
     }
 }

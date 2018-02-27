@@ -57,6 +57,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
             return 10000;
         }
     };
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
 
@@ -219,12 +221,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
     
     @Test
     public void testFirst100KBlocks() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        Context context = new Context(params);
+        Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
         
-        store = createStore(params, 10);
+        store = createStore(MAINNET, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(context, store);
         for (Block block : loader)

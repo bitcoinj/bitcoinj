@@ -65,7 +65,6 @@ public class ParseByteCacheTest {
             "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a");
 
     private BlockStore blockStore;
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
     
     private byte[] b1Bytes;
     private byte[] b1BytesWithHeader;
@@ -76,35 +75,38 @@ public class ParseByteCacheTest {
     private byte[] tx2Bytes;
     private byte[] tx2BytesWithHeader;
 
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(PARAMS);
+        blockStore = new MemoryBlockStore(UNITTEST);
     }
     
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
+        Context context = new Context(UNITTEST);
         Wallet wallet = new Wallet(context);
         wallet.freshReceiveKey();
 
         resetBlockStore();
         
-        Transaction tx1 = createFakeTx(PARAMS,
+        Transaction tx1 = createFakeTx(UNITTEST,
                 valueOf(2, 0),
-                Address.fromKey(PARAMS, wallet.currentReceiveKey()));
+                Address.fromKey(UNITTEST, wallet.currentReceiveKey()));
         
         // add a second input so can test granularity of byte cache.
-        Transaction prevTx = new Transaction(PARAMS);
-        TransactionOutput prevOut = new TransactionOutput(PARAMS, prevTx, COIN, Address.fromKey(PARAMS, wallet.currentReceiveKey()));
+        Transaction prevTx = new Transaction(UNITTEST);
+        TransactionOutput prevOut = new TransactionOutput(UNITTEST, prevTx, COIN, Address.fromKey(UNITTEST, wallet.currentReceiveKey()));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(PARAMS, COIN,
-                Address.fromKey(PARAMS, new ECKey()));
+        Transaction tx2 = createFakeTx(UNITTEST, COIN,
+                Address.fromKey(UNITTEST, new ECKey()));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
-        MessageSerializer bs = PARAMS.getDefaultSerializer();
+        MessageSerializer bs = UNITTEST.getDefaultSerializer();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx1, bos);
@@ -138,16 +140,16 @@ public class ParseByteCacheTest {
     
     @Test
     public void testTransactionsRetain() throws Exception {
-        testTransaction(MainNetParams.get(), txMessage, false, true);
-        testTransaction(PARAMS, tx1BytesWithHeader, false, true);
-        testTransaction(PARAMS, tx2BytesWithHeader, false, true);
+        testTransaction(MAINNET, txMessage, false, true);
+        testTransaction(UNITTEST, tx1BytesWithHeader, false, true);
+        testTransaction(UNITTEST, tx2BytesWithHeader, false, true);
     }
     
     @Test
     public void testTransactionsNoRetain() throws Exception {
-        testTransaction(MainNetParams.get(), txMessage, false, false);
-        testTransaction(PARAMS, tx1BytesWithHeader, false, false);
-        testTransaction(PARAMS, tx2BytesWithHeader, false, false);
+        testTransaction(MAINNET, txMessage, false, false);
+        testTransaction(UNITTEST, tx1BytesWithHeader, false, false);
+        testTransaction(UNITTEST, tx2BytesWithHeader, false, false);
     }
 
     @Test
@@ -159,10 +161,10 @@ public class ParseByteCacheTest {
     public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = PARAMS.getSerializer(false);
+        MessageSerializer bsRef = UNITTEST.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer bs = PARAMS.getSerializer(retain);
+        BitcoinSerializer bs = UNITTEST.getSerializer(retain);
         Block b1;
         Block bRef;
         b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));

@@ -41,11 +41,12 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class PaymentProtocolTest {
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     // static test data
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
     private static final Coin AMOUNT = Coin.SATOSHI;
-    private static final Address TO_ADDRESS = Address.fromKey(PARAMS, new ECKey());
+    private static final Address TO_ADDRESS = Address.fromKey(UNITTEST, new ECKey());
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
     private static final byte[] MERCHANT_DATA = { 0, 1, 2 };
@@ -102,7 +103,7 @@ public class PaymentProtocolTest {
     @Test
     public void testPaymentRequest() throws Exception {
         // Create
-        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TestNet3Params.get(), AMOUNT, TO_ADDRESS, MEMO,
+        PaymentRequest paymentRequest = PaymentProtocol.createPaymentRequest(TESTNET, AMOUNT, TO_ADDRESS, MEMO,
                 PAYMENT_URL, MERCHANT_DATA).build();
         byte[] paymentRequestBytes = paymentRequest.toByteArray();
 
@@ -122,16 +123,16 @@ public class PaymentProtocolTest {
     public void testPaymentMessage() throws Exception {
         // Create
         List<Transaction> transactions = new LinkedList<>();
-        transactions.add(FakeTxBuilder.createFakeTx(PARAMS, AMOUNT, TO_ADDRESS));
+        transactions.add(FakeTxBuilder.createFakeTx(UNITTEST, AMOUNT, TO_ADDRESS));
         Coin refundAmount = Coin.SATOSHI;
-        Address refundAddress = Address.fromKey(PARAMS, new ECKey());
+        Address refundAddress = Address.fromKey(UNITTEST, new ECKey());
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
                 MERCHANT_DATA);
         byte[] paymentBytes = payment.toByteArray();
 
         // Parse
         Payment parsedPayment = Payment.parseFrom(paymentBytes);
-        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(PARAMS,
+        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(UNITTEST,
                 parsedPayment);
         assertEquals(transactions, parsedTransactions);
         assertEquals(1, parsedPayment.getRefundToCount());

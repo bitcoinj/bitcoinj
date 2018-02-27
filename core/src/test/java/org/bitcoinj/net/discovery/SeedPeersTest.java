@@ -17,6 +17,7 @@
 
 package org.bitcoinj.net.discovery;
 
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
@@ -28,16 +29,18 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class SeedPeersTest {
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     @Test
     public void getPeer_one() throws Exception{
-        SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
+        SeedPeers seedPeers = new SeedPeers(MAINNET);
         assertThat(seedPeers.getPeer(), notNullValue());
     }
     
     @Test
     public void getPeer_all() throws Exception{
-        SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
-        for (int i = 0; i < MainNetParams.get().getAddrSeeds().length; ++i) {
+        SeedPeers seedPeers = new SeedPeers(MAINNET);
+        for (int i = 0; i < MAINNET.getAddrSeeds().length; ++i) {
             assertThat("Failed on index: "+i, seedPeers.getPeer(), notNullValue());
         }
         assertThat(seedPeers.getPeer(), equalTo(null));
@@ -45,8 +48,8 @@ public class SeedPeersTest {
     
     @Test
     public void getPeers_length() throws Exception{
-        SeedPeers seedPeers = new SeedPeers(MainNetParams.get());
+        SeedPeers seedPeers = new SeedPeers(MAINNET);
         InetSocketAddress[] addresses = seedPeers.getPeers(0, 0, TimeUnit.SECONDS);
-        assertThat(addresses.length, equalTo(MainNetParams.get().getAddrSeeds().length));
+        assertThat(addresses.length, equalTo(MAINNET.getAddrSeeds().length));
     }
 }

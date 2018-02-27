@@ -32,16 +32,16 @@ import org.junit.Test;
 import com.google.common.collect.Lists;
 
 public class TransactionInputTest {
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     @Test
     public void testStandardWalletDisconnect() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
-        Wallet w = new Wallet(new Context(params));
+        Wallet w = new Wallet(new Context(UNITTEST));
         w.setCoinSelector(new AllowUnconfirmedCoinSelector());
         Address a = w.currentReceiveAddress();
-        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(params, Coin.COIN, a);
+        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(UNITTEST, Coin.COIN, a);
         w.receivePending(tx1, null);
-        Transaction tx2 = new Transaction(params);
+        Transaction tx2 = new Transaction(UNITTEST);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         w.completeTx(SendRequest.forTx(tx2));
 
@@ -58,15 +58,14 @@ public class TransactionInputTest {
 
     @Test
     public void testUTXOWalletDisconnect() throws Exception {
-        final NetworkParameters params = UnitTestParams.get();
-        Wallet w = new Wallet(new Context(params));
+        Wallet w = new Wallet(new Context(UNITTEST));
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));
         w.setUTXOProvider(new UTXOProvider() {
             @Override
             public NetworkParameters getParams() {
-                return params;
+                return UNITTEST;
             }
 
             @Override
@@ -80,7 +79,7 @@ public class TransactionInputTest {
             }
         });
 
-        Transaction tx2 = new Transaction(params);
+        Transaction tx2 = new Transaction(UNITTEST);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         w.completeTx(SendRequest.forTx(tx2));
 

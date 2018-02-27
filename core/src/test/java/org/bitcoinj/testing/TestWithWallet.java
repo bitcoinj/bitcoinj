@@ -17,6 +17,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -37,7 +38,9 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
  * fee per kilobyte to zero in setUp.
  */
 public class TestWithWallet {
-    protected static final NetworkParameters PARAMS = UnitTestParams.get();
+    protected static final NetworkParameters UNITTEST = UnitTestParams.get();
+    protected static final NetworkParameters MAINNET = MainNetParams.get();
+
     protected ECKey myKey;
     protected Address myAddress;
     protected Wallet wallet;
@@ -46,12 +49,12 @@ public class TestWithWallet {
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
-        wallet = new Wallet(PARAMS);
+        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
+        wallet = new Wallet(UNITTEST);
         myKey = wallet.currentReceiveKey();
-        myAddress = Address.fromKey(PARAMS, myKey);
-        blockStore = new MemoryBlockStore(PARAMS);
-        chain = new BlockChain(PARAMS, wallet, blockStore);
+        myAddress = Address.fromKey(UNITTEST, myKey);
+        blockStore = new MemoryBlockStore(UNITTEST);
+        chain = new BlockChain(UNITTEST, wallet, blockStore);
     }
 
     public void tearDown() throws Exception {
@@ -80,12 +83,12 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toAddress));
+        return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toAddress));
     }
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(PARAMS, value, toPubKey));
+        return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toPubKey));
     }
 
     @Nullable

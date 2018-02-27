@@ -48,14 +48,14 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
     @Override
     public void setUp() throws Exception {
-        setUp(new MemoryBlockStore(PARAMS));
+        setUp(new MemoryBlockStore(UNITTEST));
     }
 
     @Override
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 
-        remoteVersionMessage = new VersionMessage(PARAMS, 1);
+        remoteVersionMessage = new VersionMessage(UNITTEST, 1);
         remoteVersionMessage.localServices = VersionMessage.NODE_NETWORK;
         remoteVersionMessage.clientVersion = NotFoundMessage.MIN_PROTOCOL_VERSION;
         blockJobs = false;
@@ -89,7 +89,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected final Semaphore jobBlocks = new Semaphore(0);
 
     private PeerGroup createPeerGroup(final ClientConnectionManager manager) {
-        return new PeerGroup(PARAMS, blockChain, manager) {
+        return new PeerGroup(UNITTEST, blockChain, manager) {
             @Override
             protected ListeningScheduledExecutorService createPrivateExecutor() {
                 return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {

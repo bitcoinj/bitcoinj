@@ -51,7 +51,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(PARAMS);
+        Transaction multiSigTransaction = new Transaction(UNITTEST);
         ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -67,24 +67,24 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void testP2SHOutputScript() throws Exception {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        Address P2SHAddress = Address.fromBase58(MainNetParams.get(), P2SHAddressString);
+        Address P2SHAddress = Address.fromBase58(MAINNET, P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.COIN, script);
-        assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MainNetParams.get()).toString());
+        assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MAINNET).toString());
     }
 
     @Test
     public void getAddressTests() throws Exception {
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
-        assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
-        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));
+        assertNull(tx.getOutput(0).getAddressFromP2SH(UNITTEST));
+        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(UNITTEST));
     }
 
     @Test
     public void getMinNonDustValue() throws Exception {
-        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, myAddress);
+        TransactionOutput payToAddressOutput = new TransactionOutput(UNITTEST, null, Coin.COIN, myAddress);
         assertEquals(Transaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
     }
 }

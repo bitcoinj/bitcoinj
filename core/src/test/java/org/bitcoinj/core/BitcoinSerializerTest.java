@@ -30,6 +30,7 @@ import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
 public class BitcoinSerializerTest {
+    private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final byte[] ADDRESS_MESSAGE_BYTES = HEX.decode("f9beb4d96164647200000000000000001f000000" +
             "ed52399b01e215104d010000000000000000000000000000000000ffff0a000001208d");
 
@@ -55,8 +56,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testAddr() throws Exception {
-        final NetworkParameters params = MainNetParams.get();
-        MessageSerializer serializer = params.getDefaultSerializer();
+        MessageSerializer serializer = MAINNET.getDefaultSerializer();
         // the actual data from https://en.bitcoin.it/wiki/Protocol_specification#addr
         AddressMessage addressMessage = (AddressMessage) serializer.deserialize(ByteBuffer.wrap(ADDRESS_MESSAGE_BYTES));
         assertEquals(1, addressMessage.getAddresses().size());
@@ -67,7 +67,7 @@ public class BitcoinSerializerTest {
         serializer.serialize(addressMessage, bos);
 
         assertEquals(31, addressMessage.getMessageSize());
-        addressMessage.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
+        addressMessage.addAddress(new PeerAddress(MAINNET, InetAddress.getLocalHost()));
         assertEquals(61, addressMessage.getMessageSize());
         addressMessage.removeAddress(0);
         assertEquals(31, addressMessage.getMessageSize());
@@ -78,7 +78,7 @@ public class BitcoinSerializerTest {
 
     @Test
     public void testCachedParsing() throws Exception {
-        MessageSerializer serializer = MainNetParams.get().getSerializer(true);
+        MessageSerializer serializer = MAINNET.getSerializer(true);
         
         // first try writing to a fields to ensure uncaching and children are not affected
         Transaction transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
@@ -135,7 +135,7 @@ public class BitcoinSerializerTest {
      */
     @Test
     public void testHeaders1() throws Exception {
-        MessageSerializer serializer = MainNetParams.get().getDefaultSerializer();
+        MessageSerializer serializer = MAINNET.getDefaultSerializer();
 
         byte[] headersMessageBytes = HEX.decode("f9beb4d9686561" +
                 "646572730000000000520000005d4fab8101010000006fe28c0ab6f1b372c1a6a246ae6" +
@@ -161,7 +161,7 @@ public class BitcoinSerializerTest {
      */
     @Test
     public void testHeaders2() throws Exception {
-        MessageSerializer serializer = MainNetParams.get().getDefaultSerializer();
+        MessageSerializer serializer = MAINNET.getDefaultSerializer();
 
         byte[] headersMessageBytes = HEX.decode("f9beb4d96865616465" +
                 "72730000000000e701000085acd4ea06010000006fe28c0ab6f1b372c1a6a246ae63f74f931e" +
@@ -217,7 +217,7 @@ public class BitcoinSerializerTest {
     public void testSeekPastMagicBytes() {
         // Fail in another way, there is data in the stream but no magic bytes.
         byte[] brokenMessage = HEX.decode("000000");
-        MainNetParams.get().getDefaultSerializer().seekPastMagicBytes(ByteBuffer.wrap(brokenMessage));
+        MAINNET.getDefaultSerializer().seekPastMagicBytes(ByteBuffer.wrap(brokenMessage));
     }
 
     /**
@@ -225,7 +225,7 @@ public class BitcoinSerializerTest {
      */
     @Test(expected = Error.class)
     public void testSerializeUnknownMessage() throws Exception {
-        MessageSerializer serializer = MainNetParams.get().getDefaultSerializer();
+        MessageSerializer serializer = MAINNET.getDefaultSerializer();
 
         Message unknownMessage = new Message() {
             @Override

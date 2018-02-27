@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
@@ -31,11 +32,12 @@ import static org.junit.Assert.assertTrue;
 
 public class ScriptPatternTest {
     private List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
+    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
     public void testCommonScripts() {
         assertTrue(ScriptPattern.isPayToPubKeyHash(
-                ScriptBuilder.createOutputScript(Address.fromKey(MainNetParams.get(), keys.get(0)))
+                ScriptBuilder.createOutputScript(Address.fromKey(MAINNET, keys.get(0)))
         ));
         assertTrue(ScriptPattern.isPayToScriptHash(
                 ScriptBuilder.createP2SHOutputScript(2, keys)
