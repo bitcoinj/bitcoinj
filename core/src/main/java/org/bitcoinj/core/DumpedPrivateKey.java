@@ -30,7 +30,7 @@ import org.bitcoinj.params.Networks;
  * bytes with a header byte and 4 checksum bytes at the end. If there are 33 private key bytes instead of 32, then
  * the last byte is a discriminator value for the compressed pubkey.
  */
-public class DumpedPrivateKey extends VersionedChecksummedBytes {
+public class DumpedPrivateKey extends PrefixedChecksummedBytes {
 
     /**
      * Construct a private key from its Base58 representation.

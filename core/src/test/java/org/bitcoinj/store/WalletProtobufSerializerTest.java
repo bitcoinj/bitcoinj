@@ -65,7 +65,7 @@ public class WalletProtobufSerializerTest {
 
     private ECKey myKey;
     private ECKey myWatchedKey;
-    private Address myAddress;
+    private LegacyAddress myAddress;
     private Wallet myWallet;
 
     public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
@@ -80,11 +80,11 @@ public class WalletProtobufSerializerTest {
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myWallet.importKey(myKey);
-        myAddress = Address.fromKey(UNITTEST, myKey);
+        myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
         myWallet = new Wallet(UNITTEST);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-        myWallet.addWatchedAddress(Address.fromKey(UNITTEST, myWatchedKey), mScriptCreationTime);
+        myWallet.addWatchedAddress(LegacyAddress.fromKey(UNITTEST, myWatchedKey), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
 
@@ -103,7 +103,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(mScriptCreationTime,
                 wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
         assertEquals(1, wallet1.getWatchedScripts().size());
-        assertEquals(ScriptBuilder.createOutputScript(Address.fromKey(UNITTEST, myWatchedKey)),
+        assertEquals(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(UNITTEST, myWatchedKey)),
                 wallet1.getWatchedScripts().get(0));
         assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
     }
@@ -178,7 +178,7 @@ public class WalletProtobufSerializerTest {
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
             myKey = new ECKey();
-            myAddress = Address.fromKey(UNITTEST, myKey);
+            myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
             myWallet = new Wallet(UNITTEST);
             myWallet.importKey(myKey);
             Wallet wallet1 = roundTrip(myWallet);

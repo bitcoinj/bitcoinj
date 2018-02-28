@@ -19,8 +19,8 @@ package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
 
-import org.bitcoinj.core.AbstractAddress;
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.core.Utils;
@@ -252,10 +252,10 @@ public class ScriptBuilder {
     }
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
-    public static Script createOutputScript(AbstractAddress to) {
+    public static Script createOutputScript(Address to) {
         ScriptBuilder builder = new ScriptBuilder();
-        if (to instanceof Address) {
-            Address toLegacy = (Address) to;
+        if (to instanceof LegacyAddress) {
+            LegacyAddress toLegacy = (LegacyAddress) to;
             ScriptType scriptType = toLegacy.getOutputScriptType();
             if (scriptType == ScriptType.P2PKH) {
                 // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG

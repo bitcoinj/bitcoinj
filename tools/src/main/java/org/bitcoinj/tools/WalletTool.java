@@ -583,7 +583,7 @@ public class WalletTool {
             return;
         }
         try {
-            Address address = Address.fromBase58(params, addr);
+            LegacyAddress address = LegacyAddress.fromBase58(params, addr);
             // If no creation time is specified, assume genesis (zero).
             wallet.addWatchedAddress(address, getCreationTimeSeconds());
         } catch (AddressFormatException e) {
@@ -680,7 +680,7 @@ public class WalletTool {
 
     static class OutputSpec {
         public final Coin value;
-        public final Address addr;
+        public final LegacyAddress addr;
         public final ECKey key;
 
         public OutputSpec(String spec) throws IllegalArgumentException {
@@ -700,7 +700,7 @@ public class WalletTool {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = Address.fromBase58(params, destination);
+                addr = LegacyAddress.fromBase58(params, destination);
                 key = null;
             }
         }
@@ -1355,7 +1355,7 @@ public class WalletTool {
                 }
                 key = wallet.freshReceiveKey();
             }
-            System.out.println(Address.fromKey(params, key) + " " + key);
+            System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
         }
     }
 
@@ -1420,7 +1420,7 @@ public class WalletTool {
                 key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
             }
             wallet.importKey(key);
-            System.out.println(Address.fromKey(params, key) + " " + key);
+            System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
@@ -1464,7 +1464,7 @@ public class WalletTool {
             key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
         } else {
             try {
-                Address address = Address.fromBase58(wallet.getParams(), addr);
+                LegacyAddress address = LegacyAddress.fromBase58(wallet.getParams(), addr);
                 key = wallet.findKeyFromPubHash(address.getHash160());
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");
@@ -1480,7 +1480,7 @@ public class WalletTool {
 
     private static void currentReceiveAddr() {
         ECKey key = wallet.currentReceiveKey();
-        System.out.println(Address.fromKey(params, key) + " " + key);
+        System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
     }
 
     private static void dumpWallet() throws BlockStoreException {

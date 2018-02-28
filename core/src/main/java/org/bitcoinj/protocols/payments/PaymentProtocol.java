@@ -66,7 +66,7 @@ public class PaymentProtocol {
      * @return created payment request, in its builder form
      */
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
-            @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
+            @Nullable Coin amount, LegacyAddress toAddress, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
         return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
                 paymentUrl, merchantData);
@@ -292,7 +292,7 @@ public class PaymentProtocol {
      * @return created payment message
      */
     public static Protos.Payment createPaymentMessage(List<Transaction> transactions,
-            @Nullable Coin refundAmount, @Nullable Address refundAddress, @Nullable String memo,
+            @Nullable Coin refundAmount, @Nullable LegacyAddress refundAddress, @Nullable String memo,
             @Nullable byte[] merchantData) {
         if (refundAddress != null) {
             if (refundAmount == null)
@@ -397,7 +397,7 @@ public class PaymentProtocol {
      * @param address address to pay to
      * @return output
      */
-    public static Protos.Output createPayToAddressOutput(@Nullable Coin amount, Address address) {
+    public static Protos.Output createPayToAddressOutput(@Nullable Coin amount, LegacyAddress address) {
         Protos.Output.Builder output = Protos.Output.newBuilder();
         if (amount != null) {
             final NetworkParameters params = address.getParameters();

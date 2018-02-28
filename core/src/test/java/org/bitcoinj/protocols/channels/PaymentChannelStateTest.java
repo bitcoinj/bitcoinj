@@ -341,7 +341,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         // we can broadcast the refund and get our balance back.
 
         // Spend the client wallet's one coin
-        Transaction spendCoinTx = wallet.sendCoinsOffline(SendRequest.to(Address.fromKey(UNITTEST, new ECKey()), COIN));
+        Transaction spendCoinTx = wallet.sendCoinsOffline(SendRequest.to(LegacyAddress.fromKey(UNITTEST, new ECKey()), COIN));
         assertEquals(Coin.ZERO, wallet.getBalance());
         chain.add(makeSolvedTestBlock(blockStore.getChainHead().getHeader(), spendCoinTx, createFakeTx(UNITTEST, CENT, myAddress)));
         assertEquals(CENT, wallet.getBalance());
@@ -473,7 +473,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
             // Test refund transaction with any number of issues
             byte[] refundTxBytes = clientV1State().getIncompleteRefundTransaction().bitcoinSerialize();
             Transaction refund = new Transaction(UNITTEST, refundTxBytes);
-            refund.addOutput(Coin.ZERO, Address.fromKey(UNITTEST, new ECKey()));
+            refund.addOutput(Coin.ZERO, LegacyAddress.fromKey(UNITTEST, new ECKey()));
             try {
                 serverV1State().provideRefundTransaction(refund, myKey.getPubKey());
                 fail();
@@ -692,7 +692,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, true));
 
         // Spend the client wallet's one coin
-        final SendRequest request = SendRequest.to(Address.fromKey(UNITTEST, new ECKey()), COIN);
+        final SendRequest request = SendRequest.to(LegacyAddress.fromKey(UNITTEST, new ECKey()), COIN);
         request.ensureMinRequiredFee = false;
         wallet.sendCoinsOffline(request);
         assertEquals(Coin.ZERO, wallet.getBalance());
@@ -892,7 +892,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }
 
         // Now give the server enough coins to pay the fee
-        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, Address.fromKey(UNITTEST, serverKey));
+        sendMoneyToWallet(serverWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, LegacyAddress.fromKey(UNITTEST, serverKey));
 
         // The contract is still not worth redeeming - its worth less than we pay in fee
         try {
@@ -998,7 +998,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         doubleSpendContract.addOutput(HALF_COIN, myKey);
         doubleSpendContract = new Transaction(UNITTEST, doubleSpendContract.bitcoinSerialize());
 
-        StoredBlock block = new StoredBlock(UNITTEST.getGenesisBlock().createNextBlock(Address.fromKey(UNITTEST, myKey)), BigInteger.TEN, 1);
+        StoredBlock block = new StoredBlock(UNITTEST.getGenesisBlock().createNextBlock(LegacyAddress.fromKey(UNITTEST, myKey)), BigInteger.TEN, 1);
         serverWallet.receiveFromBlock(doubleSpendContract, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
         // Now if we try to spend again the server will reject it since it saw a double-spend

@@ -32,7 +32,7 @@ import java.util.Date;
  * A class that exposes relevant bitcoin stuff as JavaFX bindable properties.
  */
 public class BitcoinUIModel {
-    private SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
+    private SimpleObjectProperty<LegacyAddress> address = new SimpleObjectProperty<>();
     private SimpleObjectProperty<Coin> balance = new SimpleObjectProperty<>(Coin.ZERO);
     private SimpleDoubleProperty syncProgress = new SimpleDoubleProperty(-1);
     private ProgressBarUpdater syncProgressUpdater = new ProgressBarUpdater();
@@ -77,7 +77,7 @@ public class BitcoinUIModel {
 
     public ReadOnlyDoubleProperty syncProgressProperty() { return syncProgress; }
 
-    public ReadOnlyObjectProperty<Address> addressProperty() {
+    public ReadOnlyObjectProperty<LegacyAddress> addressProperty() {
         return address;
     }
 

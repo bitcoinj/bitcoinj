@@ -38,8 +38,8 @@ public class TxConfidenceTableTest {
         Context context = new Context(UNITTEST);
         table = context.getConfidenceTable();
 
-        Address to = Address.fromKey(UNITTEST, new ECKey());
-        Address change = Address.fromKey(UNITTEST, new ECKey());
+        LegacyAddress to = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        LegacyAddress change = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
         tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);

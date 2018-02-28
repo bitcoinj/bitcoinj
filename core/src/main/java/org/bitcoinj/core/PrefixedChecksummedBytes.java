@@ -41,11 +41,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * keys exported using Bitcoin Core's dumpprivkey command.
  * </p>
  */
-public abstract class VersionedChecksummedBytes implements Serializable, Cloneable, Comparable<VersionedChecksummedBytes> {
+public abstract class PrefixedChecksummedBytes implements Serializable, Cloneable, Comparable<PrefixedChecksummedBytes> {
     protected final transient NetworkParameters params;
     protected final byte[] bytes;
 
-    protected VersionedChecksummedBytes(NetworkParameters params, byte[] bytes) {
+    protected PrefixedChecksummedBytes(NetworkParameters params, byte[] bytes) {
         this.params = checkNotNull(params);
         this.bytes = checkNotNull(bytes);
     }
@@ -66,25 +66,25 @@ public abstract class VersionedChecksummedBytes implements Serializable, Cloneab
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        VersionedChecksummedBytes other = (VersionedChecksummedBytes) o;
+        PrefixedChecksummedBytes other = (PrefixedChecksummedBytes) o;
         return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
-     * This implementation narrows the return type to <code>VersionedChecksummedBytes</code>
+     * This implementation narrows the return type to <code>PrefixedChecksummedBytes</code>
      * and allows subclasses to throw <code>CloneNotSupportedException</code> even though it
      * is never thrown by this implementation.
      */
     @Override
-    public VersionedChecksummedBytes clone() throws CloneNotSupportedException {
-        return (VersionedChecksummedBytes) super.clone();
+    public PrefixedChecksummedBytes clone() throws CloneNotSupportedException {
+        return (PrefixedChecksummedBytes) super.clone();
     }
 
     /**
      * This implementation uses an optimized Google Guava method to compare <code>bytes</code>.
      */
     @Override
-    public int compareTo(VersionedChecksummedBytes o) {
+    public int compareTo(PrefixedChecksummedBytes o) {
         int result = this.params.getId().compareTo(o.params.getId());
         return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
     }
@@ -99,7 +99,7 @@ public abstract class VersionedChecksummedBytes implements Serializable, Cloneab
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         try {
-            Field paramsField = VersionedChecksummedBytes.class.getDeclaredField("params");
+            Field paramsField = PrefixedChecksummedBytes.class.getDeclaredField("params");
             paramsField.setAccessible(true);
             paramsField.set(this, checkNotNull(NetworkParameters.fromID(in.readUTF())));
             paramsField.setAccessible(false);

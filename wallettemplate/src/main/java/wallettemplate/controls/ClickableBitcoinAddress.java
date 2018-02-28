@@ -16,7 +16,7 @@
 
 package wallettemplate.controls;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
@@ -61,7 +61,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
     @FXML protected Label copyWidget;
     @FXML protected Label qrCode;
 
-    protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
+    protected SimpleObjectProperty<LegacyAddress> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
 
     public ClickableBitcoinAddress() {
@@ -90,15 +90,15 @@ public class ClickableBitcoinAddress extends AnchorPane {
         return BitcoinURI.convertToBitcoinURI(address.get(), null, Main.APP_NAME, null);
     }
 
-    public Address getAddress() {
+    public LegacyAddress getAddress() {
         return address.get();
     }
 
-    public void setAddress(Address address) {
+    public void setAddress(LegacyAddress address) {
         this.address.set(address);
     }
 
-    public ObjectProperty<Address> addressProperty() {
+    public ObjectProperty<LegacyAddress> addressProperty() {
         return address;
     }
 

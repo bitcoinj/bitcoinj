@@ -163,10 +163,10 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
             final Coin valueAfterFee = totalValue.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
             if (Transaction.MIN_NONDUST_OUTPUT.compareTo(valueAfterFee) > 0)
                 throw new ValueOutOfRangeException("totalValue too small to use");
-            refundTx.addOutput(valueAfterFee, Address.fromKey(params, myKey));
+            refundTx.addOutput(valueAfterFee, LegacyAddress.fromKey(params, myKey));
             refundFees = multisigFee.add(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
         } else {
-            refundTx.addOutput(totalValue, Address.fromKey(params, myKey));
+            refundTx.addOutput(totalValue, LegacyAddress.fromKey(params, myKey));
             refundFees = multisigFee;
         }
         refundTx.getConfidence().setSource(TransactionConfidence.Source.SELF);

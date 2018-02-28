@@ -169,19 +169,19 @@ public class KeyChainGroupTest {
     @Test
     public void currentP2SHAddress() throws Exception {
         group = createMarriedKeyChainGroup();
-        Address a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(a1.isP2SHAddress());
-        Address a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a1, a2);
-        Address a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
+        LegacyAddress a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
         assertNotEquals(a2, a3);
     }
 
     @Test
     public void freshAddress() throws Exception {
         group = createMarriedKeyChainGroup();
-        Address a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        Address a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(a1.isP2SHAddress());
         assertNotEquals(a1, a2);
         group.getBloomFilterElementCount();
@@ -189,7 +189,7 @@ public class KeyChainGroupTest {
                 + (2 - group.getLookaheadThreshold())  // keys issued
                 + group.getActiveKeyChain().getAccountPath().size() + 3  /* master, account, int, ext */, group.numKeys());
 
-        Address a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a2, a3);
     }
 
@@ -201,7 +201,7 @@ public class KeyChainGroupTest {
         assertNull(group.findRedeemDataFromScriptHash(new ECKey().getPubKey()));
 
         // test our script hash
-        Address address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash160());
         assertNotNull(redeemData);
         assertNotNull(redeemData.redeemScript);
@@ -331,7 +331,7 @@ public class KeyChainGroupTest {
     @Test
     public void findRedeemScriptFromPubHash() throws Exception {
         group = createMarriedKeyChainGroup();
-        Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(group.findRedeemDataFromScriptHash(address.getHash160()) != null);
         group.getBloomFilterElementCount();
         KeyChainGroup group2 = createMarriedKeyChainGroup();
@@ -351,17 +351,17 @@ public class KeyChainGroupTest {
         int bufferSize = group.getLookaheadSize() + group.getLookaheadThreshold();
         int expected = bufferSize * 2 /* chains */ * 2 /* elements */;
         assertEquals(expected, group.getBloomFilterElementCount());
-        Address address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(expected, group.getBloomFilterElementCount());
         BloomFilter filter = group.getBloomFilter(expected + 2, 0.001, (long)(Math.random() * Long.MAX_VALUE));
         assertTrue(filter.contains(address1.getHash160()));
 
-        Address address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
+        LegacyAddress address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
         assertTrue(filter.contains(address2.getHash160()));
 
         // Check that the filter contains the lookahead buffer.
         for (int i = 0; i < bufferSize - 1 /* issued address */; i++) {
-            Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+            LegacyAddress address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
             assertTrue("key " + i, filter.contains(address.getHash160()));
         }
         // We ran ahead of the lookahead buffer.
@@ -462,7 +462,7 @@ public class KeyChainGroupTest {
     @Test
     public void serializeMarried() throws Exception {
         group = createMarriedKeyChainGroup();
-        Address address1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress address1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(group.isMarried());
         assertEquals(2, group.getActiveKeyChain().getSigsRequiredToSpend());
 
@@ -470,7 +470,7 @@ public class KeyChainGroupTest {
         KeyChainGroup group2 = KeyChainGroup.fromProtobufUnencrypted(MAINNET, protoKeys);
         assertTrue(group2.isMarried());
         assertEquals(2, group.getActiveKeyChain().getSigsRequiredToSpend());
-        Address address2 = group2.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress address2 = group2.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(address1, address2);
     }
 
@@ -578,11 +578,11 @@ public class KeyChainGroupTest {
 
     @Test
     public void markAsUsed() throws Exception {
-        Address addr1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        Address addr2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress addr1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress addr2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(addr1, addr2);
         group.markPubKeyHashAsUsed(addr1.getHash160());
-        Address addr3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        LegacyAddress addr3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertNotEquals(addr2, addr3);
     }
 

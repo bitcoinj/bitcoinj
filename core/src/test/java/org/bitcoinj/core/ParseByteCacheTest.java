@@ -92,17 +92,17 @@ public class ParseByteCacheTest {
         
         Transaction tx1 = createFakeTx(UNITTEST,
                 valueOf(2, 0),
-                Address.fromKey(UNITTEST, wallet.currentReceiveKey()));
+                LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
         
         // add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(UNITTEST);
-        TransactionOutput prevOut = new TransactionOutput(UNITTEST, prevTx, COIN, Address.fromKey(UNITTEST, wallet.currentReceiveKey()));
+        TransactionOutput prevOut = new TransactionOutput(UNITTEST, prevTx, COIN, LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
         Transaction tx2 = createFakeTx(UNITTEST, COIN,
-                Address.fromKey(UNITTEST, new ECKey()));
+                LegacyAddress.fromKey(UNITTEST, new ECKey()));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 

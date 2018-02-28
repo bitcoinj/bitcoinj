@@ -165,7 +165,7 @@ public class SegwitAddressTest {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(address);
-        VersionedChecksummedBytes addressCopy = (VersionedChecksummedBytes) new ObjectInputStream(
+        PrefixedChecksummedBytes addressCopy = (PrefixedChecksummedBytes) new ObjectInputStream(
                 new ByteArrayInputStream(os.toByteArray())).readObject();
 
         assertEquals(address, addressCopy);

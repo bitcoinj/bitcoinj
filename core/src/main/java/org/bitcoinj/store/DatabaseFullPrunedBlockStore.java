@@ -1124,7 +1124,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *         address, the return value is 0.
      * @throws BlockStoreException If there is an error getting the balance.
      */
-    public BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
+    public BigInteger calculateBalanceForAddress(LegacyAddress address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
         try {
@@ -1150,13 +1150,13 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<>();
         try {
             maybeConnect();
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
-            for (Address address : addresses) {
+            for (LegacyAddress address : addresses) {
                 s.setString(1, address.toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {

@@ -75,7 +75,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = Address.fromKey(TESTNET, serverKey);
+        LegacyAddress refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentLog().get(0).getUrl().toString());
@@ -147,7 +147,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = Address.fromKey(TESTNET, serverKey);
+        LegacyAddress refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
     }

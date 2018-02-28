@@ -46,7 +46,7 @@ public class Base58Test {
 
     @Test
     public void testEncodeChecked_address() throws Exception {
-        String encoded = Base58.encodeChecked(111, new byte[Address.LENGTH]);
+        String encoded = Base58.encodeChecked(111, new byte[LegacyAddress.LENGTH]);
         assertEquals("mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8", encoded);
     }
 

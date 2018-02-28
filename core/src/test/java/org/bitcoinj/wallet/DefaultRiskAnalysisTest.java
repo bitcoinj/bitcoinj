@@ -208,7 +208,7 @@ public class DefaultRiskAnalysisTest {
         Transaction tx = new Transaction(MAINNET);
         tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
-        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(Address.fromKey(MAINNET, key1)));
+        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(LegacyAddress.fromKey(MAINNET, key1)));
         // A pay to pubkey output
         tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));

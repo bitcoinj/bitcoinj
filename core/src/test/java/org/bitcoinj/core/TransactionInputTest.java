@@ -38,7 +38,7 @@ public class TransactionInputTest {
     public void testStandardWalletDisconnect() throws Exception {
         Wallet w = new Wallet(new Context(UNITTEST));
         w.setCoinSelector(new AllowUnconfirmedCoinSelector());
-        Address a = w.currentReceiveAddress();
+        LegacyAddress a = w.currentReceiveAddress();
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(UNITTEST, Coin.COIN, a);
         w.receivePending(tx1, null);
         Transaction tx2 = new Transaction(UNITTEST);
@@ -59,7 +59,7 @@ public class TransactionInputTest {
     @Test
     public void testUTXOWalletDisconnect() throws Exception {
         Wallet w = new Wallet(new Context(UNITTEST));
-        Address a = w.currentReceiveAddress();
+        LegacyAddress a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));
         w.setUTXOProvider(new UTXOProvider() {
@@ -69,7 +69,7 @@ public class TransactionInputTest {
             }
 
             @Override
-            public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+            public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
                 return Lists.newArrayList(utxo);
             }
 

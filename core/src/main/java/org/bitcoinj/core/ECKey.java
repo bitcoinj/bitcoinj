@@ -1268,7 +1268,7 @@ public class ECKey implements EncryptableItem {
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
             NetworkParameters params) {
-        final Address address = Address.fromKey(params, this);
+        final LegacyAddress address = LegacyAddress.fromKey(params, this);
         builder.append("  addr:");
         builder.append(address.toString());
         builder.append("  hash160:");

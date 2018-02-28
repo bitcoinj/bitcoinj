@@ -316,7 +316,7 @@ public class PaymentSession {
      * @param memo is a message to include in the payment message sent to the merchant.
      */
     @Nullable
-    public ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    public ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable LegacyAddress refundAddr, @Nullable String memo)
             throws PaymentProtocolException, VerificationException, IOException {
         Protos.Payment payment = getPayment(txns, refundAddr, memo);
         if (payment == null)
@@ -341,7 +341,7 @@ public class PaymentSession {
      * @param memo is a message to include in the payment message sent to the merchant.
      */
     @Nullable
-    public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    public Protos.Payment getPayment(List<Transaction> txns, @Nullable LegacyAddress refundAddr, @Nullable String memo)
             throws IOException, PaymentProtocolException.InvalidNetwork {
         if (paymentDetails.hasPaymentUrl()) {
             for (Transaction tx : txns)

@@ -19,7 +19,7 @@ package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
@@ -37,7 +37,7 @@ public class ScriptPatternTest {
     @Test
     public void testCommonScripts() {
         assertTrue(ScriptPattern.isPayToPubKeyHash(
-                ScriptBuilder.createOutputScript(Address.fromKey(MAINNET, keys.get(0)))
+                ScriptBuilder.createOutputScript(LegacyAddress.fromKey(MAINNET, keys.get(0)))
         ));
         assertTrue(ScriptPattern.isPayToScriptHash(
                 ScriptBuilder.createP2SHOutputScript(2, keys)

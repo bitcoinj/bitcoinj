@@ -54,7 +54,7 @@ public class TestWithNetworkConnections {
     protected BlockChain blockChain;
     protected Wallet wallet;
     protected ECKey key;
-    protected Address address;
+    protected LegacyAddress address;
     protected SocketAddress socketAddress;
 
     private NioServer[] peerServers = new NioServer[PEER_SERVERS];
@@ -90,7 +90,7 @@ public class TestWithNetworkConnections {
         if (wallet == null) {
             wallet = new Wallet(UNITTEST);
             key = wallet.freshReceiveKey();
-            address = Address.fromKey(UNITTEST, key);
+            address = LegacyAddress.fromKey(UNITTEST, key);
         }
         blockChain = new BlockChain(UNITTEST, wallet, blockStore);
 

@@ -24,7 +24,7 @@ import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -82,11 +82,11 @@ public class GenerateLowSTests {
 
         final Transaction outputTransaction = new Transaction(params);
         final Transaction inputTransaction = new Transaction(params);
-        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, Address.fromKey(params, key));
+        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, LegacyAddress.fromKey(params, key));
 
         inputTransaction.addOutput(output);
         outputTransaction.addInput(output);
-        outputTransaction.addOutput(Coin.ZERO, Address.fromKey(params, new ECKey(secureRandom)));
+        outputTransaction.addOutput(Coin.ZERO, LegacyAddress.fromKey(params, new ECKey(secureRandom)));
 
         addOutputs(outputTransaction, bag);
 

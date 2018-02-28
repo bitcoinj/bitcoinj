@@ -16,7 +16,7 @@
 
 package org.bitcoinj.uri;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +36,7 @@ public class BitcoinURITest {
 
     @Test
     public void testConvertToBitcoinURI() throws Exception {
-        Address goodAddress = Address.fromBase58(MAINNET, MAINNET_GOOD_ADDRESS);
+        LegacyAddress goodAddress = LegacyAddress.fromBase58(MAINNET, MAINNET_GOOD_ADDRESS);
         
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage", BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34"), "Hello", "AMessage"));
@@ -79,7 +79,7 @@ public class BitcoinURITest {
         };
 
         assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
-             BitcoinURI.convertToBitcoinURI(Address.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS), parseCoin("12.34"), "Hello", "AMessage"));
+             BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS), parseCoin("12.34"), "Hello", "AMessage"));
     }
 
     @Test

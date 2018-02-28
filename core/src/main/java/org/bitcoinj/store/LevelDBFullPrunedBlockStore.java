@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
@@ -420,13 +420,13 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
         // Run this on a snapshot of database so internally consistent result
         // This is critical or if one address paid another could get incorrect
         // results
 
         List<UTXO> results = new LinkedList<>();
-        for (Address a : addresses) {
+        for (LegacyAddress a : addresses) {
             ByteBuffer bb = ByteBuffer.allocate(21);
             bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
             bb.put(a.getHash160());
@@ -460,7 +460,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 }
                 if (txout != null) {
                     Script sc = txout.getScript();
-                    Address address = sc.getToAddress(params, true);
+                    LegacyAddress address = sc.getToAddress(params, true);
                     UTXO output = new UTXO(txout.getHash(), txout.getIndex(), txout.getValue(), txout.getHeight(),
                             txout.isCoinbase(), txout.getScript(), address.toString());
                     results.add(output);
@@ -786,14 +786,14 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
 
         // Could run this in parallel with above too.
         // Should update instrumentation to see if worth while.
-        Address a;
+        LegacyAddress a;
         if (out.getAddress() == null || out.getAddress().equals("")) {
             if (instrument)
                 endMethod("addUnspentTransactionOutput");
             return;
         } else {
             try {
-                a = Address.fromBase58(params, out.getAddress());
+                a = LegacyAddress.fromBase58(params, out.getAddress());
             } catch (AddressFormatException e) {
                 if (instrument)
                     endMethod("addUnspentTransactionOutput");
@@ -880,7 +880,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         // TODO storing as byte[] hash to save space. But think should just
         // store as String of address. Might be faster. Need to test.
         ByteBuffer bb = ByteBuffer.allocate(57);
-        Address a;
+        LegacyAddress a;
         byte[] hashBytes = null;
         try {
             String address = out.getAddress();
@@ -889,7 +889,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 a = sc.getToAddress(params);
                 hashBytes = a.getHash160();
             } else {
-                a = Address.fromBase58(params, out.getAddress());
+                a = LegacyAddress.fromBase58(params, out.getAddress());
                 hashBytes = a.getHash160();
             }
         } catch (AddressFormatException e) {

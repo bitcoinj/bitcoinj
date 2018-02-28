@@ -42,7 +42,7 @@ import org.bitcoinj.script.Script.ScriptType;
  * segwit address.
  * </p>
  */
-public class SegwitAddress extends AbstractAddress {
+public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
     public static final int WITNESS_PROGRAM_LENGTH_SH = 32;
     public static final int WITNESS_PROGRAM_MIN_LENGTH = 2;

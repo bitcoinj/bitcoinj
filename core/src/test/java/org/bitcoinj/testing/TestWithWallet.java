@@ -42,7 +42,7 @@ public class TestWithWallet {
     protected static final NetworkParameters MAINNET = MainNetParams.get();
 
     protected ECKey myKey;
-    protected Address myAddress;
+    protected LegacyAddress myAddress;
     protected Wallet wallet;
     protected BlockChain chain;
     protected BlockStore blockStore;
@@ -52,7 +52,7 @@ public class TestWithWallet {
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         wallet = new Wallet(UNITTEST);
         myKey = wallet.currentReceiveKey();
-        myAddress = Address.fromKey(UNITTEST, myKey);
+        myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
         blockStore = new MemoryBlockStore(UNITTEST);
         chain = new BlockChain(UNITTEST, wallet, blockStore);
     }
@@ -82,7 +82,7 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, LegacyAddress toAddress) throws VerificationException {
         return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toAddress));
     }
 
@@ -102,7 +102,7 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, LegacyAddress toAddress) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, value, toAddress);
     }
 

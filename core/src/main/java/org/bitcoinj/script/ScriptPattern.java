@@ -17,7 +17,7 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -41,7 +41,7 @@ public class ScriptPattern {
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
                chunks.get(2).data != null &&
-               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(2).data.length == LegacyAddress.LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
@@ -70,7 +70,7 @@ public class ScriptPattern {
                chunks.get(0).equalsOpCode(OP_HASH160) &&
                chunks.get(1).opcode == 0x14 &&
                chunks.get(1).data != null &&
-               chunks.get(1).data.length == Address.LENGTH &&
+               chunks.get(1).data.length == LegacyAddress.LENGTH &&
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 

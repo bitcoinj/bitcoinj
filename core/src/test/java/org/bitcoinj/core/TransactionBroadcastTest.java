@@ -159,7 +159,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(FIFTY_COINS, wallet.getBalance());
 
         // Now create a spend, and expect the announcement on p1.
-        Address dest = Address.fromKey(UNITTEST, new ECKey());
+        LegacyAddress dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertFalse(sendResult.broadcastComplete.isDone());
         Transaction t1;
@@ -208,7 +208,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         });
 
         // Now create a spend, and expect the announcement on p1.
-        Address dest = Address.fromKey(UNITTEST, new ECKey());
+        LegacyAddress dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertNotNull(sendResult.tx);
         Threading.waitForUserCode();

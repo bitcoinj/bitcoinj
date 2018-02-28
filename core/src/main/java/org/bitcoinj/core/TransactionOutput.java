@@ -84,9 +84,9 @@ public class TransactionOutput extends ChildMessage {
     /**
      * Creates an output that sends 'value' to the given address (public key hash). The amount should be created with
      * something like {@link Coin#valueOf(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
+     * {@link Transaction#addOutput(Coin, LegacyAddress)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, LegacyAddress to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
@@ -129,7 +129,7 @@ public class TransactionOutput extends ChildMessage {
      * @return an address made out of the public key hash
      */
     @Nullable
-    public Address getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
+    public LegacyAddress getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
         if (ScriptPattern.isPayToPubKeyHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
@@ -149,7 +149,7 @@ public class TransactionOutput extends ChildMessage {
      * @return an address that belongs to the redeem script
      */
     @Nullable
-    public Address getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
+    public LegacyAddress getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
         if (ScriptPattern.isPayToScriptHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
