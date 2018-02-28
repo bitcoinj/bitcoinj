@@ -22,6 +22,7 @@ import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.Script.ScriptType;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -60,11 +61,11 @@ public class LegacyAddressTest {
         // Test a testnet address.
         LegacyAddress a = LegacyAddress.fromPubKeyHash(TESTNET, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
-        assertFalse(a.isP2SHAddress());
+        assertEquals(ScriptType.P2PKH, a.getOutputScriptType());
 
         LegacyAddress b = LegacyAddress.fromPubKeyHash(MAINNET, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
-        assertFalse(b.isP2SHAddress());
+        assertEquals(ScriptType.P2PKH, a.getOutputScriptType());
     }
     
     @Test
@@ -150,10 +151,10 @@ public class LegacyAddressTest {
         // Test that we can construct P2SH addresses
         LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(mainNetP2SHAddress.getVersion(), MAINNET.p2shHeader);
-        assertTrue(mainNetP2SHAddress.isP2SHAddress());
+        assertEquals(ScriptType.P2SH, mainNetP2SHAddress.getOutputScriptType());
         LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
         assertEquals(testNetP2SHAddress.getVersion(), TESTNET.p2shHeader);
-        assertTrue(testNetP2SHAddress.isP2SHAddress());
+        assertEquals(ScriptType.P2SH, testNetP2SHAddress.getOutputScriptType());
 
         // Test that we can determine what network a P2SH address belongs to
         NetworkParameters mainNetParams = LegacyAddress.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");

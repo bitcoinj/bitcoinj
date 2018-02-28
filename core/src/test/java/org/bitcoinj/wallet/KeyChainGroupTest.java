@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
@@ -170,7 +171,7 @@ public class KeyChainGroupTest {
     public void currentP2SHAddress() throws Exception {
         group = createMarriedKeyChainGroup();
         LegacyAddress a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(a1.isP2SHAddress());
+        assertEquals(ScriptType.P2SH, a1.getOutputScriptType());
         LegacyAddress a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(a1, a2);
         LegacyAddress a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
@@ -182,7 +183,7 @@ public class KeyChainGroupTest {
         group = createMarriedKeyChainGroup();
         LegacyAddress a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         LegacyAddress a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(a1.isP2SHAddress());
+        assertEquals(ScriptType.P2SH, a1.getOutputScriptType());
         assertNotEquals(a1, a2);
         group.getBloomFilterElementCount();
         assertEquals(((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external

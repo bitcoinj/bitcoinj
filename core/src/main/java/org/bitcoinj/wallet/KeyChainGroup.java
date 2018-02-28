@@ -22,6 +22,7 @@ import com.google.protobuf.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.slf4j.*;
@@ -357,7 +358,7 @@ public class KeyChainGroup implements KeyBag {
     }
 
     public void markP2SHAddressAsUsed(LegacyAddress address) {
-        checkArgument(address.isP2SHAddress());
+        checkArgument(address.getOutputScriptType() == ScriptType.P2SH);
         RedeemData data = findRedeemDataFromScriptHash(address.getHash());
         if (data == null)
             return;   // Not our P2SH address.
@@ -400,7 +401,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** If the given P2SH address is "current", advance it to a new one. */
     private void maybeMarkCurrentAddressAsUsed(LegacyAddress address) {
-        checkArgument(address.isP2SHAddress());
+        checkArgument(address.getOutputScriptType() == ScriptType.P2SH);
         for (Map.Entry<KeyChain.KeyPurpose, LegacyAddress> entry : currentAddresses.entrySet()) {
             if (entry.getValue() != null && entry.getValue().equals(address)) {
                 log.info("Marking P2SH address as used: {}", address);
