@@ -429,7 +429,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         for (LegacyAddress a : addresses) {
             ByteBuffer bb = ByteBuffer.allocate(21);
             bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-            bb.put(a.getHash160());
+            bb.put(a.getHash());
 
             ReadOptions ro = new ReadOptions();
             Snapshot sn = db.getSnapshot();
@@ -443,7 +443,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 bbKey.get(); // remove the address_hashindex byte.
                 byte[] addressKey = new byte[20];
                 bbKey.get(addressKey);
-                if (!Arrays.equals(addressKey, a.getHash160())) {
+                if (!Arrays.equals(addressKey, a.getHash())) {
                     break;
                 }
                 byte[] hashBytes = new byte[32];
@@ -802,7 +802,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         }
         ByteBuffer bb = ByteBuffer.allocate(57);
         bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-        bb.put(a.getHash160());
+        bb.put(a.getHash());
         bb.put(out.getHash().getBytes());
         bb.putInt((int) out.getIndex());
         byte[] value = new byte[0];
@@ -887,10 +887,10 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             if (address == null || address.equals("")) {
                 Script sc = out.getScript();
                 a = sc.getToAddress(params);
-                hashBytes = a.getHash160();
+                hashBytes = a.getHash();
             } else {
                 a = LegacyAddress.fromBase58(params, out.getAddress());
-                hashBytes = a.getHash160();
+                hashBytes = a.getHash();
             }
         } catch (AddressFormatException e) {
             if (instrument)

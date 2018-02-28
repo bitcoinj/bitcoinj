@@ -75,7 +75,7 @@ public class DeterministicKeyChainTest {
         final LegacyAddress address = LegacyAddress.fromBase58(UNITTEST, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
         assertEquals(address, LegacyAddress.fromKey(UNITTEST, key1));
         assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", LegacyAddress.fromKey(UNITTEST, key2).toString());
-        assertEquals(key1, chain.findKeyFromPubHash(address.getHash160()));
+        assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
@@ -106,7 +106,7 @@ public class DeterministicKeyChainTest {
         final LegacyAddress address = LegacyAddress.fromBase58(UNITTEST, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
         assertEquals(address, LegacyAddress.fromKey(UNITTEST, key1));
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(UNITTEST, key2).toString());
-        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
+        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
@@ -165,7 +165,7 @@ public class DeterministicKeyChainTest {
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(UNITTEST, key2).toString());
-        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash160()));
+        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);

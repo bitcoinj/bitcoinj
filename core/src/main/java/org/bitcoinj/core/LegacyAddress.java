@@ -186,7 +186,8 @@ public class LegacyAddress extends Address {
         return Base58.encodeChecked(getVersion(), bytes);
     }
 
-    /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
+    /** @deprecated use {@link #getHash()} */
+    @Deprecated
     public byte[] getHash160() {
         return getHash();
     }

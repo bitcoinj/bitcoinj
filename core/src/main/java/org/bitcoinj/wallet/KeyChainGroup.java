@@ -358,7 +358,7 @@ public class KeyChainGroup implements KeyBag {
 
     public void markP2SHAddressAsUsed(LegacyAddress address) {
         checkArgument(address.isP2SHAddress());
-        RedeemData data = findRedeemDataFromScriptHash(address.getHash160());
+        RedeemData data = findRedeemDataFromScriptHash(address.getHash());
         if (data == null)
             return;   // Not our P2SH address.
         for (ECKey key : data.keys) {

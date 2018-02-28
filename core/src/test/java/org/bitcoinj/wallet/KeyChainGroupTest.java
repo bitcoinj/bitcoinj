@@ -202,7 +202,7 @@ public class KeyChainGroupTest {
 
         // test our script hash
         LegacyAddress address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash160());
+        RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash());
         assertNotNull(redeemData);
         assertNotNull(redeemData.redeemScript);
         assertEquals(2, redeemData.keys.size());
@@ -332,7 +332,7 @@ public class KeyChainGroupTest {
     public void findRedeemScriptFromPubHash() throws Exception {
         group = createMarriedKeyChainGroup();
         LegacyAddress address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(group.findRedeemDataFromScriptHash(address.getHash160()) != null);
+        assertTrue(group.findRedeemDataFromScriptHash(address.getHash()) != null);
         group.getBloomFilterElementCount();
         KeyChainGroup group2 = createMarriedKeyChainGroup();
         group2.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -340,9 +340,9 @@ public class KeyChainGroupTest {
         // test address from lookahead zone and lookahead threshold zone
         for (int i = 0; i < group.getLookaheadSize() + group.getLookaheadThreshold(); i++) {
             address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            assertTrue(group2.findRedeemDataFromScriptHash(address.getHash160()) != null);
+            assertTrue(group2.findRedeemDataFromScriptHash(address.getHash()) != null);
         }
-        assertFalse(group2.findRedeemDataFromScriptHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()) != null);
+        assertFalse(group2.findRedeemDataFromScriptHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash()) != null);
     }
 
     @Test
@@ -354,18 +354,18 @@ public class KeyChainGroupTest {
         LegacyAddress address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(expected, group.getBloomFilterElementCount());
         BloomFilter filter = group.getBloomFilter(expected + 2, 0.001, (long)(Math.random() * Long.MAX_VALUE));
-        assertTrue(filter.contains(address1.getHash160()));
+        assertTrue(filter.contains(address1.getHash()));
 
         LegacyAddress address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
-        assertTrue(filter.contains(address2.getHash160()));
+        assertTrue(filter.contains(address2.getHash()));
 
         // Check that the filter contains the lookahead buffer.
         for (int i = 0; i < bufferSize - 1 /* issued address */; i++) {
             LegacyAddress address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            assertTrue("key " + i, filter.contains(address.getHash160()));
+            assertTrue("key " + i, filter.contains(address.getHash()));
         }
         // We ran ahead of the lookahead buffer.
-        assertFalse(filter.contains(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash160()));
+        assertFalse(filter.contains(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash()));
     }
 
     @Test
@@ -581,7 +581,7 @@ public class KeyChainGroupTest {
         LegacyAddress addr1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         LegacyAddress addr2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(addr1, addr2);
-        group.markPubKeyHashAsUsed(addr1.getHash160());
+        group.markPubKeyHashAsUsed(addr1.getHash());
         LegacyAddress addr3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertNotEquals(addr2, addr3);
     }

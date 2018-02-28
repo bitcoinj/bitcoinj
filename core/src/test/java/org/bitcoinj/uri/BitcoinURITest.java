@@ -88,7 +88,7 @@ public class BitcoinURITest {
         assertNotNull(testObject);
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
-        assertEquals("Unexpected label", 20, testObject.getAddress().getHash160().length);
+        assertEquals("Unexpected label", 20, testObject.getAddress().getHash().length);
     }
 
     /**
