@@ -52,7 +52,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
             for (NetworkParameters p : Networks.get())
                 if (version == p.getDumpedPrivateKeyHeader())
                     return new DumpedPrivateKey(p, bytes);
-            throw new AddressFormatException("No network found for " + base58);
+            throw new AddressFormatException("No network found for version " + version);
         } else {
             if (version == params.getDumpedPrivateKeyHeader())
                 return new DumpedPrivateKey(params, bytes);
