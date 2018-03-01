@@ -25,15 +25,13 @@ import java.util.List;
  * <p>A {@link org.bitcoinj.store.FullPrunedBlockStore} is an internal implementation within bitcoinj.</p>
  */
 public interface UTXOProvider {
-
-    // TODO currently the access to outputs is by address. Change to ECKey
     /**
-     * Get the list of {@link UTXO}'s for a given address.
-     * @param addresses List of address.
+     * Get the list of {@link UTXO}'s for given keys.
+     * @param keys List of keys.
      * @return The list of transaction outputs.
      * @throws UTXOProviderException If there is an error.
      */
-    List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException;
+    List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException;
 
     /**
      * Get the height of the chain head.

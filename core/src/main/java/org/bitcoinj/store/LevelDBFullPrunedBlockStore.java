@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -420,16 +421,16 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
         // Run this on a snapshot of database so internally consistent result
         // This is critical or if one address paid another could get incorrect
         // results
 
         List<UTXO> results = new LinkedList<>();
-        for (LegacyAddress a : addresses) {
+        for (ECKey key : keys) {
             ByteBuffer bb = ByteBuffer.allocate(21);
             bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-            bb.put(a.getHash());
+            bb.put(key.getPubKeyHash());
 
             ReadOptions ro = new ReadOptions();
             Snapshot sn = db.getSnapshot();
@@ -443,7 +444,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 bbKey.get(); // remove the address_hashindex byte.
                 byte[] addressKey = new byte[20];
                 bbKey.get(addressKey);
-                if (!Arrays.equals(addressKey, a.getHash())) {
+                if (!Arrays.equals(addressKey, key.getPubKeyHash())) {
                     break;
                 }
                 byte[] hashBytes = new byte[32];

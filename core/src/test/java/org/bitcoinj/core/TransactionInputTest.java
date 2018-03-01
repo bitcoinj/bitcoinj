@@ -69,7 +69,7 @@ public class TransactionInputTest {
             }
 
             @Override
-            public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
+            public List<UTXO> getOpenTransactionOutputs(List<ECKey> addresses) throws UTXOProviderException {
                 return Lists.newArrayList(utxo);
             }
 

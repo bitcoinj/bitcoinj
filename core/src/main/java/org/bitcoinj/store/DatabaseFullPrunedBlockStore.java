@@ -1150,14 +1150,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<>();
         try {
             maybeConnect();
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
-            for (LegacyAddress address : addresses) {
-                s.setString(1, address.toString());
+            for (ECKey key : keys) {
+                // TODO switch to pubKeyHash in order to support native segwit addresses
+                s.setString(1, LegacyAddress.fromKey(params, key).toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));

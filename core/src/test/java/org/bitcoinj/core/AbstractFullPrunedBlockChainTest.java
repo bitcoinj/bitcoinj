@@ -272,7 +272,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(toKey));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);

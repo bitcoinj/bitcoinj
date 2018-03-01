@@ -4300,12 +4300,7 @@ public class Wallet extends BaseTaggableObject
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
-        List<LegacyAddress> addresses = new ArrayList<>();
-        for (ECKey key : keys) {
-            LegacyAddress address = LegacyAddress.fromKey(params, key);
-            addresses.add(address);
-        }
-        candidates.addAll(utxoProvider.getOpenTransactionOutputs(addresses));
+        candidates.addAll(utxoProvider.getOpenTransactionOutputs(keys));
         return candidates;
     }
 
