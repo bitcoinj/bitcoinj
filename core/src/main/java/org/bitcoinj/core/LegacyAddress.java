@@ -63,9 +63,10 @@ public class LegacyAddress extends Address {
      * @param hash160
      *            20-byte hash of pubkey or script
      */
-    private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws WrongNetworkException {
+    private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws AddressFormatException {
         super(params, hash160);
-        checkArgument(hash160.length == 20, "Addresses are 160-bit hashes, so you must provide 20 bytes");
+        if (hash160.length != 20)
+            throw new AddressFormatException("Legacy addresses are 160-bit hashes, so you must provide 20 bytes");
         this.p2sh = p2sh;
     }
 
@@ -79,7 +80,7 @@ public class LegacyAddress extends Address {
      *            20-byte pubkey hash
      * @return constructed address
      */
-    public static LegacyAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) {
+    public static LegacyAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(params, false, hash160);
     }
 
@@ -106,12 +107,8 @@ public class LegacyAddress extends Address {
      *            P2SH script hash
      * @return constructed address
      */
-    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
-        try {
-            return new LegacyAddress(params, true, hash160);
-        } catch (WrongNetworkException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
+    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+        return new LegacyAddress(params, true, hash160);
     }
 
     /**
@@ -141,7 +138,8 @@ public class LegacyAddress extends Address {
      * @throws WrongNetworkException
      *             if the given address is valid but for a different chain (eg testnet vs mainnet)
      */
-    public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58) throws AddressFormatException {
+    public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
+            throws AddressFormatException, WrongNetworkException {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
@@ -164,7 +162,7 @@ public class LegacyAddress extends Address {
 
     /** @deprecated use {@link #fromPubKeyHash(NetworkParameters, byte[])} */
     @Deprecated
-    public LegacyAddress(NetworkParameters params, byte[] hash160) {
+    public LegacyAddress(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         this(params, false, hash160);
     }
 
@@ -221,14 +219,10 @@ public class LegacyAddress extends Address {
      * compatible with the current wallet.
      * 
      * @return network the address is valid for
-     * @throws AddressFormatException if the string wasn't of a known version
+     * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
      */
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        try {
-            return LegacyAddress.fromBase58(null, address).getParameters();
-        } catch (WrongNetworkException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        return LegacyAddress.fromBase58(null, address).getParameters();
     }
 
     @Override
