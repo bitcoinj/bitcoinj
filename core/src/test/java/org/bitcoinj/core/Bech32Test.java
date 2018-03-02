@@ -71,6 +71,16 @@ public class Bech32Test {
             "de1lg7wt" + new String(new char[] { 0xff }),
     };
 
+    @Test(expected = AddressFormatException.InvalidCharacter.class)
+    public void decode_invalidCharacter_notInAlphabet() {
+        Bech32.decode("A12OUEL5X");
+    }
+
+    @Test(expected = AddressFormatException.InvalidCharacter.class)
+    public void decode_invalidCharacter_upperLowerMix() {
+        Bech32.decode("A12UeL5X");
+    }
+
     @Test(expected = AddressFormatException.InvalidChecksum.class)
     public void decode_invalidNetwork() {
         Bech32.decode("A12UEL5X");

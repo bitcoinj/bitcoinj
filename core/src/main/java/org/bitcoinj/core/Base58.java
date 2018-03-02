@@ -129,7 +129,7 @@ public class Base58 {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
             if (digit < 0) {
-                throw new AddressFormatException("Illegal character " + c + " at position " + i);
+                throw new AddressFormatException.InvalidCharacter(c, i);
             }
             input58[i] = (byte) digit;
         }
