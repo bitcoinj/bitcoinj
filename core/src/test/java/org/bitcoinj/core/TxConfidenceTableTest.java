@@ -27,7 +27,7 @@ import static org.bitcoinj.core.Coin.*;
 import static org.junit.Assert.*;
 
 public class TxConfidenceTableTest {
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private Transaction tx1, tx2;
     private PeerAddress address1, address2, address3;
     private TxConfidenceTable table;
@@ -35,24 +35,24 @@ public class TxConfidenceTableTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        Context context = new Context(PARAMS);
+        Context context = new Context(UNITTEST);
         table = context.getConfidenceTable();
 
-        Address to = new ECKey().toAddress(PARAMS);
-        Address change = new ECKey().toAddress(PARAMS);
+        LegacyAddress to = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        LegacyAddress change = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
-        tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(PARAMS, COIN, to, change);
-        tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(PARAMS, COIN, to, change);
+        tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);
+        tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);
         assertEquals(tx1.getHash(), tx2.getHash());
 
-        address1 = new PeerAddress(PARAMS, InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
-        address2 = new PeerAddress(PARAMS, InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
-        address3 = new PeerAddress(PARAMS, InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
+        address1 = new PeerAddress(UNITTEST, InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
+        address2 = new PeerAddress(UNITTEST, InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
+        address3 = new PeerAddress(UNITTEST, InetAddress.getByAddress(new byte[] { 127, 0, 0, 3 }));
     }
 
     @Test
     public void pinHandlers() throws Exception {
-        Transaction tx = PARAMS.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
+        Transaction tx = UNITTEST.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
         Sha256Hash hash = tx.getHash();
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());

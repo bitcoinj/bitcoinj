@@ -141,11 +141,11 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (connectedScript.isSentToAddress()) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return keyBag.findKeyFromPubHash(addressBytes);
-        } else if (connectedScript.isSentToRawPubKey()) {
-            byte[] pubkeyBytes = connectedScript.getPubKey();
+        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
@@ -164,14 +164,14 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (connectedScript.isSentToAddress()) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
-        } else if (connectedScript.isSentToRawPubKey()) {
-            byte[] pubkeyBytes = connectedScript.getPubKey();
+        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
-        } else if (connectedScript.isPayToScriptHash()) {
-            byte[] scriptHash = connectedScript.getPubKeyHash();
+        } else if (ScriptPattern.isPayToScriptHash(connectedScript)) {
+            byte[] scriptHash = ScriptPattern.extractHashFromPayToScriptHash(connectedScript);
             return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);

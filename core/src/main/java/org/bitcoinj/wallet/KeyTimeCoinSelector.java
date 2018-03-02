@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -61,10 +62,10 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 // We ignore any other kind of exotic output on the assumption we can't spend it ourselves.
                 final Script scriptPubKey = output.getScriptPubKey();
                 ECKey controllingKey;
-                if (scriptPubKey.isSentToRawPubKey()) {
-                    controllingKey = wallet.findKeyFromPubKey(scriptPubKey.getPubKey());
-                } else if (scriptPubKey.isSentToAddress()) {
-                    controllingKey = wallet.findKeyFromPubHash(scriptPubKey.getPubKeyHash());
+                if (ScriptPattern.isPayToPubKey(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromPayToPubKey(scriptPubKey));
+                } else if (ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey));
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;

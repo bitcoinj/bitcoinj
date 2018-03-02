@@ -617,7 +617,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
             NetworkParameters params) {
-        final Address address = toAddress(params);
+        final LegacyAddress address = LegacyAddress.fromKey(params, this);
         builder.append("  addr:").append(address);
         builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString()).append(")\n");

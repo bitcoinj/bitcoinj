@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 John L. Jegutanis
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +18,10 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
+
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
@@ -28,26 +32,27 @@ import static org.junit.Assert.assertTrue;
 
 public class ScriptPatternTest {
     private List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
+    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
     public void testCommonScripts() {
-        assertTrue(ScriptPattern.isSentToAddress(
-                ScriptBuilder.createOutputScript(keys.get(0).toAddress(MainNetParams.get())).getChunks()
+        assertTrue(ScriptPattern.isPayToPubKeyHash(
+                ScriptBuilder.createOutputScript(LegacyAddress.fromKey(MAINNET, keys.get(0)))
         ));
         assertTrue(ScriptPattern.isPayToScriptHash(
-                ScriptBuilder.createP2SHOutputScript(2, keys).getChunks()
+                ScriptBuilder.createP2SHOutputScript(2, keys)
         ));
         assertTrue(ScriptPattern.isSentToMultisig(
-                ScriptBuilder.createMultiSigOutputScript(2, keys).getChunks()
+                ScriptBuilder.createMultiSigOutputScript(2, keys)
         ));
-        assertTrue(ScriptPattern.isSentToRawPubKey(
-                ScriptBuilder.createOutputScript(keys.get(0)).getChunks()
+        assertTrue(ScriptPattern.isPayToPubKey(
+                ScriptBuilder.createOutputScript(keys.get(0))
         ));
         assertTrue(ScriptPattern.isSentToCltvPaymentChannel(
-                ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1)).getChunks()
+                ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1))
         ));
         assertTrue(ScriptPattern.isOpReturn(
-                ScriptBuilder.createOpReturnScript(new byte[10]).getChunks()
+                ScriptBuilder.createOpReturnScript(new byte[10])
         ));
     }
 }

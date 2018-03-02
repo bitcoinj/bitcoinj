@@ -48,13 +48,13 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
-    protected static final NetworkParameters PARAMS = UnitTestParams.get();
+    protected static final NetworkParameters UNITTEST = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
     protected ECKey key;
-    protected Address address;
+    protected LegacyAddress address;
     protected SocketAddress socketAddress;
 
     private NioServer[] peerServers = new NioServer[PEER_SERVERS];
@@ -79,20 +79,20 @@ public class TestWithNetworkConnections {
     }
 
     public void setUp() throws Exception {
-        setUp(new MemoryBlockStore(UnitTestParams.get()));
+        setUp(new MemoryBlockStore(UNITTEST));
     }
     
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
-            wallet = new Wallet(PARAMS);
+            wallet = new Wallet(UNITTEST);
             key = wallet.freshReceiveKey();
-            address = key.toAddress(PARAMS);
+            address = LegacyAddress.fromKey(UNITTEST, key);
         }
-        blockChain = new BlockChain(PARAMS, wallet, blockStore);
+        blockChain = new BlockChain(UNITTEST, wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -114,7 +114,7 @@ public class TestWithNetworkConnections {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(PARAMS) {
+                return new InboundMessageQueuer(UNITTEST) {
                     @Override
                     public void connectionClosed() {
                     }

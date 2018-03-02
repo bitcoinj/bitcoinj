@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 John L. Jegutanis
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +17,9 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static org.bitcoinj.script.Script.decodeFromOpN;
@@ -27,17 +29,38 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * This is a Script pattern matcher with some typical script patterns
  */
 public class ScriptPattern {
-    public static boolean isSentToAddress(List<ScriptChunk> chunks) {
+    /**
+     * Returns true if this script is of the form DUP HASH160 <pubkey hash> EQUALVERIFY CHECKSIG, ie, payment to an
+     * address like 1VayNert3x1KzbpzMGt2qdqrAThiRovi8. This form was originally intended for the case where you wish
+     * to send somebody money with a written code because their node is offline, but over time has become the standard
+     * way to make payments due to the short and recognizable base58 form addresses come in.
+     */
+    public static boolean isPayToPubKeyHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 5 &&
                chunks.get(0).equalsOpCode(OP_DUP) &&
                chunks.get(1).equalsOpCode(OP_HASH160) &&
                chunks.get(2).data != null &&
-               chunks.get(2).data.length == Address.LENGTH &&
+               chunks.get(2).data.length == LegacyAddress.LENGTH &&
                chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
                chunks.get(4).equalsOpCode(OP_CHECKSIG);
     }
 
-    public static boolean isPayToScriptHash(List<ScriptChunk> chunks) {
+    /**
+     * Extract the pubkey hash from a P2PKH scriptPubKey. It's important that the script is in the correct form, so you
+     * will want to guard calls to this method with {@link #isPayToPubKeyHash(Script)}.
+     */
+    public static byte[] extractHashFromPayToPubKeyHash(Script script) {
+        return script.chunks.get(2).data;
+    }
+
+    /**
+     * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
+     * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
+     * spending input to provide a program matching that hash.
+     */
+    public static boolean isPayToScriptHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         // We check for the effective serialized form because BIP16 defines a P2SH output using an exact byte
         // template, not the logical program structure. Thus you can have two programs that look identical when
         // printed out but one is a P2SH script and the other isn't! :(
@@ -47,11 +70,26 @@ public class ScriptPattern {
                chunks.get(0).equalsOpCode(OP_HASH160) &&
                chunks.get(1).opcode == 0x14 &&
                chunks.get(1).data != null &&
-               chunks.get(1).data.length == Address.LENGTH &&
+               chunks.get(1).data.length == LegacyAddress.LENGTH &&
                chunks.get(2).equalsOpCode(OP_EQUAL);
     }
 
-    public static boolean isSentToRawPubKey(List<ScriptChunk> chunks) {
+    /**
+     * Extract the script hash from a P2SH scriptPubKey. It's important that the script is in the correct form, so you
+     * will want to guard calls to this method with {@link #isPayToScriptHash(Script)}.
+     */
+    public static byte[] extractHashFromPayToScriptHash(Script script) {
+        return script.chunks.get(1).data;
+    }
+
+    /**
+     * Returns true if this script is of the form <pubkey> OP_CHECKSIG. This form was originally intended for transactions
+     * where the peers talked to each other directly via TCP/IP, but has fallen out of favor with time due to that mode
+     * of operation being susceptible to man-in-the-middle attacks. It is still used in coinbase outputs and can be
+     * useful more exotic types of transaction, but today most payments are to addresses.
+     */
+    public static boolean isPayToPubKey(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() == 2 &&
                chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
                !chunks.get(0).isOpCode() &&
@@ -59,7 +97,19 @@ public class ScriptPattern {
                chunks.get(0).data.length > 1;
     }
 
-    public static boolean isSentToMultisig(List<ScriptChunk> chunks) {
+    /**
+     * Extract the pubkey from a P2SH scriptPubKey. It's important that the script is in the correct form, so you will
+     * want to guard calls to this method with {@link #isPayToPubKey(Script)}.
+     */
+    public static byte[] extractKeyFromPayToPubKey(Script script) {
+        return script.chunks.get(0).data;
+    }
+
+    /**
+     * Returns whether this script matches the format used for multisig outputs: [n] [keys...] [m] CHECKMULTISIG
+     */
+    public static boolean isSentToMultisig(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() < 4) return false;
         ScriptChunk chunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY].
@@ -82,7 +132,11 @@ public class ScriptPattern {
         return true;
     }
 
-    public static boolean isSentToCltvPaymentChannel(List<ScriptChunk> chunks) {
+    /**
+     * Returns whether this script matches the format used for LOCKTIMEVERIFY transactions.
+     */
+    public static boolean isSentToCltvPaymentChannel(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() != 10) return false;
         // Check that opcodes match the pre-determined format.
         if (!chunks.get(0).equalsOpCode(OP_IF)) return false;
@@ -98,7 +152,37 @@ public class ScriptPattern {
         return true;
     }
 
-    public static boolean isOpReturn(List<ScriptChunk> chunks) {
+    /**
+     * Retrieves the public key of the sender from a LOCKTIMEVERIFY transaction. It's important that the script is in
+     * the correct form, so you will want to guard calls to this method with
+     * {@link #isSentToCltvPaymentChannel(Script)}.
+     */
+    public static byte[] extractSenderPubKeyFromCltvPaymentChannel(Script script) {
+        return script.chunks.get(8).data;
+    }
+
+    /**
+     * Retrieves the public key of the recipient from a LOCKTIMEVERIFY transaction. It's important that the script is in
+     * the correct form, so you will want to guard calls to this method with
+     * {@link #isSentToCltvPaymentChannel(Script)}.
+     */
+    public static byte[] extractRecipientPubKeyFromCltvPaymentChannel(Script script) {
+        return script.chunks.get(1).data;
+    }
+
+    /**
+     * Retrieves the locktime from a LOCKTIMEVERIFY transaction. It's important that the script is in the correct form,
+     * so you will want to guard calls to this method with {@link #isSentToCltvPaymentChannel(Script)}.
+     */
+    public static BigInteger extractExpiryFromCltvPaymentChannel(Script script) {
+        return Script.castToBigInteger(script.chunks.get(4).data, 5, false);
+    }
+
+    /**
+     * Returns whether this script is using OP_RETURN to store arbitrary data.
+     */
+    public static boolean isOpReturn(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 }

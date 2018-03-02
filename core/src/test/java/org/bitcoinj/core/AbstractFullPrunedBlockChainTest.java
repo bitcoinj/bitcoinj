@@ -57,6 +57,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
             return 10000;
         }
     };
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
 
@@ -219,12 +221,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
     
     @Test
     public void testFirst100KBlocks() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        Context context = new Context(params);
+        Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
         
-        store = createStore(params, 10);
+        store = createStore(MAINNET, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(context, store);
         for (Block block : loader)
@@ -260,7 +261,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        Address address = new Address(PARAMS, toKey.getPubKeyHash());
+        LegacyAddress address = LegacyAddress.fromKey(PARAMS, toKey);
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
@@ -327,7 +328,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
+        LegacyAddress address2 = LegacyAddress.fromKey(PARAMS, toKey2);
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);

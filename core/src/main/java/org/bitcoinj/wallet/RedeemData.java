@@ -18,6 +18,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptPattern;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class RedeemData {
      * to spend such inputs and provided program should be a proper CHECKSIG program.
      */
     public static RedeemData of(ECKey key, Script program) {
-        checkArgument(program.isSentToAddress() || program.isSentToRawPubKey());
+        checkArgument(ScriptPattern.isPayToPubKeyHash(program) || ScriptPattern.isPayToPubKey(program));
         return key != null ? new RedeemData(Collections.singletonList(key), program) : null;
     }
 

@@ -25,7 +25,7 @@ import java.util.Arrays;
  * <p>
  * Note that this is not the same base58 as used by Flickr, which you may find referenced around the Internet.
  * <p>
- * You may want to consider working with {@link VersionedChecksummedBytes} instead, which
+ * You may want to consider working with {@link PrefixedChecksummedBytes} instead, which
  * adds support for testing the prefix and suffix bytes commonly found in addresses.
  * <p>
  * Satoshi explains: why base-58 instead of standard base-64 encoding?
@@ -129,7 +129,7 @@ public class Base58 {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
             if (digit < 0) {
-                throw new AddressFormatException("Illegal character " + c + " at position " + i);
+                throw new AddressFormatException.InvalidCharacter(c, i);
             }
             input58[i] = (byte) digit;
         }
@@ -175,7 +175,7 @@ public class Base58 {
         byte[] checksum = Arrays.copyOfRange(decoded, decoded.length - 4, decoded.length);
         byte[] actualChecksum = Arrays.copyOfRange(Sha256Hash.hashTwice(data), 0, 4);
         if (!Arrays.equals(checksum, actualChecksum))
-            throw new AddressFormatException("Checksum does not validate");
+            throw new AddressFormatException.InvalidChecksum();
         return data;
     }
 

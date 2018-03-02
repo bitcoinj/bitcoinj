@@ -46,7 +46,7 @@ public class Base58Test {
 
     @Test
     public void testEncodeChecked_address() throws Exception {
-        String encoded = Base58.encodeChecked(111, new byte[Address.LENGTH]);
+        String encoded = Base58.encodeChecked(111, new byte[LegacyAddress.LENGTH]);
         assertEquals("mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8", encoded);
     }
 
@@ -83,8 +83,13 @@ public class Base58Test {
         Base58.decodeChecked("93VYUMzRG9DdbRP72uQXjaWibbQwygnvaCu9DumcqDjGybD864T");
     }
 
-    @Test(expected = AddressFormatException.class)
-    public void testDecodeChecked_badChecksum() {
+    @Test(expected = AddressFormatException.InvalidCharacter.class)
+    public void decode_invalidCharacter_notInAlphabet() {
+        Base58.decodeChecked("J0F12TrwUP45BMd");
+    }
+
+    @Test(expected = AddressFormatException.InvalidChecksum.class)
+    public void testDecodeChecked_invalidChecksum() {
         Base58.decodeChecked("4stwEBjT6FYyVW");
     }
 

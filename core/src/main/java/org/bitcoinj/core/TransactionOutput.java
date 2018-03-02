@@ -84,9 +84,9 @@ public class TransactionOutput extends ChildMessage {
     /**
      * Creates an output that sends 'value' to the given address (public key hash). The amount should be created with
      * something like {@link Coin#valueOf(int, int)}. Typically you would use
-     * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
+     * {@link Transaction#addOutput(Coin, LegacyAddress)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, LegacyAddress to) {
         this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
@@ -129,8 +129,8 @@ public class TransactionOutput extends ChildMessage {
      * @return an address made out of the public key hash
      */
     @Nullable
-    public Address getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
-        if (getScriptPubKey().isSentToAddress())
+    public LegacyAddress getAddressFromP2PKHScript(NetworkParameters networkParameters) throws ScriptException{
+        if (ScriptPattern.isPayToPubKeyHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
         return null;
@@ -149,8 +149,8 @@ public class TransactionOutput extends ChildMessage {
      * @return an address that belongs to the redeem script
      */
     @Nullable
-    public Address getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
-        if (getScriptPubKey().isPayToScriptHash())
+    public LegacyAddress getAddressFromP2SH(NetworkParameters networkParameters) throws ScriptException{
+        if (ScriptPattern.isPayToScriptHash(getScriptPubKey()))
             return getScriptPubKey().getToAddress(networkParameters);
 
         return null;
@@ -212,7 +212,7 @@ public class TransactionOutput extends ChildMessage {
      */
     public boolean isDust() {
         // Transactions that are OP_RETURN can't be dust regardless of their value.
-        if (getScriptPubKey().isOpReturn())
+        if (ScriptPattern.isOpReturn(getScriptPubKey()))
             return false;
         return getValue().isLessThan(getMinNonDustValue());
     }
@@ -321,11 +321,10 @@ public class TransactionOutput extends ChildMessage {
     public boolean isMine(TransactionBag transactionBag) {
         try {
             Script script = getScriptPubKey();
-            if (script.isSentToRawPubKey()) {
-                byte[] pubkey = script.getPubKey();
-                return transactionBag.isPubKeyMine(pubkey);
-            } if (script.isPayToScriptHash()) {
-                return transactionBag.isPayToScriptHashMine(script.getPubKeyHash());
+            if (ScriptPattern.isPayToPubKey(script)) {
+                return transactionBag.isPubKeyMine(ScriptPattern.extractKeyFromPayToPubKey(script));
+            } if (ScriptPattern.isPayToScriptHash(script)) {
+                return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromPayToScriptHash(script));
             } else {
                 byte[] pubkeyHash = script.getPubKeyHash();
                 return transactionBag.isPubKeyHashMine(pubkeyHash);
@@ -346,11 +345,11 @@ public class TransactionOutput extends ChildMessage {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
             buf.append(Coin.valueOf(value).toFriendlyString());
-            if (script.isSentToAddress() || script.isPayToScriptHash())
+            if (ScriptPattern.isPayToPubKeyHash(script) || ScriptPattern.isPayToScriptHash(script))
                 buf.append(" to ").append(script.getToAddress(params));
-            else if (script.isSentToRawPubKey())
-                buf.append(" to pubkey ").append(Utils.HEX.encode(script.getPubKey()));
-            else if (script.isSentToMultiSig())
+            else if (ScriptPattern.isPayToPubKey(script))
+                buf.append(" to pubkey ").append(Utils.HEX.encode(ScriptPattern.extractKeyFromPayToPubKey(script)));
+            else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else
                 buf.append(" (unknown type)");

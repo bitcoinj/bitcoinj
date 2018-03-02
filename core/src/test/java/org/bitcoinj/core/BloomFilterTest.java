@@ -28,6 +28,8 @@ import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
 public class BloomFilterTest {
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     @Test
     public void insertSerializeTest() {
         BloomFilter filter = new BloomFilter(3, 0.01, 0, BloomFilter.BloomUpdate.UPDATE_ALL);
@@ -68,19 +70,18 @@ public class BloomFilterTest {
 
     @Test
     public void walletTest() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        Context.propagate(new Context(params));
+        Context.propagate(new Context(MAINNET));
 
-        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(params, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
+        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
 
-        Address addr = privKey.getKey().toAddress(params);
+        LegacyAddress addr = LegacyAddress.fromKey(MAINNET, privKey.getKey());
         assertTrue(addr.toString().equals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e"));
 
-        KeyChainGroup group = new KeyChainGroup(params);
+        KeyChainGroup group = new KeyChainGroup(MAINNET);
         // Add a random key which happens to have been used in a recent generation
         group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
-        Wallet wallet = new Wallet(params, group);
-        wallet.commitTx(new Transaction(params, HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0d038754030114062f503253482fffffffff01c05e559500000000232103cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99ac00000000")));
+        Wallet wallet = new Wallet(MAINNET, group);
+        wallet.commitTx(new Transaction(MAINNET, HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0d038754030114062f503253482fffffffff01c05e559500000000232103cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99ac00000000")));
         
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have
         assertEquals(5, wallet.getBloomFilterElementCount());

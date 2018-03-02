@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
-    private static Address forwardingAddress;
+    private static LegacyAddress forwardingAddress;
     private static WalletAppKit kit;
 
     public static void main(String[] args) throws Exception {
@@ -65,7 +65,7 @@ public class ForwardingService {
             filePrefix = "forwarding-service";
         }
         // Parse the address given as the first parameter.
-        forwardingAddress = Address.fromBase58(params, args[0]);
+        forwardingAddress = LegacyAddress.fromBase58(params, args[0]);
 
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(params, new File("."), filePrefix);
@@ -111,7 +111,7 @@ public class ForwardingService {
             }
         });
 
-        Address sendToAddress = kit.wallet().currentReceiveKey().toAddress(params);
+        LegacyAddress sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
         System.out.println("Send coins to: " + sendToAddress);
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 

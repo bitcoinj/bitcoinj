@@ -26,7 +26,7 @@ import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Coin;
@@ -440,7 +440,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #currentKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public Address currentAddress(KeyChain.KeyPurpose purpose) {
+    public LegacyAddress currentAddress(KeyChain.KeyPurpose purpose) {
         keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
@@ -454,7 +454,7 @@ public class Wallet extends BaseTaggableObject
      * An alias for calling {@link #currentAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public Address currentReceiveAddress() {
+    public LegacyAddress currentReceiveAddress() {
         return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -504,8 +504,8 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #freshKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public Address freshAddress(KeyChain.KeyPurpose purpose) {
-        Address key;
+    public LegacyAddress freshAddress(KeyChain.KeyPurpose purpose) {
+        LegacyAddress key;
         keyChainGroupLock.lock();
         try {
             key = keyChainGroup.freshAddress(purpose);
@@ -520,7 +520,7 @@ public class Wallet extends BaseTaggableObject
      * An alias for calling {@link #freshAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public Address freshReceiveAddress() {
+    public LegacyAddress freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -541,11 +541,11 @@ public class Wallet extends BaseTaggableObject
      * Returns only the addresses that have been issued by {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
      * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
      */
-    public List<Address> getIssuedReceiveAddresses() {
+    public List<LegacyAddress> getIssuedReceiveAddresses() {
         final List<ECKey> keys = getIssuedReceiveKeys();
-        List<Address> addresses = new ArrayList<>(keys.size());
+        List<LegacyAddress> addresses = new ArrayList<>(keys.size());
         for (ECKey key : keys)
-            addresses.add(key.toAddress(getParams()));
+            addresses.add(LegacyAddress.fromKey(getParams(), key));
         return addresses;
     }
 
@@ -659,13 +659,13 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
-    public Address currentChangeAddress() {
+    public LegacyAddress currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
     /**
      * @deprecated use {@link #currentChangeAddress()} instead.
      */
-    public Address getChangeAddress() {
+    public LegacyAddress getChangeAddress() {
         return currentChangeAddress();
     }
 
@@ -844,15 +844,15 @@ public class Wallet extends BaseTaggableObject
     /**
      * Return true if we are watching this address.
      */
-    public boolean isAddressWatched(Address address) {
+    public boolean isAddressWatched(LegacyAddress address) {
         Script script = ScriptBuilder.createOutputScript(address);
         return isWatchedScript(script);
     }
 
     /**
-     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
+     * Same as {@link #addWatchedAddress(LegacyAddress, long)} with the current time as the creation time.
      */
-    public boolean addWatchedAddress(final Address address) {
+    public boolean addWatchedAddress(final LegacyAddress address) {
         long now = Utils.currentTimeMillis() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
@@ -863,7 +863,7 @@ public class Wallet extends BaseTaggableObject
      * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
      * @return whether the address was added successfully (not already present)
      */
-    public boolean addWatchedAddress(final Address address, long creationTime) {
+    public boolean addWatchedAddress(final LegacyAddress address, long creationTime) {
         return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
     }
 
@@ -873,10 +873,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return how many addresses were added successfully
      */
-    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
+    public int addWatchedAddresses(final List<LegacyAddress> addresses, long creationTime) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (Address address : addresses) {
+        for (LegacyAddress address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             script.setCreationTimeSeconds(creationTime);
             scripts.add(script);
@@ -923,7 +923,7 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddress(final Address address) {
+    public boolean removeWatchedAddress(final LegacyAddress address) {
         return removeWatchedAddresses(ImmutableList.of(address));
     }
 
@@ -932,10 +932,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddresses(final List<Address> addresses) {
+    public boolean removeWatchedAddresses(final List<LegacyAddress> addresses) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (Address address : addresses) {
+        for (LegacyAddress address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             scripts.add(script);
         }
@@ -969,12 +969,12 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns all addresses watched by this wallet.
      */
-    public List<Address> getWatchedAddresses() {
+    public List<LegacyAddress> getWatchedAddresses() {
         keyChainGroupLock.lock();
         try {
-            List<Address> addresses = new LinkedList<>();
+            List<LegacyAddress> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
-                if (script.isSentToAddress())
+                if (ScriptPattern.isPayToPubKeyHash(script))
                     addresses.add(script.getToAddress(params));
             return addresses;
         } finally {
@@ -1078,14 +1078,14 @@ public class Wallet extends BaseTaggableObject
             for (TransactionOutput o : tx.getOutputs()) {
                 try {
                     Script script = o.getScriptPubKey();
-                    if (script.isSentToRawPubKey()) {
-                        byte[] pubkey = script.getPubKey();
+                    if (ScriptPattern.isPayToPubKey(script)) {
+                        byte[] pubkey = ScriptPattern.extractKeyFromPayToPubKey(script);
                         keyChainGroup.markPubKeyAsUsed(pubkey);
-                    } else if (script.isSentToAddress()) {
-                        byte[] pubkeyHash = script.getPubKeyHash();
+                    } else if (ScriptPattern.isPayToPubKeyHash(script)) {
+                        byte[] pubkeyHash = ScriptPattern.extractHashFromPayToPubKeyHash(script);
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
-                    } else if (script.isPayToScriptHash()) {
-                        Address a = Address.fromP2SHScript(tx.getParams(), script);
+                    } else if (ScriptPattern.isPayToScriptHash(script)) {
+                        LegacyAddress a = LegacyAddress.fromP2SHScript(tx.getParams(), script);
                         keyChainGroup.markP2SHAddressAsUsed(a);
                     }
                 } catch (ScriptException e) {
@@ -3044,7 +3044,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(Address)} or
+     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(LegacyAddress)} or
      * {@link #addWatchedScripts(java.util.List)}.
      * @param excludeImmatureCoinbases Whether to ignore outputs that are unspendable due to being immature.
      */
@@ -3750,11 +3750,11 @@ public class Wallet extends BaseTaggableObject
      * {@link Wallet#currentChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
-     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, Coin)} instead. That will create the sending
+     * {@link Wallet#sendCoins(TransactionBroadcaster, LegacyAddress, Coin)} instead. That will create the sending
      * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
-     * <p>This is a helper method that is equivalent to using {@link SendRequest#to(Address, Coin)}
+     * <p>This is a helper method that is equivalent to using {@link SendRequest#to(LegacyAddress, Coin)}
      * followed by {@link Wallet#completeTx(SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
@@ -3776,7 +3776,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
+    public Transaction createSend(LegacyAddress address, Coin value) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, value);
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             req.shuffleOutputs = false;
@@ -3835,7 +3835,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, LegacyAddress to, Coin value) throws InsufficientMoneyException {
         SendRequest request = SendRequest.to(to, value);
         return sendCoins(broadcaster, request);
     }
@@ -3986,7 +3986,7 @@ public class Wallet extends BaseTaggableObject
                 for (TransactionOutput output : req.tx.getOutputs()) {
                     if (output.isDust())
                         throw new DustySendRequested();
-                    if (output.getScriptPubKey().isOpReturn())
+                    if (ScriptPattern.isOpReturn(output.getScriptPubKey()))
                         ++opReturnCount;
                 }
                 if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
@@ -4187,30 +4187,30 @@ public class Wallet extends BaseTaggableObject
      * false if the form of the script is not known or if the script is OP_RETURN.
      */
     public boolean canSignFor(Script script) {
-        if (script.isSentToRawPubKey()) {
-            byte[] pubkey = script.getPubKey();
+        if (ScriptPattern.isPayToPubKey(script)) {
+            byte[] pubkey = ScriptPattern.extractKeyFromPayToPubKey(script);
             ECKey key = findKeyFromPubKey(pubkey);
             return key != null && (key.isEncrypted() || key.hasPrivKey());
-        } if (script.isPayToScriptHash()) {
-            RedeemData data = findRedeemDataFromScriptHash(script.getPubKeyHash());
+        } if (ScriptPattern.isPayToScriptHash(script)) {
+            RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
-        } else if (script.isSentToAddress()) {
-            ECKey key = findKeyFromPubHash(script.getPubKeyHash());
+        } else if (ScriptPattern.isPayToPubKeyHash(script)) {
+            ECKey key = findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
             return key != null && (key.isEncrypted() || key.hasPrivKey());
-        } else if (script.isSentToMultiSig()) {
+        } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
                 ECKey key = findKeyFromPubKey(pubkey.getPubKey());
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
-        } else if (script.isSentToCLTVPaymentChannel()) {
+        } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
             // Any script for which we are the recipient or sender counts.
-            byte[] sender = script.getCLTVPaymentChannelSenderPubKey();
+            byte[] sender = ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(script);
             ECKey senderKey = findKeyFromPubKey(sender);
             if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
                 return true;
             }
-            byte[] recipient = script.getCLTVPaymentChannelRecipientPubKey();
+            byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
             ECKey recipientKey = findKeyFromPubKey(sender);
             if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
                 return true;
@@ -4271,9 +4271,9 @@ public class Wallet extends BaseTaggableObject
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
-        List<Address> addresses = new ArrayList<>();
+        List<LegacyAddress> addresses = new ArrayList<>();
         for (ECKey key : keys) {
-            Address address = new Address(params, key.getPubKeyHash());
+            LegacyAddress address = LegacyAddress.fromKey(params, key);
             addresses.add(address);
         }
         candidates.addAll(utxoProvider.getOpenTransactionOutputs(addresses));
@@ -4724,7 +4724,7 @@ public class Wallet extends BaseTaggableObject
     // Returns true if the output is one that won't be selected by a data element matching in the scriptSig.
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
         Script script = out.getScriptPubKey();
-        boolean isScriptTypeSupported = script.isSentToRawPubKey() || script.isPayToScriptHash();
+        boolean isScriptTypeSupported = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isPayToScriptHash(script);
         return (isScriptTypeSupported && myUnspents.contains(out)) || watchedScripts.contains(script);
     }
 
@@ -4911,7 +4911,7 @@ public class Wallet extends BaseTaggableObject
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
                 // back to us. The address comes either from the request or currentChangeAddress() as a default.
-                Address changeAddress = req.changeAddress;
+                LegacyAddress changeAddress = req.changeAddress;
                 if (changeAddress == null)
                     changeAddress = currentChangeAddress();
                 TransactionOutput changeOutput = new TransactionOutput(params, tx, change, changeAddress);
@@ -4981,11 +4981,11 @@ public class Wallet extends BaseTaggableObject
                 Script script = output.getScriptPubKey();
                 ECKey key = null;
                 Script redeemScript = null;
-                if (script.isSentToAddress()) {
-                    key = findKeyFromPubHash(script.getPubKeyHash());
+                if (ScriptPattern.isPayToPubKeyHash(script)) {
+                    key = findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
                     checkNotNull(key, "Coin selection includes unspendable outputs");
-                } else if (script.isPayToScriptHash()) {
-                    redeemScript = findRedeemDataFromScriptHash(script.getPubKeyHash()).redeemScript;
+                } else if (ScriptPattern.isPayToScriptHash(script)) {
+                    redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script)).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
                 }
                 size += script.getNumberOfBytesRequiredToSpend(key, redeemScript);

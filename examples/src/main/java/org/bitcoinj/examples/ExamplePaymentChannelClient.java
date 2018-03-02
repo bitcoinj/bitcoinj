@@ -210,7 +210,7 @@ public class ExamplePaymentChannelClient {
         ListenableFuture<Coin> balanceFuture = appKit.wallet().getBalanceFuture(amountPlusFee, Wallet.BalanceType.ESTIMATED);
         if (!balanceFuture.isDone()) {
             System.out.println("Please send " + amountPlusFee.toFriendlyString() +
-                    " to " + myKey.toAddress(params));
+                    " to " + LegacyAddress.fromKey(params, myKey));
             Futures.getUnchecked(balanceFuture);
         }
     }

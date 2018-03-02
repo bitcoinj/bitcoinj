@@ -77,6 +77,7 @@ public abstract class NetworkParameters {
     protected int addressHeader;
     protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
+    protected String segwitAddressHrp;
     protected int interval;
     protected int targetTimespan;
     protected byte[] alertSigningKey;
@@ -100,7 +101,6 @@ public abstract class NetworkParameters {
     protected int spendableCoinbaseDepth;
     protected int subsidyDecreaseBlockCount;
     
-    protected int[] acceptableAddressCodes;
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
     protected HttpDiscovery.Details[] httpSeeds = {};
@@ -317,7 +317,7 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * First byte of a base58 encoded address. See {@link org.bitcoinj.core.Address}. This is the same as acceptableAddressCodes[0] and
+     * First byte of a base58 encoded address. See {@link org.bitcoinj.core.LegacyAddress}. This is the same as acceptableAddressCodes[0] and
      * is the one used for "normal" addresses. Other types of address may be encountered with version codes found in
      * the acceptableAddressCodes array.
      */
@@ -337,6 +337,11 @@ public abstract class NetworkParameters {
         return dumpedPrivateKeyHeader;
     }
 
+    /** Human readable part of bech32 encoded segwit address. */
+    public String getSegwitAddressHrp() {
+        return segwitAddressHrp;
+    }
+
     /**
      * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
@@ -344,15 +349,6 @@ public abstract class NetworkParameters {
      */
     public int getTargetTimespan() {
         return targetTimespan;
-    }
-
-    /**
-     * The version codes that prefix addresses which are acceptable on this network. Although Satoshi intended these to
-     * be used for "versioning", in fact they are today used to discriminate what kind of data is contained in the
-     * address and to prevent accidentally sending coins across chains which would destroy them.
-     */
-    public int[] getAcceptableAddressCodes() {
-        return acceptableAddressCodes;
     }
 
     /**

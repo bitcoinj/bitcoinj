@@ -33,7 +33,7 @@ public interface UTXOProvider {
      * @return The list of transaction outputs.
      * @throws UTXOProviderException If there is an error.
      */
-    List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException;
+    List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException;
 
     /**
      * Get the height of the chain head.

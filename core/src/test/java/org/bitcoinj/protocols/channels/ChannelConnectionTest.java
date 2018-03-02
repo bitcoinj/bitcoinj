@@ -18,6 +18,7 @@ package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -112,11 +113,11 @@ public class ChannelConnectionTest extends TestWithWallet {
     public void setUp() throws Exception {
         super.setUp();
         Utils.setMockClock(); // Use mock clock
-        Context.propagate(new Context(PARAMS, 3, Coin.ZERO, false)); // Shorter event horizon for unit tests.
+        Context.propagate(new Context(UNITTEST, 3, Coin.ZERO, false)); // Shorter event horizon for unit tests.
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        serverWallet = new Wallet(PARAMS);
+        serverWallet = new Wallet(UNITTEST);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
         // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
@@ -540,9 +541,9 @@ public class ChannelConnectionTest extends TestWithWallet {
         newClientStates.deserializeWalletExtension(wallet, clientStoredChannels.serializeWalletExtension());
         broadcastTxPause.release();
         if (isMultiSigContract()) {
-            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isSentToMultiSig());
+            assertTrue(ScriptPattern.isSentToMultisig(broadcasts.take().getOutput(0).getScriptPubKey()));
         } else {
-            assertTrue(broadcasts.take().getOutput(0).getScriptPubKey().isPayToScriptHash());
+            assertTrue(ScriptPattern.isPayToScriptHash(broadcasts.take().getOutput(0).getScriptPubKey()));
         }
         broadcastTxPause.release();
         assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());
@@ -677,7 +678,7 @@ public class ChannelConnectionTest extends TestWithWallet {
                 .setType(MessageType.INITIATE).build());
         if (useRefunds()) {
             final Protos.TwoWayChannelMessage provideRefund = pair.clientRecorder.checkNextMsg(MessageType.PROVIDE_REFUND);
-            Transaction refund = new Transaction(PARAMS, provideRefund.getProvideRefund().getTx().toByteArray());
+            Transaction refund = new Transaction(UNITTEST, provideRefund.getProvideRefund().getTx().toByteArray());
             assertEquals(myValue, refund.getOutput(0).getValue());
         } else {
             assertEquals(2, client.state().getMajorVersion());
@@ -688,7 +689,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testEmptyWallet() throws Exception {
-        Wallet emptyWallet = new Wallet(PARAMS);
+        Wallet emptyWallet = new Wallet(UNITTEST);
         emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;
@@ -856,7 +857,7 @@ public class ChannelConnectionTest extends TestWithWallet {
             Transaction settlement1 = broadcasts.take();
             // Server sends back the settle TX it just broadcast.
             final Protos.TwoWayChannelMessage closeMsg = pair.serverRecorder.checkNextMsg(MessageType.CLOSE);
-            final Transaction settlement2 = new Transaction(PARAMS, closeMsg.getSettlement().getTx().toByteArray());
+            final Transaction settlement2 = new Transaction(UNITTEST, closeMsg.getSettlement().getTx().toByteArray());
             assertEquals(settlement1, settlement2);
             client.receiveMessage(closeMsg);
             assertNotNull(wallet.getTransaction(settlement2.getHash()));   // Close TX entered the wallet.

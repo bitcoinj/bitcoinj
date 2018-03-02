@@ -102,6 +102,8 @@
                             <excludes>
                                 <exclude>**/core/PeerTest.java</exclude>
                                 <exclude>**/core/TransactionBroadcastTest.java</exclude>
+                                <exclude>**/net/NetworkAbstractionTests.java</exclude>
+                                <exclude>**/protocols/channels/ChannelConnectionTest</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

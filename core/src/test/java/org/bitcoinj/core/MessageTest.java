@@ -21,14 +21,14 @@ import org.bitcoinj.params.UnitTestParams;
 import org.junit.Test;
 
 public class MessageTest {
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     // If readStr() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
     public void readStrOfExtremeLength() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
-        new VarStrMessage(params, payload);
+        new VarStrMessage(UNITTEST, payload);
     }
 
     static class VarStrMessage extends Message {
@@ -45,10 +45,9 @@ public class MessageTest {
     // If readBytes() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
     public void readByteArrayOfExtremeLength() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
-        new VarBytesMessage(params, payload);
+        new VarBytesMessage(UNITTEST, payload);
     }
 
     static class VarBytesMessage extends Message {

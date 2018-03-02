@@ -32,16 +32,15 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 
 public class DumpedPrivateKeyTest {
-
-    private static final MainNetParams MAINNET = MainNetParams.get();
-    private static final TestNet3Params TESTNET = TestNet3Params.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     @Test
     public void checkNetwork() throws Exception {
         DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
-    @Test(expected = WrongNetworkException.class)
+    @Test(expected = AddressFormatException.WrongNetwork.class)
     public void checkNetworkWrong() throws Exception {
         DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }

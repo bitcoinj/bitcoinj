@@ -245,7 +245,7 @@ public abstract class PaymentChannelClientState {
         // Our output always comes first.
         // TODO: We should drop myKey in favor of output key + multisig key separation
         // (as its always obvious who the client is based on T2 output order)
-        tx.addOutput(valueToMe, myKey.toAddress(wallet.getParams()));
+        tx.addOutput(valueToMe, LegacyAddress.fromKey(wallet.getParams(), myKey));
         return tx;
     }
 

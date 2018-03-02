@@ -19,6 +19,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptPattern;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
@@ -330,7 +332,7 @@ public class BloomFilter extends Message {
                 if (!chunk.isPushData())
                     continue;
                 if (contains(chunk.data)) {
-                    boolean isSendingToPubKeys = script.isSentToRawPubKey() || script.isSentToMultiSig();
+                    boolean isSendingToPubKeys = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isSentToMultisig(script);
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
                         insert(output.getOutPointFor().unsafeBitcoinSerialize());
                     found = true;

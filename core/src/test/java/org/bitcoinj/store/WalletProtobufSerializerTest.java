@@ -60,10 +60,12 @@ import static org.junit.Assert.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class WalletProtobufSerializerTest {
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     private ECKey myKey;
     private ECKey myWatchedKey;
-    private Address myAddress;
+    private LegacyAddress myAddress;
     private Wallet myWallet;
 
     public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
@@ -72,17 +74,17 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        Context ctx = new Context(PARAMS);
+        Context ctx = new Context(UNITTEST);
         myWatchedKey = new ECKey();
-        myWallet = new Wallet(PARAMS);
+        myWallet = new Wallet(UNITTEST);
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myWallet.importKey(myKey);
-        myAddress = myKey.toAddress(PARAMS);
-        myWallet = new Wallet(PARAMS);
+        myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
+        myWallet = new Wallet(UNITTEST);
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-        myWallet.addWatchedAddress(myWatchedKey.toAddress(PARAMS), mScriptCreationTime);
+        myWallet.addWatchedAddress(LegacyAddress.fromKey(UNITTEST, myWatchedKey), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
 
@@ -101,7 +103,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(mScriptCreationTime,
                 wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
         assertEquals(1, wallet1.getWatchedScripts().size());
-        assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(PARAMS)),
+        assertEquals(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(UNITTEST, myWatchedKey)),
                 wallet1.getWatchedScripts().get(0));
         assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
     }
@@ -110,9 +112,9 @@ public class WalletProtobufSerializerTest {
     public void oneTx() throws Exception {
         // Check basic tx serialization.
         Coin v1 = COIN;
-        Transaction t1 = createFakeTx(PARAMS, v1, myAddress);
-        t1.getConfidence().markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByName("1.2.3.4")));
-        t1.getConfidence().markBroadcastBy(new PeerAddress(PARAMS, InetAddress.getByName("5.6.7.8")));
+        Transaction t1 = createFakeTx(UNITTEST, v1, myAddress);
+        t1.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("1.2.3.4")));
+        t1.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("5.6.7.8")));
         t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
         myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);
@@ -146,7 +148,7 @@ public class WalletProtobufSerializerTest {
     public void raiseFeeTx() throws Exception {
         // Check basic tx serialization.
         Coin v1 = COIN;
-        Transaction t1 = createFakeTx(PARAMS, v1, myAddress);
+        Transaction t1 = createFakeTx(UNITTEST, v1, myAddress);
         t1.setPurpose(Purpose.RAISE_FEE);
         myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);
@@ -157,7 +159,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void doubleSpend() throws Exception {
         // Check that we can serialize double spends correctly, as this is a slightly tricky case.
-        FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(PARAMS, myAddress);
+        FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(UNITTEST, myAddress);
         // t1 spends to our wallet.
         myWallet.receivePending(doubleSpends.t1, null);
         // t2 rolls back t1 and spends somewhere else.
@@ -176,8 +178,8 @@ public class WalletProtobufSerializerTest {
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
             myKey = new ECKey();
-            myAddress = myKey.toAddress(PARAMS);
-            myWallet = new Wallet(PARAMS);
+            myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
+            myWallet = new Wallet(UNITTEST);
             myWallet.importKey(myKey);
             Wallet wallet1 = roundTrip(myWallet);
             assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
@@ -190,13 +192,13 @@ public class WalletProtobufSerializerTest {
         // Test the lastBlockSeenHash field works.
 
         // LastBlockSeenHash should be empty if never set.
-        Wallet wallet = new Wallet(PARAMS);
+        Wallet wallet = new Wallet(UNITTEST);
         Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(wallet);
         ByteString lastSeenBlockHash = walletProto.getLastSeenBlockHash();
         assertTrue(lastSeenBlockHash.isEmpty());
 
         // Create a block.
-        Block block = PARAMS.getDefaultSerializer().makeBlock(BlockTest.blockBytes);
+        Block block = UNITTEST.getDefaultSerializer().makeBlock(BlockTest.blockBytes);
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
         wallet.setLastBlockSeenHeight(1);
@@ -207,7 +209,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(1, wallet1.getLastBlockSeenHeight());
 
         // Test the Satoshi genesis block (hash of all zeroes) is roundtripped ok.
-        Block genesisBlock = MainNetParams.get().getGenesisBlock();
+        Block genesisBlock = MAINNET.getGenesisBlock();
         wallet.setLastBlockSeenHash(genesisBlock.getHash());
         Wallet wallet2 = roundTrip(wallet);
         assertEquals(genesisBlock.getHash(), wallet2.getLastBlockSeenHash());
@@ -215,11 +217,11 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void testSequenceNumber() throws Exception {
-        Wallet wallet = new Wallet(PARAMS);
-        Transaction tx1 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
+        Wallet wallet = new Wallet(UNITTEST);
+        Transaction tx1 = createFakeTx(UNITTEST, Coin.COIN, wallet.currentReceiveAddress());
         tx1.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
         wallet.receivePending(tx1, null);
-        Transaction tx2 = createFakeTx(PARAMS, Coin.COIN, wallet.currentReceiveAddress());
+        Transaction tx2 = createFakeTx(UNITTEST, Coin.COIN, wallet.currentReceiveAddress());
         tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
         wallet.receivePending(tx2, null);
         Wallet walletCopy = roundTrip(wallet);
@@ -233,7 +235,7 @@ public class WalletProtobufSerializerTest {
     public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
         // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
 
-        BlockChain chain = new BlockChain(PARAMS, myWallet, new MemoryBlockStore(PARAMS));
+        BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
 
         final ArrayList<Transaction> txns = new ArrayList<>(2);
         myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
@@ -244,7 +246,7 @@ public class WalletProtobufSerializerTest {
         });
 
         // Start by building two blocks on top of the genesis block.
-        Block b1 = PARAMS.getGenesisBlock().createNextBlock(myAddress);
+        Block b1 = UNITTEST.getGenesisBlock().createNextBlock(myAddress);
         BigInteger work1 = b1.getWork();
         assertTrue(work1.signum() > 0);
 
@@ -327,10 +329,10 @@ public class WalletProtobufSerializerTest {
     public void testRoundTripWatchingWallet() throws Exception {
         final String xpub = "tpubD9LrDvFDrB6wYNhbR2XcRRaT4yCa37TjBR3YthBQvrtEwEq6CKeEXUs3TppQd38rfxmxD1qLkC99iP3vKcKwLESSSYdFAftbrpuhSnsw6XM";
         final long creationTimeSeconds = 1457019819;
-        Wallet wallet = Wallet.fromWatchingKeyB58(PARAMS, xpub, creationTimeSeconds);
+        Wallet wallet = Wallet.fromWatchingKeyB58(UNITTEST, xpub, creationTimeSeconds);
         Wallet wallet2 = roundTrip(wallet);
         Wallet wallet3 = roundTrip(wallet2);
-        assertEquals(xpub, wallet.getWatchingKey().serializePubB58(PARAMS));
+        assertEquals(xpub, wallet.getWatchingKey().serializePubB58(UNITTEST));
         assertEquals(creationTimeSeconds, wallet.getWatchingKey().getCreationTimeSeconds());
         assertEquals(creationTimeSeconds, wallet2.getWatchingKey().getCreationTimeSeconds());
         assertEquals(creationTimeSeconds, wallet3.getWatchingKey().getCreationTimeSeconds());
@@ -342,9 +344,9 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testRoundTripMarriedWallet() throws Exception {
         // create 2-of-2 married wallet
-        myWallet = new Wallet(PARAMS);
+        myWallet = new Wallet(UNITTEST);
         final DeterministicKeyChain partnerChain = new DeterministicKeyChain(new SecureRandom());
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(PARAMS), PARAMS);
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(UNITTEST), UNITTEST);
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
                 .followingKeys(partnerKey)
@@ -362,7 +364,7 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void roundtripVersionTwoTransaction() throws Exception {
-        Transaction tx = new Transaction(PARAMS, Utils.HEX.decode(
+        Transaction tx = new Transaction(UNITTEST, Utils.HEX.decode(
                 "0200000001d7902864af9310420c6e606b814c8f89f7902d40c130594e85df2e757a7cc301070000006b483045022100ca1757afa1af85c2bb014382d9ce411e1628d2b3d478df9d5d3e9e93cb25dcdd02206c5d272b31a23baf64e82793ee5c816e2bbef251e733a638b630ff2331fc83ba0121026ac2316508287761befbd0f7495ea794b396dbc5b556bf276639f56c0bd08911feffffff0274730700000000001976a91456da2d038a098c42390c77ef163e1cc23aedf24088ac91062300000000001976a9148ebf3467b9a8d7ae7b290da719e61142793392c188ac22e00600"));
         assertEquals(tx.getVersion(), 2);
         assertEquals(tx.getHashAsString(), "0321b1413ed9048199815bd6bc2650cab1a9e8d543f109a42c769b1f18df4174");
@@ -375,10 +377,10 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
+        Block b = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
-        BlockChain chain = new BlockChain(PARAMS, myWallet, new MemoryBlockStore(PARAMS));
+        BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
         assertTrue(chain.add(b));
         // Wallet now has a coinbase tx in it.
         assertEquals(1, myWallet.getTransactions(true).size());
@@ -402,21 +404,21 @@ public class WalletProtobufSerializerTest {
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
         // Initial extension is mandatory: try to read it back into a wallet that doesn't know about it.
         try {
-            new WalletProtobufSerializer().readWallet(PARAMS, null, proto);
+            new WalletProtobufSerializer().readWallet(UNITTEST, null, proto);
             fail();
         } catch (UnreadableWalletException e) {
             assertTrue(e.getMessage().contains("mandatory"));
         }
-        Wallet wallet = new WalletProtobufSerializer().readWallet(PARAMS,
+        Wallet wallet = new WalletProtobufSerializer().readWallet(UNITTEST,
                 new WalletExtension[]{ new FooWalletExtension("com.whatever.required", true) },
                 proto);
         assertTrue(wallet.getExtensions().containsKey("com.whatever.required"));
 
         // Non-mandatory extensions are ignored if the wallet doesn't know how to read them.
-        Wallet wallet2 = new Wallet(PARAMS);
+        Wallet wallet2 = new Wallet(UNITTEST);
         wallet2.addExtension(new FooWalletExtension("com.whatever.optional", false));
         Protos.Wallet proto2 = new WalletProtobufSerializer().walletToProto(wallet2);
-        Wallet wallet5 = new WalletProtobufSerializer().readWallet(PARAMS, null, proto2);
+        Wallet wallet5 = new WalletProtobufSerializer().readWallet(UNITTEST, null, proto2);
         assertEquals(0, wallet5.getExtensions().size());
     }
 
@@ -445,7 +447,7 @@ public class WalletProtobufSerializerTest {
         };
         myWallet.addExtension(extension);
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
-        Wallet wallet = new WalletProtobufSerializer().readWallet(PARAMS, new WalletExtension[]{extension}, proto);
+        Wallet wallet = new WalletProtobufSerializer().readWallet(UNITTEST, new WalletExtension[]{extension}, proto);
         assertEquals(0, wallet.getExtensions().size());
     }
 
@@ -453,6 +455,6 @@ public class WalletProtobufSerializerTest {
     public void versions() throws Exception {
         Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
         proto.setVersion(2);
-        new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build());
+        new WalletProtobufSerializer().readWallet(UNITTEST, null, proto.build());
     }
 }

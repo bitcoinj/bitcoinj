@@ -16,7 +16,7 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
@@ -28,19 +28,19 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 
 public class SPVBlockStoreTest {
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     @Test
     public void basics() throws Exception {
-        NetworkParameters params = UnitTestParams.get();
         File f = File.createTempFile("spvblockstore", null);
         f.delete();
         f.deleteOnExit();
-        SPVBlockStore store = new SPVBlockStore(params, f);
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, f);
 
-        Address to = new ECKey().toAddress(params);
+        LegacyAddress to = LegacyAddress.fromKey(UNITTEST, new ECKey());
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(params.getGenesisBlock(), genesis.getHeader());
+        assertEquals(UNITTEST.getGenesisBlock(), genesis.getHeader());
         assertEquals(0, genesis.getHeight());
 
 
@@ -51,7 +51,7 @@ public class SPVBlockStoreTest {
         store.close();
 
         // Check we can get it back out again if we rebuild the store object.
-        store = new SPVBlockStore(params, f);
+        store = new SPVBlockStore(UNITTEST, f);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.

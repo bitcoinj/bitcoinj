@@ -22,6 +22,7 @@ import com.google.protobuf.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.slf4j.*;
@@ -69,7 +70,7 @@ public class KeyChainGroup implements KeyBag {
     // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
     // P2SH addresses. They're mutually exclusive.
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
-    private final EnumMap<KeyChain.KeyPurpose, Address> currentAddresses;
+    private final EnumMap<KeyChain.KeyPurpose, LegacyAddress> currentAddresses;
     @Nullable private KeyCrypter keyCrypter;
     private int lookaheadSize = -1;
     private int lookaheadThreshold = -1;
@@ -115,7 +116,7 @@ public class KeyChainGroup implements KeyBag {
 
         if (isMarried()) {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
-                Address address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
+                LegacyAddress address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
                 currentAddresses.put(entry.getKey(), address);
             }
         }
@@ -178,17 +179,17 @@ public class KeyChainGroup implements KeyBag {
     /**
      * Returns address for a {@link #currentKey(KeyChain.KeyPurpose)}
      */
-    public Address currentAddress(KeyChain.KeyPurpose purpose) {
+    public LegacyAddress currentAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         if (chain.isMarried()) {
-            Address current = currentAddresses.get(purpose);
+            LegacyAddress current = currentAddresses.get(purpose);
             if (current == null) {
                 current = freshAddress(purpose);
                 currentAddresses.put(purpose, current);
             }
             return current;
         } else {
-            return currentKey(purpose).toAddress(params);
+            return LegacyAddress.fromKey(params, currentKey(purpose));
         }
     }
 
@@ -232,17 +233,17 @@ public class KeyChainGroup implements KeyBag {
     /**
      * Returns address for a {@link #freshKey(KeyChain.KeyPurpose)}
      */
-    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+    public LegacyAddress freshAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         if (chain.isMarried()) {
             Script outputScript = chain.freshOutputScript(purpose);
-            checkState(outputScript.isPayToScriptHash()); // Only handle P2SH for now
-            Address freshAddress = Address.fromP2SHScript(params, outputScript);
+            checkState(ScriptPattern.isPayToScriptHash(outputScript)); // Only handle P2SH for now
+            LegacyAddress freshAddress = LegacyAddress.fromP2SHScript(params, outputScript);
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else {
-            return freshKey(purpose).toAddress(params);
+            return LegacyAddress.fromKey(params, freshKey(purpose));
         }
     }
 
@@ -356,9 +357,9 @@ public class KeyChainGroup implements KeyBag {
         return null;
     }
 
-    public void markP2SHAddressAsUsed(Address address) {
-        checkArgument(address.isP2SHAddress());
-        RedeemData data = findRedeemDataFromScriptHash(address.getHash160());
+    public void markP2SHAddressAsUsed(LegacyAddress address) {
+        checkArgument(address.getOutputScriptType() == ScriptType.P2SH);
+        RedeemData data = findRedeemDataFromScriptHash(address.getHash());
         if (data == null)
             return;   // Not our P2SH address.
         for (ECKey key : data.keys) {
@@ -399,9 +400,9 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /** If the given P2SH address is "current", advance it to a new one. */
-    private void maybeMarkCurrentAddressAsUsed(Address address) {
-        checkArgument(address.isP2SHAddress());
-        for (Map.Entry<KeyChain.KeyPurpose, Address> entry : currentAddresses.entrySet()) {
+    private void maybeMarkCurrentAddressAsUsed(LegacyAddress address) {
+        checkArgument(address.getOutputScriptType() == ScriptType.P2SH);
+        for (Map.Entry<KeyChain.KeyPurpose, LegacyAddress> entry : currentAddresses.entrySet()) {
             if (entry.getValue() != null && entry.getValue().equals(address)) {
                 log.info("Marking P2SH address as used: {}", address);
                 currentAddresses.put(entry.getKey(), freshAddress(entry.getKey()));
@@ -727,7 +728,7 @@ public class KeyChainGroup implements KeyBag {
         } else {
             log.info("Wallet with existing HD chain is being re-upgraded due to change in key rotation time.");
         }
-        log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", keyToUse.toAddress(params));
+        log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", LegacyAddress.fromKey(params, keyToUse));
         byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
         // Private keys should be at least 128 bits long.
         checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);

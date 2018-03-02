@@ -25,23 +25,24 @@ import java.io.*;
 import static org.junit.Assert.assertEquals;
 
 public class LevelDBBlockStoreTest {
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+
     @Test
     public void basics() throws Exception {
         File f = File.createTempFile("leveldbblockstore", null);
         f.delete();
 
-        NetworkParameters params = UnitTestParams.get();
-        Context context = new Context(params);
+        Context context = new Context(UNITTEST);
         LevelDBBlockStore store = new LevelDBBlockStore(context, f);
         store.reset();
 
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(params.getGenesisBlock(), genesis.getHeader());
+        assertEquals(UNITTEST.getGenesisBlock(), genesis.getHeader());
         assertEquals(0, genesis.getHeight());
 
         // Build a new block.
-        Address to = Address.fromBase58(params, "mrj2K6txjo2QBcSmuAzHj4nD1oXSEJE1Qo");
+        LegacyAddress to = LegacyAddress.fromBase58(UNITTEST, "mrj2K6txjo2QBcSmuAzHj4nD1oXSEJE1Qo");
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);

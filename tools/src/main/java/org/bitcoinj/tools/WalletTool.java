@@ -27,6 +27,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
@@ -582,7 +583,7 @@ public class WalletTool {
             return;
         }
         try {
-            Address address = Address.fromBase58(params, addr);
+            LegacyAddress address = LegacyAddress.fromBase58(params, addr);
             // If no creation time is specified, assume genesis (zero).
             wallet.addWatchedAddress(address, getCreationTimeSeconds());
         } catch (AddressFormatException e) {
@@ -602,7 +603,7 @@ public class WalletTool {
                     } else {
                         t.addOutput(outputSpec.value, outputSpec.key);
                     }
-                } catch (WrongNetworkException e) {
+                } catch (AddressFormatException.WrongNetwork e) {
                     System.err.println("Malformed output specification, address is for a different network: " + spec);
                     return;
                 } catch (AddressFormatException e) {
@@ -679,7 +680,7 @@ public class WalletTool {
 
     static class OutputSpec {
         public final Coin value;
-        public final Address addr;
+        public final LegacyAddress addr;
         public final ECKey key;
 
         public OutputSpec(String spec) throws IllegalArgumentException {
@@ -699,7 +700,7 @@ public class WalletTool {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = Address.fromBase58(params, destination);
+                addr = LegacyAddress.fromBase58(params, destination);
                 key = null;
             }
         }
@@ -724,7 +725,7 @@ public class WalletTool {
                 value = outputSpec.value;
                 byte[] refundPubKey = new BigInteger(refund, 16).toByteArray();
                 refundKey = ECKey.fromPublicOnly(refundPubKey);
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {
@@ -804,7 +805,7 @@ public class WalletTool {
             try {
                 outputSpec = new OutputSpec(output);
                 value = outputSpec.value;
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {
@@ -831,7 +832,7 @@ public class WalletTool {
             }
             TransactionOutput lockTimeVerifyOutput = null;
             for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (out.getScriptPubKey().isSentToCLTVPaymentChannel()) {
+                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
                     lockTimeVerifyOutput = out;
                 }
             }
@@ -854,9 +855,9 @@ public class WalletTool {
             }
 
             ECKey key1 = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelSenderPubKey());
+                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             ECKey key2 = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelRecipientPubKey());
+                    ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             if (key1 == null || key2 == null) {
                 System.err.println("Don't own private keys for both pubkeys");
                 return;
@@ -908,7 +909,7 @@ public class WalletTool {
             try {
                 outputSpec = new OutputSpec(output);
                 value = outputSpec.value;
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {
@@ -935,7 +936,7 @@ public class WalletTool {
             }
             TransactionOutput lockTimeVerifyOutput = null;
             for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (out.getScriptPubKey().isSentToCLTVPaymentChannel()) {
+                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
                     lockTimeVerifyOutput = out;
                 }
             }
@@ -944,7 +945,7 @@ public class WalletTool {
                 return;
             }
 
-            req.tx.setLockTime(lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelExpiry().longValue());
+            req.tx.setLockTime(ScriptPattern.extractExpiryFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()).longValue());
 
             if (!value.equals(lockTimeVerifyOutput.getValue())) {
                 System.err.println("You must spend all the money in the input transaction");
@@ -960,7 +961,7 @@ public class WalletTool {
             }
 
             ECKey key = wallet.findKeyFromPubKey(
-                    lockTimeVerifyOutput.getScriptPubKey().getCLTVPaymentChannelSenderPubKey());
+                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
             if (key == null) {
                 System.err.println("Don't own private key for pubkey");
                 return;
@@ -1354,7 +1355,7 @@ public class WalletTool {
                 }
                 key = wallet.freshReceiveKey();
             }
-            System.out.println(key.toAddress(params) + " " + key);
+            System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
         }
     }
 
@@ -1419,7 +1420,7 @@ public class WalletTool {
                 key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
             }
             wallet.importKey(key);
-            System.out.println(key.toAddress(params) + " " + key);
+            System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
         }
@@ -1463,8 +1464,8 @@ public class WalletTool {
             key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
         } else {
             try {
-                Address address = Address.fromBase58(wallet.getParams(), addr);
-                key = wallet.findKeyFromPubHash(address.getHash160());
+                LegacyAddress address = LegacyAddress.fromBase58(wallet.getParams(), addr);
+                key = wallet.findKeyFromPubHash(address.getHash());
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");
                 return;
@@ -1479,7 +1480,7 @@ public class WalletTool {
 
     private static void currentReceiveAddr() {
         ECKey key = wallet.currentReceiveKey();
-        System.out.println(key.toAddress(params) + " " + key);
+        System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
     }
 
     private static void dumpWallet() throws BlockStoreException {

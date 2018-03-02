@@ -16,7 +16,7 @@
 
 package wallettemplate.controls;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.NetworkParameters;
 import javafx.scene.Node;
@@ -52,7 +52,7 @@ public class BitcoinAddressValidator {
 
     private boolean testAddr(String text) {
         try {
-            Address.fromBase58(params, text);
+            LegacyAddress.fromBase58(params, text);
             return true;
         } catch (AddressFormatException e) {
             return false;

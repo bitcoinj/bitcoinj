@@ -24,7 +24,7 @@ import java.math.BigInteger;
 import java.util.Date;
 
 import org.bitcoin.protocols.payments.Protos.PaymentDetails;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
@@ -75,7 +75,7 @@ public class SendRequest {
      * don't really control as it depends on who sent you money), and the value being sent somewhere else. The
      * change address should be selected from this wallet, normally. <b>If null this will be chosen for you.</b>
      */
-    public Address changeAddress = null;
+    public LegacyAddress changeAddress = null;
 
     /**
      * <p>A transaction can have a fee attached, which is defined as the difference between the input values
@@ -163,7 +163,7 @@ public class SendRequest {
      * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
      * likely be rejected by the network in this case.</p>
      */
-    public static SendRequest to(Address destination, Coin value) {
+    public static SendRequest to(LegacyAddress destination, Coin value) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
@@ -177,7 +177,7 @@ public class SendRequest {
      *
      * <p>Be careful to check the output's value is reasonable using
      * {@link TransactionOutput#getMinNonDustValue(Coin)} afterwards or you risk having the transaction
-     * rejected by the network. Note that using {@link SendRequest#to(Address, Coin)} will result
+     * rejected by the network. Note that using {@link SendRequest#to(LegacyAddress, Coin)} will result
      * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
      */
     public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
@@ -194,7 +194,7 @@ public class SendRequest {
         return req;
     }
 
-    public static SendRequest emptyWallet(Address destination) {
+    public static SendRequest emptyWallet(LegacyAddress destination) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = destination.getParameters();
         checkNotNull(parameters, "Address is for an unknown network");
