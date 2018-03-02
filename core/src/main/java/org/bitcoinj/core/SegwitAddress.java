@@ -180,7 +180,7 @@ public class SegwitAddress extends Address {
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
                 return new SegwitAddress(params, bechData.data);
-            throw new WrongNetworkException(bechData.hrp);
+            throw new AddressFormatException.WrongNetwork(bechData.hrp);
         }
     }
 

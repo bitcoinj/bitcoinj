@@ -603,7 +603,7 @@ public class WalletTool {
                     } else {
                         t.addOutput(outputSpec.value, outputSpec.key);
                     }
-                } catch (WrongNetworkException e) {
+                } catch (AddressFormatException.WrongNetwork e) {
                     System.err.println("Malformed output specification, address is for a different network: " + spec);
                     return;
                 } catch (AddressFormatException e) {
@@ -725,7 +725,7 @@ public class WalletTool {
                 value = outputSpec.value;
                 byte[] refundPubKey = new BigInteger(refund, 16).toByteArray();
                 refundKey = ECKey.fromPublicOnly(refundPubKey);
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {
@@ -805,7 +805,7 @@ public class WalletTool {
             try {
                 outputSpec = new OutputSpec(output);
                 value = outputSpec.value;
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {
@@ -909,7 +909,7 @@ public class WalletTool {
             try {
                 outputSpec = new OutputSpec(output);
                 value = outputSpec.value;
-            } catch (WrongNetworkException e) {
+            } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network.");
                 return;
             } catch (AddressFormatException e) {

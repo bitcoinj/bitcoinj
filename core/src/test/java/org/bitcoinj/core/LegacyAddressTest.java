@@ -83,7 +83,7 @@ public class LegacyAddressTest {
         try {
             LegacyAddress.fromBase58(TESTNET, "this is not a valid address!");
             fail();
-        } catch (WrongNetworkException e) {
+        } catch (AddressFormatException.WrongNetwork e) {
             fail();
         } catch (AddressFormatException e) {
             // Success.
@@ -93,7 +93,7 @@ public class LegacyAddressTest {
         try {
             LegacyAddress.fromBase58(TESTNET, "");
             fail();
-        } catch (WrongNetworkException e) {
+        } catch (AddressFormatException.WrongNetwork e) {
             fail();
         } catch (AddressFormatException e) {
             // Success.
@@ -103,7 +103,7 @@ public class LegacyAddressTest {
         try {
             LegacyAddress.fromBase58(TESTNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
             fail();
-        } catch (WrongNetworkException e) {
+        } catch (AddressFormatException.WrongNetwork e) {
             // Success.
         } catch (AddressFormatException e) {
             fail();

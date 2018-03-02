@@ -40,7 +40,7 @@ public class DumpedPrivateKeyTest {
         DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
-    @Test(expected = WrongNetworkException.class)
+    @Test(expected = AddressFormatException.WrongNetwork.class)
     public void checkNetworkWrong() throws Exception {
         DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }

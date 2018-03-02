@@ -47,19 +47,19 @@ public abstract class Address extends PrefixedChecksummedBytes {
      * @return constructed address
      * @throws AddressFormatException
      *             if the given string doesn't parse or the checksum is invalid
-     * @throws WrongNetworkException
+     * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
      */
     public static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
         try {
             return LegacyAddress.fromBase58(params, str);
-        } catch (WrongNetworkException x) {
+        } catch (AddressFormatException.WrongNetwork x) {
             throw x;
         } catch (AddressFormatException x) {
             try {
                 return SegwitAddress.fromBech32(params, str);
-            } catch (WrongNetworkException x2) {
+            } catch (AddressFormatException.WrongNetwork x2) {
                 throw x;
             } catch (AddressFormatException x2) {
                 throw new AddressFormatException(str);

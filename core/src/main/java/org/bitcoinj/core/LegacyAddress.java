@@ -135,11 +135,11 @@ public class LegacyAddress extends Address {
      *            base58-encoded textual form of the address
      * @throws AddressFormatException
      *             if the given base58 doesn't parse or the checksum is invalid
-     * @throws WrongNetworkException
+     * @throws AddressFormatException.WrongNetwork
      *             if the given address is valid but for a different chain (eg testnet vs mainnet)
      */
     public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
-            throws AddressFormatException, WrongNetworkException {
+            throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
@@ -156,7 +156,7 @@ public class LegacyAddress extends Address {
                 return new LegacyAddress(params, false, bytes);
             else if (version == params.getP2SHHeader())
                 return new LegacyAddress(params, true, bytes);
-            throw new WrongNetworkException(version);
+            throw new AddressFormatException.WrongNetwork(version);
         }
     }
 

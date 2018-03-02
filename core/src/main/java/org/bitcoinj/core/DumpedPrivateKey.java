@@ -40,11 +40,11 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
      *            The textual form of the private key.
      * @throws AddressFormatException
      *             if the given base58 doesn't parse or the checksum is invalid
-     * @throws WrongNetworkException
+     * @throws AddressFormatException.WrongNetwork
      *             if the given private key is valid but for a different chain (eg testnet vs mainnet)
      */
     public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
-            throws AddressFormatException {
+            throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
@@ -56,7 +56,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
         } else {
             if (version == params.getDumpedPrivateKeyHeader())
                 return new DumpedPrivateKey(params, bytes);
-            throw new WrongNetworkException(version);
+            throw new AddressFormatException.WrongNetwork(version);
         }
     }
 
