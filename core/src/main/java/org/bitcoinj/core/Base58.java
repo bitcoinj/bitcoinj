@@ -175,7 +175,7 @@ public class Base58 {
         byte[] checksum = Arrays.copyOfRange(decoded, decoded.length - 4, decoded.length);
         byte[] actualChecksum = Arrays.copyOfRange(Sha256Hash.hashTwice(data), 0, 4);
         if (!Arrays.equals(checksum, actualChecksum))
-            throw new AddressFormatException("Checksum does not validate");
+            throw new AddressFormatException.InvalidChecksum();
         return data;
     }
 

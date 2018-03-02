@@ -83,8 +83,8 @@ public class Base58Test {
         Base58.decodeChecked("93VYUMzRG9DdbRP72uQXjaWibbQwygnvaCu9DumcqDjGybD864T");
     }
 
-    @Test(expected = AddressFormatException.class)
-    public void testDecodeChecked_badChecksum() {
+    @Test(expected = AddressFormatException.InvalidChecksum.class)
+    public void testDecodeChecked_invalidChecksum() {
         Base58.decodeChecked("4stwEBjT6FYyVW");
     }
 

@@ -28,6 +28,21 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@link PrefixedChecksummedBytes} hierarchy of
+     * classes when you try to decode data and the checksum isn't valid. You shouldn't allow the user to proceed in this
+     * case.
+     */
+    public static class InvalidChecksum extends AddressFormatException {
+        public InvalidChecksum() {
+            super("Checksum does not validate");
+        }
+
+        public InvalidChecksum(String message) {
+            super(message);
+        }
+    }
+
+    /**
      * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
      * address with a version header that isn't used by that network. You shouldn't allow the user to proceed in this
      * case as they are trying to send money across different chains, an operation that is guaranteed to destroy the

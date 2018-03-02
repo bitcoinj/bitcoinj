@@ -70,4 +70,9 @@ public class Bech32Test {
             "li1dgmt3",
             "de1lg7wt" + new String(new char[] { 0xff }),
     };
+
+    @Test(expected = AddressFormatException.InvalidChecksum.class)
+    public void decode_invalidNetwork() {
+        Bech32.decode("A12UEL5X");
+    }
 }

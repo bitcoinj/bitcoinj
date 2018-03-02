@@ -141,7 +141,7 @@ public class Bech32 {
             values[i] = CHARSET_REV[c];
         }
         String hrp = str.substring(0, pos).toLowerCase(Locale.ROOT);
-        if (!verifyChecksum(hrp, values)) throw new AddressFormatException("Invalid checksum");
+        if (!verifyChecksum(hrp, values)) throw new AddressFormatException.InvalidChecksum();
         return new Bech32Data(hrp, Arrays.copyOfRange(values, 0, values.length - 6));
     }
 }
