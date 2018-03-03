@@ -159,6 +159,21 @@ public class SegwitAddressTest {
             "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du", "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv",
             "bc1gmk9yu" };
 
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBech32_version0_invalidLength() {
+        SegwitAddress.fromBech32(null, "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P");
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBech32_tooShort() {
+        SegwitAddress.fromBech32(null, "bc1rw5uspcuh");
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBech32_tooLong() {
+        SegwitAddress.fromBech32(null, "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90");
+    }
+
     @Test
     public void testJavaSerialization() throws Exception {
         SegwitAddress address = SegwitAddress.fromBech32(null, "BC1SW50QA3JX3S");

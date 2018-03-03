@@ -62,7 +62,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
         if (version != 0x01)
             throw new AddressFormatException("Mismatched version number: " + version);
         if (bytes.length != 38)
-            throw new AddressFormatException("Wrong number of bytes, excluding version byte: " + bytes.length);
+            throw new AddressFormatException.InvalidDataLength("Wrong number of bytes: " + bytes.length);
         boolean hasLotAndSequence = (bytes[1] & 0x04) != 0; // bit 2
         boolean compressed = (bytes[1] & 0x20) != 0; // bit 5
         if ((bytes[1] & 0x01) != 0) // bit 0

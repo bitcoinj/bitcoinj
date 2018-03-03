@@ -92,6 +92,18 @@ public class DumpedPrivateKeyTest {
         DumpedPrivateKey.fromBase58(null, base58); // fail
     }
 
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBase58_tooShort() {
+        String base58 = Base58.encodeChecked(MAINNET.dumpedPrivateKeyHeader, new byte[31]);
+        DumpedPrivateKey.fromBase58(null, base58);
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBase58_tooLong() {
+        String base58 = Base58.encodeChecked(MAINNET.dumpedPrivateKeyHeader, new byte[34]);
+        DumpedPrivateKey.fromBase58(null, base58);
+    }
+
     @Test
     public void roundtripBase58_getKey() throws Exception {
         ECKey k = new ECKey().decompress();

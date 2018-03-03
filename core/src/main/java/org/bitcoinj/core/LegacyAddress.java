@@ -66,7 +66,8 @@ public class LegacyAddress extends Address {
     private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws AddressFormatException {
         super(params, hash160);
         if (hash160.length != 20)
-            throw new AddressFormatException("Legacy addresses are 160-bit hashes, so you must provide 20 bytes");
+            throw new AddressFormatException.InvalidDataLength(
+                    "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);
         this.p2sh = p2sh;
     }
 

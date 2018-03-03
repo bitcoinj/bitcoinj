@@ -89,17 +89,18 @@ public class SegwitAddress extends Address {
     private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
         super(params, data);
         if (data.length < 1)
-            throw new AddressFormatException("Zero data found");
+            throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
         if (witnessVersion < 0 || witnessVersion > 16)
             throw new AddressFormatException("Invalid script version: " + witnessVersion);
         byte[] witnessProgram = getWitnessProgram();
         if (witnessProgram.length < WITNESS_PROGRAM_MIN_LENGTH || witnessProgram.length > WITNESS_PROGRAM_MAX_LENGTH)
-            throw new AddressFormatException("Invalid length: " + witnessProgram.length);
+            throw new AddressFormatException.InvalidDataLength("Invalid length: " + witnessProgram.length);
         // Check script length for version 0
         if (witnessVersion == 0 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_PKH
                 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_SH)
-            throw new AddressFormatException("Invalid length for address version 0: " + witnessProgram.length);
+            throw new AddressFormatException.InvalidDataLength(
+                    "Invalid length for address version 0: " + witnessProgram.length);
     }
 
     /**
