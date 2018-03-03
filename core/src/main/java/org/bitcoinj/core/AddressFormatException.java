@@ -75,11 +75,26 @@ public class AddressFormatException extends IllegalArgumentException {
 
     /**
      * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
-     * address with a version header that isn't used by that network. You shouldn't allow the user to proceed in this
-     * case as they are trying to send money across different chains, an operation that is guaranteed to destroy the
-     * money.
+     * address or private key with an invalid prefix (version header or human-readable part). You shouldn't allow the
+     * user to proceed in this case.
      */
-    public static class WrongNetwork extends AddressFormatException {
+    public static class InvalidPrefix extends AddressFormatException {
+        public InvalidPrefix() {
+            super();
+        }
+
+        public InvalidPrefix(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
+     * address with a prefix (version header or human-readable part) that used by another network (usually: mainnet vs
+     * testnet). You shouldn't allow the user to proceed in this case as they are trying to send money across different
+     * chains, an operation that is guaranteed to destroy the money.
+     */
+    public static class WrongNetwork extends InvalidPrefix {
         public WrongNetwork(int versionHeader) {
             super("Version code of address did not match acceptable versions for network: " + versionHeader);
         }

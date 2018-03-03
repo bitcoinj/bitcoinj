@@ -89,4 +89,9 @@ public class Bech32Test {
     public void decode_invalidNetwork() {
         Bech32.decode("A12UEL5X");
     }
+
+    @Test(expected = AddressFormatException.InvalidPrefix.class)
+    public void decode_invalidHrp() {
+        Bech32.decode("1pzry9x0s0muk");
+    }
 }

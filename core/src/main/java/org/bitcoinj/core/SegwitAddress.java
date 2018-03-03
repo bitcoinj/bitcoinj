@@ -177,7 +177,7 @@ public class SegwitAddress extends Address {
                 if (bechData.hrp.equals(p.getSegwitAddressHrp()))
                     return new SegwitAddress(p, bechData.data);
             }
-            throw new AddressFormatException("No network found for " + bech32);
+            throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
                 return new SegwitAddress(params, bechData.data);

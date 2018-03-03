@@ -180,6 +180,16 @@ public class SegwitAddressTest {
         SegwitAddress.fromBech32(null, "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90");
     }
 
+    @Test(expected = AddressFormatException.InvalidPrefix.class)
+    public void fromBech32_invalidHrp() {
+        SegwitAddress.fromBech32(null, "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty");
+    }
+
+    @Test(expected = AddressFormatException.WrongNetwork.class)
+    public void fromBech32_wrongNetwork() {
+        SegwitAddress.fromBech32(TESTNET, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
+    }
+
     @Test
     public void testJavaSerialization() throws Exception {
         SegwitAddress address = SegwitAddress.fromBech32(null, "BC1SW50QA3JX3S");

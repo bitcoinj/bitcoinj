@@ -143,7 +143,7 @@ public class Bech32 {
             }
         }
         final int pos = str.lastIndexOf('1');
-        if (pos < 1) throw new AddressFormatException("Missing human-readable part");
+        if (pos < 1) throw new AddressFormatException.InvalidPrefix("Missing human-readable part");
         final int dataPartLength = str.length() - 1 - pos;
         if (dataPartLength < 6) throw new AddressFormatException.InvalidDataLength("Data part too short: " + dataPartLength);
         byte[] values = new byte[dataPartLength];
