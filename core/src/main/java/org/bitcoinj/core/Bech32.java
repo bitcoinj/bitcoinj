@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -97,14 +99,14 @@ public class Bech32 {
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(final Bech32Data bech32) throws AddressFormatException {
+    public static String encode(final Bech32Data bech32) {
         return encode(bech32.hrp, bech32.data);
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(String hrp, final byte[] values) throws AddressFormatException {
-        if (hrp.length() < 1) throw new AddressFormatException("Human-readable part is too short");
-        if (hrp.length() > 83) throw new AddressFormatException("Human-readable part is too long");
+    public static String encode(String hrp, final byte[] values) {
+        checkArgument(hrp.length() >= 1, "Human-readable part is too short");
+        checkArgument(hrp.length() <= 83, "Human-readable part is too long");
         hrp = hrp.toLowerCase(Locale.ROOT);
         byte[] checksum = createChecksum(hrp, values);
         byte[] combined = new byte[values.length + checksum.length];
