@@ -152,8 +152,18 @@ public class BuildCheckpoints {
             }
         });
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Shutdown requested!");
+                end(checkpoints, suffix, peerGroup, store);
+            }
+        });
         peerGroup.downloadBlockChain();
+        end(checkpoints, suffix, peerGroup, store);
+    }
 
+    private static void end(TreeMap<Integer, StoredBlock> checkpoints, String suffix, PeerGroup peerGroup, BlockStore store) {
         checkState(checkpoints.size() > 0);
 
         final File plainFile = new File("checkpoints" + suffix);
