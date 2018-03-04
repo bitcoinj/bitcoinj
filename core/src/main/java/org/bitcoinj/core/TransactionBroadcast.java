@@ -116,8 +116,15 @@ public class TransactionBroadcast {
     }
 
     private class EnoughAvailablePeers implements Runnable {
+        private Context context;
+
+        public EnoughAvailablePeers() {
+            this.context = Context.get();
+        }
+
         @Override
         public void run() {
+            Context.propagate(context);
             // We now have enough connected peers to send the transaction.
             // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
             // thread.
