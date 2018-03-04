@@ -108,8 +108,14 @@ public class LegacyAddress extends Address {
      *            P2SH script hash
      * @return constructed address
      */
-    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+    public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(params, true, hash160);
+    }
+
+    /** @deprecated use {@link #fromScriptHash(NetworkParameters, byte[])} */
+    @Deprecated
+    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
+        return fromScriptHash(params, hash160);
     }
 
     /**
@@ -123,7 +129,7 @@ public class LegacyAddress extends Address {
      */
     public static LegacyAddress fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(ScriptPattern.isPayToScriptHash(scriptPubKey), "Not a P2SH script");
-        return fromP2SHHash(params, ScriptPattern.extractHashFromPayToScriptHash(scriptPubKey));
+        return fromScriptHash(params, ScriptPattern.extractHashFromPayToScriptHash(scriptPubKey));
     }
 
     /**

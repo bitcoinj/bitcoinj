@@ -164,9 +164,9 @@ public class LegacyAddressTest {
 
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
-        LegacyAddress a = LegacyAddress.fromP2SHHash(MAINNET, hex);
+        LegacyAddress a = LegacyAddress.fromScriptHash(MAINNET, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        LegacyAddress b = LegacyAddress.fromP2SHHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        LegacyAddress b = LegacyAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
         LegacyAddress c = LegacyAddress.fromP2SHScript(MAINNET, ScriptBuilder.createP2SHOutputScript(hex));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
