@@ -42,8 +42,15 @@ public class DRMWorkaround {
             return;
         try {
             Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
+            //gate.setAccessible(true);
+            //gate.setBoolean(null, false);
+            if ( Modifier.isFinal(gate.getModifiers()) ) {
+            	Field modifiers = Field.class.getDeclaredField("modifiers");
+            	modifiers.setAccessible(true);
+            	modifiers.setInt(gate, gate.getModifiers() & ~Modifier.FINAL);
+            }
             gate.setAccessible(true);
-            gate.setBoolean(null, false);
+            gate.setBoolean(null, false); // isRestricted = false;
             final Field allPerm = Class.forName("javax.crypto.CryptoAllPermission").getDeclaredField("INSTANCE");
             allPerm.setAccessible(true);
             Object accessAllAreasCard = allPerm.get(null);
