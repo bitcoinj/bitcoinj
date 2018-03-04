@@ -67,7 +67,6 @@ import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletEventListener;
 import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
@@ -692,23 +691,6 @@ public class Wallet extends BaseTaggableObject
     public LegacyAddress currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
-    /**
-     * @deprecated use {@link #currentChangeAddress()} instead.
-     */
-    public LegacyAddress getChangeAddress() {
-        return currentChangeAddress();
-    }
-
-    /**
-     * <p>Deprecated alias for {@link #importKey(ECKey)}.</p>
-     *
-     * <p><b>Replace with either {@link #freshReceiveKey()} if your call is addKey(new ECKey()), or with {@link #importKey(ECKey)}
-     * which does the same thing this method used to, but with a better name.</b></p>
-     */
-    @Deprecated
-    public boolean addKey(ECKey key) {
-        return importKey(key);
-    }
 
     /**
      * <p>Imports the given ECKey to the wallet.</p>
@@ -718,12 +700,6 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean importKey(ECKey key) {
         return importKeys(Lists.newArrayList(key)) == 1;
-    }
-
-    /** Replace with {@link #importKeys(java.util.List)}, which does the same thing but with a better name. */
-    @Deprecated
-    public int addKeys(List<ECKey> keys) {
-        return importKeys(keys);
     }
 
     /**
@@ -2567,32 +2543,6 @@ public class Wallet extends BaseTaggableObject
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. Runs the listener methods in the user thread.
      */
-    public void addEventListener(WalletEventListener listener) {
-        addChangeEventListener(Threading.USER_THREAD, listener);
-        addCoinsReceivedEventListener(Threading.USER_THREAD, listener);
-        addCoinsSentEventListener(Threading.USER_THREAD, listener);
-        addKeyChainEventListener(Threading.USER_THREAD, listener);
-        addReorganizeEventListener(Threading.USER_THREAD, listener);
-        addScriptChangeEventListener(Threading.USER_THREAD, listener);
-        addTransactionConfidenceEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    public void addEventListener(WalletEventListener listener, Executor executor) {
-        addCoinsReceivedEventListener(executor, listener);
-        addCoinsSentEventListener(executor, listener);
-        addChangeEventListener(executor, listener);
-        addKeyChainEventListener(executor, listener);
-        addReorganizeEventListener(executor, listener);
-        addScriptChangeEventListener(executor, listener);
-        addTransactionConfidenceEventListener(executor, listener);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when something interesting happens,
-     * like receiving money. Runs the listener methods in the user thread.
-     */
     public void addChangeEventListener(WalletChangeEventListener listener) {
         addChangeEventListener(Threading.USER_THREAD, listener);
     }
@@ -2705,21 +2655,6 @@ public class Wallet extends BaseTaggableObject
     public void addTransactionConfidenceEventListener(Executor executor, TransactionConfidenceEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
         transactionConfidenceListeners.add(new ListenerRegistration<>(listener, executor));
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
-     * was never added.
-     * @deprecated use the fine-grain event listeners instead.
-     */
-    @Deprecated
-    public boolean removeEventListener(WalletEventListener listener) {
-        return removeChangeEventListener(listener) ||
-            removeCoinsReceivedEventListener(listener) ||
-            removeCoinsSentEventListener(listener) ||
-            removeKeyChainEventListener(listener) ||
-            removeReorganizeEventListener(listener) ||
-            removeTransactionConfidenceEventListener(listener);
     }
 
     /**
@@ -3029,7 +2964,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Prepares the wallet for a blockchain replay. Removes all transactions (as they would get in the way of the
-     * replay) and makes the wallet think it has never seen a block. {@link WalletEventListener#onWalletChanged} will
+     * replay) and makes the wallet think it has never seen a block. {@link WalletChangeEventListener#onWalletChanged} will
      * be fired.
      */
     public void reset() {
@@ -3538,18 +3473,6 @@ public class Wallet extends BaseTaggableObject
         ESTIMATED_SPENDABLE,
         /** Same as AVAILABLE but only for outputs we have the private keys for and can sign ourselves. */
         AVAILABLE_SPENDABLE
-    }
-
-    /** @deprecated Use {@link #getBalance()} instead as including watched balances is now the default behaviour */
-    @Deprecated
-    public Coin getWatchedBalance() {
-        return getBalance();
-    }
-
-    /** @deprecated Use {@link #getBalance(CoinSelector)} instead as including watched balances is now the default behaviour */
-    @Deprecated
-    public Coin getWatchedBalance(CoinSelector selector) {
-        return getBalance(selector);
     }
 
     /**
@@ -4175,12 +4098,6 @@ public class Wallet extends BaseTaggableObject
      */
     public List<TransactionOutput> calculateAllSpendCandidates() {
         return calculateAllSpendCandidates(true, true);
-    }
-
-    /** @deprecated Use {@link #calculateAllSpendCandidates(boolean, boolean)} or the zero-parameter form instead. */
-    @Deprecated
-    public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
-        return calculateAllSpendCandidates(excludeImmatureCoinbases, true);
     }
 
     /**
@@ -5124,12 +5041,6 @@ public class Wallet extends BaseTaggableObject
     public boolean isKeyRotating(ECKey key) {
         long time = vKeyRotationTimestamp;
         return time != 0 && key.getCreationTimeSeconds() < time;
-    }
-
-    /** @deprecated Renamed to doMaintenance */
-    @Deprecated
-    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
-        return doMaintenance(aesKey, andSend);
     }
 
     /**
