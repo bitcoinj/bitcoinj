@@ -1310,7 +1310,7 @@ public class Transaction extends ChildMessage {
     /**
      * A transaction has a relative lock time
      * (<a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">BIP 68</a>) if it is version 2 or
-     * higher and at least one of its inputs has its {@link TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
+     * higher and at least one of its inputs has its {@link TransactionInput#SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
      */
     public boolean hasRelativeLockTime() {
         if (version < 2)
