@@ -1115,7 +1115,8 @@ public class Wallet extends BaseTaggableObject
                         byte[] pubkeyHash = ScriptPattern.extractHashFromPayToPubKeyHash(script);
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
                     } else if (ScriptPattern.isPayToScriptHash(script)) {
-                        LegacyAddress a = LegacyAddress.fromP2SHScript(tx.getParams(), script);
+                        LegacyAddress a = LegacyAddress.fromScriptHash(tx.getParams(),
+                                ScriptPattern.extractHashFromPayToScriptHash(script));
                         keyChainGroup.markP2SHAddressAsUsed(a);
                     }
                 } catch (ScriptException e) {
