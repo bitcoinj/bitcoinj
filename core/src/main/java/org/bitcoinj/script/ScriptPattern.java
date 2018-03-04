@@ -38,13 +38,22 @@ public class ScriptPattern {
      */
     public static boolean isPayToPubKeyHash(Script script) {
         List<ScriptChunk> chunks = script.chunks;
-        return chunks.size() == 5 &&
-               chunks.get(0).equalsOpCode(OP_DUP) &&
-               chunks.get(1).equalsOpCode(OP_HASH160) &&
-               chunks.get(2).data != null &&
-               chunks.get(2).data.length == LegacyAddress.LENGTH &&
-               chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
-               chunks.get(4).equalsOpCode(OP_CHECKSIG);
+        if (chunks.size() != 5)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_DUP))
+            return false;
+        if (!chunks.get(1).equalsOpCode(OP_HASH160))
+            return false;
+        byte[] chunk2data = chunks.get(2).data;
+        if (chunk2data == null)
+            return false;
+        if (chunk2data.length != LegacyAddress.LENGTH)
+            return false;
+        if (!chunks.get(3).equalsOpCode(OP_EQUALVERIFY))
+            return false;
+        if (!chunks.get(4).equalsOpCode(OP_CHECKSIG))
+            return false;
+        return true;
     }
 
     /**
@@ -67,12 +76,21 @@ public class ScriptPattern {
         // printed out but one is a P2SH script and the other isn't! :(
         // We explicitly test that the op code used to load the 20 bytes is 0x14 and not something logically
         // equivalent like OP_HASH160 OP_PUSHDATA1 0x14 <20 bytes of script hash> OP_EQUAL
-        return chunks.size() == 3 &&
-               chunks.get(0).equalsOpCode(OP_HASH160) &&
-               chunks.get(1).opcode == 0x14 &&
-               chunks.get(1).data != null &&
-               chunks.get(1).data.length == LegacyAddress.LENGTH &&
-               chunks.get(2).equalsOpCode(OP_EQUAL);
+        if (chunks.size() != 3)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_HASH160))
+            return false;
+        ScriptChunk chunk1 = chunks.get(1);
+        if (chunk1.opcode != 0x14)
+            return false;
+        byte[] chunk1data = chunk1.data;
+        if (chunk1data == null)
+            return false;
+        if (chunk1data.length != LegacyAddress.LENGTH)
+            return false;
+        if (!chunks.get(2).equalsOpCode(OP_EQUAL))
+            return false;
+        return true;
     }
 
     /**
@@ -91,11 +109,19 @@ public class ScriptPattern {
      */
     public static boolean isPayToPubKey(Script script) {
         List<ScriptChunk> chunks = script.chunks;
-        return chunks.size() == 2 &&
-               chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
-               !chunks.get(0).isOpCode() &&
-               chunks.get(0).data != null &&
-               chunks.get(0).data.length > 1;
+        if (chunks.size() != 2)
+            return false;
+        ScriptChunk chunk0 = chunks.get(0);
+        if (chunk0.isOpCode())
+            return false;
+        byte[] chunk0data = chunk0.data;
+        if (chunk0data == null)
+            return false;
+        if (chunk0data.length <= 1)
+            return false;
+        if (!chunks.get(1).equalsOpCode(OP_CHECKSIG))
+            return false;
+        return true;
     }
 
     /**
