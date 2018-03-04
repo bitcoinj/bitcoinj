@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.AbstractBlockChain;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
@@ -3035,7 +3036,7 @@ public class WalletTest extends TestWithWallet {
         wallet.setKeyRotationTime(goodKey.getCreationTimeSeconds());
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
-        LegacyAddress output = txns.get(0).getOutput(0).getAddressFromP2PKHScript(UNITTEST);
+        Address output = txns.get(0).getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
         ECKey usedKey = wallet.findKeyFromPubHash(output.getHash());
         assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
         assertEquals(goodKey.getCreationTimeSeconds(), wallet.freshReceiveKey().getCreationTimeSeconds());
