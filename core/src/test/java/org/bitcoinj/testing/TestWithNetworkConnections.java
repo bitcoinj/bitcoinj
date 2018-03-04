@@ -54,7 +54,7 @@ public class TestWithNetworkConnections {
     protected BlockChain blockChain;
     protected Wallet wallet;
     protected ECKey key;
-    protected LegacyAddress address;
+    protected Address address;
     protected SocketAddress socketAddress;
 
     private NioServer[] peerServers = new NioServer[PEER_SERVERS];

@@ -27,7 +27,6 @@ import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Coin;
@@ -35,6 +34,7 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -469,7 +469,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #currentKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public LegacyAddress currentAddress(KeyChain.KeyPurpose purpose) {
+    public Address currentAddress(KeyChain.KeyPurpose purpose) {
         keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
@@ -483,7 +483,7 @@ public class Wallet extends BaseTaggableObject
      * An alias for calling {@link #currentAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public LegacyAddress currentReceiveAddress() {
+    public Address currentReceiveAddress() {
         return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -533,23 +533,23 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #freshKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public LegacyAddress freshAddress(KeyChain.KeyPurpose purpose) {
-        LegacyAddress key;
+    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+        Address address;
         keyChainGroupLock.lock();
         try {
-            key = keyChainGroup.freshAddress(purpose);
+            address = keyChainGroup.freshAddress(purpose);
         } finally {
             keyChainGroupLock.unlock();
         }
         saveNow();
-        return key;
+        return address;
     }
 
     /**
      * An alias for calling {@link #freshAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public LegacyAddress freshReceiveAddress() {
+    public Address freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -570,9 +570,9 @@ public class Wallet extends BaseTaggableObject
      * Returns only the addresses that have been issued by {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
      * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
      */
-    public List<LegacyAddress> getIssuedReceiveAddresses() {
+    public List<Address> getIssuedReceiveAddresses() {
         final List<ECKey> keys = getIssuedReceiveKeys();
-        List<LegacyAddress> addresses = new ArrayList<>(keys.size());
+        List<Address> addresses = new ArrayList<>(keys.size());
         for (ECKey key : keys)
             addresses.add(LegacyAddress.fromKey(getParams(), key));
         return addresses;
@@ -688,7 +688,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
-    public LegacyAddress currentChangeAddress() {
+    public Address currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
     }
 
@@ -850,15 +850,15 @@ public class Wallet extends BaseTaggableObject
     /**
      * Return true if we are watching this address.
      */
-    public boolean isAddressWatched(LegacyAddress address) {
+    public boolean isAddressWatched(Address address) {
         Script script = ScriptBuilder.createOutputScript(address);
         return isWatchedScript(script);
     }
 
     /**
-     * Same as {@link #addWatchedAddress(LegacyAddress, long)} with the current time as the creation time.
+     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
-    public boolean addWatchedAddress(final LegacyAddress address) {
+    public boolean addWatchedAddress(final Address address) {
         long now = Utils.currentTimeMillis() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
@@ -869,7 +869,7 @@ public class Wallet extends BaseTaggableObject
      * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
      * @return whether the address was added successfully (not already present)
      */
-    public boolean addWatchedAddress(final LegacyAddress address, long creationTime) {
+    public boolean addWatchedAddress(final Address address, long creationTime) {
         return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
     }
 
@@ -879,10 +879,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return how many addresses were added successfully
      */
-    public int addWatchedAddresses(final List<LegacyAddress> addresses, long creationTime) {
+    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (LegacyAddress address : addresses) {
+        for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             script.setCreationTimeSeconds(creationTime);
             scripts.add(script);
@@ -929,7 +929,7 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddress(final LegacyAddress address) {
+    public boolean removeWatchedAddress(final Address address) {
         return removeWatchedAddresses(ImmutableList.of(address));
     }
 
@@ -938,10 +938,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddresses(final List<LegacyAddress> addresses) {
+    public boolean removeWatchedAddresses(final List<Address> addresses) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (LegacyAddress address : addresses) {
+        for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             scripts.add(script);
         }
@@ -975,13 +975,13 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns all addresses watched by this wallet.
      */
-    public List<LegacyAddress> getWatchedAddresses() {
+    public List<Address> getWatchedAddresses() {
         keyChainGroupLock.lock();
         try {
-            List<LegacyAddress> addresses = new LinkedList<>();
+            List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (ScriptPattern.isPayToPubKeyHash(script))
-                    addresses.add(((LegacyAddress) script.getToAddress(params)));
+                    addresses.add(script.getToAddress(params));
             return addresses;
         } finally {
             keyChainGroupLock.unlock();
@@ -3010,7 +3010,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(LegacyAddress)} or
+     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(Address)} or
      * {@link #addWatchedScripts(java.util.List)}.
      * @param excludeImmatureCoinbases Whether to ignore outputs that are unspendable due to being immature.
      */
@@ -4854,7 +4854,7 @@ public class Wallet extends BaseTaggableObject
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
                 // back to us. The address comes either from the request or currentChangeAddress() as a default.
-                LegacyAddress changeAddress = req.changeAddress;
+                Address changeAddress = req.changeAddress;
                 if (changeAddress == null)
                     changeAddress = currentChangeAddress();
                 TransactionOutput changeOutput = new TransactionOutput(params, tx, change, changeAddress);

@@ -219,7 +219,7 @@ public class FakeTxBuilder {
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
         Coin value = COIN;
-        LegacyAddress someBadGuy = LegacyAddress.fromKey(params, new ECKey());
+        Address someBadGuy = LegacyAddress.fromKey(params, new ECKey());
 
         doubleSpends.prevTx = new Transaction(params);
         TransactionOutput prevOut = new TransactionOutput(params, doubleSpends.prevTx, value, someBadGuy);
@@ -261,7 +261,7 @@ public class FakeTxBuilder {
                                             Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            LegacyAddress to = LegacyAddress.fromKey(previousBlock.getParams(), new ECKey());
+            Address to = LegacyAddress.fromKey(previousBlock.getParams(), new ECKey());
             Block b = previousBlock.createNextBlock(to, version, timeSeconds, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
@@ -313,7 +313,7 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        LegacyAddress to = LegacyAddress.fromKey(prev.getParams(), new ECKey());
+        Address to = LegacyAddress.fromKey(prev.getParams(), new ECKey());
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {

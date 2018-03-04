@@ -255,19 +255,18 @@ public class ScriptBuilder {
     public static Script createOutputScript(Address to) {
         ScriptBuilder builder = new ScriptBuilder();
         if (to instanceof LegacyAddress) {
-            LegacyAddress toLegacy = (LegacyAddress) to;
-            ScriptType scriptType = toLegacy.getOutputScriptType();
+            ScriptType scriptType = to.getOutputScriptType();
             if (scriptType == ScriptType.P2PKH) {
                 // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
                 builder.op(OP_DUP);
                 builder.op(OP_HASH160);
-                builder.data(toLegacy.getHash());
+                builder.data(to.getHash());
                 builder.op(OP_EQUALVERIFY);
                 builder.op(OP_CHECKSIG);
             } else if (scriptType == ScriptType.P2SH) {
                 // OP_HASH160 <scriptHash> OP_EQUAL
                 builder.op(OP_HASH160);
-                builder.data(toLegacy.getHash());
+                builder.data(to.getHash());
                 builder.op(OP_EQUAL);
             } else {
                 throw new IllegalStateException("Cannot handle " + scriptType);

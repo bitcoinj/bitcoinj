@@ -17,7 +17,6 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
@@ -47,6 +46,32 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import joptsimple.util.DateConverter;
 
+import org.bitcoinj.core.AbstractBlockChain;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Base58;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.CheckpointManager;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.FullPrunedBlockChain;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
@@ -583,7 +608,7 @@ public class WalletTool {
             return;
         }
         try {
-            LegacyAddress address = LegacyAddress.fromBase58(params, addr);
+            Address address = LegacyAddress.fromBase58(params, addr);
             // If no creation time is specified, assume genesis (zero).
             wallet.addWatchedAddress(address, getCreationTimeSeconds());
         } catch (AddressFormatException e) {
@@ -1464,7 +1489,7 @@ public class WalletTool {
             key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
         } else {
             try {
-                LegacyAddress address = LegacyAddress.fromBase58(wallet.getParams(), addr);
+                Address address = LegacyAddress.fromBase58(wallet.getParams(), addr);
                 key = wallet.findKeyFromPubHash(address.getHash());
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");

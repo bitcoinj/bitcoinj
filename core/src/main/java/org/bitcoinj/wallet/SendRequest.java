@@ -76,7 +76,7 @@ public class SendRequest {
      * don't really control as it depends on who sent you money), and the value being sent somewhere else. The
      * change address should be selected from this wallet, normally. <b>If null this will be chosen for you.</b>
      */
-    public LegacyAddress changeAddress = null;
+    public Address changeAddress = null;
 
     /**
      * <p>A transaction can have a fee attached, which is defined as the difference between the input values

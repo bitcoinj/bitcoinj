@@ -1124,7 +1124,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *         address, the return value is 0.
      * @throws BlockStoreException If there is an error getting the balance.
      */
-    public BigInteger calculateBalanceForAddress(LegacyAddress address) throws BlockStoreException {
+    public BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
         try {

@@ -16,8 +16,9 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.params.UnitTestParams;
@@ -37,7 +38,7 @@ public class SPVBlockStoreTest {
         f.deleteOnExit();
         SPVBlockStore store = new SPVBlockStore(UNITTEST, f);
 
-        LegacyAddress to = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address to = LegacyAddress.fromKey(UNITTEST, new ECKey());
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
         assertEquals(UNITTEST.getGenesisBlock(), genesis.getHeader());

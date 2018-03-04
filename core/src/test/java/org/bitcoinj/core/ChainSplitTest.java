@@ -51,9 +51,9 @@ public class ChainSplitTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private Wallet wallet;
     private BlockChain chain;
-    private LegacyAddress coinsTo;
-    private LegacyAddress coinsTo2;
-    private LegacyAddress someOtherGuy;
+    private Address coinsTo;
+    private Address coinsTo2;
+    private Address someOtherGuy;
 
     @Before
     public void setUp() throws Exception {
@@ -186,7 +186,7 @@ public class ChainSplitTest {
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
-        LegacyAddress dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction spend = wallet.createSend(dest, valueOf(10, 0));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
@@ -220,7 +220,7 @@ public class ChainSplitTest {
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
-        LegacyAddress dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address dest = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction spend = wallet.createSend(dest, FIFTY_COINS);
         // We do NOT confirm the spend here. That means it's not considered to be pending because createSend is
         // stateless. For our purposes it is as if some other program with our keys created the tx.
@@ -311,7 +311,7 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, valueOf(10, 0));
-        LegacyAddress yetAnotherGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address yetAnotherGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(20, 0));
         wallet.commitTx(t1);
         // Receive t1 as confirmed by the network.
@@ -354,7 +354,7 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = checkNotNull(wallet.createSend(someOtherGuy, valueOf(10, 0)));
-        LegacyAddress yetAnotherGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address yetAnotherGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction t2 = checkNotNull(wallet.createSend(yetAnotherGuy, valueOf(20, 0)));
         wallet.commitTx(t1);
         // t1 is still pending ...

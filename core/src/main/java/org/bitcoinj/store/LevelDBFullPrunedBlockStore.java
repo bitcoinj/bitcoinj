@@ -28,10 +28,10 @@ import java.util.concurrent.TimeUnit;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -788,7 +788,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
 
         // Could run this in parallel with above too.
         // Should update instrumentation to see if worth while.
-        LegacyAddress a;
+        Address a;
         if (out.getAddress() == null || out.getAddress().equals("")) {
             if (instrument)
                 endMethod("addUnspentTransactionOutput");
@@ -882,13 +882,13 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         // TODO storing as byte[] hash to save space. But think should just
         // store as String of address. Might be faster. Need to test.
         ByteBuffer bb = ByteBuffer.allocate(57);
-        LegacyAddress a;
+        Address a;
         byte[] hashBytes = null;
         try {
             String address = out.getAddress();
             if (address == null || address.equals("")) {
                 Script sc = out.getScript();
-                a = (LegacyAddress) sc.getToAddress(params);
+                a = sc.getToAddress(params);
                 hashBytes = a.getHash();
             } else {
                 a = LegacyAddress.fromBase58(params, out.getAddress());
