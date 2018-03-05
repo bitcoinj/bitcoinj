@@ -66,7 +66,7 @@ public class ScriptPattern {
 
     /**
      * <p>
-     * Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
+     * Whether or not this is a scriptPubKey representing a P2SH output. In such outputs, the logic that
      * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
      * spending input to provide a program matching that hash.
      * </p>

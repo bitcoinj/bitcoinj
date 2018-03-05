@@ -172,20 +172,20 @@ public class ScriptTest {
         TransactionSignature dummySig = TransactionSignature.dummy();
         ECKey key = new ECKey();
 
-        // pay-to-pubkey
+        // P2PK
         Script inputScript = ScriptBuilder.createInputScript(dummySig);
         assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
         inputScript = ScriptBuilder.createInputScript(null);
         assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
 
-        // pay-to-address
+        // P2PKH
         inputScript = ScriptBuilder.createInputScript(dummySig, key);
         assertThat(inputScript.getChunks().get(0).data, equalTo(dummySig.encodeToBitcoin()));
         inputScript = ScriptBuilder.createInputScript(null, key);
         assertThat(inputScript.getChunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.getChunks().get(1).data, equalTo(key.getPubKey()));
 
-        // pay-to-script-hash
+        // P2SH
         ECKey key2 = new ECKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key, key2));
         inputScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(dummySig, dummySig), multisigScript);

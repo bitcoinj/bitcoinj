@@ -299,7 +299,7 @@ public class Script {
         else if (ScriptPattern.isPayToWitnessHash(this))
             return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromPayToWitnessHash(this));
         else
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
@@ -378,7 +378,7 @@ public class Script {
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
         if (ScriptPattern.isPayToPubKeyHash(this)) {
-            checkArgument(key != null, "Key required to create pay-to-address input script");
+            checkArgument(key != null, "Key required to create P2PKH input script");
             return ScriptBuilder.createInputScript(null, key);
         } else if (ScriptPattern.isPayToPubKey(this)) {
             return ScriptBuilder.createInputScript(null);
@@ -568,7 +568,7 @@ public class Script {
             ScriptChunk nChunk = chunks.get(0);
             return Script.decodeFromOpN(nChunk.opcode);
         } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
-            // pay-to-address and pay-to-pubkey require single sig
+            // P2PKH and P2PK require single sig
             return 1;
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");

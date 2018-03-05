@@ -288,7 +288,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptSig that can redeem a pay-to-address output.
+     * Creates a scriptSig that can redeem a P2PKH output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
      */
     public static Script createInputScript(@Nullable TransactionSignature signature, ECKey pubKey) {
@@ -298,7 +298,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptSig that can redeem a pay-to-pubkey output.
+     * Creates a scriptSig that can redeem a P2PK output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
      */
     public static Script createInputScript(@Nullable TransactionSignature signature) {
@@ -342,7 +342,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program.
+     * Create a program that satisfies a P2SH OP_CHECKMULTISIG program.
      * If given signature list is null, incomplete scriptSig will be created with OP_0 instead of signatures
      */
     public static Script createP2SHMultiSigInputScript(@Nullable List<TransactionSignature> signatures,
