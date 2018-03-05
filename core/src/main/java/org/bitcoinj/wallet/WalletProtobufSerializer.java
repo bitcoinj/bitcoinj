@@ -32,8 +32,6 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.signers.LocalTransactionSigner;
-import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -233,16 +231,6 @@ public class WalletProtobufSerializer {
         for (Map.Entry<String, ByteString> entry : wallet.getTags().entrySet()) {
             Protos.Tag.Builder tag = Protos.Tag.newBuilder().setTag(entry.getKey()).setData(entry.getValue());
             walletBuilder.addTags(tag);
-        }
-
-        for (TransactionSigner signer : wallet.getTransactionSigners()) {
-            // do not serialize LocalTransactionSigner as it's being added implicitly
-            if (signer instanceof LocalTransactionSigner)
-                continue;
-            Protos.TransactionSigner.Builder protoSigner = Protos.TransactionSigner.newBuilder();
-            protoSigner.setClassName(signer.getClass().getName());
-            protoSigner.setData(ByteString.copyFrom(signer.serialize()));
-            walletBuilder.addTransactionSigners(protoSigner);
         }
 
         // Populate the wallet version.
@@ -565,18 +553,6 @@ public class WalletProtobufSerializer {
 
         for (Protos.Tag tag : walletProto.getTagsList()) {
             wallet.setTag(tag.getTag(), tag.getData());
-        }
-
-        for (Protos.TransactionSigner signerProto : walletProto.getTransactionSignersList()) {
-            try {
-                Class signerClass = Class.forName(signerProto.getClassName());
-                TransactionSigner signer = (TransactionSigner)signerClass.newInstance();
-                signer.deserialize(signerProto.getData().toByteArray());
-                wallet.addTransactionSigner(signer);
-            } catch (Exception e) {
-                throw new UnreadableWalletException("Unable to deserialize TransactionSigner instance: " +
-                        signerProto.getClassName(), e);
-            }
         }
 
         if (walletProto.hasVersion()) {

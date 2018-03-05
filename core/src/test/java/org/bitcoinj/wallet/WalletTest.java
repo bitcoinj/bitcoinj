@@ -42,7 +42,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.signers.StatelessTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -3320,16 +3319,6 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void transactionSignersShouldBeSerializedAlongWithWallet() throws Exception {
-        TransactionSigner signer = new NopTransactionSigner(true);
-        wallet.addTransactionSigner(signer);
-        assertEquals(2, wallet.getTransactionSigners().size());
-        wallet = roundTrip(wallet);
-        assertEquals(2, wallet.getTransactionSigners().size());
-        assertTrue(wallet.getTransactionSigners().get(1).isReady());
-    }
-
-    @Test
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(UNITTEST);
@@ -3340,7 +3329,7 @@ public class WalletTest extends TestWithWallet {
         final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(UNITTEST), UNITTEST);
 
-        TransactionSigner signer = new StatelessTransactionSigner() {
+        TransactionSigner signer = new TransactionSigner() {
             @Override
             public boolean isReady() {
                 return true;

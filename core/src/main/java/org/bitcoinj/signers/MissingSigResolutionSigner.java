@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * In MissingSigsMode.THROW mode this signer will throw an exception. It would be MissingSignatureException
  * for P2SH or MissingPrivateKeyException for other transaction types.
  */
-public class MissingSigResolutionSigner extends StatelessTransactionSigner {
+public class MissingSigResolutionSigner implements TransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(MissingSigResolutionSigner.class);
 
     public Wallet.MissingSigsMode missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;

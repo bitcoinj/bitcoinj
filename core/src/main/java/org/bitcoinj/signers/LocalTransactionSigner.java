@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * the same derivation path.</p>
  * <p>This signer always uses {@link Transaction.SigHash#ALL} signing mode.</p>
  */
-public class LocalTransactionSigner extends StatelessTransactionSigner {
+public class LocalTransactionSigner implements TransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(LocalTransactionSigner.class);
 
     /**

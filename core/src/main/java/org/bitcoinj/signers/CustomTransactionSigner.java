@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * some local API or something else.
  * </p>
  */
-public abstract class CustomTransactionSigner extends StatelessTransactionSigner {
+public abstract class CustomTransactionSigner implements TransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(CustomTransactionSigner.class);
 
     @Override

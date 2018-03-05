@@ -68,16 +68,6 @@ public interface TransactionSigner {
     boolean isReady();
 
     /**
-     * Returns byte array of data representing state of this signer. It's used to serialize/deserialize this signer
-     */
-    byte[] serialize();
-
-    /**
-     * Uses given byte array of data to reconstruct internal state of this signer
-     */
-    void deserialize(byte[] data);
-
-    /**
      * Signs given transaction's inputs.
      * Returns true if signer is compatible with given transaction (can do something meaningful with it).
      * Otherwise this method returns false
