@@ -59,7 +59,7 @@ public class Script {
         // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
         NO_TYPE,
         P2PKH, // pay to pubkey hash (aka pay to address)
-        PUB_KEY, // pay to pubkey
+        P2PK, // pay to pubkey
         P2SH, // pay to script hash
         P2WPKH, // pay to witness pubkey hash
         P2WSH, // pay to witness script hash
@@ -1608,7 +1608,7 @@ public class Script {
         if (ScriptPattern.isPayToPubKeyHash(this)) {
             type = ScriptType.P2PKH;
         } else if (ScriptPattern.isPayToPubKey(this)) {
-            type = ScriptType.PUB_KEY;
+            type = ScriptType.P2PK;
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             type = ScriptType.P2SH;
         }
