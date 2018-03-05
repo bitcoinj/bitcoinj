@@ -66,7 +66,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void fourPeers() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
@@ -127,7 +127,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void rejectHandling() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         ListenableFuture<Transaction> future = broadcast.broadcast();
         // 0 and 3 are randomly selected to receive the broadcast.

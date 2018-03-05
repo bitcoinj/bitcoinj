@@ -28,6 +28,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
@@ -275,6 +276,14 @@ public class WalletProtobufSerializer {
                 inputBuilder.setSequence((int) input.getSequenceNumber());
             if (input.getValue() != null)
                 inputBuilder.setValue(input.getValue().value);
+            if (input.hasWitness()) {
+                TransactionWitness witness = input.getWitness();
+                Protos.ScriptWitness.Builder witnessBuilder = Protos.ScriptWitness.newBuilder();
+                int pushCount = witness.getPushCount();
+                for (int i = 0; i < pushCount; i++)
+                    witnessBuilder.addData(ByteString.copyFrom(witness.getPush(i)));
+                inputBuilder.setWitness(witnessBuilder);
+            }
             txBuilder.addTransactionInput(inputBuilder);
         }
 
@@ -640,6 +649,15 @@ public class WalletProtobufSerializer {
             TransactionInput input = new TransactionInput(params, tx, scriptBytes, outpoint, value);
             if (inputProto.hasSequence())
                 input.setSequenceNumber(0xffffffffL & inputProto.getSequence());
+            if (inputProto.hasWitness()) {
+                Protos.ScriptWitness witnessProto = inputProto.getWitness();
+                if (witnessProto.getDataCount() > 0) {
+                    TransactionWitness witness = new TransactionWitness(witnessProto.getDataCount());
+                    for (int j = 0; j < witnessProto.getDataCount(); j++)
+                        witness.setPush(j, witnessProto.getData(j).toByteArray());
+                    input.setWitness(witness);
+                }
+            }
             tx.addInput(input);
         }
 

@@ -5037,6 +5037,470 @@ public final class Protos {
     // @@protoc_insertion_point(class_scope:wallet.Script)
   }
 
+  public interface ScriptWitnessOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:wallet.ScriptWitness)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getDataList();
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    int getDataCount();
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    com.google.protobuf.ByteString getData(int index);
+  }
+  /**
+   * Protobuf type {@code wallet.ScriptWitness}
+   */
+  public static final class ScriptWitness extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:wallet.ScriptWitness)
+      ScriptWitnessOrBuilder {
+    // Use ScriptWitness.newBuilder() to construct.
+    private ScriptWitness(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private ScriptWitness(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final ScriptWitness defaultInstance;
+    public static ScriptWitness getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public ScriptWitness getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ScriptWitness(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                data_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              data_.add(input.readBytes());
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          data_ = java.util.Collections.unmodifiableList(data_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.bitcoinj.wallet.Protos.ScriptWitness.class, org.bitcoinj.wallet.Protos.ScriptWitness.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<ScriptWitness> PARSER =
+        new com.google.protobuf.AbstractParser<ScriptWitness>() {
+      public ScriptWitness parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ScriptWitness(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ScriptWitness> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int DATA_FIELD_NUMBER = 1;
+    private java.util.List<com.google.protobuf.ByteString> data_;
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getDataList() {
+      return data_;
+    }
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    public int getDataCount() {
+      return data_.size();
+    }
+    /**
+     * <code>repeated bytes data = 1;</code>
+     */
+    public com.google.protobuf.ByteString getData(int index) {
+      return data_.get(index);
+    }
+
+    private void initFields() {
+      data_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < data_.size(); i++) {
+        output.writeBytes(1, data_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < data_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(data_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getDataList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.bitcoinj.wallet.Protos.ScriptWitness prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code wallet.ScriptWitness}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:wallet.ScriptWitness)
+        org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.bitcoinj.wallet.Protos.ScriptWitness.class, org.bitcoinj.wallet.Protos.ScriptWitness.Builder.class);
+      }
+
+      // Construct using org.bitcoinj.wallet.Protos.ScriptWitness.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        data_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
+      }
+
+      public org.bitcoinj.wallet.Protos.ScriptWitness getDefaultInstanceForType() {
+        return org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
+      }
+
+      public org.bitcoinj.wallet.Protos.ScriptWitness build() {
+        org.bitcoinj.wallet.Protos.ScriptWitness result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.bitcoinj.wallet.Protos.ScriptWitness buildPartial() {
+        org.bitcoinj.wallet.Protos.ScriptWitness result = new org.bitcoinj.wallet.Protos.ScriptWitness(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          data_ = java.util.Collections.unmodifiableList(data_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.data_ = data_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.bitcoinj.wallet.Protos.ScriptWitness) {
+          return mergeFrom((org.bitcoinj.wallet.Protos.ScriptWitness)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.bitcoinj.wallet.Protos.ScriptWitness other) {
+        if (other == org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance()) return this;
+        if (!other.data_.isEmpty()) {
+          if (data_.isEmpty()) {
+            data_ = other.data_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureDataIsMutable();
+            data_.addAll(other.data_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.bitcoinj.wallet.Protos.ScriptWitness parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.bitcoinj.wallet.Protos.ScriptWitness) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.google.protobuf.ByteString> data_ = java.util.Collections.emptyList();
+      private void ensureDataIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          data_ = new java.util.ArrayList<com.google.protobuf.ByteString>(data_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getDataList() {
+        return java.util.Collections.unmodifiableList(data_);
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public int getDataCount() {
+        return data_.size();
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public com.google.protobuf.ByteString getData(int index) {
+        return data_.get(index);
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public Builder setData(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureDataIsMutable();
+        data_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public Builder addData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureDataIsMutable();
+        data_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public Builder addAllData(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureDataIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, data_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes data = 1;</code>
+       */
+      public Builder clearData() {
+        data_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:wallet.ScriptWitness)
+    }
+
+    static {
+      defaultInstance = new ScriptWitness(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:wallet.ScriptWitness)
+  }
+
   public interface TransactionInputOrBuilder extends
       // @@protoc_insertion_point(interface_extends:wallet.TransactionInput)
       com.google.protobuf.MessageOrBuilder {
@@ -5125,6 +5589,31 @@ public final class Protos {
      * </pre>
      */
     long getValue();
+
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    boolean hasWitness();
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    org.bitcoinj.wallet.Protos.ScriptWitness getWitness();
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder getWitnessOrBuilder();
   }
   /**
    * Protobuf type {@code wallet.TransactionInput}
@@ -5201,6 +5690,19 @@ public final class Protos {
             case 40: {
               bitField0_ |= 0x00000010;
               value_ = input.readInt64();
+              break;
+            }
+            case 50: {
+              org.bitcoinj.wallet.Protos.ScriptWitness.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000020) == 0x00000020)) {
+                subBuilder = witness_.toBuilder();
+              }
+              witness_ = input.readMessage(org.bitcoinj.wallet.Protos.ScriptWitness.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(witness_);
+                witness_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000020;
               break;
             }
           }
@@ -5358,12 +5860,46 @@ public final class Protos {
       return value_;
     }
 
+    public static final int WITNESS_FIELD_NUMBER = 6;
+    private org.bitcoinj.wallet.Protos.ScriptWitness witness_;
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    public boolean hasWitness() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    public org.bitcoinj.wallet.Protos.ScriptWitness getWitness() {
+      return witness_;
+    }
+    /**
+     * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     *
+     * <pre>
+     * script witness
+     * </pre>
+     */
+    public org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder getWitnessOrBuilder() {
+      return witness_;
+    }
+
     private void initFields() {
       transactionOutPointHash_ = com.google.protobuf.ByteString.EMPTY;
       transactionOutPointIndex_ = 0;
       scriptBytes_ = com.google.protobuf.ByteString.EMPTY;
       sequence_ = 0;
       value_ = 0L;
+      witness_ = org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -5405,6 +5941,9 @@ public final class Protos {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeInt64(5, value_);
       }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        output.writeMessage(6, witness_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -5433,6 +5972,10 @@ public final class Protos {
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(5, value_);
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, witness_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -5543,6 +6086,7 @@ public final class Protos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getWitnessFieldBuilder();
         }
       }
       private static Builder create() {
@@ -5561,6 +6105,12 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000008);
         value_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
+        if (witnessBuilder_ == null) {
+          witness_ = org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
+        } else {
+          witnessBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
 
@@ -5609,6 +6159,14 @@ public final class Protos {
           to_bitField0_ |= 0x00000010;
         }
         result.value_ = value_;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
+        }
+        if (witnessBuilder_ == null) {
+          result.witness_ = witness_;
+        } else {
+          result.witness_ = witnessBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -5639,6 +6197,9 @@ public final class Protos {
         }
         if (other.hasValue()) {
           setValue(other.getValue());
+        }
+        if (other.hasWitness()) {
+          mergeWitness(other.getWitness());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -5923,6 +6484,158 @@ public final class Protos {
         value_ = 0L;
         onChanged();
         return this;
+      }
+
+      private org.bitcoinj.wallet.Protos.ScriptWitness witness_ = org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.bitcoinj.wallet.Protos.ScriptWitness, org.bitcoinj.wallet.Protos.ScriptWitness.Builder, org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder> witnessBuilder_;
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public boolean hasWitness() {
+        return ((bitField0_ & 0x00000020) == 0x00000020);
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public org.bitcoinj.wallet.Protos.ScriptWitness getWitness() {
+        if (witnessBuilder_ == null) {
+          return witness_;
+        } else {
+          return witnessBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public Builder setWitness(org.bitcoinj.wallet.Protos.ScriptWitness value) {
+        if (witnessBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          witness_ = value;
+          onChanged();
+        } else {
+          witnessBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000020;
+        return this;
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public Builder setWitness(
+          org.bitcoinj.wallet.Protos.ScriptWitness.Builder builderForValue) {
+        if (witnessBuilder_ == null) {
+          witness_ = builderForValue.build();
+          onChanged();
+        } else {
+          witnessBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000020;
+        return this;
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public Builder mergeWitness(org.bitcoinj.wallet.Protos.ScriptWitness value) {
+        if (witnessBuilder_ == null) {
+          if (((bitField0_ & 0x00000020) == 0x00000020) &&
+              witness_ != org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance()) {
+            witness_ =
+              org.bitcoinj.wallet.Protos.ScriptWitness.newBuilder(witness_).mergeFrom(value).buildPartial();
+          } else {
+            witness_ = value;
+          }
+          onChanged();
+        } else {
+          witnessBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000020;
+        return this;
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public Builder clearWitness() {
+        if (witnessBuilder_ == null) {
+          witness_ = org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
+          onChanged();
+        } else {
+          witnessBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000020);
+        return this;
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public org.bitcoinj.wallet.Protos.ScriptWitness.Builder getWitnessBuilder() {
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return getWitnessFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      public org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder getWitnessOrBuilder() {
+        if (witnessBuilder_ != null) {
+          return witnessBuilder_.getMessageOrBuilder();
+        } else {
+          return witness_;
+        }
+      }
+      /**
+       * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       *
+       * <pre>
+       * script witness
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.bitcoinj.wallet.Protos.ScriptWitness, org.bitcoinj.wallet.Protos.ScriptWitness.Builder, org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder> 
+          getWitnessFieldBuilder() {
+        if (witnessBuilder_ == null) {
+          witnessBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.bitcoinj.wallet.Protos.ScriptWitness, org.bitcoinj.wallet.Protos.ScriptWitness.Builder, org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder>(
+                  getWitness(),
+                  getParentForChildren(),
+                  isClean());
+          witness_ = null;
+        }
+        return witnessBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:wallet.TransactionInput)
@@ -18015,6 +18728,11 @@ public final class Protos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_wallet_Script_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_wallet_ScriptWitness_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_wallet_ScriptWitness_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_wallet_TransactionInput_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -18088,64 +18806,66 @@ public final class Protos {
       "INAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\022\032\n\026DETE" +
       "RMINISTIC_MNEMONIC\020\003\022\025\n\021DETERMINISTIC_KE" +
       "Y\020\004\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022creati",
-      "on_timestamp\030\002 \002(\003\"\222\001\n\020TransactionInput\022" +
-      "\"\n\032transaction_out_point_hash\030\001 \002(\014\022#\n\033t" +
-      "ransaction_out_point_index\030\002 \002(\r\022\024\n\014scri" +
-      "pt_bytes\030\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\022\r\n\005valu" +
-      "e\030\005 \001(\003\"\177\n\021TransactionOutput\022\r\n\005value\030\001 " +
-      "\002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031spent_by_tr" +
-      "ansaction_hash\030\003 \001(\014\022\"\n\032spent_by_transac" +
-      "tion_index\030\004 \001(\005\"\267\003\n\025TransactionConfiden" +
-      "ce\0220\n\004type\030\001 \001(\0162\".wallet.TransactionCon" +
-      "fidence.Type\022\032\n\022appeared_at_height\030\002 \001(\005",
-      "\022\036\n\026overriding_transaction\030\003 \001(\014\022\r\n\005dept" +
-      "h\030\004 \001(\005\022)\n\014broadcast_by\030\006 \003(\0132\023.wallet.P" +
-      "eerAddress\022\033\n\023last_broadcasted_at\030\010 \001(\003\022" +
-      "4\n\006source\030\007 \001(\0162$.wallet.TransactionConf" +
-      "idence.Source\"`\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BU" +
-      "ILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHA" +
-      "IN\020\003\022\010\n\004DEAD\020\004\022\017\n\013IN_CONFLICT\020\005\"A\n\006Sourc" +
-      "e\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020" +
-      "\001\022\017\n\013SOURCE_SELF\020\002\"\303\005\n\013Transaction\022\017\n\007ve" +
-      "rsion\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162",
-      "\030.wallet.Transaction.Pool\022\021\n\tlock_time\030\004" +
-      " \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transaction_" +
-      "input\030\006 \003(\0132\030.wallet.TransactionInput\0225\n" +
-      "\022transaction_output\030\007 \003(\0132\031.wallet.Trans" +
-      "actionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030bloc" +
-      "k_relativity_offsets\030\013 \003(\005\0221\n\nconfidence" +
-      "\030\t \001(\0132\035.wallet.TransactionConfidence\0225\n" +
-      "\007purpose\030\n \001(\0162\033.wallet.Transaction.Purp" +
-      "ose:\007UNKNOWN\022+\n\rexchange_rate\030\014 \001(\0132\024.wa" +
-      "llet.ExchangeRate\022\014\n\004memo\030\r \001(\t\"Y\n\004Pool\022",
-      "\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n" +
-      "\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE" +
-      "\020\022\"\243\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYM" +
-      "ENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030ASSURANCE_CON" +
-      "TRACT_CLAIM\020\003\022\035\n\031ASSURANCE_CONTRACT_PLED" +
-      "GE\020\004\022\033\n\027ASSURANCE_CONTRACT_STUB\020\005\022\r\n\tRAI" +
-      "SE_FEE\020\006\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002" +
-      "(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030" +
-      "\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004dat" +
-      "a\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag",
-      "\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022netwo" +
-      "rk_identifier\030\001 \002(\t\022\034\n\024last_seen_block_h" +
-      "ash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(" +
-      "\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n\003" +
-      "key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030\004 " +
-      "\003(\0132\023.wallet.Transaction\022&\n\016watched_scri" +
-      "pt\030\017 \003(\0132\016.wallet.Script\022C\n\017encryption_t" +
-      "ype\030\005 \001(\0162\035.wallet.Wallet.EncryptionType" +
-      ":\013UNENCRYPTED\0227\n\025encryption_parameters\030\006" +
-      " \001(\0132\030.wallet.ScryptParameters\022\022\n\007versio",
-      "n\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021.wallet.E" +
-      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
-      "ation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet." +
-      "Tag\";\n\016EncryptionType\022\017\n\013UNENCRYPTED\020\001\022\030" +
-      "\n\024ENCRYPTED_SCRYPT_AES\020\002\"R\n\014ExchangeRate" +
-      "\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfiat_value\030\002 \002(\003" +
-      "\022\032\n\022fiat_currency_code\030\003 \002(\tB\035\n\023org.bitc" +
-      "oinj.walletB\006Protos"
+      "on_timestamp\030\002 \002(\003\"\035\n\rScriptWitness\022\014\n\004d" +
+      "ata\030\001 \003(\014\"\272\001\n\020TransactionInput\022\"\n\032transa" +
+      "ction_out_point_hash\030\001 \002(\014\022#\n\033transactio" +
+      "n_out_point_index\030\002 \002(\r\022\024\n\014script_bytes\030" +
+      "\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\022\r\n\005value\030\005 \001(\003\022&" +
+      "\n\007witness\030\006 \001(\0132\025.wallet.ScriptWitness\"\177" +
+      "\n\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014sc" +
+      "ript_bytes\030\002 \002(\014\022!\n\031spent_by_transaction" +
+      "_hash\030\003 \001(\014\022\"\n\032spent_by_transaction_inde" +
+      "x\030\004 \001(\005\"\267\003\n\025TransactionConfidence\0220\n\004typ",
+      "e\030\001 \001(\0162\".wallet.TransactionConfidence.T" +
+      "ype\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026overr" +
+      "iding_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022)" +
+      "\n\014broadcast_by\030\006 \003(\0132\023.wallet.PeerAddres" +
+      "s\022\033\n\023last_broadcasted_at\030\010 \001(\003\0224\n\006source" +
+      "\030\007 \001(\0162$.wallet.TransactionConfidence.So" +
+      "urce\"`\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022" +
+      "\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004D" +
+      "EAD\020\004\022\017\n\013IN_CONFLICT\020\005\"A\n\006Source\022\022\n\016SOUR" +
+      "CE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOUR",
+      "CE_SELF\020\002\"\303\005\n\013Transaction\022\017\n\007version\030\001 \002" +
+      "(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet." +
+      "Transaction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nu" +
+      "pdated_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003" +
+      "(\0132\030.wallet.TransactionInput\0225\n\022transact" +
+      "ion_output\030\007 \003(\0132\031.wallet.TransactionOut" +
+      "put\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030block_relativ" +
+      "ity_offsets\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035." +
+      "wallet.TransactionConfidence\0225\n\007purpose\030" +
+      "\n \001(\0162\033.wallet.Transaction.Purpose:\007UNKN",
+      "OWN\022+\n\rexchange_rate\030\014 \001(\0132\024.wallet.Exch" +
+      "angeRate\022\014\n\004memo\030\r \001(\t\"Y\n\004Pool\022\013\n\007UNSPEN" +
+      "T\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013" +
+      "\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"\243\001\n\007Pu" +
+      "rpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014" +
+      "KEY_ROTATION\020\002\022\034\n\030ASSURANCE_CONTRACT_CLA" +
+      "IM\020\003\022\035\n\031ASSURANCE_CONTRACT_PLEDGE\020\004\022\033\n\027A" +
+      "SSURANCE_CONTRACT_STUB\020\005\022\r\n\tRAISE_FEE\020\006\"" +
+      "N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002" +
+      " \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"",
+      "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
+      "\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n" +
+      "\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022network_identi" +
+      "fier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014" +
+      "\022\036\n\026last_seen_block_height\030\014 \001(\r\022!\n\031last" +
+      "_seen_block_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\013" +
+      "2\013.wallet.Key\022(\n\013transaction\030\004 \003(\0132\023.wal" +
+      "let.Transaction\022&\n\016watched_script\030\017 \003(\0132" +
+      "\016.wallet.Script\022C\n\017encryption_type\030\005 \001(\016" +
+      "2\035.wallet.Wallet.EncryptionType:\013UNENCRY",
+      "PTED\0227\n\025encryption_parameters\030\006 \001(\0132\030.wa" +
+      "llet.ScryptParameters\022\022\n\007version\030\007 \001(\005:\001" +
+      "1\022$\n\textension\030\n \003(\0132\021.wallet.Extension\022" +
+      "\023\n\013description\030\013 \001(\t\022\031\n\021key_rotation_tim" +
+      "e\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag\";\n\016En" +
+      "cryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPT" +
+      "ED_SCRYPT_AES\020\002\"R\n\014ExchangeRate\022\022\n\ncoin_" +
+      "value\030\001 \002(\003\022\022\n\nfiat_value\030\002 \002(\003\022\032\n\022fiat_" +
+      "currency_code\030\003 \002(\tB\035\n\023org.bitcoinj.wall" +
+      "etB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -18189,56 +18909,62 @@ public final class Protos {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_Script_descriptor,
         new java.lang.String[] { "Program", "CreationTimestamp", });
-    internal_static_wallet_TransactionInput_descriptor =
+    internal_static_wallet_ScriptWitness_descriptor =
       getDescriptor().getMessageTypes().get(5);
+    internal_static_wallet_ScriptWitness_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_wallet_ScriptWitness_descriptor,
+        new java.lang.String[] { "Data", });
+    internal_static_wallet_TransactionInput_descriptor =
+      getDescriptor().getMessageTypes().get(6);
     internal_static_wallet_TransactionInput_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_TransactionInput_descriptor,
-        new java.lang.String[] { "TransactionOutPointHash", "TransactionOutPointIndex", "ScriptBytes", "Sequence", "Value", });
+        new java.lang.String[] { "TransactionOutPointHash", "TransactionOutPointIndex", "ScriptBytes", "Sequence", "Value", "Witness", });
     internal_static_wallet_TransactionOutput_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_wallet_TransactionOutput_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_TransactionOutput_descriptor,
         new java.lang.String[] { "Value", "ScriptBytes", "SpentByTransactionHash", "SpentByTransactionIndex", });
     internal_static_wallet_TransactionConfidence_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_wallet_TransactionConfidence_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_TransactionConfidence_descriptor,
         new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "Depth", "BroadcastBy", "LastBroadcastedAt", "Source", });
     internal_static_wallet_Transaction_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_wallet_Transaction_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_Transaction_descriptor,
         new java.lang.String[] { "Version", "Hash", "Pool", "LockTime", "UpdatedAt", "TransactionInput", "TransactionOutput", "BlockHash", "BlockRelativityOffsets", "Confidence", "Purpose", "ExchangeRate", "Memo", });
     internal_static_wallet_ScryptParameters_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_wallet_ScryptParameters_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_ScryptParameters_descriptor,
         new java.lang.String[] { "Salt", "N", "R", "P", });
     internal_static_wallet_Extension_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_wallet_Extension_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_Extension_descriptor,
         new java.lang.String[] { "Id", "Data", "Mandatory", });
     internal_static_wallet_Tag_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_wallet_Tag_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_Tag_descriptor,
         new java.lang.String[] { "Tag", "Data", });
     internal_static_wallet_Wallet_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_wallet_Wallet_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_Wallet_descriptor,
         new java.lang.String[] { "NetworkIdentifier", "LastSeenBlockHash", "LastSeenBlockHeight", "LastSeenBlockTimeSecs", "Key", "Transaction", "WatchedScript", "EncryptionType", "EncryptionParameters", "Version", "Extension", "Description", "KeyRotationTime", "Tags", });
     internal_static_wallet_ExchangeRate_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_wallet_ExchangeRate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_ExchangeRate_descriptor,

@@ -257,7 +257,13 @@ public class Transaction extends ChildMessage {
     @Override
     public Sha256Hash getHash() {
         if (hash == null) {
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(unsafeBitcoinSerialize()));
+            ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+            try {
+                bitcoinSerializeToStream(stream, false);
+            } catch (IOException e) {
+                // Cannot happen, we are serializing to a memory stream.
+            }
+            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(stream.toByteArray()));
         }
         return hash;
     }
@@ -563,14 +569,41 @@ public class Transaction extends ChildMessage {
         return cursor - offset + 4;
     }
 
+    /**
+     * Deserialize according to <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or
+     * the <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if the
+     * transaction is segwit or not.
+     */
     @Override
     protected void parse() throws ProtocolException {
         cursor = offset;
-
-        version = readUint32();
         optimalEncodingMessageSize = 4;
 
-        // First come the inputs.
+        // version
+        version = readUint32();
+        // peek at marker
+        byte marker = payload[cursor];
+        boolean useSegwit = marker == 0;
+        // marker, flag
+        if (useSegwit) {
+            readBytes(2);
+            optimalEncodingMessageSize += 2;
+        }
+        // txin_count, txins
+        parseInputs();
+        // txout_count, txouts
+        parseOutputs();
+        // script_witnesses
+        if (useSegwit)
+            parseWitnesses();
+        // lock_time
+        lockTime = readUint32();
+        optimalEncodingMessageSize += 4;
+
+        length = cursor - offset;
+    }
+
+    private void parseInputs() {
         long numInputs = readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<>(Math.min((int) numInputs, MAX_INITIAL_INPUTS_OUTPUTS_SIZE));
@@ -581,7 +614,9 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
             cursor += scriptLen + 4;
         }
-        // Now the outputs
+    }
+
+    private void parseOutputs() {
         long numOutputs = readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<>(Math.min((int) numOutputs, MAX_INITIAL_INPUTS_OUTPUTS_SIZE));
@@ -592,9 +627,30 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }
-        lockTime = readUint32();
-        optimalEncodingMessageSize += 4;
-        length = cursor - offset;
+    }
+
+    private void parseWitnesses() {
+        int numWitnesses = inputs.size();
+        for (int i = 0; i < numWitnesses; i++) {
+            long pushCount = readVarInt();
+            TransactionWitness witness = new TransactionWitness((int) pushCount);
+            getInput(i).setWitness(witness);
+            optimalEncodingMessageSize += VarInt.sizeOf(pushCount);
+            for (int y = 0; y < pushCount; y++) {
+                long pushSize = readVarInt();
+                optimalEncodingMessageSize += VarInt.sizeOf(pushSize) + pushSize;
+                byte[] push = readBytes((int) pushSize);
+                witness.setPush(y, push);
+            }
+        }
+    }
+
+    /** @return true of the transaction has any witnesses in any of its inputs */
+    public boolean hasWitnesses() {
+        for (TransactionInput in : inputs)
+            if (in.hasWitness())
+                return true;
+        return false;
     }
 
     public int getOptimalEncodingMessageSize() {
@@ -694,6 +750,7 @@ public class Transaction extends ChildMessage {
             return s.toString();
         }
         if (!inputs.isEmpty()) {
+            int i = 0;
             for (TransactionInput in : inputs) {
                 s.append("     ");
                 s.append("in   ");
@@ -704,6 +761,11 @@ public class Transaction extends ChildMessage {
                     final Coin value = in.getValue();
                     if (value != null)
                         s.append(" ").append(value.toFriendlyString());
+                    if (in.hasWitness()) {
+                        s.append("\n          ");
+                        s.append("witness:");
+                        s.append(in.getWitness());
+                    }
                     s.append("\n          ");
                     s.append("outpoint:");
                     final TransactionOutPoint outpoint = in.getOutpoint();
@@ -730,6 +792,7 @@ public class Transaction extends ChildMessage {
                     s.append("[exception: ").append(e.getMessage()).append("]");
                 }
                 s.append('\n');
+                i++;
             }
         } else {
             s.append("     ");
@@ -1129,16 +1192,41 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+        boolean useSegwit = hasWitnesses()
+                && protocolVersion >= NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+        bitcoinSerializeToStream(stream, useSegwit);
+    }
+
+    /**
+     * Serialize according to <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or the
+     * <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if segwit is
+     * desired.
+     */
+    protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
+        // version
         uint32ToByteStreamLE(version, stream);
+        // marker, flag
+        if (useSegwit) {
+            stream.write(0);
+            stream.write(1);
+        }
+        // txin_count, txins
         stream.write(new VarInt(inputs.size()).encode());
         for (TransactionInput in : inputs)
             in.bitcoinSerialize(stream);
+        // txout_count, txouts
         stream.write(new VarInt(outputs.size()).encode());
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
+        // script_witnisses
+        if (useSegwit) {
+            for (TransactionInput in : inputs) {
+                in.getWitness().bitcoinSerializeToStream(stream);
+            }
+        }
+        // lock_time
         uint32ToByteStreamLE(lockTime, stream);
     }
-
 
     /**
      * Transactions can have an associated lock time, specified either as a block height or in seconds since the

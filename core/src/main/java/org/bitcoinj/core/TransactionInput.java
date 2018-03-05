@@ -81,6 +81,8 @@ public class TransactionInput extends ChildMessage {
     @Nullable
     private Coin value;
 
+    private TransactionWitness witness;
+
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
@@ -263,6 +265,31 @@ public class TransactionInput extends ChildMessage {
     @Nullable
     public Coin getValue() {
         return value;
+    }
+
+    /**
+     * Get the transaction witness of this input.
+     * 
+     * @return the witness of the input
+     */
+    public TransactionWitness getWitness() {
+        return witness != null ? witness : TransactionWitness.EMPTY;
+    }
+
+    /**
+     * Set the transaction witness of an input.
+     */
+    public void setWitness(TransactionWitness witness) {
+        this.witness = witness;
+    }
+
+    /**
+     * Determine if the transaction has witnesses.
+     * 
+     * @return true if the transaction has witnesses
+     */
+    public boolean hasWitness() {
+        return witness != null && witness.getPushCount() != 0;
     }
 
     public enum ConnectionResult {
@@ -501,7 +528,7 @@ public class TransactionInput extends ChildMessage {
                 s.append(": COINBASE");
             } else {
                 s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
-                String flags = Joiner.on(", ").skipNulls().join(
+                String flags = Joiner.on(", ").skipNulls().join(hasWitness() ? "witness" : null,
                         hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())

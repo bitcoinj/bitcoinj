@@ -258,6 +258,13 @@ public class BlockTest {
     }
 
     @Test
+    public void testBlock481829_segwitTransaction() throws Exception {
+        Block block481829 = MAINNET.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block481829.dat")));
+        assertEquals(2020, block481829.getTransactions().size());
+    }
+
+    @Test
     public void isBIPs() throws Exception {
         final Block genesis = MAINNET.getGenesisBlock();
         assertFalse(genesis.isBIP34());
