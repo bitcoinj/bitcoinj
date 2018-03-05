@@ -21,6 +21,7 @@ package org.bitcoinj.store;
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -959,7 +960,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
-            s.setInt(7, out.getScript().getScriptType().id);
+            ScriptType scriptType = out.getScript().getScriptType();
+            s.setInt(7, scriptType != null ? scriptType.id : 0);
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();

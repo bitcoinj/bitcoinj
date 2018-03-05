@@ -56,7 +56,6 @@ public class Script {
 
     /** Enumeration to encapsulate the type of this script. */
     public enum ScriptType {
-        NO_TYPE(0),
         P2PKH(1), // pay to pubkey hash (aka pay to address)
         P2PK(2), // pay to pubkey
         P2SH(3), // pay to script hash
@@ -1606,18 +1605,16 @@ public class Script {
 
     /**
      * Get the {@link org.bitcoinj.script.Script.ScriptType}.
-     * @return The script type.
+     * @return The script type, or null if the script is of unknown type
      */
-    public ScriptType getScriptType() {
-        ScriptType type = ScriptType.NO_TYPE;
-        if (ScriptPattern.isPayToPubKeyHash(this)) {
-            type = ScriptType.P2PKH;
-        } else if (ScriptPattern.isPayToPubKey(this)) {
-            type = ScriptType.P2PK;
-        } else if (ScriptPattern.isPayToScriptHash(this)) {
-            type = ScriptType.P2SH;
-        }
-        return type;
+    public @Nullable ScriptType getScriptType() {
+        if (ScriptPattern.isPayToPubKeyHash(this))
+            return ScriptType.P2PKH;
+        if (ScriptPattern.isPayToPubKey(this))
+            return ScriptType.P2PK;
+        if (ScriptPattern.isPayToScriptHash(this))
+            return ScriptType.P2SH;
+        return null;
     }
 
     @Override
