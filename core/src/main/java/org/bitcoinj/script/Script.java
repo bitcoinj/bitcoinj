@@ -56,13 +56,18 @@ public class Script {
 
     /** Enumeration to encapsulate the type of this script. */
     public enum ScriptType {
-        // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
-        NO_TYPE,
-        P2PKH, // pay to pubkey hash (aka pay to address)
-        P2PK, // pay to pubkey
-        P2SH, // pay to script hash
-        P2WPKH, // pay to witness pubkey hash
-        P2WSH, // pay to witness script hash
+        NO_TYPE(0),
+        P2PKH(1), // pay to pubkey hash (aka pay to address)
+        P2PK(2), // pay to pubkey
+        P2SH(3), // pay to script hash
+        P2WPKH(4), // pay to witness pubkey hash
+        P2WSH(5); // pay to witness script hash
+
+        public final int id;
+
+        private ScriptType(int id) {
+            this.id = id;
+        }
     }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
