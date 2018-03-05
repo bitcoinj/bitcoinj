@@ -58,11 +58,11 @@ public class Script {
     public enum ScriptType {
         // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
         NO_TYPE,
-        P2PKH,
-        PUB_KEY,
-        P2SH,
-        P2WPKH,
-        P2WSH
+        P2PKH, // pay to pubkey hash (aka pay to address)
+        PUB_KEY, // pay to pubkey
+        P2SH, // pay to script hash
+        P2WPKH, // pay to witness pubkey hash
+        P2WSH, // pay to witness script hash
     }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
