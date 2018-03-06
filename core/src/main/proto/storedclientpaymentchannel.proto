@@ -19,7 +19,7 @@
  
 /* Notes:
  * - Endianness: All byte arrays that represent numbers (such as hashes and private keys) are Big Endian
- * - To regenerate after editing, run mvn clean package -DupdateProtobuf
+ * - To regenerate after editing, run gradle generateProto
  */
 
 syntax = "proto2";

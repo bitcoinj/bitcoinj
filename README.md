@@ -9,30 +9,30 @@ The bitcoinj library is a Java implementation of the Bitcoin protocol, which all
 ### Technologies
 
 * Java 7 for the core modules, Java 8 for everything else
-* [Maven 3+](http://maven.apache.org) - for building the project
+* [Gradle 3.4+](https://gradle.org/) - for building the project
 * [Google Protocol Buffers](https://github.com/google/protobuf) - for use with serialization and hardware communications
 
 ### Getting started
 
-To get started, it is best to have the latest JDK and Maven installed. The HEAD of the `master` branch contains the latest development code and various production releases are provided on feature branches.
+To get started, it is best to have the latest JDK and Gradle installed. The HEAD of the `master` branch contains the latest development code and various production releases are provided on feature branches.
 
 #### Building from the command line
 
 To perform a full build use
 ```
-mvn clean package
+gradle clean build
 ```
 You can also run
 ```
-mvn site:site
+gradle javadoc
 ```
-to generate a website with useful information like JavaDocs.
+to generate the JavaDocs.
 
-The outputs are under the `target` directory.
+The outputs are under the `build` directory.
 
 #### Building from an IDE
 
-Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Maven integration built-in and has a free Community Edition. Simply use `File | Import Project` and locate the `pom.xml` in the root of the cloned project source tree.
+Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Gradle integration built-in and has a free Community Edition. Simply use `File | New | Project from Existing Sources` and locate the `build.gradle` in the root of the cloned project source tree.
 
 ### Example applications
 

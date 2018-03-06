@@ -1,0 +1,17 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.4'
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+
+    group = 'org.bitcoinj'
+}

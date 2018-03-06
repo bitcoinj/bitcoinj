@@ -1,0 +1,26 @@
+apply plugin: 'java'
+
+dependencies {
+    implementation project(':core')
+    implementation 'com.google.guava:guava:24.0-android'
+    implementation 'net.sf.jopt-simple:jopt-simple:4.3'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.25'
+}
+
+sourceCompatibility = 1.8
+
+task wallet_tool(type: JavaExec) {
+    description = 'Print and manipulate wallets.'
+    main = 'org.bitcoinj.tools.WalletTool'
+    if (project.hasProperty('appArgs') && appArgs.length() > 0)
+        args = Arrays.asList(appArgs.split("\\s+"))
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task build_checkpoints(type: JavaExec) {
+    description = 'Create checkpoint files to use with CheckpointManager.'
+    main = 'org.bitcoinj.tools.BuildCheckpoints'
+    if (project.hasProperty('appArgs') && appArgs.length() > 0)
+        args = Arrays.asList(appArgs.split("\\s+"))
+    classpath = sourceSets.main.runtimeClasspath
+}

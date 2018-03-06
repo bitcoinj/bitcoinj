@@ -15,13 +15,5 @@
 # limitations under the License.
 
 set -e
-
-# Check if the jar has been built.
-if [ ! -e target/build-checkpoints.jar ]; then
-  echo "Compiling BuildCheckpoints to a JAR"
-  cd ..
-  mvn package -DskipTests
-  cd tools
-fi
-
-java -jar target/build-checkpoints.jar "$@"
+args="$@"
+gradle -q build_checkpoints "-PappArgs=$args"

@@ -15,13 +15,5 @@
 # limitations under the License.
 
 set -e
-
-# Check if the jar has been built.
-if [ ! -e target/wallet-tool.jar ] || [[ "$ALWAYS_BUILD_WALLETTOOL" != "" ]]; then
-  echo "Compiling WalletTool to a JAR"
-  cd ..
-  mvn package -DskipTests
-  cd tools
-fi
-
-java -jar target/wallet-tool.jar "$@"
+args="$@"
+gradle -q wallet_tool "-PappArgs=$args"
