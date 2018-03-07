@@ -18,6 +18,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.MessageWriteTarget;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
@@ -37,7 +39,7 @@ import static com.google.common.base.Preconditions.*;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the
- * {@link org.bitcoinj.net} classes and {@link Peer}.
+ * <code>org.bitcoinj.net</code> classes and {@link Peer}.
  */
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
@@ -190,8 +192,8 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     /**
      * Sets the {@link MessageWriteTarget} used to write messages to the peer. This should almost never be called, it is
-     * called automatically by {@link org.bitcoinj.net.NioClient} or
-     * {@link org.bitcoinj.net.NioClientManager} once the socket finishes initialization.
+     * called automatically by {@link NioClient} or
+     * {@link NioClientManager} once the socket finishes initialization.
      */
     @Override
     public void setWriteTarget(MessageWriteTarget writeTarget) {
