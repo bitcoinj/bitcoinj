@@ -70,14 +70,14 @@
                                 <configuration>
                                     <tasks>
                                         <path id="proto.path">
-                                            <fileset dir="src">
+                                            <fileset dir="src/main/proto">
                                                 <include name="**/*.proto"/>
                                             </fileset>
                                         </path>
                                         <pathconvert pathsep=" " property="proto.files" refid="proto.path"/>
                                         <exec executable="protoc" failonerror="true">
                                             <arg value="--java_out=${project.basedir}/src/main/java"/>
-                                            <arg value="-I${project.basedir}/src"/>
+                                            <arg value="-I${project.basedir}/src/main/proto"/>
                                             <arg line="${proto.files}"/>
                                         </exec>
                                     </tasks>
