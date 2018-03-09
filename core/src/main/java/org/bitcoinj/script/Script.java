@@ -1614,6 +1614,10 @@ public class Script {
             return ScriptType.P2PK;
         if (ScriptPattern.isPayToScriptHash(this))
             return ScriptType.P2SH;
+        if (ScriptPattern.isPayToWitnessPubKeyHash(this))
+            return ScriptType.P2WPKH;
+        if (ScriptPattern.isPayToWitnessScriptHash(this))
+            return ScriptType.P2WSH;
         return null;
     }
 

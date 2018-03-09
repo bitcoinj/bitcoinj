@@ -157,6 +157,34 @@ public class ScriptPattern {
     }
 
     /**
+     * Returns true if this script is of the form OP_0 <hash> and hash is 20 bytes long. This can only be a P2WPKH
+     * scriptPubKey. This script type was introduced with segwit.
+     */
+    public static boolean isPayToWitnessPubKeyHash(Script script) {
+        if (!isPayToWitnessHash(script))
+            return false;
+        List<ScriptChunk> chunks = script.chunks;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH;
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 <hash> and hash is 32 bytes long. This can only be a P2WSH
+     * scriptPubKey. This script type was introduced with segwit.
+     */
+    public static boolean isPayToWitnessScriptHash(Script script) {
+        if (!isPayToWitnessHash(script))
+            return false;
+        List<ScriptChunk> chunks = script.chunks;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH;
+    }
+
+    /**
      * Extract the pubkey hash from a P2WPKH or the script hash from a P2WSH scriptPubKey. It's important that the
      * script is in the correct form, so you will want to guard calls to this method with
      * {@link #isPayToWitnessHash(Script)}.

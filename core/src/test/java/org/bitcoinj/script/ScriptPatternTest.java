@@ -47,10 +47,10 @@ public class ScriptPatternTest {
         assertTrue(ScriptPattern.isPayToPubKey(
                 ScriptBuilder.createOutputScript(keys.get(0))
         ));
-        assertTrue(ScriptPattern.isPayToWitnessHash(
+        assertTrue(ScriptPattern.isPayToWitnessPubKeyHash(
                 ScriptBuilder.createOutputScript(SegwitAddress.fromHash(MAINNET, keys.get(0).getPubKeyHash()))
         ));
-        assertTrue(ScriptPattern.isPayToWitnessHash(
+        assertTrue(ScriptPattern.isPayToWitnessScriptHash(
                 ScriptBuilder.createOutputScript(SegwitAddress.fromHash(MAINNET, Sha256Hash.hash(new byte[0])))
         ));
         assertTrue(ScriptPattern.isSentToMultisig(

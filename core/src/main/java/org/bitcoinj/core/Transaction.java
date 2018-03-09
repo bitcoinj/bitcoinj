@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
@@ -733,8 +734,8 @@ public class Transaction extends ChildMessage {
             s.append("     ");
             s.append("out  ");
             try {
-                String scriptPubKeyStr = out.getScriptPubKey().toString();
-                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
+                Script scriptPubKey = out.getScriptPubKey();
+                s.append(scriptPubKey.getChunks().size() > 0 ? scriptPubKey.toString() : "<no scriptPubKey>");
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
                 if (!out.isAvailableForSpending()) {
@@ -745,6 +746,10 @@ public class Transaction extends ChildMessage {
                     s.append(" by ");
                     s.append(spentBy.getParentTransaction().getHashAsString());
                 }
+                s.append('\n');
+                ScriptType scriptType = scriptPubKey.getScriptType();
+                if (scriptType != null)
+                    s.append("          " + scriptType + " addr:" + scriptPubKey.getToAddress(params));
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
