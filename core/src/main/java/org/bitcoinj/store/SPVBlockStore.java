@@ -20,12 +20,11 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.utils.*;
 import org.slf4j.*;
 
-import com.google.common.base.Charsets;
-
 import javax.annotation.*;
 import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
@@ -133,7 +132,7 @@ public class SPVBlockStore implements BlockStore {
             if (exists) {
                 header = new byte[4];
                 buffer.get(header);
-                if (!new String(header, Charsets.US_ASCII).equals(HEADER_MAGIC))
+                if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
                     throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
             } else {
                 initNewStore(params);

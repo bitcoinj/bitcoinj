@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.params.TestNet3Params;
@@ -43,6 +42,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -774,7 +774,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Transaction t2 = new Transaction(UNITTEST);
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
-        Sha256Hash t3 = Sha256Hash.of("abc".getBytes(Charsets.UTF_8));
+        Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
         t2.addInput(new TransactionInput(UNITTEST, t2, new byte[]{}, new TransactionOutPoint(UNITTEST, 0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(COIN, new ECKey());

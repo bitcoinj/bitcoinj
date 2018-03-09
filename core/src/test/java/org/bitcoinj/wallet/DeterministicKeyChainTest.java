@@ -31,7 +31,6 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -42,6 +41,7 @@ import org.junit.Test;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -693,7 +693,7 @@ public class DeterministicKeyChainTest {
     private String checkSerialization(List<Protos.Key> keys, String filename) {
         try {
             String sb = protoToString(keys);
-            List<String> lines = Resources.readLines(getClass().getResource(filename), Charsets.UTF_8);
+            List<String> lines = Resources.readLines(getClass().getResource(filename), StandardCharsets.UTF_8);
             String expected = Joiner.on('\n').join(lines);
             assertEquals(expected, sb);
             return expected;
