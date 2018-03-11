@@ -900,7 +900,7 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(LegacyAddress to, long version, long time, int blockHeight) {
+    public Block createNextBlock(Address to, long version, long time, int blockHeight) {
         return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
     }
 
@@ -910,7 +910,7 @@ public class Block extends Message {
      * 
      * @param height block height, if known, or -1 otherwise.
      */
-    Block createNextBlock(@Nullable final LegacyAddress to, final long version,
+    Block createNextBlock(@Nullable final Address to, final long version,
                           @Nullable TransactionOutPoint prevOut, final long time,
                           final byte[] pubKey, final Coin coinbaseValue,
                           final int height) {
@@ -958,17 +958,17 @@ public class Block extends Message {
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable LegacyAddress to, TransactionOutPoint prevOut) {
+    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable LegacyAddress to, Coin value) {
+    public Block createNextBlock(@Nullable Address to, Coin value) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
-    public Block createNextBlock(@Nullable LegacyAddress to) {
+    public Block createNextBlock(@Nullable Address to) {
         return createNextBlock(to, FIFTY_COINS);
     }
 

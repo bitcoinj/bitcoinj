@@ -19,12 +19,13 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -95,7 +96,7 @@ public class WalletTest extends TestWithWallet {
     private static final CharSequence PASSWORD1 = "my helicopter contains eels";
     private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
-    private final LegacyAddress OTHER_ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
+    private final Address OTHER_ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
     @Before
     @Override
@@ -152,7 +153,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingToP2SH() throws Exception {
-        LegacyAddress destination = LegacyAddress.fromP2SHHash(UNITTEST, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        Address destination = LegacyAddress.fromScriptHash(UNITTEST, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         basicSpendingCommon(wallet, myAddress, destination, null);
     }
 
@@ -160,7 +161,7 @@ public class WalletTest extends TestWithWallet {
     public void basicSpendingWithEncryptedWallet() throws Exception {
         Wallet encryptedWallet = new Wallet(UNITTEST);
         encryptedWallet.encrypt(PASSWORD1);
-        LegacyAddress myEncryptedAddress = LegacyAddress.fromKey(UNITTEST, encryptedWallet.freshReceiveKey());
+        Address myEncryptedAddress = LegacyAddress.fromKey(UNITTEST, encryptedWallet.freshReceiveKey());
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, OTHER_ADDRESS, encryptedWallet);
     }
 
@@ -223,7 +224,7 @@ public class WalletTest extends TestWithWallet {
         }
     }
 
-    private Transaction cleanupCommon(LegacyAddress destination) throws Exception {
+    private Transaction cleanupCommon(Address destination) throws Exception {
         receiveATransaction(wallet, myAddress);
 
         Coin v2 = valueOf(0, 50);
@@ -296,7 +297,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
-    private void basicSpendingCommon(Wallet wallet, LegacyAddress toAddress, LegacyAddress destination, Wallet encryptedWallet) throws Exception {
+    private void basicSpendingCommon(Wallet wallet, Address toAddress, Address destination, Wallet encryptedWallet) throws Exception {
         // We'll set up a wallet that receives a coin, then sends a coin of lesser value and keeps the change. We
         // will attach a small fee. Because the Bitcoin protocol makes it difficult to determine the fee of an
         // arbitrary transaction in isolation, we'll check that the fee was set by examining the size of the change.
@@ -377,11 +378,11 @@ public class WalletTest extends TestWithWallet {
         assertNotEquals(unspents2, wallet.getUnspents());
     }
 
-    private void receiveATransaction(Wallet wallet, LegacyAddress toAddress) throws Exception {
+    private void receiveATransaction(Wallet wallet, Address toAddress) throws Exception {
         receiveATransactionAmount(wallet, toAddress, COIN);
     }
 
-    private void receiveATransactionAmount(Wallet wallet, LegacyAddress toAddress, Coin amount) {
+    private void receiveATransactionAmount(Wallet wallet, Address toAddress, Coin amount) {
         final ListenableFuture<Coin> availFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.AVAILABLE);
         final ListenableFuture<Coin> estimatedFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.ESTIMATED);
         assertFalse(availFuture.isDone());
@@ -410,7 +411,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(depthFuture.isDone());
     }
 
-    private void basicSanityChecks(Wallet wallet, Transaction t, LegacyAddress destination) throws VerificationException {
+    private void basicSanityChecks(Wallet wallet, Transaction t, Address destination) throws VerificationException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(UNITTEST));
@@ -779,7 +780,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant of all our coins.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(2, 90));
         // Create a double spend of just the first one.
-        LegacyAddress BAD_GUY = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address BAD_GUY = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction send2 = wallet.createSend(BAD_GUY, COIN);
         send2 = UNITTEST.getDefaultSerializer().makeTransaction(send2.bitcoinSerialize());
         // Broadcast send1, it's now pending.
@@ -873,7 +874,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 50));
         // Create a double spend.
-        LegacyAddress BAD_GUY = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address BAD_GUY = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction send2 = wallet.createSend(BAD_GUY, valueOf(0, 50));
         send2 = UNITTEST.getDefaultSerializer().makeTransaction(send2.bitcoinSerialize());
         // Broadcast send1.
@@ -1408,7 +1409,7 @@ public class WalletTest extends TestWithWallet {
         Coin nanos = COIN;
 
         // Create two transactions that share the same input tx.
-        LegacyAddress badGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address badGuy = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction doubleSpentTx = new Transaction(UNITTEST);
         TransactionOutput doubleSpentOut = new TransactionOutput(UNITTEST, doubleSpentTx, nanos, badGuy);
         doubleSpentTx.addOutput(doubleSpentOut);
@@ -1644,7 +1645,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void watchingScripts() throws Exception {
         // Verify that pending transactions to watched addresses are relevant
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
         Coin value = valueOf(5, 0);
         Transaction t1 = createFakeTx(UNITTEST, value, watchedAddress);
@@ -1654,7 +1655,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = InsufficientMoneyException.class)
     public void watchingScriptsConfirmed() throws Exception {
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, CENT, watchedAddress);
         assertEquals(CENT, wallet.getBalance());
@@ -1667,7 +1668,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsSentFrom() throws Exception {
         int baseElements = wallet.getBloomFilterElementCount();
 
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
         assertEquals(baseElements + 1, wallet.getBloomFilterElementCount());
 
@@ -1689,7 +1690,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() throws Exception {
         assertFalse(wallet.isRequiringUpdateAllBloomFilter());
 
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction t1 = createFakeTx(UNITTEST, CENT, watchedAddress);
         TransactionOutPoint outPoint = new TransactionOutPoint(UNITTEST, 0, t1);
         wallet.addWatchedAddress(watchedAddress);
@@ -1704,24 +1705,24 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void getWatchedAddresses() throws Exception {
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
-        List<LegacyAddress> watchedAddresses = wallet.getWatchedAddresses();
+        List<Address> watchedAddresses = wallet.getWatchedAddresses();
         assertEquals(1, watchedAddresses.size());
         assertEquals(watchedAddress, watchedAddresses.get(0));
     }
 
     @Test
     public void removeWatchedAddresses() {
-        List<LegacyAddress> addressesForRemoval = new ArrayList<>();
+        List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+            Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
 
         wallet.removeWatchedAddresses(addressesForRemoval);
-        for (LegacyAddress addr : addressesForRemoval)
+        for (Address addr : addressesForRemoval)
             assertFalse(wallet.isAddressWatched(addr));
 
         assertFalse(wallet.isRequiringUpdateAllBloomFilter());
@@ -1729,7 +1730,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void removeWatchedAddress() {
-        LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
         wallet.removeWatchedAddress(watchedAddress);
         assertFalse(wallet.isAddressWatched(watchedAddress));
@@ -1738,16 +1739,16 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void removeScriptsBloomFilter() throws Exception {
-        List<LegacyAddress> addressesForRemoval = new ArrayList<>();
+        List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            LegacyAddress watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
+            Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
 
         wallet.removeWatchedAddresses(addressesForRemoval);
 
-        for (LegacyAddress addr : addressesForRemoval) {
+        for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(UNITTEST, CENT, addr);
             TransactionOutPoint outPoint = new TransactionOutPoint(UNITTEST, 0, t1);
 
@@ -1762,7 +1763,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void marriedKeychainBloomFilter() throws Exception {
         createMarriedWallet(2, 2);
-        LegacyAddress address = wallet.currentReceiveAddress();
+        Address address = wallet.currentReceiveAddress();
 
         assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash()));
 
@@ -2928,7 +2929,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
-        final LegacyAddress toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
+        final Address toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
         final ECKey rotatingToKey = wallet.findKeyFromPubHash(toAddress.getHash());
         assertNotNull(rotatingToKey);
         assertFalse(wallet.isKeyRotating(rotatingToKey));
@@ -3035,7 +3036,7 @@ public class WalletTest extends TestWithWallet {
         wallet.setKeyRotationTime(goodKey.getCreationTimeSeconds());
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
-        LegacyAddress output = txns.get(0).getOutput(0).getAddressFromP2PKHScript(UNITTEST);
+        Address output = txns.get(0).getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
         ECKey usedKey = wallet.findKeyFromPubHash(output.getHash());
         assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
         assertEquals(goodKey.getCreationTimeSeconds(), wallet.freshReceiveKey().getCreationTimeSeconds());
@@ -3062,7 +3063,7 @@ public class WalletTest extends TestWithWallet {
     public void fragmentedReKeying() throws Exception {
         // Send lots of small coins and check the fee is correct.
         ECKey key = wallet.freshReceiveKey();
-        LegacyAddress address = LegacyAddress.fromKey(UNITTEST, key);
+        Address address = LegacyAddress.fromKey(UNITTEST, key);
         Utils.setMockClock();
         Utils.rollMockClock(86400);
         for (int i = 0; i < 800; i++) {
@@ -3355,7 +3356,7 @@ public class WalletTest extends TestWithWallet {
                 .build();
         wallet.addAndActivateHDChain(chain);
 
-        LegacyAddress myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+        Address myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
 
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);

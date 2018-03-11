@@ -170,7 +170,7 @@ public class Base58 {
     public static byte[] decodeChecked(String input) throws AddressFormatException {
         byte[] decoded  = decode(input);
         if (decoded.length < 4)
-            throw new AddressFormatException("Input too short");
+            throw new AddressFormatException.InvalidDataLength("Input too short: " + decoded.length);
         byte[] data = Arrays.copyOfRange(decoded, 0, decoded.length - 4);
         byte[] checksum = Arrays.copyOfRange(decoded, decoded.length - 4, decoded.length);
         byte[] actualChecksum = Arrays.copyOfRange(Sha256Hash.hashTwice(data), 0, 4);

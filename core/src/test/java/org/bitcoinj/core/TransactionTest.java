@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  */
 public class TransactionTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
-    private static final LegacyAddress ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
+    private static final Address ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
     private Transaction tx;
 
@@ -344,7 +344,7 @@ public class TransactionTest {
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
-        LegacyAddress addr = LegacyAddress.fromKey(UNITTEST, key);
+        Address addr = LegacyAddress.fromKey(UNITTEST, key);
         Transaction fakeTx = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, addr);
 
         Transaction tx = new Transaction(UNITTEST);

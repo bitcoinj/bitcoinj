@@ -20,7 +20,6 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -47,12 +46,14 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.math.ec.FixedPointUtil;
 import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.spongycastle.util.Properties;
 import org.spongycastle.util.encoders.Base64;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.util.Arrays;
@@ -568,6 +569,9 @@ public class ECKey implements EncryptableItem {
         public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
             ASN1InputStream decoder = null;
             try {
+                // BouncyCastle by default is strict about parsing ASN.1 integers. We relax this check, because some
+                // Bitcoin signatures would not parse.
+                Properties.setThreadOverride("org.spongycastle.asn1.allow_unsafe_integer", true);
                 decoder = new ASN1InputStream(bytes);
                 final ASN1Primitive seqObj = decoder.readObject();
                 if (seqObj == null)
@@ -590,6 +594,7 @@ public class ECKey implements EncryptableItem {
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
+                Properties.removeThreadOverride("org.spongycastle.asn1.allow_unsafe_integer");
             }
         }
 
@@ -876,7 +881,7 @@ public class ECKey implements EncryptableItem {
         sigData[0] = (byte)headerByte;
         System.arraycopy(Utils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
         System.arraycopy(Utils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
-        return new String(Base64.encode(sigData), Charsets.UTF_8);
+        return new String(Base64.encode(sigData), StandardCharsets.UTF_8);
     }
 
     /**
@@ -1268,7 +1273,7 @@ public class ECKey implements EncryptableItem {
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
             NetworkParameters params) {
-        final LegacyAddress address = LegacyAddress.fromKey(params, this);
+        final Address address = LegacyAddress.fromKey(params, this);
         builder.append("  addr:");
         builder.append(address.toString());
         builder.append("  hash160:");
@@ -1285,7 +1290,7 @@ public class ECKey implements EncryptableItem {
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
     private static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
-    private static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(Charsets.UTF_8);
+    private static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(StandardCharsets.UTF_8);
 
     /**
      * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
@@ -1296,7 +1301,7 @@ public class ECKey implements EncryptableItem {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
             bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
-            byte[] messageBytes = message.getBytes(Charsets.UTF_8);
+            byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
             VarInt size = new VarInt(messageBytes.length);
             bos.write(size.encode());
             bos.write(messageBytes);

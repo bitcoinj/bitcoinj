@@ -17,7 +17,6 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
-import com.google.common.base.Charsets;
 import com.google.common.primitives.Bytes;
 import com.lambdaworks.crypto.SCrypt;
 
@@ -25,6 +24,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.Normalizer;
 import java.util.Arrays;
@@ -60,9 +60,9 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
 
         if (version != 0x01)
-            throw new AddressFormatException("Mismatched version number: " + version);
+            throw new AddressFormatException.InvalidPrefix("Mismatched version number: " + version);
         if (bytes.length != 38)
-            throw new AddressFormatException("Wrong number of bytes, excluding version byte: " + bytes.length);
+            throw new AddressFormatException.InvalidDataLength("Wrong number of bytes: " + bytes.length);
         boolean hasLotAndSequence = (bytes[1] & 0x04) != 0; // bit 2
         boolean compressed = (bytes[1] & 0x20) != 0; // bit 5
         if ((bytes[1] & 0x01) != 0) // bit 0
@@ -117,7 +117,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
     public ECKey decrypt(String passphrase) throws BadPassphraseException {
         String normalizedPassphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFC);
         ECKey key = ecMultiply ? decryptEC(normalizedPassphrase) : decryptNoEC(normalizedPassphrase);
-        Sha256Hash hash = Sha256Hash.twiceOf(LegacyAddress.fromKey(params, key).toString().getBytes(Charsets.US_ASCII));
+        Sha256Hash hash = Sha256Hash.twiceOf(LegacyAddress.fromKey(params, key).toString().getBytes(StandardCharsets.US_ASCII));
         byte[] actualAddressHash = Arrays.copyOfRange(hash.getBytes(), 0, 4);
         if (!Arrays.equals(actualAddressHash, addressHash))
             throw new BadPassphraseException();
@@ -126,7 +126,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
     private ECKey decryptNoEC(String normalizedPassphrase) {
         try {
-            byte[] derived = SCrypt.scrypt(normalizedPassphrase.getBytes(Charsets.UTF_8), addressHash, 16384, 8, 8, 64);
+            byte[] derived = SCrypt.scrypt(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), addressHash, 16384, 8, 8, 64);
             byte[] key = Arrays.copyOfRange(derived, 32, 64);
             SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 
@@ -148,7 +148,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
             byte[] ownerEntropy = Arrays.copyOfRange(content, 0, 8);
             byte[] ownerSalt = hasLotAndSequence ? Arrays.copyOfRange(ownerEntropy, 0, 4) : ownerEntropy;
 
-            byte[] passFactorBytes = SCrypt.scrypt(normalizedPassphrase.getBytes(Charsets.UTF_8), ownerSalt, 16384, 8, 8, 32);
+            byte[] passFactorBytes = SCrypt.scrypt(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), ownerSalt, 16384, 8, 8, 32);
             if (hasLotAndSequence) {
                 byte[] hashBytes = Bytes.concat(passFactorBytes, ownerEntropy);
                 checkState(hashBytes.length == 40);

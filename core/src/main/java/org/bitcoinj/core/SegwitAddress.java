@@ -24,6 +24,8 @@ import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * <p>
  * Implementation of native segwit addresses. They are composed of two parts:
@@ -89,17 +91,18 @@ public class SegwitAddress extends Address {
     private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
         super(params, data);
         if (data.length < 1)
-            throw new AddressFormatException("Zero data found");
+            throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
         if (witnessVersion < 0 || witnessVersion > 16)
             throw new AddressFormatException("Invalid script version: " + witnessVersion);
         byte[] witnessProgram = getWitnessProgram();
         if (witnessProgram.length < WITNESS_PROGRAM_MIN_LENGTH || witnessProgram.length > WITNESS_PROGRAM_MAX_LENGTH)
-            throw new AddressFormatException("Invalid length: " + witnessProgram.length);
+            throw new AddressFormatException.InvalidDataLength("Invalid length: " + witnessProgram.length);
         // Check script length for version 0
         if (witnessVersion == 0 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_PKH
                 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_SH)
-            throw new AddressFormatException("Invalid length for address version 0: " + witnessProgram.length);
+            throw new AddressFormatException.InvalidDataLength(
+                    "Invalid length for address version 0: " + witnessProgram.length);
     }
 
     /**
@@ -138,15 +141,13 @@ public class SegwitAddress extends Address {
     @Override
     public ScriptType getOutputScriptType() {
         int version = getWitnessVersion();
-        if (version != 0)
-            return ScriptType.NO_TYPE;
+        checkState(version == 0);
         int programLength = getWitnessProgram().length;
         if (programLength == WITNESS_PROGRAM_LENGTH_PKH)
             return ScriptType.P2WPKH;
-        else if (programLength == WITNESS_PROGRAM_LENGTH_SH)
+        if (programLength == WITNESS_PROGRAM_LENGTH_SH)
             return ScriptType.P2WSH;
-        else
-            return ScriptType.NO_TYPE;
+        throw new IllegalStateException("Cannot happen.");
     }
 
     /**
@@ -176,7 +177,7 @@ public class SegwitAddress extends Address {
                 if (bechData.hrp.equals(p.getSegwitAddressHrp()))
                     return new SegwitAddress(p, bechData.data);
             }
-            throw new AddressFormatException("No network found for " + bech32);
+            throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
                 return new SegwitAddress(params, bechData.data);

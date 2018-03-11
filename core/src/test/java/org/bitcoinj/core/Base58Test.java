@@ -93,7 +93,7 @@ public class Base58Test {
         Base58.decodeChecked("4stwEBjT6FYyVW");
     }
 
-    @Test(expected = AddressFormatException.class)
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void testDecodeChecked_shortInput() {
         Base58.decodeChecked("4s");
     }

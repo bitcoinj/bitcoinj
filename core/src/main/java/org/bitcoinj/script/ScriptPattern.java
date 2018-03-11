@@ -18,6 +18,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.SegwitAddress;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -37,13 +38,22 @@ public class ScriptPattern {
      */
     public static boolean isPayToPubKeyHash(Script script) {
         List<ScriptChunk> chunks = script.chunks;
-        return chunks.size() == 5 &&
-               chunks.get(0).equalsOpCode(OP_DUP) &&
-               chunks.get(1).equalsOpCode(OP_HASH160) &&
-               chunks.get(2).data != null &&
-               chunks.get(2).data.length == LegacyAddress.LENGTH &&
-               chunks.get(3).equalsOpCode(OP_EQUALVERIFY) &&
-               chunks.get(4).equalsOpCode(OP_CHECKSIG);
+        if (chunks.size() != 5)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_DUP))
+            return false;
+        if (!chunks.get(1).equalsOpCode(OP_HASH160))
+            return false;
+        byte[] chunk2data = chunks.get(2).data;
+        if (chunk2data == null)
+            return false;
+        if (chunk2data.length != LegacyAddress.LENGTH)
+            return false;
+        if (!chunks.get(3).equalsOpCode(OP_EQUALVERIFY))
+            return false;
+        if (!chunks.get(4).equalsOpCode(OP_CHECKSIG))
+            return false;
+        return true;
     }
 
     /**
@@ -55,9 +65,14 @@ public class ScriptPattern {
     }
 
     /**
-     * <p>Whether or not this is a scriptPubKey representing a pay-to-script-hash output. In such outputs, the logic that
+     * <p>
+     * Whether or not this is a scriptPubKey representing a P2SH output. In such outputs, the logic that
      * controls reclamation is not actually in the output at all. Instead there's just a hash, and it's up to the
      * spending input to provide a program matching that hash.
+     * </p>
+     * <p>
+     * P2SH is described by <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP16</a>.
+     * </p>
      */
     public static boolean isPayToScriptHash(Script script) {
         List<ScriptChunk> chunks = script.chunks;
@@ -66,12 +81,21 @@ public class ScriptPattern {
         // printed out but one is a P2SH script and the other isn't! :(
         // We explicitly test that the op code used to load the 20 bytes is 0x14 and not something logically
         // equivalent like OP_HASH160 OP_PUSHDATA1 0x14 <20 bytes of script hash> OP_EQUAL
-        return chunks.size() == 3 &&
-               chunks.get(0).equalsOpCode(OP_HASH160) &&
-               chunks.get(1).opcode == 0x14 &&
-               chunks.get(1).data != null &&
-               chunks.get(1).data.length == LegacyAddress.LENGTH &&
-               chunks.get(2).equalsOpCode(OP_EQUAL);
+        if (chunks.size() != 3)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_HASH160))
+            return false;
+        ScriptChunk chunk1 = chunks.get(1);
+        if (chunk1.opcode != 0x14)
+            return false;
+        byte[] chunk1data = chunk1.data;
+        if (chunk1data == null)
+            return false;
+        if (chunk1data.length != LegacyAddress.LENGTH)
+            return false;
+        if (!chunks.get(2).equalsOpCode(OP_EQUAL))
+            return false;
+        return true;
     }
 
     /**
@@ -90,11 +114,19 @@ public class ScriptPattern {
      */
     public static boolean isPayToPubKey(Script script) {
         List<ScriptChunk> chunks = script.chunks;
-        return chunks.size() == 2 &&
-               chunks.get(1).equalsOpCode(OP_CHECKSIG) &&
-               !chunks.get(0).isOpCode() &&
-               chunks.get(0).data != null &&
-               chunks.get(0).data.length > 1;
+        if (chunks.size() != 2)
+            return false;
+        ScriptChunk chunk0 = chunks.get(0);
+        if (chunk0.isOpCode())
+            return false;
+        byte[] chunk0data = chunk0.data;
+        if (chunk0data == null)
+            return false;
+        if (chunk0data.length <= 1)
+            return false;
+        if (!chunks.get(1).equalsOpCode(OP_CHECKSIG))
+            return false;
+        return true;
     }
 
     /**
@@ -103,6 +135,62 @@ public class ScriptPattern {
      */
     public static byte[] extractKeyFromPayToPubKey(Script script) {
         return script.chunks.get(0).data;
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 <hash>. This can either be a P2WPKH or P2WSH scriptPubKey. These
+     * two script types were introduced with segwit.
+     */
+    public static boolean isPayToWitnessHash(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
+        if (chunks.size() != 2)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        if (chunk1data == null)
+            return false;
+        if (chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH
+                && chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_SH)
+            return false;
+        return true;
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 <hash> and hash is 20 bytes long. This can only be a P2WPKH
+     * scriptPubKey. This script type was introduced with segwit.
+     */
+    public static boolean isPayToWitnessPubKeyHash(Script script) {
+        if (!isPayToWitnessHash(script))
+            return false;
+        List<ScriptChunk> chunks = script.chunks;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH;
+    }
+
+    /**
+     * Returns true if this script is of the form OP_0 <hash> and hash is 32 bytes long. This can only be a P2WSH
+     * scriptPubKey. This script type was introduced with segwit.
+     */
+    public static boolean isPayToWitnessScriptHash(Script script) {
+        if (!isPayToWitnessHash(script))
+            return false;
+        List<ScriptChunk> chunks = script.chunks;
+        if (!chunks.get(0).equalsOpCode(OP_0))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        return chunk1data != null && chunk1data.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH;
+    }
+
+    /**
+     * Extract the pubkey hash from a P2WPKH or the script hash from a P2WSH scriptPubKey. It's important that the
+     * script is in the correct form, so you will want to guard calls to this method with
+     * {@link #isPayToWitnessHash(Script)}.
+     */
+    public static byte[] extractHashFromPayToWitnessHash(Script script) {
+        return script.chunks.get(1).data;
     }
 
     /**

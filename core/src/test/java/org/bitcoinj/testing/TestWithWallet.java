@@ -16,7 +16,17 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.AbstractBlockChain;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
@@ -42,7 +52,7 @@ public class TestWithWallet {
     protected static final NetworkParameters MAINNET = MainNetParams.get();
 
     protected ECKey myKey;
-    protected LegacyAddress myAddress;
+    protected Address myAddress;
     protected Wallet wallet;
     protected BlockChain chain;
     protected BlockStore blockStore;
@@ -82,7 +92,7 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, LegacyAddress toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
         return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toAddress));
     }
 
@@ -102,7 +112,7 @@ public class TestWithWallet {
     }
 
     @Nullable
-    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, LegacyAddress toAddress) throws VerificationException {
+    protected Transaction sendMoneyToWallet(AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
         return sendMoneyToWallet(this.wallet, type, value, toAddress);
     }
 

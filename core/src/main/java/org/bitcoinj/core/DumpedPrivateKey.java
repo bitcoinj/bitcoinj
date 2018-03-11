@@ -52,7 +52,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
             for (NetworkParameters p : Networks.get())
                 if (version == p.getDumpedPrivateKeyHeader())
                     return new DumpedPrivateKey(p, bytes);
-            throw new AddressFormatException("No network found for version " + version);
+            throw new AddressFormatException.InvalidPrefix("No network found for version " + version);
         } else {
             if (version == params.getDumpedPrivateKeyHeader())
                 return new DumpedPrivateKey(params, bytes);
@@ -63,7 +63,8 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
     private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
         super(params, bytes);
         if (bytes.length != 32 && bytes.length != 33)
-            throw new AddressFormatException("Wrong number of bytes for a private key, not 32 or 33");
+            throw new AddressFormatException.InvalidDataLength(
+                    "Wrong number of bytes for a private key (32 or 33): " + bytes.length);
     }
 
     // Used by ECKey.getPrivateKeyEncoded()

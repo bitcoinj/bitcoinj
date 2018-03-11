@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * This class aggregates data required to spend transaction output.
  *
- * For pay-to-address and pay-to-pubkey transactions it will have only a single key and CHECKSIG program as redeemScript.
+ * For P2PKH and P2PK transactions it will have only a single key and CHECKSIG program as redeemScript.
  * For multisignature transactions there will be multiple keys one of which will be a full key and the rest are watch only,
  * redeem script will be a CHECKMULTISIG program. Keys will be sorted in the same order they appear in
  * a program (lexicographical order).
@@ -50,7 +50,7 @@ public class RedeemData {
     }
 
     /**
-     * Creates RedeemData for pay-to-address or pay-to-pubkey input. Provided key is a single private key needed
+     * Creates RedeemData for P2PKH or P2PK input. Provided key is a single private key needed
      * to spend such inputs and provided program should be a proper CHECKSIG program.
      */
     public static RedeemData of(ECKey key, Script program) {

@@ -25,8 +25,8 @@ import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Coin;
@@ -34,6 +34,7 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -66,7 +67,6 @@ import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletEventListener;
 import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
@@ -303,6 +303,35 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * This wallet can also spend.
+     */
+    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
+        return new Wallet(params, new KeyChainGroup(params, spendKey, false));
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * The key is specified in base58 notation and the creation time of the key. If you don't know the creation time,
+     * you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     */
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
+        final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params);
+        spendKey.setCreationTimeSeconds(creationTimeSeconds);
+        return fromSpendingKey(params, spendKey);
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     */
+    public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey, ChildNumber accountNumber) {
+        DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
+        accountKey = accountKey.dropParent();
+        accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
+        return new Wallet(params, new KeyChainGroup(params, accountKey, false));
+    }
+
+    /**
      * Creates a wallet containing a given set of keys. All further keys will be derived from the oldest key.
      */
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
@@ -440,7 +469,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #currentKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public LegacyAddress currentAddress(KeyChain.KeyPurpose purpose) {
+    public Address currentAddress(KeyChain.KeyPurpose purpose) {
         keyChainGroupLock.lock();
         try {
             maybeUpgradeToHD();
@@ -454,7 +483,7 @@ public class Wallet extends BaseTaggableObject
      * An alias for calling {@link #currentAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public LegacyAddress currentReceiveAddress() {
+    public Address currentReceiveAddress() {
         return currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -504,23 +533,23 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #freshKey(org.bitcoinj.wallet.KeyChain.KeyPurpose)}
      */
-    public LegacyAddress freshAddress(KeyChain.KeyPurpose purpose) {
-        LegacyAddress key;
+    public Address freshAddress(KeyChain.KeyPurpose purpose) {
+        Address address;
         keyChainGroupLock.lock();
         try {
-            key = keyChainGroup.freshAddress(purpose);
+            address = keyChainGroup.freshAddress(purpose);
         } finally {
             keyChainGroupLock.unlock();
         }
         saveNow();
-        return key;
+        return address;
     }
 
     /**
      * An alias for calling {@link #freshAddress(org.bitcoinj.wallet.KeyChain.KeyPurpose)} with
      * {@link org.bitcoinj.wallet.KeyChain.KeyPurpose#RECEIVE_FUNDS} as the parameter.
      */
-    public LegacyAddress freshReceiveAddress() {
+    public Address freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
     }
 
@@ -541,9 +570,9 @@ public class Wallet extends BaseTaggableObject
      * Returns only the addresses that have been issued by {@link #freshReceiveKey()}, {@link #freshReceiveAddress()},
      * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
      */
-    public List<LegacyAddress> getIssuedReceiveAddresses() {
+    public List<Address> getIssuedReceiveAddresses() {
         final List<ECKey> keys = getIssuedReceiveKeys();
-        List<LegacyAddress> addresses = new ArrayList<>(keys.size());
+        List<Address> addresses = new ArrayList<>(keys.size());
         for (ECKey key : keys)
             addresses.add(LegacyAddress.fromKey(getParams(), key));
         return addresses;
@@ -659,25 +688,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns the address used for change outputs. Note: this will probably go away in future. */
-    public LegacyAddress currentChangeAddress() {
+    public Address currentChangeAddress() {
         return currentAddress(KeyChain.KeyPurpose.CHANGE);
-    }
-    /**
-     * @deprecated use {@link #currentChangeAddress()} instead.
-     */
-    public LegacyAddress getChangeAddress() {
-        return currentChangeAddress();
-    }
-
-    /**
-     * <p>Deprecated alias for {@link #importKey(ECKey)}.</p>
-     *
-     * <p><b>Replace with either {@link #freshReceiveKey()} if your call is addKey(new ECKey()), or with {@link #importKey(ECKey)}
-     * which does the same thing this method used to, but with a better name.</b></p>
-     */
-    @Deprecated
-    public boolean addKey(ECKey key) {
-        return importKey(key);
     }
 
     /**
@@ -688,12 +700,6 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean importKey(ECKey key) {
         return importKeys(Lists.newArrayList(key)) == 1;
-    }
-
-    /** Replace with {@link #importKeys(java.util.List)}, which does the same thing but with a better name. */
-    @Deprecated
-    public int addKeys(List<ECKey> keys) {
-        return importKeys(keys);
     }
 
     /**
@@ -844,15 +850,15 @@ public class Wallet extends BaseTaggableObject
     /**
      * Return true if we are watching this address.
      */
-    public boolean isAddressWatched(LegacyAddress address) {
+    public boolean isAddressWatched(Address address) {
         Script script = ScriptBuilder.createOutputScript(address);
         return isWatchedScript(script);
     }
 
     /**
-     * Same as {@link #addWatchedAddress(LegacyAddress, long)} with the current time as the creation time.
+     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
-    public boolean addWatchedAddress(final LegacyAddress address) {
+    public boolean addWatchedAddress(final Address address) {
         long now = Utils.currentTimeMillis() / 1000;
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
@@ -863,7 +869,7 @@ public class Wallet extends BaseTaggableObject
      * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
      * @return whether the address was added successfully (not already present)
      */
-    public boolean addWatchedAddress(final LegacyAddress address, long creationTime) {
+    public boolean addWatchedAddress(final Address address, long creationTime) {
         return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
     }
 
@@ -873,10 +879,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return how many addresses were added successfully
      */
-    public int addWatchedAddresses(final List<LegacyAddress> addresses, long creationTime) {
+    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (LegacyAddress address : addresses) {
+        for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             script.setCreationTimeSeconds(creationTime);
             scripts.add(script);
@@ -923,7 +929,7 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddress(final LegacyAddress address) {
+    public boolean removeWatchedAddress(final Address address) {
         return removeWatchedAddresses(ImmutableList.of(address));
     }
 
@@ -932,10 +938,10 @@ public class Wallet extends BaseTaggableObject
      *
      * @return true if successful
      */
-    public boolean removeWatchedAddresses(final List<LegacyAddress> addresses) {
+    public boolean removeWatchedAddresses(final List<Address> addresses) {
         List<Script> scripts = Lists.newArrayList();
 
-        for (LegacyAddress address : addresses) {
+        for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
             scripts.add(script);
         }
@@ -969,10 +975,10 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns all addresses watched by this wallet.
      */
-    public List<LegacyAddress> getWatchedAddresses() {
+    public List<Address> getWatchedAddresses() {
         keyChainGroupLock.lock();
         try {
-            List<LegacyAddress> addresses = new LinkedList<>();
+            List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (ScriptPattern.isPayToPubKeyHash(script))
                     addresses.add(script.getToAddress(params));
@@ -1085,7 +1091,8 @@ public class Wallet extends BaseTaggableObject
                         byte[] pubkeyHash = ScriptPattern.extractHashFromPayToPubKeyHash(script);
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
                     } else if (ScriptPattern.isPayToScriptHash(script)) {
-                        LegacyAddress a = LegacyAddress.fromP2SHScript(tx.getParams(), script);
+                        LegacyAddress a = LegacyAddress.fromScriptHash(tx.getParams(),
+                                ScriptPattern.extractHashFromPayToScriptHash(script));
                         keyChainGroup.markP2SHAddressAsUsed(a);
                     }
                 } catch (ScriptException e) {
@@ -2536,32 +2543,6 @@ public class Wallet extends BaseTaggableObject
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. Runs the listener methods in the user thread.
      */
-    public void addEventListener(WalletEventListener listener) {
-        addChangeEventListener(Threading.USER_THREAD, listener);
-        addCoinsReceivedEventListener(Threading.USER_THREAD, listener);
-        addCoinsSentEventListener(Threading.USER_THREAD, listener);
-        addKeyChainEventListener(Threading.USER_THREAD, listener);
-        addReorganizeEventListener(Threading.USER_THREAD, listener);
-        addScriptChangeEventListener(Threading.USER_THREAD, listener);
-        addTransactionConfidenceEventListener(Threading.USER_THREAD, listener);
-    }
-
-    /** Use the more specific listener methods instead */
-    @Deprecated
-    public void addEventListener(WalletEventListener listener, Executor executor) {
-        addCoinsReceivedEventListener(executor, listener);
-        addCoinsSentEventListener(executor, listener);
-        addChangeEventListener(executor, listener);
-        addKeyChainEventListener(executor, listener);
-        addReorganizeEventListener(executor, listener);
-        addScriptChangeEventListener(executor, listener);
-        addTransactionConfidenceEventListener(executor, listener);
-    }
-
-    /**
-     * Adds an event listener object. Methods on this object are called when something interesting happens,
-     * like receiving money. Runs the listener methods in the user thread.
-     */
     public void addChangeEventListener(WalletChangeEventListener listener) {
         addChangeEventListener(Threading.USER_THREAD, listener);
     }
@@ -2674,21 +2655,6 @@ public class Wallet extends BaseTaggableObject
     public void addTransactionConfidenceEventListener(Executor executor, TransactionConfidenceEventListener listener) {
         // This is thread safe, so we don't need to take the lock.
         transactionConfidenceListeners.add(new ListenerRegistration<>(listener, executor));
-    }
-
-    /**
-     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
-     * was never added.
-     * @deprecated use the fine-grain event listeners instead.
-     */
-    @Deprecated
-    public boolean removeEventListener(WalletEventListener listener) {
-        return removeChangeEventListener(listener) ||
-            removeCoinsReceivedEventListener(listener) ||
-            removeCoinsSentEventListener(listener) ||
-            removeKeyChainEventListener(listener) ||
-            removeReorganizeEventListener(listener) ||
-            removeTransactionConfidenceEventListener(listener);
     }
 
     /**
@@ -2998,7 +2964,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Prepares the wallet for a blockchain replay. Removes all transactions (as they would get in the way of the
-     * replay) and makes the wallet think it has never seen a block. {@link WalletEventListener#onWalletChanged} will
+     * replay) and makes the wallet think it has never seen a block. {@link WalletChangeEventListener#onWalletChanged} will
      * be fired.
      */
     public void reset() {
@@ -3044,7 +3010,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(LegacyAddress)} or
+     * Returns all the outputs that match addresses or scripts added via {@link #addWatchedAddress(Address)} or
      * {@link #addWatchedScripts(java.util.List)}.
      * @param excludeImmatureCoinbases Whether to ignore outputs that are unspendable due to being immature.
      */
@@ -3509,18 +3475,6 @@ public class Wallet extends BaseTaggableObject
         AVAILABLE_SPENDABLE
     }
 
-    /** @deprecated Use {@link #getBalance()} instead as including watched balances is now the default behaviour */
-    @Deprecated
-    public Coin getWatchedBalance() {
-        return getBalance();
-    }
-
-    /** @deprecated Use {@link #getBalance(CoinSelector)} instead as including watched balances is now the default behaviour */
-    @Deprecated
-    public Coin getWatchedBalance(CoinSelector selector) {
-        return getBalance(selector);
-    }
-
     /**
      * Returns the AVAILABLE balance of this wallet. See {@link BalanceType#AVAILABLE} for details on what this
      * means.
@@ -3750,11 +3704,11 @@ public class Wallet extends BaseTaggableObject
      * {@link Wallet#currentChangeAddress()}, so you must have added at least one key.</p>
      *
      * <p>If you just want to send money quickly, you probably want
-     * {@link Wallet#sendCoins(TransactionBroadcaster, LegacyAddress, Coin)} instead. That will create the sending
+     * {@link Wallet#sendCoins(TransactionBroadcaster, Address, Coin)} instead. That will create the sending
      * transaction, commit to the wallet and broadcast it to the network all in one go. This method is lower level
      * and lets you see the proposed transaction before anything is done with it.</p>
      *
-     * <p>This is a helper method that is equivalent to using {@link SendRequest#to(LegacyAddress, Coin)}
+     * <p>This is a helper method that is equivalent to using {@link SendRequest#to(Address, Coin)}
      * followed by {@link Wallet#completeTx(SendRequest)} and returning the requests transaction object.
      * Note that this means a fee may be automatically added if required, if you want more control over the process,
      * just do those two steps yourself.</p>
@@ -3776,7 +3730,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public Transaction createSend(LegacyAddress address, Coin value) throws InsufficientMoneyException {
+    public Transaction createSend(Address address, Coin value) throws InsufficientMoneyException {
         SendRequest req = SendRequest.to(address, value);
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             req.shuffleOutputs = false;
@@ -3835,7 +3789,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, LegacyAddress to, Coin value) throws InsufficientMoneyException {
+    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value) throws InsufficientMoneyException {
         SendRequest request = SendRequest.to(to, value);
         return sendCoins(broadcaster, request);
     }
@@ -4146,12 +4100,6 @@ public class Wallet extends BaseTaggableObject
         return calculateAllSpendCandidates(true, true);
     }
 
-    /** @deprecated Use {@link #calculateAllSpendCandidates(boolean, boolean)} or the zero-parameter form instead. */
-    @Deprecated
-    public List<TransactionOutput> calculateAllSpendCandidates(boolean excludeImmatureCoinbases) {
-        return calculateAllSpendCandidates(excludeImmatureCoinbases, true);
-    }
-
     /**
      * Returns a list of all outputs that are being tracked by this wallet either from the {@link UTXOProvider}
      * (in this case the existence or not of private keys is ignored), or the wallets internal storage (the default)
@@ -4271,12 +4219,7 @@ public class Wallet extends BaseTaggableObject
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
-        List<LegacyAddress> addresses = new ArrayList<>();
-        for (ECKey key : keys) {
-            LegacyAddress address = LegacyAddress.fromKey(params, key);
-            addresses.add(address);
-        }
-        candidates.addAll(utxoProvider.getOpenTransactionOutputs(addresses));
+        candidates.addAll(utxoProvider.getOpenTransactionOutputs(keys));
         return candidates;
     }
 
@@ -4911,7 +4854,7 @@ public class Wallet extends BaseTaggableObject
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
                 // back to us. The address comes either from the request or currentChangeAddress() as a default.
-                LegacyAddress changeAddress = req.changeAddress;
+                Address changeAddress = req.changeAddress;
                 if (changeAddress == null)
                     changeAddress = currentChangeAddress();
                 TransactionOutput changeOutput = new TransactionOutput(params, tx, change, changeAddress);
@@ -5098,12 +5041,6 @@ public class Wallet extends BaseTaggableObject
     public boolean isKeyRotating(ECKey key) {
         long time = vKeyRotationTimestamp;
         return time != 0 && key.getCreationTimeSeconds() < time;
-    }
-
-    /** @deprecated Renamed to doMaintenance */
-    @Deprecated
-    public ListenableFuture<List<Transaction>> maybeDoMaintenance(@Nullable KeyParameter aesKey, boolean andSend) throws DeterministicUpgradeRequiresPassword {
-        return doMaintenance(aesKey, andSend);
     }
 
     /**

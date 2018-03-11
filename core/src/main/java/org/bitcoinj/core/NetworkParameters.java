@@ -394,7 +394,7 @@ public abstract class NetworkParameters {
     public abstract Coin getMaxMoney();
 
     /**
-     * Any standard (ie pay-to-address) output smaller than this value will
+     * Any standard (ie P2PKH) output smaller than this value will
      * most likely be rejected by the network.
      */
     public abstract Coin getMinNonDustOutput();

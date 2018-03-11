@@ -17,7 +17,15 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Base58;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -52,7 +60,7 @@ public class PrivateKeys {
             }
             System.out.println("Address from private key is: " + LegacyAddress.fromKey(params, key).toString());
             // And the address ...
-            LegacyAddress destination = LegacyAddress.fromBase58(params, args[1]);
+            Address destination = LegacyAddress.fromBase58(params, args[1]);
 
             // Import the private key to a fresh wallet.
             Wallet wallet = new Wallet(params);

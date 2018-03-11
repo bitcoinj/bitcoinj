@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -97,14 +99,14 @@ public class Bech32 {
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(final Bech32Data bech32) throws AddressFormatException {
+    public static String encode(final Bech32Data bech32) {
         return encode(bech32.hrp, bech32.data);
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(String hrp, final byte[] values) throws AddressFormatException {
-        if (hrp.length() < 1) throw new AddressFormatException("Human-readable part is too short");
-        if (hrp.length() > 83) throw new AddressFormatException("Human-readable part is too long");
+    public static String encode(String hrp, final byte[] values) {
+        checkArgument(hrp.length() >= 1, "Human-readable part is too short");
+        checkArgument(hrp.length() <= 83, "Human-readable part is too long");
         hrp = hrp.toLowerCase(Locale.ROOT);
         byte[] checksum = createChecksum(hrp, values);
         byte[] combined = new byte[values.length + checksum.length];
@@ -122,8 +124,10 @@ public class Bech32 {
     /** Decode a Bech32 string. */
     public static Bech32Data decode(final String str) throws AddressFormatException {
         boolean lower = false, upper = false;
-        if (str.length() < 8) throw new AddressFormatException("Input too short");
-        if (str.length() > 90) throw new AddressFormatException("Input too long");
+        if (str.length() < 8)
+            throw new AddressFormatException.InvalidDataLength("Input too short: " + str.length());
+        if (str.length() > 90)
+            throw new AddressFormatException.InvalidDataLength("Input too long: " + str.length());
         for (int i = 0; i < str.length(); ++i) {
             char c = str.charAt(i);
             if (c < 33 || c > 126) throw new AddressFormatException.InvalidCharacter(c, i);
@@ -139,10 +143,11 @@ public class Bech32 {
             }
         }
         final int pos = str.lastIndexOf('1');
-        if (pos < 1) throw new AddressFormatException("Missing human-readable part");
-        if (pos + 7 > str.length()) throw new AddressFormatException("Data part too short");
-        byte[] values = new byte[str.length() - 1 - pos];
-        for (int i = 0; i < str.length() - 1 - pos; ++i) {
+        if (pos < 1) throw new AddressFormatException.InvalidPrefix("Missing human-readable part");
+        final int dataPartLength = str.length() - 1 - pos;
+        if (dataPartLength < 6) throw new AddressFormatException.InvalidDataLength("Data part too short: " + dataPartLength);
+        byte[] values = new byte[dataPartLength];
+        for (int i = 0; i < dataPartLength; ++i) {
             char c = str.charAt(i + pos + 1);
             if (CHARSET_REV[c] == -1) throw new AddressFormatException.InvalidCharacter(c, i + pos + 1);
             values[i] = CHARSET_REV[c];

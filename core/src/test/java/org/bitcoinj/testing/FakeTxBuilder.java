@@ -17,7 +17,23 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.MessageSerializer;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
@@ -64,7 +80,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
-    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, LegacyAddress to, LegacyAddress changeOutput) {
+    public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
@@ -86,7 +102,7 @@ public class FakeTxBuilder {
      * Create a fake TX for unit tests, for use with unit tests that need greater control. One outputs, 2 random inputs,
      * split randomly to create randomness.
      */
-    public static Transaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, LegacyAddress to) {
+    public static Transaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, Address to) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
         t.addOutput(outputToMe);
@@ -122,7 +138,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
-    public static Transaction createFakeTx(NetworkParameters params, Coin value, LegacyAddress to) {
+    public static Transaction createFakeTx(NetworkParameters params, Coin value, Address to) {
         return createFakeTxWithChangeAddress(params, value, to, LegacyAddress.fromKey(params, new ECKey()));
     }
 
@@ -151,7 +167,7 @@ public class FakeTxBuilder {
      * Transaction[0] is a feeder transaction, supplying BTC to Transaction[1]
      */
     public static Transaction[] createFakeTx(NetworkParameters params, Coin value,
-                                             LegacyAddress to, LegacyAddress from) {
+                                             Address to, Address from) {
         // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
         // from address, to the to address with to one to somewhere else to simulate change.
         Transaction t = new Transaction(params);
@@ -200,10 +216,10 @@ public class FakeTxBuilder {
      * Creates two transactions that spend the same (fake) output. t1 spends to "to". t2 spends somewhere else.
      * The fake output goes to the same address as t2.
      */
-    public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, LegacyAddress to) {
+    public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
         Coin value = COIN;
-        LegacyAddress someBadGuy = LegacyAddress.fromKey(params, new ECKey());
+        Address someBadGuy = LegacyAddress.fromKey(params, new ECKey());
 
         doubleSpends.prevTx = new Transaction(params);
         TransactionOutput prevOut = new TransactionOutput(params, doubleSpends.prevTx, value, someBadGuy);
@@ -245,7 +261,7 @@ public class FakeTxBuilder {
                                             Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            LegacyAddress to = LegacyAddress.fromKey(previousBlock.getParams(), new ECKey());
+            Address to = LegacyAddress.fromKey(previousBlock.getParams(), new ECKey());
             Block b = previousBlock.createNextBlock(to, version, timeSeconds, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
@@ -290,14 +306,14 @@ public class FakeTxBuilder {
         return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), 0, transactions);
     }
 
-    public static Block makeSolvedTestBlock(BlockStore blockStore, LegacyAddress coinsTo) throws BlockStoreException {
+    public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
         Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
         b.solve();
         return b;
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        LegacyAddress to = LegacyAddress.fromKey(prev.getParams(), new ECKey());
+        Address to = LegacyAddress.fromKey(prev.getParams(), new ECKey());
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
@@ -307,7 +323,7 @@ public class FakeTxBuilder {
         return b;
     }
 
-    public static Block makeSolvedTestBlock(Block prev, LegacyAddress to, Transaction... transactions) throws BlockStoreException {
+    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions) throws BlockStoreException {
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {

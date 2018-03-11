@@ -17,7 +17,13 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
@@ -40,7 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
-    private static LegacyAddress forwardingAddress;
+    private static Address forwardingAddress;
     private static WalletAppKit kit;
 
     public static void main(String[] args) throws Exception {
@@ -111,7 +117,7 @@ public class ForwardingService {
             }
         });
 
-        LegacyAddress sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
+        Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
         System.out.println("Send coins to: " + sendToAddress);
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 

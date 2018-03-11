@@ -21,6 +21,7 @@ package org.bitcoinj.store;
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -959,7 +960,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
-            s.setInt(7, out.getScript().getScriptType().ordinal());
+            ScriptType scriptType = out.getScript().getScriptType();
+            s.setInt(7, scriptType != null ? scriptType.id : 0);
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();
@@ -1124,7 +1126,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      *         address, the return value is 0.
      * @throws BlockStoreException If there is an error getting the balance.
      */
-    public BigInteger calculateBalanceForAddress(LegacyAddress address) throws BlockStoreException {
+    public BigInteger calculateBalanceForAddress(Address address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement s = null;
         try {
@@ -1150,14 +1152,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<LegacyAddress> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<>();
         try {
             maybeConnect();
             s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
-            for (LegacyAddress address : addresses) {
-                s.setString(1, address.toString());
+            for (ECKey key : keys) {
+                // TODO switch to pubKeyHash in order to support native segwit addresses
+                s.setString(1, LegacyAddress.fromKey(params, key).toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));

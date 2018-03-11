@@ -47,11 +47,11 @@ import static java.lang.Math.*;
  */
 public class BloomFilter extends Message {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using
-        it as a filter, either never, for all outputs or only for pay-2-pubkey outputs (default) */
+        it as a filter, either never, for all outputs or only for P2PK outputs (default) */
     public enum BloomUpdate {
         UPDATE_NONE, // 0
         UPDATE_ALL, // 1
-        /** Only adds outpoints to the filter if the output is a pay-to-pubkey/pay-to-multisig script */
+        /** Only adds outpoints to the filter if the output is a P2PK/pay-to-multisig script */
         UPDATE_P2PUBKEY_ONLY //2
     }
     
@@ -74,7 +74,7 @@ public class BloomFilter extends Message {
     }
     
     /**
-     * Constructs a filter with the given parameters which is updated on pay2pubkey outputs only.
+     * Constructs a filter with the given parameters which is updated on P2PK outputs only.
      */
     public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
         this(elements, falsePositiveRate, randomNonce, BloomUpdate.UPDATE_P2PUBKEY_ONLY);

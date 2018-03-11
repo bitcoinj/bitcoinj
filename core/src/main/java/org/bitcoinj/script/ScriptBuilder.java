@@ -255,19 +255,18 @@ public class ScriptBuilder {
     public static Script createOutputScript(Address to) {
         ScriptBuilder builder = new ScriptBuilder();
         if (to instanceof LegacyAddress) {
-            LegacyAddress toLegacy = (LegacyAddress) to;
-            ScriptType scriptType = toLegacy.getOutputScriptType();
+            ScriptType scriptType = to.getOutputScriptType();
             if (scriptType == ScriptType.P2PKH) {
                 // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
                 builder.op(OP_DUP);
                 builder.op(OP_HASH160);
-                builder.data(toLegacy.getHash());
+                builder.data(to.getHash());
                 builder.op(OP_EQUALVERIFY);
                 builder.op(OP_CHECKSIG);
             } else if (scriptType == ScriptType.P2SH) {
                 // OP_HASH160 <scriptHash> OP_EQUAL
                 builder.op(OP_HASH160);
-                builder.data(toLegacy.getHash());
+                builder.data(to.getHash());
                 builder.op(OP_EQUAL);
             } else {
                 throw new IllegalStateException("Cannot handle " + scriptType);
@@ -289,7 +288,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptSig that can redeem a pay-to-address output.
+     * Creates a scriptSig that can redeem a P2PKH output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
      */
     public static Script createInputScript(@Nullable TransactionSignature signature, ECKey pubKey) {
@@ -299,7 +298,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptSig that can redeem a pay-to-pubkey output.
+     * Creates a scriptSig that can redeem a P2PK output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
      */
     public static Script createInputScript(@Nullable TransactionSignature signature) {
@@ -343,7 +342,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Create a program that satisfies a pay-to-script hashed OP_CHECKMULTISIG program.
+     * Create a program that satisfies a P2SH OP_CHECKMULTISIG program.
      * If given signature list is null, incomplete scriptSig will be created with OP_0 instead of signatures
      */
     public static Script createP2SHMultiSigInputScript(@Nullable List<TransactionSignature> signatures,

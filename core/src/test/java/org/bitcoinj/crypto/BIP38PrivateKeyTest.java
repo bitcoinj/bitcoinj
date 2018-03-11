@@ -16,6 +16,8 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.core.AddressFormatException;
+import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.BIP38PrivateKey.BadPassphraseException;
@@ -147,6 +149,12 @@ public class BIP38PrivateKeyTest {
         BIP38PrivateKey encryptedKey = BIP38PrivateKey.fromBase58(MAINNET,
                 "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg");
         encryptedKey.decrypt("BAD");
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBase58_invalidLength() {
+        String base58 = Base58.encodeChecked(1, new byte[16]);
+        BIP38PrivateKey.fromBase58(null, base58);
     }
 
     @Test

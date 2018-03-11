@@ -66,7 +66,8 @@ public class LegacyAddress extends Address {
     private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws AddressFormatException {
         super(params, hash160);
         if (hash160.length != 20)
-            throw new AddressFormatException("Legacy addresses are 160-bit hashes, so you must provide 20 bytes");
+            throw new AddressFormatException.InvalidDataLength(
+                    "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);
         this.p2sh = p2sh;
     }
 
@@ -107,22 +108,24 @@ public class LegacyAddress extends Address {
      *            P2SH script hash
      * @return constructed address
      */
-    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+    public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(params, true, hash160);
     }
 
+    /** @deprecated use {@link #fromScriptHash(NetworkParameters, byte[])} */
+    @Deprecated
+    public static LegacyAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
+        return fromScriptHash(params, hash160);
+    }
+
     /**
-     * Constructs a {@link LegacyAddress} that represents the script hash extracted from the given scriptPubKey.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param scriptPubKey
-     *            scriptPubKey
-     * @return constructed address
+     * @deprecated use {@link #fromScriptHash(NetworkParameters, byte[])} in combination with
+     *             {@link ScriptPattern#extractHashFromPayToScriptHash(Script)}
      */
+    @Deprecated
     public static LegacyAddress fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(ScriptPattern.isPayToScriptHash(scriptPubKey), "Not a P2SH script");
-        return fromP2SHHash(params, ScriptPattern.extractHashFromPayToScriptHash(scriptPubKey));
+        return fromScriptHash(params, ScriptPattern.extractHashFromPayToScriptHash(scriptPubKey));
     }
 
     /**
@@ -150,7 +153,7 @@ public class LegacyAddress extends Address {
                 else if (version == p.getP2SHHeader())
                     return new LegacyAddress(p, true, bytes);
             }
-            throw new AddressFormatException("No network found for " + base58);
+            throw new AddressFormatException.InvalidPrefix("No network found for " + base58);
         } else {
             if (version == params.getAddressHeader())
                 return new LegacyAddress(params, false, bytes);

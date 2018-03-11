@@ -56,13 +56,17 @@ public class Script {
 
     /** Enumeration to encapsulate the type of this script. */
     public enum ScriptType {
-        // Do NOT change the ordering of the following definitions because their ordinals are stored in databases.
-        NO_TYPE,
-        P2PKH,
-        PUB_KEY,
-        P2SH,
-        P2WPKH,
-        P2WSH
+        P2PKH(1), // pay to pubkey hash (aka pay to address)
+        P2PK(2), // pay to pubkey
+        P2SH(3), // pay to script hash
+        P2WPKH(4), // pay to witness pubkey hash
+        P2WSH(5); // pay to witness script hash
+
+        public final int id;
+
+        private ScriptType(int id) {
+            this.id = id;
+        }
     }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, long, Script, Set)}.
@@ -239,22 +243,17 @@ public class Script {
     }
 
     /**
-     * <p>If a program matches the standard template DUP HASH160 &lt;pubkey hash&gt; EQUALVERIFY CHECKSIG
-     * then this function retrieves the third element.
-     * In this case, this is useful for fetching the destination address of a transaction.</p>
+     * <p>If the program somehow pays to a hash, returns the hash.</p>
      * 
-     * <p>If a program matches the standard template HASH160 &lt;script hash&gt; EQUAL
-     * then this function retrieves the second element.
-     * In this case, this is useful for fetching the hash of the redeem script of a transaction.</p>
-     * 
-     * <p>Otherwise it throws a ScriptException.</p>
-     *
+     * <p>Otherwise this method throws a ScriptException.</p>
      */
     public byte[] getPubKeyHash() throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
             return ScriptPattern.extractHashFromPayToPubKeyHash(this);
         else if (ScriptPattern.isPayToScriptHash(this))
             return ScriptPattern.extractHashFromPayToScriptHash(this);
+        else if (ScriptPattern.isPayToWitnessHash(this))
+            return ScriptPattern.extractHashFromPayToWitnessHash(this);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
@@ -283,7 +282,7 @@ public class Script {
     /**
      * Gets the destination address from this script, if it's in the required form.
      */
-    public LegacyAddress getToAddress(NetworkParameters params) throws ScriptException {
+    public Address getToAddress(NetworkParameters params) throws ScriptException {
         return getToAddress(params, false);
     }
 
@@ -294,15 +293,17 @@ public class Script {
      *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
      *            showing addresses rather than pubkeys.
      */
-    public LegacyAddress getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
+    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
         if (ScriptPattern.isPayToPubKeyHash(this))
             return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
         else if (ScriptPattern.isPayToScriptHash(this))
-            return LegacyAddress.fromP2SHScript(params, this);
+            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromPayToScriptHash(this));
         else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
             return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromPayToPubKey(this)));
+        else if (ScriptPattern.isPayToWitnessHash(this))
+            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromPayToWitnessHash(this));
         else
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to a pay-to-address type");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
@@ -381,7 +382,7 @@ public class Script {
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
         if (ScriptPattern.isPayToPubKeyHash(this)) {
-            checkArgument(key != null, "Key required to create pay-to-address input script");
+            checkArgument(key != null, "Key required to create P2PKH input script");
             return ScriptBuilder.createInputScript(null, key);
         } else if (ScriptPattern.isPayToPubKey(this)) {
             return ScriptBuilder.createInputScript(null);
@@ -571,7 +572,7 @@ public class Script {
             ScriptChunk nChunk = chunks.get(0);
             return Script.decodeFromOpN(nChunk.opcode);
         } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
-            // pay-to-address and pay-to-pubkey require single sig
+            // P2PKH and P2PK require single sig
             return 1;
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
@@ -1604,18 +1605,20 @@ public class Script {
 
     /**
      * Get the {@link org.bitcoinj.script.Script.ScriptType}.
-     * @return The script type.
+     * @return The script type, or null if the script is of unknown type
      */
-    public ScriptType getScriptType() {
-        ScriptType type = ScriptType.NO_TYPE;
-        if (ScriptPattern.isPayToPubKeyHash(this)) {
-            type = ScriptType.P2PKH;
-        } else if (ScriptPattern.isPayToPubKey(this)) {
-            type = ScriptType.PUB_KEY;
-        } else if (ScriptPattern.isPayToScriptHash(this)) {
-            type = ScriptType.P2SH;
-        }
-        return type;
+    public @Nullable ScriptType getScriptType() {
+        if (ScriptPattern.isPayToPubKeyHash(this))
+            return ScriptType.P2PKH;
+        if (ScriptPattern.isPayToPubKey(this))
+            return ScriptType.P2PK;
+        if (ScriptPattern.isPayToScriptHash(this))
+            return ScriptType.P2SH;
+        if (ScriptPattern.isPayToWitnessPubKeyHash(this))
+            return ScriptType.P2WPKH;
+        if (ScriptPattern.isPayToWitnessScriptHash(this))
+            return ScriptType.P2WSH;
+        return null;
     }
 
     @Override

@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
@@ -115,7 +116,7 @@ public class Transaction extends ChildMessage {
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
     /**
-     * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
+     * Any standard (ie P2PKH) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
      * {@link TransactionOutput#getMinNonDustValue(Coin)}.
      */
@@ -733,8 +734,8 @@ public class Transaction extends ChildMessage {
             s.append("     ");
             s.append("out  ");
             try {
-                String scriptPubKeyStr = out.getScriptPubKey().toString();
-                s.append(!Strings.isNullOrEmpty(scriptPubKeyStr) ? scriptPubKeyStr : "<no scriptPubKey>");
+                Script scriptPubKey = out.getScriptPubKey();
+                s.append(scriptPubKey.getChunks().size() > 0 ? scriptPubKey.toString() : "<no scriptPubKey>");
                 s.append(" ");
                 s.append(out.getValue().toFriendlyString());
                 if (!out.isAvailableForSpending()) {
@@ -745,6 +746,10 @@ public class Transaction extends ChildMessage {
                     s.append(" by ");
                     s.append(spentBy.getParentTransaction().getHashAsString());
                 }
+                s.append('\n');
+                ScriptType scriptType = scriptPubKey.getScriptType();
+                if (scriptType != null)
+                    s.append("          " + scriptType + " addr:" + scriptPubKey.getToAddress(params));
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]");
             }
@@ -884,7 +889,7 @@ public class Transaction extends ChildMessage {
     /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(Coin value, LegacyAddress address) {
+    public TransactionOutput addOutput(Coin value, Address address) {
         return addOutput(new TransactionOutput(params, this, value, address));
     }
 
@@ -1366,7 +1371,7 @@ public class Transaction extends ChildMessage {
     /**
      * A transaction has a relative lock time
      * (<a href="https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki">BIP 68</a>) if it is version 2 or
-     * higher and at least one of its inputs has its {@link TransactionInput.SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
+     * higher and at least one of its inputs has its {@link TransactionInput#SEQUENCE_LOCKTIME_DISABLE_FLAG} cleared.
      */
     public boolean hasRelativeLockTime() {
         if (version < 2)

@@ -54,7 +54,7 @@ public class BlockChainTest {
     private Wallet wallet;
     private BlockChain chain;
     private BlockStore blockStore;
-    private LegacyAddress coinbaseTo;
+    private Address coinbaseTo;
 
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
@@ -293,10 +293,10 @@ public class BlockChainTest {
     public void intraBlockDependencies() throws Exception {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
-        LegacyAddress somebodyElse = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address somebodyElse = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = wallet.freshReceiveKey();
-        LegacyAddress addr = LegacyAddress.fromKey(UNITTEST, key);
+        Address addr = LegacyAddress.fromKey(UNITTEST, key);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, addr);
         Transaction t2 = new Transaction(UNITTEST);
@@ -319,7 +319,7 @@ public class BlockChainTest {
         int height = 1;
         chain.addWallet(wallet2);
 
-        LegacyAddress addressToSendTo = LegacyAddress.fromKey(UNITTEST, receiveKey);
+        Address addressToSendTo = LegacyAddress.fromKey(UNITTEST, receiveKey);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);

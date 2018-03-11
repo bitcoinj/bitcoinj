@@ -22,6 +22,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.*;
+import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.protocols.channels.*;
 import org.bitcoinj.store.*;
@@ -81,6 +82,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected String userAgent, version;
     protected WalletProtobufSerializer.WalletFactory walletFactory;
     @Nullable protected DeterministicSeed restoreFromSeed;
+    @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
 
     protected volatile Context context;
@@ -199,6 +201,19 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     /**
+     * If an account key is set here then any existing wallet that matches the file name will be renamed to a backup name,
+     * the chain file will be deleted, and the wallet object will be instantiated with the given key instead of
+     * a fresh seed being created. This is intended for restoring a wallet from an account key. To implement restore
+     * you would shut down the existing appkit, if any, then recreate it with the key given by the user, then start
+     * up the new kit. The next time your app starts it should work as normal (that is, don't keep calling this each
+     * time).
+     */
+    public WalletAppKit restoreWalletFromKey(DeterministicKey accountKey) {
+        this.restoreFromKey = accountKey;
+        return this;
+    }
+
+    /**
      * Sets the peer discovery class to use. If none is provided then DNS is used, which is a reasonable default.
      */
     public WalletAppKit setDiscovery(@Nullable PeerDiscovery discovery) {
@@ -268,12 +283,12 @@ public class WalletAppKit extends AbstractIdleService {
             File chainFile = new File(directory, filePrefix + ".spvchain");
             boolean chainFileExists = chainFile.exists();
             vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null;
+            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null || restoreFromKey != null;
             vWallet = createOrLoadWallet(shouldReplayWallet);
 
             // Initiate Bitcoin network objects (block store, blockchain and peer group)
             vStore = provideBlockStore(chainFile);
-            if (!chainFileExists || restoreFromSeed != null) {
+            if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
                 if (checkpoints == null && !Utils.isAndroidRuntime()) {
                     checkpoints = CheckpointManager.openStream(params);
                 }
@@ -290,7 +305,18 @@ public class WalletAppKit extends AbstractIdleService {
                                 throw new IOException("Failed to delete chain file in preparation for restore.");
                             vStore = new SPVBlockStore(params, chainFile);
                         }
-                    } else {
+                    } else if (restoreFromKey != null) {
+                        time = restoreFromKey.getCreationTimeSeconds();
+                        if (chainFileExists) {
+                            log.info("Deleting the chain file in preparation from restore.");
+                            vStore.close();
+                            if (!chainFile.delete())
+                                throw new IOException("Failed to delete chain file in preparation for restore.");
+                            vStore = new SPVBlockStore(params, chainFile);
+                        }
+                    }
+                    else
+                    {
                         time = vWallet.getEarliestKeyCreationTime();
                     }
                     if (time > 0)
@@ -411,6 +437,8 @@ public class WalletAppKit extends AbstractIdleService {
         KeyChainGroup kcg;
         if (restoreFromSeed != null)
             kcg = new KeyChainGroup(params, restoreFromSeed);
+        else if (restoreFromKey != null)
+            kcg = new KeyChainGroup(params, restoreFromKey, false);
         else
             kcg = new KeyChainGroup(params);
         if (walletFactory != null) {
@@ -422,6 +450,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     private void maybeMoveOldWalletOutOfTheWay() {
         if (restoreFromSeed == null) return;
+        if (restoreFromKey == null) return;
         if (!vWalletFile.exists()) return;
         int counter = 1;
         File newName;

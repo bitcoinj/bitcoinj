@@ -261,7 +261,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        LegacyAddress address = LegacyAddress.fromKey(PARAMS, toKey);
+        Address address = LegacyAddress.fromKey(PARAMS, toKey);
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
@@ -272,7 +272,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(toKey));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
@@ -328,7 +328,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        LegacyAddress address2 = LegacyAddress.fromKey(PARAMS, toKey2);
+        Address address2 = LegacyAddress.fromKey(PARAMS, toKey2);
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);

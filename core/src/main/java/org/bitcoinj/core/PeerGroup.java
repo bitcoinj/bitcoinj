@@ -178,11 +178,11 @@ public class PeerGroup implements TransactionBroadcaster {
         @Override
         public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
-            // if we have received a transaction that includes a relevant pay-to-pubkey output.
+            // if we have received a transaction that includes a relevant P2PK output.
             //
-            // The reason is that pay-to-pubkey outputs, when spent, will not repeat any data we can predict in their
+            // The reason is that P2PK outputs, when spent, will not repeat any data we can predict in their
             // inputs. So a remote peer will update the Bloom filter for us when such an output is seen matching the
-            // existing filter, so that it includes the tx hash in which the pay-to-pubkey output was observed. Thus
+            // existing filter, so that it includes the tx hash in which the P2PK output was observed. Thus
             // the spending transaction will always match (due to the outpoint structure).
             //
             // Unfortunately, whilst this is required for correct sync of the chain in blocks, there are two edge cases.

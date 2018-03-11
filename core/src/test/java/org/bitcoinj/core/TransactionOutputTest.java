@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
@@ -67,19 +68,20 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void testP2SHOutputScript() throws Exception {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        LegacyAddress P2SHAddress = LegacyAddress.fromBase58(MAINNET, P2SHAddressString);
+        Address P2SHAddress = LegacyAddress.fromBase58(MAINNET, P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
         Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.COIN, script);
-        assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MAINNET).toString());
+        assertEquals(P2SHAddressString, tx.getOutput(0).getScriptPubKey().getToAddress(MAINNET).toString());
     }
 
     @Test
     public void getAddressTests() throws Exception {
         Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
-        assertNull(tx.getOutput(0).getAddressFromP2SH(UNITTEST));
-        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(UNITTEST));
+        assertTrue(ScriptPattern.isOpReturn(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isPayToPubKey(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isPayToPubKeyHash(tx.getOutput(0).getScriptPubKey()));
     }
 
     @Test
