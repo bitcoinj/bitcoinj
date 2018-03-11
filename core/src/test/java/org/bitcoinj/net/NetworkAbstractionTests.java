@@ -363,7 +363,7 @@ public class NetworkAbstractionTests {
 
     @Test
     public void largeDataTest() throws Exception {
-        /** Test various large-data handling, essentially testing {@link ProtobufConnection#receiveBytes(java.nio.ByteBuffer)} */
+        // Test various large-data handling, essentially testing {@link ProtobufConnection#receiveBytes(java.nio.ByteBuffer)}
         final SettableFuture<Void> serverConnectionOpen = SettableFuture.create();
         final SettableFuture<Void> clientConnectionOpen = SettableFuture.create();
         final SettableFuture<Void> serverConnectionClosed = SettableFuture.create();

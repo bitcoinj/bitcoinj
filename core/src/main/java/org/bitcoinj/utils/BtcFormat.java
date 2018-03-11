@@ -1107,9 +1107,7 @@ public abstract class BtcFormat extends Format {
         return new BtcFixedFormat(locale, scale, minDecimals, groups);
     }
 
-    /***********************/
-    /****** FORMATTING *****/
-    /***********************/
+    // ****** FORMATTING *****
 
     /**
      * Formats a bitcoin monetary value and returns an {@link java.text.AttributedCharacterIterator}.
@@ -1295,9 +1293,7 @@ public abstract class BtcFormat extends Format {
         return satoshis;
     }
 
-    /********************/
-    /****** PARSING *****/
-    /********************/
+    // ****** PARSING *****
 
     /**
       * Parse a <code>String</code> representation of a Bitcoin monetary value.  Returns a
@@ -1461,9 +1457,7 @@ public abstract class BtcFormat extends Format {
         return (Coin)parseObject(source);
     }
 
-    /*********************************/
     /****** END OF PARSING STUFF *****/
-    /*********************************/
 
     protected static String prefixCode(String code, int scale) {
         switch (scale) {

@@ -210,21 +210,7 @@ public class PaymentChannelClientConnection {
     public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size) throws ValueOutOfRangeException, IllegalStateException {
         return channelClient.incrementPayment(size, null, null);
     }
-    /**
-     * Increments the total value which we pay the server.
-     *
-     * @param size How many satoshis to increment the payment by (note: not the new total).
-     * @param info Information about this payment increment, used to extend this protocol.
-     * @throws ValueOutOfRangeException If the size is negative or would pay more than this channel's total value
-     *                                  ({@link PaymentChannelClientConnection#state()}.getTotalValue())
-     * @throws IllegalStateException If the channel has been closed or is not yet open
-     *                               (see {@link PaymentChannelClientConnection#getChannelOpenFuture()} for the second)
-     */
-    /*
-    public ListenableFuture<PaymentIncrementAck> incrementPayment(Coin size, ByteString info) throws ValueOutOfRangeException, IllegalStateException {
-        return channelClient.incrementPayment(size, info, null);
-    }
-*/
+
     /**
      * Increments the total value which we pay the server.
      *
