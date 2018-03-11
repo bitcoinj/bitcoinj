@@ -18,6 +18,7 @@ package org.bitcoinj.utils;
 
 import static org.bitcoinj.utils.Fiat.parseFiat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -76,9 +77,15 @@ public class FiatTest {
 
     @Test
     public void testComparing() {
-        assertEquals(0, parseFiat("EUR", "6.66").compareTo(parseFiat("EUR", "6.66")));
-        assertEquals(-1, parseFiat("EUR", "6.66").compareTo(parseFiat("EUR", "10.00")));
-        assertEquals(1, parseFiat("EUR", "2").compareTo(parseFiat("EUR", "1")));
+        assertTrue(parseFiat("EUR", "1.11").isLessThan(parseFiat("EUR", "6.66")));
+        assertTrue(parseFiat("EUR", "6.66").isGreaterThan(parseFiat("EUR", "2.56")));
+    }
+
+    @Test
+    public void testSign() {
+        assertTrue(parseFiat("EUR", "-1").isNegative());
+        assertTrue(parseFiat("EUR", "1").isPositive());
+        assertTrue(parseFiat("EUR", "0.00").isZero());
     }
 
 }
