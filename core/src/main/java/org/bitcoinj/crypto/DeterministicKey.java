@@ -316,7 +316,6 @@ public class DeterministicKey extends ECKey {
         return super.isPubKeyOnly() && (parent == null || parent.isPubKeyOnly());
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean hasPrivKey() {
         return findParentWithPrivKey() != null;

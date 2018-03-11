@@ -124,9 +124,6 @@ public class SegwitAddress extends Address {
         return convertBits(bytes, 1, bytes.length - 1, 5, 8, false);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public byte[] getHash() {
         return getWitnessProgram();
@@ -150,9 +147,6 @@ public class SegwitAddress extends Address {
         throw new IllegalStateException("Cannot happen.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
         return toBech32();
