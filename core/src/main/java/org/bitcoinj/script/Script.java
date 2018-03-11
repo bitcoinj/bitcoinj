@@ -736,12 +736,12 @@ public class Script {
 
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
-     * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
-     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link TransactionInput#verify(TransactionOutput)} or
+     * {@link Script#correctlySpends(Transaction, long, Script)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      *
-     * @deprecated Use {@link #executeScript(org.bitcoinj.core.Transaction, long, org.bitcoinj.script.Script, java.util.LinkedList, java.util.Set)}
+     * @deprecated Use {@link #executeScript(Transaction, long, Script, LinkedList, Set)}
      * instead.
      */
     @Deprecated
@@ -756,8 +756,8 @@ public class Script {
 
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
-     * {@link org.bitcoinj.core.TransactionInput#verify(org.bitcoinj.core.TransactionOutput)} or
-     * {@link org.bitcoinj.script.Script#correctlySpends(org.bitcoinj.core.Transaction, long, Script)}. This method
+     * {@link TransactionInput#verify(TransactionOutput)} or
+     * {@link Script#correctlySpends(Transaction, long, Script)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      */
@@ -1520,7 +1520,7 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @deprecated Use {@link #correctlySpends(org.bitcoinj.core.Transaction, long, org.bitcoinj.script.Script, java.util.Set)}
+     * @deprecated Use {@link #correctlySpends(Transaction, long, Script, Set)}
      * instead so that verification flags do not change as new verification options
      * are added.
      */
@@ -1604,7 +1604,7 @@ public class Script {
     }
 
     /**
-     * Get the {@link org.bitcoinj.script.Script.ScriptType}.
+     * Get the {@link Script.ScriptType}.
      * @return The script type, or null if the script is of unknown type
      */
     public @Nullable ScriptType getScriptType() {

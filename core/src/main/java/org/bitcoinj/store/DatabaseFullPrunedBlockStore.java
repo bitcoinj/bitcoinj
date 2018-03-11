@@ -212,7 +212,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * Get the database specific error code that indicated a duplicate key error when inserting a record.
-     * <p>This is the code returned by {@link java.sql.SQLException#getSQLState()}</p>
+     * <p>This is the code returned by {@link SQLException#getSQLState()}</p>
      * @return The database duplicate error code.
      */
     protected abstract String getDuplicateKeyErrorCode();
@@ -546,7 +546,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Create a new store for the given {@link org.bitcoinj.core.NetworkParameters}.
+     * Create a new store for the given {@link NetworkParameters}.
      * @param params The network.
      * @throws BlockStoreException If the store couldn't be created.
      */
@@ -1106,10 +1106,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Calculate the balance for a coinbase, to-address, or p2sh address.
      *
-     * <p>The balance {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
+     * <p>The balance {@link DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
      * the balance (summed) as an number, then use calculateClientSide=false</p>
      *
-     * <p>The balance {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
+     * <p>The balance {@link DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
      * the all the openoutputs as stored in the DB (binary), then use calculateClientSide=true</p>
      *
      * @param address The address to calculate the balance of

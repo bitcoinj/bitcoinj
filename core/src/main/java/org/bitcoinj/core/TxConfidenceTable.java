@@ -131,7 +131,7 @@ public class TxConfidenceTable {
 
     /**
      * Called by peers when they see a transaction advertised in an "inv" message. It passes the data on to the relevant
-     * {@link org.bitcoinj.core.TransactionConfidence} object, creating it if needed.
+     * {@link TransactionConfidence} object, creating it if needed.
      *
      * @return the number of peers that have now announced this hash (including the caller)
      */

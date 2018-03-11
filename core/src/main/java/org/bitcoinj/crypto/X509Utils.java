@@ -17,6 +17,7 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.Joiner;
+import org.bitcoinj.protocols.payments.PaymentSession;
 import org.spongycastle.asn1.ASN1ObjectIdentifier;
 import org.spongycastle.asn1.ASN1String;
 import org.spongycastle.asn1.x500.AttributeTypeAndValue;
@@ -38,7 +39,7 @@ import java.util.List;
 
 /**
  * X509Utils provides tools for working with X.509 certificates and keystores, as used in the BIP 70 payment protocol.
- * For more details on this, see {@link org.bitcoinj.protocols.payments.PaymentSession}, the article "Working with
+ * For more details on this, see {@link PaymentSession}, the article "Working with
  * the payment protocol" on the bitcoinj website, or the Bitcoin developer guide.
  */
 public class X509Utils {

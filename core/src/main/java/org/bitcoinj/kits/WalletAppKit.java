@@ -56,7 +56,7 @@ import static com.google.common.base.Preconditions.*;
  * means doing potentially blocking file IO, generating keys and other potentially intensive operations. By running it
  * on a background thread, there's no risk of accidentally causing UI lag.</p>
  *
- * <p>Note that {@link #awaitRunning()} can throw an unchecked {@link java.lang.IllegalStateException}
+ * <p>Note that {@link #awaitRunning()} can throw an unchecked {@link IllegalStateException}
  * if anything goes wrong during startup - you should probably handle it and use {@link Exception#getCause()} to figure
  * out what went wrong more precisely. Same thing if you just use the {@link #startAsync()} method.</p>
  */

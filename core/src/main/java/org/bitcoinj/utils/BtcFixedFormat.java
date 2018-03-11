@@ -19,8 +19,11 @@ package org.bitcoinj.utils;
 import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Objects;
+import org.bitcoinj.core.Coin;
+
 import java.math.BigInteger;
 import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.List;
@@ -38,12 +41,12 @@ import java.util.List;
  *
  * <p>A more detailed explanation, including examples, is in the documentation for the
  * {@link BtcFormat} class, and further information beyond that is in the documentation for the
- * {@link java.text.Format} class, from which this class descends.</p>
+ * {@link Format} class, from which this class descends.</p>
 
- * @see          java.text.Format
- * @see          java.text.NumberFormat
- * @see          java.text.DecimalFormat
- * @see          org.bitcoinj.core.Coin
+ * @see Format
+ * @see NumberFormat
+ * @see DecimalFormat
+ * @see Coin
  */
 
 public final class BtcFixedFormat extends BtcFormat {

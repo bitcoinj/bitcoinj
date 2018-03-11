@@ -18,6 +18,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
@@ -28,8 +29,8 @@ import javax.annotation.Nullable;
 public interface EncryptableKeyChain extends KeyChain {
     /**
      * Takes the given password, which should be strong, derives a key from it and then invokes
-     * {@link #toEncrypted(org.bitcoinj.crypto.KeyCrypter, org.spongycastle.crypto.params.KeyParameter)} with
-     * {@link org.bitcoinj.crypto.KeyCrypterScrypt} as the crypter.
+     * {@link #toEncrypted(KeyCrypter, KeyParameter)} with
+     * {@link KeyCrypterScrypt} as the crypter.
      *
      * @return The derived key, in case you wish to cache it for future use.
      */
@@ -42,7 +43,7 @@ public interface EncryptableKeyChain extends KeyChain {
     EncryptableKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey);
 
     /**
-     * Decrypts the key chain with the given password. See {@link #toDecrypted(org.spongycastle.crypto.params.KeyParameter)}
+     * Decrypts the key chain with the given password. See {@link #toDecrypted(KeyParameter)}
      * for details.
      */
     EncryptableKeyChain toDecrypted(CharSequence password);
@@ -50,7 +51,7 @@ public interface EncryptableKeyChain extends KeyChain {
     /**
      * Decrypt the key chain with the given AES key and whatever {@link KeyCrypter} is already set. Note that if you
      * just want to spend money from an encrypted wallet, don't decrypt the whole thing first. Instead, set the
-     * {@link org.bitcoinj.wallet.SendRequest#aesKey} field before asking the wallet to build the send.
+     * {@link SendRequest#aesKey} field before asking the wallet to build the send.
      *
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to
      *               create from a password)

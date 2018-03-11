@@ -17,6 +17,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.Threading;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
@@ -32,7 +33,7 @@ public interface PreMessageReceivedEventListener {
      * callback is passed as "m" to the next, forming a chain.</p>
      *
      * <p>Note that this will never be called if registered with any executor other than
-     * {@link org.bitcoinj.utils.Threading#SAME_THREAD}</p>
+     * {@link Threading#SAME_THREAD}</p>
      */
     Message onPreMessageReceived(Peer peer, Message m);
 }

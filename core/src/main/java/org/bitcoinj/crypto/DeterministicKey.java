@@ -338,7 +338,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns this keys {@link org.bitcoinj.crypto.KeyCrypter} <b>or</b> the keycrypter of its parent key.
+     * Returns this keys {@link KeyCrypter} <b>or</b> the keycrypter of its parent key.
      */
     @Override @Nullable
     public KeyCrypter getKeyCrypter() {
@@ -559,7 +559,7 @@ public class DeterministicKey extends ECKey {
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link org.bitcoinj.core.ECKey#getCreationTimeSeconds()}.
+     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTimeSeconds()}.
      */
     @Override
     public long getCreationTimeSeconds() {

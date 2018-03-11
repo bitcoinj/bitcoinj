@@ -434,7 +434,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Convenience wrapper around {@link #toEncrypted(org.bitcoinj.crypto.KeyCrypter,
+     * Convenience wrapper around {@link #toEncrypted(KeyCrypter,
      * org.spongycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
      * parameters, derives a key from the given password and returns the created key.
      */
@@ -449,7 +449,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     /**
      * Encrypt the wallet using the KeyCrypter and the AES key. A good default KeyCrypter to use is
-     * {@link org.bitcoinj.crypto.KeyCrypterScrypt}.
+     * {@link KeyCrypterScrypt}.
      *
      * @param keyCrypter The KeyCrypter that specifies how to encrypt/ decrypt a key
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming

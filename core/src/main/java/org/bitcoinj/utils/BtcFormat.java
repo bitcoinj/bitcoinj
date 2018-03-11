@@ -267,10 +267,10 @@ import java.util.regex.Pattern;
  * <h3>Formatting</h3>
  *
  * <p>You format a Bitcoin monetary value by passing it to the {@link BtcFormat#format(Object)}
- * method.  This argument can be either a {@link org.bitcoinj.core.Coin}-type object or a
- * numerical object such as {@link java.lang.Long} or {@link java.math.BigDecimal}.
- * Integer-based types such as {@link java.math.BigInteger} are interpreted as representing a
- * number of satoshis, while a {@link java.math.BigDecimal} is interpreted as representing a
+ * method.  This argument can be either a {@link Coin}-type object or a
+ * numerical object such as {@link Long} or {@link BigDecimal}.
+ * Integer-based types such as {@link BigInteger} are interpreted as representing a
+ * number of satoshis, while a {@link BigDecimal} is interpreted as representing a
  * number of bitcoins.  A value having a fractional amount of satoshis is rounded to the
  * nearest whole satoshi at least, and possibly to a greater unit depending on the number of
  * fractional decimal-places displayed.  The {@code format()} method will not accept an
@@ -322,9 +322,9 @@ import java.util.regex.Pattern;
  * <p>When using an automatically-denominating formatter, you might
  * want to know what denomination was chosen.  You can get the
  * currency-units indicator, as well as any other field in the
- * formatted output, by using a {@link java.text.FieldPosition} instance
+ * formatted output, by using a {@link FieldPosition} instance
  * constructed using an appropriate constant from the {@link
- * java.text.NumberFormat.Field} class:</p>
+ * NumberFormat.Field} class:</p>
  *
  * <blockquote><pre>
  * BtcFormat de = BtcFormat.getInstance(Locale.GERMANY);
@@ -393,7 +393,7 @@ import java.util.regex.Pattern;
  * </pre></blockquote>
  *
  * <p>If you need to vertically-align columns printed in a proportional font,
- * then see the documentation for the {@link java.text.NumberFormat} class
+ * then see the documentation for the {@link NumberFormat} class
  * for an explanation of how to do that.</p>
  *
  * <h3>Parsing</h3>
@@ -447,7 +447,7 @@ import java.util.regex.Pattern;
  *
  *  <h4>Parsing</h4>
  *
- * <p>Parsing is performed by an underlying {@link java.text.NumberFormat} object.  While this
+ * <p>Parsing is performed by an underlying {@link NumberFormat} object. While this
  * delivers the benefit of recognizing locale-specific patterns, some have criticized other
  * aspects of its behavior.  For example, see <a
  * href="http://www.ibm.com/developerworks/library/j-numberformat/">this article by Joe Sam
@@ -465,12 +465,12 @@ import java.util.regex.Pattern;
  *
  * <p>Instances of this class are immutable.</p>
  *
- * @see          java.text.Format
- * @see          java.text.NumberFormat
- * @see          java.text.DecimalFormat
- * @see          java.text.DecimalFormatSymbols
- * @see          java.text.FieldPosition
- * @see          org.bitcoinj.core.Coin
+ * @see Format
+ * @see NumberFormat
+ * @see DecimalFormat
+ * @see DecimalFormatSymbols
+ * @see FieldPosition
+ * @see Coin
  */
 
 public abstract class BtcFormat extends Format {
@@ -635,7 +635,7 @@ public abstract class BtcFormat extends Format {
          *  if that method is not invoked. */
         public Builder fractionGroups(int... val) { fractionGroups = val; return this; }
 
-        /** Specify the {@link java.util.Locale} for formatting and parsing.
+        /** Specify the {@link Locale} for formatting and parsing.
          *  If this method is not invoked, then the runtime default locale will be used. */
         public Builder locale(Locale val) { locale = val; return this; }
 
@@ -660,7 +660,7 @@ public abstract class BtcFormat extends Format {
         public Builder code(String val) { code = val; return this; }
 
         /** Use the given pattern when formatting and parsing.  The format of this pattern is
-         *  identical to that used by the {@link java.text.DecimalFormat} class.
+         *  identical to that used by the {@link DecimalFormat} class.
          *
          *  <p>If the pattern lacks a negative subpattern, then the formatter will indicate
          *  negative values by placing a minus sign immediately preceding the number part of
@@ -687,7 +687,7 @@ public abstract class BtcFormat extends Format {
         } 
 
         /** Use the given localized-pattern for formatting and parsing.  The format of this
-         *  pattern is identical to the patterns used by the {@link java.text.DecimalFormat}
+         *  pattern is identical to the patterns used by the {@link DecimalFormat}
          *  class.
          *
          *  <p>The pattern is localized according to the locale of the {@code BtcFormat}
@@ -1116,12 +1116,12 @@ public abstract class BtcFormat extends Format {
     // ****** FORMATTING *****
 
     /**
-     * Formats a bitcoin monetary value and returns an {@link java.text.AttributedCharacterIterator}.
+     * Formats a bitcoin monetary value and returns an {@link AttributedCharacterIterator}.
      * By iterating, you can examine what fields apply to each character.  This can be useful
      * since a character may be part of more than one field, for example a grouping separator
      * that is also part of the integer field.
      *
-     * @see java.text.AttributedCharacterIterator
+     * @see AttributedCharacterIterator
      */
     @Override
     public AttributedCharacterIterator formatToCharacterIterator(Object obj) { synchronized(numberFormat) {
@@ -1303,8 +1303,8 @@ public abstract class BtcFormat extends Format {
 
     /**
       * Parse a {@link String} representation of a Bitcoin monetary value.  Returns a
-      * {@link org.bitcoinj.core.Coin} object that represents the parsed value.
-      * @see java.text.NumberFormat */
+      * {@link Coin} object that represents the parsed value.
+      * @see NumberFormat */
     @Override
     public final Object parseObject(String source, ParsePosition pos) { return parse(source, pos); }
 
@@ -1501,7 +1501,7 @@ public abstract class BtcFormat extends Format {
      *
      *  <p>This method accommodates an imperfection in the Java formatting code and distributed
      *  locale data.  To wit: the subpattern for negative numbers is optional and not all
-     *  locales have one. In those cases, {@link java.text.DecimalFormat} will indicate numbers
+     *  locales have one. In those cases, {@link DecimalFormat} will indicate numbers
      *  less than zero by adding a negative sign as the first character of the prefix of the
      *  positive subpattern.
      *
@@ -1521,7 +1521,7 @@ public abstract class BtcFormat extends Format {
 
     /**
      * Return an array of all locales for which the getInstance() method of this class can
-     * return localized instances.  See {@link java.text.NumberFormat#getAvailableLocales()}
+     * return localized instances.  See {@link NumberFormat#getAvailableLocales()}
      */
     public static Locale[] getAvailableLocales() { return NumberFormat.getAvailableLocales(); }
 

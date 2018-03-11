@@ -47,7 +47,7 @@ public interface IPaymentChannelClient {
      * intending to reopen the channel later. There is likely little reason to use this in a stateless protocol.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
-     * {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)} or
+     * {@link IPaymentChannelClient.ClientConnection#destroyConnection(PaymentChannelCloseException.CloseReason)} or
      * {@link IPaymentChannelClient#settle()} is called, to actually handle the connection close logic.</p>
      */
     void connectionClosed();
@@ -56,7 +56,7 @@ public interface IPaymentChannelClient {
      * <p>Settles the channel, notifying the server it can broadcast the most recent payment transaction.</p>
      *
      * <p>Note that this only generates a CLOSE message for the server and calls
-     * {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)}
+     * {@link IPaymentChannelClient.ClientConnection#destroyConnection(PaymentChannelCloseException.CloseReason)}
      * to settle the connection, it does not actually handle connection close logic, and
      * {@link PaymentChannelClient#connectionClosed()} must still be called after the connection fully settles.</p>
      *
@@ -103,25 +103,25 @@ public interface IPaymentChannelClient {
          * however the order of messages must be preserved.</p>
          *
          * <p>If the send fails, no exception should be thrown, however
-         * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#connectionClosed()} should be called immediately. In the case of messages which
+         * {@link PaymentChannelClient#connectionClosed()} should be called immediately. In the case of messages which
          * are a part of initialization, initialization will simply fail and the refund transaction will be broadcasted
          * when it unlocks (if necessary).  In the case of a payment message, the payment will be lost however if the
          * channel is resumed it will begin again from the channel value <i>after</i> the failed payment.</p>
          *
-         * <p>Called while holding a lock on the {@link org.bitcoinj.protocols.channels.PaymentChannelClient} object - be careful about reentrancy</p>
+         * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
          */
         void sendToServer(Protos.TwoWayChannelMessage msg);
 
         /**
          * <p>Requests that the connection to the server be closed. For stateless protocols, note that after this call,
          * no more messages should be received from the server and this object is no longer usable. A
-         * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#connectionClosed()} event should be generated immediately after this call.</p>
+         * {@link PaymentChannelClient#connectionClosed()} event should be generated immediately after this call.</p>
          *
-         * <p>Called while holding a lock on the {@link org.bitcoinj.protocols.channels.PaymentChannelClient} object - be careful about reentrancy</p>
+         * <p>Called while holding a lock on the {@link PaymentChannelClient} object - be careful about reentrancy</p>
          *
          * @param reason The reason for the closure, see the individual values for more details.
          *               It is usually safe to ignore this and treat any value below
-         *               {@link org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason#CLIENT_REQUESTED_CLOSE} as "unrecoverable error" and all others as
+         *               {@link PaymentChannelCloseException.CloseReason#CLIENT_REQUESTED_CLOSE} as "unrecoverable error" and all others as
          *               "try again once and see if it works then"
          */
         void destroyConnection(PaymentChannelCloseException.CloseReason reason);
@@ -129,7 +129,7 @@ public interface IPaymentChannelClient {
 
         /**
          * <p>Queries if the expire time proposed by server is acceptable. If {@code false} is return the channel
-         * will be closed with a  {@link org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason#TIME_WINDOW_UNACCEPTABLE}.</p>
+         * will be closed with a  {@link PaymentChannelCloseException.CloseReason#TIME_WINDOW_UNACCEPTABLE}.</p>
          * @param expireTime The time, in seconds,  when this channel will be closed by the server. Note this is in absolute time, i.e. seconds since 1970-01-01T00:00:00.
          * @return {@code true} if the proposed time is acceptable {@code false} otherwise.
          */
@@ -137,10 +137,10 @@ public interface IPaymentChannelClient {
 
         /**
          * <p>Indicates the channel has been successfully opened and
-         * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#incrementPayment(Coin)}
+         * {@link PaymentChannelClient#incrementPayment(Coin)}
          * may be called at will.</p>
          *
-         * <p>Called while holding a lock on the {@link org.bitcoinj.protocols.channels.PaymentChannelClient}
+         * <p>Called while holding a lock on the {@link PaymentChannelClient}
          * object - be careful about reentrancy</p>
          *
          * @param wasInitiated If true, the channel is newly opened. If false, it was resumed.
@@ -168,7 +168,7 @@ public interface IPaymentChannelClient {
         /**
          *  The time in seconds, relative to now, on how long this channel should be kept open. Note that is is
          *  a proposal to the server. The server may in turn propose something different.
-         *  See {@link org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientConnection#acceptExpireTime(long)}
+         *  See {@link IPaymentChannelClient.ClientConnection#acceptExpireTime(long)}
          *
          */
         long timeWindow();

@@ -50,7 +50,7 @@ public class PaymentChannelClientConnection {
     /**
      * Attempts to open a new connection to and open a payment channel with the given host and port, blocking until the
      * connection is open. The server is requested to keep the channel open for
-     * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#DEFAULT_TIME_WINDOW}
+     * {@link PaymentChannelClient#DEFAULT_TIME_WINDOW}
      * seconds. If the server proposes a longer time the channel will be closed.
      *
      * @param server         The host/port pair where the server is listening.
@@ -75,7 +75,7 @@ public class PaymentChannelClientConnection {
     /**
      * Attempts to open a new connection to and open a payment channel with the given host and port, blocking until the
      * connection is open.  The server is requested to keep the channel open for
-     * {@link org.bitcoinj.protocols.channels.PaymentChannelClient#DEFAULT_TIME_WINDOW} seconds.
+     * {@link PaymentChannelClient#DEFAULT_TIME_WINDOW} seconds.
      * If the server proposes a longer time the channel will be closed.
      *
      * @param server          The host/port pair where the server is listening.
@@ -191,7 +191,7 @@ public class PaymentChannelClientConnection {
      *
      * <p>After this future completes successfully, you may call
      * {@link PaymentChannelClientConnection#incrementPayment(Coin)} or
-     * {@link PaymentChannelClientConnection#incrementPayment(Coin, com.google.protobuf.ByteString, KeyParameter)} to
+     * {@link PaymentChannelClientConnection#incrementPayment(Coin, ByteString, KeyParameter)} to
      * begin paying the server.</p>
      */
     public ListenableFuture<PaymentChannelClientConnection> getChannelOpenFuture() {

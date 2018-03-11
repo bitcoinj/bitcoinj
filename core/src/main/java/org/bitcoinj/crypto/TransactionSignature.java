@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 
 /**
- * A TransactionSignature wraps an {@link org.bitcoinj.core.ECKey.ECDSASignature} and adds methods for handling
+ * A TransactionSignature wraps an {@link ECKey.ECDSASignature} and adds methods for handling
  * the additional SIGHASH mode byte that is used.
  */
 public class TransactionSignature extends ECKey.ECDSASignature {

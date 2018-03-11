@@ -21,8 +21,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +44,10 @@ public class BlockChain extends AbstractBlockChain {
     /**
      * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}</p>
+     * {@link Wallet#loadFromFile(File, WalletExtension...)}</p>
      *
-     * <p>For the store, you should use {@link org.bitcoinj.store.SPVBlockStore} or you could also try a
-     * {@link org.bitcoinj.store.MemoryBlockStore} if you want to hold all headers in RAM and don't care about
+     * <p>For the store, you should use {@link SPVBlockStore} or you could also try a
+     * {@link MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
     public BlockChain(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {

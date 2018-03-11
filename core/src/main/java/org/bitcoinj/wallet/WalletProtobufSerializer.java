@@ -17,8 +17,17 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.*;
+import com.google.protobuf.Message;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
@@ -40,6 +49,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,8 +71,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * format is defined by the <tt>wallet.proto</tt> file in the bitcoinj source distribution.<p>
  *
  * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
- * the obvious operations on Output/InputStreams. You can use a {@link java.io.ByteArrayInputStream} and equivalent
- * {@link java.io.ByteArrayOutputStream} if you'd like byte arrays instead. The protocol buffer can also be manipulated
+ * the obvious operations on Output/InputStreams. You can use a {@link ByteArrayInputStream} and equivalent
+ * {@link ByteArrayOutputStream} if you'd like byte arrays instead. The protocol buffer can also be manipulated
  * in its object form if you'd like to modify the flattened data structure before serialization to binary.<p>
  *
  * You can extend the wallet format with additional fields specific to your application if you want, but make sure
@@ -147,7 +159,7 @@ public class WalletProtobufSerializer {
 
     /**
      * Returns the given wallet formatted as text. The text format is that used by protocol buffers and although it
-     * can also be parsed using {@link TextFormat#merge(CharSequence, com.google.protobuf.Message.Builder)},
+     * can also be parsed using {@link TextFormat#merge(CharSequence, Message.Builder)},
      * it is designed more for debugging than storage. It is not well specified and wallets are largely binary data
      * structures anyway, consisting as they do of keys (large random numbers) and {@link Transaction}s which also
      * mostly contain keys and hashes.
@@ -617,7 +629,7 @@ public class WalletProtobufSerializer {
 
     /**
      * Returns the loaded protocol buffer from the given byte stream. You normally want
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)} instead - this method is designed for low level
+     * {@link Wallet#loadFromFile(File, WalletExtension...)} instead - this method is designed for low level
      * work involving the wallet file format itself.
      */
     public static Protos.Wallet parseToProto(InputStream input) throws IOException {

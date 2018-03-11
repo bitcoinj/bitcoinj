@@ -48,8 +48,8 @@ import java.util.concurrent.Callable;
  *
  * <ul>
  * <li>A {@link BitcoinURI} object that conforms to BIP 0072</li>
- * <li>A url where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} can be fetched</li>
- * <li>Directly with a {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object</li>
+ * <li>A url where the {@link Protos.PaymentRequest} can be fetched</li>
+ * <li>Directly with a {@link Protos.PaymentRequest} object</li>
  * </ul>
  *
  * <p>If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
@@ -59,10 +59,10 @@ import java.util.concurrent.Callable;
  * amount and recipient are correct, perform any additional steps, and then construct a list of transactions to pass to
  * the sendPayment method.</p>
  *
- * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link org.bitcoin.protocols.payments.Protos.Payment} message will be sent
+ * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
  * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
  * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
- * {@link org.bitcoin.protocols.payments.Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
+ * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
  * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
  * tx itself later if needed.</p>
  *
@@ -83,7 +83,7 @@ public class PaymentSession {
 
     /**
      * <p>Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
-     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may
+     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link Protos.PaymentRequest} object may
      * be fetched in the r= parameter.</p>
      *
      * <p>If the payment request object specifies a PKI method, then the system trust store will be used to verify
@@ -96,7 +96,7 @@ public class PaymentSession {
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
-     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may
+     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link Protos.PaymentRequest} object may
      * be fetched in the r= parameter.
      * If verifyPki is specified and the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
@@ -109,7 +109,7 @@ public class PaymentSession {
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided uri.
-     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may
+     * uri is a BIP-72-style BitcoinURI object that specifies where the {@link Protos.PaymentRequest} object may
      * be fetched in the r= parameter.
      * If verifyPki is specified and the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
@@ -130,7 +130,7 @@ public class PaymentSession {
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided url.
-     * url is an address where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may be fetched.
+     * url is an address where the {@link Protos.PaymentRequest} object may be fetched.
      * If verifyPki is specified and the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
@@ -141,7 +141,7 @@ public class PaymentSession {
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided url.
-     * url is an address where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may be fetched.
+     * url is an address where the {@link Protos.PaymentRequest} object may be fetched.
      * If the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
@@ -153,7 +153,7 @@ public class PaymentSession {
 
     /**
      * Returns a future that will be notified with a PaymentSession object after it is fetched using the provided url.
-     * url is an address where the {@link org.bitcoin.protocols.payments.Protos.PaymentRequest} object may be fetched.
+     * url is an address where the {@link Protos.PaymentRequest} object may be fetched.
      * If the payment request object specifies a PKI method, then the system trust store will
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
@@ -184,7 +184,7 @@ public class PaymentSession {
     }
 
     /**
-     * Creates a PaymentSession from the provided {@link org.bitcoin.protocols.payments.Protos.PaymentRequest}.
+     * Creates a PaymentSession from the provided {@link Protos.PaymentRequest}.
      * Verifies PKI by default.
      */
     public PaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
@@ -192,7 +192,7 @@ public class PaymentSession {
     }
 
     /**
-     * Creates a PaymentSession from the provided {@link org.bitcoin.protocols.payments.Protos.PaymentRequest}.
+     * Creates a PaymentSession from the provided {@link Protos.PaymentRequest}.
      * If verifyPki is true, also validates the signature and throws an exception if it fails.
      */
     public PaymentSession(Protos.PaymentRequest request, boolean verifyPki) throws PaymentProtocolException {
@@ -200,7 +200,7 @@ public class PaymentSession {
     }
 
     /**
-     * Creates a PaymentSession from the provided {@link org.bitcoin.protocols.payments.Protos.PaymentRequest}.
+     * Creates a PaymentSession from the provided {@link Protos.PaymentRequest}.
      * If verifyPki is true, also validates the signature and throws an exception if it fails.
      * If trustStoreLoader is null, the system default trust store is used.
      */

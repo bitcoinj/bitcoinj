@@ -24,10 +24,12 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +61,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     * {@link Wallet#loadFromFile(File, WalletExtension...)}
      */
     public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(context, new ArrayList<Wallet>(), blockStore);
@@ -69,7 +71,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(java.io.File, WalletExtension...)}
+     * {@link Wallet#loadFromFile(File, WalletExtension...)}
      */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);

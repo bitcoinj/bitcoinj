@@ -370,7 +370,7 @@ public abstract class Message {
     /**
      * Set the serializer for this message when deserialized by Java.
      */
-    private void readObject(java.io.ObjectInputStream in)
+    private void readObject(ObjectInputStream in)
         throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (null != params) {

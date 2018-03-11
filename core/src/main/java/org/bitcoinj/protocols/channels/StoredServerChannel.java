@@ -88,7 +88,7 @@ public class StoredServerChannel {
     }
 
     /**
-     * If a handler is connected, call its {@link org.bitcoinj.protocols.channels.PaymentChannelServer#close()}
+     * If a handler is connected, call its {@link PaymentChannelServer#close()}
      * method thus disconnecting the TCP connection.
      */
     synchronized void closeConnectedHandler() {

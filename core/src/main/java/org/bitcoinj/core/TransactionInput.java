@@ -288,7 +288,7 @@ public class TransactionInput extends ChildMessage {
 
     /**
      * Alias for getOutpoint().getConnectedRedeemData(keyBag)
-     * @see TransactionOutPoint#getConnectedRedeemData(org.bitcoinj.wallet.KeyBag)
+     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
      */
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {

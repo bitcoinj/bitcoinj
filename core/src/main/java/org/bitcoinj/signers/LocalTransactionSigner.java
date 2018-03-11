@@ -31,16 +31,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link org.bitcoinj.wallet.KeyBag}.</p>
+ * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link KeyBag}.</p>
  * <p>This signer doesn't create input scripts for tx inputs. Instead it expects inputs to contain scripts with
  * empty sigs and replaces one of the empty sigs with calculated signature.
  * </p>
  * <p>This signer is always implicitly added into every wallet and it is the first signer to be executed during tx
  * completion. As the first signer to create a signature, it stores derivation path of the signing key in a given
- * {@link org.bitcoinj.signers.TransactionSigner.ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
+ * {@link TransactionSigner.ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
  * signers to use correct signing key for P2SH inputs, because all the keys involved in a single P2SH address have
  * the same derivation path.</p>
- * <p>This signer always uses {@link org.bitcoinj.core.Transaction.SigHash#ALL} signing mode.</p>
+ * <p>This signer always uses {@link Transaction.SigHash#ALL} signing mode.</p>
  */
 public class LocalTransactionSigner extends StatelessTransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(LocalTransactionSigner.class);

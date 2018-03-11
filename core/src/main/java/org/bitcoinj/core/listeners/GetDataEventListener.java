@@ -17,6 +17,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.utils.Threading;
 
 import javax.annotation.*;
 import java.util.*;
@@ -33,7 +34,7 @@ public interface GetDataEventListener {
      * items as possible which appear in the {@link GetDataMessage}, or null if you're not interested in responding.</p>
      *
      * <p>Note that this will never be called if registered with any executor other than
-     * {@link org.bitcoinj.utils.Threading#SAME_THREAD}</p>
+     * {@link Threading#SAME_THREAD}</p>
      */
     @Nullable
     List<Message> getData(Peer peer, GetDataMessage m);

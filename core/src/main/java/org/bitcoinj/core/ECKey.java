@@ -624,7 +624,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using ASN.1 format, so you want {@link org.bitcoinj.core.ECKey.ECDSASignature#toASN1()}
+     * usually encoded using ASN.1 format, so you want {@link ECKey.ECDSASignature#toASN1()}
      * instead. However sometimes the independent components can be useful, for instance, if you're going to do
      * further EC maths on them.
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
@@ -643,7 +643,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link org.bitcoinj.core.ECKey.ECDSASignature#encodeToDER()}
+     * usually encoded using DER format, so you want {@link ECKey.ECDSASignature#encodeToDER()}
      * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
      * EC maths on them.
      *
@@ -1028,7 +1028,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
-     * the {@link org.bitcoinj.core.DumpedPrivateKey#toString()} method to get the string.
+     * the {@link DumpedPrivateKey#toString()} method to get the string.
      *
      * @param params The network this key is intended for use on.
      * @return Private key bytes as a {@link DumpedPrivateKey}.

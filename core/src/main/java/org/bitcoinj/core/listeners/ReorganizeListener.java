@@ -17,6 +17,8 @@
 package org.bitcoinj.core.listeners;
 
 import java.util.List;
+
+import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 
@@ -26,7 +28,7 @@ import org.bitcoinj.core.VerificationException;
 public interface ReorganizeListener {
 
     /**
-     * Called by the {@link org.bitcoinj.core.BlockChain} when the best chain
+     * Called by the {@link BlockChain} when the best chain
      * (representing total work done) has changed. In this case,
      * we need to go through our transactions and find out if any have become invalid. It's possible for our balance
      * to go down in this case: money we thought we had can suddenly vanish if the rest of the network agrees it

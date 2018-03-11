@@ -393,7 +393,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Parse a human readable coin value to a {@link org.bitcoinj.core.Coin} instance.
+     * Parse a human readable coin value to a {@link Coin} instance.
      * 
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason
@@ -403,7 +403,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Parse a human readable fiat value to a {@link org.bitcoinj.utils.Fiat} instance.
+     * Parse a human readable fiat value to a {@link Fiat} instance.
      * 
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason

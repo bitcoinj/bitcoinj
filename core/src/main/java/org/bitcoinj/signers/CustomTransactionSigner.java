@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * <p>This signer may be used as a template for creating custom multisig transaction signers.</p>
  * <p>
- * Concrete implementations have to implement {@link #getSignature(org.bitcoinj.core.Sha256Hash, java.util.List)}
+ * Concrete implementations have to implement {@link #getSignature(Sha256Hash, List)}
  * method returning a signature and a public key of the keypair used to created that signature.
  * It's up to custom implementation where to locate signatures: it may be a network connection,
  * some local API or something else.
