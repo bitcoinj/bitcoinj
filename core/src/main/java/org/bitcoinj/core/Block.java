@@ -314,8 +314,6 @@ public class Block extends Message {
     /**
      * Special handling to check if we have a valid byte array for both header
      * and transactions
-     *
-     * @throws IOException
      */
     @Override
     public byte[] bitcoinSerialize() {
