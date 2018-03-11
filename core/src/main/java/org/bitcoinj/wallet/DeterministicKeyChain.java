@@ -333,11 +333,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * Creates a deterministic key chain from a watched or spendable account key.  If  <code>isWatching</code> flag is set,
+     * Creates a deterministic key chain from a watched or spendable account key.  If  {@code isWatching} flag is set,
      * then creates a deterministic key chain that watches the given (public only) root key.  You can use this to calculate
      * balances and generally follow along, but spending is not possible with such a chain.  If it is not set, then this
-     * creates a deterministic key chain that allows spending. If <code>isFollowing</code> flag is set(only allowed
-     * if <code>isWatching</code> is set) then this keychain follows some other keychain.  In a married wallet following
+     * creates a deterministic key chain that allows spending. If {@code isFollowing} flag is set(only allowed
+     * if {@code isWatching} is set) then this keychain follows some other keychain.  In a married wallet following
      * keychain represents "spouse's" keychain.
      */
     public DeterministicKeyChain(DeterministicKey key, boolean isFollowing, boolean isWatching) {
@@ -358,7 +358,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * <p>Creates a deterministic key chain with the given watch key. If <code>isFollowing</code> flag is set then this keychain follows
+     * <p>Creates a deterministic key chain with the given watch key. If {@code isFollowing} flag is set then this keychain follows
      * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
      * <p>Watch key has to be an account key.</p>
      */
@@ -670,7 +670,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * <p>An alias for <code>getKeyByPath(getAccountPath())</code>.</p>
+     * <p>An alias for {@code getKeyByPath(getAccountPath())}.</p>
      *
      * <p>Use this when you would like to create a watching key chain that follows this one, but can't spend money from it.
      * The returned key can be serialized and then passed into {@link #watch(org.bitcoinj.crypto.DeterministicKey)}

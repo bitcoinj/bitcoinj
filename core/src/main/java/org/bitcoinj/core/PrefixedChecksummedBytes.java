@@ -71,8 +71,8 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
     }
 
     /**
-     * This implementation narrows the return type to <code>PrefixedChecksummedBytes</code>
-     * and allows subclasses to throw <code>CloneNotSupportedException</code> even though it
+     * This implementation narrows the return type to {@link PrefixedChecksummedBytes}
+     * and allows subclasses to throw {@link CloneNotSupportedException} even though it
      * is never thrown by this implementation.
      */
     @Override
@@ -81,7 +81,7 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
     }
 
     /**
-     * This implementation uses an optimized Google Guava method to compare <code>bytes</code>.
+     * This implementation uses an optimized Google Guava method to compare {@code bytes}.
      */
     @Override
     public int compareTo(PrefixedChecksummedBytes o) {

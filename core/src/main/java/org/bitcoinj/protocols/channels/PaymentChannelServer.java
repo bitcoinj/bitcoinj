@@ -122,7 +122,7 @@ public class PaymentChannelServer {
 
         /**
          * <p>Called when a channel is being closed and must be signed, possibly with an encrypted key.</p>
-         * @return A future for the (nullable) KeyParameter for the ECKey, or <code>null</code> if no key is required.
+         * @return A future for the (nullable) KeyParameter for the ECKey, or {@code null} if no key is required.
          */
         @Nullable
         ListenableFuture<KeyParameter> getUserKey();
