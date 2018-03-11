@@ -229,7 +229,7 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
 }
 
 /**
- * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link org.bitcoinj.core.UTXO}s in memory.
+ * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link UTXO}s in memory.
  * Used primarily for unit testing.
  */
 public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {

@@ -316,7 +316,6 @@ public class DeterministicKey extends ECKey {
         return super.isPubKeyOnly() && (parent == null || parent.isPubKeyOnly());
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean hasPrivKey() {
         return findParentWithPrivKey() != null;
@@ -339,7 +338,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns this keys {@link org.bitcoinj.crypto.KeyCrypter} <b>or</b> the keycrypter of its parent key.
+     * Returns this keys {@link KeyCrypter} <b>or</b> the keycrypter of its parent key.
      */
     @Override @Nullable
     public KeyCrypter getKeyCrypter() {
@@ -441,9 +440,9 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Derives a child at the given index using hardened derivation.  Note: <code>index</code> is
+     * Derives a child at the given index using hardened derivation.  Note: {@code index} is
      * not the "i" value.  If you want the softened derivation, then use instead
-     * <code>HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, false))</code>.
+     * {@code HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, false))}.
      */
     public DeterministicKey derive(int child) {
         return HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, true));
@@ -560,7 +559,7 @@ public class DeterministicKey extends ECKey {
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link org.bitcoinj.core.ECKey#getCreationTimeSeconds()}.
+     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTimeSeconds()}.
      */
     @Override
     public long getCreationTimeSeconds() {

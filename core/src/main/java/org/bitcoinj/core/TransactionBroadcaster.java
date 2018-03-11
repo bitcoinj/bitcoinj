@@ -18,7 +18,7 @@ package org.bitcoinj.core;
 
 /**
  * A general interface which declares the ability to broadcast transactions. This is implemented
- * by {@link org.bitcoinj.core.PeerGroup}.
+ * by {@link PeerGroup}.
  */
 public interface TransactionBroadcaster {
     /** Broadcast the given transaction on the network */

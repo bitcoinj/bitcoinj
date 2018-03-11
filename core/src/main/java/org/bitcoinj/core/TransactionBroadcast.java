@@ -263,7 +263,7 @@ public class TransactionBroadcast {
 
     /**
      * Sets the given callback for receiving progress values, which will run on the user thread. See
-     * {@link org.bitcoinj.utils.Threading} for details.  If the broadcast has already started then the callback will
+     * {@link Threading} for details.  If the broadcast has already started then the callback will
      * be invoked immediately with the current progress.
      */
     public void setProgressCallback(ProgressCallback callback) {

@@ -27,7 +27,7 @@ import java.security.KeyStoreException;
 
 /**
  * An implementation of TrustStoreLoader handles fetching a KeyStore from the operating system, a file, etc. It's
- * necessary because the Java {@link java.security.KeyStore} abstraction is not completely seamless and for example
+ * necessary because the Java {@link KeyStore} abstraction is not completely seamless and for example
  * we sometimes need slightly different techniques to load the key store on different versions of Android, MacOS,
  * Windows, etc.
  */

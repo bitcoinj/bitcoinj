@@ -27,22 +27,20 @@ import org.bitcoinj.script.Script.ScriptType;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * <p>
- * Implementation of native segwit addresses. They are composed of two parts:
+ * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
+ *
  * <ul>
  * <li>A human-readable part (HRP) which is a string the specifies the network. See
  * {@link NetworkParameters#getSegwitAddressHrp()}.</li>
  * <li>A data part, containing the witness version (encoded as an OP_N operator) and program (encoded by re-arranging
  * bits into groups of 5).</li>
  * </ul>
- * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.
- * </p>
- * 
- * <p>
- * However, you don't need to care about the internals. Use {@link #fromBech32(NetworkParameters, String)},
+ *
+ * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
+ *
+ * <p>However, you don't need to care about the internals. Use {@link #fromBech32(NetworkParameters, String)},
  * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)} to construct a native
- * segwit address.
- * </p>
+ * segwit address.</p>
  */
 public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
@@ -124,9 +122,6 @@ public class SegwitAddress extends Address {
         return convertBits(bytes, 1, bytes.length - 1, 5, 8, false);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public byte[] getHash() {
         return getWitnessProgram();
@@ -150,9 +145,6 @@ public class SegwitAddress extends Address {
         throw new IllegalStateException("Cannot happen.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
         return toBech32();

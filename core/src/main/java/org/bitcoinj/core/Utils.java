@@ -60,7 +60,7 @@ public class Utils {
 
     /**
      * <p>
-     * The regular {@link java.math.BigInteger#toByteArray()} includes the sign bit of the number and 
+     * The regular {@link BigInteger#toByteArray()} includes the sign bit of the number and
      * might result in an extra byte addition. This method removes this extra byte.
      * </p>
      * <p>

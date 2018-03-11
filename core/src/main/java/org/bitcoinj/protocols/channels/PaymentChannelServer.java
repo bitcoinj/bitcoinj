@@ -122,7 +122,7 @@ public class PaymentChannelServer {
 
         /**
          * <p>Called when a channel is being closed and must be signed, possibly with an encrypted key.</p>
-         * @return A future for the (nullable) KeyParameter for the ECKey, or <code>null</code> if no key is required.
+         * @return A future for the (nullable) KeyParameter for the ECKey, or {@code null} if no key is required.
          */
         @Nullable
         ListenableFuture<KeyParameter> getUserKey();
@@ -595,7 +595,7 @@ public class PaymentChannelServer {
      * resume this channel in the future and stops generating messages for the client.</p>
      *
      * <p>Note that this <b>MUST</b> still be called even after either
-     * {@link org.bitcoinj.protocols.channels.PaymentChannelServer.ServerConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)} or
+     * {@link PaymentChannelServer.ServerConnection#destroyConnection(PaymentChannelCloseException.CloseReason)} or
      * {@link PaymentChannelServer#close()} is called to actually handle the connection close logic.</p>
      */
     public void connectionClosed() {
@@ -638,7 +638,7 @@ public class PaymentChannelServer {
 
     /**
      * <p>Closes the connection by generating a settle message for the client and calls
-     * {@link org.bitcoinj.protocols.channels.PaymentChannelServer.ServerConnection#destroyConnection(org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason)}. Note that this does not broadcast
+     * {@link PaymentChannelServer.ServerConnection#destroyConnection(PaymentChannelCloseException.CloseReason)}. Note that this does not broadcast
      * the payment transaction and the client may still resume the same channel if they reconnect</p>
      * <p>
      * <p>Note that {@link PaymentChannelServer#connectionClosed()} must still be called after the connection fully

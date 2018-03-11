@@ -57,8 +57,8 @@ public final class HDKeyDerivation {
      * broken by attackers (this is not theoretical, people have had money stolen that way). This method checks
      * that the given seed is at least 64 bits long.
      *
-     * @throws HDDerivationException if generated master key is invalid (private key 0 or >= n).
-     * @throws IllegalArgumentException if the seed is less than 8 bytes and could be brute forced.
+     * @throws HDDerivationException if generated master key is invalid (private key not between 0 and n inclusive)
+     * @throws IllegalArgumentException if the seed is less than 8 bytes and could be brute forced
      */
     public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
         checkArgument(seed.length > 8, "Seed is too short and could be brute forced");
@@ -79,7 +79,7 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
+     * @throws HDDerivationException if privKeyBytes is invalid (not between 0 and n inclusive).
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode)
             throws HDDerivationException {
@@ -88,7 +88,7 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
+     * @throws HDDerivationException if privKeyBytes is invalid (not between 0 and n inclusive).
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode,
             ImmutableList<ChildNumber> childNumberPath) throws HDDerivationException {
@@ -104,11 +104,11 @@ public final class HDKeyDerivation {
 
     /**
      * Derives a key given the "extended" child number, ie. the 0x80000000 bit of the value that you
-     * pass for <code>childNumber</code> will determine whether to use hardened derivation or not.
+     * pass for {@code childNumber} will determine whether to use hardened derivation or not.
      * Consider whether your code would benefit from the clarity of the equivalent, but explicit, form
-     * of this method that takes a <code>ChildNumber</code> rather than an <code>int</code>, for example:
-     * <code>deriveChildKey(parent, new ChildNumber(childNumber, true))</code>
-     * where the value of the hardened bit of <code>childNumber</code> is zero.
+     * of this method that takes a {@code ChildNumber} rather than an {@code int}, for example:
+     * {@code deriveChildKey(parent, new ChildNumber(childNumber, true))}
+     * where the value of the hardened bit of {@code childNumber} is zero.
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, int childNumber) {
         return deriveChildKey(parent, new ChildNumber(childNumber));

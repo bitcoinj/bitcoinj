@@ -94,14 +94,14 @@ public class ChannelConnectionTest extends TestWithWallet {
     public IPaymentChannelClient.ClientChannelProperties clientChannelProperties;
 
     /**
-     * Returns <code>true</code> if we are using a protocol version that requires the exchange of refunds.
+     * Returns {@code true} if we are using a protocol version that requires the exchange of refunds.
      */
     private boolean useRefunds() {
         return clientChannelProperties.versionSelector() == VERSION_1;
     }
 
     /**
-     * Returns <code>true</code> if the contract being used is a multisig contract
+     * Returns {@code true} if the contract being used is a multisig contract
      * @return
      */
     private boolean isMultiSigContract() {

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.*;
 
 import org.bitcoinj.core.listeners.BlockChainListener;
 import org.bitcoinj.utils.*;
+import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.Wallet;
 
 import javax.annotation.*;
@@ -56,9 +57,9 @@ import static com.google.common.base.Preconditions.*;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is updated via the {@link org.bitcoinj.core.TransactionConfidence#incrementDepthInBlocks()}
+ * <p>TransactionConfidence is updated via the {@link TransactionConfidence#incrementDepthInBlocks()}
  * method to ensure the block depth is up to date.</p>
- * To make a copy that won't be changed, use {@link org.bitcoinj.core.TransactionConfidence#duplicate()}.
+ * To make a copy that won't be changed, use {@link TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence {
 
@@ -88,7 +89,7 @@ public class TransactionConfidence {
          * announced and is considered valid by the network. A pending transaction will be announced if the containing
          * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(Wallet)}.
          * You can estimate how likely the transaction is to be included by connecting to a bunch of nodes then measuring
-         * how many announce it, using {@link org.bitcoinj.core.TransactionConfidence#numBroadcastPeers()}.
+         * how many announce it, using {@link TransactionConfidence#numBroadcastPeers()}.
          * Or if you saw it from a trusted peer, you can assume it's valid and will get mined sooner or later as well.
          */
         PENDING(2),
@@ -165,7 +166,7 @@ public class TransactionConfidence {
         /** An enum that describes why a transaction confidence listener is being invoked (i.e. the class of change). */
         enum ChangeReason {
             /**
-             * Occurs when the type returned by {@link org.bitcoinj.core.TransactionConfidence#getConfidenceType()}
+             * Occurs when the type returned by {@link TransactionConfidence#getConfidenceType()}
              * has changed. For example, if a PENDING transaction changes to BUILDING or DEAD, then this reason will
              * be given. It's a high level summary.
              */
@@ -464,7 +465,7 @@ public class TransactionConfidence {
     /**
      * The source of a transaction tries to identify where it came from originally. For instance, did we download it
      * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
-     * and so on. This information is useful for {@link org.bitcoinj.wallet.CoinSelector} implementations to risk analyze
+     * and so on. This information is useful for {@link CoinSelector} implementations to risk analyze
      * transactions and decide when to spend them.
      */
     public synchronized Source getSource() {
@@ -474,7 +475,7 @@ public class TransactionConfidence {
     /**
      * The source of a transaction tries to identify where it came from originally. For instance, did we download it
      * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
-     * and so on. This information is useful for {@link org.bitcoinj.wallet.CoinSelector} implementations to risk analyze
+     * and so on. This information is useful for {@link CoinSelector} implementations to risk analyze
      * transactions and decide when to spend them.
      */
     public synchronized void setSource(Source source) {

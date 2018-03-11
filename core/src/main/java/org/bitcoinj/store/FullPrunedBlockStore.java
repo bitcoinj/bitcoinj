@@ -32,7 +32,7 @@ import org.bitcoinj.core.*;
  * 
  * <p>It should store the {@link StoredUndoableBlock}s of a number of recent blocks before verifiedHead.height and
  * all those after verifiedHead.height.
- * It is advisable to store any {@link StoredUndoableBlock} which has a height > verifiedHead.height - N.
+ * It is advisable to store any {@link StoredUndoableBlock} which has a {@code height > verifiedHead.height - N}.
  * Because N determines the memory usage, it is recommended that N be customizable. N should be chosen such that
  * re-orgs beyond that point are vanishingly unlikely, for example, a few thousand blocks is a reasonable choice.</p>
  * 
@@ -72,17 +72,17 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
     StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException;
     
     /**
-     * Gets a {@link org.bitcoinj.core.UTXO} with the given hash and index, or null if none is found
+     * Gets a {@link UTXO} with the given hash and index, or null if none is found
      */
     UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException;
     
     /**
-     * Adds a {@link org.bitcoinj.core.UTXO} to the list of unspent TransactionOutputs
+     * Adds a {@link UTXO} to the list of unspent TransactionOutputs
      */
     void addUnspentTransactionOutput(UTXO out) throws BlockStoreException;
     
     /**
-     * Removes a {@link org.bitcoinj.core.UTXO} from the list of unspent TransactionOutputs
+     * Removes a {@link UTXO} from the list of unspent TransactionOutputs
      * Note that the coinbase of the genesis block should NEVER be spendable and thus never in the list.
      * @throws BlockStoreException if there is an underlying storage issue, or out was not in the list.
      */

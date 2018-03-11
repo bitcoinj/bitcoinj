@@ -58,8 +58,8 @@ public class LegacyAddress extends Address {
      * 
      * @param params
      *            network this address is valid for
-     * @param version
-     *            version header of the address
+     * @param p2sh
+     *            true if hash160 is hash of a script, false if it is hash of a pubkey
      * @param hash160
      *            20-byte hash of pubkey or script
      */

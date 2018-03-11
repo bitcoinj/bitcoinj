@@ -130,7 +130,7 @@ public class TransactionOutPoint extends ChildMessage {
 
     /**
      * Returns the ECKey identified in the connected output, for either P2PKH scripts or P2PK scripts.
-     * For P2SH scripts you can use {@link #getConnectedRedeemData(org.bitcoinj.wallet.KeyBag)} and then get the
+     * For P2SH scripts you can use {@link #getConnectedRedeemData(KeyBag)} and then get the
      * key from RedeemData.
      * If the script form cannot be understood, throws ScriptException.
      *

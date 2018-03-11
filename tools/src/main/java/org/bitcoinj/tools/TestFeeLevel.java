@@ -26,6 +26,7 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A program that sends a transaction with the specified fee and measures how long it takes to confirm.
@@ -57,7 +58,7 @@ public class TestFeeLevel {
         }
     }
 
-    private static void go(Coin feeRateToTest, int numOutputs) throws InterruptedException, java.util.concurrent.ExecutionException, InsufficientMoneyException {
+    private static void go(Coin feeRateToTest, int numOutputs) throws InterruptedException, ExecutionException, InsufficientMoneyException {
         System.out.println("Wallet has " + kit.wallet().getBalance().toFriendlyString()
                 + "; current receive address is " + kit.wallet().currentReceiveAddress());
 

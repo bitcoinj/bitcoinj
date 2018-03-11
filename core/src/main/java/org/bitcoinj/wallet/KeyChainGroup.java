@@ -42,7 +42,7 @@ import java.util.concurrent.*;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * <p>A KeyChainGroup is used by the {@link org.bitcoinj.wallet.Wallet} and
+ * <p>A KeyChainGroup is used by the {@link Wallet} and
  * manages: a {@link BasicKeyChain} object (which will normally be empty), and zero or more
  * {@link DeterministicKeyChain}s. A deterministic key chain will be created lazily/on demand
  * when a fresh or current key is requested, possibly being initialized from the private key bytes of the earliest non
@@ -504,7 +504,7 @@ public class KeyChainGroup implements KeyBag {
 
     /**
      * Encrypt the keys in the group using the KeyCrypter and the AES key. A good default KeyCrypter to use is
-     * {@link org.bitcoinj.crypto.KeyCrypterScrypt}.
+     * {@link KeyCrypterScrypt}.
      *
      * @throws org.bitcoinj.crypto.KeyCrypterException Thrown if the wallet encryption fails for some reason,
      *         leaving the group unchanged.
@@ -531,7 +531,7 @@ public class KeyChainGroup implements KeyBag {
 
     /**
      * Decrypt the keys in the group using the previously given key crypter and the AES key. A good default
-     * KeyCrypter to use is {@link org.bitcoinj.crypto.KeyCrypterScrypt}.
+     * KeyCrypter to use is {@link KeyCrypterScrypt}.
      *
      * @throws org.bitcoinj.crypto.KeyCrypterException Thrown if the wallet decryption fails for some reason, leaving the group unchanged.
      */

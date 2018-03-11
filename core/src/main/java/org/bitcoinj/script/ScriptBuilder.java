@@ -23,6 +23,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script.ScriptType;
@@ -41,7 +42,7 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind
- * convenience methods on {@link org.bitcoinj.core.Transaction}, but they are useful when working with the
+ * convenience methods on {@link Transaction}, but they are useful when working with the
  * protocol at a lower level.</p>
  */
 public class ScriptBuilder {
@@ -145,7 +146,7 @@ public class ScriptBuilder {
     }
 
     /** Adds the given number as a push data chunk.
-     * This is intended to use for negative numbers or values > 16, and although
+     * This is intended to use for negative numbers or values greater than 16, and although
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 
@@ -169,7 +170,7 @@ public class ScriptBuilder {
 
     /**
      * Adds the given number as a push data chunk to the given index in the program.
-     * This is intended to use for negative numbers or values > 16, and although
+     * This is intended to use for negative numbers or values greater than 16, and although
      * it will accept numbers in the range 0-16 inclusive, the encoding would be
      * considered non-standard.
      * 

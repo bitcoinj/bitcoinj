@@ -26,7 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * An extension of {@link org.bitcoinj.core.PeerSocketHandler} that keeps inbound messages in a queue for later processing
+ * An extension of {@link PeerSocketHandler} that keeps inbound messages in a queue for later processing
  */
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<>(1000);

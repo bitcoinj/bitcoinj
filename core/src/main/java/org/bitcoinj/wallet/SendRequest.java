@@ -66,7 +66,7 @@ public class SendRequest {
 
     /**
      * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
-     * (its value is ignored and set to {@link org.bitcoinj.wallet.Wallet#getBalance()} - the fees required
+     * (its value is ignored and set to {@link Wallet#getBalance()} - the fees required
      * for the transaction). Any additional outputs are removed.
      */
     public boolean emptyWallet = false;
@@ -116,7 +116,7 @@ public class SendRequest {
     public KeyParameter aesKey = null;
 
     /**
-     * If not null, the {@link org.bitcoinj.wallet.CoinSelector} to use instead of the wallets default. Coin selectors are
+     * If not null, the {@link CoinSelector} to use instead of the wallets default. Coin selectors are
      * responsible for choosing which transaction outputs (coins) in a wallet to use given the desired send value
      * amount.
      */

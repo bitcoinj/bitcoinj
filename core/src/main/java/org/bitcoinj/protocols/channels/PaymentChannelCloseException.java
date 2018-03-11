@@ -34,7 +34,7 @@ public class PaymentChannelCloseException extends Exception {
         // Values after here indicate its probably possible to try reopening channel again
 
         /**
-         * <p>The {@link org.bitcoinj.protocols.channels.PaymentChannelClient#settle()} method was called or the
+         * <p>The {@link PaymentChannelClient#settle()} method was called or the
          * client sent a CLOSE message.</p>
          * <p>As long as the server received the CLOSE message, this means that the channel is settling and the payment
          * transaction (if any) will be broadcast. If the client attempts to open a new connection, a new channel will
@@ -43,7 +43,7 @@ public class PaymentChannelCloseException extends Exception {
         CLIENT_REQUESTED_CLOSE,
 
         /**
-         * <p>The {@link org.bitcoinj.protocols.channels.PaymentChannelServer#close()} method was called or server
+         * <p>The {@link PaymentChannelServer#close()} method was called or server
          * sent a CLOSE message.</p>
          *
          * <p>This may occur if the server opts to close the connection for some reason, or automatically if the channel

@@ -19,8 +19,11 @@ package org.bitcoinj.utils;
 import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Objects;
+import org.bitcoinj.core.Coin;
+
 import java.math.BigInteger;
 import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.List;
@@ -28,21 +31,22 @@ import java.util.List;
 /**
  * <p>This class, a concrete extension of {@link BtcFormat}, is distinguished in that each
  * instance formats and by-default parses all Bitcoin monetary values in units of a single
- * denomination that is specified at the time that instance is constructed.
+ * denomination that is specified at the time that instance is constructed.</p>
  *
  * <p>By default, neither currency codes nor symbols are included in formatted values as
  * output, nor recognized in parsed values as input.  The can be overridden by applying a
- * custom pattern using either the {@link BtcFormat.Builder#localizedPattern} or {@link BtcFormat.Builder#localizedPattern} methods, as described in the documentation for the {@link BtcFormat.Builder}
- * class.<ol>
+ * custom pattern using either the {@link BtcFormat.Builder#localizedPattern} or
+ * {@link BtcFormat.Builder#localizedPattern} methods, as described in the documentation for
+ * the {@link BtcFormat.Builder} class.</p>
  *
  * <p>A more detailed explanation, including examples, is in the documentation for the
  * {@link BtcFormat} class, and further information beyond that is in the documentation for the
- * {@link java.text.Format} class, from which this class descends.
+ * {@link Format} class, from which this class descends.</p>
 
- * @see          java.text.Format
- * @see          java.text.NumberFormat
- * @see          java.text.DecimalFormat
- * @see          org.bitcoinj.core.Coin
+ * @see Format
+ * @see NumberFormat
+ * @see DecimalFormat
+ * @see Coin
  */
 
 public final class BtcFixedFormat extends BtcFormat {
@@ -82,7 +86,7 @@ public final class BtcFixedFormat extends BtcFormat {
     }
 
     /** Return the decimal-place shift for this object's unit-denomination.  For example, if
-     * the denomination is millibitcoins, this method will return the value <code>3</code>.  As
+     * the denomination is millibitcoins, this method will return the value {@code 3}.  As
      * a side-effect, prefixes the currency signs of the underlying NumberFormat object.  This
      * method is invoked by the superclass when formatting.  The arguments are ignored because
      * the denomination is fixed regardless of the value being formatted.
@@ -94,14 +98,14 @@ public final class BtcFixedFormat extends BtcFormat {
     }
 
     /** Return the decimal-place shift for this object's fixed unit-denomination.  For example, if
-     *  the denomination is millibitcoins, this method will return the value <code>3</code>.  */
+     *  the denomination is millibitcoins, this method will return the value {@code 3}.  */
     @Override
     public int scale() { return scale; }
 
     /**
      * Return the currency code that identifies the units in which values formatted and
      * (by-default) parsed by this instance are denominated.  For example, if the formatter's
-     * denomination is millibitcoins, then this method will return <code>"mBTC"</code>,
+     * denomination is millibitcoins, then this method will return {@code "mBTC"},
      * assuming the default base currency-code is not overridden using a
      * {@link BtcFormat.Builder}.  */
     public String code() { return prefixCode(coinCode(), scale); }
@@ -109,12 +113,12 @@ public final class BtcFixedFormat extends BtcFormat {
     /**
      * Return the currency symbol that identifies the units in which values formatted by this
      * instance are denominated. For example, when invoked on an instance denominated in
-     * millibitcoins, this method by default returns <code>"₥฿"</code>, depending on the
+     * millibitcoins, this method by default returns {@code "₥฿"}, depending on the
      * locale.  */
     public String symbol() { return prefixSymbol(coinSymbol(), scale); }
 
     /** Return the fractional decimal-placing used when formatting.  This method returns an
-     *  <code>int</code> array.  The value of the first element is the minimum number of
+     *  {@code int} array.  The value of the first element is the minimum number of
      *  decimal places to be used in all cases, limited to a precision of satoshis.  The value
      *  of each successive element is the size of an optional place-group that will be applied,
      *  possibly partially, if useful for expressing precision.  The actual size of each group

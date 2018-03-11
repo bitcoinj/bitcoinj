@@ -240,21 +240,21 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Appends the given user-agent information to the subVer field. The subVer is composed of a series of
+     * <p>Appends the given user-agent information to the subVer field. The subVer is composed of a series of
      * name:version pairs separated by slashes in the form of a path. For example a typical subVer field for bitcoinj
-     * users might look like "/bitcoinj:0.13/MultiBit:1.2/" where libraries come further to the left.<p>
+     * users might look like "/bitcoinj:0.13/MultiBit:1.2/" where libraries come further to the left.</p>
      *
-     * There can be as many components as you feel a need for, and the version string can be anything, but it is
+     * <p>There can be as many components as you feel a need for, and the version string can be anything, but it is
      * recommended to use A.B.C where A = major, B = minor and C = revision for software releases, and dates for
      * auto-generated source repository snapshots. A valid subVer begins and ends with a slash, therefore name
-     * and version are not allowed to contain such characters. <p>
+     * and version are not allowed to contain such characters.</p>
      *
-     * Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
+     * <p>Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
      * else. For example, calling <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a subVer being
      * set of "/bitcoinj:1.0/MultiBit:1.0(Windows)/". Therefore the / ( and ) characters are reserved in all these
-     * components. If you don't want to add a comment (recommended), pass null.<p>
+     * components. If you don't want to add a comment (recommended), pass null.</p>
      *
-     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a> for more information.
+     * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a> for more information.</p>
      *
      * @param comments Optional (can be null) platform or other node specific information.
      * @throws IllegalArgumentException if name, version or comments contains invalid characters.
@@ -276,14 +276,16 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Returns true if the clientVersion field is >= Pong.MIN_PROTOCOL_VERSION. If it is then ping() is usable.
+     * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#PONG} or higher.
+     * If it is then {@link Peer#ping()} is usable.
      */
     public boolean isPingPongSupported() {
         return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
     }
 
     /**
-     * Returns true if the clientVersion field is >= FilteredBlock.MIN_PROTOCOL_VERSION. If it is then Bloom filtering
+     * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#BLOOM_FILTER} or higher.
+     * If it is then Bloom filtering
      * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {

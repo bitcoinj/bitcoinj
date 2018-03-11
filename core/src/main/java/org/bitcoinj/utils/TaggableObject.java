@@ -39,7 +39,7 @@ public interface TaggableObject {
     @Nullable ByteString maybeGetTag(String tag);
 
     /**
-     * Returns the immutable byte array associated with the given tag name, or throws {@link java.lang.IllegalArgumentException}
+     * Returns the immutable byte array associated with the given tag name, or throws {@link IllegalArgumentException}
      * if that tag wasn't set yet.
      */
     ByteString getTag(String tag);

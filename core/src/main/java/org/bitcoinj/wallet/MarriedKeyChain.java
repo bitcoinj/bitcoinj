@@ -81,7 +81,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         }
 
         /**
-         * Threshold, or <code>(followingKeys.size() + 1) / 2 + 1)</code> (majority) if unspecified.</p>
+         * <p>Threshold, or {@code (followingKeys.size() + 1) / 2 + 1)} (majority) if unspecified.</p>
          * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are non-standard
          * and such spends won't be processed by peers with default settings, essentially making such transactions almost
          * nonspendable</p>
