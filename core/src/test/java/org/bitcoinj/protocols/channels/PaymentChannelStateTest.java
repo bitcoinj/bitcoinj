@@ -70,7 +70,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
     public PaymentChannelClient.VersionSelector versionSelector;
 
     /**
-     * Returns <code>true</code> if we are using a protocol version that requires the exchange of refunds.
+     * Returns {@code true} if we are using a protocol version that requires the exchange of refunds.
      */
     private boolean useRefunds() {
         return versionSelector == PaymentChannelClient.VersionSelector.VERSION_1;

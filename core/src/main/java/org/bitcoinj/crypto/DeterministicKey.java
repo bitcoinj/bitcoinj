@@ -440,9 +440,9 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Derives a child at the given index using hardened derivation.  Note: <code>index</code> is
+     * Derives a child at the given index using hardened derivation.  Note: {@code index} is
      * not the "i" value.  If you want the softened derivation, then use instead
-     * <code>HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, false))</code>.
+     * {@code HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, false))}.
      */
     public DeterministicKey derive(int child) {
         return HDKeyDerivation.deriveChildKey(this, new ChildNumber(child, true));

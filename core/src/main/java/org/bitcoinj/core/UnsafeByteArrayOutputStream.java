@@ -56,8 +56,8 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
     }
 
     /**
-     * Writes <code>len</code> bytes from the specified byte array
-     * starting at offset <code>off</code> to this byte array output stream.
+     * Writes {@code len} bytes from the specified byte array
+     * starting at offset {@code off} to this byte array output stream.
      *
      * @param b   the data.
      * @param off the start offset in the data.
@@ -82,7 +82,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * Writes the complete contents of this byte array output stream to
      * the specified output stream argument, as if by calling the output
-     * stream's write method using <code>out.write(buf, 0, count)</code>.
+     * stream's write method using {@code out.write(buf, 0, count)}.
      *
      * @param out the output stream to which to write the data.
      * @throws IOException if an I/O error occurs.
@@ -93,7 +93,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
     }
 
     /**
-     * Resets the <code>count</code> field of this byte array output
+     * Resets the {@code count} field of this byte array output
      * stream to zero, so that all currently accumulated output in the
      * output stream is discarded. The output stream can be used again,
      * reusing the already allocated buffer space.
@@ -121,7 +121,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * Returns the current size of the buffer.
      *
-     * @return the value of the <code>count</code> field, which is the number
+     * @return the value of the {@code count} field, which is the number
      *         of valid bytes in this output stream.
      * @see java.io.ByteArrayOutputStream#count
      */

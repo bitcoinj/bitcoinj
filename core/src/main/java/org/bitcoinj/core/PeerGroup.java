@@ -1261,10 +1261,10 @@ public class PeerGroup implements TransactionBroadcaster {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      *
      * <p>This method invokes {@link PeerGroup#recalculateFastCatchupAndFilter(FilterRecalculateMode)}.
-     * The return value of this method is the <code>ListenableFuture</code> returned by that invocation.</p>
+     * The return value of this method is the {@code ListenableFuture} returned by that invocation.</p>
      *
-     * @return a future that completes once each <code>Peer</code> in this group has had its
-     *         <code>BloomFilter</code> (re)set.
+     * @return a future that completes once each {@code Peer} in this group has had its
+     *         {@code BloomFilter} (re)set.
      */
     public ListenableFuture<BloomFilter> addPeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
