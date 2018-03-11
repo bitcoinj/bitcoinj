@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * An unsynchronized implementation of ByteArrayOutputStream that will return the backing byte array if its length == size().
+ * <p>An unsynchronized implementation of ByteArrayOutputStream that will return the backing byte array if its length == size().
  * This avoids unneeded array copy where the BOS is simply being used to extract a byte array of known length from a
- * 'serialized to stream' method.
- * <p/>
- * Unless the final length can be accurately predicted the only performance this will yield is due to unsynchronized
- * methods.
+ * 'serialized to stream' method.</p>
+ *
+ * <p>Unless the final length can be accurately predicted the only performance this will yield is due to unsynchronized
+ * methods.</p>
  *
  * @author git
  */

@@ -32,7 +32,7 @@ public class Pong extends Message {
     
     /**
      * Create a Pong with a nonce value.
-     * Only use this if the remote node has a protocol version > 60000
+     * Only use this if the remote node has a protocol version greater than 60000
      */
     public Pong(long nonce) {
         this.nonce = nonce;

@@ -39,11 +39,13 @@ import java.util.NoSuchElementException;
  * <p>In order to comply with {@link Iterator}, this class swallows a lot of {@link IOException}s, which may result in a few
  * blocks being missed followed by a huge set of orphan blocks.</p>
  * 
- * <p>To blindly import all files which can be found in Bitcoin Core (version >= 0.8) datadir automatically,
- * try this code fragment:<br>
- * BlockFileLoader loader = new BlockFileLoader(BlockFileLoader.getReferenceClientBlockFileList());<br>
- * for (Block block : loader) {<br>
- * &nbsp;&nbsp;try { chain.add(block); } catch (Exception e) { }<br>
+ * <p>To blindly import all files which can be found in Bitcoin Core (version 0.8 or higher) datadir automatically,
+ * try this code fragment:
+ * {@code
+ * BlockFileLoader loader = new BlockFileLoader(BlockFileLoader.getReferenceClientBlockFileList());
+ * for (Block block : loader) {
+ * try { chain.add(block); } catch (Exception e) { }
+ * }
  * }</p>
  */
 public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {

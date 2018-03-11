@@ -36,7 +36,7 @@ import static org.bitcoinj.core.Sha256Hash.*;
  * It records a set of {@link Transaction}s together with some data that links it into a place in the global block
  * chain, and proves that a difficult calculation was done over its contents. See
  * <a href="http://www.bitcoin.org/bitcoin.pdf">the Bitcoin technical paper</a> for
- * more detail on blocks. <p/>
+ * more detail on blocks.</p>
  *
  * <p>To get a block, you can either build one from the raw bytes you can get from another implementation, or request one
  * specifically using {@link Peer#getBlock(Sha256Hash)}, or grab one from a downloaded {@link BlockChain}.</p>

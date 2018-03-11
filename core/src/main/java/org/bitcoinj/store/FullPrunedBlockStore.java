@@ -32,7 +32,7 @@ import org.bitcoinj.core.*;
  * 
  * <p>It should store the {@link StoredUndoableBlock}s of a number of recent blocks before verifiedHead.height and
  * all those after verifiedHead.height.
- * It is advisable to store any {@link StoredUndoableBlock} which has a height > verifiedHead.height - N.
+ * It is advisable to store any {@link StoredUndoableBlock} which has a {@code height > verifiedHead.height - N}.
  * Because N determines the memory usage, it is recommended that N be customizable. N should be chosen such that
  * re-orgs beyond that point are vanishingly unlikely, for example, a few thousand blocks is a reasonable choice.</p>
  * 

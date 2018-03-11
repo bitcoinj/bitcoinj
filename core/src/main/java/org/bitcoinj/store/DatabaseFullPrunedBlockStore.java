@@ -37,20 +37,17 @@ import java.util.*;
  * <p>A generic full pruned block store for a relational database.  This generic class requires
  * certain table structures for the block store.</p>
  *
- * <p>The following are the tables and field names/types that are assumed:-</p>
+ * <p>The following are the tables and field names/types that are assumed:</p>
  *
- * <p>
- * <b>setting</b> table
  * <table>
+ *     <caption><b>setting</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>name</td><td>string</td></tr>
  *     <tr><td>value</td><td>binary</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>headers</b> table
  * <table>
+ *     <caption><b>headers</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>chainwork</td><td>binary</td></tr>
@@ -58,22 +55,18 @@ import java.util.*;
  *     <tr><td>header</td><td>binary</td></tr>
  *     <tr><td>wasundoable</td><td>boolean</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>undoableblocks</b> table
  * <table>
+ *     <caption><b>undoableblocks</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>height</td><td>integer</td></tr>
  *     <tr><td>txoutchanges</td><td>binary</td></tr>
  *     <tr><td>transactions</td><td>binary</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>openoutputs</b> table
  * <table>
+ *     <caption><b>openoutputs</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>index</td><td>integer</td></tr>
@@ -84,8 +77,6 @@ import java.util.*;
  *     <tr><td>addresstargetable</td><td>integer</td></tr>
  *     <tr><td>coinbase</td><td>boolean</td></tr>
  * </table>
- * </p>
- *
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);

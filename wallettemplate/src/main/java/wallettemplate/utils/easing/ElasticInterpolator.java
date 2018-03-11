@@ -28,10 +28,9 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
 /**
- * This interpolator simulates an elastic behavior.
- * <p/>
- * The following curve illustrates the interpolation.
- * </p>
+ * <p>This interpolator simulates an elastic behavior.</p>
+ * <p>The following curve illustrates the interpolation.</p>
+ * {@code
  * <svg style="width:300px;" xmlns="http://www.w3.org/2000/svg" viewBox="-2 -40 124 140">
  * <line style="stroke: rgb(187, 187, 187); stroke-width: 1px;" y2="60" y1="0" x2="0" x1="0"/>
  * <text style="font-size: 12px; fill: rgb(187, 187, 187);" y="6" x="2">x</text>
@@ -39,10 +38,9 @@ import javafx.beans.property.SimpleDoubleProperty;
  * <text style="font-size: 12px; fill: rgb(187, 187, 187);" y="57" x="115">t</text>
  * <path style="fill: rgba(255, 255, 255, 0);stroke: black;stroke-width: 2px;"
  * d="M0,60 L1.2,54.8 2.4,47.7 3.6,39.4 4.8,30.4 6.0,21.2 7.2,12.2 8.4,3.9 9.6,-3.6 10.8,-9.9 12.0,-15.0 13.2,-18.7 14.4,-21.1 15.6,-22.3 16.8,-22.2 18.0,-21.2 19.2,-19.4 20.4,-16.9 21.6,-13.9 22.8,-10.8 24.0,-7.5 25.2,-4.3 26.4,-1.4 27.6,1.3 28.8,3.5 30.0,5.3 31.2,6.6 32.4,7.5 33.6,7.9 34.8,7.9 36.0,7.5 37.2,6.8 38.4,6.0 39.6,4.9 40.8,3.8 42.0,2.7 43.2,1.5 44.4,0.5 45.6,-0.5 46.8,-1.2 48.0,-1.9 49.2,-2.3 50.4,-2.6 51.6,-2.8 52.8,-2.8 54.0,-2.7 55.2,-2.4 56.4,-2.1 57.6,-1.7 58.8,-1.3 60.0,-0.9 61.2,-0.5 62.4,-0.2 63.6,0.2 64.8,0.4 66.0,0.7 67.2,0.8 68.4,0.9 69.6,1.0 70.8,1.0 72.0,0.9 73.2,0.9 74.4,0.7 75.6,0.6 76.8,0.5 78.0,0.3 79.2,0.2 80.4,0.1 81.6,-0.1 82.8,-0.2 84.0,-0.2 85.2,-0.3 86.4,-0.3 87.6,-0.3 88.8,-0.3 90.0,-0.3 91.2,-0.3 92.4,-0.3 93.6,-0.2 94.8,-0.2 96.0,-0.1 97.2,-0.1 98.4,-0.0 99.6,0.0 100.8,0.1 102.0,0.1 103.2,0.1 104.4,0.1 105.6,0.1 106.8,0.1 108.0,0.1 109.2,0.1 110.4,0.1 111.6,0.1 112.8,0.1 114.0,0.0 115.2,0.0 116.4,0.0 117.6,-0.0 118.8,-0.0 120.0,0.0"/>
- * </svg>
- * <p/>
- * The math in this class is taken from
- * <a href="http://www.robertpenner.com/easing/">http://www.robertpenner.com/easing/</a>.
+ * </svg>}
+ * <p>The math in this class is taken from
+ * <a href="http://www.robertpenner.com/easing/">http://www.robertpenner.com/easing/</a>.</p>
  *
  * @author Christian Schudt
  */

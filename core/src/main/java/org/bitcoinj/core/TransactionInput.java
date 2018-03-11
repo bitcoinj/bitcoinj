@@ -306,7 +306,7 @@ public class TransactionInput extends ChildMessage {
      * Connecting means updating the internal pointers and spent flags. If the mode is to ABORT_ON_CONFLICT then
      * the spent output won't be changed, but the outpoint.fromTx pointer will still be updated.
      *
-     * @param transactions Map of txhash->transaction.
+     * @param transactions Map of txhash to transaction.
      * @param mode   Whether to abort if there's a pre-existing connection or not.
      * @return NO_SUCH_TX if the prevtx wasn't found, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */

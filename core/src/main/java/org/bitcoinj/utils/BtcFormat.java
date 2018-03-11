@@ -48,13 +48,15 @@ import java.util.regex.Pattern;
 
 /**
  * <p>Instances of this class format and parse locale-specific numerical
- * representations of Bitcoin monetary values.
+ * representations of Bitcoin monetary values.</p>
  *
  * <p>A primary goal of this class is to minimize the danger of
  * human-misreading of monetary values due to mis-counting the number
  * of zeros (or, more generally, of decimal places) in the number that
  * represents a Bitcoin monetary value.  Some of the features offered for doing this
- * are: <ol>
+ * are:</p>
+ *
+ * <ol>
  *   <li>automatic adjustment of denominational units in which a
  *       value is represented so as to lessen the number of adjacent zeros,
  *   <li>use of locale-specific decimal-separators to group digits in
@@ -65,7 +67,9 @@ import java.util.regex.Pattern;
  *
  * <h3>Basic Usage</h3>
  *
- * Basic usage is very simple: <ol>
+ * <p>Basic usage is very simple:</p>
+ *
+ * <ol>
  *   <li>Construct a new formatter object using one of the factory methods. 
  *   <li>Format a value by passing it as an argument to the
  *       {@link BtcFormat#format(Object)} method. 
@@ -73,7 +77,7 @@ import java.util.regex.Pattern;
  *       representation of it to the {@link BtcFormat#parse(String)} method.</ol>
  *
  * <p>For example, depending on your locale, values might be formatted
- * and parsed as follows:
+ * and parsed as follows:</p>
  *
  * <blockquote><pre>
  * BtcFormat f = BtcFormat.getInstance();
@@ -85,13 +89,13 @@ import java.util.regex.Pattern;
  *
  * <h3>Auto-Denomination versus Fixed-Denomination</h3>
  *
- * There are two provided concrete classes, one that automatically denominates values to
+ * <p>There are two provided concrete classes, one that automatically denominates values to
  * be formatted, {@link BtcAutoFormat}, and another that formats any value in units of a
- * fixed, specified denomination, {@link BtcFixedFormat}.  
+ * fixed, specified denomination, {@link BtcFixedFormat}.</p>
  *
- * <h5>Automatic Denomination</h5>
+ * <h4>Automatic Denomination</h4>
  *
- * Automatic denomination means that the formatter adjusts the denominational units in which a
+ * <p>Automatic denomination means that the formatter adjusts the denominational units in which a
  * formatted number is expressed based on the monetary value that number represents.  An
  * auto-denominating formatter is defined by its style, specified by one of the enumerated
  * values of {@link BtcAutoFormat.Style}.  There are two styles constants: {@link
@@ -99,28 +103,30 @@ import java.util.regex.Pattern;
  * difference is that the {@code CODE} style uses an internationally-distinct currency
  * code, such as {@code "BTC"}, to indicate the units of denomination, while the
  * {@code SYMBOL} style uses a possibly-ambiguous currency symbol such as
- * {@code "฿"}.
+ * {@code "฿"}.</p>
  *
  * <p>The denomination used when formatting will be either bitcoin, millicoin
  * or microcoin, depending on the value being represented, chosen so as to minimize the number
  * of consecutive zeros displayed without losing precision.  For example, depending on the
- * locale, a value of one bitcoin might be formatted as <pre>฿1.00</pre> where a value
- * exceeding that by one satoshi would be <pre>µ฿1,000,000.01</pre>
+ * locale, a value of one bitcoin might be formatted as {@code ฿1.00} where a value
+ * exceeding that by one satoshi would be {@code µ฿1,000,000.01}</p>
  *
- * <h5>Fixed Denomination</h5>
+ * <h4>Fixed Denomination</h4>
  * 
- * Fixed denomination means that the same denomination of units is used for every value that is
+ * <p>Fixed denomination means that the same denomination of units is used for every value that is
  * formatted or parsed by a given formatter instance.  A fixed-denomination formatter is
  * defined by its scale, which is the number of places one must shift the decimal point in
  * increasing precision to convert the representation of a given quantity of bitcoins into a
  * representation of the same value denominated in the formatter's units.  For example, a scale
  * value of {@code 3} specifies a denomination of millibitcoins, because to represent
  * {@code 1.0000 BTC}, or one bitcoin, in millibitcoins, one shifts the decimal point
- * three places, that is, to {@code 1000.0 mBTC}.
+ * three places, that is, to {@code 1000.0 mBTC}.</p>
  *
  * <h3>Construction</h3>
  *
- * There are two ways to obtain an instance of this class: <ol>
+ * <p>There are two ways to obtain an instance of this class:</p>
+ *
+ * <ol>
  *   <li>Use one of the factory methods; or
  *   <li>Use a {@link BtcFormat.Builder} object.</ol>
  *
@@ -128,15 +134,15 @@ import java.util.regex.Pattern;
  * configuration is either used or modified.  The {@link Builder}
  * class provides more control over the configuration, and gives
  * access to some features not available through the factory methods,
- * such as using custom formatting patterns and currency symbols.
+ * such as using custom formatting patterns and currency symbols.</p>
  *
- * <h5>Factory Methods</h5>
+ * <h4>Factory Methods</h4>
  *
- * Although formatting and parsing is performed by one of the concrete
+ * <p>Although formatting and parsing is performed by one of the concrete
  * subclasses, you can obtain formatters using the various static factory
  * methods of this abstract base class {@link BtcFormat}.  There
  * are a variety of overloaded methods that allow you to obtain a
- * formatter that behaves according to your needs.
+ * formatter that behaves according to your needs.</p>
  *
  * <p>The primary distinction is between automatic- and
  * fixed-denomination formatters.  By default, the
@@ -144,7 +150,7 @@ import java.util.regex.Pattern;
  * automatic-denominating {@link BtcAutoFormat} instance for your
  * default locale that will display exactly two fractional decimal
  * places and a currency code.  For example, if you happen to be in
- * the USA:
+ * the USA:</p>
  *
  * <blockquote><pre>
  * BtcFormat f = BtcFormat.getInstance();
@@ -157,13 +163,13 @@ import java.util.regex.Pattern;
  * of that {@code int} will be interpreted as the decimal-place scale of
  * the {@link BtcFixedFormat} instance that is returned, and thus will
  * determine its denomination.  For example, if you want to format
- * values in units of microbitcoins:
+ * values in units of microbitcoins:</p>
  *
  * <blockquote><pre>BtcFormat m = BtcFormat.getInstance(6);
- *String s = m.format(Coin.COIN); <strong>// "1,000,000.00"</strong>
- * </blockquote>
+ * String s = m.format(Coin.COIN); <strong>// "1,000,000.00"</strong>
+ * </pre></blockquote>
  *
- * <p>This class provides several constants bound to common scale values:
+ * <p>This class provides several constants bound to common scale values:</p>
  *
  * <blockquote><pre>BtcFormat milliFormat = BtcFormat.getInstance(MILLICOIN_SCALE);</pre></blockquote>
  *
@@ -172,14 +178,14 @@ import java.util.regex.Pattern;
  * {@link BtcAutoFormat.Style} type, either {@link BtcAutoFormat.Style#CODE} or
  * {@link BtcAutoFormat.Style#SYMBOL}, then you will get a {@link BtcAutoFormat}
  * instance that uses either a currency code or symbol, respectively,
- * to indicate the results of its auto-denomination.
+ * to indicate the results of its auto-denomination.</p>
  *
  * <blockquote><pre>
  * BtcFormat s = BtcFormat.getInstance(SYMBOL);
  * Coin value = Coin.parseCoin("0.1234");
  * String mil = s.format(value);              <strong>// "₥฿123.40"</strong>
  * String mic = s.format(value.divide(1000)); <strong>// "µ฿123.40"</strong>
- * </blockquote>
+ * </pre></blockquote>
  *
  * <p>An alternative way to specify whether you want an auto- or fixed-denomination formatter
  * is to use one of the factory methods that is named to indicate that characteristics of the
@@ -189,14 +195,14 @@ import java.util.regex.Pattern;
  * {@code 0}, {@code 3} and {@code 6}, respectively.  For auto-denominating
  * formatters the relevant factory methods are {@link #getCodeInstance()} and {@link
  * #getSymbolInstance()}, which are equivalent to {@code getInstance(Style.CODE)}, and
- * {@code getInstance(Style.SYMBOL)}.
+ * {@code getInstance(Style.SYMBOL)}.</p>
  *
  * <p>Regardless of how you specify whether your new formatter is to be of automatic- or
  * fixed-denomination, the next (and possibly first) parameter to each of the factory methods
- * is an optional {@link Locale} value.
+ * is an optional {@link Locale} value.</p>
  *
- * For example, here we construct four instances for the same locale that each format
- * differently the same one-bitcoin value:
+ * <p>For example, here we construct four instances for the same locale that each format
+ * differently the same one-bitcoin value:</p>
  *
  * <blockquote><pre>
  * <strong>// Next line returns "1,00 BTC"</strong>
@@ -209,15 +215,15 @@ import java.util.regex.Pattern;
  * BtcFormat.getInstance(4, Locale.GERMANY).format(Coin.COIN);
  * </pre></blockquote>
  *
- * Omitting such a {@link Locale} parameter will give you a
- * formatter for your default locale.
+ * <p>Omitting such a {@link Locale} parameter will give you a
+ * formatter for your default locale.</p>
  *
  * <p>The final (and possibly only) arguments to the factory methods serve to set the default
  * number of fractional decimal places that will be displayed when formatting monetary values.
  * In the case of an auto-denominating formatter, this can be a single {@code int} value,
  * which will determine the number of fractional decimal places to be used in all cases, except
  * where either (1) doing so would provide a place for fractional satoshis, or (2) that default
- * value is overridden when invoking the {@code format()} method as described below.
+ * value is overridden when invoking the {@code format()} method as described below.</p>
  *
  * <p>In the case of a fixed-denomination formatter, you can pass any number of
  * {@code int} values.  The first will determine the minimum number of fractional decimal
@@ -225,20 +231,20 @@ import java.util.regex.Pattern;
  * decimal-places to be displayed only if useful for expressing precision.  As with auto-denominating
  * formatters, numbers will never be formatted with a decimal place that represents a
  * fractional quantity of satoshis, and these defaults can be overridden by arguments to the
- * {@code format()} method.  See below for examples.
+ * {@code format()} method.  See below for examples.</p>
  *
- * <h5>The {@link Builder} Class</h5>
+ * <h4>The {@link Builder} Class</h4>
  *
- * A new {@link BtcFormat.Builder} instance is returned by the {@link #builder()} method.  Such
+ * <p>A new {@link BtcFormat.Builder} instance is returned by the {@link #builder()} method.  Such
  * an object has methods that set the configuration parameters of a {@link BtcFormat}
  * object.  Its {@link Builder#build()} method constructs and returns a {@link BtcFormat} instance
- * configured according to those settings.
+ * configured according to those settings.</p>
  *
  * <p>In addition to setter-methods that correspond to the factory-method parameters explained
  * above, a {@link Builder} also allows you to specify custom formatting and parsing
  * patterns and currency symbols and codes.  For example, rather than using the default
  * currency symbol, which has the same unicode character point as the national currency symbol of
- * Thailand, some people prefer to use a capital letter "B" with a vertical overstrike.
+ * Thailand, some people prefer to use a capital letter "B" with a vertical overstrike.</p>
  *
  * <blockquote><pre>
  * BtcFormat.Builder builder = BtcFormat.builder();
@@ -256,7 +262,7 @@ import java.util.regex.Pattern;
  * String out = f.format(COIN); <strong>// "XBT 1.00"</strong>
  * </pre></blockquote>
  *
- * <p>See the documentation of the {@link BtcFormat.Builder} class for details.
+ * <p>See the documentation of the {@link BtcFormat.Builder} class for details.</p>
  *
  * <h3>Formatting</h3>
  *
@@ -268,7 +274,7 @@ import java.util.regex.Pattern;
  * number of bitcoins.  A value having a fractional amount of satoshis is rounded to the
  * nearest whole satoshi at least, and possibly to a greater unit depending on the number of
  * fractional decimal-places displayed.  The {@code format()} method will not accept an
- * argument whose type is {@link String}, {@link Float} nor {@link Double}.
+ * argument whose type is {@link String}, {@link Float} nor {@link Double}.</p>
  *
  * <p>Subsequent to the monetary value to be formatted, the {@link #format(Object)} method also
  * accepts as arguments optional {@code int} values that specify the number of decimal
@@ -281,7 +287,7 @@ import java.util.regex.Pattern;
  * {@link BtcFixedFormat} also accept a variable-length sequence of additional {@code int}
  * values, each of which specifies the size of a group of fractional decimal-places to be used
  * in addition to all preceding places, only if useful to express precision, and only to a
- * maximum precision of satoshis.  For example:
+ * maximum precision of satoshis.  For example:</p>
  *
  * <blockquote><pre>
  * BtcFormat f = BtcFormat.getCoinInstance();
@@ -298,7 +304,7 @@ import java.util.regex.Pattern;
  * place to fractions of satoshis, then the size of that group will be reduced to a maximum
  * precision of satoshis.  Either all or none of the allowed decimal places of that group will
  * still be applied as doing so is useful for expressing the precision of the value being
- * formatted.
+ * formatted.</p>
  *
  * <p>Several convenient constants of repeating group-size sequences are provided:
  * {@link BtcFixedFormat#REPEATING_PLACES}, {@link
@@ -307,7 +313,7 @@ import java.util.regex.Pattern;
  * of one, two and three decimals places, respectively.  For example,
  * to display only as many fractional places as useful in order to
  * prevent hanging zeros on the least-significant end of formatted
- * numbers:
+ * numbers:</p>
  *
  * <blockquote><pre>
  * format(value, 0, REPEATING_PLACES);
@@ -318,7 +324,7 @@ import java.util.regex.Pattern;
  * currency-units indicator, as well as any other field in the
  * formatted output, by using a {@link java.text.FieldPosition} instance
  * constructed using an appropriate constant from the {@link
- * java.text.NumberFormat.Field} class:
+ * java.text.NumberFormat.Field} class:</p>
  *
  * <blockquote><pre>
  * BtcFormat de = BtcFormat.getInstance(Locale.GERMANY);
@@ -332,7 +338,7 @@ import java.util.regex.Pattern;
  * <p>When using a fixed-denomination formatter whose scale can be expressed as a standard
  * "metric" prefix, you can invoke the {@code code()} and {@code symbol()} methods to
  * obtain a {@link String} whose value is the appropriate currency code or symbol,
- * respectively, for that formatter.
+ * respectively, for that formatter.</p>
  *
  * <blockquote><pre>
  * BtcFixedFormat kilo = (BtcFixedFormat)BtcFormat(-3); <strong>// scale -3 for kilocoins</strong>
@@ -344,11 +350,11 @@ import java.util.regex.Pattern;
  * BtcFormat(4).code(); <strong>// unnamed denomination has no code; raises exception</strong>
  * </pre></blockquote>
  *
- * <h5>Formatting for Tabular Columns</h5>
+ * <h4>Formatting for Tabular Columns</h4>
  *
- * When displaying tables of monetary values, you can lessen the
+ * <p>When displaying tables of monetary values, you can lessen the
  * risk of human misreading-error by vertically aligning the decimal
- * separator of those values.  This example demonstrates one way to do that:
+ * separator of those values.  This example demonstrates one way to do that:</p>
  *
  * <blockquote><pre>
  * <strong>// The elements of this array are the values we will format:</strong>
@@ -361,12 +367,12 @@ import java.util.regex.Pattern;
  * String[] output = new String[rows.length];
  * int[] indexes = new int[rows.length];
  * int maxIndex = 0;
- * for (int i = 0; i < rows.length; i++) {
+ * for (int i = 0; i &lt; rows.length; i++) {
  *     output[i] = f.format(rows[i], new StringBuffer(), fp).toString();
  *     indexes[i] = fp.getBeginIndex();
- *     if (indexes[i] > maxIndex) maxIndex = indexes[i];
+ *     if (indexes[i] &gt; maxIndex) maxIndex = indexes[i];
  * }
- * for (int i = 0; i < output.length; i++) {
+ * for (int i = 0; i &lt; output.length; i++) {
  *     System.out.println(repeat(" ", (maxIndex - indexes[i])) + output[i]);
  * }
  * </pre></blockquote>
@@ -386,9 +392,9 @@ import java.util.regex.Pattern;
  *          0.00000001
  * </pre></blockquote>
  *
- * If you need to vertically-align columns printed in a proportional font,
+ * <p>If you need to vertically-align columns printed in a proportional font,
  * then see the documentation for the {@link java.text.NumberFormat} class
- * for an explanation of how to do that.
+ * for an explanation of how to do that.</p>
  *
  * <h3>Parsing</h3>
  *
@@ -402,9 +408,9 @@ import java.util.regex.Pattern;
  * interpret every number as being denominated in the units that were specified when
  * constructing the instance doing the parsing.  This default behavior of {@link
  * BtcFixedFormat} can be overridden by setting a parsing pattern that includes a currency sign
- * using the {@link BtcFormat.Builder#pattern()} method.
+ * using the {@link BtcFormat.Builder#pattern()} method.</p>
  *
- * <p>The {@link BtcAutoFormat#parse(String)}</code> method of {@link BtcAutoFormat} (and of
+ * <p>The {@link BtcAutoFormat#parse(String)} method of {@link BtcAutoFormat} (and of
  * {@link BtcAutoFormat} configured with applicable non-default pattern) will recognize a
  * variety of currency symbols and codes, including all standard international (metric)
  * prefixes from micro to mega.  For example, denominational units of microcoins may be
@@ -412,7 +418,7 @@ import java.util.regex.Pattern;
  * {@code µBTC} or other appropriate permutations of those characters.  Additionally, if
  * either or both of a custom currency code or symbol is configured using {@link
  * BtcFormat.Builder#code} or {@link BtcFormat.Builder#code}, then such code or symbol will
- * be recognized in addition to those recognized by default..
+ * be recognized in addition to those recognized by default.</p>
  *
  * <p>Instances of this class that recognize currency signs will recognize both currency
  * symbols and codes, regardless of which that instance uses for formatting.  However, if the
@@ -422,42 +428,42 @@ import java.util.regex.Pattern;
  * be separated by a space from the number is determined by the locale.  The {@link
  * BtcFormat#pattern()} method returns a representation of the pattern that
  * can be examined to determine whether a space must separate currency signs from numbers in
- * parsed {@link String}s.
+ * parsed {@link String}s.</p>
  *
  * <p>When parsing, if the currency-units indicator is absent, then a {@link BtcAutoFormat}
  * instance will infer a denomination of bitcoins while a {@link BtcFixedFormat} will infer the
  * denomination in which it expresses formatted values.  Note: by default (unless overridden by
  * a custom pattern), if the locale or style requires a space to separate the number from the
  * units indicator, that space must be present in the String to be parsed, even if the units
- * indicator is absent.
+ * indicator is absent.</p>
  *
  * <p>The {@code parse()} method returns an instance of the
  * {@link Coin} class.  Therefore, attempting to parse a value greater
  * than the maximum that a {@code Coin} object can represent will
  * raise a {@code ParseException}, as will any other detected
- * parsing error.
+ * parsing error.</p>
  *
  *  <h3>Limitations</h3>
  *
- *  <h5>Parsing</h5>
+ *  <h4>Parsing</h4>
  *
- * Parsing is performed by an underlying {@link java.text.NumberFormat} object.  While this
+ * <p>Parsing is performed by an underlying {@link java.text.NumberFormat} object.  While this
  * delivers the benefit of recognizing locale-specific patterns, some have criticized other
  * aspects of its behavior.  For example, see <a
  * href="http://www.ibm.com/developerworks/library/j-numberformat/">this article by Joe Sam
  * Shirah</a>.  In particular, explicit positive-signs are not recognized.  If you are parsing
  * input from end-users, then you should consider whether you would benefit from any of the
- * work-arounds mentioned in that article.
+ * work-arounds mentioned in that article.</p>
  *
- * <h5>Exotic Locales</h5>
+ * <h4>Exotic Locales</h4>
  *
- * This class is not well-tested in locales that use non-ascii
+ * <p>This class is not well-tested in locales that use non-ascii
  * character sets, especially those where writing proceeds from
- * right-to-left.  Helpful feedback in that regard is appreciated.
+ * right-to-left.  Helpful feedback in that regard is appreciated.</p>
  *
  * <h3>Thread-Safety</h3>
  *
- * <p>Instances of this class are immutable.
+ * <p>Instances of this class are immutable.</p>
  *
  * @see          java.text.Format
  * @see          java.text.NumberFormat

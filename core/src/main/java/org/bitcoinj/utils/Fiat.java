@@ -73,13 +73,9 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
     }
 
     /**
-     * <p>
-     * Parses an amount expressed in the way humans are used to.
-     * <p/>
-     * <p>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     * "1.23E3", "1234.5E-5".
-     * <p/>
+     * <p>Parses an amount expressed in the way humans are used to.</p>
+     * <p>This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".</p>
      *
      * @throws IllegalArgumentException
      *             if you try to specify more than 4 digits after the comma, or a value out of range.
@@ -94,13 +90,9 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
     }
 
     /**
-     * <p>
-     * Parses an amount expressed in the way humans are used to. The amount is cut to 4 digits after the comma.
-     * <p/>
-     * <p>
-     * This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     * "1.23E3", "1234.5E-5".
-     * <p/>
+     * <p>Parses an amount expressed in the way humans are used to. The amount is cut to 4 digits after the comma.</p>
+     * <p>This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     * "1.23E3", "1234.5E-5".</p>
      *
      * @throws IllegalArgumentException
      *             if you try to specify a value out of range.

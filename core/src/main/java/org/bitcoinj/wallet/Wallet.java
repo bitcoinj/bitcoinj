@@ -755,13 +755,13 @@ public class Wallet extends BaseTaggableObject
     /**
      * Add a pre-configured keychain to the wallet.  Useful for setting up a complex keychain,
      * such as for a married wallet.  For example:
-     * <pre>
+     * {@code
      * MarriedKeyChain chain = MarriedKeyChain.builder()
      *     .random(new SecureRandom())
      *     .followingKeys(followingKeys)
      *     .threshold(2).build();
      * wallet.addAndActivateHDChain(chain);
-     * </p>
+     * }
      */
     public void addAndActivateHDChain(DeterministicKeyChain chain) {
         keyChainGroupLock.lock();
@@ -1422,7 +1422,7 @@ public class Wallet extends BaseTaggableObject
      * delayTime. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
      * is about to shut down as the JVM will not wait for the background thread.</b></p>
      *
-     * <p>An event listener can be provided. If a delay >0 was specified, it will be called on a background thread
+     * <p>An event listener can be provided. If a delay greater than 0 was specified, it will be called on a background thread
      * with the wallet locked when an auto-save occurs. If delay is zero or you do something that always triggers
      * an immediate save, like adding a key, the event listener will be invoked on the calling threads.</p>
      *
@@ -2113,7 +2113,6 @@ public class Wallet extends BaseTaggableObject
      * transactions are extracted and sent to us UNLESS the new block caused a re-org, in which case this will
      * not be called (the {@link Wallet#reorganize(StoredBlock, java.util.List, java.util.List)} method will
      * call this one in that case).</p>
-     * <p/>
      * <p>Used to update confidence data in each transaction and last seen block hash. Triggers auto saving.
      * Invokes the onWalletChanged event listener if there were any affected transactions.</p>
      */
@@ -2893,12 +2892,11 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns an list of N transactions, ordered by increasing age. Transactions on side chains are not included.
-     * Dead transactions (overridden by double spends) are optionally included. <p>
-     * <p/>
-     * Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
+     * <p>Returns an list of N transactions, ordered by increasing age. Transactions on side chains are not included.
+     * Dead transactions (overridden by double spends) are optionally included.</p>
+     * <p>Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
      * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
-     * depending on how the wallet is implemented (eg if backed by a database).
+     * depending on how the wallet is implemented (eg if backed by a database).</p>
      */
     public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         lock.lock();

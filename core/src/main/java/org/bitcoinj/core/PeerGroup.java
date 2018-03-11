@@ -1631,9 +1631,9 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Tells the PeerGroup to download only block headers before a certain time and bodies after that. Call this
+     * Tells the {@link PeerGroup} to download only block headers before a certain time and bodies after that. Call this
      * before starting block chain download.
-     * Do not use a time > NOW - 1 block, as it will break some block download logic.
+     * Do not use a {@code time > NOW - 1} block, as it will break some block download logic.
      */
     public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
         lock.lock();
@@ -1908,7 +1908,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * {@link #waitForPeersOfVersion(int, long)} with zero as the protocol version.
      *
      * @param numPeers How many peers to wait for.
-     * @return a future that will be triggered when the number of connected peers >= numPeers
+     * @return a future that will be triggered when the number of connected peers is greater than or equals numPeers
      */
     public ListenableFuture<List<Peer>> waitForPeers(final int numPeers) {
         return waitForPeersOfVersion(numPeers, 0);
@@ -1920,7 +1920,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @param numPeers How many peers to wait for.
      * @param protocolVersion The protocol version the awaited peers must implement (or better).
-     * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher >= numPeers
+     * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher is greater than or equals numPeers
      */
     public ListenableFuture<List<Peer>> waitForPeersOfVersion(final int numPeers, final long protocolVersion) {
         List<Peer> foundPeers = findPeersOfAtLeastVersion(protocolVersion);
@@ -1963,7 +1963,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @param numPeers How many peers to wait for.
      * @param mask An integer representing a bit mask that will be ANDed with the peers advertised service masks.
-     * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher >= numPeers
+     * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher is greater than or equals numPeers
      */
     public ListenableFuture<List<Peer>> waitForPeersWithServiceMask(final int numPeers, final int mask) {
         lock.lock();
@@ -2130,7 +2130,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Sets the period between pings for an individual peer. Setting this lower means more accurate and timely ping
      * times are available via {@link org.bitcoinj.core.Peer#getLastPingTime()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
-     * Setting the value to be <= 0 disables pinging entirely, although you can still request one yourself
+     * Setting the value to be smaller or equals 0 disables pinging entirely, although you can still request one yourself
      * using {@link org.bitcoinj.core.Peer#ping()}.
      */
     public void setPingIntervalMsec(long pingIntervalMsec) {

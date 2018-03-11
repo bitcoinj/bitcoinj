@@ -57,8 +57,8 @@ public final class HDKeyDerivation {
      * broken by attackers (this is not theoretical, people have had money stolen that way). This method checks
      * that the given seed is at least 64 bits long.
      *
-     * @throws HDDerivationException if generated master key is invalid (private key 0 or >= n).
-     * @throws IllegalArgumentException if the seed is less than 8 bytes and could be brute forced.
+     * @throws HDDerivationException if generated master key is invalid (private key not between 0 and n inclusive)
+     * @throws IllegalArgumentException if the seed is less than 8 bytes and could be brute forced
      */
     public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
         checkArgument(seed.length > 8, "Seed is too short and could be brute forced");
@@ -79,7 +79,7 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
+     * @throws HDDerivationException if privKeyBytes is invalid (not between 0 and n inclusive).
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode)
             throws HDDerivationException {
@@ -88,7 +88,7 @@ public final class HDKeyDerivation {
     }
 
     /**
-     * @throws HDDerivationException if privKeyBytes is invalid (0 or >= n).
+     * @throws HDDerivationException if privKeyBytes is invalid (not between 0 and n inclusive).
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode,
             ImmutableList<ChildNumber> childNumberPath) throws HDDerivationException {
