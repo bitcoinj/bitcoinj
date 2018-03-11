@@ -998,13 +998,11 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean isPubKeyHashMine(byte[] pubkeyHash) {
         return findKeyFromPubHash(pubkeyHash) != null;
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean isWatchedScript(Script script) {
         keyChainGroupLock.lock();
@@ -1030,7 +1028,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean isPubKeyMine(byte[] pubkey) {
         return findKeyFromPubKey(pubkey) != null;
@@ -1051,7 +1048,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean isPayToScriptHashMine(byte[] payToScriptHash) {
         return findRedeemDataFromScriptHash(payToScriptHash) != null;
@@ -2946,7 +2942,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** {@inheritDoc} */
     @Override
     public Map<Sha256Hash, Transaction> getTransactionPool(Pool pool) {
         lock.lock();

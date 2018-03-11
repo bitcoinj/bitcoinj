@@ -436,9 +436,6 @@ public class PaymentChannelClient implements IPaymentChannelClient {
         conn.channelOpen(wasInitiated);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void receiveMessage(Protos.TwoWayChannelMessage msg) throws InsufficientMoneyException {
         lock.lock();
