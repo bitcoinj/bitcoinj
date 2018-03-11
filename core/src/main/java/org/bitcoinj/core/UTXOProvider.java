@@ -36,7 +36,7 @@ public interface UTXOProvider {
     /**
      * Get the height of the chain head.
      * @return The chain head height.
-     * @throws UTXOProvider If there is an error.
+     * @throws UTXOProviderException If there is an error.
      */
     int getChainHeadHeight() throws UTXOProviderException;
 
