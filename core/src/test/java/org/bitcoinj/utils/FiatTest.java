@@ -73,4 +73,12 @@ public class FiatTest {
         assertEquals("3", parseFiat("EUR", "3.000").toPlainString());
         assertEquals("4", parseFiat("EUR", "4.0000").toPlainString());
     }
+
+    @Test
+    public void testComparing() {
+        assertEquals(0, parseFiat("EUR", "6.66").compareTo(parseFiat("EUR", "6.66")));
+        assertEquals(-1, parseFiat("EUR", "6.66").compareTo(parseFiat("EUR", "10.00")));
+        assertEquals(1, parseFiat("EUR", "2").compareTo(parseFiat("EUR", "1")));
+    }
+
 }
