@@ -433,6 +433,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkNotNull(chain.seed);
 
         checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
+        setAccountPath(chain.getAccountPath());
 
         this.issuedExternalKeys = chain.issuedExternalKeys;
         this.issuedInternalKeys = chain.issuedInternalKeys;
