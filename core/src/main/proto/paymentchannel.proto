@@ -22,6 +22,8 @@
  * - To regenerate after editing, run mvn clean package -DupdateProtobuf
  */
 
+syntax = "proto2";
+
 package paymentchannels;
 
 option java_package = "org.bitcoin.paymentchannel";

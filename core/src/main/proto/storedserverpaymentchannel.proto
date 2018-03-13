@@ -22,11 +22,12 @@
  * - To regenerate after editing, run mvn clean package -DupdateProtobuf
  */
 
+syntax = "proto2";
+
 package paymentchannels;
 
 option java_package = "org.bitcoinj.protocols.channels";
 option java_outer_classname = "ServerState";
-
 
 // A set of StoredPaymentChannel's
 message StoredServerPaymentChannels {
