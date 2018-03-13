@@ -54,15 +54,16 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
      */
     public static List<File> getReferenceClientBlockFileList() {
         String defaultDataDir;
-        String OS = System.getProperty("os.name").toLowerCase();
         if (Utils.isWindows()) {
             defaultDataDir = System.getenv("APPDATA") + "\\.bitcoin\\blocks\\";
-        } else if (OS.indexOf("mac") >= 0 || (OS.indexOf("darwin") >= 0)) {
+        } else if (Utils.isMac()) {
             defaultDataDir = System.getProperty("user.home") + "/Library/Application Support/Bitcoin/blocks/";
-        } else {
+        } else if (Utils.isLinux()) {
             defaultDataDir = System.getProperty("user.home") + "/.bitcoin/blocks/";
+        } else {
+            throw new RuntimeException("Unsupported system");
         }
-        
+
         List<File> list = new LinkedList<>();
         for (int i = 0; true; i++) {
             File file = new File(defaultDataDir + String.format(Locale.US, "blk%05d.dat", i));
