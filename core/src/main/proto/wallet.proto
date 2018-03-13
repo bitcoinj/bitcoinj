@@ -23,6 +23,8 @@
  * - To regenerate after editing, run: mvn generate-sources -DupdateProtobuf
  */
 
+syntax = "proto2";
+
 package wallet;
 
 option java_package = "org.bitcoinj.wallet";

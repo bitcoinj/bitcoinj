@@ -30,6 +30,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
@@ -73,6 +74,9 @@ public class ForwardingService {
         // Parse the address given as the first parameter.
         forwardingAddress = LegacyAddress.fromBase58(params, args[0]);
 
+        System.out.println("Network: " + params.getId());
+        System.out.println("Forwarding address: " + forwardingAddress);
+
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(params, new File("."), filePrefix);
 
@@ -105,6 +109,7 @@ public class ForwardingService {
                 Futures.addCallback(tx.getConfidence().getDepthFuture(1), new FutureCallback<TransactionConfidence>() {
                     @Override
                     public void onSuccess(TransactionConfidence result) {
+                        System.out.println("Confirmation received.");
                         forwardCoins(tx);
                     }
 
@@ -128,11 +133,9 @@ public class ForwardingService {
 
     private static void forwardCoins(Transaction tx) {
         try {
-            Coin value = tx.getValueSentToMe(kit.wallet());
-            System.out.println("Forwarding " + value.toFriendlyString());
-            // Now send the coins back! Send with a small fee attached to ensure rapid confirmation.
-            final Coin amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
-            final Wallet.SendResult sendResult = kit.wallet().sendCoins(kit.peerGroup(), forwardingAddress, amountToSend);
+            // Now send the coins onwards.
+            SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
+            Wallet.SendResult sendResult = kit.wallet().sendCoins(sendRequest);
             checkNotNull(sendResult);  // We should never try to send more coins than we have!
             System.out.println("Sending ...");
             // Register a callback that is invoked when the transaction has propagated across the network.

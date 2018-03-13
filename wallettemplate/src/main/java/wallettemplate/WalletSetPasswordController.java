@@ -16,7 +16,6 @@
 
 package wallettemplate;
 
-import com.google.protobuf.*;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
@@ -26,9 +25,12 @@ import org.bitcoinj.crypto.*;
 import org.bitcoinj.wallet.*;
 import org.slf4j.*;
 import org.spongycastle.crypto.params.*;
+
+import com.google.protobuf.ByteString;
+
 import wallettemplate.utils.*;
 
-import java.time.*;
+import java.time.Duration;
 import java.util.concurrent.*;
 
 import static wallettemplate.utils.GuiUtils.*;

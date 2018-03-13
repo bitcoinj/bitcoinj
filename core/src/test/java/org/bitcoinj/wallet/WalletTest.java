@@ -166,6 +166,16 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void encryptWalletWithArbitraryPath() throws Exception {
+        final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
+        KeyChainGroup keyChainGroup = new KeyChainGroup(UNITTEST,
+                new DeterministicSeed(ENTROPY, "", 1389353062L),
+                        DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH);
+        Wallet encryptedWallet = new Wallet(UNITTEST, keyChainGroup);
+        encryptedWallet.encrypt(PASSWORD1);
+    }
+
+    @Test
     public void basicSpendingFromP2SH() throws Exception {
         createMarriedWallet(2, 2);
         myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);

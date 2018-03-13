@@ -277,7 +277,7 @@ public class SPVBlockStore implements BlockStore {
     public void close() throws BlockStoreException {
         try {
             buffer.force();
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            if (Utils.isWindows()) {
                 log.info("Windows mmap hack: Forcing buffer cleaning");
                 WindowsMMapHack.forceRelease(buffer);
             }

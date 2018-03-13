@@ -19,6 +19,7 @@ package wallettemplate;
 import com.google.common.util.concurrent.*;
 import javafx.scene.input.*;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.*;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -74,7 +75,7 @@ public class Main extends Application {
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
 
-        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+        if (Utils.isMac()) {
             // We could match the Mac Aqua style here, except that (a) Modena doesn't look that bad, and (b)
             // the date picker widget is kinda broken in AquaFx and I can't be bothered fixing it.
             // AquaFx.style();

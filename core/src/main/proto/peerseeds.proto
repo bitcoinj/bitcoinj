@@ -1,8 +1,10 @@
-package org.bitcoin.crawler;
-
 //
 // A simple protocol for describing signed sets of IP addresses. Intended to be distributed via HTTP[S] or in files.
 //
+
+syntax = "proto2";
+
+package org.bitcoin.crawler;
 
 option java_package = "org.bitcoin.crawler";
 option java_outer_classname = "PeerSeedProtos";
