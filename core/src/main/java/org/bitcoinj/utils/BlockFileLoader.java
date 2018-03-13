@@ -55,7 +55,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     public static List<File> getReferenceClientBlockFileList() {
         String defaultDataDir;
         String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.indexOf("win") >= 0) {
+        if (Utils.isWindows()) {
             defaultDataDir = System.getenv("APPDATA") + "\\.bitcoin\\blocks\\";
         } else if (OS.indexOf("mac") >= 0 || (OS.indexOf("darwin") >= 0)) {
             defaultDataDir = System.getProperty("user.home") + "/Library/Application Support/Bitcoin/blocks/";
