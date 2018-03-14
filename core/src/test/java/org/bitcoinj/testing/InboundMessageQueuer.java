@@ -19,6 +19,7 @@ package org.bitcoinj.testing;
 import org.bitcoinj.core.*;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public BloomFilter lastReceivedFilter;
 
     protected InboundMessageQueuer(NetworkParameters params) {
-        super(params, new InetSocketAddress("127.0.0.1", 2000));
+        super(params, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
     }
 
     public Message nextMessage() {

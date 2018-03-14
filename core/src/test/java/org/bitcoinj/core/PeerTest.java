@@ -39,6 +39,7 @@ import javax.annotation.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
@@ -81,7 +82,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void setUp() throws Exception {
         super.setUp();
         VersionMessage ver = new VersionMessage(UNITTEST, 100);
-        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4000);
+        InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 4000);
         peer = new Peer(UNITTEST, ver, new PeerAddress(UNITTEST, address), blockChain);
         peer.addWallet(wallet);
     }
@@ -284,7 +285,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void invDownloadTxMultiPeer() throws Exception {
         // Check co-ordination of which peer to download via the memory pool.
         VersionMessage ver = new VersionMessage(UNITTEST, 100);
-        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 4242);
+        InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 4242);
         Peer peer2 = new Peer(UNITTEST, ver, new PeerAddress(UNITTEST, address), blockChain);
         peer2.addWallet(wallet);
         VersionMessage peerVersion = new VersionMessage(UNITTEST, OTHER_PEER_CHAIN_HEIGHT);

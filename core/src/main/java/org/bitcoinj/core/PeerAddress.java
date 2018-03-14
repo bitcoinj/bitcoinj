@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
-import com.google.common.net.InetAddresses;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -113,7 +112,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
-        return new PeerAddress(params, InetAddresses.forString("127.0.0.1"), params.getPort());
+        return new PeerAddress(params, InetAddress.getLoopbackAddress(), params.getPort());
     }
 
     @Override
