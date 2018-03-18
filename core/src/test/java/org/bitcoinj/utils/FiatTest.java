@@ -123,6 +123,12 @@ public class FiatTest {
         Fiat divResult = fiatA.divide(2);
         assertEquals(3330000, divResult.getValue());
         assertEquals("USD", divResult.getCurrencyCode());
+
+        long ldivResult = fiatA.divide(fiatB);
+        assertEquals(333, ldivResult);
+
+        Fiat mulResult = fiatA.multiply(2);
+        assertEquals(13320000, mulResult.getValue());
     }
 
 }
