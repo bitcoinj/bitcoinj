@@ -107,4 +107,22 @@ public class FiatTest {
         assertEquals("6660000", fiat.toString());
     }
 
+    @Test
+    public void testOperations() {
+        Fiat fiatA = parseFiat("USD", "666");
+        Fiat fiatB = parseFiat("USD", "2");
+
+        Fiat sumResult = fiatA.add(fiatB);
+        assertEquals(6680000, sumResult.getValue());
+        assertEquals("USD", sumResult.getCurrencyCode());
+
+        Fiat subResult = fiatA.subtract(fiatB);
+        assertEquals(6640000, subResult.getValue());
+        assertEquals("USD", subResult.getCurrencyCode());
+
+        Fiat divResult = fiatA.divide(2);
+        assertEquals(3330000, divResult.getValue());
+        assertEquals("USD", divResult.getCurrencyCode());
+    }
+
 }
