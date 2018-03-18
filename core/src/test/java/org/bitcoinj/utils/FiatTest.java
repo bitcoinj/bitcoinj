@@ -89,13 +89,22 @@ public class FiatTest {
     @Test
     public void testSign() {
         assertTrue(parseFiat("EUR", "-1").isNegative());
+        assertTrue(parseFiat("EUR", "-1").negate().isPositive());
         assertTrue(parseFiat("EUR", "1").isPositive());
         assertTrue(parseFiat("EUR", "0.00").isZero());
+
     }
 
     @Test
     public void testCurrencyCode() {
-        assertEquals(parseFiat("RUB", "66.6").getCurrencyCode(), "RUB");
+        assertEquals("RUB", parseFiat("RUB", "66.6").getCurrencyCode());
+    }
+
+    @Test
+    public void testValueFetching() {
+        Fiat fiat = parseFiat("USD", "666");
+        assertEquals(6660000, fiat.longValue());
+        assertEquals("6660000", fiat.toString());
     }
 
 }
