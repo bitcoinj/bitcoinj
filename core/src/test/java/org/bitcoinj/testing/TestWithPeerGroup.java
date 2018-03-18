@@ -113,7 +113,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
         Preconditions.checkArgument(id < PEER_SERVERS);
-        InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", 2000 + id);
+        InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000 + id);
         Peer peer = peerGroup.connectTo(remoteAddress).getConnectionOpenFuture().get();
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
         writeTarget.peer = peer;

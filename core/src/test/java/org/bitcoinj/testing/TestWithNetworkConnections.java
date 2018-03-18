@@ -100,7 +100,7 @@ public class TestWithNetworkConnections {
             channels.awaitRunning();
         }
 
-        socketAddress = new InetSocketAddress("127.0.0.1", 1111);
+        socketAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1111);
     }
 
     protected void startPeerServers() throws IOException {
@@ -125,7 +125,7 @@ public class TestWithNetworkConnections {
                     }
                 };
             }
-        }, new InetSocketAddress("127.0.0.1", 2000 + i));
+        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000 + i));
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
@@ -158,11 +158,11 @@ public class TestWithNetworkConnections {
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
-            channels.openConnection(new InetSocketAddress("127.0.0.1", 2000), peer);
+            channels.openConnection(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer);
         else if (clientType == ClientType.NIO_CLIENT)
-            new NioClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100);
+            new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, 100);
         else if (clientType == ClientType.BLOCKING_CLIENT)
-            new BlockingClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100, SocketFactory.getDefault(), null);
+            new BlockingClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, 100, SocketFactory.getDefault(), null);
         else
             throw new RuntimeException();
         // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work

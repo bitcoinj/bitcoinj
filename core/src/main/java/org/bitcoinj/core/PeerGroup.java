@@ -20,7 +20,6 @@ package org.bitcoinj.core;
 import com.google.common.annotations.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
-import com.google.common.net.*;
 import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
 import net.jcip.annotations.*;
@@ -1020,7 +1019,7 @@ public class PeerGroup implements TransactionBroadcaster {
             Socket socket = null;
             try {
                 socket = new Socket();
-                socket.connect(new InetSocketAddress(InetAddresses.forString("127.0.0.1"), params.getPort()), vConnectTimeoutMillis);
+                socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), params.getPort()), vConnectTimeoutMillis);
                 localhostCheckState = LocalhostCheckState.FOUND;
                 return true;
             } catch (IOException e) {

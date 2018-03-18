@@ -425,7 +425,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * For use in encryption when {@link #toEncrypted(KeyCrypter, KeyParameter)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
-     * See also {@link #makeKeyChainFromSeed(DeterministicSeed)}
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, ImmutableList<ChildNumber>)}
      */
     protected DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
@@ -1048,7 +1048,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
-        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed);
+        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, getAccountPath());
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
             throw new KeyCrypterException("Provided AES key is wrong");
@@ -1075,8 +1075,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed) {
-        return new DeterministicKeyChain(seed);
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
+        return new DeterministicKeyChain(seed, accountPath);
     }
 
     @Override
