@@ -88,4 +88,9 @@ public class FiatTest {
         assertTrue(parseFiat("EUR", "0.00").isZero());
     }
 
+    @Test
+    public void testCurrencyCode() {
+        assertEquals(parseFiat("RUB", "66.6").getCurrencyCode(), "RUB");
+    }
+
 }
