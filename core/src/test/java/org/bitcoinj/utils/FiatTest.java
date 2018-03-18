@@ -129,6 +129,18 @@ public class FiatTest {
 
         Fiat mulResult = fiatA.multiply(2);
         assertEquals(13320000, mulResult.getValue());
+
+        Fiat[] fiats = fiatA.divideAndRemainder(3);
+        assertEquals(2, fiats.length);
+
+        Fiat fiat1 = fiats[0];
+        assertEquals(2220000, fiat1.getValue());
+        assertEquals("USD", fiat1.getCurrencyCode());
+
+        Fiat fiat2 = fiats[1];
+        assertEquals(0, fiat2.getValue());
+        assertEquals("USD", fiat2.getCurrencyCode());
+
     }
 
 }
