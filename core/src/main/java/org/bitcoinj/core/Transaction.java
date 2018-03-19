@@ -117,6 +117,11 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546); // satoshis
 
+    /**
+     * Max initial size of inputs and outputs ArrayList.
+     */
+    public static final int MAX_INITIAL_INPUTS_OUTPUTS_SIZE = 20;
+
     // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
@@ -559,7 +564,7 @@ public class Transaction extends ChildMessage {
         // First come the inputs.
         long numInputs = readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
-        inputs = new ArrayList<TransactionInput>((int) numInputs);
+        inputs = new ArrayList<TransactionInput>(Math.min((int) numInputs, MAX_INITIAL_INPUTS_OUTPUTS_SIZE));
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
@@ -570,7 +575,7 @@ public class Transaction extends ChildMessage {
         // Now the outputs
         long numOutputs = readVarInt();
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
-        outputs = new ArrayList<TransactionOutput>((int) numOutputs);
+        outputs = new ArrayList<TransactionOutput>(Math.min((int) numOutputs, MAX_INITIAL_INPUTS_OUTPUTS_SIZE));
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
