@@ -2310,7 +2310,8 @@ public class Wallet extends BaseTaggableObject
         try {
             // Store the new block hash.
             setLastBlockSeenHash(newBlockHash);
-            setLastBlockSeenHeight(block.getHeight());
+            final int blockHeight = block.getHeight();
+            setLastBlockSeenHeight(blockHeight);
             setLastBlockSeenTimeSecs(block.getHeader().getTimeSeconds());
             // Notify all the BUILDING transactions of the new block.
             // This is so that they can update their depth.
@@ -2330,7 +2331,7 @@ public class Wallet extends BaseTaggableObject
                         // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
                         // but this way is backwards compatible with existing software, and the new state probably
                         // wouldn't mean anything different to just remembering peers anyway.
-                        if (confidence.incrementDepthInBlocks() > context.getEventHorizon())
+                        if (confidence.incrementDepthInBlocks(blockHeight) > context.getEventHorizon())
                             confidence.clearBroadcastBy();
                         confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                     }
