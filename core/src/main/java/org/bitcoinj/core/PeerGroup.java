@@ -691,7 +691,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /** Use the more specific listener methods instead */
-    @Deprecated @SuppressWarnings("deprecation")
+    @Deprecated
     public void addEventListener(AbstractPeerEventListener listener, Executor executor) {
         addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
         addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);
@@ -704,7 +704,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /** Use the more specific listener methods instead */
-    @Deprecated @SuppressWarnings("deprecation")
+    @Deprecated
     public void addEventListener(AbstractPeerEventListener listener) {
         addBlocksDownloadedEventListener(executor, listener);
         addChainDownloadStartedEventListener(executor, listener);
@@ -841,7 +841,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /** Use the more specific listener methods instead */
-    @Deprecated @SuppressWarnings("deprecation")
+    @Deprecated
     public void removeEventListener(AbstractPeerEventListener listener) {
         removeBlocksDownloadedEventListener(listener);
         removeChainDownloadStartedEventListener(listener);

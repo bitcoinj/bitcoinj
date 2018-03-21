@@ -288,7 +288,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Deprecated: use the more specific event handler methods instead */
-    @Deprecated @SuppressWarnings("deprecation")
+    @Deprecated
     public void addEventListener(AbstractPeerEventListener listener) {
         addBlocksDownloadedEventListener(Threading.USER_THREAD, listener);
         addChainDownloadStartedEventListener(Threading.USER_THREAD, listener);

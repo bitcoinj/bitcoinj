@@ -90,7 +90,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return a new instance
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
-    @SuppressWarnings("deprecation") // the constructor will be made private in the future
+    // the constructor will be made private in the future
     public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
         return wrap(Utils.reverseBytes(rawHashBytes));
     }

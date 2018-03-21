@@ -46,7 +46,6 @@ public abstract class ServerConnectionEventHandler {
      * {@link StoredPaymentChannelServerStates#getChannel(Sha256Hash)} with the id provided in
      * {@link ServerConnectionEventHandler#channelOpen(Sha256Hash)}</p>
      */
-    @SuppressWarnings("unchecked")
     // The warning 'unchecked call to write(MessageType)' being suppressed here comes from the build()
     // formally returning MessageLite-derived class that cannot be statically guaranteed to be the same MessageType
     // that is used in connectionChannel.

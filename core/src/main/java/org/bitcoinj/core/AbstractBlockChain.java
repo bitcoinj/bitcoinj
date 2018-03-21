@@ -225,7 +225,7 @@ public abstract class AbstractBlockChain {
     }
 
     /** Replaced with more specific listener methods: use them instead. */
-    @Deprecated @SuppressWarnings("deprecation")
+    @Deprecated
     public void addListener(BlockChainListener listener) {
         addListener(listener, Threading.USER_THREAD);
     }
