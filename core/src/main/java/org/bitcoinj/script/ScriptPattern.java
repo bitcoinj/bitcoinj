@@ -19,8 +19,11 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Sha256Hash;
+import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.script.Script.decodeFromOpN;
@@ -273,5 +276,32 @@ public class ScriptPattern {
     public static boolean isOpReturn(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
+    }
+
+    private static final byte[] SEGWIT_COMMITMENT_HEADER = Hex.decode("aa21a9ed");
+
+    /**
+     * Returns whether this script matches the pattern for a segwit commitment (in an output of the coinbase
+     * transaction).
+     */
+    public static boolean isSegwitCommitment(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
+        if (chunks.size() < 2)
+            return false;
+        if (!chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN))
+            return false;
+        byte[] chunkData = chunks.get(1).data;
+        if (chunkData == null || chunkData.length != 36)
+            return false;
+        if (!Arrays.equals(Arrays.copyOfRange(chunkData, 0, 4), SEGWIT_COMMITMENT_HEADER))
+            return false;
+        return true;
+    }
+
+    /**
+     * Retrieves the hash from a segwit commitment (in an output of the coinbase transaction).
+     */
+    public static Sha256Hash extractSegwitCommitmentHash(Script script) {
+        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).data, 4, 36));
     }
 }

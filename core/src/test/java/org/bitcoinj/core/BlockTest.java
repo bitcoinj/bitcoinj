@@ -24,12 +24,15 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet2Params;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptOpCodes;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -240,6 +243,18 @@ public class BlockTest {
         // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
         assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
         assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
+    }
+
+    @Test
+    public void testBlock481815_segwitCommitmentInCoinbase() throws Exception {
+        Block block481815 = MAINNET.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(
+                getClass().getResourceAsStream("block481815.dat")));
+        assertEquals(2097, block481815.getTransactions().size());
+        Transaction coinbase = block481815.getTransactions().get(0);
+        final Script segwitCommitment = coinbase.getOutput(1).getScriptPubKey();
+        assertTrue(ScriptPattern.isSegwitCommitment(segwitCommitment));
+        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7",
+                ScriptPattern.extractSegwitCommitmentHash(segwitCommitment).toString());
     }
 
     @Test
