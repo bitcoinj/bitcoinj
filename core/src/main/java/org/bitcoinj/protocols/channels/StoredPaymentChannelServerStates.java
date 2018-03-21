@@ -16,26 +16,42 @@
 
 package org.bitcoinj.protocols.channels;
 
-import com.google.common.collect.ImmutableMap;
-import org.bitcoinj.core.*;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
-import net.jcip.annotations.GuardedBy;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.TransactionBroadcaster;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.protobuf.ByteString;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Keeps track of a set of {@link StoredServerChannel}s and expires them 2 hours before their refund transactions

@@ -17,12 +17,14 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.net.discovery.*;
+import static com.google.common.base.Preconditions.checkState;
 
-import java.net.*;
+import java.net.URI;
 
-import static com.google.common.base.Preconditions.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.net.discovery.HttpDiscovery;
 
 /**
  * Parameters for the main production network on which people trade goods and services.

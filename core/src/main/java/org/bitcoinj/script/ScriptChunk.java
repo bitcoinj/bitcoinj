@@ -17,18 +17,27 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Utils;
-import com.google.common.base.Objects;
-
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_16;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.getOpCodeName;
+import static org.bitcoinj.script.ScriptOpCodes.getPushDataName;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Utils;
+
+import com.google.common.base.Objects;
 
 /**
  * A script element that is either a data push (signature, pubkey, etc) or a non-push (logic, numeric, etc) operation.

@@ -17,10 +17,15 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Objects;
 
 /**
  * <p>A FilteredBlock is used to relay a block with its transactions filtered using a {@link BloomFilter}. It consists

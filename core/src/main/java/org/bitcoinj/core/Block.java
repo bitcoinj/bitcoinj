@@ -17,19 +17,31 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Sha256Hash.hashTwice;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Sha256Hash.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.

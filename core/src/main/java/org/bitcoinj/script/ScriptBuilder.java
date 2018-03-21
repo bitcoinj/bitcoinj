@@ -17,18 +17,27 @@
 
 package org.bitcoinj.script;
 
-import com.google.common.collect.Lists;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKLOCKTIMEVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DROP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ELSE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ENDIF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUALVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH160;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RETURN;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script.ScriptType;
-
-import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,9 +45,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script.ScriptType;
+
+import com.google.common.collect.Lists;
 
 /**
  * <p>Tools for the construction of commonly used script types. You don't normally need this as it's hidden behind

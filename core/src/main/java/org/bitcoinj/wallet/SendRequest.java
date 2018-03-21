@@ -25,7 +25,6 @@ import java.util.Date;
 
 import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;

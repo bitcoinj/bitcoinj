@@ -16,19 +16,23 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.script.ScriptPattern;
-
-import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 /**
  * A coin selector that takes all coins assigned to keys created before the given timestamp.

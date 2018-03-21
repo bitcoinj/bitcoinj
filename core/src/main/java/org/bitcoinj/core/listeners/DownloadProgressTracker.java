@@ -17,19 +17,21 @@
 
 package org.bitcoinj.core.listeners;
 
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+
+import javax.annotation.Nullable;
+
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.Utils;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * <p>An implementation of {@link AbstractPeerDataEventListener} that listens to chain download events and tracks progress

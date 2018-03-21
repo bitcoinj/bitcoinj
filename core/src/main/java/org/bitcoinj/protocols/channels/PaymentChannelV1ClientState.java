@@ -16,9 +16,26 @@
 
 package org.bitcoinj.protocols.channels;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
-import org.bitcoinj.core.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
@@ -27,16 +44,14 @@ import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.spongycastle.crypto.params.KeyParameter;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
-import javax.annotation.Nullable;
-import java.util.List;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 
 /**
  * Version 1 of the payment channel state machine - uses time locked multisig

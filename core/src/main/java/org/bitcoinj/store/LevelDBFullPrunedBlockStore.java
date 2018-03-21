@@ -16,6 +16,14 @@
 
 package org.bitcoinj.store;
 
+import static org.fusesource.leveldbjni.JniDBFactory.bytes;
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.io.*;
-import java.nio.ByteBuffer;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -44,11 +50,15 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
-import org.iq80.leveldb.*;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
+import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.ReadOptions;
+import org.iq80.leveldb.Snapshot;
+import org.iq80.leveldb.WriteBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.fusesource.leveldbjni.JniDBFactory.*;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;

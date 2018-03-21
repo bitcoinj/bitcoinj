@@ -17,17 +17,30 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
-import org.spongycastle.util.encoders.Hex;
+import static org.bitcoinj.script.Script.decodeFromOpN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKLOCKTIMEVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DROP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ELSE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ENDIF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUALVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH160;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.bitcoinj.script.Script.decodeFromOpN;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Sha256Hash;
+import org.spongycastle.util.encoders.Hex;
 
 /**
  * This is a Script pattern matcher with some typical script patterns

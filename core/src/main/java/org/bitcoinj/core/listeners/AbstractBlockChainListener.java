@@ -16,9 +16,13 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
+import java.util.List;
 
-import java.util.*;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.VerificationException;
 
 /**
  * For backwards compatibility only. Implements the block chain listener interfaces. Use the more specific interfaces

@@ -17,26 +17,54 @@
 
 package org.bitcoinj.kits;
 
-import com.google.common.collect.*;
-import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.channels.FileLock;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.CheckpointManager;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.TransactionBroadcaster;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.net.discovery.*;
-import org.bitcoinj.protocols.channels.*;
-import org.bitcoinj.store.*;
-import org.bitcoinj.wallet.*;
-import org.slf4j.*;
+import org.bitcoinj.net.discovery.DnsDiscovery;
+import org.bitcoinj.net.discovery.PeerDiscovery;
+import org.bitcoinj.protocols.channels.StoredPaymentChannelClientStates;
+import org.bitcoinj.protocols.channels.StoredPaymentChannelServerStates;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.Protos;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
+import org.bitcoinj.wallet.WalletProtobufSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory

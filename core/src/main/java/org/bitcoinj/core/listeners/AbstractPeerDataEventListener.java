@@ -16,10 +16,15 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
+import java.util.List;
 
-import javax.annotation.*;
-import java.util.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.GetDataMessage;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.Peer;
 
 /**
  * Deprecated: implement the more specific event listener interfaces instead to fill out only what you need

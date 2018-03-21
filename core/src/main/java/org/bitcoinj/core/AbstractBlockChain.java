@@ -17,22 +17,47 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.listeners.BlockChainListener;
+import org.bitcoinj.core.listeners.NewBestBlockListener;
+import org.bitcoinj.core.listeners.ReorganizeListener;
+import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.store.*;
-import org.bitcoinj.utils.*;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.H2FullPrunedBlockStore;
+import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.utils.VersionTally;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that

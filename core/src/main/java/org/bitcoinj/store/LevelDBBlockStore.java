@@ -16,13 +16,23 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
-import org.fusesource.leveldbjni.*;
-import org.iq80.leveldb.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import javax.annotation.*;
-import java.io.*;
-import java.nio.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.fusesource.leveldbjni.JniDBFactory;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBFactory;
+import org.iq80.leveldb.DBIterator;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteBatch;
 
 /**
  * An SPV block store that writes every header it sees to a <a href="https://github.com/fusesource/leveldbjni">LevelDB</a>.

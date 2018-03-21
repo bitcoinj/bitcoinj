@@ -16,9 +16,9 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.core.*;
-
 import java.math.BigInteger;
+
+import org.bitcoinj.core.Block;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using

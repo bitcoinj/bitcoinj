@@ -16,15 +16,19 @@
 
 package org.bitcoinj.wallet;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import com.google.common.annotations.VisibleForTesting;
 
-import java.math.BigInteger;
-import java.util.*;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * This class implements a {@link CoinSelector} which attempts to get the highest priority

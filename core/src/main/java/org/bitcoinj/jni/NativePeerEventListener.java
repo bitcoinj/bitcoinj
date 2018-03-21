@@ -16,12 +16,21 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.*;
-
-import javax.annotation.*;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.GetDataMessage;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
+import org.bitcoinj.core.listeners.PeerConnectionEventListener;
+import org.bitcoinj.core.listeners.PeerDataEventListener;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in

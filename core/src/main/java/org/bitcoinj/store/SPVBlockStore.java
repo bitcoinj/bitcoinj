@@ -16,19 +16,34 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.utils.*;
-import org.slf4j.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
-import javax.annotation.*;
-import java.io.*;
-import java.nio.*;
-import java.nio.channels.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.locks.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.Threading;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO: Lose the mmap in this class. There are too many platform bugs that require odd workarounds.
 

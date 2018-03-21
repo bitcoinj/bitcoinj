@@ -16,15 +16,9 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.AbstractTimeoutHandler;
-import org.bitcoinj.net.MessageWriteTarget;
-import org.bitcoinj.net.NioClient;
-import org.bitcoinj.net.NioClientManager;
-import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.utils.Threading;
-import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,7 +29,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.util.concurrent.locks.Lock;
 
-import static com.google.common.base.Preconditions.*;
+import org.bitcoinj.net.AbstractTimeoutHandler;
+import org.bitcoinj.net.MessageWriteTarget;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.net.NioClientManager;
+import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.utils.Threading;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the

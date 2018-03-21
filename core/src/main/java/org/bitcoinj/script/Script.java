@@ -19,14 +19,11 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.TransactionSignature;
-import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.*;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,10 +31,35 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-import static org.bitcoinj.script.ScriptOpCodes.*;
-import static com.google.common.base.Preconditions.*;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.UnsafeByteArrayOutputStream;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
+import com.google.common.collect.Lists;
 
 // TODO: Redesign this entire API to be more type safe and organised.
 

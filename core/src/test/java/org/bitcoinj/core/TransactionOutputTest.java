@@ -16,8 +16,11 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-import org.bitcoinj.params.MainNetParams;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
@@ -28,7 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableList;
 
 public class TransactionOutputTest extends TestWithWallet {
 

@@ -16,18 +16,30 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.utils.*;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketAddress;
-import java.nio.channels.*;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 /**
  * A class which manages a set of client connections. Uses Java NIO to select network events and processes them in a

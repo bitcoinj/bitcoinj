@@ -16,14 +16,20 @@
 
 package org.bitcoinj.protocols.channels;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.wallet.Wallet;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Locale;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionBroadcaster;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.wallet.Wallet;
 
 /**
  * Represents the state of a channel once it has been opened in such a way that it can be stored and used to resume a

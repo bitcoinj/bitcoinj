@@ -17,14 +17,17 @@
 
 package org.bitcoin;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import static org.bitcoin.NativeSecp256k1Util.assertEquals;
 
 import java.math.BigInteger;
-import com.google.common.base.Preconditions;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import static org.bitcoin.NativeSecp256k1Util.*;
+
+import org.bitcoin.NativeSecp256k1Util.AssertFailException;
+
+import com.google.common.base.Preconditions;
 
 /**
  * <p>This class holds native methods to handle ECDSA verification.</p>

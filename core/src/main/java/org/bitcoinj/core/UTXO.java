@@ -16,12 +16,19 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.*;
-import com.google.common.base.Objects;
-
-import java.io.*;
-import java.math.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.Locale;
+
+import org.bitcoinj.script.Script;
+
+import com.google.common.base.Objects;
 
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 

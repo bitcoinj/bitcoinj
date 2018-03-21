@@ -18,11 +18,6 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -31,6 +26,17 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.StoredUndoableBlock;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>A full pruned block store using the Postgres database engine. As an added bonus an address index is calculated,

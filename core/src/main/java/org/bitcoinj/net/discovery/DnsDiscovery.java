@@ -17,12 +17,19 @@
 
 package org.bitcoinj.net.discovery;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.utils.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.utils.DaemonThreadFactory;
 
 /**
  * <p>Supports peer discovery through DNS.</p>

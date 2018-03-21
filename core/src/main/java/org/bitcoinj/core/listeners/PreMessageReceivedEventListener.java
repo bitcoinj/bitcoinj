@@ -16,7 +16,9 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.utils.Threading;
 
 /**

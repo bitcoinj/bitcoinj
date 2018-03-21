@@ -16,9 +16,12 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
+import javax.annotation.Nullable;
 
-import javax.annotation.*;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerGroup;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,

@@ -17,14 +17,22 @@
 
 package org.bitcoinj.core;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptError;
+import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.wallet.KeyBag;
+import org.bitcoinj.wallet.RedeemData;
+
 import com.google.common.base.Objects;
-import org.bitcoinj.script.*;
-import org.bitcoinj.wallet.*;
-
-import javax.annotation.*;
-import java.io.*;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * <p>This message is a reference or pointer to an output of a different transaction.</p>

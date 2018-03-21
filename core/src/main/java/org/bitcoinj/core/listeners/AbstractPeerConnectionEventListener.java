@@ -16,9 +16,10 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
+import java.util.Set;
 
-import java.util.*;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
 
 /**
  * Deprecated: implement the more specific event listener interfaces instead to fill out only what you need

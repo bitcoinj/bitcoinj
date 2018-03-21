@@ -17,12 +17,12 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.script.ScriptPattern;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.Math.E;
+import static java.lang.Math.log;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.lang.Math.pow;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,8 +30,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Math.*;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptPattern;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 /**
  * <p>A Bloom filter is a probabilistic data structure which can be sent to another client so that it can avoid

@@ -16,11 +16,13 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.base.*;
-import org.bitcoinj.core.*;
-import org.slf4j.*;
+import java.util.concurrent.ThreadFactory;
 
-import java.util.concurrent.*;
+import org.bitcoinj.core.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
 
 /**
  * A {@link ThreadFactory} that propagates a {@link Context} from the creating

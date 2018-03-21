@@ -16,34 +16,53 @@
 
 package org.bitcoinj.wallet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Lists.newLinkedList;
+
+import java.math.BigInteger;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.*;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicHierarchy;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.EncryptedData;
+import org.bitcoinj.crypto.HDKeyDerivation;
+import org.bitcoinj.crypto.HDUtils;
+import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.KeyCrypterException;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
+import org.bitcoinj.crypto.LazyECPoint;
+import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.google.protobuf.ByteString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.google.common.base.Preconditions.*;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.newLinkedList;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the

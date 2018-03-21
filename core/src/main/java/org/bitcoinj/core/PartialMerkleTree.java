@@ -18,13 +18,16 @@
 
 package org.bitcoinj.core;
 
+import static org.bitcoinj.core.Utils.checkBitLE;
+import static org.bitcoinj.core.Utils.reverseBytes;
+import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.bitcoinj.core.Utils.*;
 import com.google.common.base.Objects;
 
 /**

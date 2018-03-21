@@ -17,8 +17,9 @@
 
 package org.bitcoinj.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.core.Utils.readUint32;
+import static org.bitcoinj.core.Utils.uint32ToByteArrayBE;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.bitcoinj.core.Utils.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * <p>Methods to serialize and de-serialize messages to the Bitcoin network format as defined in

@@ -17,8 +17,22 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.*;
-import com.google.protobuf.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+
+import javax.annotation.Nullable;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BloomFilter;
@@ -26,20 +40,26 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.*;
-import org.bitcoinj.script.*;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDUtils;
+import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
+import org.bitcoinj.crypto.LinuxSecureRandom;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
-import org.bitcoinj.utils.*;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.slf4j.*;
-import org.spongycastle.crypto.params.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
-import javax.annotation.*;
-import java.security.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 /**
  * <p>A KeyChainGroup is used by the {@link Wallet} and

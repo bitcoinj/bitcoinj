@@ -16,9 +16,34 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.*;
-import com.google.common.base.Objects;
-import org.bitcoinj.core.listeners.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
+import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
+import org.bitcoinj.core.listeners.GetDataEventListener;
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
+import org.bitcoinj.core.listeners.PeerConnectedEventListener;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
@@ -28,27 +53,20 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
 import net.jcip.annotations.GuardedBy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
-import java.net.SocketAddress;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A Peer handles the high level communication with a Bitcoin node, extending a {@link PeerSocketHandler} which

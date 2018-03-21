@@ -17,26 +17,34 @@
 
 package org.bitcoinj.net.discovery;
 
-import com.google.common.annotations.*;
-import com.google.protobuf.*;
-import org.bitcoin.crawler.*;
-import org.bitcoinj.core.*;
-import org.slf4j.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import javax.annotation.*;
-import java.io.*;
-import java.net.*;
-import java.security.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.zip.*;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+
+import javax.annotation.Nullable;
+
+import org.bitcoin.crawler.PeerSeedProtos;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VersionMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * A class that knows how to read signed sets of seeds over HTTP, using a simple protobuf based protocol. See the

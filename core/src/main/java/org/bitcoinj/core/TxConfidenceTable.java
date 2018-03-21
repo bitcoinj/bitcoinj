@@ -16,14 +16,18 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.utils.*;
-
-import javax.annotation.*;
-import java.lang.ref.*;
-import java.util.*;
-import java.util.concurrent.locks.*;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.utils.Threading;
 
 /**
  * <p>Tracks transactions that are being announced across the network. Typically one is created for you by a

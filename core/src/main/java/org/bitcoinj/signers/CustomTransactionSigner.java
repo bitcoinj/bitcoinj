@@ -16,7 +16,15 @@
 
 package org.bitcoinj.signers;
 
-import org.bitcoinj.core.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
+
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -26,10 +34,6 @@ import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>This signer may be used as a template for creating custom multisig transaction signers.</p>

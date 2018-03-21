@@ -21,7 +21,11 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.MessageFormat;
 import java.util.Date;
-import java.util.logging.*;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * A Java logging formatter that writes more compact output than the default.

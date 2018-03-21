@@ -17,12 +17,13 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
-
-import java.sql.*;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.bitcoinj.core.NetworkParameters;
 
 // Originally written for Apache Derby, but its DELETE (and general) performance was awful
 /**

@@ -17,25 +17,29 @@
 
 package org.bitcoinj.net.discovery;
 
-import com.google.common.collect.Lists;
-
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.net.discovery.HttpDiscovery;
-import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
-import org.bitcoinj.utils.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.VersionMessage;
+import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 import okhttp3.OkHttpClient;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * MultiplexingDiscovery queries multiple PeerDiscovery objects, shuffles their responses and then returns the results,

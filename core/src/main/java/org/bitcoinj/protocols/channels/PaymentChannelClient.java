@@ -17,27 +17,35 @@
 
 package org.bitcoinj.protocols.channels;
 
-import org.bitcoinj.core.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoin.paymentchannel.Protos;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.protocols.channels.PaymentChannelCloseException.CloseReason;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.slf4j.LoggerFactory;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+
 import net.jcip.annotations.GuardedBy;
-import org.bitcoin.paymentchannel.Protos;
-import org.slf4j.LoggerFactory;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A class which handles most of the complexity of creating a payment channel connection by providing a

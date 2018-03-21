@@ -17,32 +17,93 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import com.google.common.primitives.*;
-import com.google.common.util.concurrent.*;
-import net.jcip.annotations.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.net.*;
-import org.bitcoinj.net.discovery.*;
-import org.bitcoinj.script.*;
-import org.bitcoinj.utils.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
+import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.listeners.AbstractPeerEventListener;
+import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
+import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.core.listeners.GetDataEventListener;
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
+import org.bitcoinj.core.listeners.PeerConnectedEventListener;
+import org.bitcoinj.core.listeners.PeerConnectionEventListener;
+import org.bitcoinj.core.listeners.PeerDataEventListener;
+import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
+import org.bitcoinj.core.listeners.PeerDiscoveredEventListener;
+import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.net.ClientConnectionManager;
+import org.bitcoinj.net.FilterMerger;
+import org.bitcoinj.net.NioClientManager;
+import org.bitcoinj.net.discovery.MultiplexingDiscovery;
+import org.bitcoinj.net.discovery.PeerDiscovery;
+import org.bitcoinj.net.discovery.PeerDiscoveryException;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.utils.ExponentialBackoff;
+import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableScheduledFuture;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Runnables;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 
-import static com.google.common.base.Preconditions.*;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages

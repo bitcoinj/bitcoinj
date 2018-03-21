@@ -17,13 +17,16 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
-import org.slf4j.*;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * Creates a simple connection to a server using a {@link StreamConnection} to process data.

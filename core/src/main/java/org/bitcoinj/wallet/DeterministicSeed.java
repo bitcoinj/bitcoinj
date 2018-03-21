@@ -17,23 +17,27 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.*;
-
-import com.google.common.base.Objects;
-import com.google.common.base.Splitter;
-import org.spongycastle.crypto.params.KeyParameter;
-
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.core.Utils.HEX;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.bitcoinj.core.Utils.HEX;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import javax.annotation.Nullable;
+
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.EncryptableItem;
+import org.bitcoinj.crypto.EncryptedData;
+import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.crypto.MnemonicException;
+import org.spongycastle.crypto.params.KeyParameter;
+
+import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
 
 /**
  * Holds the seed bytes for the BIP32 deterministic wallet algorithm, inside a
