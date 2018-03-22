@@ -45,7 +45,6 @@ public class SPVBlockStore implements BlockStore {
     public static final String HEADER_MAGIC = "SPVB";
 
     protected volatile MappedByteBuffer buffer;
-    protected final int capacity;
     protected final NetworkParameters params;
 
     protected ReentrantLock lock = Threading.lock("SPVBlockStore");
@@ -79,40 +78,53 @@ public class SPVBlockStore implements BlockStore {
     // Used to stop other applications/processes from opening the store.
     protected FileLock fileLock = null;
     protected RandomAccessFile randomAccessFile = null;
+    private int fileLength;
 
     /**
-     * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} blocks. Will create the given
-     * file if it's missing. This operation will block on disk.
+     * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
+     * given file if it's missing. This operation will block on disk.
      * @param file file to use for the block store
      * @throws BlockStoreException if something goes wrong
      */
     public SPVBlockStore(NetworkParameters params, File file) throws BlockStoreException {
-        this(params, file, DEFAULT_CAPACITY);
+        this(params, file, DEFAULT_CAPACITY, false);
     }
 
     /**
      * Creates and initializes an SPV block store that can hold a given amount of blocks. Will create the given file if
      * it's missing. This operation will block on disk.
      * @param file file to use for the block store
-     * @param capacity custom capacity
+     * @param capacity custom capacity in number of block headers
+     * @param wether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
      */
-    public SPVBlockStore(NetworkParameters params, File file, int capacity) throws BlockStoreException {
+    public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
         checkNotNull(file);
         this.params = checkNotNull(params);
         checkArgument(capacity > 0);
-        this.capacity = capacity;
         try {
             boolean exists = file.exists();
             // Set up the backing file.
             randomAccessFile = new RandomAccessFile(file, "rw");
-            long fileSize = getFileSize(capacity);
+            fileLength = getFileSize(capacity);
             if (!exists) {
                 log.info("Creating new SPV block chain file " + file);
-                randomAccessFile.setLength(fileSize);
-            } else if (randomAccessFile.length() != fileSize) {
-                throw new BlockStoreException("File size on disk does not match expected size: " +
-                        randomAccessFile.length() + " vs " + fileSize);
+                randomAccessFile.setLength(fileLength);
+            } else {
+                final long currentLength = randomAccessFile.length();
+                if (currentLength != fileLength) {
+                    if ((currentLength - FILE_PROLOGUE_BYTES) % RECORD_SIZE != 0)
+                        throw new BlockStoreException(
+                                "File size on disk indicates this is not a block store: " + currentLength);
+                    else if (!grow)
+                        throw new BlockStoreException("File size on disk does not match expected size: " + currentLength
+                                + " vs " + fileLength);
+                    else if (fileLength < randomAccessFile.length())
+                        throw new BlockStoreException(
+                                "Shrinking is unsupported: " + currentLength + " vs " + fileLength);
+                    else
+                        randomAccessFile.setLength(fileLength);
+                }
             }
 
             FileChannel channel = randomAccessFile.getChannel();
@@ -125,12 +137,11 @@ public class SPVBlockStore implements BlockStore {
             // inconsistent. However the only process accessing it is us, via this mapping, so our own view will
             // always be correct. Once we establish the mmap the underlying file and channel can go away. Note that
             // the details of mmapping vary between platforms.
-            buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileSize);
+            buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
 
             // Check or initialize the header bytes to ensure we don't try to open some random file.
-            byte[] header;
             if (exists) {
-                header = new byte[4];
+                byte[] header = new byte[4];
                 buffer.get(header);
                 if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
                     throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
@@ -177,7 +188,7 @@ public class SPVBlockStore implements BlockStore {
         lock.lock();
         try {
             int cursor = getRingCursor(buffer);
-            if (cursor == getFileSize(capacity)) {
+            if (cursor == fileLength) {
                 // Wrapped around.
                 cursor = FILE_PROLOGUE_BYTES;
             }
@@ -209,14 +220,13 @@ public class SPVBlockStore implements BlockStore {
             // wrapped around.
             int cursor = getRingCursor(buffer);
             final int startingPoint = cursor;
-            final int fileSize = getFileSize(capacity);
             final byte[] targetHashBytes = hash.getBytes();
             byte[] scratch = new byte[32];
             do {
                 cursor -= RECORD_SIZE;
                 if (cursor < FILE_PROLOGUE_BYTES) {
                     // We hit the start, so wrap around.
-                    cursor = fileSize - RECORD_SIZE;
+                    cursor = fileLength - RECORD_SIZE;
                 }
                 // Cursor is now at the start of the next record to check, so read the hash and compare it.
                 buffer.position(cursor);
@@ -283,6 +293,7 @@ public class SPVBlockStore implements BlockStore {
             }
             buffer = null;  // Allow it to be GCd and the underlying file mapping to go away.
             randomAccessFile.close();
+            blockCache.clear();
         } catch (IOException e) {
             throw new BlockStoreException(e);
         }
