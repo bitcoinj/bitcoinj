@@ -287,10 +287,6 @@ public class SPVBlockStore implements BlockStore {
     public void close() throws BlockStoreException {
         try {
             buffer.force();
-            if (Utils.isWindows()) {
-                log.info("Windows mmap hack: Forcing buffer cleaning");
-                WindowsMMapHack.forceRelease(buffer);
-            }
             buffer = null;  // Allow it to be GCd and the underlying file mapping to go away.
             randomAccessFile.close();
             blockCache.clear();
