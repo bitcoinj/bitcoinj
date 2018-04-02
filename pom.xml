@@ -21,7 +21,7 @@
 
   <groupId>org.bitcoinj</groupId>
   <artifactId>bitcoinj-parent</artifactId>
-  <version>0.15-SNAPSHOT</version>
+  <version>0.16f-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -37,6 +37,7 @@
     <version>7</version>
   </parent>
 
+  <!--
   <scm>
     <connection>scm:git:https://github.com/bitcoinj/bitcoinj</connection>
     <developerConnection>scm:git:https://github.com/bitcoinj/bitcoinj</developerConnection>
@@ -46,6 +47,7 @@
   <name>bitcoinj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
   <url>http://www.bitcoinj.org/</url>
+  -->
 
   <licenses>
     <license>
@@ -56,6 +58,7 @@
     </license>
   </licenses>
 
+  <!--
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/bitcoinj/bitcoinj/issues</url>
@@ -67,6 +70,7 @@
       <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
     </mailingList>
   </mailingLists>
+  -->
 
   <distributionManagement>
     <snapshotRepository>
