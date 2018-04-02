@@ -33,6 +33,8 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Parameters for the testnet, a separate public instance of Bitcoin that has relaxed rules suitable for development
  * and testing of applications and new Bitcoin versions.
+ *
+ * Copied from TestNet3Params; see FLO commentary for modifications.
  */
 public class FloTestNetParams extends AbstractBitcoinNetParams {
     public FloTestNetParams() {

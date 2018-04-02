@@ -26,6 +26,8 @@ import static com.google.common.base.Preconditions.*;
 
 /**
  * Parameters for the main production network on which people trade goods and services.
+ *
+ * Copied from MainNetParams; see FLO commentary for modifications.
  */
 public class FloMainNetParams extends AbstractBitcoinNetParams {
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
