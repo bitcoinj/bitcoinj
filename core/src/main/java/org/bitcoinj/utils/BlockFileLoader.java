@@ -85,6 +85,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     }
 
     private Iterator<File> fileIt;
+    private File file = null;
     private FileInputStream currentFileStream = null;
     private Block nextBlock = null;
     private NetworkParameters params;
@@ -136,8 +137,9 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                     currentFileStream = null;
                     return;
                 }
+                file = fileIt.next();
                 try {
-                    currentFileStream = new FileInputStream(fileIt.next());
+                    currentFileStream = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
                     currentFileStream = null;
                 }
@@ -172,6 +174,8 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;
+                } catch (Exception e) {
+                    throw new RuntimeException("unexpected problem with block in " + file, e);
                 }
                 break;
             } catch (IOException e) {
