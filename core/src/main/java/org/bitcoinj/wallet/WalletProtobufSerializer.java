@@ -366,7 +366,6 @@ public class WalletProtobufSerializer {
             confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
             if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
                 confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
-                confidenceBuilder.setDepth(confidence.getDepthInBlocks());
             }
             if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
                 // Copy in the overriding transaction, if available.
@@ -787,13 +786,6 @@ public class WalletProtobufSerializer {
                 return;
             }
             confidence.setAppearedAtChainHeight(confidenceProto.getAppearedAtHeight());
-        }
-        if (confidenceProto.hasDepth()) {
-            if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
-                log.warn("Have depth but not BUILDING for tx {}", tx.getHashAsString());
-                return;
-            }
-            confidence.setDepthInBlocks(confidenceProto.getDepth());
         }
         if (confidenceProto.hasOverridingTransaction()) {
             if (confidence.getConfidenceType() != ConfidenceType.DEAD) {

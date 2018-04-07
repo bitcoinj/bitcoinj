@@ -99,7 +99,7 @@ public class Kit {
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
                 System.out.println("-----> confidence changed: " + tx.getHashAsString());
                 TransactionConfidence confidence = tx.getConfidence();
-                System.out.println("new block depth: " + confidence.getDepthInBlocks());
+                System.out.println("new block height: " + confidence.getAppearedAtChainHeight());
             }
         });
 

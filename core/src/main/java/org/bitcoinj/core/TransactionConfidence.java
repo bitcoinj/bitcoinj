@@ -76,9 +76,6 @@ public class TransactionConfidence {
     // Lazily created listeners array.
     private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
-    // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
-    private int depth;
-
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
         /** If BUILDING, then the transaction is included in the best chain and your confidence in it is increasing. */
@@ -173,12 +170,6 @@ public class TransactionConfidence {
             TYPE,
 
             /**
-             * Occurs when a transaction that is in the best known block chain gets buried by another block. If you're
-             * waiting for a certain number of confirmations, this is the reason to watch out for.
-             */
-            DEPTH,
-
-            /**
              * Occurs when a pending transaction (not in the chain) was announced by another connected peers. By
              * watching the number of peers that announced a transaction go up, you can see whether it's being
              * accepted by the network or not. If all your peers announce, it's a pretty good bet the transaction
@@ -253,7 +244,6 @@ public class TransactionConfidence {
         if (appearedAtChainHeight < 0)
             throw new IllegalArgumentException("appearedAtChainHeight out of range");
         this.appearedAtChainHeight = appearedAtChainHeight;
-        this.depth = 1;
         setConfidenceType(ConfidenceType.BUILDING);
     }
 
@@ -276,7 +266,6 @@ public class TransactionConfidence {
             overridingTransaction = null;
         }
         if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
-            depth = 0;
             appearedAtChainHeight = -1;
         }
     }
@@ -356,23 +345,13 @@ public class TransactionConfidence {
                 builder.append("In conflict.");
                 break;
             case BUILDING:
-                builder.append(String.format(Locale.US, "Appeared in best chain at height %d, depth %d.",
-                        getAppearedAtChainHeight(), getDepthInBlocks()));
+                builder.append(String.format(Locale.US, "Appeared in best chain at height %d.",
+                        getAppearedAtChainHeight()));
                 break;
         }
         if (source != Source.UNKNOWN)
             builder.append(" Source: ").append(source);
         return builder.toString();
-    }
-
-    /**
-     * Called by the wallet when the tx appears on the best chain and a new block is added to the top. Updates the
-     * internal counter that tracks how deeply buried the block is.
-     *
-     * @return the new depth
-     */
-    public synchronized int incrementDepthInBlocks() {
-        return ++this.depth;
     }
 
     /**
@@ -385,15 +364,12 @@ public class TransactionConfidence {
      * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
      * the depth is zero.</p>
      */
-    public synchronized int getDepthInBlocks() {
+    public synchronized int getDepthInBlocks(int bestChainHeight) {
+        if (appearedAtChainHeight == -1)
+            return 0;
+        int depth = bestChainHeight - appearedAtChainHeight + 1;
+        // checkState(depth > 0, "depth: %s", depth);
         return depth;
-    }
-
-    /*
-     * Set the depth in blocks. Having one block confirmation is a depth of one.
-     */
-    public synchronized void setDepthInBlocks(int depth) {
-        this.depth = depth;
     }
 
     /**
@@ -489,17 +465,17 @@ public class TransactionConfidence {
      */
     public synchronized ListenableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
         final SettableFuture<TransactionConfidence> result = SettableFuture.create();
-        if (getDepthInBlocks() >= depth) {
+//        if (getDepthInBlocks() >= depth) {
             result.set(this);
-        }
-        addEventListener(executor, new Listener() {
-            @Override public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
-                if (getDepthInBlocks() >= depth) {
-                    removeEventListener(this);
-                    result.set(confidence);
-                }
-            }
-        });
+//        }
+//        addEventListener(executor, new Listener() {
+//            @Override public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+//                if (getDepthInBlocks() >= depth) {
+//                    removeEventListener(this);
+//                    result.set(confidence);
+//                }
+//            }
+//        });
         return result;
     }
 

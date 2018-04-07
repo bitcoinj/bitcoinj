@@ -246,8 +246,8 @@ public class WalletProtobufSerializerTest {
     }
 
     @Test
-    public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
-        // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
+    public void testAppearedAtChainHeight() throws Exception {
+        // Test the TransactionConfidence appearedAtChainHeight field is stored.
 
         BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
 
@@ -284,10 +284,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(1, confidence0.getAppearedAtChainHeight());
         assertEquals(2, confidence1.getAppearedAtChainHeight());
 
-        assertEquals(2, confidence0.getDepthInBlocks());
-        assertEquals(1, confidence1.getDepthInBlocks());
-
-        // Roundtrip the wallet and check it has stored the depth and workDone.
+        // Roundtrip the wallet and check it has stored the appearedAtChainHeight.
         Wallet rebornWallet = roundTrip(myWallet);
 
         Set<Transaction> rebornTxns = rebornWallet.getTransactions(false);
@@ -312,9 +309,6 @@ public class WalletProtobufSerializerTest {
 
         assertEquals(1, rebornConfidence0.getAppearedAtChainHeight());
         assertEquals(2, rebornConfidence1.getAppearedAtChainHeight());
-
-        assertEquals(2, rebornConfidence0.getDepthInBlocks());
-        assertEquals(1, rebornConfidence1.getDepthInBlocks());
     }
 
     private static Wallet roundTrip(Wallet wallet) throws Exception {

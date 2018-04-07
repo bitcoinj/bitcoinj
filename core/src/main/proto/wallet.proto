@@ -197,9 +197,8 @@ message TransactionConfidence {
   // bother to track them all, just the first. This only makes sense if type = DEAD.
   optional bytes overriding_transaction = 3;
 
-  // If type == BUILDING then this is the depth of the transaction in the blockchain.
-  // Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-  optional int32 depth = 4;
+  // deprecated - do not recycle this numeric identifier
+  // optional int32 depth = 4;
 
   // deprecated - do not recycle this numeric identifier
   // optional int64 work_done = 5;
