@@ -427,9 +427,9 @@ public class ChainSplitTest {
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
         assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
 
-        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks());
-        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
-        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
+        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
 
         // We now have the following chain:
         //     genesis -> b1 -> b2 -> b3
@@ -455,9 +455,9 @@ public class ChainSplitTest {
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
         assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
 
-        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks());
-        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks());
-        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks());
+        assertEquals(3, txns.get(0).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(2, txns.get(1).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(1, txns.get(2).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
 
         // Now we add another block to make the alternative chain longer.
         Block b6 = b5.createNextBlock(someOtherGuy);
@@ -470,7 +470,7 @@ public class ChainSplitTest {
 
         assertEquals(3, txns.size());
         assertEquals(1, txns.get(0).getConfidence().getAppearedAtChainHeight());
-        assertEquals(4, txns.get(0).getConfidence().getDepthInBlocks());
+        assertEquals(4, txns.get(0).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
 
         // Transaction 1 (in block b2) is now on a side chain, so it goes pending (not see in chain).
         assertEquals(ConfidenceType.PENDING, txns.get(1).getConfidence().getConfidenceType());
@@ -478,7 +478,7 @@ public class ChainSplitTest {
             txns.get(1).getConfidence().getAppearedAtChainHeight();
             fail();
         } catch (IllegalStateException e) {}
-        assertEquals(0, txns.get(1).getConfidence().getDepthInBlocks());
+        assertEquals(0, txns.get(1).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
 
         // ... and back to the first chain.
         Block b7 = b3.createNextBlock(coinsTo);
@@ -501,9 +501,9 @@ public class ChainSplitTest {
         assertEquals(2, txns.get(1).getConfidence().getAppearedAtChainHeight());
         assertEquals(3, txns.get(2).getConfidence().getAppearedAtChainHeight());
 
-        assertEquals(5, txns.get(0).getConfidence().getDepthInBlocks());
-        assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks());
-        assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks());
+        assertEquals(5, txns.get(0).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(4, txns.get(1).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(3, txns.get(2).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
 
         assertEquals(Coin.valueOf(250, 0), wallet.getBalance());
 
@@ -513,9 +513,9 @@ public class ChainSplitTest {
         chain.add(b9);
         chain.add(b10);
         BigInteger extraWork = b9.getWork().add(b10.getWork());
-        assertEquals(7, txns.get(0).getConfidence().getDepthInBlocks());
-        assertEquals(6, txns.get(1).getConfidence().getDepthInBlocks());
-        assertEquals(5, txns.get(2).getConfidence().getDepthInBlocks());
+        assertEquals(7, txns.get(0).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(6, txns.get(1).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
+        assertEquals(5, txns.get(2).getConfidence().getDepthInBlocks(wallet.getLastBlockSeenHeight()));
     }
 
     @Test

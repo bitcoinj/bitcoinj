@@ -27,9 +27,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 /**
- * This class implements a {@link CoinSelector} which attempts to get the highest priority
- * possible. This means that the transaction is the most likely to get confirmed. Note that this means we may end up
- * "spending" more priority than would be required to get the transaction we are creating confirmed.
+ * Implementation of a {@link CoinSelector} which priorizes old UTXOs.
  */
 public class DefaultCoinSelector implements CoinSelector {
     @Override
@@ -63,17 +61,14 @@ public class DefaultCoinSelector implements CoinSelector {
         Collections.sort(outputs, new Comparator<TransactionOutput>() {
             @Override
             public int compare(TransactionOutput a, TransactionOutput b) {
-                int depth1 = a.getParentTransactionDepthInBlocks();
-                int depth2 = b.getParentTransactionDepthInBlocks();
+                int aHeight = a.getParentTransactionAppearedAtChainHeight();
+                int bHeight = b.getParentTransactionAppearedAtChainHeight();
+                int c0 = Integer.compare(aHeight, bHeight); // older is 'better'
+                if (c0 != 0) return c0;
                 Coin aValue = a.getValue();
                 Coin bValue = b.getValue();
-                BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
-                BigInteger bCoinDepth = BigInteger.valueOf(bValue.value).multiply(BigInteger.valueOf(depth2));
-                int c1 = bCoinDepth.compareTo(aCoinDepth);
+                int c1 = bValue.compareTo(aValue); // higher is 'better'
                 if (c1 != 0) return c1;
-                // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
-                int c2 = bValue.compareTo(aValue);
-                if (c2 != 0) return c2;
                 // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
                 BigInteger aHash = a.getParentTransactionHash().toBigInteger();
                 BigInteger bHash = b.getParentTransactionHash().toBigInteger();

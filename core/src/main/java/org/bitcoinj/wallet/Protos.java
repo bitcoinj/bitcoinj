@@ -6745,25 +6745,6 @@ public final class Protos {
     com.google.protobuf.ByteString getOverridingTransaction();
 
     /**
-     * <code>optional int32 depth = 4;</code>
-     *
-     * <pre>
-     * If type == BUILDING then this is the depth of the transaction in the blockchain.
-     * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-     * </pre>
-     */
-    boolean hasDepth();
-    /**
-     * <code>optional int32 depth = 4;</code>
-     *
-     * <pre>
-     * If type == BUILDING then this is the depth of the transaction in the blockchain.
-     * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-     * </pre>
-     */
-    int getDepth();
-
-    /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
     java.util.List<org.bitcoinj.wallet.Protos.PeerAddress> 
@@ -6893,15 +6874,10 @@ public final class Protos {
               overridingTransaction_ = input.readBytes();
               break;
             }
-            case 32: {
-              bitField0_ |= 0x00000008;
-              depth_ = input.readInt32();
-              break;
-            }
             case 50: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
                 broadcastBy_ = new java.util.ArrayList<org.bitcoinj.wallet.Protos.PeerAddress>();
-                mutable_bitField0_ |= 0x00000010;
+                mutable_bitField0_ |= 0x00000008;
               }
               broadcastBy_.add(input.readMessage(org.bitcoinj.wallet.Protos.PeerAddress.PARSER, extensionRegistry));
               break;
@@ -6912,13 +6888,13 @@ public final class Protos {
               if (value == null) {
                 unknownFields.mergeVarintField(7, rawValue);
               } else {
-                bitField0_ |= 0x00000020;
+                bitField0_ |= 0x00000010;
                 source_ = value;
               }
               break;
             }
             case 64: {
-              bitField0_ |= 0x00000010;
+              bitField0_ |= 0x00000008;
               lastBroadcastedAt_ = input.readInt64();
               break;
             }
@@ -6930,7 +6906,7 @@ public final class Protos {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           broadcastBy_ = java.util.Collections.unmodifiableList(broadcastBy_);
         }
         this.unknownFields = unknownFields.build();
@@ -7323,31 +7299,6 @@ public final class Protos {
       return overridingTransaction_;
     }
 
-    public static final int DEPTH_FIELD_NUMBER = 4;
-    private int depth_;
-    /**
-     * <code>optional int32 depth = 4;</code>
-     *
-     * <pre>
-     * If type == BUILDING then this is the depth of the transaction in the blockchain.
-     * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-     * </pre>
-     */
-    public boolean hasDepth() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional int32 depth = 4;</code>
-     *
-     * <pre>
-     * If type == BUILDING then this is the depth of the transaction in the blockchain.
-     * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-     * </pre>
-     */
-    public int getDepth() {
-      return depth_;
-    }
-
     public static final int BROADCAST_BY_FIELD_NUMBER = 6;
     private java.util.List<org.bitcoinj.wallet.Protos.PeerAddress> broadcastBy_;
     /**
@@ -7393,7 +7344,7 @@ public final class Protos {
      * </pre>
      */
     public boolean hasLastBroadcastedAt() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional int64 last_broadcasted_at = 8;</code>
@@ -7412,7 +7363,7 @@ public final class Protos {
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
      */
     public boolean hasSource() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
@@ -7425,7 +7376,6 @@ public final class Protos {
       type_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN;
       appearedAtHeight_ = 0;
       overridingTransaction_ = com.google.protobuf.ByteString.EMPTY;
-      depth_ = 0;
       broadcastBy_ = java.util.Collections.emptyList();
       lastBroadcastedAt_ = 0L;
       source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
@@ -7458,16 +7408,13 @@ public final class Protos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBytes(3, overridingTransaction_);
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt32(4, depth_);
-      }
       for (int i = 0; i < broadcastBy_.size(); i++) {
         output.writeMessage(6, broadcastBy_.get(i));
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         output.writeEnum(7, source_.getNumber());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeInt64(8, lastBroadcastedAt_);
       }
       getUnknownFields().writeTo(output);
@@ -7491,19 +7438,15 @@ public final class Protos {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(3, overridingTransaction_);
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(4, depth_);
-      }
       for (int i = 0; i < broadcastBy_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(6, broadcastBy_.get(i));
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(7, source_.getNumber());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(8, lastBroadcastedAt_);
       }
@@ -7638,18 +7581,16 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000002);
         overridingTransaction_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
-        depth_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000008);
         if (broadcastByBuilder_ == null) {
           broadcastBy_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000008);
         } else {
           broadcastByBuilder_.clear();
         }
         lastBroadcastedAt_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
 
@@ -7690,25 +7631,21 @@ public final class Protos {
           to_bitField0_ |= 0x00000004;
         }
         result.overridingTransaction_ = overridingTransaction_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.depth_ = depth_;
         if (broadcastByBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
             broadcastBy_ = java.util.Collections.unmodifiableList(broadcastBy_);
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000008);
           }
           result.broadcastBy_ = broadcastBy_;
         } else {
           result.broadcastBy_ = broadcastByBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000010;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000008;
         }
         result.lastBroadcastedAt_ = lastBroadcastedAt_;
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
-          to_bitField0_ |= 0x00000020;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000010;
         }
         result.source_ = source_;
         result.bitField0_ = to_bitField0_;
@@ -7736,14 +7673,11 @@ public final class Protos {
         if (other.hasOverridingTransaction()) {
           setOverridingTransaction(other.getOverridingTransaction());
         }
-        if (other.hasDepth()) {
-          setDepth(other.getDepth());
-        }
         if (broadcastByBuilder_ == null) {
           if (!other.broadcastBy_.isEmpty()) {
             if (broadcastBy_.isEmpty()) {
               broadcastBy_ = other.broadcastBy_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000008);
             } else {
               ensureBroadcastByIsMutable();
               broadcastBy_.addAll(other.broadcastBy_);
@@ -7756,7 +7690,7 @@ public final class Protos {
               broadcastByBuilder_.dispose();
               broadcastByBuilder_ = null;
               broadcastBy_ = other.broadcastBy_;
-              bitField0_ = (bitField0_ & ~0x00000010);
+              bitField0_ = (bitField0_ & ~0x00000008);
               broadcastByBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getBroadcastByFieldBuilder() : null;
@@ -7962,64 +7896,12 @@ public final class Protos {
         return this;
       }
 
-      private int depth_ ;
-      /**
-       * <code>optional int32 depth = 4;</code>
-       *
-       * <pre>
-       * If type == BUILDING then this is the depth of the transaction in the blockchain.
-       * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-       * </pre>
-       */
-      public boolean hasDepth() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
-      }
-      /**
-       * <code>optional int32 depth = 4;</code>
-       *
-       * <pre>
-       * If type == BUILDING then this is the depth of the transaction in the blockchain.
-       * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-       * </pre>
-       */
-      public int getDepth() {
-        return depth_;
-      }
-      /**
-       * <code>optional int32 depth = 4;</code>
-       *
-       * <pre>
-       * If type == BUILDING then this is the depth of the transaction in the blockchain.
-       * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-       * </pre>
-       */
-      public Builder setDepth(int value) {
-        bitField0_ |= 0x00000008;
-        depth_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 depth = 4;</code>
-       *
-       * <pre>
-       * If type == BUILDING then this is the depth of the transaction in the blockchain.
-       * Zero confirmations: depth = 0, one confirmation: depth = 1 etc.
-       * </pre>
-       */
-      public Builder clearDepth() {
-        bitField0_ = (bitField0_ & ~0x00000008);
-        depth_ = 0;
-        onChanged();
-        return this;
-      }
-
       private java.util.List<org.bitcoinj.wallet.Protos.PeerAddress> broadcastBy_ =
         java.util.Collections.emptyList();
       private void ensureBroadcastByIsMutable() {
-        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
           broadcastBy_ = new java.util.ArrayList<org.bitcoinj.wallet.Protos.PeerAddress>(broadcastBy_);
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000008;
          }
       }
 
@@ -8169,7 +8051,7 @@ public final class Protos {
       public Builder clearBroadcastBy() {
         if (broadcastByBuilder_ == null) {
           broadcastBy_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
+          bitField0_ = (bitField0_ & ~0x00000008);
           onChanged();
         } else {
           broadcastByBuilder_.clear();
@@ -8246,7 +8128,7 @@ public final class Protos {
           broadcastByBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.bitcoinj.wallet.Protos.PeerAddress, org.bitcoinj.wallet.Protos.PeerAddress.Builder, org.bitcoinj.wallet.Protos.PeerAddressOrBuilder>(
                   broadcastBy_,
-                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  ((bitField0_ & 0x00000008) == 0x00000008),
                   getParentForChildren(),
                   isClean());
           broadcastBy_ = null;
@@ -8263,7 +8145,7 @@ public final class Protos {
        * </pre>
        */
       public boolean hasLastBroadcastedAt() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>optional int64 last_broadcasted_at = 8;</code>
@@ -8283,7 +8165,7 @@ public final class Protos {
        * </pre>
        */
       public Builder setLastBroadcastedAt(long value) {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000010;
         lastBroadcastedAt_ = value;
         onChanged();
         return this;
@@ -8296,7 +8178,7 @@ public final class Protos {
        * </pre>
        */
       public Builder clearLastBroadcastedAt() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         lastBroadcastedAt_ = 0L;
         onChanged();
         return this;
@@ -8307,7 +8189,7 @@ public final class Protos {
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
        */
       public boolean hasSource() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
@@ -8322,7 +8204,7 @@ public final class Protos {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000020;
         source_ = value;
         onChanged();
         return this;
@@ -8331,7 +8213,7 @@ public final class Protos {
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
        */
       public Builder clearSource() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         source_ = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN;
         onChanged();
         return this;
@@ -19239,60 +19121,59 @@ public final class Protos {
       "e\030\005 \001(\003\"\177\n\021TransactionOutput\022\r\n\005value\030\001 " +
       "\002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n\031spent_by_tr" +
       "ansaction_hash\030\003 \001(\014\022\"\n\032spent_by_transac" +
-      "tion_index\030\004 \001(\005\"\267\003\n\025TransactionConfiden" +
+      "tion_index\030\004 \001(\005\"\250\003\n\025TransactionConfiden" +
       "ce\0220\n\004type\030\001 \001(\0162\".wallet.TransactionCon" +
       "fidence.Type\022\032\n\022appeared_at_height\030\002 \001(\005",
-      "\022\036\n\026overriding_transaction\030\003 \001(\014\022\r\n\005dept" +
-      "h\030\004 \001(\005\022)\n\014broadcast_by\030\006 \003(\0132\023.wallet.P" +
-      "eerAddress\022\033\n\023last_broadcasted_at\030\010 \001(\003\022" +
-      "4\n\006source\030\007 \001(\0162$.wallet.TransactionConf" +
-      "idence.Source\"`\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BU" +
-      "ILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHA" +
-      "IN\020\003\022\010\n\004DEAD\020\004\022\017\n\013IN_CONFLICT\020\005\"A\n\006Sourc" +
-      "e\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020" +
-      "\001\022\017\n\013SOURCE_SELF\020\002\"\303\005\n\013Transaction\022\017\n\007ve" +
-      "rsion\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162",
-      "\030.wallet.Transaction.Pool\022\021\n\tlock_time\030\004" +
-      " \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021transaction_" +
-      "input\030\006 \003(\0132\030.wallet.TransactionInput\0225\n" +
-      "\022transaction_output\030\007 \003(\0132\031.wallet.Trans" +
-      "actionOutput\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030bloc" +
-      "k_relativity_offsets\030\013 \003(\005\0221\n\nconfidence" +
-      "\030\t \001(\0132\035.wallet.TransactionConfidence\0225\n" +
-      "\007purpose\030\n \001(\0162\033.wallet.Transaction.Purp" +
-      "ose:\007UNKNOWN\022+\n\rexchange_rate\030\014 \001(\0132\024.wa" +
-      "llet.ExchangeRate\022\014\n\004memo\030\r \001(\t\"Y\n\004Pool\022",
-      "\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n" +
-      "\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE" +
-      "\020\022\"\243\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYM" +
-      "ENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030ASSURANCE_CON" +
-      "TRACT_CLAIM\020\003\022\035\n\031ASSURANCE_CONTRACT_PLED" +
-      "GE\020\004\022\033\n\027ASSURANCE_CONTRACT_STUB\020\005\022\r\n\tRAI" +
-      "SE_FEE\020\006\"N\n\020ScryptParameters\022\014\n\004salt\030\001 \002" +
-      "(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030" +
-      "\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004dat" +
-      "a\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag",
-      "\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"5\n\021TransactionSigne" +
-      "r\022\022\n\nclass_name\030\001 \002(\t\022\014\n\004data\030\002 \001(\014\"\351\004\n\006" +
-      "Wallet\022\032\n\022network_identifier\030\001 \002(\t\022\034\n\024la" +
-      "st_seen_block_hash\030\002 \001(\014\022\036\n\026last_seen_bl" +
-      "ock_height\030\014 \001(\r\022!\n\031last_seen_block_time" +
-      "_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n" +
-      "\013transaction\030\004 \003(\0132\023.wallet.Transaction\022" +
-      "&\n\016watched_script\030\017 \003(\0132\016.wallet.Script\022" +
-      "C\n\017encryption_type\030\005 \001(\0162\035.wallet.Wallet" +
-      ".EncryptionType:\013UNENCRYPTED\0227\n\025encrypti",
-      "on_parameters\030\006 \001(\0132\030.wallet.ScryptParam" +
-      "eters\022\022\n\007version\030\007 \001(\005:\0011\022$\n\textension\030\n" +
-      " \003(\0132\021.wallet.Extension\022\023\n\013description\030\013" +
-      " \001(\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n\004tags\030" +
-      "\020 \003(\0132\013.wallet.Tag\0226\n\023transaction_signer" +
-      "s\030\021 \003(\0132\031.wallet.TransactionSigner\";\n\016En" +
-      "cryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPT" +
-      "ED_SCRYPT_AES\020\002\"R\n\014ExchangeRate\022\022\n\ncoin_" +
-      "value\030\001 \002(\003\022\022\n\nfiat_value\030\002 \002(\003\022\032\n\022fiat_" +
-      "currency_code\030\003 \002(\tB\035\n\023org.bitcoinj.wall",
-      "etB\006Protos"
+      "\022\036\n\026overriding_transaction\030\003 \001(\014\022)\n\014broa" +
+      "dcast_by\030\006 \003(\0132\023.wallet.PeerAddress\022\033\n\023l" +
+      "ast_broadcasted_at\030\010 \001(\003\0224\n\006source\030\007 \001(\016" +
+      "2$.wallet.TransactionConfidence.Source\"`" +
+      "\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PEN" +
+      "DING\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\022" +
+      "\017\n\013IN_CONFLICT\020\005\"A\n\006Source\022\022\n\016SOURCE_UNK" +
+      "NOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOURCE_SEL" +
+      "F\020\002\"\303\005\n\013Transaction\022\017\n\007version\030\001 \002(\005\022\014\n\004" +
+      "hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet.Transa",
+      "ction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nupdated" +
+      "_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003(\0132\030.w" +
+      "allet.TransactionInput\0225\n\022transaction_ou" +
+      "tput\030\007 \003(\0132\031.wallet.TransactionOutput\022\022\n" +
+      "\nblock_hash\030\010 \003(\014\022 \n\030block_relativity_of" +
+      "fsets\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035.wallet" +
+      ".TransactionConfidence\0225\n\007purpose\030\n \001(\0162" +
+      "\033.wallet.Transaction.Purpose:\007UNKNOWN\022+\n" +
+      "\rexchange_rate\030\014 \001(\0132\024.wallet.ExchangeRa" +
+      "te\022\014\n\004memo\030\r \001(\t\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n",
+      "\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PEND" +
+      "ING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"\243\001\n\007Purpose\022" +
+      "\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_RO" +
+      "TATION\020\002\022\034\n\030ASSURANCE_CONTRACT_CLAIM\020\003\022\035" +
+      "\n\031ASSURANCE_CONTRACT_PLEDGE\020\004\022\033\n\027ASSURAN" +
+      "CE_CONTRACT_STUB\020\005\022\r\n\tRAISE_FEE\020\006\"N\n\020Scr" +
+      "yptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\005" +
+      "16384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExt" +
+      "ension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmand" +
+      "atory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030",
+      "\002 \002(\014\"5\n\021TransactionSigner\022\022\n\nclass_name" +
+      "\030\001 \002(\t\022\014\n\004data\030\002 \001(\014\"\351\004\n\006Wallet\022\032\n\022netwo" +
+      "rk_identifier\030\001 \002(\t\022\034\n\024last_seen_block_h" +
+      "ash\030\002 \001(\014\022\036\n\026last_seen_block_height\030\014 \001(" +
+      "\r\022!\n\031last_seen_block_time_secs\030\016 \001(\003\022\030\n\003" +
+      "key\030\003 \003(\0132\013.wallet.Key\022(\n\013transaction\030\004 " +
+      "\003(\0132\023.wallet.Transaction\022&\n\016watched_scri" +
+      "pt\030\017 \003(\0132\016.wallet.Script\022C\n\017encryption_t" +
+      "ype\030\005 \001(\0162\035.wallet.Wallet.EncryptionType" +
+      ":\013UNENCRYPTED\0227\n\025encryption_parameters\030\006",
+      " \001(\0132\030.wallet.ScryptParameters\022\022\n\007versio" +
+      "n\030\007 \001(\005:\0011\022$\n\textension\030\n \003(\0132\021.wallet.E" +
+      "xtension\022\023\n\013description\030\013 \001(\t\022\031\n\021key_rot" +
+      "ation_time\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet." +
+      "Tag\0226\n\023transaction_signers\030\021 \003(\0132\031.walle" +
+      "t.TransactionSigner\";\n\016EncryptionType\022\017\n" +
+      "\013UNENCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002" +
+      "\"R\n\014ExchangeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\n" +
+      "fiat_value\030\002 \002(\003\022\032\n\022fiat_currency_code\030\003" +
+      " \002(\tB\035\n\023org.bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -19353,7 +19234,7 @@ public final class Protos {
     internal_static_wallet_TransactionConfidence_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_wallet_TransactionConfidence_descriptor,
-        new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "Depth", "BroadcastBy", "LastBroadcastedAt", "Source", });
+        new java.lang.String[] { "Type", "AppearedAtHeight", "OverridingTransaction", "BroadcastBy", "LastBroadcastedAt", "Source", });
     internal_static_wallet_Transaction_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_wallet_Transaction_fieldAccessorTable = new

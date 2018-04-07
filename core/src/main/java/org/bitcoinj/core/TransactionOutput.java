@@ -365,17 +365,17 @@ public class TransactionOutput extends ChildMessage {
     }
 
     /**
-     * Returns the depth in blocks of the parent tx.
+     * Returns the block height of the parent tx, if confirmed.
      *
-     * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
+     * <p>If the transaction appears in a block, the block height is returned. If it's anything else (pending, dead, unknown)
      * then -1.</p>
-     * @return The tx depth or -1.
+     * @return The tx block height or -1.
      */
-    public int getParentTransactionDepthInBlocks() {
+    public int getParentTransactionAppearedAtChainHeight() {
         if (getParentTransaction() != null) {
             TransactionConfidence confidence = getParentTransaction().getConfidence();
             if (confidence.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
-                return confidence.getDepthInBlocks();
+                return confidence.getAppearedAtChainHeight();
             }
         }
         return -1;

@@ -155,13 +155,13 @@ public class TransactionTest {
         Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(UNITTEST);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertEquals(tx.isMature(), false);
+        assertEquals(tx.isMature(Integer.MAX_VALUE), false);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertEquals(tx.isMature(), false);
+        assertEquals(tx.isMature(Integer.MAX_VALUE), false);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertEquals(tx.isMature(), false);
+        assertEquals(tx.isMature(Integer.MAX_VALUE), false);
     }
 
     @Test

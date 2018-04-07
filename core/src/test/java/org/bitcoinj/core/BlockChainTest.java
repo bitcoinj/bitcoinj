@@ -331,7 +331,7 @@ public class BlockChainTest {
         // The coinbase tx is not yet available to spend.
         assertEquals(Coin.ZERO, wallet.getBalance());
         assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
-        assertTrue(!coinbaseTransaction.isMature());
+        assertTrue(!coinbaseTransaction.isMature(wallet.getLastBlockSeenHeight()));
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
         try {
@@ -353,7 +353,7 @@ public class BlockChainTest {
             assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
 
             // The coinbase transaction is still not mature.
-            assertTrue(!coinbaseTransaction.isMature());
+            assertTrue(!coinbaseTransaction.isMature(wallet.getLastBlockSeenHeight()));
 
             // Attempt to spend the coinbase - this should fail.
             try {
@@ -371,7 +371,7 @@ public class BlockChainTest {
         // Wallet now has the coinbase transaction available for spend.
         assertEquals(wallet.getBalance(), FIFTY_COINS);
         assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
-        assertTrue(coinbaseTransaction.isMature());
+        assertTrue(coinbaseTransaction.isMature(wallet.getLastBlockSeenHeight()));
 
         // Create a spend with the coinbase BTC to the address in the second wallet - this should now succeed.
         Transaction coinbaseSend2 = wallet.createSend(addressToSendTo, valueOf(49, 0));
