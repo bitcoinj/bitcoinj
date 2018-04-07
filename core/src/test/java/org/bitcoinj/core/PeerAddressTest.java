@@ -29,14 +29,23 @@ import org.junit.Test;
 
 public class PeerAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
+    
+    @Test
+    public void parse_ancientProtocolVersion() throws Exception {
+        // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
+        String hex = "010000000000000000000000000000000000ffff0a000001208d";
+        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, 0);
+        assertEquals(26, pa.length);
+        assertEquals(VersionMessage.NODE_NETWORK, pa.getServices().longValue());
+        assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
+        assertEquals(8333, pa.getPort());
+    }
 
     @Test
-    public void testPeerAddressRoundtrip() throws Exception {
-        // copied verbatim from https://en.bitcoin.it/wiki/Protocol_specification#Network_address
-        String fromSpec = "010000000000000000000000000000000000ffff0a000001208d";
-        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(fromSpec), 0, 0);
-        String reserialized = Utils.HEX.encode(pa.unsafeBitcoinSerialize());
-        assertEquals(reserialized, fromSpec);
+    public void bitcoinSerialize_ancientProtocolVersion() throws Exception {
+        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, 0, BigInteger.ZERO);
+        assertEquals(26, pa.length);        
+        assertEquals("000000000000000000000000000000000000ffff7f000001208d", Utils.HEX.encode(pa.bitcoinSerialize()));
     }
 
     @Test
@@ -88,11 +97,5 @@ public class PeerAddressTest {
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
         assertEquals(-1, pa2.getTime());
-    }
-
-    @Test
-    public void testBitcoinSerialize() throws Exception {
-        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, 0, BigInteger.ZERO);
-        assertEquals("000000000000000000000000000000000000ffff7f000001208d", Utils.HEX.encode(pa.bitcoinSerialize()));
     }
 }
