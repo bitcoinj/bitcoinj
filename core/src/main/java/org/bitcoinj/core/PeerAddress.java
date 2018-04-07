@@ -73,7 +73,7 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         this.protocolVersion = protocolVersion;
         this.services = services;
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
     /**
@@ -117,7 +117,7 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (protocolVersion >= 31402) {
+        if (isSerializeTime()) {
             //TODO this appears to be dynamic because the client only ever sends out it's own address
             //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
             //the address refers to this client.
@@ -139,6 +139,10 @@ public class PeerAddress extends ChildMessage {
         Utils.uint16ToByteStreamBE(port, stream);
     }
 
+    private boolean isSerializeTime() {
+        return protocolVersion >= 31402 && !(parent instanceof VersionMessage);
+    }
+
     @Override
     protected void parse() throws ProtocolException {
         // Format of a serialized address:
@@ -146,7 +150,7 @@ public class PeerAddress extends ChildMessage {
         //   uint64 services   (flags determining what the node can do)
         //   16 bytes ip address
         //   2 bytes port num
-        if (protocolVersion > 31402)
+        if (isSerializeTime())
             time = readUint32();
         else
             time = -1;
@@ -160,7 +164,7 @@ public class PeerAddress extends ChildMessage {
         port = Utils.readUint16BE(payload, cursor);
         cursor += 2;
         // The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
     public String getHostname() {
