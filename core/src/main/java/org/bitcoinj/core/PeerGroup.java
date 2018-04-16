@@ -1074,12 +1074,6 @@ public class PeerGroup implements TransactionBroadcaster {
         Futures.getUnchecked(startAsync());
     }
 
-    /** Can just use start() for a blocking start here instead of startAsync/awaitRunning: PeerGroup is no longer a Guava service. */
-    @Deprecated
-    public void awaitRunning() {
-        waitForJobQueue();
-    }
-
     public ListenableFuture stopAsync() {
         checkState(vRunning);
         vRunning = false;
@@ -1110,16 +1104,6 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             stopAsync();
             log.info("Awaiting PeerGroup shutdown ...");
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** Can just use stop() here instead of stopAsync/awaitTerminated: PeerGroup is no longer a Guava service. */
-    @Deprecated
-    public void awaitTerminated() {
-        try {
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
