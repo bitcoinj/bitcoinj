@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2018 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +26,31 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
-public class RegTestParams extends TestNet2Params {
+public class RegTestParams extends AbstractBitcoinNetParams {
     private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public RegTestParams() {
         super();
-        // Difficulty adjustments are disabled for regtest. 
-        // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never changes.    
+        packetMagic = 0xfabfb5daL;
+        addressHeader = 111;
+        p2shHeader = 196;
+        targetTimespan = TARGET_TIMESPAN;
+        dumpedPrivateKeyHeader = 239;
+        segwitAddressHrp = "tb";
+        genesisBlock.setTime(1296688602L);
+        genesisBlock.setDifficultyTarget(0x1d07fff8L);
+        genesisBlock.setNonce(384568319);
+        spendableCoinbaseDepth = 100;
+        String genesisHash = genesisBlock.getHashAsString();
+        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
+        dnsSeeds = null;
+        addrSeeds = null;
+        bip32HeaderPub = 0x043587CF;
+        bip32HeaderPriv = 0x04358394;
+
+        // Difficulty adjustments are disabled for regtest.
+        // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
+        // changes.
         interval = Integer.MAX_VALUE;
         maxTarget = MAX_TARGET;
         subsidyDecreaseBlockCount = 150;

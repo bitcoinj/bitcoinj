@@ -162,12 +162,6 @@ public abstract class NetworkParameters {
         return TestNet3Params.get();
     }
 
-    /** Alias for TestNet2Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet2() {
-        return TestNet2Params.get();
-    }
-
     /** Alias for TestNet3Params.get(), use that instead. */
     @Deprecated
     public static NetworkParameters testNet3() {

@@ -18,7 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet2Params;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -59,12 +59,12 @@ public class BlockChainTest {
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
-    private static class TweakableTestNet2Params extends TestNet2Params {
+    private static class TweakableTestNet3Params extends TestNet3Params {
         public void setMaxTarget(BigInteger limit) {
             maxTarget = limit;
         }
     }
-    private static final TweakableTestNet2Params TESTNET = new TweakableTestNet2Params();
+    private static final TweakableTestNet3Params TESTNET = new TweakableTestNet3Params();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
@@ -396,22 +396,24 @@ public class BlockChainTest {
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
         Block b2 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
-        b2.setMerkleRoot(Sha256Hash.wrap("addc858a17e21e68350f968ccd384d6439b64aafa6c193c8b9dd66320470838b"));
-        b2.setNonce(2642058077L);
-        b2.setTime(1296734343L);
-        b2.setPrevBlockHash(Sha256Hash.wrap("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604"));
-        assertEquals("000000037b21cac5d30fc6fda2581cf7b2612908aed2abbcc429c45b0557a15f", b2.getHashAsString());
+        b2.setMerkleRoot(Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"));
+        b2.setNonce(875942400L);
+        b2.setTime(1296688946L);
+        b2.setDifficultyTarget(0x1d00ffff);
+        b2.setPrevBlockHash(Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"));
+        assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
         b2.verifyHeader();
         return b2;
     }
 
     private static Block getBlock1() throws Exception {
         Block b1 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
-        b1.setMerkleRoot(Sha256Hash.wrap("0e8e58ecdacaa7b3c6304a35ae4ffff964816d2b80b62b58558866ce4e648c10"));
-        b1.setNonce(236038445);
-        b1.setTime(1296734340);
-        b1.setPrevBlockHash(Sha256Hash.wrap("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
-        assertEquals("000000033cc282bc1fa9dcae7a533263fd7fe66490f550d80076433340831604", b1.getHashAsString());
+        b1.setMerkleRoot(Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
+        b1.setNonce(1924588547);
+        b1.setTime(1296688928);
+        b1.setDifficultyTarget(0x1d00ffff);
+        b1.setPrevBlockHash(Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+        assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());
         b1.verifyHeader();
         return b1;
     }

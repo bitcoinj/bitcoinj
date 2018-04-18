@@ -44,6 +44,8 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
+
+import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.wallet.MarriedKeyChain;
@@ -212,7 +214,8 @@ public class WalletProtobufSerializerTest {
         assertTrue(lastSeenBlockHash.isEmpty());
 
         // Create a block.
-        Block block = UNITTEST.getDefaultSerializer().makeBlock(BlockTest.blockBytes);
+        Block block = UNITTEST.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat")));
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
         wallet.setLastBlockSeenHeight(1);
