@@ -40,6 +40,6 @@ public class SendHeadersMessageTest {
 
         ByteBuffer buffer = ByteBuffer.wrap(message);
         BitcoinSerializer serializer = new BitcoinSerializer(REGTEST, false);
-        assertTrue(serializer.deserialize(buffer) instanceof org.bitcoinj.core.SendHeadersMessage);
+        assertTrue(serializer.deserialize(buffer) instanceof SendHeadersMessage);
     }
 }
