@@ -912,13 +912,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     // If this is not a following chain and previous was, this must be married
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
-                    if (seed == null & key.hasSecretBytes()) {
+                    if (seed == null && key.hasSecretBytes()) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, new BigInteger(1, key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeSpendingKeyChain(key, iter.peek(), accountKey, isMarried);
                         isSpendingKey = true;
-                    }
-                    else if (seed == null) {
+                    } else if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeWatchingKeyChain(key, iter.peek(), accountKey, isFollowingKey, isMarried);
