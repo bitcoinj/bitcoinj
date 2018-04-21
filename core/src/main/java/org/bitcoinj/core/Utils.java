@@ -33,10 +33,12 @@ import java.util.TimeZone;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.BaseEncoding;
@@ -53,6 +55,8 @@ public class Utils {
 
     /** Joiner for concatenating words with a space inbetween. */
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
+    /** Splitter for splitting words on whitespaces. */
+    public static final Splitter WHITESPACE_SPLITTER = Splitter.on(Pattern.compile("\\s+"));
     /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
