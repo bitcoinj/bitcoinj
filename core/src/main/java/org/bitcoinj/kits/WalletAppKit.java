@@ -25,6 +25,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.protocols.channels.*;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.*;
 import org.bitcoinj.wallet.*;
 import org.slf4j.*;
@@ -63,8 +64,10 @@ import static com.google.common.base.Preconditions.*;
 public class WalletAppKit extends AbstractIdleService {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
-    protected final String filePrefix;
     protected final NetworkParameters params;
+    protected final Script.ScriptType preferredOutputScriptType;
+    protected final KeyChainGroupStructure structure;
+    protected final String filePrefix;
     protected volatile BlockChain vChain;
     protected volatile BlockStore vStore;
     protected volatile Wallet vWallet;
@@ -91,15 +94,26 @@ public class WalletAppKit extends AbstractIdleService {
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      */
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), directory, filePrefix);
+        this(new Context(params), Script.ScriptType.P2PKH, null, directory, filePrefix);
+    }
+
+    /**
+     * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     */
+    public WalletAppKit(NetworkParameters params, Script.ScriptType preferredOutputScriptType,
+            @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
+        this(new Context(params), preferredOutputScriptType, structure, directory, filePrefix);
     }
 
     /**
      * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
      */
-    public WalletAppKit(Context context, File directory, String filePrefix) {
+    public WalletAppKit(Context context, Script.ScriptType preferredOutputScriptType,
+            @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
         this.context = context;
         this.params = checkNotNull(context.getParams());
+        this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
+        this.structure = structure != null ? structure : KeyChainGroupStructure.DEFAULT;
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
     }
@@ -434,13 +448,13 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     protected Wallet createWallet() {
-        KeyChainGroup.Builder kcg = KeyChainGroup.builder(params);
+        KeyChainGroup.Builder kcg = KeyChainGroup.builder(params, structure);
         if (restoreFromSeed != null)
-            kcg.addChain(DeterministicKeyChain.builder().seed(restoreFromSeed).build());
+            kcg.addChain(DeterministicKeyChain.builder().seed(restoreFromSeed).outputScriptType(preferredOutputScriptType).build());
         else if (restoreFromKey != null)
-            kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).build());
+            kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).outputScriptType(preferredOutputScriptType).build());
         else
-            kcg.fromRandom();
+            kcg.fromRandom(preferredOutputScriptType);
         if (walletFactory != null) {
             return walletFactory.create(params, kcg.build());
         } else {

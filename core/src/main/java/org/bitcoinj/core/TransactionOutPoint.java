@@ -129,7 +129,7 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     /**
-     * Returns the ECKey identified in the connected output, for either P2PKH scripts or P2PK scripts.
+     * Returns the ECKey identified in the connected output, for either P2PKH, P2WPKH or P2PK scripts.
      * For P2SH scripts you can use {@link #getConnectedRedeemData(KeyBag)} and then get the
      * key from RedeemData.
      * If the script form cannot be understood, throws ScriptException.
@@ -143,7 +143,10 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
-            return keyBag.findKeyFromPubKeyHash(addressBytes);
+            return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH);
+        } else if (ScriptPattern.isPayToWitnessPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToWitnessHash(connectedScript);
+            return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
@@ -153,7 +156,7 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     /**
-     * Returns the RedeemData identified in the connected output, for either P2PKH scripts, P2PK
+     * Returns the RedeemData identified in the connected output, for either P2PKH, P2WPKH, P2PK
      * or P2SH scripts.
      * If the script forms cannot be understood, throws ScriptException.
      *
@@ -166,7 +169,10 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes), connectedScript);
+            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH), connectedScript);
+        } else if (ScriptPattern.isPayToWitnessPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToWitnessHash(connectedScript);
+            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH), connectedScript);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);

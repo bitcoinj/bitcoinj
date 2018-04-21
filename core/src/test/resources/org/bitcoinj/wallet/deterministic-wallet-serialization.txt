@@ -11,6 +11,7 @@ creation_timestamp: 1389353062000
 deterministic_key {
   chain_code: "XL\240FW\203\316\230\334\374J\003\357=\215\001\206\365\207Z\006m\334X`\236,;_\304\000^"
 }
+output_script_type: P2PKH
 
 type: DETERMINISTIC_KEY
 secret_bytes: "\354B\331\275;\000\254?\3428\006\220G\365\243\333s\260s\213R\313\307\377f\331B\351\327=\001\333"

@@ -6,6 +6,7 @@ deterministic_key {
   chain_code: "F\336\2067\377M\026)%\357ZL#\203\320\324\217-\3305\310\244\n\205\277E\323L\250ww\314"
   path: 2147483648
 }
+output_script_type: P2PKH
 
 type: DETERMINISTIC_KEY
 secret_bytes: "\362\305\242\3637\2748Z?]\035s\272\253J\300\033\250\022r\350\020\277U\036K<\335\237\333/\303"

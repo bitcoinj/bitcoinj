@@ -324,18 +324,21 @@ public class TransactionTest {
         assertEquals(txHex, HEX.encode(tx.bitcoinSerialize()));
         assertEquals(2, tx.getInputs().size());
         assertEquals(2, tx.getOutputs().size());
+        TransactionInput txIn0 = tx.getInput(0);
+        TransactionInput txIn1 = tx.getInput(1);
 
-        ECKey key0 = ECKey.fromPrivate(
-                HEX.decode("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
+        ECKey key0 = ECKey.fromPrivate(HEX.decode("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
+        Script scriptPubKey0 = ScriptBuilder.createP2PKOutputScript(key0);
         assertEquals("2103c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432ac",
-                HEX.encode(ScriptBuilder.createP2PKOutputScript(key0).getProgram()));
-        ECKey key1 = ECKey.fromPrivate(
-                HEX.decode("619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"));
-        assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
-                key1.getPublicKeyAsHex());
+                HEX.encode(scriptPubKey0.getProgram()));
+        ECKey key1 = ECKey.fromPrivate(HEX.decode("619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"));
+        assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357", key1.getPublicKeyAsHex());
+        Script scriptPubKey1 = ScriptBuilder.createP2WPKHOutputScript(key1);
+        assertEquals("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1", HEX.encode(scriptPubKey1.getProgram()));
+        txIn1.connect(new TransactionOutput(TESTNET, null, Coin.COIN.multiply(6), scriptPubKey1.getProgram()));
 
         TransactionSignature txSig0 = tx.calculateSignature(0, key0,
-                ScriptBuilder.createP2PKOutputScript(key0).getProgram(),
+                scriptPubKey0,
                 Transaction.SigHash.ALL, false);
         assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
                 HEX.encode(txSig0.encodeToBitcoin()));
@@ -345,24 +348,20 @@ public class TransactionTest {
                 HEX.encode(scriptCode.getProgram()));
 
         TransactionSignature txSig1 = tx.calculateWitnessSignature(1, key1,
-                scriptCode, Coin.COIN.multiply(6),
+                scriptCode, txIn1.getValue(),
                 Transaction.SigHash.ALL, false);
         assertEquals("304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee"
                         + "01",
                 HEX.encode(txSig1.encodeToBitcoin()));
 
-        TransactionInput txIn0 = tx.getInput(0);
-        txIn0.setScriptSig(new ScriptBuilder()
-                .data(txSig0.encodeToBitcoin())
-                .build());
+        assertFalse(correctlySpends(txIn0, scriptPubKey0, 0));
+        txIn0.setScriptSig(new ScriptBuilder().data(txSig0.encodeToBitcoin()).build());
+        assertTrue(correctlySpends(txIn0, scriptPubKey0, 0));
 
-        TransactionWitness witness = new TransactionWitness(2);
-        witness.setPush(0, txSig1.encodeToBitcoin());
-        witness.setPush(1, key1.getPubKey());
-
-        TransactionInput txIn1 = tx.getInput(1);
-        txIn1.setWitness(witness);
+        assertFalse(correctlySpends(txIn1, scriptPubKey1, 1));
+        txIn1.setWitness(TransactionWitness.redeemP2WPKH(txSig1, key1));
         // no redeem script for p2wpkh
+        assertTrue(correctlySpends(txIn1, scriptPubKey1, 1));
 
         String signedTxHex = "01000000" // version
                 + "00" // marker
@@ -400,6 +399,7 @@ public class TransactionTest {
         assertEquals(txHex, HEX.encode(tx.bitcoinSerialize()));
         assertEquals(1, tx.getInputs().size());
         assertEquals(2, tx.getOutputs().size());
+        TransactionInput txIn = tx.getInput(0);
 
         ECKey key = ECKey.fromPrivate(
                 HEX.decode("eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf"));
@@ -415,10 +415,7 @@ public class TransactionTest {
         assertEquals("a9144733f37cf4db86fbc2efed2500b4f4e49f31202387",
                 HEX.encode(scriptPubKey.getProgram()));
 
-        Script scriptCode = new ScriptBuilder()
-                .data(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(TESTNET, key))
-                        .getProgram())
-                .build();
+        Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(key).getProgram()).build();
         assertEquals("1976a91479091972186c449eb1ded22b78e40d009bdf008988ac",
                 HEX.encode(scriptCode.getProgram()));
 
@@ -429,13 +426,10 @@ public class TransactionTest {
                         + "01",
                 HEX.encode(txSig.encodeToBitcoin()));
 
-        TransactionWitness witness = new TransactionWitness(2);
-        witness.setPush(0, txSig.encodeToBitcoin());
-        witness.setPush(1, key.getPubKey());
-
-        TransactionInput txIn = tx.getInput(0);
-        txIn.setWitness(witness);
+        assertFalse(correctlySpends(txIn, scriptPubKey, 0));
+        txIn.setWitness(TransactionWitness.redeemP2WPKH(txSig, key));
         txIn.setScriptSig(new ScriptBuilder().data(redeemScript.getProgram()).build());
+        assertTrue(correctlySpends(txIn, scriptPubKey, 0));
 
         String signedTxHex = "01000000" // version
                 + "00" // marker
@@ -453,6 +447,16 @@ public class TransactionTest {
                 + "03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873" // push
                 + "92040000"; // nLockTime
         assertEquals(signedTxHex, HEX.encode(tx.bitcoinSerialize()));
+    }
+
+    private boolean correctlySpends(TransactionInput txIn, Script scriptPubKey, int inputIndex) {
+        try {
+            txIn.getScriptSig().correctlySpends(txIn.getParentTransaction(), inputIndex, txIn.getWitness(),
+                    txIn.getValue(), scriptPubKey, Script.ALL_VERIFY_FLAGS);
+            return true;
+        } catch (ScriptException x) {
+            return false;
+        }
     }
 
     @Test

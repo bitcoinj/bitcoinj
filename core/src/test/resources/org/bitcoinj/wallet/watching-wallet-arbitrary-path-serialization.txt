@@ -7,6 +7,7 @@ deterministic_key {
   path: 2147483649
   path: 2147483648
 }
+output_script_type: P2PKH
 
 type: DETERMINISTIC_KEY
 public_key: "\003\2471\326i\331A\337|\373\276\3214\257\363\266Q\315x\341\317\200\243\234\336<s}\261\240,\233\371"

@@ -474,8 +474,8 @@ public class TransactionInput extends ChildMessage {
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();
-        int myIndex = getParentTransaction().getInputs().indexOf(this);
-        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), pubKey);
+        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
+                Script.ALL_VERIFY_FLAGS);
     }
 
     /**

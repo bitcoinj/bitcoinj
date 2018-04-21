@@ -8,6 +8,7 @@ deterministic_key {
   path: 2147483649
   path: 2147483648
 }
+output_script_type: P2PKH
 
 type: DETERMINISTIC_KEY
 secret_bytes: "\362\305\242\3637\2748Z?]\035s\272\253J\300\033\250\022r\350\020\277U\036K<\335\237\333/\303"

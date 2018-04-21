@@ -1,5 +1,6 @@
 /*
  * Copyright 2015 Ross Nicoll.
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +65,7 @@ public class GenerateLowSTests {
         final ECKey key = new ECKey(secureRandom);
         final KeyBag bag = new KeyBag() {
             @Override
-            public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
+            public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, Script.ScriptType scriptType) {
                 return key;
             }
 

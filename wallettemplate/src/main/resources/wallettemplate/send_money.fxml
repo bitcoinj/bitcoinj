@@ -33,7 +33,7 @@
                         <Font size="24.0" />
                      </font>
                   </Label>
-              <TextField fx:id="address" maxWidth="1.7976931348623157E308" promptText="1EZEqFBd8yuc9ir2761987q7k3VcALC8YQ" HBox.hgrow="ALWAYS">
+              <TextField fx:id="address" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                 <VBox.margin>
                   <Insets />
                 </VBox.margin>

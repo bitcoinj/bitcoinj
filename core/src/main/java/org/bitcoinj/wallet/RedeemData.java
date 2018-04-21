@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 Kosta Korenkov
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +53,13 @@ public class RedeemData {
     }
 
     /**
-     * Creates RedeemData for P2PKH or P2PK input. Provided key is a single private key needed
-     * to spend such inputs and provided program should be a proper CHECKSIG program.
+     * Creates RedeemData for P2PKH, P2WPKH or P2PK input. Provided key is a single private key needed
+     * to spend such inputs.
      */
-    public static RedeemData of(ECKey key, Script program) {
-        checkArgument(ScriptPattern.isPayToPubKeyHash(program) || ScriptPattern.isPayToPubKey(program));
-        return key != null ? new RedeemData(Collections.singletonList(key), program) : null;
+    public static RedeemData of(ECKey key, Script redeemScript) {
+        checkArgument(ScriptPattern.isPayToPubKeyHash(redeemScript)
+                || ScriptPattern.isPayToWitnessPubKeyHash(redeemScript) || ScriptPattern.isPayToPubKey(redeemScript));
+        return key != null ? new RedeemData(Collections.singletonList(key), redeemScript) : null;
     }
 
     /**

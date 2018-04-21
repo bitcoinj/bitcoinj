@@ -18,6 +18,7 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.script.Script;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -460,17 +461,24 @@ public class DeterministicKey extends ECKey {
         return key;
     }
 
+    @Deprecated
     public byte[] serializePublic(NetworkParameters params) {
-        return serialize(params, true);
+        return serialize(params, true, Script.ScriptType.P2PKH);
     }
 
+    @Deprecated
     public byte[] serializePrivate(NetworkParameters params) {
-        return serialize(params, false);
+        return serialize(params, false, Script.ScriptType.P2PKH);
     }
 
-    private byte[] serialize(NetworkParameters params, boolean pub) {
+    private byte[] serialize(NetworkParameters params, boolean pub, Script.ScriptType outputScriptType) {
         ByteBuffer ser = ByteBuffer.allocate(78);
-        ser.putInt(pub ? params.getBip32HeaderPub() : params.getBip32HeaderPriv());
+        if (outputScriptType == Script.ScriptType.P2PKH)
+            ser.putInt(pub ? params.getBip32HeaderP2PKHpub() : params.getBip32HeaderP2PKHpriv());
+        else if (outputScriptType == Script.ScriptType.P2WPKH)
+            ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
+        else
+            throw new IllegalStateException(outputScriptType.toString());
         ser.put((byte) getDepth());
         ser.putInt(getParentFingerprint());
         ser.putInt(getChildNumber().i());
@@ -480,12 +488,20 @@ public class DeterministicKey extends ECKey {
         return ser.array();
     }
 
+    public String serializePubB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+        return toBase58(serialize(params, true, outputScriptType));
+    }
+
+    public String serializePrivB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+        return toBase58(serialize(params, false, outputScriptType));
+    }
+
     public String serializePubB58(NetworkParameters params) {
-        return toBase58(serialize(params, true));
+        return serializePubB58(params, Script.ScriptType.P2PKH);
     }
 
     public String serializePrivB58(NetworkParameters params) {
-        return toBase58(serialize(params, false));
+        return serializePrivB58(params, Script.ScriptType.P2PKH);
     }
 
     static String toBase58(byte[] ser) {
@@ -520,9 +536,10 @@ public class DeterministicKey extends ECKey {
     public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey, @Nullable DeterministicKey parent) {
         ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
         int header = buffer.getInt();
-        if (header != params.getBip32HeaderPriv() && header != params.getBip32HeaderPub())
+        final boolean pub = header == params.getBip32HeaderP2PKHpub() || header == params.getBip32HeaderP2WPKHpub();
+        final boolean priv = header == params.getBip32HeaderP2PKHpriv() || header == params.getBip32HeaderP2WPKHpriv();
+        if (!(pub || priv))
             throw new IllegalArgumentException("Unknown header bytes: " + toBase58(serializedKey).substring(0, 4));
-        boolean pub = header == params.getBip32HeaderPub();
         int depth = buffer.get() & 0xFF; // convert signed byte to positive int since depth cannot be negative
         final int parentFingerprint = buffer.getInt();
         final int i = buffer.getInt();
@@ -615,9 +632,8 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-            NetworkParameters params) {
-        final Address address = LegacyAddress.fromKey(params, this);
-        builder.append("  addr:").append(address);
+            NetworkParameters params, Script.ScriptType outputScriptType) {
+        builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
         builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString()).append(")\n");
         if (includePrivateKeys) {

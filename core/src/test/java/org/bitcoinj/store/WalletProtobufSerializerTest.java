@@ -109,12 +109,10 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(Coin.ZERO, wallet1.getBalance());
-        assertArrayEquals(myKey.getPubKey(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPubKey());
-        assertArrayEquals(myKey.getPrivKeyBytes(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+        ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
+        assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
+        assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
+        assertEquals(myKey.getCreationTimeSeconds(), foundKey.getCreationTimeSeconds());
         assertEquals(mScriptCreationTime,
                 wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
         assertEquals(1, wallet1.getWatchedScripts().size());
@@ -197,8 +195,9 @@ public class WalletProtobufSerializerTest {
             myWallet = new Wallet(UNITTEST);
             myWallet.importKey(myKey);
             Wallet wallet1 = roundTrip(myWallet);
-            assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPubKey());
-            assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+            ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
+            assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
+            assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
         }
     }
 
@@ -333,12 +332,10 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(0, wallet1.getTransactions(true).size());
         assertEquals(Coin.ZERO, wallet1.getBalance());
-        assertArrayEquals(myKey.getPubKey(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPubKey());
-        assertArrayEquals(myKey.getPrivKeyBytes(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(),
-                wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+        ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
+        assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
+        assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
+        assertEquals(myKey.getCreationTimeSeconds(), foundKey.getCreationTimeSeconds());
     }
 
     @Test

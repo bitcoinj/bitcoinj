@@ -5,6 +5,7 @@ deterministic_key {
   chain_code: "SE\031\000\277\023 \256W\237\036\034c\340\aB-I\246\304\025\325\262\314\235\240]\020\374T\315\027"
   path: 1
 }
+output_script_type: P2PKH
 
 type: DETERMINISTIC_KEY
 public_key: "\003QO{n\351\326\357\343T\203u\345\025{]\231\234\273A\376U`\307\212\336h\255\215\335(\364\001"

@@ -1,5 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +66,9 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 if (ScriptPattern.isPayToPubKey(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromPayToPubKey(scriptPubKey));
                 } else if (ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey));
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey), Script.ScriptType.P2PKH);
+                } else if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToWitnessHash(scriptPubKey), Script.ScriptType.P2WPKH);
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;

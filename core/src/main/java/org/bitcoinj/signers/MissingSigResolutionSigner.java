@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 Kosta Korenkov
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@ package org.bitcoinj.signers;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
@@ -80,7 +82,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                         }
                     }
                 }
-            } else {
+            } else if (ScriptPattern.isPayToPubKey(scriptPubKey) || ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
                 if (inputScript.getChunks().get(0).equalsOpCode(0)) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
@@ -88,8 +90,20 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                         txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }
                 }
+            } else if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
+                if (txIn.getWitness() == null || txIn.getWitness().equals(TransactionWitness.EMPTY)
+                        || txIn.getWitness().getPush(0).length == 0) {
+                    if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
+                        throw new ECKey.MissingPrivateKeyException();
+                    } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
+                        ECKey key = keyBag.findKeyFromPubKeyHash(
+                                ScriptPattern.extractHashFromPayToWitnessHash(scriptPubKey), Script.ScriptType.P2WPKH);
+                        txIn.setWitness(TransactionWitness.redeemP2WPKH(TransactionSignature.dummy(), key));
+                    }
+                }
+            } else {
+                throw new IllegalStateException("cannot handle: " + scriptPubKey);
             }
-            // TODO handle non-P2SH multisig
         }
         return true;
     }

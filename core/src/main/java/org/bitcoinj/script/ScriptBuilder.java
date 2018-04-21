@@ -1,6 +1,7 @@
 /*
  * Copyright 2013 Google Inc.
  * Copyright 2018 Nicola Atzei
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,6 +252,11 @@ public class ScriptBuilder {
     /** Creates a new immutable Script based on the state of the builder. */
     public Script build() {
         return new Script(chunks);
+    }
+
+    /** Creates an empty script. */
+    public static Script createEmpty() {
+        return new ScriptBuilder().build();
     }
 
     /** Creates a scriptPubKey that encodes payment to the given address. */

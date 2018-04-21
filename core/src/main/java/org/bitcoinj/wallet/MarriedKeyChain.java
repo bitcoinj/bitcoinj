@@ -102,14 +102,14 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
             MarriedKeyChain chain;
             if (random != null)
-                chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, accountPath);
+                chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, outputScriptType, accountPath);
             else if (entropy != null)
                 chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null,
-                        accountPath);
+                        outputScriptType, accountPath);
             else if (seed != null)
-                chain = new MarriedKeyChain(seed, null, accountPath);
+                chain = new MarriedKeyChain(seed, null, outputScriptType, accountPath);
             else if (watchingKey != null)
-                chain = new MarriedKeyChain(watchingKey);
+                chain = new MarriedKeyChain(watchingKey, outputScriptType);
             else
                 throw new IllegalStateException();
             chain.addFollowingAccountKeys(followingKeys, threshold);
@@ -125,16 +125,16 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicKey accountKey) {
-        super(accountKey, false, true);
+    protected MarriedKeyChain(DeterministicKey accountKey, Script.ScriptType outputScriptType) {
+        super(accountKey, false, true, outputScriptType);
     }
 
     /**
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, ImmutableList<ChildNumber> accountPath) {
-        super(seed, crypter, accountPath);
+    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, Script.ScriptType outputScriptType, ImmutableList<ChildNumber> accountPath) {
+        super(seed, crypter, outputScriptType, accountPath);
     }
 
     void setFollowingKeyChains(List<DeterministicKeyChain> followingKeyChains) {
@@ -189,7 +189,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
         for (DeterministicKey key : followingAccountKeys) {
             checkArgument(key.getPath().size() == getAccountPath().size(), "Following keys have to be account keys");
-            DeterministicKeyChain chain = DeterministicKeyChain.builder().watchAndFollow(key).build();
+            DeterministicKeyChain chain = DeterministicKeyChain.builder().watchAndFollow(key)
+                    .outputScriptType(getOutputScriptType()).build();
             if (lookaheadSize >= 0)
                 chain.setLookaheadSize(lookaheadSize);
             if (lookaheadThreshold >= 0)

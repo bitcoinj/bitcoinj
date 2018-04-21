@@ -1,5 +1,6 @@
 /*
  * Copyright 2014 devrandom
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.script.Script;
 
 /**
  * Factory interface for creation keychains while de-serializing a wallet.
@@ -33,11 +35,12 @@ public interface KeyChainFactory {
      * @param seed the seed
      * @param crypter the encrypted/decrypter
      * @param isMarried whether the keychain is leading in a marriage
-     * @param accountPath the specified account path
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param accountPath account path to generate receiving addresses on
      */
     DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
-                                       KeyCrypter crypter, boolean isMarried,
-                                       ImmutableList<ChildNumber> accountPath);
+            KeyCrypter crypter, boolean isMarried, Script.ScriptType outputScriptType,
+            ImmutableList<ChildNumber> accountPath);
 
     /**
      * Make a watching keychain.
@@ -49,9 +52,11 @@ public interface KeyChainFactory {
      * @param accountKey the account extended public key
      * @param isFollowingKey whether the keychain is following in a marriage
      * @param isMarried whether the keychain is leading in a marriage
+     * @param outputScriptType type of addresses (aka output scripts) to generate for watching
      */
     DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey,
-                                               boolean isFollowingKey, boolean isMarried) throws UnreadableWalletException;
+            boolean isFollowingKey, boolean isMarried, Script.ScriptType outputScriptType)
+            throws UnreadableWalletException;
 
     /**
      * Make a spending keychain.
@@ -62,7 +67,8 @@ public interface KeyChainFactory {
      * @param firstSubKey the protobuf for the first child key (normally the parent of the external subchain)
      * @param accountKey the account extended public key
      * @param isMarried whether the keychain is leading in a marriage
+     * @param outputScriptType type of addresses (aka output scripts) to generate for spending
      */
     DeterministicKeyChain makeSpendingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey,
-                                                      boolean isMarried) throws UnreadableWalletException;
+            boolean isMarried, Script.ScriptType outputScriptType) throws UnreadableWalletException;
 }

@@ -2779,6 +2779,23 @@ public final class Protos {
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
      */
     int getAccountPath(int index);
+
+    /**
+     * <pre>
+     * Type of addresses (aka output scripts) to generate for receiving.
+     * </pre>
+     *
+     * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     */
+    boolean hasOutputScriptType();
+    /**
+     * <pre>
+     * Type of addresses (aka output scripts) to generate for receiving.
+     * </pre>
+     *
+     * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     */
+    org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType();
   }
   /**
    * <pre>
@@ -2808,6 +2825,7 @@ public final class Protos {
       creationTimestamp_ = 0L;
       deterministicSeed_ = com.google.protobuf.ByteString.EMPTY;
       accountPath_ = java.util.Collections.emptyList();
+      outputScriptType_ = 1;
     }
 
     @java.lang.Override
@@ -2933,6 +2951,17 @@ public final class Protos {
                 accountPath_.add(input.readUInt32());
               }
               input.popLimit(limit);
+              break;
+            }
+            case 88: {
+              int rawValue = input.readEnum();
+              org.bitcoinj.wallet.Protos.Key.OutputScriptType value = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(11, rawValue);
+              } else {
+                bitField0_ |= 0x00000200;
+                outputScriptType_ = rawValue;
+              }
               break;
             }
           }
@@ -3114,6 +3143,96 @@ public final class Protos {
       }
 
       // @@protoc_insertion_point(enum_scope:wallet.Key.Type)
+    }
+
+    /**
+     * Protobuf enum {@code wallet.Key.OutputScriptType}
+     */
+    public enum OutputScriptType
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>P2PKH = 1;</code>
+       */
+      P2PKH(1),
+      /**
+       * <code>P2WPKH = 2;</code>
+       */
+      P2WPKH(2),
+      ;
+
+      /**
+       * <code>P2PKH = 1;</code>
+       */
+      public static final int P2PKH_VALUE = 1;
+      /**
+       * <code>P2WPKH = 2;</code>
+       */
+      public static final int P2WPKH_VALUE = 2;
+
+
+      public final int getNumber() {
+        return value;
+      }
+
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static OutputScriptType valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static OutputScriptType forNumber(int value) {
+        switch (value) {
+          case 1: return P2PKH;
+          case 2: return P2WPKH;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<OutputScriptType>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          OutputScriptType> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<OutputScriptType>() {
+              public OutputScriptType findValueByNumber(int number) {
+                return OutputScriptType.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return org.bitcoinj.wallet.Protos.Key.getDescriptor().getEnumTypes().get(1);
+      }
+
+      private static final OutputScriptType[] VALUES = values();
+
+      public static OutputScriptType valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private OutputScriptType(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:wallet.Key.OutputScriptType)
     }
 
     private int bitField0_;
@@ -3409,6 +3528,30 @@ public final class Protos {
     }
     private int accountPathMemoizedSerializedSize = -1;
 
+    public static final int OUTPUT_SCRIPT_TYPE_FIELD_NUMBER = 11;
+    private int outputScriptType_;
+    /**
+     * <pre>
+     * Type of addresses (aka output scripts) to generate for receiving.
+     * </pre>
+     *
+     * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     */
+    public boolean hasOutputScriptType() {
+      return ((bitField0_ & 0x00000200) == 0x00000200);
+    }
+    /**
+     * <pre>
+     * Type of addresses (aka output scripts) to generate for receiving.
+     * </pre>
+     *
+     * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     */
+    public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
+      org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
+      return result == null ? org.bitcoinj.wallet.Protos.Key.OutputScriptType.P2PKH : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -3478,6 +3621,9 @@ public final class Protos {
       for (int i = 0; i < accountPath_.size(); i++) {
         output.writeUInt32NoTag(accountPath_.get(i));
       }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        output.writeEnum(11, outputScriptType_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3534,6 +3680,10 @@ public final class Protos {
               .computeInt32SizeNoTag(dataSize);
         }
         accountPathMemoizedSerializedSize = dataSize;
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(11, outputScriptType_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3598,6 +3748,10 @@ public final class Protos {
       }
       result = result && getAccountPathList()
           .equals(other.getAccountPathList());
+      result = result && (hasOutputScriptType() == other.hasOutputScriptType());
+      if (hasOutputScriptType()) {
+        result = result && outputScriptType_ == other.outputScriptType_;
+      }
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -3649,6 +3803,10 @@ public final class Protos {
       if (getAccountPathCount() > 0) {
         hash = (37 * hash) + ACCOUNT_PATH_FIELD_NUMBER;
         hash = (53 * hash) + getAccountPathList().hashCode();
+      }
+      if (hasOutputScriptType()) {
+        hash = (37 * hash) + OUTPUT_SCRIPT_TYPE_FIELD_NUMBER;
+        hash = (53 * hash) + outputScriptType_;
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -3812,6 +3970,8 @@ public final class Protos {
         bitField0_ = (bitField0_ & ~0x00000100);
         accountPath_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000200);
+        outputScriptType_ = 1;
+        bitField0_ = (bitField0_ & ~0x00000400);
         return this;
       }
 
@@ -3889,6 +4049,10 @@ public final class Protos {
           bitField0_ = (bitField0_ & ~0x00000200);
         }
         result.accountPath_ = accountPath_;
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000200;
+        }
+        result.outputScriptType_ = outputScriptType_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3969,6 +4133,9 @@ public final class Protos {
             accountPath_.addAll(other.accountPath_);
           }
           onChanged();
+        }
+        if (other.hasOutputScriptType()) {
+          setOutputScriptType(other.getOutputScriptType());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -4885,6 +5052,58 @@ public final class Protos {
       public Builder clearAccountPath() {
         accountPath_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000200);
+        onChanged();
+        return this;
+      }
+
+      private int outputScriptType_ = 1;
+      /**
+       * <pre>
+       * Type of addresses (aka output scripts) to generate for receiving.
+       * </pre>
+       *
+       * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       */
+      public boolean hasOutputScriptType() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <pre>
+       * Type of addresses (aka output scripts) to generate for receiving.
+       * </pre>
+       *
+       * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       */
+      public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
+        org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
+        return result == null ? org.bitcoinj.wallet.Protos.Key.OutputScriptType.P2PKH : result;
+      }
+      /**
+       * <pre>
+       * Type of addresses (aka output scripts) to generate for receiving.
+       * </pre>
+       *
+       * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       */
+      public Builder setOutputScriptType(org.bitcoinj.wallet.Protos.Key.OutputScriptType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000400;
+        outputScriptType_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Type of addresses (aka output scripts) to generate for receiving.
+       * </pre>
+       *
+       * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       */
+      public Builder clearOutputScriptType() {
+        bitField0_ = (bitField0_ & ~0x00000400);
+        outputScriptType_ = 1;
         onChanged();
         return this;
       }
@@ -20418,7 +20637,7 @@ public final class Protos {
       "ode\030\001 \002(\014\022\014\n\004path\030\002 \003(\r\022\026\n\016issued_subkey" +
       "s\030\003 \001(\r\022\026\n\016lookahead_size\030\004 \001(\r\022\023\n\013isFol" +
       "lowing\030\005 \001(\010\022\036\n\023sigsRequiredToSpend\030\006 \001(" +
-      "\r:\0011\"\264\003\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wallet.Key." +
+      "\r:\0011\"\231\004\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wallet.Key." +
       "Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016encrypted_",
       "data\030\006 \001(\0132\025.wallet.EncryptedData\022\022\n\npub" +
       "lic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creation" +
@@ -20426,70 +20645,72 @@ public final class Protos {
       "\001(\0132\030.wallet.DeterministicKey\022\032\n\022determi" +
       "nistic_seed\030\010 \001(\014\022;\n\034encrypted_determini" +
       "stic_seed\030\t \001(\0132\025.wallet.EncryptedData\022\030" +
-      "\n\014account_path\030\n \003(\rB\002\020\001\"a\n\004Type\022\014\n\010ORIG" +
-      "INAL\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\022\032\n\026DETE" +
-      "RMINISTIC_MNEMONIC\020\003\022\025\n\021DETERMINISTIC_KE" +
-      "Y\020\004\"5\n\006Script\022\017\n\007program\030\001 \002(\014\022\032\n\022creati",
-      "on_timestamp\030\002 \002(\003\"\035\n\rScriptWitness\022\014\n\004d" +
-      "ata\030\001 \003(\014\"\272\001\n\020TransactionInput\022\"\n\032transa" +
-      "ction_out_point_hash\030\001 \002(\014\022#\n\033transactio" +
-      "n_out_point_index\030\002 \002(\r\022\024\n\014script_bytes\030" +
-      "\003 \002(\014\022\020\n\010sequence\030\004 \001(\r\022\r\n\005value\030\005 \001(\003\022&" +
-      "\n\007witness\030\006 \001(\0132\025.wallet.ScriptWitness\"\177" +
-      "\n\021TransactionOutput\022\r\n\005value\030\001 \002(\003\022\024\n\014sc" +
-      "ript_bytes\030\002 \002(\014\022!\n\031spent_by_transaction" +
-      "_hash\030\003 \001(\014\022\"\n\032spent_by_transaction_inde" +
-      "x\030\004 \001(\005\"\267\003\n\025TransactionConfidence\0220\n\004typ",
-      "e\030\001 \001(\0162\".wallet.TransactionConfidence.T" +
-      "ype\022\032\n\022appeared_at_height\030\002 \001(\005\022\036\n\026overr" +
-      "iding_transaction\030\003 \001(\014\022\r\n\005depth\030\004 \001(\005\022)" +
-      "\n\014broadcast_by\030\006 \003(\0132\023.wallet.PeerAddres" +
-      "s\022\033\n\023last_broadcasted_at\030\010 \001(\003\0224\n\006source" +
-      "\030\007 \001(\0162$.wallet.TransactionConfidence.So" +
-      "urce\"`\n\004Type\022\013\n\007UNKNOWN\020\000\022\014\n\010BUILDING\020\001\022" +
-      "\013\n\007PENDING\020\002\022\025\n\021NOT_IN_BEST_CHAIN\020\003\022\010\n\004D" +
-      "EAD\020\004\022\017\n\013IN_CONFLICT\020\005\"A\n\006Source\022\022\n\016SOUR" +
-      "CE_UNKNOWN\020\000\022\022\n\016SOURCE_NETWORK\020\001\022\017\n\013SOUR",
-      "CE_SELF\020\002\"\303\005\n\013Transaction\022\017\n\007version\030\001 \002" +
-      "(\005\022\014\n\004hash\030\002 \002(\014\022&\n\004pool\030\003 \001(\0162\030.wallet." +
-      "Transaction.Pool\022\021\n\tlock_time\030\004 \001(\r\022\022\n\nu" +
-      "pdated_at\030\005 \001(\003\0223\n\021transaction_input\030\006 \003" +
-      "(\0132\030.wallet.TransactionInput\0225\n\022transact" +
-      "ion_output\030\007 \003(\0132\031.wallet.TransactionOut" +
-      "put\022\022\n\nblock_hash\030\010 \003(\014\022 \n\030block_relativ" +
-      "ity_offsets\030\013 \003(\005\0221\n\nconfidence\030\t \001(\0132\035." +
-      "wallet.TransactionConfidence\0225\n\007purpose\030" +
-      "\n \001(\0162\033.wallet.Transaction.Purpose:\007UNKN",
-      "OWN\022+\n\rexchange_rate\030\014 \001(\0132\024.wallet.Exch" +
-      "angeRate\022\014\n\004memo\030\r \001(\t\"Y\n\004Pool\022\013\n\007UNSPEN" +
-      "T\020\004\022\t\n\005SPENT\020\005\022\014\n\010INACTIVE\020\002\022\010\n\004DEAD\020\n\022\013" +
-      "\n\007PENDING\020\020\022\024\n\020PENDING_INACTIVE\020\022\"\243\001\n\007Pu" +
-      "rpose\022\013\n\007UNKNOWN\020\000\022\020\n\014USER_PAYMENT\020\001\022\020\n\014" +
-      "KEY_ROTATION\020\002\022\034\n\030ASSURANCE_CONTRACT_CLA" +
-      "IM\020\003\022\035\n\031ASSURANCE_CONTRACT_PLEDGE\020\004\022\033\n\027A" +
-      "SSURANCE_CONTRACT_STUB\020\005\022\r\n\tRAISE_FEE\020\006\"" +
-      "N\n\020ScryptParameters\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002" +
-      " \001(\003:\00516384\022\014\n\001r\030\003 \001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"",
-      "8\n\tExtension\022\n\n\002id\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021" +
-      "\n\tmandatory\030\003 \002(\010\" \n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n" +
-      "\004data\030\002 \002(\014\"\261\004\n\006Wallet\022\032\n\022network_identi" +
-      "fier\030\001 \002(\t\022\034\n\024last_seen_block_hash\030\002 \001(\014" +
-      "\022\036\n\026last_seen_block_height\030\014 \001(\r\022!\n\031last" +
-      "_seen_block_time_secs\030\016 \001(\003\022\030\n\003key\030\003 \003(\013" +
-      "2\013.wallet.Key\022(\n\013transaction\030\004 \003(\0132\023.wal" +
-      "let.Transaction\022&\n\016watched_script\030\017 \003(\0132" +
-      "\016.wallet.Script\022C\n\017encryption_type\030\005 \001(\016" +
-      "2\035.wallet.Wallet.EncryptionType:\013UNENCRY",
-      "PTED\0227\n\025encryption_parameters\030\006 \001(\0132\030.wa" +
-      "llet.ScryptParameters\022\022\n\007version\030\007 \001(\005:\001" +
-      "1\022$\n\textension\030\n \003(\0132\021.wallet.Extension\022" +
-      "\023\n\013description\030\013 \001(\t\022\031\n\021key_rotation_tim" +
-      "e\030\r \001(\004\022\031\n\004tags\030\020 \003(\0132\013.wallet.Tag\";\n\016En" +
-      "cryptionType\022\017\n\013UNENCRYPTED\020\001\022\030\n\024ENCRYPT" +
-      "ED_SCRYPT_AES\020\002\"R\n\014ExchangeRate\022\022\n\ncoin_" +
-      "value\030\001 \002(\003\022\022\n\nfiat_value\030\002 \002(\003\022\032\n\022fiat_" +
-      "currency_code\030\003 \002(\tB\035\n\023org.bitcoinj.wall" +
-      "etB\006Protos"
+      "\n\014account_path\030\n \003(\rB\002\020\001\0228\n\022output_scrip" +
+      "t_type\030\013 \001(\0162\034.wallet.Key.OutputScriptTy" +
+      "pe\"a\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SC" +
+      "RYPT_AES\020\002\022\032\n\026DETERMINISTIC_MNEMONIC\020\003\022\025",
+      "\n\021DETERMINISTIC_KEY\020\004\")\n\020OutputScriptTyp" +
+      "e\022\t\n\005P2PKH\020\001\022\n\n\006P2WPKH\020\002\"5\n\006Script\022\017\n\007pr" +
+      "ogram\030\001 \002(\014\022\032\n\022creation_timestamp\030\002 \002(\003\"" +
+      "\035\n\rScriptWitness\022\014\n\004data\030\001 \003(\014\"\272\001\n\020Trans" +
+      "actionInput\022\"\n\032transaction_out_point_has" +
+      "h\030\001 \002(\014\022#\n\033transaction_out_point_index\030\002" +
+      " \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004" +
+      " \001(\r\022\r\n\005value\030\005 \001(\003\022&\n\007witness\030\006 \001(\0132\025.w" +
+      "allet.ScriptWitness\"\177\n\021TransactionOutput" +
+      "\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n",
+      "\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032spen" +
+      "t_by_transaction_index\030\004 \001(\005\"\267\003\n\025Transac" +
+      "tionConfidence\0220\n\004type\030\001 \001(\0162\".wallet.Tr" +
+      "ansactionConfidence.Type\022\032\n\022appeared_at_" +
+      "height\030\002 \001(\005\022\036\n\026overriding_transaction\030\003" +
+      " \001(\014\022\r\n\005depth\030\004 \001(\005\022)\n\014broadcast_by\030\006 \003(" +
+      "\0132\023.wallet.PeerAddress\022\033\n\023last_broadcast" +
+      "ed_at\030\010 \001(\003\0224\n\006source\030\007 \001(\0162$.wallet.Tra" +
+      "nsactionConfidence.Source\"`\n\004Type\022\013\n\007UNK" +
+      "NOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT",
+      "_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\022\017\n\013IN_CONFLIC" +
+      "T\020\005\"A\n\006Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOU" +
+      "RCE_NETWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\303\005\n\013Trans" +
+      "action\022\017\n\007version\030\001 \002(\005\022\014\n\004hash\030\002 \002(\014\022&\n" +
+      "\004pool\030\003 \001(\0162\030.wallet.Transaction.Pool\022\021\n" +
+      "\tlock_time\030\004 \001(\r\022\022\n\nupdated_at\030\005 \001(\003\0223\n\021" +
+      "transaction_input\030\006 \003(\0132\030.wallet.Transac" +
+      "tionInput\0225\n\022transaction_output\030\007 \003(\0132\031." +
+      "wallet.TransactionOutput\022\022\n\nblock_hash\030\010" +
+      " \003(\014\022 \n\030block_relativity_offsets\030\013 \003(\005\0221",
+      "\n\nconfidence\030\t \001(\0132\035.wallet.TransactionC" +
+      "onfidence\0225\n\007purpose\030\n \001(\0162\033.wallet.Tran" +
+      "saction.Purpose:\007UNKNOWN\022+\n\rexchange_rat" +
+      "e\030\014 \001(\0132\024.wallet.ExchangeRate\022\014\n\004memo\030\r " +
+      "\001(\t\"Y\n\004Pool\022\013\n\007UNSPENT\020\004\022\t\n\005SPENT\020\005\022\014\n\010I" +
+      "NACTIVE\020\002\022\010\n\004DEAD\020\n\022\013\n\007PENDING\020\020\022\024\n\020PEND" +
+      "ING_INACTIVE\020\022\"\243\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022" +
+      "\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030A" +
+      "SSURANCE_CONTRACT_CLAIM\020\003\022\035\n\031ASSURANCE_C" +
+      "ONTRACT_PLEDGE\020\004\022\033\n\027ASSURANCE_CONTRACT_S",
+      "TUB\020\005\022\r\n\tRAISE_FEE\020\006\"N\n\020ScryptParameters" +
+      "\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 " +
+      "\001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030" +
+      "\001 \002(\t\022\014\n\004data\030\002 \002(\014\022\021\n\tmandatory\030\003 \002(\010\" " +
+      "\n\003Tag\022\013\n\003tag\030\001 \002(\t\022\014\n\004data\030\002 \002(\014\"\261\004\n\006Wal" +
+      "let\022\032\n\022network_identifier\030\001 \002(\t\022\034\n\024last_" +
+      "seen_block_hash\030\002 \001(\014\022\036\n\026last_seen_block" +
+      "_height\030\014 \001(\r\022!\n\031last_seen_block_time_se" +
+      "cs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013tr" +
+      "ansaction\030\004 \003(\0132\023.wallet.Transaction\022&\n\016",
+      "watched_script\030\017 \003(\0132\016.wallet.Script\022C\n\017" +
+      "encryption_type\030\005 \001(\0162\035.wallet.Wallet.En" +
+      "cryptionType:\013UNENCRYPTED\0227\n\025encryption_" +
+      "parameters\030\006 \001(\0132\030.wallet.ScryptParamete" +
+      "rs\022\022\n\007version\030\007 \001(\005:\0011\022$\n\textension\030\n \003(" +
+      "\0132\021.wallet.Extension\022\023\n\013description\030\013 \001(" +
+      "\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n\004tags\030\020 \003" +
+      "(\0132\013.wallet.Tag\";\n\016EncryptionType\022\017\n\013UNE" +
+      "NCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\"R\n\014" +
+      "ExchangeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfiat",
+      "_value\030\002 \002(\003\022\032\n\022fiat_currency_code\030\003 \002(\t" +
+      "B\035\n\023org.bitcoinj.walletB\006Protos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -20526,7 +20747,7 @@ public final class Protos {
     internal_static_wallet_Key_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_wallet_Key_descriptor,
-        new java.lang.String[] { "Type", "SecretBytes", "EncryptedData", "PublicKey", "Label", "CreationTimestamp", "DeterministicKey", "DeterministicSeed", "EncryptedDeterministicSeed", "AccountPath", });
+        new java.lang.String[] { "Type", "SecretBytes", "EncryptedData", "PublicKey", "Label", "CreationTimestamp", "DeterministicKey", "DeterministicSeed", "EncryptedDeterministicSeed", "AccountPath", "OutputScriptType", });
     internal_static_wallet_Script_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_wallet_Script_fieldAccessorTable = new

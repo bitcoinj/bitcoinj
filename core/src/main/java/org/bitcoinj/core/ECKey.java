@@ -19,6 +19,8 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.crypto.*;
+import org.bitcoinj.script.Script;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -1288,10 +1290,15 @@ public class ECKey implements EncryptableItem {
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-            NetworkParameters params) {
-        final Address address = LegacyAddress.fromKey(params, this);
+            NetworkParameters params, Script.ScriptType outputScriptType) {
         builder.append("  addr:");
-        builder.append(address.toString());
+        if (outputScriptType != null) {
+            builder.append(Address.fromKey(params, this, outputScriptType));
+        } else {
+            builder.append(LegacyAddress.fromKey(params, this));
+            if (isCompressed())
+                builder.append(',').append(SegwitAddress.fromKey(params, this));
+        }
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");
         builder.append("  hash160:");

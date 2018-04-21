@@ -137,6 +137,13 @@ message Key {
 
   // The path to the root. Only applicable to a DETERMINISTIC_MNEMONIC key entry.
   repeated uint32 account_path = 10 [packed = true];
+
+  enum OutputScriptType {
+    P2PKH = 1;
+    P2WPKH = 2;
+  }
+  // Type of addresses (aka output scripts) to generate for receiving.
+  optional OutputScriptType output_script_type = 11;
 }
 
 message Script {

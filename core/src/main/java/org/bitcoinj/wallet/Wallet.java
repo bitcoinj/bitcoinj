@@ -26,6 +26,7 @@ import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
@@ -75,6 +76,7 @@ import org.bouncycastle.crypto.params.*;
 import javax.annotation.*;
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -251,18 +253,44 @@ public class Wallet extends BaseTaggableObject
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
+     * @param params network parameters
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
      */
-    public Wallet(NetworkParameters params) {
-        this(Context.getOrCreate(params));
+    public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType) {
+        return createDeterministic(Context.getOrCreate(params), outputScriptType);
     }
 
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
+     * @param params network parameters
+     * @deprecated Use {@link #createDeterministic(NetworkParameters, ScriptType)}
      */
+    @Deprecated
+    public Wallet(NetworkParameters params) {
+        this(params, KeyChainGroup.builder(params).fromRandom(Script.ScriptType.P2PKH).build());
+    }
+
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     */
+    public static Wallet createDeterministic(Context context, Script.ScriptType outputScriptType) {
+        return new Wallet(context, KeyChainGroup.builder(context.getParams()).fromRandom(outputScriptType).build());
+    }
+
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     * @deprecated Use {@link #createDeterministic(Context, ScriptType)}
+     */
+    @Deprecated
     public Wallet(Context context) {
-        this(context, KeyChainGroup.builder(context.getParams()).fromRandom().build());
+        this(context, KeyChainGroup.builder(context.getParams()).fromRandom(Script.ScriptType.P2PKH).build());
     }
 
     /**
@@ -277,11 +305,49 @@ public class Wallet extends BaseTaggableObject
     /**
      * @param params network parameters
      * @param seed deterministic seed
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @return a wallet from a deterministic seed with a default account path
+     */
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed,
+            Script.ScriptType outputScriptType) {
+        return fromSeed(params, seed, outputScriptType, KeyChainGroupStructure.DEFAULT);
+    }
+
+    /**
+     * @param params network parameters
+     * @param seed deterministic seed
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param structure structure for your wallet
+     * @return a wallet from a deterministic seed with a default account path
+     */
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
+            KeyChainGroupStructure structure) {
+        return new Wallet(params, KeyChainGroup.builder(params, structure).fromSeed(seed, outputScriptType).build());
+    }
+
+    /**
+     * @param params network parameters
+     * @param seed deterministic seed
      * @return a wallet from a deterministic seed with a
      * {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH 0 hardened path}
+     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, KeyChainGroupStructure)}
      */
+    @Deprecated
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
+        return fromSeed(params, seed, Script.ScriptType.P2PKH);
+    }
+
+    /**
+     * @param params network parameters
+     * @param seed deterministic seed
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param accountPath account path to generate receiving addresses on
+     * @return an instance of a wallet from a deterministic seed.
+     */
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
+            ImmutableList<ChildNumber> accountPath) {
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
+                .accountPath(accountPath).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
@@ -290,19 +356,32 @@ public class Wallet extends BaseTaggableObject
      * @param seed deterministic seed
      * @param accountPath account path
      * @return an instance of a wallet from a deterministic seed.
+     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, ImmutableList)}
      */
+    @Deprecated
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).accountPath(accountPath).build();
-        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+        return fromSeed(params, seed, Script.ScriptType.P2PKH, accountPath);
     }
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
-    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).build();
+    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey,
+            Script.ScriptType outputScriptType) {
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
+                .build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
+     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
+     * @deprecated Use {@link #fromWatchingKey(NetworkParameters, DeterministicKey, ScriptType)}
+     */
+    @Deprecated
+    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
+        return fromWatchingKey(params, watchKey, Script.ScriptType.P2PKH);
     }
 
     /**
@@ -313,16 +392,28 @@ public class Wallet extends BaseTaggableObject
     public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
         final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
         watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey);
+        return fromWatchingKey(params, watchKey, outputScriptTypeFromB58(params, watchKeyB58));
     }
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
      */
-    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).build();
+    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey,
+            Script.ScriptType outputScriptType) {
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
+                .build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
+     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
+     * @deprecated Use {@link #fromSpendingKey(NetworkParameters, DeterministicKey, ScriptType)}
+     */
+    @Deprecated
+    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
+        return fromSpendingKey(params, spendKey, Script.ScriptType.P2PKH);
     }
 
     /**
@@ -333,7 +424,7 @@ public class Wallet extends BaseTaggableObject
     public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
         final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params);
         spendKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromSpendingKey(params, spendKey);
+        return fromSpendingKey(params, spendKey, outputScriptTypeFromB58(params, spendingKeyB58));
     }
 
     /**
@@ -341,11 +432,12 @@ public class Wallet extends BaseTaggableObject
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey,
-            ChildNumber accountNumber) {
+            Script.ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
         accountKey = accountKey.dropParent();
         accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey).build();
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
+                .outputScriptType(outputScriptType).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
@@ -359,6 +451,16 @@ public class Wallet extends BaseTaggableObject
         KeyChainGroup group = KeyChainGroup.builder(params).build();
         group.importKeys(keys);
         return new Wallet(params, group);
+    }
+
+    private static Script.ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
+        int header = ByteBuffer.wrap(Base58.decodeChecked(base58)).getInt();
+        if (header == params.getBip32HeaderP2PKHpub() || header == params.getBip32HeaderP2PKHpriv())
+            return Script.ScriptType.P2PKH;
+        else if (header == params.getBip32HeaderP2WPKHpub() || header == params.getBip32HeaderP2WPKHpriv())
+            return Script.ScriptType.P2WPKH;
+        else
+            throw new IllegalArgumentException(base58.substring(0, 4));
     }
 
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
@@ -590,11 +692,18 @@ public class Wallet extends BaseTaggableObject
      * {@link #currentReceiveKey()} or {@link #currentReceiveAddress()}.
      */
     public List<Address> getIssuedReceiveAddresses() {
-        final List<ECKey> keys = getIssuedReceiveKeys();
-        List<Address> addresses = new ArrayList<>(keys.size());
-        for (ECKey key : keys)
-            addresses.add(LegacyAddress.fromKey(getParams(), key));
-        return addresses;
+        keyChainGroupLock.lock();
+        try {
+            final DeterministicKeyChain activeKeyChain = keyChainGroup.getActiveKeyChain();
+            final List<ECKey> keys = activeKeyChain.getIssuedReceiveKeys();
+            final Script.ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
+            List<Address> addresses = new ArrayList<>(keys.size());
+            for (ECKey key : keys)
+                addresses.add(Address.fromKey(getParams(), key, outputScriptType));
+            return addresses;
+        } finally {
+            keyChainGroupLock.unlock();
+        }
     }
 
     /**
@@ -1015,10 +1124,10 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.findKeyFromPubKeyHash(pubKeyHash);
+            return keyChainGroup.findKeyFromPubKeyHash(pubKeyHash, scriptType);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1040,14 +1149,14 @@ public class Wallet extends BaseTaggableObject
     public boolean isAddressMine(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
         if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
-            return isPubKeyHashMine(address.getHash());
+            return isPubKeyHashMine(address.getHash(), scriptType);
         else
             throw new IllegalArgumentException(address.toString());
     }
 
     @Override
-    public boolean isPubKeyHashMine(byte[] pubKeyHash) {
-        return findKeyFromPubKeyHash(pubKeyHash) != null;
+    public boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
+        return findKeyFromPubKeyHash(pubKeyHash, scriptType) != null;
     }
 
     @Override
@@ -1067,7 +1176,7 @@ public class Wallet extends BaseTaggableObject
     public ECKey findKeyFromAddress(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
         if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
-            return findKeyFromPubKeyHash(address.getHash());
+            return findKeyFromPubKeyHash(address.getHash(), scriptType);
         else
             return null;
     }
@@ -1132,6 +1241,9 @@ public class Wallet extends BaseTaggableObject
                         LegacyAddress a = LegacyAddress.fromScriptHash(tx.getParams(),
                                 ScriptPattern.extractHashFromPayToScriptHash(script));
                         keyChainGroup.markP2SHAddressAsUsed(a);
+                    } else if (ScriptPattern.isPayToWitnessHash(script)) {
+                        byte[] pubkeyHash = ScriptPattern.extractHashFromPayToWitnessHash(script);
+                        keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
                     }
                 } catch (ScriptException e) {
                     // Just means we didn't understand the output of this transaction: ignore it.
@@ -4082,16 +4194,19 @@ public class Wallet extends BaseTaggableObject
             int numInputs = tx.getInputs().size();
             for (int i = 0; i < numInputs; i++) {
                 TransactionInput txIn = tx.getInput(i);
-                if (txIn.getConnectedOutput() == null) {
+                TransactionOutput connectedOutput = txIn.getConnectedOutput();
+                if (connectedOutput == null) {
                     // Missing connected output, assuming already signed.
                     continue;
                 }
+                Script scriptPubKey = connectedOutput.getScriptPubKey();
 
                 try {
                     // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                     // we sign missing pieces (to check this would require either assuming any signatures are signing
                     // standard output types or a way to get processed signatures out of script execution)
-                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getConnectedOutput().getScriptPubKey());
+                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                            connectedOutput.getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
                     log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                     continue;
                 } catch (ScriptException e) {
@@ -4099,10 +4214,10 @@ public class Wallet extends BaseTaggableObject
                     // Expected.
                 }
 
-                Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
                 checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
                 txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+                txIn.setWitness(scriptPubKey.createEmptyWitness(redeemData.keys.get(0)));
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);
@@ -4181,8 +4296,13 @@ public class Wallet extends BaseTaggableObject
             RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
         } else if (ScriptPattern.isPayToPubKeyHash(script)) {
-            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
+            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script),
+                    Script.ScriptType.P2PKH);
             return key != null && (key.isEncrypted() || key.hasPrivKey());
+        } else if (ScriptPattern.isPayToWitnessPubKeyHash(script)) {
+            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToWitnessHash(script),
+                    Script.ScriptType.P2WPKH);
+            return key != null && (key.isEncrypted() || key.hasPrivKey()) && key.isCompressed();
         } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
                 ECKey key = findKeyFromPubKey(pubkey.getPubKey());
@@ -4645,7 +4765,12 @@ public class Wallet extends BaseTaggableObject
         // before calling, but because this is public API we must still lock again regardless.
         keyChainGroupLock.lock();
         try {
-            return !watchedScripts.isEmpty();
+            if (!watchedScripts.isEmpty())
+                return true;
+            for (DeterministicKeyChain chain : keyChainGroup.chains)
+                if (chain.getOutputScriptType() == Script.ScriptType.P2WPKH)
+                    return true;
+            return false;
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -4701,7 +4826,8 @@ public class Wallet extends BaseTaggableObject
     // Returns true if the output is one that won't be selected by a data element matching in the scriptSig.
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
         Script script = out.getScriptPubKey();
-        boolean isScriptTypeSupported = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isPayToScriptHash(script);
+        boolean isScriptTypeSupported = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isPayToScriptHash(script)
+                || ScriptPattern.isPayToWitnessPubKeyHash(script) || ScriptPattern.isPayToWitnessScriptHash(script);
         return (isScriptTypeSupported && myUnspents.contains(out)) || watchedScripts.contains(script);
     }
 
@@ -4959,7 +5085,12 @@ public class Wallet extends BaseTaggableObject
                 ECKey key = null;
                 Script redeemScript = null;
                 if (ScriptPattern.isPayToPubKeyHash(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script),
+                            Script.ScriptType.P2PKH);
+                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                } else if (ScriptPattern.isPayToWitnessPubKeyHash(script)) {
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToWitnessHash(script),
+                            Script.ScriptType.P2WPKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                 } else if (ScriptPattern.isPayToScriptHash(script)) {
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script)).redeemScript;
