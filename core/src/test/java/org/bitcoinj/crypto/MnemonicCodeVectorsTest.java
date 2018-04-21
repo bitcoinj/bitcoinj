@@ -1,3 +1,20 @@
+/*
+ * Copyright 2013 Ken Sedgwick
+ * Copyright 2014 Andreas Schildbach
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.Utils;
@@ -221,50 +238,7 @@ public class MnemonicCodeVectorsTest {
                         "void come effort suffer camp survey warrior heavy shoot primary clutch crush open amazing screen patrol group space point ten exist slush involve unfold",
                         "b873212f885ccffbf4692afcb84bc2e55886de2dfa07d90f5c3c239abc31c0a6ce047e30fd8bf6a281e71389aa82d73df74c7bbfb3b06b4639a5cee775cccd3c",
                         ""
-                },
-
-                /*
-                 * The following vectors were created to test character encoding and normalization of the passphrase,
-                 * and were determined using the reference implementation at https://github.com/trezor/python-mnemonic.
-                 *
-                 * Use these vectors to test a resolution to issue #1361.
-                 */
-//                {
-//                        "00000000000000000000000000000000",
-//                        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-//                        "c8eaf56947690f7505ffae9a08f3c286b5e28adb5db5d2324499979dbe5ecf6009642006593aafeb72cb7314ac47c60fd2710d46674779d6f5872042a228cae3",
-//                        "schön"
-//                }, {
-//                        "7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f",
-//                        "legal winner thank year wave sausage worth useful legal winner thank yellow",
-//                        "d0e74e4615e8697d68a011ac131bef61fb098d07eab20ebe3d2b9034281adb117ffdd5fb78a55661bf4ba4dbab3c805329a454460e74bc8c67e9016fed8ec8e4",
-//                        "schön"
-//                }, {
-//                        "80808080808080808080808080808080",
-//                        "letter advice cage absurd amount doctor acoustic avoid letter advice cage above",
-//                        "bb7a3b74623ec791d781055a2a75a253bc14a842a589c0f535ef955730cda04e6d03333e3f7d7dc6b1e6f5d9bed0fcc4714cc80f340c750d60057bff83b82125",
-//                        "schön"
-//                }, {
-//                        "ffffffffffffffffffffffffffffffff",
-//                        "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong",
-//                        "5f197e8565923b4fd776056ff2d3e5a23c783c1f95ebe91f13166b39a59bd89e20557c33503090be49002a2899c44ab89c2b461e1307443b0d579667dc783d3b",
-//                        "schön"
-//                }, {
-//                        "f30f8c1da665478f49b001d94c5fc452",
-//                        "vessel ladder alter error federal sibling chat ability sun glass valve picture",
-//                        "401e0fcc6974e6fdcb847bd832d9f6e3933d05410f23e882e7c2d027f3ad56e01d38006cd2690930e6f0bab67c75fb269d8bdbe0d1fc125581b78ba0e46c5716",
-//                        "schön"
-//                }, {
-//                        "c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05",
-//                        "scissors invite lock maple supreme raw rapid void congress muscle digital elegant little brisk hair mango congress clump",
-//                        "8f8aef01d3c05f0dbd736158df85f308edff2d3c2428b8e8991336342a2b363e484d6451e24d8b17f1343329c2fbc6b11d35b0ffc89f7f735dae14869aefbd9e",
-//                        "schön"
-//                }, {
-//                        "f585c11aec520db57dd353c69554b21a89b20fb0650966fa0a9d6f74fd989d8f",
-//                        "void come effort suffer camp survey warrior heavy shoot primary clutch crush open amazing screen patrol group space point ten exist slush involve unfold",
-//                        "566beed821c8a4af803aeb0981d48e74ecf247117982f7e055b3b4fb9691f6d870945239bb6045da030b85e0f6397b3c13c3f779d99d3a9f827d177c1adddc01",
-//                        "schön"
-//                }
+                }
         });
     }
 }
