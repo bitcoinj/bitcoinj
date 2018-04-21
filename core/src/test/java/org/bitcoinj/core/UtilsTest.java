@@ -21,6 +21,7 @@ package org.bitcoinj.core;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -110,5 +111,24 @@ public class UtilsTest {
         byte[] expected = new byte[]{-128};                 // -128 == 1000_0000 (compl-2)
         byte[] actual = Utils.bigIntegerToBytes(b, 1);
         assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void split_WordsWithWhitespace() {
+        String sentence = "These words  are    separated\rby\n\ndifferent amounts and types of white space";
+        final List<String> words = Utils.split(sentence);
+        assertEquals(12, words.size());
+        assertEquals("These", words.get(0));
+        assertEquals("words", words.get(1));
+        assertEquals("are", words.get(2));
+        assertEquals("separated", words.get(3));
+        assertEquals("by", words.get(4));
+        assertEquals("different", words.get(5));
+        assertEquals("amounts", words.get(6));
+        assertEquals("and", words.get(7));
+        assertEquals("types", words.get(8));
+        assertEquals("of", words.get(9));
+        assertEquals("white", words.get(10));
+        assertEquals("space", words.get(11));
     }
 }

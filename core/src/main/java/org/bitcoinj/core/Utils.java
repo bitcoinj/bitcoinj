@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -554,5 +555,14 @@ public class Utils {
 
     public static boolean isMac() {
         return System.getProperty("os.name").toLowerCase().contains("mac");
+    }
+
+    /**
+     * Split the words of a string into a list of strings.
+     * @param words A string of words separated by one or more whitespace characters.
+     * @return each word as an element of a list
+     */
+    public static List<String> split(String words) {
+        return new ArrayList<>(Arrays.asList(words.split("\\s+")));
     }
 }
