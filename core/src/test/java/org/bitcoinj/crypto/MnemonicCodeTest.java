@@ -17,12 +17,12 @@
 
 package org.bitcoinj.crypto;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.core.Utils.split;

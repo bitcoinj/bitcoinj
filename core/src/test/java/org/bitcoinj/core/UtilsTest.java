@@ -18,12 +18,13 @@
 
 package org.bitcoinj.core;
 
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 
