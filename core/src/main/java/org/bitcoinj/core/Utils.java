@@ -17,30 +17,23 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.io.BaseEncoding;
+import com.google.common.primitives.Ints;
+import org.spongycastle.crypto.digests.RIPEMD160Digest;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import org.spongycastle.crypto.digests.RIPEMD160Digest;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-import com.google.common.io.BaseEncoding;
-import com.google.common.primitives.Ints;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
@@ -554,5 +547,14 @@ public class Utils {
 
     public static boolean isMac() {
         return System.getProperty("os.name").toLowerCase().contains("mac");
+    }
+
+    /**
+     * Split the words of a string into a list of strings.
+     * @param words A string of words separated by one or more whitespace characters.
+     * @return each word as an element of a list
+     */
+    public static List<String> split(String words) {
+        return new ArrayList<>(Arrays.asList(words.split("\\s+")));
     }
 }

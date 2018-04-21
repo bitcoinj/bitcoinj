@@ -22,11 +22,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.core.Utils.split;
 
 /**
  * Test the various guard clauses of {@link MnemonicCode}.
@@ -82,9 +81,5 @@ public class MnemonicCodeTest {
     public void testNullPassphrase() throws Exception {
         List<String> code = split("legal winner thank year wave sausage worth useful legal winner thank yellow");
         MnemonicCode.toSeed(code, null);
-    }
-
-    static List<String> split(String words) {
-        return new ArrayList<>(Arrays.asList(words.split("\\s+")));
     }
 }

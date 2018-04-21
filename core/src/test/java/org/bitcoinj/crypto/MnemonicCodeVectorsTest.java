@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.Utils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,8 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.crypto.MnemonicCodeTest.split;
+import static org.bitcoinj.core.Utils.*;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -39,16 +37,16 @@ import static org.junit.Assert.assertEquals;
 public class MnemonicCodeVectorsTest {
 
     private MnemonicCode mc;
-    private String entropy;
-    private String mnemonicCode;
-    private String seed;
-    private String passphrase;
+    private String vectorEntropy;
+    private String vectorMnemonicCode;
+    private String vectorSeed;
+    private String vectorPassphrase;
 
-    public MnemonicCodeVectorsTest(String entropy, String mnemonicCode, String seed, String passphrase) {
-        this.entropy = entropy;
-        this.mnemonicCode = mnemonicCode;
-        this.seed = seed;
-        this.passphrase = passphrase;
+    public MnemonicCodeVectorsTest(String vectorEntropy, String vectorMnemonicCode, String vectorSeed, String vectorPassphrase) {
+        this.vectorEntropy = vectorEntropy;
+        this.vectorMnemonicCode = vectorMnemonicCode;
+        this.vectorSeed = vectorSeed;
+        this.vectorPassphrase = vectorPassphrase;
     }
 
     @Before
@@ -58,13 +56,13 @@ public class MnemonicCodeVectorsTest {
 
     @Test
     public void testMnemonicCode() throws Exception {
-        final List<String> mnemonicCode = mc.toMnemonic(HEX.decode(entropy));
-        final byte[] seed = MnemonicCode.toSeed(mnemonicCode, passphrase);
-        final byte[] entropy = mc.toEntropy(split(this.mnemonicCode));
+        final List<String> mnemonicCode = mc.toMnemonic(HEX.decode(vectorEntropy));
+        final byte[] seed = MnemonicCode.toSeed(mnemonicCode, vectorPassphrase);
+        final byte[] entropy = mc.toEntropy(split(vectorMnemonicCode));
 
-        assertEquals(this.entropy, HEX.encode(entropy));
-        assertEquals(this.mnemonicCode, Utils.SPACE_JOINER.join(mnemonicCode));
-        assertEquals(this.seed, HEX.encode(seed));
+        assertEquals(vectorEntropy, HEX.encode(entropy));
+        assertEquals(vectorMnemonicCode, SPACE_JOINER.join(mnemonicCode));
+        assertEquals(vectorSeed, HEX.encode(seed));
     }
 
     /**
