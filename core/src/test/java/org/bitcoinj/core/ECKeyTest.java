@@ -240,6 +240,19 @@ public class ECKeyTest {
     }
 
     @Test
+    public void findRecoveryId() {
+        ECKey key = new ECKey();
+        String message = "Hello World!";
+        Sha256Hash hash = Sha256Hash.of(message.getBytes());
+        ECKey.ECDSASignature sig = key.sign(hash);
+        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
+
+        List<Byte> possibleRecIds = Lists.newArrayList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
+        byte recId = key.findRecoveryId(hash, sig);
+        assertTrue(possibleRecIds.contains(recId));
+    }
+
+    @Test
     public void keyRecovery() throws Exception {
         ECKey key = new ECKey();
         String message = "Hello World!";
