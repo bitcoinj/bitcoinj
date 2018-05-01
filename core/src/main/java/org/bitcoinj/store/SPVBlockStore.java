@@ -95,7 +95,7 @@ public class SPVBlockStore implements BlockStore {
      * it's missing. This operation will block on disk.
      * @param file file to use for the block store
      * @param capacity custom capacity in number of block headers
-     * @param wether or not to migrate an existing block store of different capacity
+     * @param grow wether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
      */
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
