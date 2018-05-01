@@ -253,6 +253,39 @@ public class ECKeyTest {
     }
 
     @Test
+    public void keyRecoveryTestVector() {
+        // a test that exercises key recovery with findRecoveryId() on a test vector
+        // test vector from https://crypto.stackexchange.com/a/41339
+        ECKey key = ECKey.fromPrivate(
+                new BigInteger("ebb2c082fd7727890a28ac82f6bdf97bad8de9f5d7c9028692de1a255cad3e0f", 16));
+        String message = "Maarten Bodewes generated this test vector on 2016-11-08";
+        Sha256Hash hash = Sha256Hash.of(message.getBytes());
+        ECKey.ECDSASignature sig = key.sign(hash);
+        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
+
+        byte recId = key.findRecoveryId(hash, sig);
+        byte expectedRecId = 0;
+        assertEquals(recId, expectedRecId);
+
+        ECKey pubKey = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        ECKey recoveredKey = ECKey.recoverFromSignature(recId, sig, hash, true);
+        assertEquals(recoveredKey, pubKey);
+    }
+
+    @Test
+    public void keyRecoveryWithFindRecoveryId() throws Exception {
+        ECKey key = new ECKey();
+        String message = "Hello World!";
+        Sha256Hash hash = Sha256Hash.of(message.getBytes());
+        ECKey.ECDSASignature sig = key.sign(hash);
+
+        byte recId = key.findRecoveryId(hash, sig);
+        ECKey pubKey = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        ECKey recoveredKey = ECKey.recoverFromSignature(recId, sig, hash, true);
+        assertEquals(recoveredKey, pubKey);
+    }
+
+    @Test
     public void keyRecovery() throws Exception {
         ECKey key = new ECKey();
         String message = "Hello World!";
