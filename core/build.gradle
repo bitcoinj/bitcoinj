@@ -24,10 +24,6 @@ dependencies {
 
 sourceCompatibility = 1.7
 
-protobuf {
-    generatedFilesBaseDir = new File(projectDir, '/src') // workaround for '$projectDir/src'
-}
-
 test {
     exclude 'org/bitcoinj/net/NetworkAbstractionTests*'
 }
