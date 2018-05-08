@@ -118,7 +118,7 @@ public class PartialMerkleTree extends Message {
         transactionCount = (int)readUint32();
 
         int nHashes = (int) readVarInt();
-        hashes = new ArrayList<>(nHashes);
+        hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
             hashes.add(readHash());
 

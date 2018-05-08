@@ -31,7 +31,11 @@ import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -293,5 +297,39 @@ public class BlockTest {
         assertTrue(block370661.isBIP34());
         assertTrue(block370661.isBIP66());
         assertTrue(block370661.isBIP65());
+    }
+
+    @Test
+    public void parseBlockWithHugeDeclaredTransactionsSize() throws Exception{
+        Block block = new Block(UNITTEST, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
+            @Override
+            protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+                Utils.uint32ToByteStreamLE(getVersion(), stream);
+                stream.write(getPrevBlockHash().getReversedBytes());
+                stream.write(getMerkleRoot().getReversedBytes());
+                Utils.uint32ToByteStreamLE(getTimeSeconds(), stream);
+                Utils.uint32ToByteStreamLE(getDifficultyTarget(), stream);
+                Utils.uint32ToByteStreamLE(getNonce(), stream);
+
+                stream.write(new VarInt(Integer.MAX_VALUE).encode());
+            }
+
+            @Override
+            public byte[] bitcoinSerialize() {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try {
+                    bitcoinSerializeToStream(baos);
+                } catch (IOException e) {
+                }
+                return baos.toByteArray();
+            }
+        };
+        byte[] serializedBlock = block.bitcoinSerialize();
+        try {
+            UNITTEST.getDefaultSerializer().makeBlock(serializedBlock, serializedBlock.length);
+            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (ProtocolException e) {
+            //Expected, do nothing
+        }
     }
 }

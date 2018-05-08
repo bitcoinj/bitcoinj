@@ -26,6 +26,8 @@ import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.*;
 import java.util.*;
 
@@ -201,5 +203,35 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
         // Peer 1 goes away.
         closePeer(peerOf(p1));
+    }
+
+    @Test
+    public void parseHugeDeclaredSizePartialMerkleTree() throws Exception{
+        final byte[] bits = new byte[1];
+        bits[0] = 0x3f;
+        final List<Sha256Hash> hashes = new ArrayList<>();
+        hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000001"));
+        hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000002"));
+        hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000003"));
+        PartialMerkleTree pmt = new PartialMerkleTree(UNITTEST, bits, hashes, 3) {
+            public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+                uint32ToByteStreamLE(getTransactionCount(), stream);
+                // Add Integer.MAX_VALUE instead of hashes.size()
+                stream.write(new VarInt(Integer.MAX_VALUE).encode());
+                //stream.write(new VarInt(hashes.size()).encode());
+                for (Sha256Hash hash : hashes)
+                    stream.write(hash.getReversedBytes());
+
+                stream.write(new VarInt(bits.length).encode());
+                stream.write(bits);
+            }
+        };
+        byte[] serializedPmt = pmt.bitcoinSerialize();
+        try {
+            new PartialMerkleTree(UNITTEST, serializedPmt, 0);
+            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (ProtocolException e) {
+            //Expected, do nothing
+        }
     }
 }

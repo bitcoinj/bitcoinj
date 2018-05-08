@@ -26,7 +26,7 @@ public class TransactionWitness {
     private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
-        pushes = new ArrayList<>(pushCount);
+        pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
     }
 
     public byte[] getPush(int i) {

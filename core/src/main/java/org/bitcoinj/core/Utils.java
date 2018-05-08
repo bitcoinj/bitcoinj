@@ -60,6 +60,13 @@ public class Utils {
     /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
+    /**
+     * Max initial size of variable length arrays and ArrayLists that could be attacked.
+     * Avoids this attack: Attacker sends a msg indicating it will contain a huge number (eg 2 billion) elements (eg transaction inputs) and
+     * forces bitcoinj to try to allocate a huge piece of the memory resulting in OutOfMemoryError.
+    */
+    public static final int MAX_INITIAL_ARRAY_LENGTH = 20;
+
     private static BlockingQueue<Boolean> mockSleepQueue;
 
     /**
