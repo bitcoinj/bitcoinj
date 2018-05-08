@@ -6,5 +6,6 @@ build
 .settings
 .idea
 *.iml
+out
 *.chain
 *.spvchain
