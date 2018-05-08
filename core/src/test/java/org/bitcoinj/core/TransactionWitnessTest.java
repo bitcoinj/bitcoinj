@@ -25,12 +25,12 @@ public class TransactionWitnessTest {
         assertEquals("", w1.toString());
 
         TransactionWitness w2 = new TransactionWitness(2);
-        assertEquals("NULL NULL", w2.toString());
+        assertEquals("", w2.toString());
 
         TransactionWitness w3 = new TransactionWitness(3);
         w3.setPush(0, Utils.HEX.decode("123aaa"));
         w3.setPush(1, Utils.HEX.decode("123bbb"));
-        w3.setPush(2, Utils.HEX.decode("123ccc"));
-        assertEquals("123aaa 123bbb 123ccc", w3.toString());
+        w3.setPush(3, Utils.HEX.decode("123ccc"));
+        assertEquals("123aaa 123bbb EMPTY 123ccc", w3.toString());
     }
 }

@@ -23,28 +23,31 @@ import java.util.List;
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = new TransactionWitness(0);
 
-    private final byte[][] pushes;
+    private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
-        pushes = new byte[pushCount][];
+        pushes = new ArrayList<>(pushCount);
     }
 
     public byte[] getPush(int i) {
-        return pushes[i];
+        return pushes.get(i);
     }
 
     public int getPushCount() {
-        return pushes.length;
+        return pushes.size();
     }
 
     public void setPush(int i, byte[] value) {
-        pushes[i] = value;
+        while (i >= pushes.size()) {
+            pushes.add(new byte[]{});
+        }
+        pushes.set(i, value);
     }
 
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(new VarInt(pushes.length).encode());
-        for (int i = 0; i < pushes.length; i++) {
-            byte[] push = pushes[i];
+        stream.write(new VarInt(pushes.size()).encode());
+        for (int i = 0; i < pushes.size(); i++) {
+            byte[] push = pushes.get(i);
             stream.write(new VarInt(push.length).encode());
             stream.write(push);
         }
@@ -55,10 +58,12 @@ public class TransactionWitness {
         List<String> stringPushes = new ArrayList<>();
         for (int j = 0; j < this.getPushCount(); j++) {
             byte[] push = this.getPush(j);
-            if (push != null) {
-                stringPushes.add(Utils.HEX.encode(push));
-            } else {
+            if (push == null) {
                 stringPushes.add("NULL");
+            } else if (push.length == 0) {
+                stringPushes.add("EMPTY");
+            } else {
+                stringPushes.add(Utils.HEX.encode(push));
             }
         }
         return Utils.SPACE_JOINER.join(stringPushes);
@@ -69,11 +74,19 @@ public class TransactionWitness {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionWitness other = (TransactionWitness) o;
-        return Arrays.deepEquals(pushes, other.pushes);
+        if (pushes.size() != other.pushes.size()) return false;
+        for (int i = 0; i < pushes.size(); i++) {
+            if (!Arrays.equals(pushes.get(i), other.pushes.get(i))) return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(pushes);
+        int hashCode = 1;
+        for (byte[] push : pushes) {
+            hashCode = 31 * hashCode + (push == null ? 0 : Arrays.hashCode(push));
+        }
+        return hashCode;
     }
 }
