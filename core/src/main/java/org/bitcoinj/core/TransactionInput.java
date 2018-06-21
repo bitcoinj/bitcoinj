@@ -360,7 +360,7 @@ public class TransactionInput extends ChildMessage {
         checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
         TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
+            if (out.getParentTransaction().equals(outpoint.fromTx)) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
