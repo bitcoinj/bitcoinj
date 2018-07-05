@@ -225,11 +225,11 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
 
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
-        List<Sha256Hash> expectedLocator = new ArrayList<>();
+        BlockLocator expectedLocator = new BlockLocator();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         
-        assertEquals(getblocks.getLocator(), expectedLocator);
+        assertEquals(getblocks.getLocator().blockLocator, expectedLocator.blockLocator);
         assertEquals(getblocks.getStopHash(), b3.getHash());
         assertNull(outbound(writeTarget));
     }
@@ -396,13 +396,13 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         peer.startBlockChainDownload();
 
-        List<Sha256Hash> expectedLocator = new ArrayList<>();
+        BlockLocator expectedLocator = new BlockLocator();
         expectedLocator.add(b2.getHash());
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(message.getLocator(), expectedLocator);
+        assertEquals(message.getLocator().blockLocator, expectedLocator.blockLocator);
         assertEquals(Sha256Hash.ZERO_HASH, message.getStopHash());
     }
 
@@ -478,10 +478,10 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.setDownloadParameters(Utils.currentTimeSeconds() - (600*2) + 1, false);
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
-        List<Sha256Hash> expectedLocator = new ArrayList<>();
+        BlockLocator expectedLocator = new BlockLocator();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
-        assertEquals(getheaders.getLocator(), expectedLocator);
+        assertEquals(getheaders.getLocator().blockLocator, expectedLocator.blockLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
         HeadersMessage headers = new HeadersMessage(UNITTEST, b2.cloneAsHeader(),
@@ -493,7 +493,7 @@ public class PeerTest extends TestWithNetworkConnections {
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         inbound(writeTarget, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(expectedLocator, getblocks.getLocator());
+        assertEquals(expectedLocator.blockLocator, getblocks.getLocator().blockLocator);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We're supposed to get an inv here.
         InventoryMessage inv = new InventoryMessage(UNITTEST);

@@ -162,7 +162,7 @@ public class BitcoindComparisonTool {
                         }
                         LinkedList<Block> sendHeaders = new LinkedList<>();
                         boolean found = false;
-                        for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator()) {
+                        for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator().blockLocator) {
                             for (Block b : headers) {
                                 if (found) {
                                     sendHeaders.addLast(b);
@@ -206,7 +206,7 @@ public class BitcoindComparisonTool {
 
         connectedFuture.get();
 
-        ArrayList<Sha256Hash> locator = new ArrayList<>(1);
+        BlockLocator locator = new BlockLocator(1);
         locator.add(PARAMS.getGenesisBlock().getHash());
         Sha256Hash hashTo = Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000000");
                 

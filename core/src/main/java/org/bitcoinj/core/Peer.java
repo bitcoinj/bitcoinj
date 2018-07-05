@@ -1437,8 +1437,7 @@ public class Peer extends PeerSocketHandler {
         // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
         // sends us the data we requested in a "headers" message.
 
-        // TODO: Block locators should be abstracted out rather than special cased here.
-        List<Sha256Hash> blockLocator = new ArrayList<>(51);
+        BlockLocator blockLocator = new BlockLocator(51);
         // For now we don't do the exponential thinning as suggested here:
         //
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks

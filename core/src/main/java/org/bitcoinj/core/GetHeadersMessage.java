@@ -27,7 +27,7 @@ import java.util.List;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetHeadersMessage extends GetBlocksMessage {
-    public GetHeadersMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
+    public GetHeadersMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
         super(params, locator, stopHash);
     }
 
@@ -37,7 +37,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
 
     @Override
     public String toString() {
-        return "getheaders: " + Utils.SPACE_JOINER.join(locator);
+        return "getheaders: " + locator.toString();
     }
 
     /**
@@ -56,7 +56,6 @@ public class GetHeadersMessage extends GetBlocksMessage {
     @Override
     public int hashCode() {
         int hashCode = (int)version ^ "getheaders".hashCode() ^ stopHash.hashCode();
-        for (Sha256Hash aLocator : locator) hashCode ^= aLocator.hashCode(); // ignores locator ordering
-        return hashCode;
+        return locator.hashCode(hashCode);
     }
 }
