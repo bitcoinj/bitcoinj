@@ -16,8 +16,6 @@
 
 package org.bitcoinj.core;
 
-import java.util.List;
-
 /**
  * <p>The "getheaders" command is structurally identical to "getblocks", but has different meaning. On receiving this
  * message a Bitcoin node returns matching blocks up to the limit, but without the bodies. It is useful as an
@@ -27,7 +25,7 @@ import java.util.List;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetHeadersMessage extends GetBlocksMessage {
-    public GetHeadersMessage(NetworkParameters params, List<Sha256Hash> locator, Sha256Hash stopHash) {
+    public GetHeadersMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
         super(params, locator, stopHash);
     }
 
@@ -37,7 +35,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
 
     @Override
     public String toString() {
-        return "getheaders: " + Utils.SPACE_JOINER.join(locator);
+        return "getheaders: " + locator.toString();
     }
 
     /**
@@ -50,13 +48,12 @@ public class GetHeadersMessage extends GetBlocksMessage {
         if (o == null || getClass() != o.getClass()) return false;
         GetHeadersMessage other = (GetHeadersMessage) o;
         return version == other.version && stopHash.equals(other.stopHash) &&
-            locator.size() == other.locator.size() && locator.containsAll(other.locator);  // ignores locator ordering
+            locator.size() == other.locator.size() && locator.equals(other.locator);  // ignores locator ordering
     }
 
     @Override
     public int hashCode() {
-        int hashCode = (int)version ^ "getheaders".hashCode() ^ stopHash.hashCode();
-        for (Sha256Hash aLocator : locator) hashCode ^= aLocator.hashCode(); // ignores locator ordering
-        return hashCode;
+        int hashCode = (int) version ^ "getheaders".hashCode() ^ stopHash.hashCode();
+        return hashCode ^= locator.hashCode();
     }
 }

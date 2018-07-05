@@ -162,7 +162,7 @@ public class BitcoindComparisonTool {
                         }
                         LinkedList<Block> sendHeaders = new LinkedList<>();
                         boolean found = false;
-                        for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator()) {
+                        for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator().getHashes()) {
                             for (Block b : headers) {
                                 if (found) {
                                     sendHeaders.addLast(b);
@@ -206,8 +206,8 @@ public class BitcoindComparisonTool {
 
         connectedFuture.get();
 
-        ArrayList<Sha256Hash> locator = new ArrayList<>(1);
-        locator.add(PARAMS.getGenesisBlock().getHash());
+        BlockLocator locator = new BlockLocator();
+        locator = locator.add(PARAMS.getGenesisBlock().getHash());
         Sha256Hash hashTo = Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000000");
                 
         int rulesSinceFirstFail = 0;
@@ -295,8 +295,8 @@ public class BitcoindComparisonTool {
                 if (block.throwsException)
                     blocksRequested.remove(nextBlock.getHash());
                 //bitcoind.sendMessage(nextBlock);
-                locator.clear();
-                locator.add(bitcoindChainHead);
+                locator = new BlockLocator();
+                locator = locator.add(bitcoindChainHead);
                 bitcoind.sendMessage(new GetHeadersMessage(PARAMS, locator, hashTo));
                 bitcoind.ping().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
