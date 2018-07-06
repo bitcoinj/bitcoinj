@@ -26,6 +26,10 @@ import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.net.discovery.*;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.utils.Threading;
@@ -38,6 +42,7 @@ import org.slf4j.*;
 import javax.annotation.*;
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
@@ -73,6 +78,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     // By default we don't require any services because any peer will do.
     private long requiredServices = 0;
+
     /**
      * The default number of connections to the p2p network the library will try to build. This is set to 12 empirically.
      * It used to be 4, but because we divide the connection pool in two for broadcasting transactions, that meant we
@@ -98,17 +104,123 @@ public class PeerGroup implements TransactionBroadcaster {
     private volatile boolean vRunning;
     // Whether the peer group has been started or not. An unstarted PG does not try to access the network.
     private volatile boolean vUsedUp;
+    class PeerArchiver{
+        private final NetworkParameters params;
+        class ArchivedPeer{
+            int determineNetwork(NetworkParameters params){
+                switch (params.getId()){
+                    case NetworkParameters.ID_MAINNET:
+                        return 1;
+                    case NetworkParameters.ID_REGTEST:
+                        return 2;
+                    case NetworkParameters.ID_TESTNET:
+                        return  3;
+                    case NetworkParameters.ID_UNITTESTNET:
+                        return 3;
+                }
+                return 0;
+            }
+            NetworkParameters getParams(int params){
+                switch (params){
+                    case 1:
+                        return MainNetParams.get();
+                    case 2:
+                        return RegTestParams.get();
+                    case 3:
+                        return TestNet3Params.get();
+                    case 4:
+                        return UnitTestParams.get();
+                }
+                return null;
+            }
+            PeerAddress peerAddr;
+            int version;
+            NetworkParameters params;
+            public ArchivedPeer(PeerAddress addr, int vers, NetworkParameters netParams){
+                this.peerAddr = addr;
+                this.version = vers;
+                this.params = netParams;
+            }
+            public ArchivedPeer(byte[] bytes){
+                ByteBuffer buf = ByteBuffer.wrap(bytes);
+                buf.flip();
+                byte[] tmp = new byte[30];
+                buf.get(tmp, 0,30);
+                this.version = buf.getInt();
+                this.params = getParams(buf.getInt());
+            }
+            public byte[] serialize(){
+                ByteBuffer buf = ByteBuffer.allocate(38);
+                buf.put(peerAddr.bitcoinSerialize());
+                buf.putInt(version);
+                buf.putInt(determineNetwork(params));
+                buf.flip();
+                return buf.array();
+            }
+        }
+        private final Lock lock = Threading.lock("peerarchiver");
+        @GuardedBy("lock") private List<ArchivedPeer> archivedPeers = new LinkedList<>();
+        public PeerArchiver(NetworkParameters params ){
+            this.params = params;
+        }
+        public void getFromFile(String filename) throws IOException {
+            File file = new File(filename);
+            byte[] fileData = new byte[(int) file.length()];
+            new FileInputStream(file).read(fileData);
+            ByteBuffer buf = ByteBuffer.wrap(fileData);
+            buf.flip();
+            for(int i = 0; i >= file.length()/38; i++){
+                byte[] bytes = new byte[38];
+                buf.get(bytes, 0, 38);
+                archivedPeers.add(new ArchivedPeer(bytes));
+            }
+        }
+        public void clearPeers(){
+            archivedPeers.clear();
+        }
+        public void addPeer(ArchivedPeer addr){
+            lock.lock();
+            archivedPeers.add(addr);
+            lock.unlock();
+        }
+        public void addPeer(PeerAddress addr , NetworkParameters params, int version){
+            lock.lock();
+            archivedPeers.add(new ArchivedPeer(addr, version, params));
+            lock.unlock();
+        }
+        public void removePeer(ArchivedPeer addr){
+            lock.lock();
+            archivedPeers.remove(addr);
+            lock.unlock();
+        }
+        public ArchivedPeer get(int i){
+            lock.lock();
+            ArchivedPeer addr = archivedPeers.get(i);
+            lock.unlock();
+            return addr;
+        }
+        public List<ArchivedPeer> getArchivedPeers(){
+            return archivedPeers;
+        }
+        public void archiveToFile(String filename) throws IOException {
+            BufferedOutputStream fileWriter = new BufferedOutputStream(new FileOutputStream(new File(filename)));
+            lock.lock();
+            for(ArchivedPeer i : archivedPeers){
+                fileWriter.write(i.serialize());
+            }
+            lock.unlock();
+            fileWriter.close();
+        }
+    }
 
     // Addresses to try to connect to, excluding active peers.
     @GuardedBy("lock") private final PriorityQueue<PeerAddress> inactives;
     @GuardedBy("lock") private final Map<PeerAddress, ExponentialBackoff> backoffMap;
-
     // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
     private final CopyOnWriteArrayList<Peer> peers;
     // Currently connecting peers.
     private final CopyOnWriteArrayList<Peer> pendingPeers;
     private final ClientConnectionManager channels;
-
     // The peer that has been selected for the purposes of downloading announced data.
     @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
@@ -243,7 +355,7 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         }
     }
-
+    private PeerArchiver peerArchiver;
     private class PeerStartupListener implements PeerConnectedEventListener, PeerDisconnectedEventListener {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
@@ -359,6 +471,7 @@ public class PeerGroup implements TransactionBroadcaster {
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
         vMinRequiredProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
+        peerArchiver = new PeerArchiver(params);
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -594,6 +707,18 @@ public class PeerGroup implements TransactionBroadcaster {
      * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
      * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
      */
+    public void writePeersToFile(String filename) throws IOException {
+        peerArchiver.archiveToFile(filename);
+    }
+    public void clearArchivedPeer(){
+        peerArchiver.clearPeers();
+    }
+    public List<PeerArchiver.ArchivedPeer> getArchivedPeers(){
+        return peerArchiver.getArchivedPeers();
+    }
+    public void getPeersFromFile(String filename) throws IOException {
+        peerArchiver.getFromFile(filename);
+    }
     public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
@@ -1524,7 +1649,7 @@ public class PeerGroup implements TransactionBroadcaster {
             // Make sure the peer knows how to upload transactions that are requested from us.
             peer.addBlocksDownloadedEventListener(Threading.SAME_THREAD, peerListener);
             peer.addGetDataEventListener(Threading.SAME_THREAD, peerListener);
-
+            peerArchiver.addPeer(peer.getAddress(), this.params, peer.getVersionMessage().protocolVersion);
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
             for (ListenerRegistration<BlocksDownloadedEventListener> registration : peersBlocksDownloadedEventListeners)
                 peer.addBlocksDownloadedEventListener(registration.executor, registration.listener);

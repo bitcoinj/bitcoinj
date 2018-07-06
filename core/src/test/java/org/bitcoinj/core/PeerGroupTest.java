@@ -112,12 +112,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         connectedPeers.take();
         connectedPeers.take();
-
         pingAndWait(p1);
         pingAndWait(p2);
         Threading.waitForUserCode();
         assertEquals(0, disconnectedPeers.size());
-
         p1.close();
         disconnectedPeers.take();
         assertEquals(0, disconnectedPeers.size());
@@ -132,7 +130,17 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
         assertFalse(peerGroup.removePreMessageReceivedEventListener(preMessageReceivedListener));
     }
-
+    @Test
+    public  void peerArchiver() throws Exception {
+        peerGroup.start();
+        InboundMessageQueuer p1 = connectPeer(1);
+        InboundMessageQueuer p2 = connectPeer(2);
+        String path = File.createTempFile("tmp", "d").getAbsolutePath();
+        peerGroup.writePeersToFile(path);
+        List<PeerGroup.PeerArchiver.ArchivedPeer> excepted = peerGroup.getArchivedPeers();
+        peerGroup.getPeersFromFile(path);
+        assertEquals(excepted, peerGroup.getArchivedPeers());
+    }
     @Test
     public void peerDiscoveryPolling() throws InterruptedException {
         // Check that if peer discovery fails, we keep trying until we have some nodes to talk with.
