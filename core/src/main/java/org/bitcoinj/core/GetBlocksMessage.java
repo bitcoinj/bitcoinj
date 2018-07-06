@@ -53,7 +53,7 @@ public class GetBlocksMessage extends Message {
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
         length = cursor - offset + ((startCount + 1) * 32);
-        locator = new BlockLocator(startCount);
+        locator = new BlockLocator();
         for (int i = 0; i < startCount; i++) {
             locator.add(readHash());
         }
@@ -81,7 +81,7 @@ public class GetBlocksMessage extends Message {
         // identifiers that spans the entire chain with exponentially increasing gaps between
         // them, until we end up at the genesis block. See CBlockLocator::Set()
         stream.write(new VarInt(locator.size()).encode());
-        for (Sha256Hash hash : locator.blockLocator) {
+        for (Sha256Hash hash : locator.getHashes()) {
             // Have to reverse as wire format is little endian.
             stream.write(hash.getReversedBytes());
         }

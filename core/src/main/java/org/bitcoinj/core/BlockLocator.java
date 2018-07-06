@@ -15,40 +15,38 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockLocator {
-    List<Sha256Hash> blockLocator;
-    public BlockLocator(int startCount){
-        blockLocator = new ArrayList<>(startCount);
-    }
+public final class BlockLocator {
+    private ImmutableList<Sha256Hash> hashes;
     public BlockLocator(){
-        blockLocator = new ArrayList<>();
+        hashes =  ImmutableList.of();
     }
     public void add(Sha256Hash hash){
-        blockLocator.add(hash);
+        hashes = new ImmutableList.Builder<Sha256Hash>().addAll(hashes).add(hash).build();
     }
     public int size(){
-        return blockLocator.size();
+        return hashes.size();
     }
     public int hashCode(int initial){
         int hashCode = initial;
-        for (Sha256Hash aLocator : blockLocator) hashCode ^= aLocator.hashCode();
+        for (Sha256Hash aLocator : hashes) hashCode ^= aLocator.hashCode();
         return hashCode;
     }
-    public boolean containsAll(BlockLocator other){
-        return equals(other);
+    public List<Sha256Hash> getHashes(){
+        return hashes;
     }
-    public void clear(){
-        blockLocator.clear();
+    public boolean containsAll(BlockLocator other){
+        return hashes.equals(other.getHashes());
     }
     @Override
     public String toString(){
-        return "Block locator with " + size() + " blocks \n " + Utils.SPACE_JOINER.join(blockLocator);
+        return "Block locator with " + size() + " blocks \n " + Utils.SPACE_JOINER.join(hashes);
     }
-
     public Sha256Hash get(int i) {
-        return blockLocator.get(i);
+        return hashes.get(i);
     }
 }

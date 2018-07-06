@@ -229,7 +229,7 @@ public class PeerTest extends TestWithNetworkConnections {
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         
-        assertEquals(getblocks.getLocator().blockLocator, expectedLocator.blockLocator);
+        assertEquals(getblocks.getLocator().getHashes(), expectedLocator.getHashes());
         assertEquals(getblocks.getStopHash(), b3.getHash());
         assertNull(outbound(writeTarget));
     }
@@ -402,7 +402,7 @@ public class PeerTest extends TestWithNetworkConnections {
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(message.getLocator().blockLocator, expectedLocator.blockLocator);
+        assertEquals(message.getLocator().getHashes(), expectedLocator.getHashes());
         assertEquals(Sha256Hash.ZERO_HASH, message.getStopHash());
     }
 
@@ -481,19 +481,19 @@ public class PeerTest extends TestWithNetworkConnections {
         BlockLocator expectedLocator = new BlockLocator();
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
-        assertEquals(getheaders.getLocator().blockLocator, expectedLocator.blockLocator);
+        assertEquals(getheaders.getLocator().getHashes(), expectedLocator.getHashes());
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
         HeadersMessage headers = new HeadersMessage(UNITTEST, b2.cloneAsHeader(),
                 b3.cloneAsHeader(), b4.cloneAsHeader());
         // We expect to be asked for b3 and b4 again, but this time, with a body.
-        expectedLocator.clear();
+        expectedLocator = new BlockLocator();
         expectedLocator.add(b2.getHash());
         expectedLocator.add(b1.getHash());
         expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         inbound(writeTarget, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(expectedLocator.blockLocator, getblocks.getLocator().blockLocator);
+        assertEquals(expectedLocator.getHashes(), getblocks.getLocator().getHashes());
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We're supposed to get an inv here.
         InventoryMessage inv = new InventoryMessage(UNITTEST);
