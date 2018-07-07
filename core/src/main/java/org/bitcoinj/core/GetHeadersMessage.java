@@ -56,6 +56,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
     @Override
     public int hashCode() {
         int hashCode = (int)version ^ "getheaders".hashCode() ^ stopHash.hashCode();
-        return locator.hashCode(hashCode);
+        for (Sha256Hash aLocator : locator.getHashes()) hashCode ^= aLocator.hashCode(); // ignores locator ordering
+         return hashCode;
     }
 }

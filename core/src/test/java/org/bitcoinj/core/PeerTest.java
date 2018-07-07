@@ -148,7 +148,7 @@ public class PeerTest extends TestWithNetworkConnections {
         
         peer.startBlockChainDownload();
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
-        assertEquals(blockStore.getChainHead().getHeader().getHash(), getblocks.getLocator().get(0));
+        assertEquals(blockStore.getChainHead().getHeader().getHash(), getblocks.getLocator().getHashes().get(0));
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // Remote peer sends us an inv with some blocks.
         InventoryMessage inv = new InventoryMessage(UNITTEST);
@@ -177,7 +177,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, b5);
         getblocks = (GetBlocksMessage)outbound(writeTarget);
         assertEquals(b5.getHash(), getblocks.getStopHash());
-        assertEquals(b3.getHash(), getblocks.getLocator().get(0));
+        assertEquals(b3.getHash(), getblocks.getLocator().getHashes().get(0));
         // At this point another block is solved and broadcast. The inv triggers a getdata but we do NOT send another
         // getblocks afterwards, because that would result in us receiving the same set of blocks twice which is a
         // timewaste. The getblocks message that would have been generated is set to be the same as the previous
@@ -226,8 +226,8 @@ public class PeerTest extends TestWithNetworkConnections {
 
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
         BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
+        expectedLocator = expectedLocator.add(b1.getHash());
+        expectedLocator = expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         
         assertEquals(getblocks.getLocator().getHashes(), expectedLocator.getHashes());
         assertEquals(getblocks.getStopHash(), b3.getHash());
@@ -397,9 +397,9 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.startBlockChainDownload();
 
         BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator.add(b2.getHash());
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
+        expectedLocator = expectedLocator.add(b2.getHash());
+        expectedLocator = expectedLocator.add(b1.getHash());
+        expectedLocator = expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
         assertEquals(message.getLocator().getHashes(), expectedLocator.getHashes());
@@ -479,8 +479,8 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
         BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
+        expectedLocator = expectedLocator.add(b1.getHash());
+        expectedLocator = expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         assertEquals(getheaders.getLocator().getHashes(), expectedLocator.getHashes());
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
@@ -488,9 +488,9 @@ public class PeerTest extends TestWithNetworkConnections {
                 b3.cloneAsHeader(), b4.cloneAsHeader());
         // We expect to be asked for b3 and b4 again, but this time, with a body.
         expectedLocator = new BlockLocator();
-        expectedLocator.add(b2.getHash());
-        expectedLocator.add(b1.getHash());
-        expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
+        expectedLocator = expectedLocator.add(b2.getHash());
+        expectedLocator = expectedLocator.add(b1.getHash());
+        expectedLocator = expectedLocator.add(UNITTEST.getGenesisBlock().getHash());
         inbound(writeTarget, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(writeTarget);
         assertEquals(expectedLocator.getHashes(), getblocks.getLocator().getHashes());

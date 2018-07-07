@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
@@ -55,7 +56,7 @@ public class GetBlocksMessage extends Message {
         length = cursor - offset + ((startCount + 1) * 32);
         locator = new BlockLocator();
         for (int i = 0; i < startCount; i++) {
-            locator.add(readHash());
+            locator = locator.add(readHash());
         }
         stopHash = readHash();
     }
@@ -101,6 +102,6 @@ public class GetBlocksMessage extends Message {
     @Override
     public int hashCode() {
         int hashCode = (int)version ^ "getblocks".hashCode() ^ stopHash.hashCode();
-        return locator.hashCode(hashCode);
+        return hashCode;
     }
 }
