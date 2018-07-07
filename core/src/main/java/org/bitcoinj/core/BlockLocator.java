@@ -28,7 +28,6 @@ public final class BlockLocator {
     public BlockLocator(ImmutableList<Sha256Hash> hashes) {
         this.hashes = hashes;
     }
-
     public BlockLocator add(Sha256Hash hash){
        return new BlockLocator(new ImmutableList.Builder<Sha256Hash>().addAll(this.hashes).add(hash).build());
     }
@@ -44,5 +43,9 @@ public final class BlockLocator {
     @Override
     public String toString(){
         return "Block locator with " + size() + " blocks \n " + Utils.SPACE_JOINER.join(hashes);
+    }
+    @Override
+    public boolean equals(Object o) {
+        return ((BlockLocator) o).getHashes().equals(hashes);
     }
 }
