@@ -299,7 +299,6 @@ public class PeerGroup implements TransactionBroadcaster {
     public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
         this(Context.getOrCreate(params), chain, new NioClientManager());
     }
-
     /**
      * Creates a PeerGroup for the given context and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
