@@ -46,7 +46,7 @@ public class GetHeadersMessage extends GetBlocksMessage {
         if (o == null || getClass() != o.getClass()) return false;
         GetHeadersMessage other = (GetHeadersMessage) o;
         return version == other.version && stopHash.equals(other.stopHash) &&
-                locator.size() == other.locator.size() && locator.containsAll(other.locator);  // ignores locator ordering
+                locator.size() == other.locator.size() && locator.equals(other.locator);  // ignores locator ordering
     }
 
     @Override

@@ -94,7 +94,7 @@ public class GetBlocksMessage extends Message {
         if (o == null || getClass() != o.getClass()) return false;
         GetBlocksMessage other = (GetBlocksMessage) o;
         return version == other.version && stopHash.equals(other.stopHash) &&
-        locator.size() == other.locator.size() && locator.containsAll(other.locator); // ignores locator ordering
+        locator.size() == other.locator.size() && locator.equals(other.locator); // ignores locator ordering
     }
 
     @Override

@@ -31,6 +31,7 @@ public final class BlockLocator {
 
     /**
      * creates a Block locator with defined list of hashes
+     *
      * @param hashes
      */
     public BlockLocator(ImmutableList<Sha256Hash> hashes) {
@@ -57,22 +58,12 @@ public final class BlockLocator {
     }
 
     /**
-     * returns {@link List<Sha256Hash>} of Block locator hashes
+     * returns List of Block locator hashes
      *
      * @return
      */
     public List<Sha256Hash> getHashes() {
         return hashes;
-    }
-
-    /**
-     * compare list of hashes of two block locators
-     *
-     * @param other
-     * @return
-     */
-    public boolean containsAll(BlockLocator other) {
-        return hashes.equals(other.getHashes());
     }
 
     /**
