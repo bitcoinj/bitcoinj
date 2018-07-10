@@ -14,7 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bitcoinj.core;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -26,17 +28,22 @@ import java.io.OutputStream;
  */
 public class GetBlocksMessage extends Message {
     protected long version;
+
     protected BlockLocator locator;
+
     protected Sha256Hash stopHash;
+
     public GetBlocksMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
         super(params);
         this.version = protocolVersion;
         this.locator = locator;
         this.stopHash = stopHash;
     }
+
     public GetBlocksMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
         super(params, payload, 0);
     }
+
     @Override
     protected void parse() throws ProtocolException {
         cursor = offset;
@@ -51,16 +58,20 @@ public class GetBlocksMessage extends Message {
         }
         stopHash = readHash();
     }
+
     public BlockLocator getLocator() {
         return locator;
     }
+
     public Sha256Hash getStopHash() {
         return stopHash;
     }
+
     @Override
     public String toString() {
         return "getblocks: " + locator.toString();
     }
+
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         // Version, for some reason.
@@ -76,14 +87,16 @@ public class GetBlocksMessage extends Message {
         // Next, a block ID to stop at.
         stream.write(stopHash.getReversedBytes());
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GetBlocksMessage other = (GetBlocksMessage) o;
         return version == other.version && stopHash.equals(other.stopHash) &&
-                locator.size() == other.locator.size() && locator.containsAll(other.locator); // ignores locator ordering
+        locator.size() == other.locator.size() && locator.containsAll(other.locator); // ignores locator ordering
     }
+
     @Override
     public int hashCode() {
         int hashCode = (int) version ^ "getblocks".hashCode() ^ stopHash.hashCode();

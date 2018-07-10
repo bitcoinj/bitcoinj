@@ -148,7 +148,7 @@ public class PeerTest extends TestWithNetworkConnections {
         
         peer.startBlockChainDownload();
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
-        assertEquals(blockStore.getChainHead().getHeader().getHash(), getblocks.getLocator().getHashes().get(0));
+        assertEquals(blockStore.getChainHead().getHeader().getHash(), getblocks.getLocator().get(0));
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // Remote peer sends us an inv with some blocks.
         InventoryMessage inv = new InventoryMessage(UNITTEST);

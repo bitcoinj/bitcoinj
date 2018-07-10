@@ -12,36 +12,77 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.bitcoinj.core;
+
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
+/**
+ * Represents Block Locator in GetBlocks and GetHeaders messages
+ **/
 public final class BlockLocator {
-    private ImmutableList<Sha256Hash> hashes;
+    private final ImmutableList<Sha256Hash> hashes;
 
     public BlockLocator() {
         hashes = ImmutableList.of();
     }
 
+    /**
+     * creates a Block locator with defined list of hashes
+     * @param hashes
+     */
     public BlockLocator(ImmutableList<Sha256Hash> hashes) {
         this.hashes = hashes;
     }
 
+    /**
+     * Add a {@link Sha256Hash} to newly created block locator
+     *
+     * @param hash
+     * @return
+     */
     public BlockLocator add(Sha256Hash hash) {
         return new BlockLocator(new ImmutableList.Builder<Sha256Hash>().addAll(this.hashes).add(hash).build());
     }
 
+    /**
+     * returns size of block locator list
+     *
+     * @return
+     */
     public int size() {
         return hashes.size();
     }
 
+    /**
+     * returns {@link List<Sha256Hash>} of Block locator hashes
+     *
+     * @return
+     */
     public List<Sha256Hash> getHashes() {
         return hashes;
     }
 
+    /**
+     * compare list of hashes of two block locators
+     *
+     * @param other
+     * @return
+     */
     public boolean containsAll(BlockLocator other) {
         return hashes.equals(other.getHashes());
+    }
+
+    /**
+     * get hash by index from block locator
+     *
+     * @param i
+     * @return
+     */
+    public Sha256Hash get(int i) {
+        return hashes.get(i);
     }
 
     @Override
