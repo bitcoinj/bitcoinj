@@ -672,6 +672,48 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
+     * writes all peers from peers list in {@link PeerArchiver}
+     *
+     * @param filename
+     * @throws IOException
+     */
+    public void writePeersToFile(String filename) throws IOException {
+        peerArchiver.archiveToFile(filename);
+    }
+    public void connectFromArchivedPeers(){
+        for(PeerArchiver.ArchivedPeer i : peerArchiver.getArchivedPeers()){
+            if(i.version >= this.getMinRequiredProtocolVersion()&& peers.stream().filter(p -> p.getAddress().equals(i.peerAddr)).toArray().length > 0){
+                connectTo(i.peerAddr, false , vConnectTimeoutMillis);
+            }
+        }
+    }
+    /**
+     * clears all archived peers from {@link PeerArchiver} list
+     */
+    public void clearArchivedPeer() {
+        peerArchiver.clearPeers();
+    }
+
+    /**
+     * returns all archived peers
+     *
+     * @return
+     */
+    public List<PeerArchiver.ArchivedPeer> getArchivedPeers() {
+        return peerArchiver.getArchivedPeers();
+    }
+
+    /**
+     * loads Peers from file into {@link PeerArchiver} list
+     *
+     * @param filename
+     * @throws IOException
+     */
+    public void getPeersFromFile(String filename) throws IOException {
+        peerArchiver.getFromFile(filename);
+    }
+
+    /**
      * Returns the version message provided by setVersionMessage or a default if none was given.
      */
     public VersionMessage getVersionMessage() {
@@ -707,22 +749,6 @@ public class PeerGroup implements TransactionBroadcaster {
      * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
      * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
      */
-    public void writePeersToFile(String filename) throws IOException {
-        peerArchiver.archiveToFile(filename);
-    }
-
-    public void clearArchivedPeer() {
-        peerArchiver.clearPeers();
-    }
-
-    public List<PeerArchiver.ArchivedPeer> getArchivedPeers() {
-        return peerArchiver.getArchivedPeers();
-    }
-
-    public void getPeersFromFile(String filename) throws IOException {
-        peerArchiver.getFromFile(filename);
-    }
-
     public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
@@ -2379,19 +2405,34 @@ public class PeerGroup implements TransactionBroadcaster {
             fileWriter.close();
         }
 
-        class ArchivedPeer {
-            PeerAddress peerAddr;
+        /**
+         * class representing peer ready to write to file
+         */
+        public class ArchivedPeer {
+            public PeerAddress peerAddr;
 
-            int version;
+            public int version;
 
-            NetworkParameters params;
+            public NetworkParameters params;
 
+            /**
+             * creates Archived peer from {@link PeerAddress}, version and {@link NetworkParameters}
+             *
+             * @param addr
+             * @param vers
+             * @param netParams
+             */
             public ArchivedPeer(PeerAddress addr, int vers, NetworkParameters netParams) {
                 this.peerAddr = addr;
                 this.version = vers;
                 this.params = netParams;
             }
 
+            /**
+             * create peer from serialized bytes
+             *
+             * @param bytes
+             */
             public ArchivedPeer(byte[] bytes) {
                 ByteBuffer buf = ByteBuffer.wrap(bytes);
                 buf.flip();
@@ -2401,7 +2442,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 this.params = getParams(buf.getInt());
             }
 
-            int determineNetwork(NetworkParameters params) {
+            private int determineNetwork(NetworkParameters params) {
                 switch (params.getId()) {
                     case NetworkParameters.ID_MAINNET:
                         return 1;
@@ -2415,7 +2456,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 return 0;
             }
 
-            NetworkParameters getParams(int params) {
+            private NetworkParameters getParams(int params) {
                 switch (params) {
                     case 1:
                         return MainNetParams.get();
