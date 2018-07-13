@@ -682,7 +682,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
     public void connectFromArchivedPeers(){
         for(PeerArchiver.ArchivedPeer i : peerArchiver.getArchivedPeers()){
-            if(i.version >= this.getMinRequiredProtocolVersion()&& peers.stream().filter(p -> p.getAddress().equals(i.peerAddr)).toArray().length > 0){
+            if(i.version >= this.getMinRequiredProtocolVersion()){
                 connectTo(i.peerAddr, false , vConnectTimeoutMillis);
             }
         }
