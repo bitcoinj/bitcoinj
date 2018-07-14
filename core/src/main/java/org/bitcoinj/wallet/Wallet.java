@@ -24,37 +24,9 @@ import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.*;
 import org.bitcoinj.core.Message;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerFilterProvider;
-import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionBag;
-import org.bitcoinj.core.TransactionBroadcast;
-import org.bitcoinj.core.TransactionBroadcaster;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.UTXOProvider;
-import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
@@ -3862,7 +3834,7 @@ public class Wallet extends BaseTaggableObject
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      */
-    public Transaction sendCoins(Peer peer, SendRequest request) throws InsufficientMoneyException {
+    public Transaction sendCoins(Peer peer, SendRequest request) throws InsufficientMoneyException, PeerConnectionException {
         Transaction tx = sendCoinsOffline(request);
         peer.sendMessage(tx);
         return tx;

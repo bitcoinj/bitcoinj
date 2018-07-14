@@ -424,14 +424,18 @@ public class Peer extends PeerSocketHandler {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onPeerDisconnected(Peer.this, 0);
+                    try {
+                        registration.listener.onPeerDisconnected(Peer.this, 0);
+                    } catch (PeerConnectionException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
     }
 
     @Override
-    public void connectionOpened() {
+    public void connectionOpened() throws PeerConnectionException {
         // Announce ourselves. This has to come first to connect to clients beyond v0.3.20.2 which wait to hear
         // from us until they send their version message back.
         PeerAddress address = getAddress();
@@ -544,7 +548,7 @@ public class Peer extends PeerSocketHandler {
         future.set(m);
     }
 
-    private void processVersionMessage(VersionMessage m) throws ProtocolException {
+    private void processVersionMessage(VersionMessage m) throws ProtocolException, PeerConnectionException {
         if (vPeerVersionMessage != null)
             throw new ProtocolException("Got two version messages from peer");
         vPeerVersionMessage = m;
@@ -603,7 +607,11 @@ public class Peer extends PeerSocketHandler {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onPeerConnected(Peer.this, 1);
+                    try {
+                        registration.listener.onPeerConnected(Peer.this, 1);
+                    } catch (PeerConnectionException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
@@ -617,7 +625,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    protected void startFilteredBlock(FilteredBlock m) {
+    protected void startFilteredBlock(FilteredBlock m) throws PeerConnectionException {
         // Filtered blocks come before the data that they refer to, so stash it here and then fill it out as
         // messages stream in. We'll call endFilteredBlock when a non-tx message arrives (eg, another
         // FilteredBlock) or when a tx that isn't needed by that block is found. A ping message is sent after
@@ -666,7 +674,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    protected void processHeaders(HeadersMessage m) throws ProtocolException {
+    protected void processHeaders(HeadersMessage m) throws ProtocolException, PeerConnectionException {
         // Runs in network loop thread for this peer.
         //
         // This method can run if a peer just randomly sends us a "headers" message (should never happen), or more
@@ -748,7 +756,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    protected void processGetData(GetDataMessage getdata) {
+    protected void processGetData(GetDataMessage getdata) throws PeerConnectionException {
         log.info("{}: Received getdata message: {}", getAddress(), getdata.toString());
         ArrayList<Message> items = new ArrayList<>();
         for (ListenerRegistration<GetDataEventListener> registration : getDataEventListeners) {
@@ -766,7 +774,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    protected void processTransaction(final Transaction tx) throws VerificationException {
+    protected void processTransaction(final Transaction tx) throws VerificationException, PeerConnectionException {
         // Check a few basic syntax issues to ensure the received TX isn't nonsense.
         tx.verify();
         lock.lock();
@@ -979,7 +987,7 @@ public class Peer extends PeerSocketHandler {
         return resultFuture;
     }
 
-    protected void processBlock(Block m) {
+    protected void processBlock(Block m) throws PeerConnectionException {
         if (log.isDebugEnabled()) {
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
         }
@@ -1041,7 +1049,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     // TODO: Fix this duplication.
-    protected void endFilteredBlock(FilteredBlock m) {
+    protected void endFilteredBlock(FilteredBlock m) throws PeerConnectionException {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast filtered block {}", getAddress(), m.getHash().toString());
         if (!vDownloadData) {
@@ -1176,7 +1184,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    protected void processInv(InventoryMessage inv) {
+    protected void processInv(InventoryMessage inv) throws PeerConnectionException {
         List<InventoryItem> items = inv.getItems();
 
         // Separate out the blocks and transactions, we'll handle them differently
@@ -1308,7 +1316,7 @@ public class Peer extends PeerSocketHandler {
     // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
     // ListenableFuture instead of ListenableFuture<Block>. This is okay as sendSingleGetData() actually returns
     // ListenableFuture<Block> in this context. Note that sendSingleGetData() is also used for Transactions.
-    public ListenableFuture<Block> getBlock(Sha256Hash blockHash) {
+    public ListenableFuture<Block> getBlock(Sha256Hash blockHash) throws PeerConnectionException {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
@@ -1325,7 +1333,7 @@ public class Peer extends PeerSocketHandler {
     // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
     // ListenableFuture instead of ListenableFuture<Transaction>. This is okay as sendSingleGetData() actually returns
     // ListenableFuture<Transaction> in this context. Note that sendSingleGetData() is also used for Blocks.
-    public ListenableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
+    public ListenableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) throws PeerConnectionException {
         // This does not need to be locked.
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
@@ -1335,7 +1343,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getdata with a single item in it. */
-    private ListenableFuture sendSingleGetData(GetDataMessage getdata) {
+    private ListenableFuture sendSingleGetData(GetDataMessage getdata) throws PeerConnectionException {
         // This does not need to be locked.
         Preconditions.checkArgument(getdata.getItems().size() == 1);
         GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash, SettableFuture.create());
@@ -1345,7 +1353,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
-    public ListenableFuture<AddressMessage> getAddr() {
+    public ListenableFuture<AddressMessage> getAddr() throws PeerConnectionException {
         SettableFuture<AddressMessage> future = SettableFuture.create();
         synchronized (getAddrFutures) {
             getAddrFutures.add(future);
@@ -1402,7 +1410,7 @@ public class Peer extends PeerSocketHandler {
     private Sha256Hash lastGetBlocksBegin, lastGetBlocksEnd;
 
     @GuardedBy("lock")
-    private void blockChainDownloadLocked(Sha256Hash toHash) {
+    private void blockChainDownloadLocked(Sha256Hash toHash) throws PeerConnectionException {
         checkState(lock.isHeldByCurrentThread());
         // The block chain download process is a bit complicated. Basically, we start with one or more blocks in a
         // chain that we have from a previous session. We want to catch up to the head of the chain BUT we don't know
@@ -1493,7 +1501,7 @@ public class Peer extends PeerSocketHandler {
      * Starts an asynchronous download of the block chain. The chain download is deemed to be complete once we've
      * downloaded the same number of blocks that the peer advertised having in its version handshake message.
      */
-    public void startBlockChainDownload() {
+    public void startBlockChainDownload() throws PeerConnectionException {
         setDownloadData(true);
         // TODO: peer might still have blocks that we don't have, and even have a heavier
         // chain even if the chain block count is lower.
@@ -1567,11 +1575,11 @@ public class Peer extends PeerSocketHandler {
      * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
-    public ListenableFuture<Long> ping() throws ProtocolException {
+    public ListenableFuture<Long> ping() throws ProtocolException, PeerConnectionException {
         return ping((long) (Math.random() * Long.MAX_VALUE));
     }
 
-    protected ListenableFuture<Long> ping(long nonce) throws ProtocolException {
+    protected ListenableFuture<Long> ping(long nonce) throws ProtocolException, PeerConnectionException {
         final VersionMessage ver = vPeerVersionMessage;
         if (!ver.isPingPongSupported())
             throw new ProtocolException("Peer version is too low for measurable pings: " + ver);
@@ -1614,7 +1622,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processPing(Ping m) {
+    private void processPing(Ping m) throws PeerConnectionException {
         if (m.hasNonce())
             sendMessage(new Pong(m.getNonce()));
     }
@@ -1715,7 +1723,7 @@ public class Peer extends PeerSocketHandler {
      * <p>If the remote peer doesn't support Bloom filtering, then this call is ignored. Once set you presently cannot
      * unset a filter, though the underlying p2p protocol does support it.</p>
      */
-    public void setBloomFilter(BloomFilter filter) {
+    public void setBloomFilter(BloomFilter filter) throws PeerConnectionException {
         setBloomFilter(filter, true);
     }
 
@@ -1733,7 +1741,7 @@ public class Peer extends PeerSocketHandler {
      * <p>If the remote peer doesn't support Bloom filtering, then this call is ignored. Once set you presently cannot
      * unset a filter, though the underlying p2p protocol does support it.</p>
      */
-    public void setBloomFilter(BloomFilter filter, boolean andQueryMemPool) {
+    public void setBloomFilter(BloomFilter filter, boolean andQueryMemPool) throws PeerConnectionException {
         checkNotNull(filter, "Clearing filters is not currently supported");
         final VersionMessage ver = vPeerVersionMessage;
         if (ver == null || !ver.isBloomFilteringSupported())
@@ -1746,7 +1754,7 @@ public class Peer extends PeerSocketHandler {
         maybeRestartChainDownload();
     }
 
-    private void maybeRestartChainDownload() {
+    private void maybeRestartChainDownload() throws PeerConnectionException {
         lock.lock();
         try {
             if (awaitingFreshFilter == null)
@@ -1770,11 +1778,15 @@ public class Peer extends PeerSocketHandler {
                     lock.unlock();
 
                     log.info("Restarting chain download");
+                    try {
                     sendMessage(getdata);
                     // TODO: This bizarre ping-after-getdata hack probably isn't necessary.
                     // It's to ensure we know when the end of a filtered block stream of txns is, but we should just be
                     // able to match txns with the merkleblock. Ask Matt why it's written this way.
-                    sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
+                        sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
+                    } catch (PeerConnectionException e) {
+                        e.printStackTrace();
+                    }
                 }
             }, Threading.SAME_THREAD);
         } finally {
@@ -1799,7 +1811,7 @@ public class Peer extends PeerSocketHandler {
      *
      * @throws ProtocolException if this peer doesn't support the protocol.
      */
-    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
+    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) throws PeerConnectionException {
         return getUTXOs(outPoints, true);
     }
 
@@ -1813,7 +1825,7 @@ public class Peer extends PeerSocketHandler {
      * @param includeMempool If true (the default) the results take into account the contents of the memory pool too.
      * @throws ProtocolException if this peer doesn't support the protocol.
      */
-    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints, boolean includeMempool) {
+    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints, boolean includeMempool) throws PeerConnectionException {
         lock.lock();
         try {
             VersionMessage peerVer = getPeerVersionMessage();

@@ -246,12 +246,12 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private class PeerStartupListener implements PeerConnectedEventListener, PeerDisconnectedEventListener {
         @Override
-        public void onPeerConnected(Peer peer, int peerCount) {
+        public void onPeerConnected(Peer peer, int peerCount) throws PeerConnectionException {
             handleNewPeer(peer);
         }
 
         @Override
-        public void onPeerDisconnected(Peer peer, int peerCount) {
+        public void onPeerDisconnected(Peer peer, int peerCount) throws PeerConnectionException {
             // The channel will be automatically removed from channels.
             handlePeerDeath(peer, null);
         }
@@ -434,7 +434,7 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         }
 
-        public void go() {
+        public void go() throws PeerConnectionException {
             if (!vRunning) return;
 
             boolean doDiscovery = false;
@@ -1250,7 +1250,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
             }
 
-            public void go() {
+            public void go() throws PeerConnectionException {
                 checkState(!lock.isHeldByCurrentThread());
                 // Fully verifying mode doesn't use this optimization (it can't as it needs to see all transactions).
                 if ((chain != null && chain.shouldVerifyTransactions()) || !vBloomFilteringEnabled)
@@ -1336,7 +1336,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *         want a future which completes when the connection is open.
      */
     @Nullable
-    public Peer connectTo(InetSocketAddress address) {
+    public Peer connectTo(InetSocketAddress address) throws PeerConnectionException {
         lock.lock();
         try {
             PeerAddress peerAddress = new PeerAddress(params, address);
@@ -1351,7 +1351,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Helper for forcing a connection to localhost. Useful when using regtest mode. Returns the peer object.
      */
     @Nullable
-    public Peer connectToLocalHost() {
+    public Peer connectToLocalHost() throws PeerConnectionException {
         lock.lock();
         try {
             final PeerAddress localhost = PeerAddress.localhost(params);
@@ -1371,7 +1371,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @return Peer or null.
      */
     @Nullable @GuardedBy("lock")
-    protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) {
+    protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) throws PeerConnectionException {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
@@ -1430,7 +1430,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @param listener a listener for chain download events, may not be null
      */
-    public void startBlockChainDownload(PeerDataEventListener listener) {
+    public void startBlockChainDownload(PeerDataEventListener listener) throws PeerConnectionException {
         lock.lock();
         try {
             if (downloadPeer != null) {
@@ -1483,7 +1483,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * This method waits until the download is complete.  "Complete" is defined as downloading
      * from at least one peer all the blocks that are in that peer's inventory.
      */
-    public void downloadBlockChain() {
+    public void downloadBlockChain() throws PeerConnectionException {
         DownloadProgressTracker listener = new DownloadProgressTracker();
         startBlockChainDownload(listener);
         try {
@@ -1493,7 +1493,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    protected void handleNewPeer(final Peer peer) {
+    protected void handleNewPeer(final Peer peer) throws PeerConnectionException {
         int newSize = -1;
         lock.lock();
         try {
@@ -1548,7 +1548,11 @@ public class PeerGroup implements TransactionBroadcaster {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onPeerConnected(peer, fNewSize);
+                    try {
+                        registration.listener.onPeerConnected(peer, fNewSize);
+                    } catch (PeerConnectionException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
@@ -1651,7 +1655,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) {
+    protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) throws PeerConnectionException {
         // Peer deaths can occur during startup if a connect attempt after peer discovery aborts immediately.
         if (!isRunning()) return;
 
@@ -1722,7 +1726,11 @@ public class PeerGroup implements TransactionBroadcaster {
             registration.executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    registration.listener.onPeerDisconnected(peer, fNumConnectedPeers);
+                    try {
+                        registration.listener.onPeerDisconnected(peer, fNumConnectedPeers);
+                    } catch (PeerConnectionException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
             peer.removeDisconnectedEventListener(registration.listener);
@@ -1870,7 +1878,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
     @Nullable private ChainDownloadSpeedCalculator chainDownloadSpeedCalculator;
 
-    private void startBlockChainDownloadFromPeer(Peer peer) {
+    private void startBlockChainDownloadFromPeer(Peer peer) throws PeerConnectionException {
         lock.lock();
         try {
             setDownloadPeer(peer);

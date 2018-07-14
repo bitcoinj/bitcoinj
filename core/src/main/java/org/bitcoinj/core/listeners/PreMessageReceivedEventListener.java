@@ -35,5 +35,5 @@ public interface PreMessageReceivedEventListener {
      * <p>Note that this will never be called if registered with any executor other than
      * {@link Threading#SAME_THREAD}</p>
      */
-    Message onPreMessageReceived(Peer peer, Message m);
+    Message onPreMessageReceived(Peer peer, Message m) throws PeerConnectionException;
 }

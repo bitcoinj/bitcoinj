@@ -365,7 +365,11 @@ public class WalletAppKit extends AbstractIdleService {
                     public void onSuccess(@Nullable Object result) {
                         completeExtensionInitiations(vPeerGroup);
                         final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
-                        vPeerGroup.startBlockChainDownload(l);
+                        try {
+                            vPeerGroup.startBlockChainDownload(l);
+                        } catch (PeerConnectionException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
