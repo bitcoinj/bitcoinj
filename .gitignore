@@ -4,7 +4,9 @@ build
 .project
 .classpath
 .settings
+bin/
 .idea
 *.iml
+out/
 *.chain
 *.spvchain
