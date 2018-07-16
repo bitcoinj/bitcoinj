@@ -8,3 +8,4 @@ build
 *.iml
 *.chain
 *.spvchain
+*/bin
