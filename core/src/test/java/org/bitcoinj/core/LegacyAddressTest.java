@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import java.io.*;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
@@ -36,6 +35,7 @@ import static org.junit.Assert.*;
 
 public class LegacyAddressTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
+
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
@@ -66,7 +66,7 @@ public class LegacyAddressTest {
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
         assertEquals(ScriptType.P2PKH, a.getOutputScriptType());
     }
-    
+
     @Test
     public void decoding() {
         LegacyAddress a = LegacyAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
@@ -75,7 +75,7 @@ public class LegacyAddressTest {
         LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", Utils.HEX.encode(b.getHash()));
     }
-    
+
     @Test
     public void errorPaths() {
         // Check what happens if we try and decode garbage.
@@ -142,9 +142,10 @@ public class LegacyAddressTest {
         try {
             LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
-        } catch (AddressFormatException e) { }
+        } catch (AddressFormatException e) {
+        }
     }
-    
+
     @Test
     public void p2shAddress() {
         // Test that we can construct P2SH addresses
@@ -242,21 +243,17 @@ public class LegacyAddressTest {
 
     @Test
     public void comparisonBytesVsString() throws IOException {
-        List<String> addrs = new LinkedList<>();
-        List<String> addrs1;
-        List<String> addrs2;
         BufferedReader dataSetReader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("LegacyAddressTestDataset.txt")));
         String line;
-        while ((line = dataSetReader.readLine()) != null) addrs.add(line);
-        addrs1 = addrs.subList(0, addrs.size() / 2);
-        addrs2 = addrs.subList(addrs.size() / 2, addrs.size() );
-        for(int i = 0; i >= addrs1.size(); i++){
-            int resultBytes = LegacyAddress.fromBase58(MAINNET ,addrs1.get(i))
-                    .compareTo(LegacyAddress.fromBase58(MAINNET, addrs2.get(i)));
-            int resultsString = LegacyAddress.fromBase58(MAINNET, addrs1.get(i)).toString().
-                    compareTo(LegacyAddress.fromBase58(MAINNET, addrs2.get(i)).toString());
-            assertTrue( resultBytes < 0 );
-            assertTrue( resultsString < 0 );
+        while ((line = dataSetReader.readLine()) != null) {
+            System.out.println(line);
+            String addr[] = line.split(",");
+            int resultBytes = LegacyAddress.fromBase58(MAINNET, addr[0])
+                    .compareTo(LegacyAddress.fromBase58(MAINNET, addr[1]));
+            int resultsString = LegacyAddress.fromBase58(MAINNET, addr[0]).toString().
+                    compareTo(LegacyAddress.fromBase58(MAINNET, addr[1]).toString());
+            assertTrue(resultBytes < 0);
+            assertTrue(resultsString < 0);
         }
     }
 }
