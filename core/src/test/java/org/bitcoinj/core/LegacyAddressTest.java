@@ -26,11 +26,9 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.script.Script.ScriptType;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
@@ -243,14 +241,22 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void comparisonBytesVsString() throws Exception {
-        // TODO: To properly test this we need a much larger data set
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
-
-        int resultBytes = a.compareTo(b);
-        int resultsString = a.toString().compareTo(b.toString());
-        assertTrue( resultBytes < 0 );
-        assertTrue( resultsString < 0 );
+    public void comparisonBytesVsString() throws IOException {
+        List<String> addrs = new LinkedList<>();
+        List<String> addrs1;
+        List<String> addrs2;
+        BufferedReader dataSetReader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("LegacyAddressTestDataset.txt")));
+        String line;
+        while ((line = dataSetReader.readLine()) != null) addrs.add(line);
+        addrs1 = addrs.subList(0, addrs.size() / 2);
+        addrs2 = addrs.subList(addrs.size() / 2, addrs.size() );
+        for(int i = 0; i >= addrs1.size(); i++){
+            int resultBytes = LegacyAddress.fromBase58(MAINNET ,addrs1.get(i))
+                    .compareTo(LegacyAddress.fromBase58(MAINNET, addrs2.get(i)));
+            int resultsString = LegacyAddress.fromBase58(MAINNET, addrs1.get(i)).toString().
+                    compareTo(LegacyAddress.fromBase58(MAINNET, addrs2.get(i)).toString());
+            assertTrue( resultBytes < 0 );
+            assertTrue( resultsString < 0 );
+        }
     }
 }
