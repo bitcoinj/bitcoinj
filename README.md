@@ -20,11 +20,13 @@ To get started, it is best to have the latest JDK and Gradle installed. The HEAD
 
 To perform a full build use
 ```
-gradle clean build
+./gradlew clean build (on Linux or macOS)
+gradlew.bat clean build (on Windows)
 ```
 You can also run
 ```
-gradle javadoc
+./gradlew javadoc (on Linux or macOS)
+gradlew.bat javadoc (on Windows)
 ```
 to generate the JavaDocs.
 
