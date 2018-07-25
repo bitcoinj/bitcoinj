@@ -245,13 +245,14 @@ public class LegacyAddressTest {
     public void comparisonBytesVsString() throws IOException {
         BufferedReader dataSetReader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("LegacyAddressTestDataset.txt")));
         String line;
+        //System.out.println(dataSetReader.readLine().trim().split(",")[1].equals("1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P"));
         while ((line = dataSetReader.readLine()) != null) {
-            System.out.println(line);
-            String addr[] = line.split(",");
-            int resultBytes = LegacyAddress.fromBase58(MAINNET, addr[0])
-                    .compareTo(LegacyAddress.fromBase58(MAINNET, addr[1]));
-            int resultsString = LegacyAddress.fromBase58(MAINNET, addr[0]).toString().
-                    compareTo(LegacyAddress.fromBase58(MAINNET, addr[1]).toString());
+            String addr[] = line.replaceAll("\\n", "").split(",");
+            LegacyAddress one =LegacyAddress.fromBase58(MAINNET, addr[0]);
+            LegacyAddress second = LegacyAddress.fromBase58(MAINNET, addr[1]);
+            int resultBytes = one.compareTo(second);
+            int resultsString = one.toString().
+                    compareTo(second.toString());
             assertTrue(resultBytes < 0);
             assertTrue(resultsString < 0);
         }
