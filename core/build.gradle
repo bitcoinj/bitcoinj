@@ -6,6 +6,7 @@ version = '0.15-SNAPSHOT'
 archivesBaseName = 'bitcoinj-core'
 
 dependencies {
+    compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.7.2'
     compile 'com.madgag.spongycastle:core:1.58.0.0'
     implementation 'com.lambdaworks:scrypt:1.4.0'
     implementation 'com.google.guava:guava:24.0-android'
