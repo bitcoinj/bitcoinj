@@ -348,8 +348,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     private Wallet(Context context, KeyChainGroup keyChainGroup) {
-        this.context = context;
-        this.params = context.getParams();
+        this.context = checkNotNull(context);
+        this.params = checkNotNull(context.getParams());
         this.keyChainGroup = checkNotNull(keyChainGroup);
         if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             this.keyChainGroup.setLookaheadSize(5);  // Cut down excess computation for unit tests.
