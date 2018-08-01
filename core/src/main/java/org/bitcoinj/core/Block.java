@@ -17,19 +17,24 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.*;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Sha256Hash.*;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Sha256Hash.hashTwice;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -377,13 +382,6 @@ public class Block extends Message {
         unCacheTransactions();
     }
 
-    private void unCacheHeader() {
-        headerBytesValid = false;
-        if (!transactionBytesValid)
-            payload = null;
-        hash = null;
-    }
-
     private void unCacheTransactions() {
         transactionBytesValid = false;
         if (!headerBytesValid)
@@ -391,7 +389,6 @@ public class Block extends Message {
         // Current implementation has to uncache headers as well as any change to a tx will alter the merkle root. In
         // future we can go more granular and cache merkle root separately so rest of the header does not need to be
         // rewritten.
-        unCacheHeader();
         // Clear merkleRoot last as it may end up being parsed during unCacheHeader().
         merkleRoot = null;
     }
@@ -735,8 +732,6 @@ public class Block extends Message {
      */
     public Sha256Hash getMerkleRoot() {
         if (merkleRoot == null) {
-            //TODO check if this is really necessary.
-            unCacheHeader();
             merkleRoot = calculateMerkleRoot();
         }
         return merkleRoot;
@@ -744,7 +739,6 @@ public class Block extends Message {
 
     /** Exists only for unit testing. */
     void setMerkleRoot(Sha256Hash value) {
-        unCacheHeader();
         merkleRoot = value;
         hash = null;
     }
@@ -785,7 +779,6 @@ public class Block extends Message {
     }
 
     void setPrevBlockHash(Sha256Hash prevBlockHash) {
-        unCacheHeader();
         this.prevBlockHash = prevBlockHash;
         this.hash = null;
     }
@@ -806,7 +799,6 @@ public class Block extends Message {
     }
 
     public void setTime(long time) {
-        unCacheHeader();
         this.time = time;
         this.hash = null;
     }
@@ -826,7 +818,6 @@ public class Block extends Message {
 
     /** Sets the difficulty target in compact form. */
     public void setDifficultyTarget(long compactForm) {
-        unCacheHeader();
         this.difficultyTarget = compactForm;
         this.hash = null;
     }
@@ -841,7 +832,6 @@ public class Block extends Message {
 
     /** Sets the nonce and clears any cached data. */
     public void setNonce(long nonce) {
-        unCacheHeader();
         this.nonce = nonce;
         this.hash = null;
     }
