@@ -33,8 +33,22 @@ import java.util.List;
 public class AddressMessage extends Message {
 
     private static final long MAX_ADDRESSES = 1024;
+
     private List<PeerAddress> addresses;
 
+    /**
+     * Construct a new 'addr' message from {@link PeerAddress} list
+     * @param params
+     * @param addresses
+     */
+    AddressMessage(NetworkParameters params, List<PeerAddress> addresses) {
+        this.params = params;
+        if (addresses.size() < MAX_ADDRESSES) {
+            this.addresses = addresses;
+        } else {
+            throw new ProtocolException("too many adresses for one message");
+        }
+    }
     /**
      * Contruct a new 'addr' message.
      * @param params NetworkParameters object.
