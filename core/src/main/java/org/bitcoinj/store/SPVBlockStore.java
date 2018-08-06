@@ -47,33 +47,14 @@ import static com.google.common.base.Preconditions.*;
  * but as they are virtually unheard of this is not a significant risk.
  */
 public class SPVBlockStore implements BlockStore {
-    /**
-     * The default number of headers that will be stored in the ring buffer.
-     */
-    public static final int DEFAULT_CAPACITY = 5000;
-
-    public static final String HEADER_MAGIC = "SPVB";
-
-    protected static final int RECORD_SIZE = 32 /* hash */ + StoredBlock.COMPACT_SERIALIZED_SIZE;
-
-    // File format:
-    //   4 header bytes = "SPVB"
-    //   4 cursor bytes, which indicate the offset from the first kb where the next block header should be written.
-    //   4 height bytes
-    //   32 bytes for the hash of the chain head
-    //
-    // For each header (128 bytes)
-    //   32 bytes hash of the header
-    //   12 bytes of chain work
-    //    4 bytes of height
-    //   80 bytes of block header data
-    protected static final int FILE_PROLOGUE_BYTES = 1024;
-
     private static final Logger log = LoggerFactory.getLogger(SPVBlockStore.class);
 
-    protected final NetworkParameters params;
+    /** The default number of headers that will be stored in the ring buffer. */
+    public static final int DEFAULT_CAPACITY = 5000;
+    public static final String HEADER_MAGIC = "SPVB";
 
     protected volatile MappedByteBuffer buffer;
+    protected final NetworkParameters params;
 
     protected Map<Sha256Hash, ChainMap> chainMaps = new HashMap<>();
 
@@ -93,7 +74,6 @@ public class SPVBlockStore implements BlockStore {
     /**
      * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
      * given file if it's missing. This operation will block on disk.
-     *
      * @param file file to use for the block store
      * @throws BlockStoreException if something goes wrong
      */
@@ -104,10 +84,9 @@ public class SPVBlockStore implements BlockStore {
     /**
      * Creates and initializes an SPV block store that can hold a given amount of blocks. Will create the given file if
      * it's missing. This operation will block on disk.
-     *
-     * @param file     file to use for the block store
+     * @param file file to use for the block store
      * @param capacity custom capacity in number of block headers
-     * @param grow     wether or not to migrate an existing block store of different capacity
+     * @param grow wether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
      */
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
@@ -150,6 +129,7 @@ public class SPVBlockStore implements BlockStore {
             // always be correct. Once we establish the mmap the underlying file and channel can go away. Note that
             // the details of mmapping vary between platforms.
             buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
+
             // Check or initialize the header bytes to ensure we don't try to open some random file.
             if (exists) {
                 byte[] header = new byte[4];
@@ -229,16 +209,20 @@ public class SPVBlockStore implements BlockStore {
     @Nullable
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         lock.lock();
-        final MappedByteBuffer buffer = this.buffer;
-        if (buffer == null) throw new BlockStoreException("Store closed");
-        ChainMap map = chainMaps.get(hash);
-        if (map == null) return null;
-        byte[] hashdat = new byte[32];
-        buffer.position(map.start);
-        buffer.get(hashdat);
-        //buffer.position(map.start);
-        lock.unlock();
-        return StoredBlock.deserializeCompact(params, buffer);
+        StoredBlock block;
+        try {
+            final MappedByteBuffer buffer = this.buffer;
+            if (buffer == null) throw new BlockStoreException("Store closed");
+            ChainMap map = chainMaps.get(hash);
+            if (map == null) return null;
+            byte[] hashdat = new byte[32];
+            buffer.position(map.start);
+            buffer.get(hashdat);
+            block = StoredBlock.deserializeCompact(params, buffer);
+        } finally {
+            lock.unlock();
+        }
+        return block;
     }
 
     @Override
@@ -258,9 +242,7 @@ public class SPVBlockStore implements BlockStore {
                 lastChainHead = block;
             }
             return lastChainHead;
-        } finally {
-            lock.unlock();
-        }
+        } finally { lock.unlock(); }
     }
 
     @Override
@@ -274,9 +256,7 @@ public class SPVBlockStore implements BlockStore {
             byte[] headHash = chainHead.getHeader().getHash().getBytes();
             buffer.position(12);
             buffer.put(headHash);
-        } finally {
-            lock.unlock();
-        }
+        } finally { lock.unlock(); }
     }
 
     @Override
@@ -297,9 +277,21 @@ public class SPVBlockStore implements BlockStore {
         return params;
     }
 
-    /**
-     * Returns the offset from the file start where the latest block should be written (end of prev block).
-     */
+    protected static final int RECORD_SIZE = 32 /* hash */ + StoredBlock.COMPACT_SERIALIZED_SIZE;
+
+    // File format:
+    //   4 header bytes = "SPVB"
+    //   4 cursor bytes, which indicate the offset from the first kb where the next block header should be written.
+    //   32 bytes for the hash of the chain head
+    //
+    // For each header (128 bytes)
+    //   32 bytes hash of the header
+    //   12 bytes of chain work
+    //    4 bytes of height
+    //   80 bytes of block header data
+    protected static final int FILE_PROLOGUE_BYTES = 1024;
+
+    /** Returns the offset from the file start where the latest block should be written (end of prev block). */
     private int getRingCursor(ByteBuffer buffer) {
         int c = buffer.getInt(4);
         checkState(c >= FILE_PROLOGUE_BYTES, "Integer overflow");
@@ -311,7 +303,7 @@ public class SPVBlockStore implements BlockStore {
         buffer.putInt(4, newCursor);
     }
 
-    class ChainMap {
+    private class ChainMap {
         private int start;
 
         private int end;
