@@ -33,10 +33,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
@@ -51,7 +48,7 @@ public class SPVBlockStore implements BlockStore {
 
     /** The default number of headers that will be stored in the ring buffer. */
     public static final int DEFAULT_CAPACITY = 5000;
-    public static final String HEADER_MAGIC = "SPVB";
+    public static final String HEADER_MAGIC = "SPV2";
 
     protected volatile MappedByteBuffer buffer;
     protected final NetworkParameters params;
@@ -134,7 +131,19 @@ public class SPVBlockStore implements BlockStore {
             if (exists) {
                 byte[] header = new byte[4];
                 buffer.get(header);
-                if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
+                if(new String(header).equals("SPVB")){
+                    byte[] hash = new byte[32];
+                    buffer.position(4);
+                    int cursor = buffer.getInt();
+                    buffer.get(hash);
+                    buffer.position(cursor-96);
+                    int serHeight = StoredBlock.deserializeCompact(params, buffer).getHeight();
+                    System.out.println(serHeight);
+                    buffer.put(HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII));
+                    buffer.putInt(cursor);
+                    buffer.putInt(serHeight);
+                    buffer.put(hash);
+                }else if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
                     throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
                 buffer.position(8);
                 height = buffer.getInt();
@@ -280,8 +289,9 @@ public class SPVBlockStore implements BlockStore {
     protected static final int RECORD_SIZE = 32 /* hash */ + StoredBlock.COMPACT_SERIALIZED_SIZE;
 
     // File format:
-    //   4 header bytes = "SPVB"
+    //   4 header bytes = "SPV2" legacy "SPVB"
     //   4 cursor bytes, which indicate the offset from the first kb where the next block header should be written.
+    //   4 height bytes
     //   32 bytes for the hash of the chain head
     //
     // For each header (128 bytes)
