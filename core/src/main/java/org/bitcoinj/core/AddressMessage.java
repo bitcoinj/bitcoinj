@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -47,7 +48,16 @@ public class AddressMessage extends Message {
     AddressMessage(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
         super(params, payload, offset, serializer, length);
     }
-
+    public AddressMessage(NetworkParameters params, List<PeerAddress> addrs){
+        super(params);
+        addresses = addrs;
+    }
+    public AddressMessage(NetworkParameters params, final PeerAddress addr){
+        super(params);
+        addresses = new LinkedList<PeerAddress>(){{
+            add(addr);
+        }};
+    }
     /**
      * Contruct a new 'addr' message.
      * @param params NetworkParameters object.
