@@ -483,6 +483,8 @@ public class Peer extends PeerSocketHandler {
 
         if (m instanceof Ping) {
             processPing((Ping) m);
+        } else if (m instanceof GetAddrMessage) {
+            processGetAddr();
         } else if (m instanceof Pong) {
             processPong((Pong) m);
         } else if (m instanceof NotFoundMessage) {
@@ -519,6 +521,10 @@ public class Peer extends PeerSocketHandler {
         } else {
             log.warn("{}: Received unhandled message: {}", this, m);
         }
+    }
+
+    private void processGetAddr() {
+        sendMessage(new AddressMessage(params, versionMessage.fromAddr));
     }
 
     protected void processUTXOMessage(UTXOsMessage m) {
