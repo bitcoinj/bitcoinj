@@ -54,9 +54,7 @@ public class AddressMessage extends Message {
     }
     public AddressMessage(NetworkParameters params, final PeerAddress addr){
         super(params);
-        addresses = new LinkedList<PeerAddress>(){{
-            add(addr);
-        }};
+        addresses = Collections.singletonList(addr);
     }
     /**
      * Contruct a new 'addr' message.
