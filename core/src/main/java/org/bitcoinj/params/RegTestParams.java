@@ -36,7 +36,7 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         p2shHeader = 196;
         targetTimespan = TARGET_TIMESPAN;
         dumpedPrivateKeyHeader = 239;
-        segwitAddressHrp = "tb";
+        segwitAddressHrp = "tbtg";
         genesisBlock.setTime(1296688602L);
         genesisBlock.setDifficultyTarget(0x1d07fff8L);
         genesisBlock.setNonce(384568319);

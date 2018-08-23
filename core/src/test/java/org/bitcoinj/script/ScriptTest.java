@@ -112,7 +112,7 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() throws Exception {
-        Address p2shAddress = LegacyAddress.fromBase58(MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        Address p2shAddress = LegacyAddress.fromBase58(MAINNET, "Adj4DrvxXFZjzcvojHKw3QwrQX1uGfohPY");
         assertTrue(ScriptPattern.isPayToScriptHash(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
