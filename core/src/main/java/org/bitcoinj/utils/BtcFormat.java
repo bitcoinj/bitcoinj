@@ -70,9 +70,9 @@ import java.util.regex.Pattern;
  * <p>Basic usage is very simple:</p>
  *
  * <ol>
- *   <li>Construct a new formatter object using one of the factory methods. 
+ *   <li>Construct a new formatter object using one of the factory methods.
  *   <li>Format a value by passing it as an argument to the
- *       {@link BtcFormat#format(Object)} method. 
+ *       {@link BtcFormat#format(Object)} method.
  *   <li>Parse a value by passing a {@code String}-type
  *       representation of it to the {@link BtcFormat#parse(String)} method.</ol>
  *
@@ -112,7 +112,7 @@ import java.util.regex.Pattern;
  * exceeding that by one satoshi would be {@code µ฿1,000,000.01}</p>
  *
  * <h4>Fixed Denomination</h4>
- * 
+ *
  * <p>Fixed denomination means that the same denomination of units is used for every value that is
  * formatted or parsed by a given formatter instance.  A fixed-denomination formatter is
  * defined by its scale, which is the number of places one must shift the decimal point in
@@ -533,7 +533,7 @@ public abstract class BtcFormat extends Format {
      * <p>This class constructs new instances of {@link BtcFormat}, allowing for the
      * configuration of those instances before they are constructed.  After obtaining a
      * {@code Builder} object from the {@link BtcFormat#builder()} method, invoke the
-     * necessary setter methods to obtain your desired configuration.  Finaly, the {@link
+     * necessary setter methods to obtain your desired configuration.  Finally, the {@link
      * #build()} method returns a new {@code BtcFormat} object that has the specified
      * configuration.
      *
@@ -684,7 +684,7 @@ public abstract class BtcFormat extends Format {
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern()");
             pattern = val;
             return this;
-        } 
+        }
 
         /** Use the given localized-pattern for formatting and parsing.  The format of this
          *  pattern is identical to the patterns used by the {@link DecimalFormat}
@@ -897,7 +897,7 @@ public abstract class BtcFormat extends Format {
      * The returned object that will auto-denominate each formatted value, and
      * will indicate that denomination using either a currency code, such as
      * {@code "BTC"}, or symbol, such as {@code "฿"}, depending on the value
-     * of the first argument. 
+     * of the first argument.
      * <p>The number of fractional decimal places in formatted number will be two, or fewer
      * as necessary to avoid giving a place to fractional satoshis.
      */
@@ -914,7 +914,7 @@ public abstract class BtcFormat extends Format {
      * according to the given locale.
      *
      * <p>The third parameter is the number of fractional decimal places to use for each
-     * formatted number, reduced as neccesary when formatting to avoid giving a place to
+     * formatted number, reduced as necessary when formatting to avoid giving a place to
      * fractional satoshis.
      */
     public static BtcFormat getInstance(Style style, Locale locale, int fractionPlaces) {
@@ -1050,7 +1050,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter with the specified fractional decimal
+     * Return a new fixed-denomination formatter with the specified fractional decimal
      * placing.  The first argument specifies the denomination as the size of the
      * shift from coin-denomination in increasingly-precise decimal places.  The returned object will format
      * and parse values according to the default locale, and will format the fractional part of
@@ -1064,7 +1064,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter.  The argument specifies the denomination as
+     * Return a new fixed-denomination formatter.  The argument specifies the denomination as
      * the size of the shift from coin-denomination in increasingly-precise decimal places.
      * The returned object will format and parse values according to the default locale, and
      * will format the fractional part of numbers with two decimal places, or fewer as
@@ -1075,7 +1075,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter for the given locale.  The first argument
+     * Return a new fixed-denomination formatter for the given locale.  The first argument
      * specifies the denomination as the size of the shift from coin-denomination in
      * increasingly-precise decimal places.  The returned object will format and parse values
      * according to the locale specified by the second argument, and will format the fractional
@@ -1198,7 +1198,7 @@ public abstract class BtcFormat extends Format {
             setFormatterDigits(numberFormat, antePlaces.get(0), antePlaces.get(1));
             return s;
         }
-    }    
+    }
 
     /**
      * Return the denomination for formatting the given value.  The returned {@code int}
@@ -1247,7 +1247,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /** Return the number of fractional decimal places to be displayed when formatting
-     *  the given number of monetory units of the denomination indicated by the given decimal scale value,
+     *  the given number of monetary units of the denomination indicated by the given decimal scale value,
      *  where 0 = coin, 3 = millicoin, and so on.
      *
      *  @param unitCount      the number of monetary units to be formatted
@@ -1330,7 +1330,7 @@ public abstract class BtcFormat extends Format {
                 }
                 coinPattern = Pattern.compile(ci + "?");
                 result = denoms = new ScaleMatcher[]{
-                    new ScaleMatcher(Pattern.compile("¢" + ci + "?|c" + ci), 2), // centi 
+                    new ScaleMatcher(Pattern.compile("¢" + ci + "?|c" + ci), 2), // centi
                     new ScaleMatcher(Pattern.compile("₥" + ci + "?|m" + ci), MILLICOIN_SCALE),
                     new ScaleMatcher(Pattern.compile("([µu]" + ci + ")"),    MICROCOIN_SCALE),
                     new ScaleMatcher(Pattern.compile("(da" + ci + ")"),     -1), // deka
@@ -1526,7 +1526,7 @@ public abstract class BtcFormat extends Format {
     public static Locale[] getAvailableLocales() { return NumberFormat.getAvailableLocales(); }
 
     /** Return the unprefixed currency symbol for bitcoins configured for this object.  The
-     *  return value of this method is constant throughough the life of an instance.  */
+     *  return value of this method is constant throughout the life of an instance.  */
     public String coinSymbol() { synchronized(numberFormat) {
         return numberFormat.getDecimalFormatSymbols().getCurrencySymbol();
     }}

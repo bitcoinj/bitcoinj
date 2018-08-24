@@ -78,7 +78,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Tests various test cases from FullBlockTestGenerator
         FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
-        
+
         store = createStore(PARAMS, blockList.maximumReorgBlockCount);
         chain = new FullPrunedBlockChain(PARAMS, store);
 
@@ -166,10 +166,10 @@ public abstract class AbstractFullPrunedBlockChainTest {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         chain = new FullPrunedBlockChain(PARAMS, store);
-        
+
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
-        
+
         ECKey outKey = new ECKey();
         int height = 1;
 
@@ -182,18 +182,18 @@ public abstract class AbstractFullPrunedBlockChainTest {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
-        
+
         WeakReference<UTXO> out = new WeakReference<UTXO>
                                        (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(null);
-        
+
         Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
         t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[]{}));
         t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
-        
+
         chain.add(rollingBlock);
         WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<>(store.getUndoBlock(rollingBlock.getHash()));
 
@@ -203,7 +203,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         WeakReference<TransactionOutputChanges> changes = new WeakReference<>(storedUndoableBlock.getTxOutChanges());
         assertNotNull(changes.get());
         storedUndoableBlock = null;   // Blank the reference so it can be GCd.
-        
+
         // Create a chain longer than UNDOABLE_BLOCKS_STORED
         for (int i = 0; i < UNDOABLE_BLOCKS_STORED; i++) {
             rollingBlock = rollingBlock.createNextBlock(null);
@@ -218,13 +218,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
             store.close();
         } catch (Exception e) {}
     }
-    
+
     @Test
     public void testFirst100KBlocks() throws Exception {
         Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
-        
+
         store = createStore(MAINNET, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(context, store);
@@ -341,7 +341,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
         }
 
-        // The availbale balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
+        // The available balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", amount2.subtract(fee), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertEquals("Pending tx amount is incorrect", amount2.subtract(fee), totalPendingTxAmount);

@@ -21,7 +21,7 @@ import org.bitcoinj.utils.Threading;
 
 /**
  * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
- * they can pre-filter messages before they are procesesed by a {@link Peer} or {@link PeerGroup}, and they can
+ * they can pre-filter messages before they are processed by a {@link Peer} or {@link PeerGroup}, and they can
  * provide transactions to remote peers when they ask for them.</p>
  */
 public interface PreMessageReceivedEventListener {
