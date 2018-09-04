@@ -23,8 +23,15 @@ import org.junit.*;
 
 import java.net.*;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.junit.Assert.*;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class TxConfidenceTableTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
@@ -83,6 +90,40 @@ public class TxConfidenceTableTest {
         run[0] = null;
         table.seen(tx1.getHash(), address1);
         assertNull(run[0]);
+    }
+
+    @Test
+    public void testSeen() {
+        PeerAddress peer = createMock(PeerAddress.class);
+
+        Sha256Hash brokenHash = createMock(Sha256Hash.class);
+        Sha256Hash correctHash = createMock(Sha256Hash.class);
+
+        TransactionConfidence brokenConfidence = createMock(TransactionConfidence.class);
+        expect(brokenConfidence.getTransactionHash()).andReturn(brokenHash);
+        expect(brokenConfidence.markBroadcastBy(peer)).andThrow(new ArithmeticException("some error"));
+
+        TransactionConfidence correctConfidence = createMock(TransactionConfidence.class);
+        expect(correctConfidence.getTransactionHash()).andReturn(correctHash);
+        expect(correctConfidence.markBroadcastBy(peer)).andReturn(true);
+        correctConfidence.queueListeners(anyObject(TransactionConfidence.Listener.ChangeReason.class));
+        expectLastCall();
+
+        TransactionConfidence.Factory factory = createMock(TransactionConfidence.Factory.class);
+        expect(factory.createConfidence(brokenHash)).andReturn(brokenConfidence);
+        expect(factory.createConfidence(correctHash)).andReturn(correctConfidence);
+
+        replay(factory, brokenConfidence, correctConfidence);
+
+        TxConfidenceTable table = new TxConfidenceTable(1, factory);
+
+        try {
+            table.seen(brokenHash, peer);
+        } catch (ArithmeticException expected) {
+            // do nothing
+        }
+
+        assertNotNull(table.seen(correctHash, peer));
     }
 
     @Test

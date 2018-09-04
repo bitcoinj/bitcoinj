@@ -62,6 +62,11 @@ import static com.google.common.base.Preconditions.*;
  * To make a copy that won't be changed, use {@link TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence {
+    public static class Factory {
+        public TransactionConfidence createConfidence(Sha256Hash hash) {
+            return new TransactionConfidence(hash);
+        }
+    }
 
     /**
      * The peers that have announced the transaction to us. Network nodes don't have stable identities, so we use
