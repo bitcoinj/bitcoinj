@@ -63,7 +63,7 @@ public class BlockingClient implements MessageWriteTarget {
                           @Nullable final Set<BlockingClient> clientSet) throws IOException {
         connectFuture = SettableFuture.create();
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
-        // sure it doesnt get too large or have to call read too often.
+        // sure it doesn't get too large or have to call read too often.
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
         final Context context = Context.get();

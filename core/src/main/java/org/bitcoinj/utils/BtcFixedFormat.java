@@ -70,7 +70,7 @@ public final class BtcFixedFormat extends BtcFormat {
     public static final int[] REPEATING_TRIPLETS = {3,3,3,3,3};
 
     /** The number of places the decimal point of formatted values is shifted rightward from
-     *  thet same value expressed in bitcoins. */
+     *  the same value expressed in bitcoins. */
     private final int scale;
 
     /** Constructor */

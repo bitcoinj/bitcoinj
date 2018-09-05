@@ -1478,7 +1478,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(tx2, transactions.get(0));
         assertEquals(tx1, transactions.get(1));
         assertEquals(2, transactions.size());
-        // Check we get only the last transaction if we request a subrage.
+        // Check we get only the last transaction if we request a subrange.
         transactions = wallet.getRecentTransactions(1, false);
         assertEquals(1, transactions.size());
         assertEquals(tx2,  transactions.get(0));
@@ -2498,7 +2498,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(COIN, request20.tx.getInput(0).getValue());
         assertEquals(CENT, request20.tx.getInput(1).getValue());
 
-        // Same as request 19, but make the change 0 (so it doesnt force fee) and make us require min fee
+        // Same as request 19, but make the change 0 (so it doesn't force fee) and make us require min fee
         SendRequest request21 = SendRequest.to(OTHER_ADDRESS, CENT);
         request21.feePerKb = ZERO;
         request21.ensureMinRequiredFee = true;

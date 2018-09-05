@@ -60,8 +60,8 @@ import java.util.Locale;
 public final class BtcAutoFormat extends BtcFormat {
 
     /**
-     * Enum for specifying the style of currency indicators thas are used
-     * when formatting, ether codes or symbols.
+     * Enum for specifying the style of currency indicators that are used
+     * when formatting, either codes or symbols.
      */
     public enum Style {
 
@@ -83,9 +83,9 @@ public final class BtcAutoFormat extends BtcFormat {
             @Override void apply(DecimalFormat decimalFormat) {
                 /* To switch to using codes from symbols, we replace each single occurrence of the
                  * currency-sign character with two such characters in a row.
-                 * We also insert a space character between every occurence of this character and an
-                 * adjacent numerical digit or negative sign (that is, between the currency-sign and
-                 * the signed-number). */
+                 * We also insert a space character between every occurrence of this character and
+                 * an adjacent numerical digit or negative sign (that is, between the currency-sign
+                 * and the signed-number). */
                 decimalFormat.applyPattern(
                     negify(decimalFormat.toPattern()).replaceAll("¤","¤¤").
                                                       replaceAll("([#0.,E-])¤¤","$1 ¤¤").

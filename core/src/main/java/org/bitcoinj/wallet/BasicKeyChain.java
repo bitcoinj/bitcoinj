@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.*;
 public class BasicKeyChain implements EncryptableKeyChain {
     private final ReentrantLock lock = Threading.lock("BasicKeyChain");
 
-    // Maps used to let us quickly look up a key given data we find in transcations or the block chain.
+    // Maps used to let us quickly look up a key given data we find in transactions or the block chain.
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
     @Nullable private final KeyCrypter keyCrypter;

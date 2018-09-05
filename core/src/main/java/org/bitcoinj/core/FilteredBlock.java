@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * <p>A FilteredBlock is used to relay a block with its transactions filtered using a {@link BloomFilter}. It consists
  * of the block header and a {@link PartialMerkleTree} which contains the transactions which matched the filter.</p>
- * 
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class FilteredBlock extends Message {
@@ -33,11 +33,11 @@ public class FilteredBlock extends Message {
 
     private PartialMerkleTree merkleTree;
     private List<Sha256Hash> cachedTransactionHashes = null;
-    
+
     // A set of transactions whose hashes are a subset of getTransactionHashes()
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
     private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
-    
+
     public FilteredBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
     }
@@ -62,16 +62,16 @@ public class FilteredBlock extends Message {
         byte[] headerBytes = new byte[Block.HEADER_SIZE];
         System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
         header = params.getDefaultSerializer().makeBlock(headerBytes);
-        
+
         merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
-        
+
         length = Block.HEADER_SIZE + merkleTree.getMessageSize();
     }
-    
+
     /**
      * Gets a list of leaf hashes which are contained in the partial merkle tree in this filtered block
-     * 
-     * @throws ProtocolException If the partial merkle block is invalid or the merkle root of the partial merkle block doesnt match the block header
+     *
+     * @throws ProtocolException If the partial merkle block is invalid or the merkle root of the partial merkle block doesn't match the block header
      */
     public List<Sha256Hash> getTransactionHashes() throws VerificationException {
         if (cachedTransactionHashes != null)
@@ -83,20 +83,20 @@ public class FilteredBlock extends Message {
         } else
             throw new VerificationException("Merkle root of block header does not match merkle root of partial merkle tree.");
     }
-    
+
     /**
      * Gets a copy of the block header
      */
     public Block getBlockHeader() {
         return header.cloneAsHeader();
     }
-    
+
     /** Gets the hash of the block represented in this Filtered Block */
     @Override
     public Sha256Hash getHash() {
         return header.getHash();
     }
-    
+
     /**
      * Provide this FilteredBlock with a transaction which is in its Merkle tree.
      * @return false if the tx is not relevant to this FilteredBlock

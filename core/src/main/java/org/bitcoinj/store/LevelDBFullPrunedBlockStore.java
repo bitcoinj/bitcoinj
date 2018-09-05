@@ -57,7 +57,7 @@ import com.google.common.collect.Lists;
  * <p>
  * An implementation of a Fully Pruned Block Store using a leveldb implementation as the backing data store.
  * <p>
- * 
+ *
  * <p>
  * Includes number of caches to optimise the initial blockchain download.
  * </p>
@@ -317,7 +317,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         this.verifiedChainHeadBlock = get(hash);
         this.verifiedChainHeadHash = hash;
         if (this.verifiedChainHeadBlock == null) {
-            throw new BlockStoreException("corrupt databse block store - verified head block not found");
+            throw new BlockStoreException("corrupt database block store - verified head block not found");
         }
     }
 

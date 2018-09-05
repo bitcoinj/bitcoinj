@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
  * A generic handler which is used in {@link NioServer}, {@link NioClient} and {@link BlockingClient} to handle incoming
  * data streams.
  *
- * Used to be callet StreamParser.
+ * Used to be called StreamParser.
  */
 public interface StreamConnection {
     /** Called when the connection socket is closed */
@@ -41,7 +41,7 @@ public interface StreamConnection {
      *     will start reading at (always 0)</li>
      * <li>May read more than one message (recursively) if there are enough bytes available</li>
      * <li>Uses some internal buffering to store message which are larger (incl their length prefix) than buff's
-     *     capacity(), ie it is up to this method to ensure we dont run out of buffer space to decode the next message.
+     *     capacity(), ie it is up to this method to ensure we don't run out of buffer space to decode the next message.
      *     </li>
      * <li>buff will end with its limit the same as it was previously, and its position set to the position up to which
      *     bytes have been read (the same as its return value)</li>
