@@ -25,12 +25,14 @@ import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
 import static org.bitcoinj.core.Utils.HEX;
 
+import static org.bitcoinj.core.Utils.sha256hash160;
 import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
@@ -507,6 +509,40 @@ public class TransactionTest {
         } catch (ProtocolException e) {
             //Expected, do nothing
         }
+    }
+
+    @Test
+    public void createTransactionBitcoinGold() throws Exception {
+        long value = (long)(50 * 1e8);
+        int val = 50;
+        String txid = "40c8a218923f23df3692530fa8e475251c50c7d630dccbdfbd92ba8092f4aa13";
+        int vout = 0;
+
+        NetworkParameters params = MainNetParams.get();
+        String wif = "L54PmHcjKXi8H6v9cLAJ7DgGJFDpaFpR2YsV2WARieb82dz3QAfr";
+        DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params, wif);
+        ECKey key = dumpedPrivateKey.getKey();
+
+        String strAddress = "GfEHv6hKvAX8HYfFzabMY2eiYDtC9eViqe";
+        Address address = Address.fromString(params, strAddress);
+
+        Transaction tx = new Transaction(params);
+        tx.addOutput(Coin.valueOf(value), address);
+
+        UTXO utxo = new UTXO(new Sha256Hash(txid), vout, Coin.COIN, val, true, ScriptBuilder.createOutputScript(key));
+
+        TransactionOutPoint outPoint = new TransactionOutPoint(params, utxo.getIndex(), utxo.getHash());
+
+        tx.setVersion(2);
+        tx.addSignedInput(outPoint, utxo.getScript(), key, Transaction.SigHash.ALL_FORKID, false, Coin.valueOf(value));
+        tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
+        tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+
+        String hash = tx.getHashAsString();
+        String hash1 = tx.toString();
+        String hex = DatatypeConverter.printHexBinary(tx.unsafeBitcoinSerialize()).toLowerCase();
+        String expectedHex = "020000000113aaf49280ba92bddfcbdc30d6c7501c2575e4a80f539236df233f9218a2c840000000006b483045022100c594c8e0750b1b6ec4e267b6d6c7098840f86fa9467f8aa452f439c3a72e0cd9022019759d800fffd7fcb78d16468f5693ea07a13da33607e0e8fbb4cdb5967075b441210201ad6a9a15457b162a71f1d5db8fe27ff001abc4ae3a888214f9407cb0da863cffffffff0100f2052a010000001976a914ea95bd5087d3b5f2df279304a46ad827225c4e8688ac00000000";
+        boolean same = hex.equals(expectedHex);
     }
 
     private static class HugeDeclaredSizeTransaction extends Transaction {

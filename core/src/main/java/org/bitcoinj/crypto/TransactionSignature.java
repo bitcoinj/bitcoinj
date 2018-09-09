@@ -68,10 +68,16 @@ public class TransactionSignature extends ECKey.ECDSASignature {
 
     /** Calculates the byte used in the protocol to represent the combination of mode and anyoneCanPay. */
     public static int calcSigHashValue(Transaction.SigHash mode, boolean anyoneCanPay) {
-        Preconditions.checkArgument(SigHash.ALL == mode || SigHash.NONE == mode || SigHash.SINGLE == mode); // enforce compatibility since this code was made before the SigHash enum was updated
+        Preconditions.checkArgument(SigHash.ALL == mode || SigHash.NONE == mode || SigHash.SINGLE == mode || SigHash.ALL_FORKID == mode); // enforce compatibility since this code was made before the SigHash enum was updated
         int sighashFlags = mode.value;
         if (anyoneCanPay)
             sighashFlags |= Transaction.SigHash.ANYONECANPAY.value;
+
+        boolean fUseForkId = (mode.value & SigHash.SIGHASH_FORKID.value) > 0;
+        if (fUseForkId) {
+            sighashFlags |= SigHash.FORKID_BTG.value << 8;
+        }
+
         return sighashFlags;
     }
 
