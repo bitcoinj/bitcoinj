@@ -1095,7 +1095,13 @@ public class Transaction extends ChildMessage {
     public Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForWitnessV0(inputIndex, redeemScript.getProgram(), sigHash);
+        boolean fUseForkId = (type.value & SigHash.SIGHASH_FORKID.value) > 0;
+        if (fUseForkId)
+        {
+            return hashForWitnessV0(inputIndex, redeemScript.getProgram(), sigHash);
+        } else {
+            return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
+        }
     }
 
     private Sha256Hash getPrevoutHash(Transaction tx) throws IOException {
@@ -1181,8 +1187,8 @@ public class Transaction extends ChildMessage {
             // nSequence may already be contain in hashSequence.
             input.getOutpoint().bitcoinSerializeToStream(baos);
 
-            //baos.write(new VarInt(connectedScript.length).encode());
-            //baos.write(connectedScript);
+            baos.write(new VarInt(connectedScript.length).encode());
+            baos.write(connectedScript);
             uint64ToByteStreamLE(BigInteger.valueOf(amount), baos);
             uint32ToByteStreamLE(input.getSequenceNumber(), baos);
 
