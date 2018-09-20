@@ -36,7 +36,7 @@ public class AddressMessage extends Message {
     private List<PeerAddress> addresses;
 
     /**
-     * Contruct a new 'addr' message.
+     * Construct a new 'addr' message.
      * @param params NetworkParameters object.
      * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this block.
@@ -49,7 +49,7 @@ public class AddressMessage extends Message {
     }
 
     /**
-     * Contruct a new 'addr' message.
+     * Construct a new 'addr' message.
      * @param params NetworkParameters object.
      * @param serializer the serializer to use for this block.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire

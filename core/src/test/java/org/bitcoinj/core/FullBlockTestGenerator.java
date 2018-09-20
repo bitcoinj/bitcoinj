@@ -321,7 +321,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b13 = createNextBlock(b12, chainHeadHeight + 5, out4, null);
         blocks.add(new BlockAndValidity(b13, false, false, b6.getHash(), chainHeadHeight + 4, "b13"));
-        // Make sure we dont die if an orphan gets added twice
+        // Make sure we don't die if an orphan gets added twice
         blocks.add(new BlockAndValidity(b13, false, false, b6.getHash(), chainHeadHeight + 4, "b13"));
         spendableOutputs.offer(b13.getCoinbaseOutput());
 
@@ -332,7 +332,7 @@ public class FullBlockTestGenerator {
         // and will be discarded when an attempt is made to reorg to it.
         // TODO: Use a WeakReference to check that it is freed properly after the reorg
         blocks.add(new BlockAndValidity(b14, false, false, b6.getHash(), chainHeadHeight + 4, "b14"));
-        // Make sure we dont die if an orphan gets added twice
+        // Make sure we don't die if an orphan gets added twice
         blocks.add(new BlockAndValidity(b14, false, false, b6.getHash(), chainHeadHeight + 4, "b14"));
 
         blocks.add(new BlockAndValidity(b12, false, true, b13.getHash(), chainHeadHeight + 5, "b12"));

@@ -195,7 +195,7 @@ public class Peer extends PeerSocketHandler {
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
-     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
@@ -214,7 +214,7 @@ public class Peer extends PeerSocketHandler {
 
     /**
      * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
-     * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
+     * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
@@ -1263,7 +1263,7 @@ public class Peer extends PeerSocketHandler {
                         // previous one: whilst the stopHash is the same (because we use the orphan root), the start hash
                         // will be different and so the getblocks req won't be dropped as a duplicate. We'll end up
                         // requesting a subset of what we already requested, which can lead to parallel chain downloads
-                        // and other nastyness. So we just do a quick removal of redundant getdatas here too.
+                        // and other nastiness. So we just do a quick removal of redundant getdatas here too.
                         //
                         // Note that as of June 2012 Bitcoin Core won't actually ever interleave blocks pushed as
                         // part of chain download with newly announced blocks, so it should always be taken care of by

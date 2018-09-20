@@ -120,7 +120,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         serverWallet = new Wallet(UNITTEST);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
-        // Use an atomic boolean to indicate failure because fail()/assert*() dont work in network threads
+        // Use an atomic boolean to indicate failure because fail()/assert*() don't work in network threads
         fail = new AtomicBoolean(false);
 
         // Set up a way to monitor broadcast transactions. When you expect a broadcast, you must release a permit

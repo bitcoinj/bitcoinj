@@ -341,7 +341,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
         }
 
-        // The availbale balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
+        // The available balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", amount2.subtract(fee), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         assertEquals("Pending tx amount is incorrect", amount2.subtract(fee), totalPendingTxAmount);

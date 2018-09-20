@@ -539,7 +539,7 @@ public class Block extends Message {
         // ridiculously easy difficulty and this function would accept them.
         //
         // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
-        // field is of the right value. This requires us to have the preceeding blocks.
+        // field is of the right value. This requires us to have the preceding blocks.
         BigInteger target = getDifficultyTargetAsInteger();
 
         BigInteger h = getHash().toBigInteger();
@@ -599,7 +599,7 @@ public class Block extends Message {
         // entry is a hash.
         //
         // The hashing algorithm is double SHA-256. The leaves are a hash of the serialized contents of the transaction.
-        // The interior nodes are hashes of the concenation of the two child hashes.
+        // The interior nodes are hashes of the concatenation of the two child hashes.
         //
         // This structure allows the creation of proof that a transaction was included into a block without having to
         // provide the full block contents. Instead, you can provide only a Merkle branch. For example to prove tx2 was
@@ -693,7 +693,7 @@ public class Block extends Message {
         // Now we need to check that the body of the block actually matches the headers. The network won't generate
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
-        // transactions that reference spent or non-existant inputs.
+        // transactions that reference spent or non-existent inputs.
         if (transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)

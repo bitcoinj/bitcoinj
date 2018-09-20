@@ -288,7 +288,7 @@ public abstract class NetworkParameters {
     /**
      * <p>Genesis block for this chain.</p>
      *
-     * <p>The first block in every chain is a well known constant shared between all Bitcoin implemenetations. For a
+     * <p>The first block in every chain is a well known constant shared between all Bitcoin implementations. For a
      * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
      * prevBlockHash pointers in the block headers.</p>
      *
@@ -405,7 +405,7 @@ public abstract class NetworkParameters {
 
     /**
      * Returns whether this network has a maximum number of coins (finite supply) or
-     * not. Always returns true for Bitcoin, but exists to be overriden for other
+     * not. Always returns true for Bitcoin, but exists to be overridden for other
      * networks.
      */
     public abstract boolean hasMaxMoney();

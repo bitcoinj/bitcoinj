@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 import java.util.List;
 
 /**
- * Contains minimal data neccessary to disconnect/connect the transactions
+ * Contains minimal data necessary to disconnect/connect the transactions
  * in the stored block at will. Can either store the full set of
  * transactions (if the inputs for the block have not been tested to work)
  * or the set of transaction outputs created/destroyed when the block is

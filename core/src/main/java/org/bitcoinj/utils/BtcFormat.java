@@ -533,7 +533,7 @@ public abstract class BtcFormat extends Format {
      * <p>This class constructs new instances of {@link BtcFormat}, allowing for the
      * configuration of those instances before they are constructed.  After obtaining a
      * {@code Builder} object from the {@link BtcFormat#builder()} method, invoke the
-     * necessary setter methods to obtain your desired configuration.  Finaly, the {@link
+     * necessary setter methods to obtain your desired configuration.  Finally, the {@link
      * #build()} method returns a new {@code BtcFormat} object that has the specified
      * configuration.
      *
@@ -914,7 +914,7 @@ public abstract class BtcFormat extends Format {
      * according to the given locale.
      *
      * <p>The third parameter is the number of fractional decimal places to use for each
-     * formatted number, reduced as neccesary when formatting to avoid giving a place to
+     * formatted number, reduced as necessary when formatting to avoid giving a place to
      * fractional satoshis.
      */
     public static BtcFormat getInstance(Style style, Locale locale, int fractionPlaces) {
@@ -1050,7 +1050,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter with the specified fractional decimal
+     * Return a new fixed-denomination formatter with the specified fractional decimal
      * placing.  The first argument specifies the denomination as the size of the
      * shift from coin-denomination in increasingly-precise decimal places.  The returned object will format
      * and parse values according to the default locale, and will format the fractional part of
@@ -1064,7 +1064,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter.  The argument specifies the denomination as
+     * Return a new fixed-denomination formatter.  The argument specifies the denomination as
      * the size of the shift from coin-denomination in increasingly-precise decimal places.
      * The returned object will format and parse values according to the default locale, and
      * will format the fractional part of numbers with two decimal places, or fewer as
@@ -1075,7 +1075,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /**
-     * Return a new fixeed-denomination formatter for the given locale.  The first argument
+     * Return a new fixed-denomination formatter for the given locale.  The first argument
      * specifies the denomination as the size of the shift from coin-denomination in
      * increasingly-precise decimal places.  The returned object will format and parse values
      * according to the locale specified by the second argument, and will format the fractional
@@ -1247,7 +1247,7 @@ public abstract class BtcFormat extends Format {
     }
 
     /** Return the number of fractional decimal places to be displayed when formatting
-     *  the given number of monetory units of the denomination indicated by the given decimal scale value,
+     *  the given number of monetary units of the denomination indicated by the given decimal scale value,
      *  where 0 = coin, 3 = millicoin, and so on.
      *
      *  @param unitCount      the number of monetary units to be formatted
@@ -1526,7 +1526,7 @@ public abstract class BtcFormat extends Format {
     public static Locale[] getAvailableLocales() { return NumberFormat.getAvailableLocales(); }
 
     /** Return the unprefixed currency symbol for bitcoins configured for this object.  The
-     *  return value of this method is constant throughough the life of an instance.  */
+     *  return value of this method is constant throughout the life of an instance.  */
     public String coinSymbol() { synchronized(numberFormat) {
         return numberFormat.getDecimalFormatSymbols().getCurrencySymbol();
     }}

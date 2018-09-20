@@ -70,8 +70,8 @@ public class FilteredBlock extends Message {
     
     /**
      * Gets a list of leaf hashes which are contained in the partial merkle tree in this filtered block
-     * 
-     * @throws ProtocolException If the partial merkle block is invalid or the merkle root of the partial merkle block doesnt match the block header
+     *
+     * @throws ProtocolException If the partial merkle block is invalid or the merkle root of the partial merkle block doesn't match the block header
      */
     public List<Sha256Hash> getTransactionHashes() throws VerificationException {
         if (cachedTransactionHashes != null)
