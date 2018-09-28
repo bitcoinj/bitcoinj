@@ -106,6 +106,7 @@ public abstract class NetworkParameters {
     protected HttpDiscovery.Details[] httpSeeds = {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected transient MessageSerializer defaultSerializer = null;
+    protected transient MessageSerializer goldSerializer = null;
 
     protected NetworkParameters() {
         alertSigningKey = SATOSHI_KEY;
@@ -432,10 +433,33 @@ public abstract class NetworkParameters {
         return defaultSerializer;
     }
 
+    public final MessageSerializer getBitcoinGoldSerializer() {
+        // Construct a bitcoin gold serializer if we don't have one
+        if (null == this.goldSerializer) {
+            // Don't grab a lock unless we absolutely need it
+            synchronized(this) {
+                // Now we have a lock, double check there's still no serializer
+                // and create one if so.
+                if (null == this.goldSerializer) {
+                    // As the serializers are intended to be immutable, creating
+                    // two due to a race condition should not be a problem, however
+                    // to be safe we ensure only one exists for each network.
+                    this.goldSerializer = getGoldSerializer(false);
+                }
+            }
+        }
+        return goldSerializer;
+    }
+
     /**
      * Construct and return a custom serializer.
      */
     public abstract BitcoinSerializer getSerializer(boolean parseRetain);
+
+    /**
+     * Construct and return a custom serializer.
+     */
+    public abstract BitcoinGoldSerializer getGoldSerializer(boolean parseRetain);
 
     /**
      * The number of blocks in the last {@link #getMajorityWindow()} blocks

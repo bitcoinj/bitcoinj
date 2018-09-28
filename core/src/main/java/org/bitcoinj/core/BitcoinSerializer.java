@@ -46,7 +46,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
     private static final int COMMAND_LEN = 12;
 
-    private final NetworkParameters params;
+    protected final NetworkParameters params;
     private final boolean parseRetain;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();

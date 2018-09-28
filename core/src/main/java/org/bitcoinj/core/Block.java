@@ -24,6 +24,7 @@ import org.bitcoinj.script.*;
 import org.slf4j.*;
 
 import javax.annotation.*;
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.math.*;
 import java.util.*;
@@ -57,6 +58,7 @@ public class Block extends Message {
 
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
+    public static final int HEADER_SIZE_BTG = 140;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin Core.
 
@@ -96,6 +98,9 @@ public class Block extends Message {
     private long time;
     private long difficultyTarget; // "nBits"
     private long nonce;
+    private byte[] solution;
+    private byte[] nonceBytes;
+    private long height;
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
@@ -241,7 +246,8 @@ public class Block extends Message {
         for (int i = 0; i < numTransactions; i++) {
             Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
-            tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+
+            //tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
@@ -252,18 +258,33 @@ public class Block extends Message {
     @Override
     protected void parse() throws ProtocolException {
         // header
+        int headerSize = HEADER_SIZE;
         cursor = offset;
         version = readUint32();
         prevBlockHash = readHash();
         merkleRoot = readHash();
-        time = readUint32();
-        difficultyTarget = readUint32();
-        nonce = readUint32();
+
+        if(serializer instanceof BitcoinGoldSerializer) {
+            height = readUint32();
+            byte[] reversed = readBytes(28);
+            time = readUint32();
+            difficultyTarget = readUint32();
+            nonceBytes = readBytes(32);
+            int solutionLength = (int) readVarInt();
+            solution = readBytes(solutionLength);
+            headerSize = HEADER_SIZE_BTG + VarInt.sizeOf(solutionLength) + solution.length;
+        }
+        else {
+            time = readUint32();
+            difficultyTarget = readUint32();
+            nonce = readUint32();
+        }
+
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
         // transactions
-        parseTransactions(offset + HEADER_SIZE);
+        parseTransactions(offset + headerSize);
         length = cursor - offset;
     }
     
@@ -850,6 +871,26 @@ public class Block extends Message {
     @Nullable
     public List<Transaction> getTransactions() {
         return transactions == null ? null : ImmutableList.copyOf(transactions);
+    }
+
+    public byte[] getSolution() {
+        return this.solution;
+    }
+
+    public String getSolutionHex() {
+        return DatatypeConverter.printHexBinary(this.solution).toLowerCase();
+    }
+
+    public byte[] getNonceBytes() {
+        return this.nonceBytes;
+    }
+
+    public String getNonceBytesHex() {
+        return DatatypeConverter.printHexBinary(Utils.reverseBytes(this.nonceBytes)).toLowerCase();
+    }
+
+    public long getHeight() {
+        return this.height;
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
