@@ -58,7 +58,7 @@ public class Block extends Message {
 
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
-    public static final int HEADER_SIZE_BTG = 140;
+    public static final int HEADER_SIZE_BTG_WITHOUT_SOLUTION = 140;
 
     static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin Core.
 
@@ -101,6 +101,7 @@ public class Block extends Message {
     private byte[] solution;
     private byte[] nonceBytes;
     private long height;
+    private byte[] reversed;
 
     // TODO: Get rid of all the direct accesses to this field. It's a long-since unnecessary holdover from the Dalvik days.
     /** If null, it means this object holds only the headers. */
@@ -266,13 +267,13 @@ public class Block extends Message {
 
         if(serializer instanceof BitcoinGoldSerializer) {
             height = readUint32();
-            byte[] reversed = readBytes(28);
+            reversed = readBytes(28);
             time = readUint32();
             difficultyTarget = readUint32();
             nonceBytes = readBytes(32);
             int solutionLength = (int) readVarInt();
             solution = readBytes(solutionLength);
-            headerSize = HEADER_SIZE_BTG + VarInt.sizeOf(solutionLength) + solution.length;
+            headerSize = HEADER_SIZE_BTG_WITHOUT_SOLUTION + VarInt.sizeOf(solutionLength) + solution.length;
         }
         else {
             time = readUint32();
@@ -302,13 +303,24 @@ public class Block extends Message {
             stream.write(payload, offset, HEADER_SIZE);
             return;
         }
+
         // fall back to manual write
         Utils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        Utils.uint32ToByteStreamLE(time, stream);
-        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
-        Utils.uint32ToByteStreamLE(nonce, stream);
+        if(serializer instanceof BitcoinGoldSerializer) {
+            Utils.uint32ToByteStreamLE(height, stream);
+            stream.write(reversed);
+            Utils.uint32ToByteStreamLE(time, stream);
+            Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+            stream.write(nonceBytes);
+            stream.write(new VarInt(solution.length).encode());
+            stream.write(solution);
+        } else {
+            Utils.uint32ToByteStreamLE(time, stream);
+            Utils.uint32ToByteStreamLE(difficultyTarget, stream);
+            Utils.uint32ToByteStreamLE(nonce, stream);
+        }
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
