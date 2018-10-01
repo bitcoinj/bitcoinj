@@ -498,7 +498,10 @@ public class Transaction extends ChildMessage {
         ANYONECANPAY_ALL(0x81),
         ANYONECANPAY_NONE(0x82),
         ANYONECANPAY_SINGLE(0x83),
-        UNSET(0); // Caution: Using this type in isolation is non-standard. Treated similar to ALL.
+        UNSET(0), // Caution: Using this type in isolation is non-standard. Treated similar to ALL.
+        ALL_FORKID(65),
+        SIGHASH_FORKID(0x40),
+        FORKID_BTG(0x4F);
 
         public final int value;
 
@@ -883,10 +886,10 @@ public class Transaction extends ChildMessage {
      * @throws ScriptException if the scriptPubKey is not a pay to address or pay to pubkey script.
      */
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
-                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
+                                           SigHash sigHash, boolean anyoneCanPay, @Nullable Coin value) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), "Attempting to sign tx without outputs.");
-        TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut);
+        TransactionInput input = new TransactionInput(params, this, new byte[]{}, prevOut, value);
         addInput(input);
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
@@ -901,11 +904,11 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Same as {@link #addSignedInput(TransactionOutPoint, Script, ECKey, Transaction.SigHash, boolean)}
+     * Same as {@link #addSignedInput(TransactionOutPoint, Script, ECKey, Transaction.SigHash, boolean, Coin)}
      * but defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
      */
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false);
+        return addSignedInput(prevOut, scriptPubKey, sigKey, SigHash.ALL, false, null);
     }
 
     /**
@@ -921,7 +924,7 @@ public class Transaction extends ChildMessage {
      * signing key.
      */
     public TransactionInput addSignedInput(TransactionOutput output, ECKey signingKey, SigHash sigHash, boolean anyoneCanPay) {
-        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay);
+        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), signingKey, sigHash, anyoneCanPay, null);
     }
 
     /**
@@ -1092,7 +1095,116 @@ public class Transaction extends ChildMessage {
     public Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
+        boolean fUseForkId = (type.value & SigHash.SIGHASH_FORKID.value) > 0;
+        if (fUseForkId)
+        {
+            return hashForWitnessV0(inputIndex, redeemScript.getProgram(), sigHash);
+        } else {
+            return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
+        }
+    }
+
+    private Sha256Hash getPrevoutHash(Transaction tx) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < tx.inputs.size(); i++) {
+            tx.inputs.get(i).getOutpoint().bitcoinSerializeToStream(baos);
+        }
+        Sha256Hash hash = Sha256Hash.twiceOf(baos.toByteArray());
+        baos.close();
+        return hash;
+    }
+
+    private Sha256Hash getSequenceHash(Transaction tx) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < tx.inputs.size(); i++) {
+            uint32ToByteStreamLE(tx.inputs.get(i).getSequenceNumber(), baos);
+        }
+        Sha256Hash hash = Sha256Hash.twiceOf(baos.toByteArray());
+        baos.close();
+        return hash;
+    }
+
+    private Sha256Hash getOutputsHash(Transaction tx) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < tx.outputs.size(); i++) {
+            tx.outputs.get(i).bitcoinSerializeToStream(baos);
+        }
+        Sha256Hash hash = Sha256Hash.twiceOf(baos.toByteArray());
+        baos.close();
+        return hash;
+    }
+
+    public Sha256Hash hashForWitnessV0(int inputIndex, byte[] connectedScript, int sigHashType) {
+        // Amount of bitcoin spent in the input.
+        // Note: you get a null (Coin) with tx.get(inputIndex), after copying this transaction
+        if (this.inputs.get(inputIndex).getValue() == null) {
+            throw new RuntimeException("Input " + inputIndex + " is invalid for Bitcoin Gold");
+        }
+        long amount = this.inputs.get(inputIndex).getValue().value;
+
+        // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
+        // It would not be thread-safe to change the attributes of the transaction object itself.
+        Transaction tx = this.params.getDefaultSerializer().makeTransaction(this.bitcoinSerialize());
+
+        // Clear input scripts in preparation for signing. If we're signing a fresh
+        // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
+        // EC math so we'll do it anyway.
+        for (int i = 0; i < tx.inputs.size(); i++) {
+            tx.inputs.get(i).clearScriptBytes();
+        }
+
+        connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
+
+        TransactionInput input = tx.inputs.get(inputIndex);
+        input.setScriptBytes(connectedScript);
+
+        Sha256Hash hashPrevouts = Sha256Hash.ZERO_HASH;
+        Sha256Hash hashSequence = Sha256Hash.ZERO_HASH;
+        Sha256Hash hashOutputs = Sha256Hash.ZERO_HASH;
+
+        try {
+            if ((sigHashType & SigHash.ANYONECANPAY.value) == 0) {
+                hashPrevouts = getPrevoutHash(tx);
+            }
+
+            if ((sigHashType & SigHash.ANYONECANPAY.value) == 0 && (sigHashType & 0x1F) != SigHash.SINGLE.value && (sigHashType & 0x1F) != SigHash.NONE.value) {
+                hashSequence = getSequenceHash(tx);
+            }
+
+            if ((sigHashType & 0x1F) != SigHash.SINGLE.value && (sigHashType & 0x1F) != SigHash.NONE.value) {
+                hashOutputs = getOutputsHash(tx);
+            } else if ((sigHashType & 0x1F) == SigHash.SINGLE.value && inputIndex < tx.getOutputs().size()) {
+                hashOutputs = Sha256Hash.twiceOf(tx.getOutputs().get(inputIndex).bitcoinSerialize());
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            uint32ToByteStreamLE(tx.getVersion(), baos);
+            baos.write(hashPrevouts.getBytes());
+            baos.write(hashSequence.getBytes());
+
+            // The input being signed (replacing the scriptSig with scriptCode +
+            // amount). The prevout may already be contained in hashPrevout, and the
+            // nSequence may already be contain in hashSequence.
+            input.getOutpoint().bitcoinSerializeToStream(baos);
+
+            baos.write(new VarInt(connectedScript.length).encode());
+            baos.write(connectedScript);
+            uint64ToByteStreamLE(BigInteger.valueOf(amount), baos);
+            uint32ToByteStreamLE(input.getSequenceNumber(), baos);
+
+            // Outputs (none/one/all, depending on flags)
+            baos.write(hashOutputs.getBytes());
+
+            // Locktime
+            uint32ToByteStreamLE(tx.lockTime, baos);
+            uint32ToByteStreamLE(sigHashType, baos);//(0x000000ff & sigHashType, baos);
+
+            Sha256Hash hash = Sha256Hash.twiceOf(baos.toByteArray());
+            baos.close();
+            return hash;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -1104,7 +1216,6 @@ public class Transaction extends ChildMessage {
         // the purposes of the code in this method:
         //
         //   https://en.bitcoin.it/wiki/Contracts
-
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
