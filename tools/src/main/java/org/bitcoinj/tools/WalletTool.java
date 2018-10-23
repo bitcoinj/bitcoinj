@@ -36,6 +36,7 @@ import org.bitcoinj.wallet.DeterministicUpgradeRequiredException;
 import org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -87,7 +88,6 @@ import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -115,6 +115,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class WalletTool {
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
+    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     private static OptionSet options;
     private static OptionSpec<Date> dateFlag;
@@ -1486,7 +1487,7 @@ public class WalletTool {
         }
         ECKey key = null;
         if (pubkey != null) {
-            key = wallet.findKeyFromPubKey(Hex.decode(pubkey));
+            key = wallet.findKeyFromPubKey(HEX.decode(pubkey));
         } else {
             try {
                 Address address = LegacyAddress.fromBase58(wallet.getParams(), addr);
