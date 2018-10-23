@@ -6,7 +6,7 @@ version = '0.15-SNAPSHOT'
 archivesBaseName = 'bitcoinj-core'
 
 dependencies {
-    compile 'org.bouncycastle:bcprov-jdk15on:1.58'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.60'
     implementation 'com.lambdaworks:scrypt:1.4.0'
     implementation 'com.google.guava:guava:24.0-android'
     compile 'com.google.protobuf:protobuf-java:3.5.1'
