@@ -4186,7 +4186,8 @@ public class Wallet extends BaseTaggableObject
         for (Transaction tx : pending.values()) {
             // Remove the spent outputs.
             for (TransactionInput input : tx.getInputs()) {
-                if (input.getConnectedOutput().isMine(this)) {
+                TransactionOutput connectedOutput = input.getConnectedOutput();
+                if (connectedOutput != null && connectedOutput.isMine(this)) {
                     candidates.remove(input.getConnectedOutput());
                 }
             }
