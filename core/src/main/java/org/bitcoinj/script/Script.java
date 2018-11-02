@@ -470,7 +470,7 @@ public class Script {
     private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
-        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         for (int i = 0 ; i < numKeys ; i++) {
             if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
                 return i;
@@ -1484,7 +1484,7 @@ public class Script {
             // We could reasonably move this out of the loop, but because signature verification is significantly
             // more expensive than hashing, its not a big deal.
             try {
-                TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical);
+                TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical, false);
                 Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
                 if (ECKey.verify(hash.getBytes(), sig, pubKey))
                     sigs.pollFirst();

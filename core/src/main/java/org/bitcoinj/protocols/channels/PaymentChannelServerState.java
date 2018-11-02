@@ -240,7 +240,7 @@ public abstract class PaymentChannelServerState {
         stateMachine.checkState(State.READY);
         checkNotNull(refundSize);
         checkNotNull(signatureBytes);
-        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true);
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         // We allow snapping to zero for the payment amount because it's treated specially later, but not less than
         // the dust level because that would prevent the transaction from being relayed/mined.
         final boolean fullyUsedUp = refundSize.equals(Coin.ZERO);

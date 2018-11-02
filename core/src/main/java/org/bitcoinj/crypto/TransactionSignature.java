@@ -161,20 +161,6 @@ public class TransactionSignature extends ECKey.ECDSASignature {
      *
      * @param requireCanonicalEncoding if the encoding of the signature must
      * be canonical.
-     * @throws RuntimeException if the signature is invalid or unparseable in some way.
-     * @deprecated use {@link #decodeFromBitcoin(byte[], boolean, boolean)} instead}.
-     */
-    @Deprecated
-    public static TransactionSignature decodeFromBitcoin(byte[] bytes,
-                                                         boolean requireCanonicalEncoding) throws VerificationException {
-        return decodeFromBitcoin(bytes, requireCanonicalEncoding, false);
-    }
-
-    /**
-     * Returns a decoded signature.
-     *
-     * @param requireCanonicalEncoding if the encoding of the signature must
-     * be canonical.
      * @param requireCanonicalSValue if the S-value must be canonical (below half
      * the order of the curve).
      * @throws RuntimeException if the signature is invalid or unparseable in some way.
