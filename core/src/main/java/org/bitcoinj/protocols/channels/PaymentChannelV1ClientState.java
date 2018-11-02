@@ -227,7 +227,7 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
      * the appropriate time if necessary.</p>
      */
     public synchronized void provideRefundSignature(byte[] theirSignature, @Nullable KeyParameter userKey)
-            throws VerificationException {
+            throws SignatureDecodeException, VerificationException {
         checkNotNull(theirSignature);
         stateMachine.checkState(State.WAITING_FOR_SIGNED_REFUND);
         TransactionSignature theirSig = TransactionSignature.decodeFromBitcoin(theirSignature, true, false);

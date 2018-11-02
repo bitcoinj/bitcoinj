@@ -431,8 +431,12 @@ public class Script {
                 // OP_0, skip
             } else {
                 checkNotNull(chunk.data);
-                if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash))
-                    return sigCount;
+                try {
+                    if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash))
+                        return sigCount;
+                } catch (SignatureDecodeException e) {
+                    // ignore
+                }
                 sigCount++;
             }
         }
@@ -467,7 +471,7 @@ public class Script {
         return result;
     }
 
-    private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) {
+    private int findSigInRedeem(byte[] signatureBytes, Sha256Hash hash) throws SignatureDecodeException {
         checkArgument(chunks.get(0).isOpCode()); // P2SH scriptSig
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
@@ -1410,17 +1414,16 @@ public class Script {
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
             sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
-        } catch (Exception e1) {
-            // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
-            // Because I can't verify there aren't more, we use a very generic Exception catch
-
-            // This RuntimeException occurs when signing as we run partial/invalid scripts to see if they need more
+        } catch (SignatureDecodeException e) {
+            // This exception occurs when signing as we run partial/invalid scripts to see if they need more
             // signing work to be done inside LocalTransactionSigner.signInputs.
             // FIXME don't rely on exception message
-            if (e1.getMessage() != null && !e1.getMessage().contains("Reached past end of ASN.1 stream"))
+            if (e.getMessage() != null && !e.getMessage().contains("Reached past end of ASN.1 stream"))
                 // Don't put critical code here; the above check is not reliable on HotSpot due to optimization:
                 // http://jawspeak.com/2010/05/26/hotspot-caused-exceptions-to-lose-their-stack-traces-in-production-and-the-fix/
-                log.warn("Signature checking failed!", e1);
+                log.warn("Signature parsing failed!", e);
+        } catch (Exception e) {
+            log.warn("Signature checking failed!", e);
         }
 
         if (opcode == OP_CHECKSIG)

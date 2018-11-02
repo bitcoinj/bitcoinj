@@ -176,7 +176,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void canonicalSignatureLowS() {
+    public void canonicalSignatureLowS() throws Exception {
         // First, a synthetic test.
         TransactionSignature sig = TransactionSignature.dummy();
         Script scriptHighS = ScriptBuilder

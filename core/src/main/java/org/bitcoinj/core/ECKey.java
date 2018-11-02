@@ -564,7 +564,10 @@ public class ECKey implements EncryptableItem {
             }
         }
 
-        public static ECDSASignature decodeFromDER(byte[] bytes) throws IllegalArgumentException {
+        /**
+         * @throws SignatureDecodeException if the signature is unparseable in some way.
+         */
+        public static ECDSASignature decodeFromDER(byte[] bytes) throws SignatureDecodeException {
             ASN1InputStream decoder = null;
             try {
                 // BouncyCastle by default is strict about parsing ASN.1 integers. We relax this check, because some
@@ -573,22 +576,22 @@ public class ECKey implements EncryptableItem {
                 decoder = new ASN1InputStream(bytes);
                 final ASN1Primitive seqObj = decoder.readObject();
                 if (seqObj == null)
-                    throw new IllegalArgumentException("Reached past end of ASN.1 stream.");
+                    throw new SignatureDecodeException("Reached past end of ASN.1 stream.");
                 if (!(seqObj instanceof DLSequence))
-                    throw new IllegalArgumentException("Read unexpected class: " + seqObj.getClass().getName());
+                    throw new SignatureDecodeException("Read unexpected class: " + seqObj.getClass().getName());
                 final DLSequence seq = (DLSequence) seqObj;
                 ASN1Integer r, s;
                 try {
                     r = (ASN1Integer) seq.getObjectAt(0);
                     s = (ASN1Integer) seq.getObjectAt(1);
                 } catch (ClassCastException e) {
-                    throw new IllegalArgumentException(e);
+                    throw new SignatureDecodeException(e);
                 }
                 // OpenSSL deviates from the DER spec by interpreting these values as unsigned, though they should not be
                 // Thus, we always use the positive versions. See: http://r6.ca/blog/20111119T211504Z.html
                 return new ECDSASignature(r.getPositiveValue(), s.getPositiveValue());
             } catch (IOException e) {
-                throw new IllegalArgumentException(e);
+                throw new SignatureDecodeException(e);
             } finally {
                 if (decoder != null)
                     try { decoder.close(); } catch (IOException x) {}
@@ -674,6 +677,8 @@ public class ECKey implements EncryptableItem {
             } catch (NativeSecp256k1Util.AssertFailException e) {
                 log.error("Caught AssertFailException inside secp256k1", e);
                 throw new RuntimeException(e);
+            } catch (SignatureDecodeException e) {
+                throw new RuntimeException(e); // cannot happen
             }
         }
         if (FAKE_SIGNATURES)
@@ -728,8 +733,9 @@ public class ECKey implements EncryptableItem {
      * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
      * @param pub       The public key bytes to use.
+     * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
-    public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
+    public static boolean verify(byte[] data, byte[] signature, byte[] pub) throws SignatureDecodeException {
         if (Secp256k1Context.isEnabled()) {
             try {
                 return NativeSecp256k1.verify(data, signature, pub);
@@ -746,8 +752,9 @@ public class ECKey implements EncryptableItem {
      *
      * @param hash      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
+     * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
-    public boolean verify(byte[] hash, byte[] signature) {
+    public boolean verify(byte[] hash, byte[] signature) throws SignatureDecodeException {
         return ECKey.verify(hash, signature, getPubKey());
     }
 
@@ -761,9 +768,10 @@ public class ECKey implements EncryptableItem {
     /**
      * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key, and throws an exception
      * if the signature doesn't match
+     * @throws SignatureDecodeException if the signature is unparseable in some way.
      * @throws java.security.SignatureException if the signature does not match.
      */
-    public void verifyOrThrow(byte[] hash, byte[] signature) throws SignatureException {
+    public void verifyOrThrow(byte[] hash, byte[] signature) throws SignatureDecodeException, SignatureException {
         if (!verify(hash, signature))
             throw new SignatureException();
     }

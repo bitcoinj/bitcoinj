@@ -236,7 +236,9 @@ public abstract class PaymentChannelServerState {
      * @throws VerificationException If the signature does not verify or size is out of range (incl being rejected by the network as dust).
      * @return true if there is more value left on the channel, false if it is now fully used up.
      */
-    public synchronized boolean incrementPayment(Coin refundSize, byte[] signatureBytes) throws VerificationException, ValueOutOfRangeException, InsufficientMoneyException {
+    public synchronized boolean incrementPayment(Coin refundSize, byte[] signatureBytes)
+            throws SignatureDecodeException, VerificationException, ValueOutOfRangeException,
+            InsufficientMoneyException {
         stateMachine.checkState(State.READY);
         checkNotNull(refundSize);
         checkNotNull(signatureBytes);

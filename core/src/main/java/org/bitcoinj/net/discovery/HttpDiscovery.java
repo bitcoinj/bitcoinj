@@ -114,7 +114,8 @@ public class HttpDiscovery implements PeerDiscovery {
     }
 
     @VisibleForTesting
-    public InetSocketAddress[] protoToAddrs(PeerSeedProtos.SignedPeerSeeds proto) throws PeerDiscoveryException, InvalidProtocolBufferException, SignatureException {
+    public InetSocketAddress[] protoToAddrs(PeerSeedProtos.SignedPeerSeeds proto) throws PeerDiscoveryException,
+            InvalidProtocolBufferException, SignatureDecodeException, SignatureException {
         if (details.pubkey != null) {
             if (!Arrays.equals(proto.getPubkey().toByteArray(), details.pubkey.getPubKey()))
                 throw new PeerDiscoveryException("Public key mismatch");

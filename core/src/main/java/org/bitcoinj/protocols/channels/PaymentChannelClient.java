@@ -349,7 +349,8 @@ public class PaymentChannelClient implements IPaymentChannelClient {
     }
 
     @GuardedBy("lock")
-    private void receiveRefund(Protos.TwoWayChannelMessage refundMsg, @Nullable KeyParameter userKey) throws VerificationException {
+    private void receiveRefund(Protos.TwoWayChannelMessage refundMsg, @Nullable KeyParameter userKey)
+            throws SignatureDecodeException, VerificationException {
         checkState(majorVersion == 1);
         checkState(step == InitStep.WAITING_FOR_REFUND_RETURN && refundMsg.hasReturnRefund());
         log.info("Got RETURN_REFUND message, providing signed contract");
@@ -469,7 +470,7 @@ public class PaymentChannelClient implements IPaymentChannelClient {
                         closeReason = CloseReason.REMOTE_SENT_INVALID_MESSAGE;
                         break;
                 }
-            } catch (VerificationException e) {
+            } catch (SignatureDecodeException | VerificationException e) {
                 log.error("Caught verification exception handling message from server", e);
                 errorBuilder = Protos.Error.newBuilder()
                         .setCode(Protos.Error.ErrorCode.BAD_TRANSACTION);
