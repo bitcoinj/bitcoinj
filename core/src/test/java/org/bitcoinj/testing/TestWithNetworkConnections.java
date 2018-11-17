@@ -190,7 +190,7 @@ public class TestWithNetworkConnections {
         peer.close();
     }
 
-    protected void inbound(InboundMessageQueuer peerChannel, Message message) {
+    protected void inbound(InboundMessageQueuer peerChannel, Message message) throws PeerConnectionException {
         peerChannel.sendMessage(message);
     }
 

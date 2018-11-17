@@ -855,7 +855,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(blocks.get(blocks.size() - 1).getHash(), blockChain.getChainHead().getHeader().getHash());
     }
 
-    private void filterAndSend(InboundMessageQueuer p1, List<Block> blocks, BloomFilter filter) {
+    private void filterAndSend(InboundMessageQueuer p1, List<Block> blocks, BloomFilter filter) throws PeerConnectionException {
         for (Block block : blocks) {
             FilteredBlock fb = filter.applyAndUpdate(block);
             inbound(p1, fb);

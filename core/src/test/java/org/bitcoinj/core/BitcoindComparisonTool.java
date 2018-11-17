@@ -88,7 +88,7 @@ public class BitcoindComparisonTool {
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
         bitcoind.addConnectedEventListener(Threading.SAME_THREAD, new PeerConnectedEventListener() {
             @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
+            public void onPeerConnected(Peer peer, int peerCount) throws PeerConnectionException {
                 if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
                     System.out.println();
                     System.out.println("************************************************************************************************************************\n" +
@@ -118,7 +118,7 @@ public class BitcoindComparisonTool {
 
         bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, new PreMessageReceivedEventListener() {
             @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
+            public Message onPreMessageReceived(Peer peer, Message m) throws PeerConnectionException {
                 if (m instanceof HeadersMessage) {
                     if (!((HeadersMessage) m).getBlockHeaders().isEmpty()) {
                         Block b = Iterables.getLast(((HeadersMessage) m).getBlockHeaders());

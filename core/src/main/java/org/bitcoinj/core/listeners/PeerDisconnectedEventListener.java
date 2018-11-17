@@ -17,6 +17,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerConnectionException;
 import org.bitcoinj.core.PeerGroup;
 
 /**
@@ -33,5 +34,5 @@ public interface PeerDisconnectedEventListener {
      * @param peer
      * @param peerCount the total number of connected peers
      */
-    void onPeerDisconnected(Peer peer, int peerCount);
+    void onPeerDisconnected(Peer peer, int peerCount) throws PeerConnectionException;
 }

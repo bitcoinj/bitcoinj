@@ -16,13 +16,9 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.AbstractTimeoutHandler;
-import org.bitcoinj.net.MessageWriteTarget;
-import org.bitcoinj.net.NioClient;
-import org.bitcoinj.net.NioClientManager;
-import org.bitcoinj.net.StreamConnection;
-import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.net.*;
+import org.bitcoinj.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +28,6 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.channels.NotYetConnectedException;
 import java.util.concurrent.locks.Lock;
 
 import static com.google.common.base.Preconditions.*;
@@ -57,7 +52,6 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     private byte[] largeReadBuffer;
     private int largeReadBufferPos;
     private BitcoinSerializer.BitcoinPacketHeader header;
-
     private Lock lock = Threading.lock("PeerSocketHandler");
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
@@ -74,14 +68,13 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
 
     /**
      * Sends the given message to the peer. Due to the asynchronousness of network programming, there is no guarantee
-     * the peer will have received it. Throws NotYetConnectedException if we are not yet connected to the remote peer.
-     * TODO: Maybe use something other than the unchecked NotYetConnectedException here
+     * the peer will have received it. Throws {@link PeerConnectionException} if we are not yet connected to the remote peer.
      */
-    public void sendMessage(Message message) throws NotYetConnectedException {
+    public void sendMessage(Message message) throws PeerConnectionException {
         lock.lock();
         try {
             if (writeTarget == null)
-                throw new NotYetConnectedException();
+                throw new PeerConnectionException("Not connected yet", this.getClass());
         } finally {
             lock.unlock();
         }

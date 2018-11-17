@@ -19,6 +19,7 @@ package org.bitcoinj.net;
 
 import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
+import org.bitcoinj.core.PeerConnectionException;
 import org.slf4j.*;
 
 import java.io.*;
@@ -61,7 +62,7 @@ public class NioClient implements MessageWriteTarget {
         }
 
         @Override
-        public synchronized void connectionOpened() {
+        public synchronized void connectionOpened() throws PeerConnectionException {
             if (!closeOnOpen)
                 upstreamConnection.connectionOpened();
         }

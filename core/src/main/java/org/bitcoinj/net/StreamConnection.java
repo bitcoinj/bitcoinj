@@ -16,6 +16,8 @@
 
 package org.bitcoinj.net;
 
+import org.bitcoinj.core.PeerConnectionException;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -29,7 +31,7 @@ public interface StreamConnection {
     void connectionClosed();
 
     /** Called when the connection socket is first opened */
-    void connectionOpened();
+    void connectionOpened() throws PeerConnectionException;
 
     /**
      * <p>Called when new bytes are available from the remote end. This should only ever be called by the single

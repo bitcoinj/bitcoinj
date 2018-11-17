@@ -25,6 +25,7 @@ import java.util.Iterator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import org.bitcoinj.core.PeerConnectionException;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -40,7 +41,7 @@ public class NioServer extends AbstractExecutionThreadService {
     @VisibleForTesting final Selector selector;
 
     // Handle a SelectionKey which was selected
-    private void handleKey(Selector selector, SelectionKey key) throws IOException {
+    private void handleKey(Selector selector, SelectionKey key) throws IOException, PeerConnectionException {
         if (key.isValid() && key.isAcceptable()) {
             // Accept a new connection, give it a stream connection as an attachment
             SocketChannel newChannel = sc.accept();
