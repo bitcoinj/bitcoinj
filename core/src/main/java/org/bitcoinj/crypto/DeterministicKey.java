@@ -179,7 +179,7 @@ public class DeterministicKey extends ECKey {
 
     /**
      * Returns the path through some {@link DeterministicHierarchy} which reaches this keys position in the tree.
-     * A path can be written as 1/2/1 which means the first child of the root, the second child of that node, then
+     * A path can be written as 0/1/0 which means the first child of the root, the second child of that node, then
      * the first child of that node.
      */
     public ImmutableList<ChildNumber> getPath() {
