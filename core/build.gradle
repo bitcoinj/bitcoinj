@@ -8,7 +8,7 @@ archivesBaseName = 'bitcoinj-core'
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
     implementation 'com.lambdaworks:scrypt:1.4.0'
-    implementation 'com.google.guava:guava:24.0-android'
+    implementation 'com.google.guava:guava:25.1-android'
     compile 'com.google.protobuf:protobuf-java:3.5.1'
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'org.slf4j:slf4j-api:1.7.25'

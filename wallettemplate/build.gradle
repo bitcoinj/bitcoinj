@@ -2,7 +2,7 @@ apply plugin: 'java'
 
 dependencies {
     implementation project(':core')
-    implementation 'com.google.guava:guava:24.0-android'
+    implementation 'com.google.guava:guava:25.1-android'
     implementation 'org.fxmisc.easybind:easybind:1.0.2'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'net.glxn:qrgen:1.3'
