@@ -10,7 +10,7 @@ dependencies {
     implementation 'com.lambdaworks:scrypt:1.4.0'
     implementation 'com.google.guava:guava:24.0-android'
     compile 'com.google.protobuf:protobuf-java:3.5.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.9.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
