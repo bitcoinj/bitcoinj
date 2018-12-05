@@ -439,6 +439,22 @@ public class ScriptBuilder {
     }
 
     /**
+     * Creates a segwit scriptPubKey that sends to the given public key hash.
+     */
+    public static Script createP2WPKHOutputScript(byte[] hash) {
+        checkArgument(hash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH);
+        return new ScriptBuilder().smallNum(0).data(hash).build();
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that sends to the given public key.
+     */
+    public static Script createP2WPKHOutputScript(ECKey key) {
+        checkArgument(key.isCompressed());
+        return createP2WPKHOutputScript(key.getPubKeyHash());
+    }
+
+    /**
      * Creates a scriptPubKey that sends to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
