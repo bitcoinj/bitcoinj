@@ -48,7 +48,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
     // Maps used to let us quickly look up a key given data we find in transactions or the block chain.
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;
     private final LinkedHashMap<ByteString, ECKey> pubkeyToKeys;
+    private final LinkedHashMap<ByteString, ECKey> p2wpkhHashToKeys;
     @Nullable private final KeyCrypter keyCrypter;
+    private final boolean cacheP2wpkhHash;
     private boolean isWatching;
 
     private final CopyOnWriteArrayList<ListenerRegistration<KeyChainEventListener>> listeners;
@@ -58,9 +60,15 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     public BasicKeyChain(@Nullable KeyCrypter crypter) {
+        this(crypter, false);
+    }
+
+    public BasicKeyChain(@Nullable KeyCrypter crypter, boolean cacheP2wpkhHash) {
         this.keyCrypter = crypter;
+        this.cacheP2wpkhHash = cacheP2wpkhHash;
         hashToKeys = new LinkedHashMap<>();
         pubkeyToKeys = new LinkedHashMap<>();
+        p2wpkhHashToKeys = new LinkedHashMap<>();
         listeners = new CopyOnWriteArrayList<>();
     }
 
@@ -180,6 +188,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+        if (cacheP2wpkhHash)
+            p2wpkhHashToKeys.put(ByteString.copyFrom(key.getP2wpkhHash()), key);
         checkState(previousKey == null);
     }
 
@@ -217,6 +227,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             return pubkeyToKeys.get(ByteString.copyFrom(pubkey));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public ECKey findKeyFromP2WPKHhash(byte[] hash) {
+        if (!cacheP2wpkhHash) return null;
+        lock.lock();
+        try {
+            return p2wpkhHashToKeys.get(ByteString.copyFrom(hash));
         } finally {
             lock.unlock();
         }

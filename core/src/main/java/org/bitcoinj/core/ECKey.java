@@ -27,6 +27,8 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -157,6 +159,9 @@ public class ECKey implements EncryptableItem {
     protected EncryptedData encryptedPrivateKey;
 
     private byte[] pubKeyHash;
+
+    private Script p2wpkhScript;
+    private byte[] p2wpkhHash;
 
     /**
      * Generates an entirely new keypair. Point compression is used so the resulting public key will be 33 bytes
@@ -472,6 +477,20 @@ public class ECKey implements EncryptableItem {
         if (pubKeyHash == null)
             pubKeyHash = Utils.sha256hash160(this.pub.getEncoded());
         return pubKeyHash;
+    }
+
+    public Script getP2wpkhScript() {
+        if (p2wpkhScript == null) {
+            p2wpkhScript = ScriptBuilder.createP2WPKHOutputScript(this);
+        }
+        return p2wpkhScript;
+    }
+
+    public byte[] getP2wpkhHash() {
+        if (p2wpkhHash == null) {
+            p2wpkhHash = Utils.sha256hash160(getP2wpkhScript().getProgram());
+        }
+        return p2wpkhHash;
     }
 
     /**

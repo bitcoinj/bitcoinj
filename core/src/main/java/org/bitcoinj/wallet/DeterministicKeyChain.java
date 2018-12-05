@@ -152,6 +152,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // money.
     private final BasicKeyChain basicKeyChain;
 
+    // if set this chain uses P2WPKH address and need to cache program hash
+    private final boolean cacheP2wpkhHash;
     // If set this chain is following another chain in a married KeyChainGroup
     private boolean isFollowing;
 
@@ -325,12 +327,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             checkArgument(key.hasPrivKey(), "Private subtrees are required.");
         checkArgument(isWatching || !isFollowing, "Can only follow a key that is watched");
 
-        basicKeyChain = new BasicKeyChain();
+        this.accountPath = key.getPath();
+        this.cacheP2wpkhHash = shouldCacheP2wpkhHash(this.accountPath);
+        basicKeyChain = new BasicKeyChain(null, this.cacheP2wpkhHash);
         this.seed = null;
         this.rootKey = null;
         basicKeyChain.importKey(key);
         hierarchy = new DeterministicHierarchy(key);
-        this.accountPath = key.getPath();
         initializeHierarchyUnencrypted(key);
         this.isFollowing = isFollowing;
     }
@@ -349,8 +352,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
                                     ImmutableList<ChildNumber> accountPath) {
         this.accountPath = accountPath;
+        this.cacheP2wpkhHash = shouldCacheP2wpkhHash(this.accountPath);
         this.seed = seed;
-        basicKeyChain = new BasicKeyChain(crypter);
+        basicKeyChain = new BasicKeyChain(crypter, this.cacheP2wpkhHash);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
@@ -379,6 +383,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
         this.accountPath = chain.getAccountPath();
+        this.cacheP2wpkhHash = shouldCacheP2wpkhHash(this.accountPath);
 
         this.issuedExternalKeys = chain.issuedExternalKeys;
         this.issuedInternalKeys = chain.issuedInternalKeys;
@@ -387,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.lookaheadThreshold = chain.lookaheadThreshold;
 
         this.seed = chain.seed.encrypt(crypter, aesKey);
-        basicKeyChain = new BasicKeyChain(crypter);
+        basicKeyChain = new BasicKeyChain(crypter, this.cacheP2wpkhHash);
         // The first number is the "account number" but we don't use that feature.
         rootKey = chain.rootKey.encrypt(crypter, aesKey, null);
         hierarchy = new DeterministicHierarchy(rootKey);
@@ -411,6 +416,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             hierarchy.putKey(key);
             basicKeyChain.importKey(key);
         }
+    }
+
+    private boolean shouldCacheP2wpkhHash(ImmutableList<ChildNumber> accountPath) {
+        // cache P2WPKH for BIP49 accountPath
+        if (accountPath.size() != 3) return false;
+        ChildNumber purpose = accountPath.get(0);
+        return purpose.isHardened() && (purpose.num() == 49);
     }
 
     /** Override in subclasses to use a different account derivation path */
@@ -1378,6 +1390,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Returns the redeem script by its hash or null if this keychain did not generate the script. */
     @Nullable
     public RedeemData findRedeemDataByScriptHash(ByteString bytes) {
+        ECKey key = basicKeyChain.findKeyFromP2WPKHhash(bytes.toByteArray());
+        if (key != null) {
+            return RedeemData.of(Collections.singletonList(key),
+                    key.getP2wpkhScript());
+        }
         return null;
     }
 }
