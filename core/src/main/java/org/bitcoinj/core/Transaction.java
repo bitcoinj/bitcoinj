@@ -199,6 +199,7 @@ public class Transaction extends ChildMessage {
 
     public Transaction(NetworkParameters params) {
         super(params);
+        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         version = 1;
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
@@ -210,7 +211,7 @@ public class Transaction extends ChildMessage {
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
     public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+        this(params, payloadBytes, 0);
     }
 
     /**
@@ -218,6 +219,7 @@ public class Transaction extends ChildMessage {
      */
     public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
         super(params, payload, offset);
+        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         // inputs/outputs will be created in parse()
     }
 
@@ -243,6 +245,7 @@ public class Transaction extends ChildMessage {
             if (!hasWitnesses())
                 cachedTxId = cachedWTxId;
         }
+        protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
     }
 
     /**
@@ -250,7 +253,7 @@ public class Transaction extends ChildMessage {
      */
     public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
-        super(params, payload, 0, parent, setSerializer, length);
+        this(params, payload, 0, parent, setSerializer, length, null);
     }
 
     /** @deprecated use {@link #getTxId()} */
