@@ -4172,6 +4172,9 @@ public class Wallet extends BaseTaggableObject
         } else if (ScriptPattern.isPayToScriptHash(script)) {
             RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
+        } else if (ScriptPattern.isPayToWitnessPubKeyHash(script)) {
+            ECKey key = findKeyFromPubHash(ScriptPattern.extractHashFromPayToWitnessHash(script));
+            return key != null && (key.isEncrypted() || key.hasPrivKey());
         } else if (ScriptPattern.isPayToPubKeyHash(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
             return key != null && (key.isEncrypted() || key.hasPrivKey());

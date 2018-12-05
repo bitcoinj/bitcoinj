@@ -279,6 +279,15 @@ public class ScriptPattern {
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 
+    /**
+     * Returns whether this script is a witness program
+     */
+    public static boolean isWitnessProgram(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
+        return (chunks.size() == 2 && chunks.get(0).equalsOpCode(OP_0))
+                && (chunks.get(1).isPushData());
+    }
+
     private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     private static final byte[] SEGWIT_COMMITMENT_HEADER = HEX.decode("aa21a9ed");
 

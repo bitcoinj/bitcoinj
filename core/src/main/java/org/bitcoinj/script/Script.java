@@ -83,7 +83,8 @@ public class Script {
         DISCOURAGE_UPGRADABLE_NOPS, // Discourage use of NOPs reserved for upgrades (NOP1-10)
         CLEANSTACK, // Require that only a single stack element remains after evaluation.
         CHECKLOCKTIMEVERIFY, // Enable CHECKLOCKTIMEVERIFY operation
-        CHECKSEQUENCEVERIFY // Enable CHECKSEQUENCEVERIFY operation
+        CHECKSEQUENCEVERIFY, // Enable CHECKSEQUENCEVERIFY operation
+        SEGWIT, // Enable segregated witnesses
     }
     public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
 
@@ -391,6 +392,9 @@ public class Script {
             return ScriptBuilder.createInputScript(null);
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
+            if (ScriptPattern.isPayToWitnessPubKeyHash(redeemScript)) {
+                return new ScriptBuilder().data(redeemScript.program).build();
+            }
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
@@ -580,6 +584,10 @@ public class Script {
             return Script.decodeFromOpN(nChunk.opcode);
         } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
             // P2PKH and P2PK require single sig
+            return 1;
+        } else if (ScriptPattern.isPayToWitnessHash(this)) {
+            // P2WPKH has no signature in redeem script
+            // but there's one in witness, count as 1 before new fee calc logic arrives
             return 1;
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
@@ -1603,6 +1611,22 @@ public class Script {
             if (!castToBool(p2shStack.pollLast()))
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE,
                         "P2SH script execution resulted in a non-true stack: " + Utils.toString(p2shStackCopy));
+
+            // TODO: need value when verify witness for real
+            scriptPubKeyP2SH.checkWitness(txContainingThis, scriptSigIndex, Coin.ZERO, verifyFlags);
+        } else {
+            // TODO: need value when verify witness for real
+            scriptPubKey.checkWitness(txContainingThis, scriptSigIndex, Coin.ZERO, verifyFlags);
+        }
+    }
+
+    private void checkWitness(Transaction tx, long index, Coin value, Set<VerifyFlag> verifyFlags) {
+        if (verifyFlags.contains(VerifyFlag.SEGWIT) && ScriptPattern.isWitnessProgram(this)) {
+            TransactionInput txIn = tx.getInput(index);
+            if (!txIn.hasWitness())
+                throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY, "No Witness in txIn");
+
+            // TODO: check witness data with executeScript()
         }
     }
 

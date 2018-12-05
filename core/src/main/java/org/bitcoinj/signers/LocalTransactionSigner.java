@@ -18,13 +18,17 @@ package org.bitcoinj.signers;
 
 import java.util.EnumSet;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.Script.VerifyFlag;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 import org.slf4j.Logger;
@@ -50,6 +54,7 @@ public class LocalTransactionSigner implements TransactionSigner {
      * signed.
      */
     private static final EnumSet<VerifyFlag> MINIMUM_VERIFY_FLAGS = EnumSet.of(VerifyFlag.P2SH,
+        VerifyFlag.SEGWIT,
         VerifyFlag.NULLDUMMY);
 
     @Override
@@ -104,18 +109,34 @@ public class LocalTransactionSigner implements TransactionSigner {
             // a CHECKMULTISIG program for P2SH inputs
             byte[] script = redeemData.redeemScript.getProgram();
             try {
-                TransactionSignature signature = tx.calculateSignature(i, key, script, Transaction.SigHash.ALL, false);
+                if (ScriptPattern.isWitnessProgram(redeemData.redeemScript)) {
+                    Script scriptCode = new ScriptBuilder()
+                            .data(ScriptBuilder.createOutputScript(
+                                    LegacyAddress.fromKey(tx.getParams(), key))
+                                    .getProgram())
+                            .build();
+                    TransactionSignature signature = tx.calculateWitnessSignature(i,
+                            key, scriptCode, txIn.getValue(),
+                            Transaction.SigHash.ALL, false);
+                    TransactionWitness witness = new TransactionWitness(2);
+                    witness.setPush(0, signature.encodeToBitcoin());
+                    witness.setPush(1, key.getPubKey());
+                    txIn.setWitness(witness);
+                    txIn.setScriptSig(new ScriptBuilder().data(script).build());
+                } else {
+                    TransactionSignature signature = tx.calculateSignature(i, key, script, Transaction.SigHash.ALL, false);
 
-                // at this point we have incomplete inputScript with OP_0 in place of one or more signatures. We already
-                // have calculated the signature using the local key and now need to insert it in the correct place
-                // within inputScript. For P2PKH and P2PK script there is only one signature and it always
-                // goes first in an inputScript (sigIndex = 0). In P2SH input scripts we need to figure out our relative
-                // position relative to other signers.  Since we don't have that information at this point, and since
-                // we always run first, we have to depend on the other signers rearranging the signatures as needed.
-                // Therefore, always place as first signature.
-                int sigIndex = 0;
-                inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(), sigIndex);
-                txIn.setScriptSig(inputScript);
+                    // at this point we have incomplete inputScript with OP_0 in place of one or more signatures. We already
+                    // have calculated the signature using the local key and now need to insert it in the correct place
+                    // within inputScript. For P2PKH and P2PK script there is only one signature and it always
+                    // goes first in an inputScript (sigIndex = 0). In P2SH input scripts we need to figure out our relative
+                    // position relative to other signers.  Since we don't have that information at this point, and since
+                    // we always run first, we have to depend on the other signers rearranging the signatures as needed.
+                    // Therefore, always place as first signature.
+                    int sigIndex = 0;
+                    inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(), sigIndex);
+                    txIn.setScriptSig(inputScript);
+                }
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
