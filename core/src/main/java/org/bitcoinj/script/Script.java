@@ -95,6 +95,7 @@ public class Script {
     private static final int MAX_PUBKEYS_PER_MULTISIG = 20;
     private static final int MAX_SCRIPT_SIZE = 10000;
     public static final int SIG_SIZE = 75;
+    public static final int WITNESS_SIZE = 1 + SIG_SIZE + 33;
     /** Max number of sigops allowed in a standard p2sh redeem script */
     public static final int MAX_P2SH_SIGOPS = 15;
 
@@ -585,10 +586,6 @@ public class Script {
         } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
             // P2PKH and P2PK require single sig
             return 1;
-        } else if (ScriptPattern.isPayToWitnessHash(this)) {
-            // P2WPKH has no signature in redeem script
-            // but there's one in witness, count as 1 before new fee calc logic arrives
-            return 1;
         } else if (ScriptPattern.isPayToScriptHash(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
         } else {
@@ -604,7 +601,14 @@ public class Script {
         if (ScriptPattern.isPayToScriptHash(this)) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
-            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
+            if (ScriptPattern.isPayToWitnessPubKeyHash(redeemScript)) {
+                // witness weights 1/4 of in block contents
+                return (WITNESS_SIZE / 4)
+                        + redeemScript.getProgram().length;
+            } else {
+                return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE
+                        + redeemScript.getProgram().length;
+            }
         } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;

@@ -24,6 +24,8 @@ import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
+
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AbstractBlockChain;
@@ -4916,6 +4918,13 @@ public class Wallet extends BaseTaggableObject
 
             for (TransactionOutput selectedOutput : selection.gathered) {
                 TransactionInput input = tx.addInput(selectedOutput);
+                // add empty witness for P2WPKH tx length calculation
+                if (ScriptPattern.isPayToScriptHash(selectedOutput.getScriptPubKey())) {
+                    TransactionWitness witness = new TransactionWitness(2);
+                    witness.setPush(0, new byte[0]);
+                    witness.setPush(1, new byte[0]);
+                    input.setWitness(witness);
+                }
                 // If the scriptBytes don't default to none, our size calculations will be thrown off.
                 checkState(input.getScriptBytes().length == 0);
             }
