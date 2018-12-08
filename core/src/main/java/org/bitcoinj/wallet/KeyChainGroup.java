@@ -327,6 +327,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public void setLookaheadThreshold(int num) {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
+        this.lookaheadThreshold = num;
         for (DeterministicKeyChain chain : chains)
             chain.setLookaheadThreshold(num);
     }
