@@ -4168,34 +4168,37 @@ public class Wallet extends BaseTaggableObject
         if (ScriptPattern.isPayToPubKey(script)) {
             byte[] pubkey = ScriptPattern.extractKeyFromPayToPubKey(script);
             ECKey key = findKeyFromPubKey(pubkey);
-            return key != null && (key.isEncrypted() || key.hasPrivKey());
+            return canSignWith(key);
         } else if (ScriptPattern.isPayToScriptHash(script)) {
             RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
         } else if (ScriptPattern.isPayToPubKeyHash(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
-            return key != null && (key.isEncrypted() || key.hasPrivKey());
+            return canSignWith(key);
         } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
                 ECKey key = findKeyFromPubKey(pubkey.getPubKey());
-                if (key != null && (key.isEncrypted() || key.hasPrivKey()))
-                    return true;
+                if (canSignWith(key)) return true;
             }
         } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
             // Any script for which we are the recipient or sender counts.
             byte[] sender = ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(script);
             ECKey senderKey = findKeyFromPubKey(sender);
-            if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
-                return true;
-            }
+            if (canSignWith(senderKey)) return true;
             byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
             ECKey recipientKey = findKeyFromPubKey(recipient);
-            if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
-                return true;
-            }
+            if (canSignWith(recipientKey)) return true;
             return false;
         }
         return false;
+    }
+
+    /**
+     * Override point
+     * Returns true if key can be used for signing
+     */
+    protected boolean canSignWith(ECKey key) {
+        return (key != null) && (key.isEncrypted() || key.hasPrivKey());
     }
 
     /**
