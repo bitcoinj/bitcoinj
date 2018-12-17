@@ -95,7 +95,18 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 )
         };
 
-        // These are in big-endian format, which is what the SeedPeers code expects.
+        // note: These are in big-endian format, which is what the SeedPeers code expects.
+        // These values should be kept up-to-date as much as possible.
+        //
+        // these values were created using this tool:
+        //  https://github.com/dan-da/names2ips
+        //
+        // with this exact command:
+        //  $ ./names2ips.php --hostnames=seed.bitcoin.sipa.be,dnsseed.bluematt.me,dnsseed.bitcoin.dashjr.org,seed.bitcoinstats.com,seed.bitcoin.jonasschnelli.ch,seed.btc.petertodd.org,seed.bitcoin.sprovoost.nl,dnsseed.emzy.de --format=code --ipformat=hex --endian=big
+
+        // TODO better would be that use same as deliver to Bitcoin Core: https://github.com/bitcoin/bitcoin/tree/master/contrib/seeds
+        // Prefer to not use the list from BitoinJ
+
         // Updated Apr. 11th 2019
         addrSeeds = new int[] {
                 // seed.bitcoin.sipa.be
