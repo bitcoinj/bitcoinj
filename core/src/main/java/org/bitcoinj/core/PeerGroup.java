@@ -143,6 +143,10 @@ public class PeerGroup implements TransactionBroadcaster {
     // How many connections we want to have open at the current time. If we lose connections, we'll try opening more
     // until we reach this count.
     @GuardedBy("lock") private int maxConnections;
+    // if true, we will listen to "addr" network messages and add nodes discovered this way.
+    // if false, only nodes found by discovery process are used/added.
+    @GuardedBy("lock")
+    private boolean addPeersFromAddressMessage = true;
     // Minimum protocol version we will allow ourselves to connect to: require Bloom filtering.
     private volatile int vMinRequiredProtocolVersion;
 
@@ -247,7 +251,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    private class PeerStartupListener implements PeerConnectedEventListener, PeerDisconnectedEventListener {
+    private class PeerStartupListener implements PeerConnectedEventListener, PeerDisconnectedEventListener, PreMessageReceivedEventListener {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
             handleNewPeer(peer);
@@ -257,6 +261,19 @@ public class PeerGroup implements TransactionBroadcaster {
         public void onPeerDisconnected(Peer peer, int peerCount) {
             // The channel will be automatically removed from channels.
             handlePeerDeath(peer, null);
+        }
+
+        @Override
+        public Message onPreMessageReceived(Peer peer, Message m) {
+            // See https://github.com/bisq-network/bitcoinj/issues/28 for more info on addr msg handling
+            if (m instanceof AddressMessage && addPeersFromAddressMessage) {
+                for( PeerAddress peerAddress : ((AddressMessage)m).getAddresses() ) {
+                    addInactive(peerAddress, 0);
+                }
+            }
+
+            // Just pass the message right through for further processing.
+            return m;
         }
     }
 
@@ -414,6 +431,20 @@ public class PeerGroup implements TransactionBroadcaster {
 
         if (adjustment < 0)
             channels.closeConnections(-adjustment);
+    }
+
+    /**
+     * Switch for enabling network peer discovery.
+     *   if true, we will listen to "addr" network messages and add nodes discovered this way.
+     *   if false, only nodes found by discovery process are used/added.
+     */
+    public void setAddPeersFromAddressMessage(boolean addPeersFromAddressMessage) {
+        lock.lock();
+        try {
+            this.addPeersFromAddressMessage = addPeersFromAddressMessage;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -1031,6 +1062,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 socket = new Socket();
                 socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), params.getPort()), vConnectTimeoutMillis);
                 localhostCheckState = LocalhostCheckState.FOUND;
+
+                // If we are connected to localhost we don't want to get other peers added from AddressMessage calls.
+                setAddPeersFromAddressMessage(false);
+
                 return true;
             } catch (IOException e) {
                 log.info("Localhost peer not detected.");
