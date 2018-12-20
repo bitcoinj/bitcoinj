@@ -511,7 +511,12 @@ public class PeerGroup implements TransactionBroadcaster {
                     executor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     return;
                 }
-                connectTo(addrToTry, false, vConnectTimeoutMillis);
+
+                // BitcoinJ gets too many connections after a connection loss and reconnect as it adds up a lot of
+                // potential candidates and then try to connect to all of those when getting connection again.
+                // A check for maxConnections is required to not exceed connections.
+                if (countConnectedAndPendingPeers() < getMaxConnections())
+                    connectTo(addrToTry, false, vConnectTimeoutMillis);
             } finally {
                 lock.unlock();
             }
