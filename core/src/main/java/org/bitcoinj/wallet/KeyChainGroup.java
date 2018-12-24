@@ -115,7 +115,6 @@ public class KeyChainGroup implements KeyBag {
         this(params, null, ImmutableList.of(watch ? DeterministicKeyChain.watch(accountKey) : DeterministicKeyChain.spend(accountKey)), null, null);
     }
 
-    // Used for deserialization.
     private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, List<DeterministicKeyChain> chains,
                           @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
         this.params = params;
