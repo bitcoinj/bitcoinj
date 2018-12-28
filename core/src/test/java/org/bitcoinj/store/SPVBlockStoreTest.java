@@ -164,4 +164,12 @@ public class SPVBlockStoreTest {
         assertEquals(UNITTEST.getGenesisBlock().getHash(), store.getChainHead().getHeader().getHash());
         store.close();
     }
+
+    @Test
+    public void oneStoreDelete() throws Exception {
+        // Used to fail on windows.
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        store.close();
+        assertTrue(blockStoreFile.delete());
+    }
 }
