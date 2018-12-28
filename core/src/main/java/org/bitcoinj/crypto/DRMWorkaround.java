@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class DRMWorkaround {
     private static Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
@@ -43,6 +44,9 @@ public class DRMWorkaround {
         try {
             Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
             gate.setAccessible(true);
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(gate, gate.getModifiers() & ~Modifier.FINAL);
             gate.setBoolean(null, false);
             final Field allPerm = Class.forName("javax.crypto.CryptoAllPermission").getDeclaredField("INSTANCE");
             allPerm.setAccessible(true);
