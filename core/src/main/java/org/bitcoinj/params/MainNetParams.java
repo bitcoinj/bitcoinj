@@ -79,6 +79,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "seed.btc.petertodd.org",       // Peter Todd
                 "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
                 "seed.bitnodes.io",             // Addy Yeow
+                "dnsseed.emzy.de",              // Stephan Oeste
         };
         httpSeeds = new HttpDiscovery.Details[] {
                 // Andreas Schildbach
