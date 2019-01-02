@@ -112,4 +112,11 @@ public class UtilsTest {
         byte[] actual = Utils.bigIntegerToBytes(b, 1);
         assertTrue(Arrays.equals(expected, actual));
     }
+
+    @Test
+    public void runtime() {
+        // This test assumes it is run within a Java runtime for desktop computers.
+        assertTrue(Utils.isOpenJDKRuntime() || Utils.isOracleJavaRuntime());
+        assertFalse(Utils.isAndroidRuntime());
+    }
 }
