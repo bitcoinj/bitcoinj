@@ -554,7 +554,12 @@ public class Utils {
         ANDROID, OPENJDK, ORACLE_JAVA
     }
 
+    private enum OS {
+        LINUX, WINDOWS, MAC_OS
+    }
+
     private static Runtime runtime = null;
+    private static OS os = null;
     static {
         String runtimeProp = System.getProperty("java.runtime.name").toLowerCase(Locale.US);
         if (runtimeProp == null)
@@ -567,6 +572,18 @@ public class Utils {
             runtime = Runtime.ORACLE_JAVA;
         else
             log.info("Unknown java.runtime.name '{}'", runtimeProp);
+
+        String osProp = System.getProperty("os.name").toLowerCase(Locale.US);
+        if (osProp == null)
+            os = null;
+        else if (osProp.contains("linux"))
+            os = OS.LINUX;
+        else if (osProp.contains("win"))
+            os = OS.WINDOWS;
+        else if (osProp.contains("mac"))
+            os = OS.MAC_OS;
+        else
+            log.info("Unknown os.name '{}'", runtimeProp);
     }
 
     public static boolean isAndroidRuntime() {
@@ -582,14 +599,14 @@ public class Utils {
     }
 
     public static boolean isLinux() {
-        return System.getProperty("os.name").toLowerCase().contains("linux");
+        return os == OS.LINUX;
     }
 
     public static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
+        return os == OS.WINDOWS;
     }
 
     public static boolean isMac() {
-        return System.getProperty("os.name").toLowerCase().contains("mac");
+        return os == OS.MAC_OS;
     }
 }
