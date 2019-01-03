@@ -96,7 +96,7 @@ public class ElasticInterpolator extends EasingInterpolator {
     }
 
     /**
-     * The amplitude. The minimum value is 1. If this value is < 1 it will be set to 1 during animation.
+     * The amplitude. The minimum value is 1. If this value is &lt; 1 it will be set to 1 during animation.
      *
      * @return The property.
      * @see #getAmplitude()

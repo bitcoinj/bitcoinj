@@ -245,7 +245,7 @@ public class VersionMessage extends Message {
      * and version are not allowed to contain such characters.</p>
      *
      * <p>Anything put in the "comments" field will appear in brackets and may be used for platform info, or anything
-     * else. For example, calling <tt>appendToSubVer("MultiBit", "1.0", "Windows")</tt> will result in a subVer being
+     * else. For example, calling {@code appendToSubVer("MultiBit", "1.0", "Windows")} will result in a subVer being
      * set of "/bitcoinj:1.0/MultiBit:1.0(Windows)/". Therefore the / ( and ) characters are reserved in all these
      * components. If you don't want to add a comment (recommended), pass null.</p>
      *

@@ -38,9 +38,8 @@ public interface TransactionConfidenceEventListener {
      *     will then re-use the same outputs when creating the next spend.</li>
      * </ol><p>
      *
-     * <p>To find if the transaction is dead, you can use <tt>tx.getConfidence().getConfidenceType() ==
-     * TransactionConfidence.ConfidenceType.DEAD</tt>. If it is, you should notify the user
-     * in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.</p>
+     * <p>To find if the transaction is dead, you can use {@code tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD}.
+     * If it is, you should notify the user in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.</p>
      *
      * <p>Note that this callback will be invoked for every transaction in the wallet, for every new block that is
      * received (because the depth has changed). <b>If you want to update a UI view from the contents of the wallet
