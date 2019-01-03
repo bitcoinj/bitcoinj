@@ -857,7 +857,7 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * @return the height of the best known chain, convenience for <tt>getChainHead().getHeight()</tt>.
+     * @return the height of the best known chain, convenience for {@code getChainHead().getHeight()}.
      */
     public final int getBestChainHeight() {
         return getChainHead().getHeight();

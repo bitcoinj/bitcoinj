@@ -444,8 +444,8 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger, use <tt>
-     * new BigInteger(1, bytes);</tt>
+     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger,
+     * use {@code new BigInteger(1, bytes);}
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
@@ -453,8 +453,8 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns public key point from the given private key. To convert a byte array into a BigInteger, use <tt>
-     * new BigInteger(1, bytes);</tt>
+     * Returns public key point from the given private key. To convert a byte array into a BigInteger,
+     * use {@code new BigInteger(1, bytes);}
      */
     public static ECPoint publicPointFromPrivate(BigInteger privKey) {
         /*
@@ -1310,7 +1310,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
-     * <p><tt>[24] "Bitcoin Signed Message:\n" [message.length as a varint] message</tt></p>
+     * <p>{@code [24] "Bitcoin Signed Message:\n" [message.length as a varint] message}</p>
      */
     private static byte[] formatMessageForSigning(String message) {
         try {

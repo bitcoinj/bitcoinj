@@ -497,7 +497,7 @@ public class TransactionInput extends ChildMessage {
      * The "IsStandard" rules control whether the default Bitcoin Core client blocks relay of a tx / refuses to mine it,
      * however, non-standard transactions can still be included in blocks and will be accepted as valid if so.</p>
      *
-     * <p>This method simply calls <tt>DefaultRiskAnalysis.isInputStandard(this)</tt>.</p>
+     * <p>This method simply calls {@code DefaultRiskAnalysis.isInputStandard(this)}.</p>
      */
     public DefaultRiskAnalysis.RuleViolation isStandard() {
         return DefaultRiskAnalysis.isInputStandard(this);

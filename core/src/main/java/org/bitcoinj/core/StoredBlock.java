@@ -107,7 +107,7 @@ public class StoredBlock {
 
     /**
      * Given a block store, looks up the previous block in this chain. Convenience method for doing
-     * <tt>store.get(this.getHeader().getPrevBlockHash())</tt>.
+     * {@code store.get(this.getHeader().getPrevBlockHash())}.
      *
      * @return the previous block in the chain or null if it was not found in the store.
      */

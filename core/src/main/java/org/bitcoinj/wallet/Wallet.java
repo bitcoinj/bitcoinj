@@ -4242,7 +4242,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Convenience wrapper for <tt>setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get())</tt>. If this method
+     * Convenience wrapper for {@code setCoinSelector(Wallet.AllowUnconfirmedCoinSelector.get())}. If this method
      * is called on the wallet then transactions will be used for spending regardless of their confidence. This can
      * be dangerous - only use this if you absolutely know what you're doing!
      */
