@@ -136,6 +136,10 @@ public class Transaction extends ChildMessage {
     // list of transactions from a wallet, which is helpful for presenting to users.
     private Date updatedAt;
 
+    // Date of the block that includes this transaction on the best chain
+    @Nullable
+    private Date includedInBestChainAt;
+
     // These are in memory helpers only. They contain the transaction hashes without and with witness.
     private Sha256Hash cachedTxId;
     private Sha256Hash cachedWTxId;
@@ -365,15 +369,19 @@ public class Transaction extends ChildMessage {
      * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.</p>
      *
      * <p>Sets updatedAt to be the earliest valid block time where this tx was seen.</p>
+     * <p>Sets includedInBestChainAt to be the block time of the best chain block where this tx is included.</p>
      *
      * @param block     The {@link StoredBlock} in which the transaction has appeared.
-     * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
+     * @param bestChain whether the supplied block is part of the best chain.
      * @param relativityOffset A number that disambiguates the order of transactions within a block.
      */
     public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
         long blockTime = block.getHeader().getTimeSeconds() * 1000;
         if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
             updatedAt = new Date(blockTime);
+        }
+        if (bestChain) {
+            includedInBestChainAt = new Date(blockTime);
         }
 
         addBlockAppearance(block.getHeader().getHash(), relativityOffset);
@@ -513,6 +521,15 @@ public class Transaction extends ChildMessage {
 
     public void setUpdateTime(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @Nullable
+    public Date getIncludedInBestChainAt() {
+        return includedInBestChainAt;
+    }
+
+    public void setIncludedInBestChainAt(Date includedInBestChainAt) {
+        this.includedInBestChainAt = includedInBestChainAt;
     }
 
     /**
@@ -747,6 +764,8 @@ public class Transaction extends ChildMessage {
         s.append('\n');
         if (updatedAt != null)
             s.append(indent).append("updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
+        if (includedInBestChainAt != null)
+            s.append(indent).append("included in best chain at: ").append(Utils.dateTimeFormat(includedInBestChainAt)).append('\n');
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');
         if (isTimeLocked()) {

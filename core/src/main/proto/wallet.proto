@@ -272,6 +272,7 @@ message Transaction {
 
   optional uint32 lock_time = 4; // The nLockTime field is useful for contracts.
   optional int64 updated_at = 5; // millis since epoch the transaction was last updated
+  optional int64 included_in_best_chain_at = 1000; // millis since epoch the transaction was included on the best chain
 
   repeated TransactionInput transaction_input = 6;
   repeated TransactionOutput transaction_output = 7;
