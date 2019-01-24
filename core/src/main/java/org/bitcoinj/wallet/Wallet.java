@@ -2178,7 +2178,7 @@ public class Wallet extends BaseTaggableObject
 
         // This TX may spend our existing outputs even though it was not pending. This can happen in unit
         // tests, if keys are moved between wallets, if we're catching up to the chain given only a set of keys,
-        // or if a dead coinbase transaction has moved back onto the main chain.
+        // or if a dead coinbase transaction has moved back onto the best chain.
         boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getHash());
         if (isDeadCoinbase) {
             // There is a dead coinbase tx being received on the best chain. A coinbase tx is made dead when it moves

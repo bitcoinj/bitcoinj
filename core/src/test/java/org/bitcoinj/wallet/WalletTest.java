@@ -509,7 +509,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void sideChain() throws Exception {
-        // The wallet receives a coin on the main chain, then on a side chain. Balance is equal to both added together
+        // The wallet receives a coin on the best chain, then on a side chain. Balance is equal to both added together
         // as we assume the side chain tx is pending and will be included shortly.
         Coin v1 = COIN;
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, v1);
@@ -1413,7 +1413,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void pending3() throws Exception {
-        // Check that if we receive a pending tx, and it's overridden by a double spend from the main chain, we
+        // Check that if we receive a pending tx, and it's overridden by a double spend from the best chain, we
         // are notified that it's dead. This should work even if the pending tx inputs are NOT ours, ie, they don't
         // connect to anything.
         Coin nanos = COIN;
@@ -1457,7 +1457,7 @@ public class WalletTest extends TestWithWallet {
         Threading.waitForUserCode();
         assertEquals(t1, called[0]);
         assertEquals(nanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-        // Now receive a double spend on the main chain.
+        // Now receive a double spend on the best chain.
         called[0] = called[1] = null;
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, t2);
         Threading.waitForUserCode();
