@@ -276,7 +276,7 @@ public class ChainSplitTest {
 
     @Test
     public void testForking6() throws Exception {
-        // Test the case in which a side chain block contains a tx, and then it appears in the main chain too.
+        // Test the case in which a side chain block contains a tx, and then it appears in the best chain too.
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(someOtherGuy);
         chain.add(b1);
         // genesis -> b1

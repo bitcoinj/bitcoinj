@@ -581,7 +581,7 @@ public abstract class AbstractBlockChain {
                     // newStoredBlock is a part of the same chain, there's no fork. This happens when we receive a block
                     // that we already saw and linked into the chain previously, which isn't the chain head.
                     // Re-processing it is confusing for the wallet so just skip.
-                    log.warn("Saw duplicated block in main chain at height {}: {}",
+                    log.warn("Saw duplicated block in best chain at height {}: {}",
                             newBlock.getHeight(), newBlock.getHeader().getHash());
                     return;
                 }
@@ -757,7 +757,7 @@ public abstract class AbstractBlockChain {
         // Then build a list of all blocks in the old part of the chain and the new part.
         final LinkedList<StoredBlock> oldBlocks = getPartialChain(head, splitPoint, blockStore);
         final LinkedList<StoredBlock> newBlocks = getPartialChain(newChainHead, splitPoint, blockStore);
-        // Disconnect each transaction in the previous main chain that is no longer in the new main chain
+        // Disconnect each transaction in the previous best chain that is no longer in the new best chain
         StoredBlock storedNewHead = splitPoint;
         if (shouldVerifyTransactions()) {
             for (StoredBlock oldBlock : oldBlocks) {
