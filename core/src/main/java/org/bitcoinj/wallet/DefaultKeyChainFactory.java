@@ -41,8 +41,10 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
         DeterministicKeyChain chain;
         if (isMarried)
             chain = new MarriedKeyChain(accountKey);
+        else if (isFollowingKey)
+            chain = DeterministicKeyChain.builder().watchAndFollow(accountKey).build();
         else
-            chain = new DeterministicKeyChain(accountKey, isFollowingKey);
+            chain = DeterministicKeyChain.builder().watch(accountKey).build();
         return chain;
     }
 
@@ -53,7 +55,7 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
         if (isMarried)
             chain = new MarriedKeyChain(accountKey);
         else
-            chain = DeterministicKeyChain.spend(accountKey);
+            chain = DeterministicKeyChain.builder().spend(accountKey).build();
         return chain;
     }
 }
