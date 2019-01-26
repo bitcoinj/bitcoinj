@@ -362,7 +362,7 @@ public class WalletProtobufSerializerTest {
     public void testRoundTripMarriedWallet() throws Exception {
         // create 2-of-2 married wallet
         myWallet = new Wallet(UNITTEST);
-        final DeterministicKeyChain partnerChain = new DeterministicKeyChain(new SecureRandom());
+        final DeterministicKeyChain partnerChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(UNITTEST), UNITTEST);
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())

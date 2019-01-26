@@ -31,7 +31,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import java.security.SecureRandom;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,26 +121,20 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         return new Builder();
     }
 
-    // Protobuf deserialization constructors
-    MarriedKeyChain(DeterministicKey accountKey) {
-        super(accountKey, false);
+    /**
+     * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
+     * {@link Builder}.
+     */
+    protected MarriedKeyChain(DeterministicKey accountKey) {
+        super(accountKey, false, true);
     }
 
+    /**
+     * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
+     * {@link Builder}.
+     */
     protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, ImmutableList<ChildNumber> accountPath) {
         super(seed, crypter, accountPath);
-    }
-
-    // Builder constructors
-    private MarriedKeyChain(SecureRandom random, int bits, String passphrase) {
-        super(random, bits, passphrase);
-    }
-
-    private MarriedKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs) {
-        super(entropy, passphrase, seedCreationTimeSecs);
-    }
-
-    private MarriedKeyChain(DeterministicSeed seed) {
-        super(seed);
     }
 
     void setFollowingKeyChains(List<DeterministicKeyChain> followingKeyChains) {
@@ -196,7 +189,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
         for (DeterministicKey key : followingAccountKeys) {
             checkArgument(key.getPath().size() == getAccountPath().size(), "Following keys have to be account keys");
-            DeterministicKeyChain chain = DeterministicKeyChain.watchAndFollow(key);
+            DeterministicKeyChain chain = DeterministicKeyChain.builder().watchAndFollow(key).build();
             if (lookaheadSize >= 0)
                 chain.setLookaheadSize(lookaheadSize);
             if (lookaheadThreshold >= 0)

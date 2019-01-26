@@ -63,11 +63,11 @@ public class DeterministicKeyChainTest {
         // You should use a random seed instead. The secs constant comes from the unit test file, so we can compare
         // serialized data properly.
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(ENTROPY, "", secs);
+        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).build();
         chain.setLookaheadSize(10);
         assertEquals(secs, checkNotNull(chain.getSeed()).getCreationTimeSeconds());
 
-        bip44chain = new DeterministicKeyChain(new DeterministicSeed(ENTROPY, "", secs), BIP44_ACCOUNT_ONE_PATH);
+        bip44chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).accountPath(BIP44_ACCOUNT_ONE_PATH).build();
         bip44chain.setLookaheadSize(10);
         assertEquals(secs, checkNotNull(bip44chain.getSeed()).getCreationTimeSeconds());
     }
@@ -167,7 +167,7 @@ public class DeterministicKeyChainTest {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = Lists.newArrayList();
         long secs = 1389353062L;
-        chain = new DeterministicKeyChain(ENTROPY, "", secs);
+        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).build();
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
             public void onKeysAdded(List<ECKey> keys) {
@@ -203,7 +203,7 @@ public class DeterministicKeyChainTest {
     public void random() {
         // Can't test much here but verify the constructor worked and the class is functional. The other tests rely on
         // a fixed seed to be deterministic.
-        chain = new DeterministicKeyChain(new SecureRandom(), 384);
+        chain = DeterministicKeyChain.builder().random(new SecureRandom(), 384).build();
         chain.setLookaheadSize(10);
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).sign(Sha256Hash.ZERO_HASH);
         chain.getKey(KeyChain.KeyPurpose.CHANGE).sign(Sha256Hash.ZERO_HASH);
@@ -358,7 +358,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xpub69KR9epSNBM59KLuasxMU5CyKytMJjBP5HEZ5p8YoGUCpM6cM9hqxB9DDPCpUUtqmw5duTckvPfwpoWGQUFPmRLpxs5jYiTf2u6xRMcdhDf", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58, MAINNET);
         watchingKey.setCreationTimeSeconds(100000);
-        chain = DeterministicKeyChain.watch(watchingKey);
+        chain = DeterministicKeyChain.builder().watch(watchingKey).build();
         assertEquals(100000, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
@@ -394,7 +394,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey watchingKey = bip44chain.getWatchingKey();
         watchingKey = watchingKey.dropPrivateBytes().dropParent();
         watchingKey.setCreationTimeSeconds(100000);
-        chain = DeterministicKeyChain.watch(watchingKey);
+        chain = DeterministicKeyChain.builder().watch(watchingKey).build();
         assertEquals(100000, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
@@ -435,7 +435,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xpub69KR9epJ2Wp6ywiv4Xu5WfBUpX4GLu6D5NUMd4oUkCFoZoRNyk3ZCxfKPDkkGvCPa16dPgEdY63qoyLqEa5TQQy1nmfSmgWcagRzimyV7uA", pub58);
         watchingKey = DeterministicKey.deserializeB58(null, pub58, MAINNET);
         watchingKey.setCreationTimeSeconds(100000);
-        chain = DeterministicKeyChain.watch(watchingKey);
+        chain = DeterministicKeyChain.builder().watch(watchingKey).build();
         assertEquals(accountOne, chain.getAccountPath());
         assertEquals(100000, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
@@ -475,7 +475,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xprv9vL4k9HYXonmvqGSUrRM6wGEmx3ruGTXi4JxHRiwEvwDwYmTocPbQNpjN89gpqPrFofmfvALwgnNFBCH2grse1YDf8ERAwgdvbjRtoMfsbV", prv58);
         watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
         watchingKey.setCreationTimeSeconds(100000);
-        chain = DeterministicKeyChain.spend(watchingKey);
+        chain = DeterministicKeyChain.builder().spend(watchingKey).build();
         assertEquals(100000, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
@@ -517,7 +517,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xprv9vL4k9HYXonmzR7UC1ngJ3hTjxkmjLLUo3RexSfUGSWcACHzghWBLJAwW6xzs59XeFizQxFQWtscoTfrF9PSXrUgAtBgr13Nuojax8xTBRz", prv58);
         watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
         watchingKey.setCreationTimeSeconds(secs);
-        chain = DeterministicKeyChain.spend(watchingKey);
+        chain = DeterministicKeyChain.builder().spend(watchingKey).build();
         assertEquals(accountTwo, chain.getAccountPath());
         assertEquals(secs, chain.getEarliestKeyCreationTime());
         chain.setLookaheadSize(10);
@@ -544,7 +544,7 @@ public class DeterministicKeyChainTest {
         assertEquals("xprv9yYQhynAmWWuz62PScx5Q2frBET2F1raaXna5A2E9Lj8XWgmKBL7S98Yand8F736j9UCTNWQeiB4yL5pLZP7JDY2tY8eszGQkiKDwBkezeS", prv58);
         watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
         watchingKey.setCreationTimeSeconds(secs);
-        DeterministicKeyChain fromPrivBase58Chain = DeterministicKeyChain.spend(watchingKey);
+        DeterministicKeyChain fromPrivBase58Chain = DeterministicKeyChain.builder().spend(watchingKey).build();
         assertEquals(secs, fromPrivBase58Chain.getEarliestKeyCreationTime());
         fromPrivBase58Chain.setLookaheadSize(10);
         fromPrivBase58Chain.maybeLookAhead();
@@ -610,7 +610,7 @@ public class DeterministicKeyChainTest {
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() throws Exception {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
-        chain = DeterministicKeyChain.watch(accountKey.dropPrivateBytes().dropParent());
+        chain = DeterministicKeyChain.builder().watch(accountKey.dropPrivateBytes().dropParent()).build();
         assertEquals(DeterministicKeyChain.ACCOUNT_ZERO_PATH, chain.getAccountPath());
         chain = chain.toEncrypted("this doesn't make any sense");
     }
@@ -641,7 +641,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)
             keys[i] = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        chain = DeterministicKeyChain.watch(chain.getWatchingKey().dropPrivateBytes().dropParent());
+        chain = DeterministicKeyChain.builder().watch(chain.getWatchingKey().dropPrivateBytes().dropParent()).build();
         int e = chain.numBloomFilterEntries();
         BloomFilter filter = chain.getFilter(e, 0.001, 1);
         for (DeterministicKey key : keys)

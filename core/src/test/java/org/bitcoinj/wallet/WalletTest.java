@@ -120,7 +120,7 @@ public class WalletTest extends TestWithWallet {
 
         List<DeterministicKey> followingKeys = Lists.newArrayList();
         for (int i = 0; i < numKeys - 1; i++) {
-            final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
+            final DeterministicKeyChain keyChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
             DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(UNITTEST), UNITTEST);
             followingKeys.add(partnerKey);
             if (addSigners && i < threshold - 1)
@@ -3326,7 +3326,7 @@ public class WalletTest extends TestWithWallet {
         blockStore = new MemoryBlockStore(UNITTEST);
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
-        final DeterministicKeyChain keyChain = new DeterministicKeyChain(new SecureRandom());
+        final DeterministicKeyChain keyChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(UNITTEST), UNITTEST);
 
         TransactionSigner signer = new TransactionSigner() {

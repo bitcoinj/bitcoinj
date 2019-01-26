@@ -65,7 +65,7 @@ import static com.google.common.collect.Lists.newLinkedList;
  * sufficient information about the account key to create a watching chain via
  * {@link DeterministicKey#deserializeB58(DeterministicKey, String, NetworkParameters)}
  * (with null as the first parameter) and then
- * {@link DeterministicKeyChain#DeterministicKeyChain(DeterministicKey)}.</p>
+ * {@link Builder#watch(DeterministicKey)}.</p>
  *
  * <p>This class builds on {@link DeterministicHierarchy} and
  * {@link DeterministicKey} by adding support for serialization to and from protobufs,
@@ -164,10 +164,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected SecureRandom random;
         protected int bits = DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS;
         protected String passphrase;
-        protected long creationTimeSecs;
+        protected long creationTimeSecs = 0;
         protected byte[] entropy;
         protected DeterministicSeed seed;
         protected DeterministicKey watchingKey = null;
+        protected boolean isFollowing = false;
+        protected DeterministicKey spendingKey = null;
         protected ImmutableList<ChildNumber> accountPath = null;
 
         protected Builder() {
@@ -222,9 +224,34 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
-        public T watchingKey(DeterministicKey watchingKey) {
-            checkState(accountPath == null, "either watchingKey or accountPath");
-            this.watchingKey = watchingKey;
+        /**
+         * Creates a key chain that watches the given account key.
+         */
+        public T watch(DeterministicKey accountKey) {
+            checkState(accountPath == null, "either watch or accountPath");
+            this.watchingKey = accountKey;
+            this.isFollowing = false;
+            return self();
+        }
+
+        /**
+         * Creates a deterministic key chain with the given watch key and that follows some other keychain. In a married
+         * wallet following keychain represents "spouse". Watch key has to be an account key.
+         */
+        public T watchAndFollow(DeterministicKey accountKey) {
+            checkState(accountPath == null, "either watchAndFollow or accountPath");
+            this.watchingKey = accountKey;
+            this.isFollowing = true;
+            return self();
+        }
+
+        /**
+         * Creates a key chain that can spend from the given account key.
+         */
+        public T spend(DeterministicKey accountKey) {
+            checkState(accountPath == null, "either spend or accountPath");
+            this.spendingKey = accountKey;
+            this.isFollowing = false;
             return self();
         }
 
@@ -239,7 +266,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          * Use an account path other than the default {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH}.
          */
         public T accountPath(ImmutableList<ChildNumber> accountPath) {
-            checkState(watchingKey == null, "either watchingKey or accountPath");
+            checkState(watchingKey == null, "either watch or accountPath");
             this.accountPath = accountPath;
             return self();
         }
@@ -260,7 +287,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             else if (seed != null)
                 return new DeterministicKeyChain(seed, null, accountPath);
             else if (watchingKey != null)
-                return new DeterministicKeyChain(watchingKey);
+                return new DeterministicKeyChain(watchingKey, isFollowing, true);
+            else if (spendingKey != null)
+                return new DeterministicKeyChain(spendingKey, false, false);
             else
                 throw new IllegalStateException();
         }
@@ -271,81 +300,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     public static Builder<?> builder() {
-        return new Builder();
+        return new Builder<>();
     }
 
     /**
-     * Generates a new key chain with entropy selected randomly from the given {@link SecureRandom}
-     * object and the default entropy size.
-     */
-    public DeterministicKeyChain(SecureRandom random) {
-        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC);
-    }
-
-    /**
-     * Generates a new key chain with entropy selected randomly from the given {@link SecureRandom}
-     * object and of the requested size in bits.
-     */
-    public DeterministicKeyChain(SecureRandom random, int bits) {
-        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC);
-    }
-
-    /**
-     * Generates a new key chain with entropy selected randomly from the given {@link SecureRandom}
-     * object and of the requested size in bits.  The derived seed is further protected with a user selected passphrase
-     * (see BIP 39).
-     */
-    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase) {
-        this(new DeterministicSeed(random, bits, passphrase));
-    }
-
-    /**
-     * Creates a deterministic key chain starting from the given entropy. All keys yielded by this chain will be the same
-     * if the starting seed is the same. You should provide the creation time in seconds since the UNIX epoch for the
-     * seed: this lets us know from what part of the chain we can expect to see derived keys appear.
-     */
-    public DeterministicKeyChain(byte[] entropy, String passphrase, long seedCreationTimeSecs) {
-        this(new DeterministicSeed(entropy, passphrase, seedCreationTimeSecs));
-    }
-
-    /**
-     * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
-     * if the starting seed is the same.
-     */
-    protected DeterministicKeyChain(DeterministicSeed seed) {
-        this(seed, null, ACCOUNT_ZERO_PATH);
-    }
-
-    /**
-     * Creates a deterministic key chain starting from the given seed. This deterministic Key chain
-     * will follow the account path defined.
-     */
-    public DeterministicKeyChain(DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
-        this(seed, null, accountPath);
-    }
-
-    /**
-     * Creates a deterministic key chain that watches the given (public only) root key. You can use this to calculate
-     * balances and generally follow along, but spending is not possible with such a chain.
-     */
-    public DeterministicKeyChain(DeterministicKey watchingKey) {
-        checkArgument(watchingKey.isPubKeyOnly(), "Private subtrees not currently supported: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
-        this.accountPath = watchingKey.getPath();
-        basicKeyChain = new BasicKeyChain();
-        this.seed = null;
-        this.rootKey = null;
-        basicKeyChain.importKey(watchingKey);
-        hierarchy = new DeterministicHierarchy(watchingKey);
-        initializeHierarchyUnencrypted(watchingKey);
-    }
-
-    /**
-     * Creates a deterministic key chain from a watched or spendable account key.  If  {@code isWatching} flag is set,
-     * then creates a deterministic key chain that watches the given (public only) root key.  You can use this to calculate
-     * balances and generally follow along, but spending is not possible with such a chain.  If it is not set, then this
-     * creates a deterministic key chain that allows spending. If {@code isFollowing} flag is set(only allowed
-     * if {@code isWatching} is set) then this keychain follows some other keychain.  In a married wallet following
+     * <p>
+     * Creates a deterministic key chain from a watched or spendable account key. If {@code isWatching} flag is set,
+     * then creates a deterministic key chain that watches the given (public only) root key. You can use this to
+     * calculate balances and generally follow along, but spending is not possible with such a chain. If it is not set,
+     * then this creates a deterministic key chain that allows spending. If {@code isFollowing} flag is set(only allowed
+     * if {@code isWatching} is set) then this keychain follows some other keychain. In a married wallet following
      * keychain represents "spouse's" keychain.
+     * </p>
+     * 
+     * <p>
+     * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
+     * {@link Builder}.
+     * </p>
      */
     public DeterministicKeyChain(DeterministicKey key, boolean isFollowing, boolean isWatching) {
         if (isWatching)
@@ -365,48 +336,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * <p>Creates a deterministic key chain with the given watch key. If {@code isFollowing} flag is set then this keychain follows
-     * some other keychain. In a married wallet following keychain represents "spouse's" keychain.</p>
-     * <p>Watch key has to be an account key.</p>
-     */
-    protected DeterministicKeyChain(DeterministicKey watchKey, boolean isFollowing) {
-        this(watchKey);
-        this.isFollowing = isFollowing;
-    }
-
-    /**
-     * Creates a deterministic key chain with the given watch key and that follows some other keychain. In a married
-     * wallet following keychain represents "spouse"
-     * Watch key has to be an account key.
-     */
-    public static DeterministicKeyChain watchAndFollow(DeterministicKey watchKey) {
-        return new DeterministicKeyChain(watchKey, true);
-    }
-
-    /**
-     * Creates a key chain that watches the given account key.
-     */
-    public static DeterministicKeyChain watch(DeterministicKey accountKey) {
-        return new DeterministicKeyChain(accountKey);
-    }
-
-    /**
-     * Creates a key chain that can spend from the given account key.
-     */
-    public static DeterministicKeyChain spend(DeterministicKey accountKey) {
-        return new DeterministicKeyChain(accountKey, false, false);
-    }
-
-    /**
-     * For use in {@link KeyChainFactory} during deserialization.
-     */
-    protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter) {
-        this(seed, crypter, ACCOUNT_ZERO_PATH);
-    }
-
-    /**
-     * Creates a deterministic key chain with an encrypted deterministic seed using the provided account path.
-     *  Using {@link KeyCrypter KeyCrypter} to decrypt.
+     * <p>
+     * Creates a deterministic key chain with an encrypted deterministic seed using the provided account path. Using
+     * {@link KeyCrypter KeyCrypter} to decrypt.
+     * </p>
+     * 
+     * <p>
+     * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
+     * {@link Builder}.
+     * </p>
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
                                     ImmutableList<ChildNumber> accountPath) {
@@ -676,7 +614,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * <p>An alias for {@code getKeyByPath(getAccountPath())}.</p>
      *
      * <p>Use this when you would like to create a watching key chain that follows this one, but can't spend money from it.
-     * The returned key can be serialized and then passed into {@link #watch(DeterministicKey)}
+     * The returned key can be serialized and then passed into {@link Builder#watch(DeterministicKey)}
      * on another system to watch the hierarchy.</p>
      *
      * <p>Note that the returned key is not pubkey only unless this key chain already is: the returned key can still
@@ -1077,7 +1015,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * This is used in encryption/decryption.
      */
     protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
-        return new DeterministicKeyChain(seed, accountPath);
+        return new DeterministicKeyChain(seed, null, accountPath);
     }
 
     @Override
