@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
 /**
@@ -65,6 +66,26 @@ public abstract class Address extends PrefixedChecksummedBytes {
                 throw new AddressFormatException(str);
             }
         }
+    }
+
+    /**
+     * Construct an {@link Address} that represents the public part of the given {@link ECKey}.
+     * 
+     * @param params
+     *            network this address is valid for
+     * @param key
+     *            only the public part is used
+     * @param outputScriptType
+     *            script type the address should use
+     * @return constructed address
+     */
+    public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
+        if (outputScriptType == Script.ScriptType.P2PKH)
+            return LegacyAddress.fromKey(params, key);
+        else if (outputScriptType == Script.ScriptType.P2WPKH)
+            return SegwitAddress.fromKey(params, key);
+        else
+            throw new IllegalArgumentException(outputScriptType.toString());
     }
 
     /**
