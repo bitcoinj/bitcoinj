@@ -245,25 +245,24 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
 
         public DeterministicKeyChain build() {
-            checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkState(passphrase == null || seed == null, "Passphrase must not be specified with seed");
 
             if (accountPath == null)
                 accountPath = ACCOUNT_ZERO_PATH;
 
-            DeterministicKeyChain chain;
-            if (random != null) {
+            if (random != null)
                 // Default passphrase to "" if not specified
-                chain = new DeterministicKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, accountPath);
-            } else if (entropy != null) {
-                chain = new DeterministicKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null, accountPath);
-            } else if (seed != null) {
-                chain = new DeterministicKeyChain(seed, null, accountPath);
-            } else {
-                chain = new DeterministicKeyChain(watchingKey);
-            }
-
-            return chain;
+                return new DeterministicKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null,
+                        accountPath);
+            else if (entropy != null)
+                return new DeterministicKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs),
+                        null, accountPath);
+            else if (seed != null)
+                return new DeterministicKeyChain(seed, null, accountPath);
+            else if (watchingKey != null)
+                return new DeterministicKeyChain(watchingKey);
+            else
+                throw new IllegalStateException();
         }
 
         protected String getPassphrase() {

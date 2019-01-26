@@ -94,7 +94,6 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
         @Override
         public MarriedKeyChain build() {
-            checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkNotNull(followingKeys, "followingKeys must be provided");
 
             if (threshold == 0)
@@ -103,15 +102,17 @@ public class MarriedKeyChain extends DeterministicKeyChain {
                 accountPath = ACCOUNT_ZERO_PATH;
 
             MarriedKeyChain chain;
-            if (random != null) {
+            if (random != null)
                 chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, accountPath);
-            } else if (entropy != null) {
-                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null, accountPath);
-            } else if (seed != null) {
+            else if (entropy != null)
+                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null,
+                        accountPath);
+            else if (seed != null)
                 chain = new MarriedKeyChain(seed, null, accountPath);
-            } else {
+            else if (watchingKey != null)
                 chain = new MarriedKeyChain(watchingKey);
-            }
+            else
+                throw new IllegalStateException();
             chain.addFollowingAccountKeys(followingKeys, threshold);
             return chain;
         }
