@@ -162,7 +162,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     public static class Builder<T extends Builder<T>> {
         protected SecureRandom random;
-        protected int bits = 128;
+        protected int bits = DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS;
         protected String passphrase;
         protected long seedCreationTimeSecs;
         protected byte[] entropy;
