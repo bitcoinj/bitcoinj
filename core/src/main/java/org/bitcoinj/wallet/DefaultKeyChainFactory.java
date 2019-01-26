@@ -28,7 +28,7 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
     public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried) {
         DeterministicKeyChain chain;
         if (isMarried)
-            chain = new MarriedKeyChain(seed, crypter);
+            chain = new MarriedKeyChain(seed, crypter, null);
         else
             chain = new DeterministicKeyChain(seed, crypter);
         return chain;
@@ -39,7 +39,7 @@ public class DefaultKeyChainFactory implements KeyChainFactory {
                                               KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> accountPath) {
         DeterministicKeyChain chain;
         if (isMarried)
-            chain = new MarriedKeyChain(seed, crypter);
+            chain = new MarriedKeyChain(seed, crypter, accountPath);
         else
             chain = new DeterministicKeyChain(seed, crypter, accountPath);
         return chain;

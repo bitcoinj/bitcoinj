@@ -24,6 +24,7 @@ import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
@@ -95,16 +96,20 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         public MarriedKeyChain build() {
             checkState(random != null || entropy != null || seed != null || watchingKey!= null, "Must provide either entropy or random or seed or watchingKey");
             checkNotNull(followingKeys, "followingKeys must be provided");
-            MarriedKeyChain chain;
+
             if (threshold == 0)
                 threshold = (followingKeys.size() + 1) / 2 + 1;
+            if (accountPath == null)
+                accountPath = ACCOUNT_ZERO_PATH;
+
+            MarriedKeyChain chain;
             if (random != null) {
-                chain = new MarriedKeyChain(random, bits, getPassphrase(), seedCreationTimeSecs);
+                chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase(), seedCreationTimeSecs), null, accountPath);
             } else if (entropy != null) {
-                chain = new MarriedKeyChain(entropy, getPassphrase(), seedCreationTimeSecs);
+                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), seedCreationTimeSecs), null, accountPath);
             } else if (seed != null) {
                 seed.setCreationTimeSeconds(seedCreationTimeSecs);
-                chain = new MarriedKeyChain(seed);
+                chain = new MarriedKeyChain(seed, null, accountPath);
             } else {
                 watchingKey.setCreationTimeSeconds(seedCreationTimeSecs);
                 chain = new MarriedKeyChain(watchingKey);
@@ -123,8 +128,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         super(accountKey, false);
     }
 
-    MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter) {
-        super(seed, crypter);
+    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, ImmutableList<ChildNumber> accountPath) {
+        super(seed, crypter, accountPath);
     }
 
     // Builder constructors

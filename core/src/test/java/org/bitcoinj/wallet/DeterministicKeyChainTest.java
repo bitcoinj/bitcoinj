@@ -105,7 +105,8 @@ public class DeterministicKeyChainTest {
     @Test
     public void deriveAccountOne() throws Exception {
         long secs = 1389353062L;
-        DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
+        DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(ImmutableList.of(ChildNumber.ONE))
+                .entropy(ENTROPY).seedCreationTimeSecs(secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
@@ -122,25 +123,11 @@ public class DeterministicKeyChainTest {
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
-    static class AccountOneChain extends DeterministicKeyChain {
-        public AccountOneChain(byte[] entropy, String s, long secs) {
-            super(entropy, s, secs);
-        }
-
-        public AccountOneChain(KeyCrypter crypter, DeterministicSeed seed) {
-            super(seed, crypter);
-        }
-
-        @Override
-        protected ImmutableList<ChildNumber> getAccountPath() {
-            return ImmutableList.of(ChildNumber.ONE);
-        }
-    }
-
     @Test
     public void serializeAccountOne() throws Exception {
         long secs = 1389353062L;
-        DeterministicKeyChain chain1 = new AccountOneChain(ENTROPY, "", secs);
+        DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(ImmutableList.of(ChildNumber.ONE))
+                .entropy(ENTROPY).seedCreationTimeSecs(secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         final Address address = LegacyAddress.fromBase58(UNITTEST, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
@@ -153,12 +140,12 @@ public class DeterministicKeyChainTest {
             @Override
             public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
                     KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> accountPath) {
-                return new AccountOneChain(crypter, seed);
+                return DeterministicKeyChain.builder().seed(seed).accountPath(accountPath).build();
             }
 
             @Override
             public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried) {
-                return new AccountOneChain(crypter, seed);
+                return DeterministicKeyChain.builder().seed(seed).build();
             }
 
             @Override
@@ -450,7 +437,8 @@ public class DeterministicKeyChainTest {
     @Test
     public void watchingChainAccountOne() throws UnreadableWalletException {
         Utils.setMockClock();
-        DeterministicKeyChain chain1 = new AccountOneChain(chain.getKeyCrypter(), chain.getSeed());
+        DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(ImmutableList.of(ChildNumber.ONE))
+                .seed(chain.getSeed()).build();
         DeterministicKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -521,26 +509,13 @@ public class DeterministicKeyChainTest {
         final DeterministicKey rekey4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
     }
-    static class AccountTwoChain extends DeterministicKeyChain {
-        public AccountTwoChain(byte[] entropy, String s, long secs) {
-            super(entropy, s, secs);
-        }
-
-        public AccountTwoChain(KeyCrypter crypter, DeterministicSeed seed) {
-            super(seed, crypter);
-        }
-
-        @Override
-        protected ImmutableList<ChildNumber> getAccountPath() {
-            return ImmutableList.of(new ChildNumber(2, true));
-        }
-    }
 
     @Test
     public void spendingChainAccountTwo() throws UnreadableWalletException {
         Utils.setMockClock();
         long secs = 1389353062L;
-        chain = new AccountTwoChain(ENTROPY, "", secs);
+        chain = DeterministicKeyChain.builder().accountPath(ImmutableList.of(new ChildNumber(2, true))).entropy(ENTROPY)
+                .seedCreationTimeSecs(secs).build();
         DeterministicKey firstReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey secondReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey firstChangeKey = chain.getKey(KeyChain.KeyPurpose.CHANGE);
