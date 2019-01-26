@@ -104,15 +104,12 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
             MarriedKeyChain chain;
             if (random != null) {
-                checkState(seedCreationTimeSecs == 0);
                 chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, accountPath);
             } else if (entropy != null) {
-                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), seedCreationTimeSecs), null, accountPath);
+                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null, accountPath);
             } else if (seed != null) {
-                seed.setCreationTimeSeconds(seedCreationTimeSecs);
                 chain = new MarriedKeyChain(seed, null, accountPath);
             } else {
-                watchingKey.setCreationTimeSeconds(seedCreationTimeSecs);
                 chain = new MarriedKeyChain(watchingKey);
             }
             chain.addFollowingAccountKeys(followingKeys, threshold);

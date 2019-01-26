@@ -106,7 +106,7 @@ public class DeterministicKeyChainTest {
     public void deriveAccountOne() throws Exception {
         long secs = 1389353062L;
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(ImmutableList.of(ChildNumber.ONE))
-                .entropy(ENTROPY).seedCreationTimeSecs(secs).build();
+                .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
@@ -127,7 +127,7 @@ public class DeterministicKeyChainTest {
     public void serializeAccountOne() throws Exception {
         long secs = 1389353062L;
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(ImmutableList.of(ChildNumber.ONE))
-                .entropy(ENTROPY).seedCreationTimeSecs(secs).build();
+                .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         final Address address = LegacyAddress.fromBase58(UNITTEST, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
@@ -514,8 +514,8 @@ public class DeterministicKeyChainTest {
     public void spendingChainAccountTwo() throws UnreadableWalletException {
         Utils.setMockClock();
         long secs = 1389353062L;
-        chain = DeterministicKeyChain.builder().accountPath(ImmutableList.of(new ChildNumber(2, true))).entropy(ENTROPY)
-                .seedCreationTimeSecs(secs).build();
+        chain = DeterministicKeyChain.builder().accountPath(ImmutableList.of(new ChildNumber(2, true)))
+                .entropy(ENTROPY, secs).build();
         DeterministicKey firstReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey secondReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey firstChangeKey = chain.getKey(KeyChain.KeyPurpose.CHANGE);
