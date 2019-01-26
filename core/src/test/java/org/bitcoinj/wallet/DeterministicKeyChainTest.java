@@ -139,25 +139,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey watching = chain1.getWatchingKey();
 
         List<Protos.Key> keys = chain1.serializeToProtobuf();
-        KeyChainFactory factory = new KeyChainFactory() {
-            @Override
-            public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
-                    KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> accountPath) {
-                return DeterministicKeyChain.builder().seed(seed).accountPath(accountPath).build();
-            }
-
-            @Override
-            public DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public DeterministicKeyChain makeSpendingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isMarried) {
-                throw new UnsupportedOperationException();
-            }
-        };
-
-        chain1 = DeterministicKeyChain.fromProtobuf(keys, null, factory).get(0);
+        chain1 = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
         assertEquals(accountOne, chain1.getAccountPath());
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
