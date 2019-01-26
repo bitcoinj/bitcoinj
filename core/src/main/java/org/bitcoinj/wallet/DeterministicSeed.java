@@ -88,10 +88,9 @@ public class DeterministicSeed implements EncryptableItem {
      * @param random Entropy source
      * @param bits number of bits, must be divisible by 32
      * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
-     * @param creationTimeSeconds When the seed was originally created, UNIX time.
      */
-    public DeterministicSeed(SecureRandom random, int bits, String passphrase, long creationTimeSeconds) {
-        this(getEntropy(random, bits), checkNotNull(passphrase), creationTimeSeconds);
+    public DeterministicSeed(SecureRandom random, int bits, String passphrase) {
+        this(getEntropy(random, bits), checkNotNull(passphrase), Utils.currentTimeSeconds());
     }
 
     /**

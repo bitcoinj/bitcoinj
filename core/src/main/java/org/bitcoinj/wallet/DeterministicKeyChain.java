@@ -258,7 +258,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             DeterministicKeyChain chain;
             if (random != null) {
                 // Default passphrase to "" if not specified
-                chain = new DeterministicKeyChain(new DeterministicSeed(random, bits, getPassphrase(), seedCreationTimeSecs), null, accountPath);
+                checkState(seedCreationTimeSecs == 0);
+                chain = new DeterministicKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, accountPath);
             } else if (entropy != null) {
                 chain = new DeterministicKeyChain(new DeterministicSeed(entropy, getPassphrase(), seedCreationTimeSecs), null, accountPath);
             } else if (seed != null) {
@@ -286,7 +287,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and the default entropy size.
      */
     public DeterministicKeyChain(SecureRandom random) {
-        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
+        this(random, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, DEFAULT_PASSPHRASE_FOR_MNEMONIC);
     }
 
     /**
@@ -294,7 +295,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and of the requested size in bits.
      */
     public DeterministicKeyChain(SecureRandom random, int bits) {
-        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC, Utils.currentTimeSeconds());
+        this(random, bits, DEFAULT_PASSPHRASE_FOR_MNEMONIC);
     }
 
     /**
@@ -302,8 +303,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * object and of the requested size in bits.  The derived seed is further protected with a user selected passphrase
      * (see BIP 39).
      */
-    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase, long seedCreationTimeSecs) {
-        this(new DeterministicSeed(random, bits, passphrase, seedCreationTimeSecs));
+    public DeterministicKeyChain(SecureRandom random, int bits, String passphrase) {
+        this(new DeterministicSeed(random, bits, passphrase));
     }
 
     /**
