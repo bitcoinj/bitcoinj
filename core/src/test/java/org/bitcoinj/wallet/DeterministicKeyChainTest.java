@@ -144,11 +144,6 @@ public class DeterministicKeyChainTest {
             }
 
             @Override
-            public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried) {
-                return DeterministicKeyChain.builder().seed(seed).build();
-            }
-
-            @Override
             public DeterministicKeyChain makeWatchingKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried) {
                 throw new UnsupportedOperationException();
             }

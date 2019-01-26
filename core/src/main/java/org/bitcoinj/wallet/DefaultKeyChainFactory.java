@@ -25,16 +25,6 @@ import com.google.common.collect.ImmutableList;
  */
 public class DefaultKeyChainFactory implements KeyChainFactory {
     @Override
-    public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed, KeyCrypter crypter, boolean isMarried) {
-        DeterministicKeyChain chain;
-        if (isMarried)
-            chain = new MarriedKeyChain(seed, crypter, null);
-        else
-            chain = new DeterministicKeyChain(seed, crypter);
-        return chain;
-    }
-
-    @Override
     public DeterministicKeyChain makeKeyChain(Protos.Key key, Protos.Key firstSubKey, DeterministicSeed seed,
                                               KeyCrypter crypter, boolean isMarried, ImmutableList<ChildNumber> accountPath) {
         DeterministicKeyChain chain;
