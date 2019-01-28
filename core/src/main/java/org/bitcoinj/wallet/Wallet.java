@@ -3180,6 +3180,8 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             StringBuilder builder = new StringBuilder("Wallet\n");
+            if (includePrivateKeys)
+                builder.append("  WARNING: includes private keys!\n");
             builder.append("Balances:\n");
             for (BalanceType balanceType : BalanceType.values())
                 builder.append("  ").append(getBalance(balanceType).toFriendlyString()).append(' ').append(balanceType)
