@@ -4155,7 +4155,7 @@ public class Wallet extends BaseTaggableObject
                 return true;
             }
             byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
-            ECKey recipientKey = findKeyFromPubKey(sender);
+            ECKey recipientKey = findKeyFromPubKey(recipient);
             if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
                 return true;
             }
