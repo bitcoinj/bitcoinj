@@ -3184,10 +3184,11 @@ public class Wallet extends BaseTaggableObject
             Coin availableBalance = getBalance(BalanceType.AVAILABLE_SPENDABLE);
             builder.append("Wallet containing ").append(estimatedBalance.toFriendlyString()).append(" (spendable: ")
                     .append(availableBalance.toFriendlyString()).append(") in:\n");
-            builder.append("  ").append(pending.size()).append(" pending transactions\n");
-            builder.append("  ").append(unspent.size()).append(" unspent transactions\n");
-            builder.append("  ").append(spent.size()).append(" spent transactions\n");
-            builder.append("  ").append(dead.size()).append(" dead transactions\n");
+            builder.append("Transactions:\n");
+            builder.append("  ").append(pending.size()).append(" pending\n");
+            builder.append("  ").append(unspent.size()).append(" unspent\n");
+            builder.append("  ").append(spent.size()).append(" spent\n");
+            builder.append("  ").append(dead.size()).append(" dead\n");
             final Date lastBlockSeenTime = getLastBlockSeenTime();
             builder.append("Last seen best block: ").append(getLastBlockSeenHeight()).append(" (")
                     .append(lastBlockSeenTime == null ? "time unknown" : Utils.dateTimeFormat(lastBlockSeenTime))
