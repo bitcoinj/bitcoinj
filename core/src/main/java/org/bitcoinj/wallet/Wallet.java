@@ -4135,7 +4135,7 @@ public class Wallet extends BaseTaggableObject
             byte[] pubkey = ScriptPattern.extractKeyFromPayToPubKey(script);
             ECKey key = findKeyFromPubKey(pubkey);
             return key != null && (key.isEncrypted() || key.hasPrivKey());
-        } if (ScriptPattern.isPayToScriptHash(script)) {
+        } else if (ScriptPattern.isPayToScriptHash(script)) {
             RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
         } else if (ScriptPattern.isPayToPubKeyHash(script)) {
