@@ -3179,11 +3179,11 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            StringBuilder builder = new StringBuilder();
-            Coin estimatedBalance = getBalance(BalanceType.ESTIMATED);
-            Coin availableBalance = getBalance(BalanceType.AVAILABLE_SPENDABLE);
-            builder.append("Wallet containing ").append(estimatedBalance.toFriendlyString()).append(" (spendable: ")
-                    .append(availableBalance.toFriendlyString()).append(") in:\n");
+            StringBuilder builder = new StringBuilder("Wallet\n");
+            builder.append("Balances:\n");
+            for (BalanceType balanceType : BalanceType.values())
+                builder.append("  ").append(getBalance(balanceType).toFriendlyString()).append(' ').append(balanceType)
+                        .append('\n');
             builder.append("Transactions:\n");
             builder.append("  ").append(pending.size()).append(" pending\n");
             builder.append("  ").append(unspent.size()).append(" unspent\n");
