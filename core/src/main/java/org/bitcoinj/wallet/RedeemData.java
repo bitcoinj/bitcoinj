@@ -20,6 +20,8 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
 
+import com.google.common.base.MoreObjects;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -66,5 +68,13 @@ public class RedeemData {
             if (key.hasPrivKey())
                 return key;
         return null;
+    }
+
+    @Override
+    public String toString() {
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
+        helper.add("redeemScript", redeemScript);
+        helper.add("keys", keys);
+        return helper.toString();
     }
 }
