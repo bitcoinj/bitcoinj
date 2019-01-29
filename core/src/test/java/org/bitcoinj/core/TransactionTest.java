@@ -43,6 +43,7 @@ import static org.junit.Assert.*;
  */
 public class TransactionTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final Address ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
     private Transaction tx;
@@ -309,18 +310,18 @@ public class TransactionTest {
     public void testWitnessSignatureP2WPKH() {
         // test vector P2WPKH from:
         // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-        NetworkParameters netParams = TestNet3Params.get();
-
-        Transaction unsignedTx = new Transaction(netParams, HEX.decode("01000000" +  // version
-                "02" +
-                "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000" + "00" + "eeffffff" +
-                "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a" + "01000000" + "00" + "ffffffff" +
-                "02" +
-                "202cb20600000000" + "1976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac" +
-                "9093510d00000000" + "1976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac" +
-                "11000000"));
-        assertEquals(2, unsignedTx.getInputs().size());
-        assertEquals(2, unsignedTx.getOutputs().size());
+        String txHex = "01000000" // version
+                + "02" // num txIn
+                + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000" + "00" + "eeffffff" // txIn
+                + "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a" + "01000000" + "00" + "ffffffff" // txIn
+                + "02" // num txOut
+                + "202cb20600000000" + "1976a914" + "8280b37df378db99f66f85c95a783a76ac7a6d59" + "88ac" // txOut
+                + "9093510d00000000" + "1976a914" + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159" + "88ac" // txOut
+                + "11000000"; // nLockTime
+        Transaction tx = new Transaction(TESTNET, HEX.decode(txHex));
+        assertEquals(txHex, HEX.encode(tx.bitcoinSerialize()));
+        assertEquals(2, tx.getInputs().size());
+        assertEquals(2, tx.getOutputs().size());
 
         ECKey key0 = ECKey.fromPrivate(
                 HEX.decode("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
@@ -331,7 +332,7 @@ public class TransactionTest {
         assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
                 key1.getPublicKeyAsHex());
 
-        TransactionSignature txSig0 = unsignedTx.calculateSignature(0, key0,
+        TransactionSignature txSig0 = tx.calculateSignature(0, key0,
                 ScriptBuilder.createOutputScript(key0).getProgram(),
                 Transaction.SigHash.ALL, false);
         assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
@@ -341,14 +342,14 @@ public class TransactionTest {
         assertEquals("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
                 HEX.encode(scriptCode.getProgram()));
 
-        TransactionSignature txSig1 = unsignedTx.calculateWitnessSignature(1, key1,
+        TransactionSignature txSig1 = tx.calculateWitnessSignature(1, key1,
                 scriptCode, Coin.COIN.multiply(6),
                 Transaction.SigHash.ALL, false);
         assertEquals("304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee"
                         + "01",
                 HEX.encode(txSig1.encodeToBitcoin()));
 
-        TransactionInput txIn0 = unsignedTx.getInput(0);
+        TransactionInput txIn0 = tx.getInput(0);
         txIn0.setScriptSig(new ScriptBuilder()
                 .data(txSig0.encodeToBitcoin())
                 .build());
@@ -357,43 +358,46 @@ public class TransactionTest {
         witness.setPush(0, txSig1.encodeToBitcoin());
         witness.setPush(1, key1.getPubKey());
 
-        TransactionInput txIn1 = unsignedTx.getInput(1);
+        TransactionInput txIn1 = tx.getInput(1);
         txIn1.setWitness(witness);
         // no redeem script for p2wpkh
 
-        assertEquals("01000000" + "00" + "01" +
-                        "02" +
-                        "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000" +
-                        "494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01" +
-                        "eeffffff" +
-                        "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a" + "01000000" + "00" +
-                        "ffffffff" +
-                        "02" +
-                        "202cb20600000000" + "1976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac" +
-                        "9093510d00000000" + "1976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac" +
-                        "00" + // witness 0 push 0
-                        "02" + // witness 1 push 2
-                        "47304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee01" +
-                        "21025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357" +
-                        "11000000",
-                HEX.encode(unsignedTx.bitcoinSerialize()));
+        String signedTxHex = "01000000" // version
+                + "00" // marker
+                + "01" // flag
+                + "02" // num txIn
+                + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000"
+                + "494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01"
+                + "eeffffff" // txIn
+                + "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a" + "01000000" + "00" + "ffffffff" // txIn
+                + "02" // num txOut
+                + "202cb20600000000" + "1976a914" + "8280b37df378db99f66f85c95a783a76ac7a6d59" + "88ac" // txOut
+                + "9093510d00000000" + "1976a914" + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159" + "88ac" // txOut
+                + "00" // witness (empty)
+                + "02" // witness (2 pushes)
+                + "47" // push length
+                + "304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee01" // push
+                + "21" // push length
+                + "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357" // push
+                + "11000000"; // nLockTime
+        assertEquals(signedTxHex, HEX.encode(tx.bitcoinSerialize()));
     }
 
     @Test
     public void testWitnessSignatureP2SH_P2WPKH() {
         // test vector P2SH-P2WPKH from:
         // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-        NetworkParameters netParams = TestNet3Params.get();
-
-        Transaction unsignedTx = new Transaction(netParams, HEX.decode("01000000" + // version
-                "01" + // input * 1
-                "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477" + "01000000" + "00" + "feffffff" +
-                "02" + // output * 2
-                "b8b4eb0b00000000" + "1976a914a457b684d7f0d539a46a45bbc043f35b59d0d96388ac" +
-                "0008af2f00000000" + "1976a914fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c88ac" +
-                "92040000"));
-        assertEquals(1, unsignedTx.getInputs().size());
-        assertEquals(2, unsignedTx.getOutputs().size());
+        String txHex = "01000000" // version
+                + "01" // num txIn
+                + "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477" + "01000000" + "00" + "feffffff" // txIn
+                + "02" // num txOut
+                + "b8b4eb0b00000000" + "1976a914" + "a457b684d7f0d539a46a45bbc043f35b59d0d963" + "88ac" // txOut
+                + "0008af2f00000000" + "1976a914" + "fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c" + "88ac" // txOut
+                + "92040000"; // nLockTime
+        Transaction tx = new Transaction(TESTNET, HEX.decode(txHex));
+        assertEquals(txHex, HEX.encode(tx.bitcoinSerialize()));
+        assertEquals(1, tx.getInputs().size());
+        assertEquals(2, tx.getOutputs().size());
 
         ECKey key = ECKey.fromPrivate(
                 HEX.decode("eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf"));
@@ -410,13 +414,13 @@ public class TransactionTest {
                 HEX.encode(scriptPubKey.getProgram()));
 
         Script scriptCode = new ScriptBuilder()
-                .data(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(netParams, key))
+                .data(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(TESTNET, key))
                         .getProgram())
                 .build();
         assertEquals("1976a91479091972186c449eb1ded22b78e40d009bdf008988ac",
                 HEX.encode(scriptCode.getProgram()));
 
-        TransactionSignature txSig = unsignedTx.calculateWitnessSignature(0, key,
+        TransactionSignature txSig = tx.calculateWitnessSignature(0, key,
                 scriptCode, Coin.COIN.multiply(10),
                 Transaction.SigHash.ALL, false);
         assertEquals("3044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb"
@@ -427,22 +431,26 @@ public class TransactionTest {
         witness.setPush(0, txSig.encodeToBitcoin());
         witness.setPush(1, key.getPubKey());
 
-        TransactionInput txIn = unsignedTx.getInput(0);
+        TransactionInput txIn = tx.getInput(0);
         txIn.setWitness(witness);
         txIn.setScriptSig(new ScriptBuilder().data(redeemScript.getProgram()).build());
 
-        assertEquals("01000000" + "0001" + // version / tag / flag
-                        "01" + // input * 1
-                        "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477" + "01000000" +
-                        "1716001479091972186c449eb1ded22b78e40d009bdf0089" + "feffffff" +
-                        "02" + // output * 2
-                        "b8b4eb0b00000000" + "1976a914a457b684d7f0d539a46a45bbc043f35b59d0d96388ac" +
-                        "0008af2f00000000" + "1976a914fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c88ac" +
-                        "02" + // witness 0 push count
-                        "473044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb01" +
-                        "2103ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873" +
-                        "92040000",
-                HEX.encode(unsignedTx.bitcoinSerialize()));
+        String signedTxHex = "01000000" // version
+                + "00" // marker
+                + "01" // flag
+                + "01" // num txIn
+                + "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477" + "01000000" // txIn
+                + "1716001479091972186c449eb1ded22b78e40d009bdf0089" + "feffffff" // txIn
+                + "02" // num txOut
+                + "b8b4eb0b00000000" + "1976a914" + "a457b684d7f0d539a46a45bbc043f35b59d0d963" + "88ac" // txOut
+                + "0008af2f00000000" + "1976a914" + "fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c" + "88ac" // txOut
+                + "02" // witness (2 pushes)
+                + "47" // push length
+                + "3044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb01" // push
+                + "21" // push length
+                + "03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873" // push
+                + "92040000"; // nLockTime
+        assertEquals(signedTxHex, HEX.encode(tx.bitcoinSerialize()));
     }
 
     @Test
