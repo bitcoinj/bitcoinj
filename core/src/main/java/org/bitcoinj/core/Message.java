@@ -68,7 +68,8 @@ public abstract class Message {
 
     protected Message(NetworkParameters params) {
         this.params = params;
-        serializer = params.getDefaultSerializer();
+        this.protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+        this.serializer = params.getDefaultSerializer();
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
