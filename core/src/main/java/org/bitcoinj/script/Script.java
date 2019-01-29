@@ -143,11 +143,14 @@ public class Script {
     }
 
     /**
-     * Returns the program opcodes as a string, for example "[1234] DUP HASH160"
+     * Returns the program opcodes as a string, for example "[1234] DUP HASH160", or "&lt;empty&gt;".
      */
     @Override
     public String toString() {
-        return Utils.SPACE_JOINER.join(chunks);
+        if (!chunks.isEmpty())
+            return Utils.SPACE_JOINER.join(chunks);
+        else
+            return "<empty>";
     }
 
     /** Returns the serialized program as a newly created byte array. */

@@ -31,7 +31,6 @@ import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -751,8 +750,7 @@ public class Transaction extends ChildMessage {
                 s.append("in   ");
 
                 try {
-                    String scriptSigStr = in.getScriptSig().toString();
-                    s.append(!Strings.isNullOrEmpty(scriptSigStr) ? scriptSigStr : "<no scriptSig>");
+                    s.append(in.getScriptSig());
                     final Coin value = in.getValue();
                     if (value != null)
                         s.append(" ").append(value.toFriendlyString());
