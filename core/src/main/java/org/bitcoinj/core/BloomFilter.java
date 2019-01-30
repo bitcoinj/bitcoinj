@@ -21,6 +21,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
@@ -131,7 +132,11 @@ public class BloomFilter extends Message {
 
     @Override
     public String toString() {
-        return "Bloom Filter of size " + data.length + " with " + hashFuncs + " hash functions.";
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
+        helper.add("data length", data.length);
+        helper.add("hashFuncs", hashFuncs);
+        helper.add("nFlags", getUpdateFlag());
+        return helper.toString();
     }
 
     @Override
