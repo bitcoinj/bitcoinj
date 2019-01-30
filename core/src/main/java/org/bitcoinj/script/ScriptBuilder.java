@@ -254,28 +254,24 @@ public class ScriptBuilder {
 
     /** Creates a scriptPubKey that encodes payment to the given address. */
     public static Script createOutputScript(Address to) {
-        ScriptBuilder builder = new ScriptBuilder();
         if (to instanceof LegacyAddress) {
             ScriptType scriptType = to.getOutputScriptType();
-            if (scriptType == ScriptType.P2PKH) {
+            if (scriptType == ScriptType.P2PKH)
                 return createP2PKHOutputScript(to.getHash());
-            } else if (scriptType == ScriptType.P2SH) {
-                // OP_HASH160 <scriptHash> OP_EQUAL
-                builder.op(OP_HASH160);
-                builder.data(to.getHash());
-                builder.op(OP_EQUAL);
-            } else {
+            else if (scriptType == ScriptType.P2SH)
+                return createP2SHOutputScript(to.getHash());
+            else
                 throw new IllegalStateException("Cannot handle " + scriptType);
-            }
         } else if (to instanceof SegwitAddress) {
+            ScriptBuilder builder = new ScriptBuilder();
             // OP_0 <pubKeyHash|scriptHash>
             SegwitAddress toSegwit = (SegwitAddress) to;
             builder.smallNum(toSegwit.getWitnessVersion());
             builder.data(toSegwit.getWitnessProgram());
+            return builder.build();
         } else {
             throw new IllegalStateException("Cannot handle " + to);
         }
-        return builder.build();
     }
 
     /** Creates a scriptPubKey that encodes payment to the given raw public key. */

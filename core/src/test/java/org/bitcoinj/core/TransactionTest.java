@@ -405,8 +405,7 @@ public class TransactionTest {
                 HEX.encode(redeemScript.getProgram()));
 
         byte[] p2wpkhHash = Utils.sha256hash160(redeemScript.getProgram());
-        Script scriptPubKey = ScriptBuilder.createOutputScript(
-                LegacyAddress.fromScriptHash(netParams, p2wpkhHash));
+        Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(p2wpkhHash);
         assertEquals("a9144733f37cf4db86fbc2efed2500b4f4e49f31202387",
                 HEX.encode(scriptPubKey.getProgram()));
 
