@@ -337,10 +337,7 @@ public class TransactionTest {
         assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
                 HEX.encode(txSig0.encodeToBitcoin()));
 
-        Script scriptCode = new ScriptBuilder()
-                .data(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(netParams, key1))
-                        .getProgram())
-                .build();
+        Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(key1).getProgram()).build();
         assertEquals("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
                 HEX.encode(scriptCode.getProgram()));
 

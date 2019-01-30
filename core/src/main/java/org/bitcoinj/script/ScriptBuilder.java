@@ -258,12 +258,7 @@ public class ScriptBuilder {
         if (to instanceof LegacyAddress) {
             ScriptType scriptType = to.getOutputScriptType();
             if (scriptType == ScriptType.P2PKH) {
-                // OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-                builder.op(OP_DUP);
-                builder.op(OP_HASH160);
-                builder.data(to.getHash());
-                builder.op(OP_EQUALVERIFY);
-                builder.op(OP_CHECKSIG);
+                return createP2PKHOutputScript(to.getHash());
             } else if (scriptType == ScriptType.P2SH) {
                 // OP_HASH160 <scriptHash> OP_EQUAL
                 builder.op(OP_HASH160);
@@ -436,6 +431,28 @@ public class ScriptBuilder {
 
         checkState(inserted);
         return builder.build();
+    }
+
+    /**
+     * Creates a scriptPubKey that sends to the given public key hash.
+     */
+    public static Script createP2PKHOutputScript(byte[] hash) {
+        checkArgument(hash.length == LegacyAddress.LENGTH);
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.op(OP_DUP);
+        builder.op(OP_HASH160);
+        builder.data(hash);
+        builder.op(OP_EQUALVERIFY);
+        builder.op(OP_CHECKSIG);
+        return builder.build();
+    }
+
+    /**
+     * Creates a scriptPubKey that sends to the given public key.
+     */
+    public static Script createP2PKHOutputScript(ECKey key) {
+        checkArgument(key.isCompressed());
+        return createP2PKHOutputScript(key.getPubKeyHash());
     }
 
     /**
