@@ -19,11 +19,7 @@ package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
 
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -33,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 
 public class ScriptPatternTest {
     private List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
-    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
     public void testCommonScripts() {
@@ -47,10 +42,10 @@ public class ScriptPatternTest {
                 ScriptBuilder.createOutputScript(keys.get(0))
         ));
         assertTrue(ScriptPattern.isPayToWitnessPubKeyHash(
-                ScriptBuilder.createOutputScript(SegwitAddress.fromHash(MAINNET, keys.get(0).getPubKeyHash()))
+                ScriptBuilder.createP2WPKHOutputScript(keys.get(0))
         ));
         assertTrue(ScriptPattern.isPayToWitnessScriptHash(
-                ScriptBuilder.createOutputScript(SegwitAddress.fromHash(MAINNET, Sha256Hash.hash(new byte[0])))
+                ScriptBuilder.createP2WSHOutputScript(new ScriptBuilder().build())
         ));
         assertTrue(ScriptPattern.isSentToMultisig(
                 ScriptBuilder.createMultiSigOutputScript(2, keys)

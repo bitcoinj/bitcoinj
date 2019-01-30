@@ -23,6 +23,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -483,6 +484,22 @@ public class ScriptBuilder {
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that sends to the given script hash.
+     */
+    public static Script createP2WSHOutputScript(byte[] hash) {
+        checkArgument(hash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH);
+        return new ScriptBuilder().smallNum(0).data(hash).build();
+    }
+
+    /**
+     * Creates a segwit scriptPubKey for the given redeem script.
+     */
+    public static Script createP2WSHOutputScript(Script redeemScript) {
+        byte[] hash = Sha256Hash.hash(redeemScript.getProgram());
+        return ScriptBuilder.createP2WSHOutputScript(hash);
     }
 
     /**
