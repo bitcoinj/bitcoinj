@@ -247,6 +247,11 @@ public class BloomFilter extends Message {
         insert(key.getPubKeyHash());
     }
 
+    /** Inserts the given transaction outpoint. */
+    public synchronized void insert(TransactionOutPoint outpoint) {
+        insert(outpoint.unsafeBitcoinSerialize());
+    }
+
     /**
      * Sets this filter to match all objects. A Bloom filter which matches everything may seem pointless, however,
      * it is useful in order to reduce steady state bandwidth usage when you want full blocks. Instead of receiving
@@ -339,7 +344,7 @@ public class BloomFilter extends Message {
                 if (contains(chunk.data)) {
                     boolean isSendingToPubKeys = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isSentToMultisig(script);
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
-                        insert(output.getOutPointFor().unsafeBitcoinSerialize());
+                        insert(output.getOutPointFor());
                     found = true;
                 }
             }

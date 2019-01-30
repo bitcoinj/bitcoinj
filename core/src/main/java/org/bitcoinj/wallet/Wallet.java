@@ -4649,7 +4649,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
             for (TransactionOutPoint point : bloomOutPoints)
-                filter.insert(point.unsafeBitcoinSerialize());
+                filter.insert(point);
             return filter;
         } finally {
             endBloomFilterCalculation();
