@@ -405,9 +405,36 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     public String toString() {
-        PeerAddress addr = getAddress();
-        // if null, it's a user-provided NetworkConnection object
-        return addr == null ? "Peer()" : addr.toString();
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
+        helper.addValue(getAddress());
+        helper.add("version", vPeerVersionMessage.clientVersion);
+        helper.add("subVer", vPeerVersionMessage.subVer);
+        String servicesStr = Strings.emptyToNull(toStringServices(vPeerVersionMessage.localServices));
+        helper.add("services",
+                vPeerVersionMessage.localServices + (servicesStr != null ? " (" + servicesStr + ")" : ""));
+        long peerTime = vPeerVersionMessage.time * 1000;
+        helper.add("time", String.format(Locale.US, "%tF %tT", peerTime, peerTime));
+        helper.add("height", vPeerVersionMessage.bestHeight);
+        return helper.toString();
+    }
+
+    public String toStringServices(long services) {
+        List<String> a = new LinkedList<String>();
+        if ((services & VersionMessage.NODE_NETWORK) == VersionMessage.NODE_NETWORK) {
+            a.add("NETWORK");
+            services &= ~VersionMessage.NODE_NETWORK;
+        }
+        if ((services & VersionMessage.NODE_GETUTXOS) == VersionMessage.NODE_GETUTXOS) {
+            a.add("GETUTXOS");
+            services &= ~VersionMessage.NODE_GETUTXOS;
+        }
+        if ((services & VersionMessage.NODE_WITNESS) == VersionMessage.NODE_WITNESS) {
+            a.add("WITNESS");
+            services &= ~VersionMessage.NODE_WITNESS;
+        }
+        if (services != 0)
+            a.add("remaining: " + Long.toBinaryString(services));
+        return Joiner.on(", ").join(a);
     }
 
     @Override
@@ -549,14 +576,7 @@ public class Peer extends PeerSocketHandler {
             throw new ProtocolException("Got two version messages from peer");
         vPeerVersionMessage = m;
         // Switch to the new protocol version.
-        long peerTime = vPeerVersionMessage.time * 1000;
-        log.info("{}: Got version={}, subVer='{}', services=0x{}, time={}, blocks={}",
-                this,
-                vPeerVersionMessage.clientVersion,
-                vPeerVersionMessage.subVer,
-                vPeerVersionMessage.localServices,
-                String.format(Locale.US, "%tF %tT", peerTime, peerTime),
-                vPeerVersionMessage.bestHeight);
+        log.info(toString());
         // bitcoinj is a client mode implementation. That means there's not much point in us talking to other client
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
