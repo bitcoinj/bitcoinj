@@ -109,18 +109,10 @@ public class Peer extends PeerSocketHandler {
     private volatile BloomFilter vBloomFilter;
     // The last filtered block we received, we're waiting to fill it out with transactions.
     private FilteredBlock currentFilteredBlock = null;
-    // How many filtered blocks have been received during the lifetime of this connection. Used to decide when to
-    // refresh the server-side side filter by sending a new one (it degrades over time as false positives are added
-    // on the remote side, see BIP 37 for a discussion of this).
-    // TODO: Is this still needed? It should not be since the auto FP tracking logic was added.
-    private int filteredBlocksReceived;
     // If non-null, we should discard incoming filtered blocks because we ran out of keys and are awaiting a new filter
     // to be calculated by the PeerGroup. The discarded block hashes should be added here so we can re-request them
     // once we've recalculated and resent a new filter.
     @GuardedBy("lock") @Nullable private List<Sha256Hash> awaitingFreshFilter;
-    // How frequently to refresh the filter. This should become dynamic in future and calculated depending on the
-    // actual false positive rate. For now a good value was determined empirically around January 2013.
-    private static final int RESEND_BLOOM_FILTER_BLOCK_COUNT = 25000;
     // Keeps track of things we requested internally with getdata but didn't receive yet, so we can avoid re-requests.
     // It's not quite the same as getDataFutures, as this is used only for getdatas done as part of downloading
     // the chain and so is lighter weight (we just keep a bunch of hashes not futures).
@@ -647,13 +639,6 @@ public class Peer extends PeerSocketHandler {
         // FilteredBlock) or when a tx that isn't needed by that block is found. A ping message is sent after
         // a getblocks, to force the non-tx message path.
         currentFilteredBlock = m;
-        // Potentially refresh the server side filter. Because the remote node adds hits back into the filter
-        // to save round-tripping back through us, the filter degrades over time as false positives get added,
-        // triggering yet more false positives. We refresh it every so often to get the FP rate back down.
-        filteredBlocksReceived++;
-        if (filteredBlocksReceived % RESEND_BLOOM_FILTER_BLOCK_COUNT == RESEND_BLOOM_FILTER_BLOCK_COUNT - 1) {
-            sendMessage(vBloomFilter);
-        }
     }
 
     protected void processNotFoundMessage(NotFoundMessage m) {
