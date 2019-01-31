@@ -1082,6 +1082,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 try {
                     log.info("Stopping ...");
                     Stopwatch watch = Stopwatch.createStarted();
+                    // The log output this creates can be useful.
+                    setDownloadPeer(null);
                     // Blocking close of all sockets.
                     channels.stopAsync();
                     channels.awaitTerminated();
