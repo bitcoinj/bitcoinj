@@ -2212,6 +2212,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 candidates2.add(peer);
             }
         }
+        if (candidates2.isEmpty())
+            return null;
         int index = (int) (Math.random() * candidates2.size());
         return candidates2.get(index);
     }
