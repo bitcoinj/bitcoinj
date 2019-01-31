@@ -432,6 +432,10 @@ public class Peer extends PeerSocketHandler {
             a.add("WITNESS");
             services &= ~VersionMessage.NODE_WITNESS;
         }
+        if ((services & VersionMessage.NODE_NETWORK_LIMITED) == VersionMessage.NODE_NETWORK_LIMITED) {
+            a.add("NETWORK_LIMITED");
+            services &= ~VersionMessage.NODE_NETWORK_LIMITED;
+        }
         if (services != 0)
             a.add("remaining: " + Long.toBinaryString(services));
         return Joiner.on(", ").join(a);
@@ -581,10 +585,10 @@ public class Peer extends PeerSocketHandler {
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
-        if (!vPeerVersionMessage.hasBlockChain() ||
+        if (!vPeerVersionMessage.hasLimitedBlockChain() ||
                 (!params.allowEmptyPeerChain() && vPeerVersionMessage.bestHeight == 0)) {
             // Shut down the channel gracefully.
-            log.info("{}: Peer does not have a copy of the block chain.", this);
+            log.info("{}: Peer does not have at least a recent part of the block chain.", this);
             close();
             return;
         }

@@ -2188,7 +2188,11 @@ public class PeerGroup implements TransactionBroadcaster {
         int mostCommonChainHeight = getMostCommonChainHeight(peers);
         List<Peer> candidates = new ArrayList<>();
         for (Peer peer : peers) {
-            if (peer.getBestHeight() == mostCommonChainHeight) candidates.add(peer);
+            if (!peer.getPeerVersionMessage().hasBlockChain())
+                continue;
+            if (peer.getBestHeight() < mostCommonChainHeight)
+                continue;
+            candidates.add(peer);
         }
         // Of the candidates, find the peers that meet the minimum protocol version we want to target. We could select
         // the highest version we've seen on the assumption that newer versions are always better but we don't want to
