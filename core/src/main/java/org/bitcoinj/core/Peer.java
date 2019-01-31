@@ -420,6 +420,10 @@ public class Peer extends PeerSocketHandler {
             a.add("GETUTXOS");
             services &= ~VersionMessage.NODE_GETUTXOS;
         }
+        if ((services & VersionMessage.NODE_BLOOM) == VersionMessage.NODE_BLOOM) {
+            a.add("BLOOM");
+            services &= ~VersionMessage.NODE_BLOOM;
+        }
         if ((services & VersionMessage.NODE_WITNESS) == VersionMessage.NODE_WITNESS) {
             a.add("WITNESS");
             services &= ~VersionMessage.NODE_WITNESS;

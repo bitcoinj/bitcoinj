@@ -49,6 +49,8 @@ public class VersionMessage extends Message {
     public static final int NODE_NETWORK = 1 << 0;
     /** A service bit that denotes whether the peer supports the getutxos message or not. */
     public static final int NODE_GETUTXOS = 1 << 1;
+    /** A service bit that denotes whether the peer supports BIP37 bloom filters or not. The service bit is defined in BIP111. */
+    public static final int NODE_BLOOM = 1 << 2;
     /** Indicates that a node can be asked for blocks and transactions including witness data. */
     public static final int NODE_WITNESS = 1 << 3;
     /** A service bit that denotes whether the peer has at least the last two days worth of blockchain (BIP159). */
@@ -273,12 +275,15 @@ public class VersionMessage extends Message {
     }
 
     /**
-     * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#BLOOM_FILTER} or higher.
-     * If it is then Bloom filtering
-     * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
+     * Returns true if the peer supports bloom filtering according to BIP37 and BIP111.
      */
     public boolean isBloomFilteringSupported() {
-        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
+        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
+                && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
+            return true;
+        if ((localServices & NODE_BLOOM) == NODE_BLOOM)
+            return true;
+        return false;
     }
 
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
