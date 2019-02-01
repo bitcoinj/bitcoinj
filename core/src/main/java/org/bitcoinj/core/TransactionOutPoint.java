@@ -143,7 +143,7 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
-            return keyBag.findKeyFromPubHash(addressBytes);
+            return keyBag.findKeyFromPubKeyHash(addressBytes);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
@@ -166,7 +166,7 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
+            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes), connectedScript);
         } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);

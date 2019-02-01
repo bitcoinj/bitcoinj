@@ -388,7 +388,7 @@ public class KeyChainGroup implements KeyBag {
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
         ECKey result;
         if ((result = basic.findKeyFromPubHash(pubKeyHash)) != null)
             return result;

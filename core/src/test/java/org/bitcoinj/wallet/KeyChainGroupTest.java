@@ -160,16 +160,16 @@ public class KeyChainGroupTest {
         assertEquals(a, result);
         result = group.findKeyFromPubKey(b.getPubKey());
         assertEquals(b, result);
-        result = group.findKeyFromPubHash(a.getPubKeyHash());
+        result = group.findKeyFromPubKeyHash(a.getPubKeyHash());
         assertEquals(a, result);
-        result = group.findKeyFromPubHash(b.getPubKeyHash());
+        result = group.findKeyFromPubKeyHash(b.getPubKeyHash());
         assertEquals(b, result);
         result = group.findKeyFromPubKey(c.getPubKey());
         assertEquals(c, result);
-        result = group.findKeyFromPubHash(c.getPubKeyHash());
+        result = group.findKeyFromPubKeyHash(c.getPubKeyHash());
         assertEquals(c, result);
         assertNull(group.findKeyFromPubKey(d.getPubKey()));
-        assertNull(group.findKeyFromPubHash(d.getPubKeyHash()));
+        assertNull(group.findKeyFromPubKeyHash(d.getPubKeyHash()));
     }
 
     @Test

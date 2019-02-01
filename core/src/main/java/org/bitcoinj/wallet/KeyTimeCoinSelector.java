@@ -65,7 +65,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 if (ScriptPattern.isPayToPubKey(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromPayToPubKey(scriptPubKey));
                 } else if (ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey));
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey));
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;

@@ -32,7 +32,7 @@ public interface KeyBag {
      * @return ECKey object or null if no such key was found.
      */
     @Nullable
-    ECKey findKeyFromPubHash(byte[] pubKeyHash);
+    ECKey findKeyFromPubKeyHash(byte[] pubKeyHash);
 
     /**
      * Locates a keypair from the keychain given the raw public key bytes.

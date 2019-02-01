@@ -997,10 +997,10 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.findKeyFromPubHash(pubKeyHash);
+            return keyChainGroup.findKeyFromPubKeyHash(pubKeyHash);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1029,7 +1029,7 @@ public class Wallet extends BaseTaggableObject
 
     @Override
     public boolean isPubKeyHashMine(byte[] pubKeyHash) {
-        return findKeyFromPubHash(pubKeyHash) != null;
+        return findKeyFromPubKeyHash(pubKeyHash) != null;
     }
 
     @Override
@@ -1049,7 +1049,7 @@ public class Wallet extends BaseTaggableObject
     public ECKey findKeyFromAddress(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
         if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
-            return findKeyFromPubHash(address.getHash());
+            return findKeyFromPubKeyHash(address.getHash());
         else
             return null;
     }
@@ -4163,7 +4163,7 @@ public class Wallet extends BaseTaggableObject
             RedeemData data = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script));
             return data != null && canSignFor(data.redeemScript);
         } else if (ScriptPattern.isPayToPubKeyHash(script)) {
-            ECKey key = findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
+            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
             return key != null && (key.isEncrypted() || key.hasPrivKey());
         } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
@@ -4941,7 +4941,7 @@ public class Wallet extends BaseTaggableObject
                 ECKey key = null;
                 Script redeemScript = null;
                 if (ScriptPattern.isPayToPubKeyHash(script)) {
-                    key = findKeyFromPubHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(script));
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                 } else if (ScriptPattern.isPayToScriptHash(script)) {
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromPayToScriptHash(script)).redeemScript;

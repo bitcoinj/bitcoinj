@@ -2940,7 +2940,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
         final Address toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
-        final ECKey rotatingToKey = wallet.findKeyFromPubHash(toAddress.getHash());
+        final ECKey rotatingToKey = wallet.findKeyFromPubKeyHash(toAddress.getHash());
         assertNotNull(rotatingToKey);
         assertFalse(wallet.isKeyRotating(rotatingToKey));
         assertEquals(3, tx.getInputs().size());
@@ -2956,7 +2956,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(UNITTEST, key1));
         wallet.doMaintenance(null, true);
         tx = broadcaster.waitForTransactionAndSucceed();
-        assertNotNull(wallet.findKeyFromPubHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash()));
+        assertNotNull(wallet.findKeyFromPubKeyHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash()));
         log.info("Unexpected thing: {}", tx);
         assertEquals(Coin.valueOf(19300), tx.getFee());
         assertEquals(1, tx.getInputs().size());
@@ -3047,7 +3047,7 @@ public class WalletTest extends TestWithWallet {
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
         Address output = txns.get(0).getOutput(0).getScriptPubKey().getToAddress(UNITTEST);
-        ECKey usedKey = wallet.findKeyFromPubHash(output.getHash());
+        ECKey usedKey = wallet.findKeyFromPubKeyHash(output.getHash());
         assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
         assertEquals(goodKey.getCreationTimeSeconds(), wallet.freshReceiveKey().getCreationTimeSeconds());
         assertEquals("mrM3TpCnav5YQuVA1xLercCGJH4DXujMtv", LegacyAddress.fromKey(UNITTEST, usedKey).toString());
