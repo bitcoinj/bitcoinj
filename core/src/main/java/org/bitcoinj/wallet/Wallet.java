@@ -58,6 +58,7 @@ import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.signers.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
@@ -1013,6 +1014,17 @@ public class Wallet extends BaseTaggableObject
         } finally {
             keyChainGroupLock.unlock();
         }
+    }
+
+    /**
+     * Returns true if the address is belongs to this wallet.
+     */
+    public boolean isAddressMine(Address address) {
+        final ScriptType scriptType = address.getOutputScriptType();
+        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
+            return isPubKeyHashMine(address.getHash());
+        else
+            throw new IllegalArgumentException(address.toString());
     }
 
     @Override
