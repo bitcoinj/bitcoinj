@@ -301,14 +301,14 @@ public class TransactionOutput extends ChildMessage {
     public boolean isMine(TransactionBag transactionBag) {
         try {
             Script script = getScriptPubKey();
-            if (ScriptPattern.isPayToPubKey(script)) {
+            if (ScriptPattern.isPayToPubKey(script))
                 return transactionBag.isPubKeyMine(ScriptPattern.extractKeyFromPayToPubKey(script));
-            } if (ScriptPattern.isPayToScriptHash(script)) {
+            else if (ScriptPattern.isPayToScriptHash(script))
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromPayToScriptHash(script));
-            } else {
-                byte[] pubkeyHash = script.getPubKeyHash();
-                return transactionBag.isPubKeyHashMine(pubkeyHash);
-            }
+            else if (ScriptPattern.isPayToPubKeyHash(script))
+                return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromPayToPubKeyHash(script));
+            else
+                return false;
         } catch (ScriptException e) {
             // Just means we didn't understand the output of this transaction: ignore it.
             log.debug("Could not parse tx {} output script: {}", parent != null ? parent.getHash() : "(no parent)", e.toString());
