@@ -64,12 +64,12 @@ public class GenerateLowSTests {
         final ECKey key = new ECKey(secureRandom);
         final KeyBag bag = new KeyBag() {
             @Override
-            public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+            public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
                 return key;
             }
 
             @Override
-            public ECKey findKeyFromPubKey(byte[] pubkey) {
+            public ECKey findKeyFromPubKey(byte[] pubKey) {
                 return key;
             }
 

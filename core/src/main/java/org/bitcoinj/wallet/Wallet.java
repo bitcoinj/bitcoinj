@@ -997,10 +997,10 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.findKeyFromPubHash(pubkeyHash);
+            return keyChainGroup.findKeyFromPubHash(pubKeyHash);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1028,8 +1028,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     @Override
-    public boolean isPubKeyHashMine(byte[] pubkeyHash) {
-        return findKeyFromPubHash(pubkeyHash) != null;
+    public boolean isPubKeyHashMine(byte[] pubKeyHash) {
+        return findKeyFromPubHash(pubKeyHash) != null;
     }
 
     @Override
@@ -1060,18 +1060,18 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
+    public ECKey findKeyFromPubKey(byte[] pubKey) {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.findKeyFromPubKey(pubkey);
+            return keyChainGroup.findKeyFromPubKey(pubKey);
         } finally {
             keyChainGroupLock.unlock();
         }
     }
 
     @Override
-    public boolean isPubKeyMine(byte[] pubkey) {
-        return findKeyFromPubKey(pubkey) != null;
+    public boolean isPubKeyMine(byte[] pubKey) {
+        return findKeyFromPubKey(pubKey) != null;
     }
 
     /**

@@ -388,25 +388,25 @@ public class KeyChainGroup implements KeyBag {
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
+    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
         ECKey result;
-        if ((result = basic.findKeyFromPubHash(pubkeyHash)) != null)
+        if ((result = basic.findKeyFromPubHash(pubKeyHash)) != null)
             return result;
         for (DeterministicKeyChain chain : chains) {
-            if ((result = chain.findKeyFromPubHash(pubkeyHash)) != null)
+            if ((result = chain.findKeyFromPubHash(pubKeyHash)) != null)
                 return result;
         }
         return null;
     }
 
     /**
-     * Mark the DeterministicKeys as used, if they match the pubkeyHash
+     * Mark the DeterministicKeys as used, if they match the pubKeyHash
      * See {@link DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
-    public void markPubKeyHashAsUsed(byte[] pubkeyHash) {
+    public void markPubKeyHashAsUsed(byte[] pubKeyHash) {
         for (DeterministicKeyChain chain : chains) {
             DeterministicKey key;
-            if ((key = chain.markPubHashAsUsed(pubkeyHash)) != null) {
+            if ((key = chain.markPubHashAsUsed(pubKeyHash)) != null) {
                 maybeMarkCurrentKeyAsUsed(key);
                 return;
             }
@@ -449,12 +449,12 @@ public class KeyChainGroup implements KeyBag {
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
+    public ECKey findKeyFromPubKey(byte[] pubKey) {
         ECKey result;
-        if ((result = basic.findKeyFromPubKey(pubkey)) != null)
+        if ((result = basic.findKeyFromPubKey(pubKey)) != null)
             return result;
         for (DeterministicKeyChain chain : chains) {
-            if ((result = chain.findKeyFromPubKey(pubkey)) != null)
+            if ((result = chain.findKeyFromPubKey(pubKey)) != null)
                 return result;
         }
         return null;

@@ -63,14 +63,14 @@ public class DecryptingKeyBag implements KeyBag {
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubHash(byte[] pubkeyHash) {
-        return maybeDecrypt(target.findKeyFromPubHash(pubkeyHash));
+    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
+        return maybeDecrypt(target.findKeyFromPubHash(pubKeyHash));
     }
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubKey(byte[] pubkey) {
-        return maybeDecrypt(target.findKeyFromPubKey(pubkey));
+    public ECKey findKeyFromPubKey(byte[] pubKey) {
+        return maybeDecrypt(target.findKeyFromPubKey(pubKey));
     }
 
     @Nullable

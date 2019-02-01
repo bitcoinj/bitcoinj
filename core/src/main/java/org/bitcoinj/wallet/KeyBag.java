@@ -32,7 +32,7 @@ public interface KeyBag {
      * @return ECKey object or null if no such key was found.
      */
     @Nullable
-    ECKey findKeyFromPubHash(byte[] pubkeyHash);
+    ECKey findKeyFromPubHash(byte[] pubKeyHash);
 
     /**
      * Locates a keypair from the keychain given the raw public key bytes.
@@ -40,7 +40,7 @@ public interface KeyBag {
      * @return ECKey or null if no such key was found.
      */
     @Nullable
-    ECKey findKeyFromPubKey(byte[] pubkey);
+    ECKey findKeyFromPubKey(byte[] pubKey);
 
     /**
      * Locates a redeem data (redeem script and keys) from the keychain given the hash of the script.
