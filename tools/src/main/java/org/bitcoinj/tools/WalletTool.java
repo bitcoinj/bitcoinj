@@ -1493,7 +1493,7 @@ public class WalletTool {
         } else {
             try {
                 Address address = LegacyAddress.fromBase58(wallet.getParams(), addr);
-                key = wallet.findKeyFromPubHash(address.getHash());
+                key = wallet.findKeyFromAddress(address);
             } catch (AddressFormatException e) {
                 System.err.println(addr + " does not parse as a Bitcoin address of the right network parameters.");
                 return;

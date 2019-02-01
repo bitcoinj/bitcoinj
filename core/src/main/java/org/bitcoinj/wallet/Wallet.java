@@ -1043,6 +1043,18 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Locates a keypair from the wallet given the corresponding address.
+     * @return ECKey or null if no such key was found.
+     */
+    public ECKey findKeyFromAddress(Address address) {
+        final ScriptType scriptType = address.getOutputScriptType();
+        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
+            return findKeyFromPubHash(address.getHash());
+        else
+            return null;
+    }
+
+    /**
      * Locates a keypair from the basicKeyChain given the raw public key bytes.
      * @return ECKey or null if no such key was found.
      */
