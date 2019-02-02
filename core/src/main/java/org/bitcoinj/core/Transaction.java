@@ -1186,33 +1186,33 @@ public class Transaction extends ChildMessage {
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
-            byte[] redeemScript,
+            byte[] scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript, value, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignatureWitness(inputIndex, scriptCode, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
-            Script redeemScript,
+            Script scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, redeemScript.getProgram(), value, hashType, anyoneCanPay);
+        return calculateWitnessSignature(inputIndex, key, scriptCode.getProgram(), value, hashType, anyoneCanPay);
     }
 
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
             @Nullable KeyParameter aesKey,
-            byte[] redeemScript,
+            byte[] scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignatureWitness(inputIndex, redeemScript, value, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignatureWitness(inputIndex, scriptCode, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
@@ -1220,11 +1220,11 @@ public class Transaction extends ChildMessage {
             int inputIndex,
             ECKey key,
             @Nullable KeyParameter aesKey,
-            Script redeemScript,
+            Script scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, aesKey, redeemScript.getProgram(), value, hashType, anyoneCanPay);
+        return calculateWitnessSignature(inputIndex, key, aesKey, scriptCode.getProgram(), value, hashType, anyoneCanPay);
     }
 
     public synchronized Sha256Hash hashForSignatureWitness(
@@ -1263,7 +1263,7 @@ public class Transaction extends ChildMessage {
 
     public synchronized Sha256Hash hashForSignatureWitness(
             int inputIndex,
-            byte[] connectedScript,
+            byte[] scriptCode,
             Coin prevValue,
             byte sigHashType){
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
@@ -1318,7 +1318,7 @@ public class Transaction extends ChildMessage {
             bos.write(hashSequence);
             bos.write(inputs.get(inputIndex).getOutpoint().getHash().getReversedBytes());
             uint32ToByteStreamLE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
-            bos.write(connectedScript);
+            bos.write(scriptCode);
             uint64ToByteStreamLE(BigInteger.valueOf(prevValue.getValue()), bos);
             uint32ToByteStreamLE(inputs.get(inputIndex).getSequenceNumber(), bos);
             bos.write(hashOutputs);
