@@ -210,8 +210,8 @@ public class DefaultRiskAnalysisTest {
         // A pay to address output
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKHOutputScript(key1));
         // A pay to pubkey output
-        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));
-        tx.addOutput(Coin.CENT, ScriptBuilder.createOutputScript(key1));
+        tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
+        tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         // 1-of-2 multisig output.
         ImmutableList<ECKey> keys = ImmutableList.of(key1, new ECKey());
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(1, keys));

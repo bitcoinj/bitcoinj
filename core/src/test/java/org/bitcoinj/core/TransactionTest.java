@@ -326,14 +326,14 @@ public class TransactionTest {
         ECKey key0 = ECKey.fromPrivate(
                 HEX.decode("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
         assertEquals("2103c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432ac",
-                HEX.encode(ScriptBuilder.createOutputScript(key0).getProgram()));
+                HEX.encode(ScriptBuilder.createP2PKOutputScript(key0).getProgram()));
         ECKey key1 = ECKey.fromPrivate(
                 HEX.decode("619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"));
         assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357",
                 key1.getPublicKeyAsHex());
 
         TransactionSignature txSig0 = tx.calculateSignature(0, key0,
-                ScriptBuilder.createOutputScript(key0).getProgram(),
+                ScriptBuilder.createP2PKOutputScript(key0).getProgram(),
                 Transaction.SigHash.ALL, false);
         assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
                 HEX.encode(txSig0.encodeToBitcoin()));

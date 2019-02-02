@@ -907,7 +907,7 @@ public class FullBlockTestGenerator {
 
         // A valid block created exactly like b44 to make sure the creation itself works
         Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS);
-        byte[] outScriptBytes = ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
+        byte[] outScriptBytes = ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
             b44.setDifficultyTarget(b43.block.getDifficultyTarget());
             b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);

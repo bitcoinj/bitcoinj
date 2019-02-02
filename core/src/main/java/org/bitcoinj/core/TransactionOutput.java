@@ -96,7 +96,7 @@ public class TransactionOutput extends ChildMessage {
      * {@link Transaction#addOutput(Coin, ECKey)} instead of creating an output directly.
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, ECKey to) {
-        this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
+        this(params, parent, value, ScriptBuilder.createP2PKOutputScript(to).getProgram());
     }
 
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, byte[] scriptBytes) {

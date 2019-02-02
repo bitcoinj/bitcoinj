@@ -32,7 +32,7 @@ public class UTXOTest {
     @Test
     public void testJavaSerialization() throws Exception {
         ECKey key = new ECKey();
-        UTXO utxo = new UTXO(Sha256Hash.of(new byte[]{1,2,3}), 1, Coin.COIN, 10, true, ScriptBuilder.createOutputScript(key));
+        UTXO utxo = new UTXO(Sha256Hash.of(new byte[]{1,2,3}), 1, Coin.COIN, 10, true, ScriptBuilder.createP2PKOutputScript(key));
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(utxo);
         UTXO utxoCopy = (UTXO) new ObjectInputStream(

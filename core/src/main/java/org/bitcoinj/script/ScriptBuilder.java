@@ -275,11 +275,6 @@ public class ScriptBuilder {
         }
     }
 
-    /** Creates a scriptPubKey that encodes payment to the given raw public key. */
-    public static Script createOutputScript(ECKey key) {
-        return new ScriptBuilder().data(key.getPubKey()).op(OP_CHECKSIG).build();
-    }
-
     /**
      * Creates a scriptSig that can redeem a P2PKH output.
      * If given signature is null, incomplete scriptSig will be created with OP_0 instead of signature
@@ -428,6 +423,16 @@ public class ScriptBuilder {
 
         checkState(inserted);
         return builder.build();
+    }
+
+    /** Creates a scriptPubKey that encodes payment to the given raw public key. */
+    public static Script createP2PKOutputScript(byte[] pubKey) {
+        return new ScriptBuilder().data(pubKey).op(OP_CHECKSIG).build();
+    }
+
+    /** Creates a scriptPubKey that encodes payment to the given raw public key. */
+    public static Script createP2PKOutputScript(ECKey pubKey) {
+        return createP2PKOutputScript(pubKey.getPubKey());
     }
 
     /**

@@ -882,7 +882,7 @@ public class Block extends Message {
         coinbase.addInput(new TransactionInput(params, coinbase,
                 inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
-                ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+                ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
         coinbase.setParent(this);
         coinbase.length = coinbase.unsafeBitcoinSerialize().length;
