@@ -609,4 +609,11 @@ public class Utils {
     public static boolean isMac() {
         return os == OS.MAC_OS;
     }
+
+    public static String toString(List<byte[]> stack) {
+        List<String> parts = new ArrayList<String>(stack.size());
+        for (byte[] push : stack)
+            parts.add('[' + HEX.encode(push) + ']');
+        return SPACE_JOINER.join(parts);
+    }
 }

@@ -1567,9 +1567,11 @@ public class Script {
         
         if (stack.size() == 0)
             throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Stack empty at end of script execution.");
-        
+
+        List<byte[]> stackCopy = new LinkedList<byte[]>(stack);
         if (!castToBool(stack.pollLast()))
-            throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Script resulted in a non-true stack: " + stack);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE,
+                    "Script resulted in a non-true stack: " + Utils.toString(stackCopy));
 
         // P2SH is pay to script hash. It means that the scriptPubKey has a special form which is a valid
         // program but it has "useless" form that if evaluated as a normal program always returns true.
@@ -1597,8 +1599,10 @@ public class Script {
             if (p2shStack.size() == 0)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.");
             
+            List<byte[]> p2shStackCopy = new LinkedList<byte[]>(p2shStack);
             if (!castToBool(p2shStack.pollLast()))
-                throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH script execution resulted in a non-true stack");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE,
+                        "P2SH script execution resulted in a non-true stack: " + Utils.toString(p2shStackCopy));
         }
     }
 
