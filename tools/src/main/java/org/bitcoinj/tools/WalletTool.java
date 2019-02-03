@@ -1435,7 +1435,7 @@ public class WalletTool {
         } else {
             throw new IllegalStateException();
         }
-        if (wallet.findKeyFromPubKey(key.getPubKey()) != null) {
+        if (wallet.hasKey(key)) {
             System.err.println("That key already exists in this wallet.");
             return;
         }
