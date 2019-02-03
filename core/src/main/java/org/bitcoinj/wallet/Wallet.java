@@ -5013,15 +5013,50 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * When a key rotation time is set, and money controlled by keys created before the given timestamp T will be
-     * automatically respent to any key that was created after T. This can be used to recover from a situation where
-     * a set of keys is believed to be compromised. Once the time is set transactions will be created and broadcast
-     * immediately. New coins that come in after calling this method will be automatically respent immediately. The
-     * rotation time is persisted to the wallet. You can stop key rotation by calling this method again with zero
-     * as the argument.
+     * <p>
+     * When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
+     * respent to any key that was created after T. This can be used to recover from a situation where a set of keys is
+     * believed to be compromised. The rotation time is persisted to the wallet. You can stop key rotation by calling
+     * this method again with {@code null} as the argument.
+     * </p>
+     *
+     * <p>
+     * Once set up, calling {@link #doMaintenance(KeyParameter, boolean)} will create and possibly send rotation
+     * transactions: but it won't be done automatically (because you might have to ask for the users password). This may
+     * need to be repeated regularly in case new coins keep coming in on rotating addresses/keys.
+     * </p>
+     *
+     * <p>
+     * The given time cannot be in the future.
+     * </p>
      */
-    public void setKeyRotationTime(Date time) {
-        setKeyRotationTime(time.getTime() / 1000);
+    public void setKeyRotationTime(@Nullable Date time) {
+        setKeyRotationTime(time != null ? time.getTime() / 1000 : 0);
+    }
+
+    /**
+     * <p>
+     * When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
+     * respent to any key that was created after T. This can be used to recover from a situation where a set of keys is
+     * believed to be compromised. The rotation time is persisted to the wallet. You can stop key rotation by calling
+     * this method again with {@code 0} as the argument.
+     * </p>
+     * 
+     * <p>
+     * Once set up, calling {@link #doMaintenance(KeyParameter, boolean)} will create and possibly send rotation
+     * transactions: but it won't be done automatically (because you might have to ask for the users password). This may
+     * need to be repeated regularly in case new coins keep coming in on rotating addresses/keys.
+     * </p>
+     *
+     * <p>
+     * The given time cannot be in the future.
+     * </p>
+     */
+    public void setKeyRotationTime(long unixTimeSeconds) {
+        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
+                Utils.dateTimeFormat(unixTimeSeconds * 1000));
+        vKeyRotationTimestamp = unixTimeSeconds;
+        saveNow();
     }
 
     /**
@@ -5034,23 +5069,6 @@ public class Wallet extends BaseTaggableObject
             return new Date(keyRotationTimestamp * 1000);
         else
             return null;
-    }
-
-    /**
-     * <p>When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
-     * automatically respent to any key that was created after T. This can be used to recover from a situation where
-     * a set of keys is believed to be compromised. You can stop key rotation by calling this method again with zero
-     * as the argument. Once set up, calling {@link #doMaintenance(KeyParameter, boolean)}
-     * will create and possibly send rotation transactions: but it won't be done automatically (because you might have
-     * to ask for the users password).</p>
-     *
-     * <p>The given time cannot be in the future.</p>
-     */
-    public void setKeyRotationTime(long unixTimeSeconds) {
-        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
-                Utils.dateTimeFormat(unixTimeSeconds * 1000));
-        vKeyRotationTimestamp = unixTimeSeconds;
-        saveNow();
     }
 
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
