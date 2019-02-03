@@ -1406,19 +1406,13 @@ public class WalletTool {
         long creationTimeSeconds = getCreationTimeSeconds();
         if (options.has("privkey")) {
             String data = (String) options.valueOf("privkey");
-            if (data.startsWith("5J") || data.startsWith("5H") || data.startsWith("5K")) {
-                DumpedPrivateKey dpk;
-                try {
-                    dpk = DumpedPrivateKey.fromBase58(params, data);
-                } catch (AddressFormatException e) {
-                    System.err.println("Could not parse dumped private key " + data);
-                    return;
-                }
+            try {
+                DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params, data); // WIF
                 key = dpk.getKey();
-            } else {
+            } catch (AddressFormatException e) {
                 byte[] decode = parseAsHexOrBase58(data);
                 if (decode == null) {
-                    System.err.println("Could not understand --privkey as either hex or base58: " + data);
+                    System.err.println("Could not understand --privkey as either WIF, hex or base58: " + data);
                     return;
                 }
                 key = ECKey.fromPrivate(new BigInteger(1, decode));
