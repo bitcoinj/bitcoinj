@@ -1295,7 +1295,8 @@ public class ECKey implements EncryptableItem {
         builder.append("  hash160:");
         builder.append(Utils.HEX.encode(getPubKeyHash()));
         if (creationTimeSeconds > 0)
-            builder.append("  creationTimeSeconds:").append(creationTimeSeconds);
+            builder.append("  creationTimeSeconds:").append(creationTimeSeconds).append(" [")
+                    .append(Utils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
