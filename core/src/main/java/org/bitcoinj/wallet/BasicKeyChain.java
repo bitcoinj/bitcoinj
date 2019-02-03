@@ -18,6 +18,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
@@ -617,5 +618,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
+        final StringBuilder builder = new StringBuilder();
+        List<ECKey> keys = getKeys();
+        Collections.sort(keys, ECKey.AGE_COMPARATOR);
+        for (ECKey key : keys)
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params);
+        return builder.toString();
     }
 }

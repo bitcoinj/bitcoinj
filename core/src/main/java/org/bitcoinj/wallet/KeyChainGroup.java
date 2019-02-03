@@ -814,12 +814,8 @@ public class KeyChainGroup implements KeyBag {
 
     public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
         final StringBuilder builder = new StringBuilder();
-        if (basic != null) {
-            List<ECKey> keys = basic.getKeys();
-            Collections.sort(keys, ECKey.AGE_COMPARATOR);
-            for (ECKey key : keys)
-                key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params);
-        }
+        if (basic != null)
+            builder.append(basic.toString(includePrivateKeys, aesKey, params));
         for (DeterministicKeyChain chain : chains)
             builder.append(chain.toString(includePrivateKeys, aesKey, params)).append('\n');
         return builder.toString();
