@@ -1474,15 +1474,15 @@ public class WalletTool {
     }
 
     private static void deleteKey() {
-        String pubkey = (String) options.valueOf("pubkey");
+        String pubKey = (String) options.valueOf("pubkey");
         String addr = (String) options.valueOf("addr");
-        if (pubkey == null && addr == null) {
+        if (pubKey == null && addr == null) {
             System.err.println("One of --pubkey or --addr must be specified.");
             return;
         }
         ECKey key = null;
-        if (pubkey != null) {
-            key = wallet.findKeyFromPubKey(HEX.decode(pubkey));
+        if (pubKey != null) {
+            key = wallet.findKeyFromPubKey(HEX.decode(pubKey));
         } else {
             try {
                 Address address = LegacyAddress.fromBase58(wallet.getParams(), addr);
@@ -1496,7 +1496,11 @@ public class WalletTool {
             System.err.println("Wallet does not seem to contain that key.");
             return;
         }
-        wallet.removeKey(key);
+        boolean removed = wallet.removeKey(key);
+        if (removed)
+            System.out.println("Key " + key + " was removed");
+        else
+            System.err.println("Key " + key + " could not be removed");
     }
 
     private static void currentReceiveAddr() {
