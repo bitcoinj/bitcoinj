@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Locale;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.bitcoinj.core.Coin;
@@ -251,6 +252,12 @@ public class MonetaryFormatTest {
         final Coin value = Coin.valueOf(-1234567890l);
         assertEquals("-12.34567890", NO_CODE.withLocale(Locale.US).format(value).toString());
         assertEquals("-12,34567890", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
+    }
+
+    @Ignore("non-determinism between OpenJDK versions")
+    @Test
+    public void withLocaleDevanagari() throws Exception {
+        final Coin value = Coin.valueOf(-1234567890l);
         assertEquals("-१२.३४५६७८९०", NO_CODE.withLocale(new Locale("hi", "IN")).format(value).toString()); // Devanagari
     }
 

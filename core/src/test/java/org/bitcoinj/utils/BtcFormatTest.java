@@ -17,6 +17,7 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.core.Coin;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -71,6 +72,7 @@ public class BtcFormatTest {
         assertEquals("µ฿0.01", usFormat.format(1));
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void suffixTest() {
         BtcFormat deFormat = BtcFormat.getSymbolInstance(Locale.GERMANY);
@@ -148,6 +150,7 @@ public class BtcFormatTest {
         }
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void argumentTypeTest() {
         BtcFormat usFormat = BtcFormat.getSymbolInstance(Locale.US);
@@ -282,6 +285,7 @@ public class BtcFormatTest {
         assertEquals(fa.hashCode(), fb.hashCode());
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void parseTest() throws java.text.ParseException {
         BtcFormat us = BtcFormat.getSymbolInstance(Locale.US);
@@ -664,6 +668,7 @@ public class BtcFormatTest {
         );
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void currencyCodeTest() {
         /* Insert needed space AFTER currency-code */
@@ -1157,6 +1162,7 @@ public class BtcFormatTest {
         assertEquals("11.223344556677", megaFormat.format(Coin.valueOf(1122334455667700l), 0, REPEATING_TRIPLETS));
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void negativeTest() throws Exception {
         assertEquals("-1,00 BTC", BtcFormat.getInstance(FRANCE).format(COIN.multiply(-1)));
@@ -1266,6 +1272,7 @@ public class BtcFormatTest {
 
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void attributeTest() throws Exception {
         String codePat = BtcFormat.getCodeInstance(Locale.US).pattern();
@@ -1281,6 +1288,7 @@ public class BtcFormatTest {
         assertEquals('๐', BtcFormat.getInstance(new Locale("th","TH","TH")).symbols().getZeroDigit());
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void toStringTest() {
         assertEquals("Auto-format ฿#,##0.00;(฿#,##0.00)", BtcFormat.getSymbolInstance(Locale.US).toString());
@@ -1330,6 +1338,7 @@ public class BtcFormatTest {
         assertEquals("mBTC 1000.000", f.format(COIN));
     }
 
+    @Ignore("non-determinism between OpenJDK versions")
     @Test
     public void builderTest() {
         Locale locale;
