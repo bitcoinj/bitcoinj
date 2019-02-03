@@ -1230,7 +1230,6 @@ public class WalletTool {
         }
         if (mode == ValidationMode.SPV) {
             store = new SPVBlockStore(params, chainFileName);
-            chain = new BlockChain(params, wallet, store);
             if (reset) {
                 try {
                     CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
@@ -1242,10 +1241,10 @@ public class WalletTool {
                     System.out.println("Could not load checkpoints: " + x.getMessage());
                 }
             }
+            chain = new BlockChain(params, wallet, store);
         } else if (mode == ValidationMode.FULL) {
-            FullPrunedBlockStore s = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
-            store = s;
-            chain = new FullPrunedBlockChain(params, wallet, s);
+            store = new H2FullPrunedBlockStore(params, chainFileName.getAbsolutePath(), 5000);
+            chain = new FullPrunedBlockChain(params, wallet, (FullPrunedBlockStore) store);
         }
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
