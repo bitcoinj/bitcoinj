@@ -3298,7 +3298,7 @@ public class Wallet extends BaseTaggableObject
             }
             if (tx.hasConfidence())
                 builder.append("  confidence: ").append(tx.getConfidence()).append('\n');
-            builder.append(tx.toString(chain));
+            builder.append(tx.toString(chain, "  "));
         }
     }
 

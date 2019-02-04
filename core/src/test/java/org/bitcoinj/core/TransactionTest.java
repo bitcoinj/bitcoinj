@@ -471,7 +471,7 @@ public class TransactionTest {
 
         replay(mockBlockChain);
 
-        String str = tx.toString(mockBlockChain);
+        String str = tx.toString(mockBlockChain, null);
 
         assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
         assertEquals(str.contains("estimated to be reached at"), true);
