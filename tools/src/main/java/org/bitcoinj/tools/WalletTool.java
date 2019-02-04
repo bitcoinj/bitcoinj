@@ -1440,11 +1440,15 @@ public class WalletTool {
                     return;   // Error message already printed.
                 key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
             }
-            wallet.importKey(key);
-            System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
         } catch (KeyCrypterException kce) {
-            System.err.println("There was an encryption related error when adding the key. The error was '" + kce.getMessage() + "'.");
+            System.err.println("There was an encryption related error when adding the key. The error was '"
+                    + kce.getMessage() + "'.");
+            return;
         }
+        if (!key.isCompressed())
+            System.out.println("WARNING: Importing an uncompressed key");
+        wallet.importKey(key);
+        System.out.println(LegacyAddress.fromKey(params, key) + " " + key);
     }
 
     /**
