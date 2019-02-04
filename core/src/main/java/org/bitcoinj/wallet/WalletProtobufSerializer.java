@@ -295,9 +295,8 @@ public class WalletProtobufSerializer {
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
                 Sha256Hash spendingHash = spentBy.getParentTransaction().getHash();
-                int spentByTransactionIndex = spentBy.getParentTransaction().getInputs().indexOf(spentBy);
                 outputBuilder.setSpentByTransactionHash(hashToByteString(spendingHash))
-                             .setSpentByTransactionIndex(spentByTransactionIndex);
+                             .setSpentByTransactionIndex(spentBy.getIndex());
             }
             txBuilder.addTransactionOutput(outputBuilder);
         }

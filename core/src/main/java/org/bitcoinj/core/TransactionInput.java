@@ -147,6 +147,17 @@ public class TransactionInput extends ChildMessage {
         this.value = null;
     }
 
+    /**
+     * Gets the index of this input in the parent transaction, or throws if this input is free standing. Iterates
+     * over the parents list to discover this.
+     */
+    public int getIndex() {
+        final int myIndex = getParentTransaction().getInputs().indexOf(this);
+        if (myIndex < 0)
+            throw new IllegalStateException("Input linked to wrong parent transaction?");
+        return myIndex;
+    }
+
     @Override
     protected void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, payload, cursor, this, serializer);
@@ -464,7 +475,7 @@ public class TransactionInput extends ChildMessage {
         }
         Script pubKey = output.getScriptPubKey();
         int myIndex = getParentTransaction().getInputs().indexOf(this);
-        getScriptSig().correctlySpends(getParentTransaction(), myIndex, pubKey);
+        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), pubKey);
     }
 
     /**
