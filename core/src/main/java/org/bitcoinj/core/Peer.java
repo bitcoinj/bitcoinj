@@ -931,7 +931,7 @@ public class Peer extends PeerSocketHandler {
             if (needToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
             for (Sha256Hash hash : needToRequest) {
-                getdata.addTransaction(hash);
+                getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
                 GetDataRequest req = new GetDataRequest(hash, SettableFuture.create());
                 futures.add(req.future);
                 getDataFutures.add(req);
@@ -1194,10 +1194,10 @@ public class Peer extends PeerSocketHandler {
 
         for (InventoryItem item : items) {
             switch (item.type) {
-                case Transaction:
+                case TRANSACTION:
                     transactions.add(item);
                     break;
-                case Block:
+                case BLOCK:
                     blocks.add(item);
                     break;
                 default:
@@ -1243,7 +1243,7 @@ public class Peer extends PeerSocketHandler {
                 it.remove();
             } else {
                 log.debug("{}: getdata on tx {}", getAddress(), item.hash);
-                getdata.addItem(item);
+                getdata.addTransaction(item.hash, vPeerVersionMessage.isWitnessSupported());
                 // Register with the garbage collector that we care about the confidence data for a while.
                 pendingTxDownloads.add(conf);
             }
@@ -1283,7 +1283,7 @@ public class Peer extends PeerSocketHandler {
                                 getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
-                                getdata.addItem(item);
+                                getdata.addBlock(item.hash);
                             }
                             pendingBlockDownloads.add(item.hash);
                         }
@@ -1339,7 +1339,7 @@ public class Peer extends PeerSocketHandler {
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = new GetDataMessage(params);
-        getdata.addTransaction(hash);
+        getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
         return sendSingleGetData(getdata);
     }
 

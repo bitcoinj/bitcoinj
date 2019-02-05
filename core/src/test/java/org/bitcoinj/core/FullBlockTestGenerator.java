@@ -1511,8 +1511,8 @@ public class FullBlockTestGenerator {
         spendableOutputs.offer(b82.getCoinbaseOutput());
 
         HashSet<InventoryItem> post82Mempool = new HashSet<>();
-        post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b78tx.getHash()));
-        post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
+        post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b78tx.getHash()));
+        post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b79tx.getHash()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
 
         // Check the UTXO query takes mempool into account.

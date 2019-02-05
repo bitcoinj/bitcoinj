@@ -626,7 +626,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // p1 requests dep resolution, p2 is quiet.
         assertTrue(outbound(p1) instanceof GetDataMessage);
         final Sha256Hash dephash = tx.getInput(0).getOutpoint().getHash();
-        final InventoryItem inv = new InventoryItem(InventoryItem.Type.Transaction, dephash);
+        final InventoryItem inv = new InventoryItem(InventoryItem.Type.TRANSACTION, dephash);
         inbound(p1, new NotFoundMessage(UNITTEST, ImmutableList.of(inv)));
         assertNull(outbound(p1));
         assertNull(outbound(p2));
@@ -834,7 +834,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Await restart of the chain download.
         GetDataMessage getdata = assertNextMessageIs(p1, GetDataMessage.class);
         assertEquals(exhaustionPoint.getHash(), getdata.getHashOf(0));
-        assertEquals(InventoryItem.Type.FilteredBlock, getdata.getItems().get(0).type);
+        assertEquals(InventoryItem.Type.FILTERED_BLOCK, getdata.getItems().get(0).type);
         List<Block> newBlocks = blocks.subList(3, blocks.size());
         filterAndSend(p1, newBlocks, newFilter);
         assertNextMessageIs(p1, Ping.class);

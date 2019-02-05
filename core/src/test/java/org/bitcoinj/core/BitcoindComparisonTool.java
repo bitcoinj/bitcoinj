@@ -132,7 +132,7 @@ public class BitcoindComparisonTool {
                     System.exit(1);
                 } else if (m instanceof GetDataMessage) {
                     for (InventoryItem item : ((GetDataMessage) m).items)
-                        if (item.type == InventoryItem.Type.Block) {
+                        if (item.type == InventoryItem.Type.BLOCK) {
                             log.info("Requested " + item.hash);
                             if (currentBlock.block.getHash().equals(item.hash))
                                 bitcoind.sendMessage(currentBlock.block);
