@@ -170,8 +170,8 @@ public class PaymentChannelV1ClientState extends PaymentChannelClientState {
             refundFees = multisigFee;
         }
         refundTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        log.info("initiated channel with multi-sig contract {}, refund {}", multisigContract.getHashAsString(),
-                refundTx.getHashAsString());
+        log.info("initiated channel with multi-sig contract {}, refund {}", multisigContract.getTxId(),
+                refundTx.getTxId());
         stateMachine.transition(State.INITIATED);
         // Client should now call getIncompleteRefundTransaction() and send it to the server.
     }

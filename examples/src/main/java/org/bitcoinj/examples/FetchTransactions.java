@@ -53,7 +53,7 @@ public class FetchTransactions {
         System.out.println("Waiting for node to send us the dependencies ...");
         List<Transaction> deps = peer.downloadDependencies(tx).get();
         for (Transaction dep : deps) {
-            System.out.println("Got dependency " + dep.getHashAsString());
+            System.out.println("Got dependency " + dep.getTxId());
         }
 
         System.out.println("Done.");

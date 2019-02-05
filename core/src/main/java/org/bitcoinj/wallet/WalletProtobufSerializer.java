@@ -734,7 +734,7 @@ public class WalletProtobufSerializer {
                 Transaction spendingTx = txMap.get(spentByTransactionHash);
                 if (spendingTx == null) {
                     throw new UnreadableWalletException(String.format(Locale.US, "Could not connect %s to %s",
-                            tx.getHashAsString(), byteStringToHash(spentByTransactionHash)));
+                            tx.getTxId(), byteStringToHash(spentByTransactionHash)));
                 }
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
                 TransactionInput input = checkNotNull(spendingTx.getInput(spendingIndex));
@@ -757,7 +757,7 @@ public class WalletProtobufSerializer {
         // We are lenient here because tx confidence is not an essential part of the wallet.
         // If the tx has an unknown type of confidence, ignore.
         if (!confidenceProto.hasType()) {
-            log.warn("Unknown confidence type for tx {}", tx.getHashAsString());
+            log.warn("Unknown confidence type for tx {}", tx.getTxId());
             return;
         }
         ConfidenceType confidenceType;
@@ -776,27 +776,27 @@ public class WalletProtobufSerializer {
         confidence.setConfidenceType(confidenceType);
         if (confidenceProto.hasAppearedAtHeight()) {
             if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
-                log.warn("Have appearedAtHeight but not BUILDING for tx {}", tx.getHashAsString());
+                log.warn("Have appearedAtHeight but not BUILDING for tx {}", tx.getTxId());
                 return;
             }
             confidence.setAppearedAtChainHeight(confidenceProto.getAppearedAtHeight());
         }
         if (confidenceProto.hasDepth()) {
             if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
-                log.warn("Have depth but not BUILDING for tx {}", tx.getHashAsString());
+                log.warn("Have depth but not BUILDING for tx {}", tx.getTxId());
                 return;
             }
             confidence.setDepthInBlocks(confidenceProto.getDepth());
         }
         if (confidenceProto.hasOverridingTransaction()) {
             if (confidence.getConfidenceType() != ConfidenceType.DEAD) {
-                log.warn("Have overridingTransaction but not OVERRIDDEN for tx {}", tx.getHashAsString());
+                log.warn("Have overridingTransaction but not OVERRIDDEN for tx {}", tx.getTxId());
                 return;
             }
             Transaction overridingTransaction =
                 txMap.get(confidenceProto.getOverridingTransaction());
             if (overridingTransaction == null) {
-                log.warn("Have overridingTransaction that is not in wallet for tx {}", tx.getHashAsString());
+                log.warn("Have overridingTransaction that is not in wallet for tx {}", tx.getTxId());
                 return;
             }
             confidence.setOverridingTransaction(overridingTransaction);

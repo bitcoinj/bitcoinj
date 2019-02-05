@@ -135,9 +135,9 @@ public class Transaction extends ChildMessage {
     // list of transactions from a wallet, which is helpful for presenting to users.
     private Date updatedAt;
 
-    // This is an in memory helper only. It contains the transaction hash (aka txid), used as a reference by transaction
-    // inputs via outpoints.
-    private Sha256Hash hash;
+    // These are in memory helpers only. They contain the transaction hashes without and with witness.
+    private Sha256Hash cachedTxId;
+    private Sha256Hash cachedWTxId;
 
     // Data about how confirmed this tx is. Serialized, may be null.
     @Nullable private TransactionConfidence confidence;
@@ -230,11 +230,19 @@ public class Transaction extends ChildMessage {
      * @param setSerializer The serializer to use for this transaction.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
+     * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
+     * avoid wasting the considerable effort a set method is provided so the serializer can set it. No verification
+     * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent, MessageSerializer setSerializer, int length)
-            throws ProtocolException {
+    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
+            MessageSerializer setSerializer, int length, @Nullable byte[] hashFromHeader) throws ProtocolException {
         super(params, payload, offset, parent, setSerializer, length);
+        if (hashFromHeader != null) {
+            cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
+            if (!hasWitnesses())
+                cachedTxId = cachedWTxId;
+        }
     }
 
     /**
@@ -245,39 +253,59 @@ public class Transaction extends ChildMessage {
         super(params, payload, 0, parent, setSerializer, length);
     }
 
-    /**
-     * Returns the transaction hash (aka txid) as you see them in block explorers. It is used as a reference by
-     * transaction inputs via outpoints.
-     */
+    /** @deprecated use {@link #getTxId()} */
     @Override
+    @Deprecated
     public Sha256Hash getHash() {
-        if (hash == null) {
-            ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
-            try {
-                bitcoinSerializeToStream(stream, false);
-            } catch (IOException e) {
-                // Cannot happen, we are serializing to a memory stream.
-            }
-            hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(stream.toByteArray()));
-        }
-        return hash;
+        return getTxId();
     }
 
-    /**
-     * Used by BitcoinSerializer.  The serializer has to calculate a hash for checksumming so to
-     * avoid wasting the considerable effort a set method is provided so the serializer can set it.
-     *
-     * No verification is performed on this hash.
-     */
-    void setHash(Sha256Hash hash) {
-        this.hash = hash;
-    }
-
-    /**
-     * Returns the transaction hash (aka txid) as you see them in block explorers, as a hex string.
-     */
+    /** @deprecated use {@link #getTxId()}.toString() */
+    @Deprecated
     public String getHashAsString() {
-        return getHash().toString();
+        return getTxId().toString();
+    }
+
+    /**
+     * Returns the transaction id as you see them in block explorers. It is used as a reference by transaction inputs
+     * via outpoints.
+     */
+    public Sha256Hash getTxId() {
+        if (cachedTxId == null) {
+            if (!hasWitnesses() && cachedWTxId != null) {
+                cachedTxId = cachedWTxId;
+            } else {
+                ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+                try {
+                    bitcoinSerializeToStream(stream, false);
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // cannot happen
+                }
+                cachedTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(stream.toByteArray()));
+            }
+        }
+        return cachedTxId;
+    }
+
+    /**
+     * Returns the witness transaction id (aka witness id) as per BIP144. For transactions without witness, this is the
+     * same as {@link #getTxId()}.
+     */
+    public Sha256Hash getWTxId() {
+        if (cachedWTxId == null) {
+            if (!hasWitnesses() && cachedTxId != null) {
+                cachedWTxId = cachedTxId;
+            } else {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try {
+                    bitcoinSerializeToStream(baos, hasWitnesses());
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // cannot happen
+                }
+                cachedWTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+            }
+        }
+        return cachedWTxId;
     }
 
     /**
@@ -525,7 +553,8 @@ public class Transaction extends ChildMessage {
     @Override
     protected void unCache() {
         super.unCache();
-        hash = null;
+        cachedTxId = null;
+        cachedWTxId = null;
     }
 
     protected static int calcLength(byte[] buf, int offset) {
@@ -710,7 +739,11 @@ public class Transaction extends ChildMessage {
         if (indent == null)
             indent = "";
         StringBuilder s = new StringBuilder();
-        s.append(indent).append(getHashAsString()).append('\n');
+        Sha256Hash txId = getTxId(), wTxId = getWTxId();
+        s.append(indent).append(txId);
+        if (!wTxId.equals(txId))
+            s.append(", wtxid ").append(wTxId);
+        s.append('\n');
         if (updatedAt != null)
             s.append(indent).append("updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
         if (version != 1)
@@ -810,7 +843,7 @@ public class Transaction extends ChildMessage {
                     final TransactionInput spentBy = out.getSpentBy();
                     if (spentBy != null) {
                         s.append(" by:");
-                        s.append(spentBy.getParentTransaction().getHashAsString()).append(':')
+                        s.append(spentBy.getParentTransaction().getTxId()).append(':')
                                 .append(spentBy.getIndex());
                     }
                 }

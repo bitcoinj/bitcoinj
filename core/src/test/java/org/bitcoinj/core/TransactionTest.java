@@ -290,7 +290,8 @@ public class TransactionTest {
         hex2 = HEX.encode(tx.bitcoinSerialize());
         assertEquals(hex, hex2);
         assertEquals("Uncorrect hash", "38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a",
-                tx.getHash().toString());
+                tx.getTxId().toString());
+        assertEquals(tx.getWTxId(), tx.getTxId());
 
         // Roundtrip with witness
         hex = "0100000000010213206299feb17742091c3cb2ab45faa3aa87922d3c030cafb3f798850a2722bf0000000000feffffffa12f2424b9599898a1d30f06e1ce55eba7fabfeee82ae9356f07375806632ff3010000006b483045022100fcc8cf3014248e1a0d6dcddf03e80f7e591605ad0dbace27d2c0d87274f8cd66022053fcfff64f35f22a14deb657ac57f110084fb07bb917c3b42e7d033c54c7717b012102b9e4dcc33c9cc9cb5f42b96dddb3b475b067f3e21125f79e10c853e5ca8fba31feffffff02206f9800000000001976a9144841b9874d913c430048c78a7b18baebdbea440588ac8096980000000000160014e4873ef43eac347471dd94bc899c51b395a509a502483045022100dd8250f8b5c2035d8feefae530b10862a63030590a851183cb61b3672eb4f26e022057fe7bc8593f05416c185d829b574290fb8706423451ebd0a0ae50c276b87b43012102179862f40b85fa43487500f1d6b13c864b5eb0a83999738db0f7a6b91b2ec64f00db080000";
@@ -303,7 +304,8 @@ public class TransactionTest {
         hex2 = HEX.encode(tx.bitcoinSerialize());
         assertEquals(hex, hex2);
         assertEquals("Uncorrect hash", "99e7484eafb6e01622c395c8cae7cb9f8822aab6ba993696b39df8b60b0f4b11",
-                tx.getHash().toString());
+                tx.getTxId().toString());
+        assertNotEquals(tx.getWTxId(), tx.getTxId());
     }
 
     @Test
@@ -597,7 +599,7 @@ public class TransactionTest {
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);
-        final String txHash = tx.getHashAsString();
+        final Sha256Hash txHash = tx.getTxId();
         final String txNormalizedHash = tx.hashForSignature(
                 0,
                 new byte[0],
@@ -606,7 +608,7 @@ public class TransactionTest {
 
         for (int i = 0; i < 100; i++) {
             // ensure the transaction object itself was not modified; if it was, the hash will change
-            assertEquals(txHash, tx.getHashAsString());
+            assertEquals(txHash, tx.getTxId());
             new Thread(){
                 public void run() {
                     assertEquals(

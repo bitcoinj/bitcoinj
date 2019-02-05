@@ -145,7 +145,7 @@ public class ForwardingService {
                 @Override
                 public void run() {
                     // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
-                    System.out.println("Sent coins onwards! Transaction hash is " + sendResult.tx.getHashAsString());
+                    System.out.println("Sent coins onwards! Transaction hash is " + sendResult.tx.getTxId());
                 }
             }, MoreExecutors.directExecutor());
         } catch (KeyCrypterException | InsufficientMoneyException e) {

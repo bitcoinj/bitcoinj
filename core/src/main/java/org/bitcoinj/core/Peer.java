@@ -780,7 +780,7 @@ public class Peer extends PeerSocketHandler {
         tx.verify();
         lock.lock();
         try {
-            log.debug("{}: Received tx {}", getAddress(), tx.getHashAsString());
+            log.debug("{}: Received tx {}", getAddress(), tx.getTxId());
             // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
             // etc). This helps the wallet decide how to risk analyze it later.
             //
@@ -839,7 +839,7 @@ public class Peer extends PeerSocketHandler {
 
                                 @Override
                                 public void onFailure(Throwable throwable) {
-                                    log.error("Could not download dependencies of tx {}", tx.getHashAsString());
+                                    log.error("Could not download dependencies of tx {}", tx.getTxId());
                                     log.error("Error was: ", throwable);
                                     // Not much more we can do at this point.
                                 }
@@ -887,7 +887,7 @@ public class Peer extends PeerSocketHandler {
     public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
-        log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
+        log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         final LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
         final ListenableFuture<Object> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx,
@@ -945,7 +945,7 @@ public class Peer extends PeerSocketHandler {
                     List<ListenableFuture<Object>> childFutures = Lists.newLinkedList();
                     for (Transaction tx : transactions) {
                         if (tx == null) continue;
-                        log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getHashAsString());
+                        log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getTxId());
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
                         if (depth + 1 < maxDepth)

@@ -54,7 +54,7 @@ public class WatchMempool {
             public void onTransaction(Peer peer, Transaction tx) {
                 Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
                 incrementCounter(TOTAL_KEY);
-                log.info("tx {} result {}", tx.getHash(), result);
+                log.info("tx {} result {}", tx.getTxId(), result);
                 incrementCounter(result.name());
                 if (result == Result.NON_STANDARD)
                     incrementCounter(Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx));

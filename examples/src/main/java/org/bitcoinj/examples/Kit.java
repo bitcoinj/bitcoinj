@@ -68,7 +68,7 @@ public class Kit {
         kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                System.out.println("-----> coins resceived: " + tx.getHashAsString());
+                System.out.println("-----> coins resceived: " + tx.getTxId());
                 System.out.println("received: " + tx.getValue(wallet));
             }
         });
@@ -97,7 +97,7 @@ public class Kit {
         kit.wallet().addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
             public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                System.out.println("-----> confidence changed: " + tx.getHashAsString());
+                System.out.println("-----> confidence changed: " + tx.getTxId());
                 TransactionConfidence confidence = tx.getConfidence();
                 System.out.println("new block depth: " + confidence.getDepthInBlocks());
             }

@@ -244,11 +244,11 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     @Override
     public String toString() {
         if (!analyzed)
-            return "Pending risk analysis for " + tx.getHashAsString();
+            return "Pending risk analysis for " + tx.getTxId();
         else if (nonFinal != null)
-            return "Risky due to non-finality of " + nonFinal.getHashAsString();
+            return "Risky due to non-finality of " + nonFinal.getTxId();
         else if (nonStandard != null)
-            return "Risky due to non-standard tx " + nonStandard.getHashAsString();
+            return "Risky due to non-standard tx " + nonStandard.getTxId();
         else
             return "Non-risky";
     }

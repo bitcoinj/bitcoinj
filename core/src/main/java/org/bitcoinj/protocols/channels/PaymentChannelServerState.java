@@ -194,7 +194,7 @@ public abstract class PaymentChannelServerState {
         final SettableFuture<PaymentChannelServerState> future = SettableFuture.create();
         Futures.addCallback(broadcaster.broadcastTransaction(contract).future(), new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
-                log.info("Successfully broadcast multisig contract {}. Channel now open.", transaction.getHashAsString());
+                log.info("Successfully broadcast multisig contract {}. Channel now open.", transaction.getTxId());
                 try {
                     // Manually add the contract to the wallet, overriding the isRelevant checks so we can track
                     // it and check for double-spends later

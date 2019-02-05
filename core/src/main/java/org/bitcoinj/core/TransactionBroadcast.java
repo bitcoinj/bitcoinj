@@ -152,7 +152,7 @@ public class TransactionBroadcast {
             numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
             Collections.shuffle(peers, random);
             peers = peers.subList(0, numToBroadcastTo);
-            log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getHashAsString());
+            log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getTxId());
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Joiner.on(",").join(peers));
             for (Peer peer : peers) {
                 try {
@@ -183,7 +183,7 @@ public class TransactionBroadcast {
             // The number of peers that announced this tx has gone up.
             int numSeenPeers = conf.numBroadcastPeers() + rejects.size();
             boolean mined = tx.getAppearsInHashes() != null;
-            log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, tx.getHashAsString(),
+            log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, tx.getTxId(),
                     numSeenPeers, mined ? " and mined" : "");
 
             // Progress callback on the requested thread.

@@ -147,7 +147,7 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
         refundTx.getInput(0).setScriptSig(ScriptBuilder.createCLTVPaymentChannelP2SHRefund(refundSignature, redeemScript));
 
         refundTx.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        log.info("initiated channel with contract {}", contract.getHashAsString());
+        log.info("initiated channel with contract {}", contract.getTxId());
         stateMachine.transition(State.SAVE_STATE_IN_WALLET);
         // Client should now call getIncompleteRefundTransaction() and send it to the server.
     }

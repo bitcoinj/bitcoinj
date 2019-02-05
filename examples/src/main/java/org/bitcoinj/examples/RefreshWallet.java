@@ -47,7 +47,7 @@ public class RefreshWallet {
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public synchronized void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
-                System.out.println("\nReceived tx " + tx.getHashAsString());
+                System.out.println("\nReceived tx " + tx.getTxId());
                 System.out.println(tx.toString());
             }
         });

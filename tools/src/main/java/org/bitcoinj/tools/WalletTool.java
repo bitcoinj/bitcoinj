@@ -675,7 +675,7 @@ public class WalletTool {
                 throw new RuntimeException(e);
             }
             t = req.tx;   // Not strictly required today.
-            System.out.println(t.getHashAsString());
+            System.out.println(t.getTxId());
             if (options.has("offline")) {
                 wallet.commitTx(t);
                 return;
@@ -792,7 +792,7 @@ public class WalletTool {
             }
             wallet.completeTx(req);
 
-            System.out.println(req.tx.getHashAsString());
+            System.out.println(req.tx.getTxId());
             if (options.has("offline")) {
                 wallet.commitTx(req.tx);
                 return;
@@ -898,7 +898,7 @@ public class WalletTool {
                     req.tx.calculateSignature(0, key2, lockTimeVerifyOutput.getScriptPubKey(), Transaction.SigHash.SINGLE, false);
             input.setScriptSig(ScriptBuilder.createCLTVPaymentChannelInput(sig1, sig2));
 
-            System.out.println(req.tx.getHashAsString());
+            System.out.println(req.tx.getTxId());
             if (options.has("offline")) {
                 wallet.commitTx(req.tx);
                 return;
@@ -1001,7 +1001,7 @@ public class WalletTool {
                     req.tx.calculateSignature(0, key, lockTimeVerifyOutput.getScriptPubKey(), Transaction.SigHash.SINGLE, false);
             input.setScriptSig(ScriptBuilder.createCLTVPaymentChannelRefund(sig));
 
-            System.out.println(req.tx.getHashAsString());
+            System.out.println(req.tx.getTxId());
             if (options.has("offline")) {
                 wallet.commitTx(req.tx);
                 return;
@@ -1162,7 +1162,7 @@ public class WalletTool {
                     @Override
                     public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
-                        System.out.println(tx.getHashAsString());
+                        System.out.println(tx.getTxId());
                         latch.countDown();  // Wake up main thread.
                     }
                 });
@@ -1170,7 +1170,7 @@ public class WalletTool {
                     @Override
                     public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                         // Runs in a peer thread.
-                        System.out.println(tx.getHashAsString());
+                        System.out.println(tx.getTxId());
                         latch.countDown();  // Wake up main thread.
                     }
                 });

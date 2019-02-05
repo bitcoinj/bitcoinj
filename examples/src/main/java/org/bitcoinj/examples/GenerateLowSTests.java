@@ -108,7 +108,7 @@ public class GenerateLowSTests {
         // First output a conventional low-S transaction with the LOW_S flag, for the tx_valid.json set
         System.out.println("[\"A transaction with a low-S signature.\"],");
         System.out.println("[[[\""
-            + inputTransaction.getHashAsString() + "\", "
+            + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
             + "\"" + Utils.HEX.encode(proposedTransaction.partialTx.unsafeBitcoinSerialize()) + "\", \""
@@ -123,7 +123,7 @@ public class GenerateLowSTests {
         // A high-S transaction without the LOW_S flag, for the tx_valid.json set
         System.out.println("[\"A transaction with a high-S signature.\"],");
         System.out.println("[[[\""
-            + inputTransaction.getHashAsString() + "\", "
+            + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
             + "\"" + Utils.HEX.encode(proposedTransaction.partialTx.unsafeBitcoinSerialize()) + "\", \""
@@ -132,7 +132,7 @@ public class GenerateLowSTests {
         // Lastly a conventional high-S transaction with the LOW_S flag, for the tx_invalid.json set
         System.out.println("[\"A transaction with a high-S signature.\"],");
         System.out.println("[[[\""
-            + inputTransaction.getHashAsString() + "\", "
+            + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
             + "\"" + Utils.HEX.encode(proposedTransaction.partialTx.unsafeBitcoinSerialize()) + "\", \""

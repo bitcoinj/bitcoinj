@@ -306,12 +306,9 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset,
-        int length, byte[] hash) throws ProtocolException {
-        Transaction tx = new Transaction(params, payloadBytes, offset, null, this, length);
-        if (hash != null)
-            tx.setHash(Sha256Hash.wrapReversed(hash));
-        return tx;
+    public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hashFromHeader)
+            throws ProtocolException {
+        return new Transaction(params, payloadBytes, offset, null, this, length, hashFromHeader);
     }
 
     @Override

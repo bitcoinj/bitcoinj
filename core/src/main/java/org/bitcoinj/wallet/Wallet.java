@@ -1601,13 +1601,13 @@ public class Wallet extends BaseTaggableObject
 
             for (Transaction tx : unspent.values()) {
                 if (!isTxConsistent(tx, false)) {
-                    throw new IllegalStateException("Inconsistent unspent tx: " + tx.getHashAsString());
+                    throw new IllegalStateException("Inconsistent unspent tx: " + tx.getTxId());
                 }
             }
 
             for (Transaction tx : spent.values()) {
                 if (!isTxConsistent(tx, true)) {
-                    throw new IllegalStateException("Inconsistent spent tx: " + tx.getHashAsString());
+                    throw new IllegalStateException("Inconsistent spent tx: " + tx.getTxId());
                 }
             }
         } finally {
@@ -1720,7 +1720,7 @@ public class Wallet extends BaseTaggableObject
             // between pools.
             EnumSet<Pool> containingPools = getContainingPools(tx);
             if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
-                log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+                log.debug("Received tx we already saw in a block or created ourselves: " + tx.getTxId());
                 return;
             }
             // Repeat the check of relevancy here, even though the caller may have already done so - this is to avoid
@@ -1736,8 +1736,8 @@ public class Wallet extends BaseTaggableObject
             Coin valueSentToMe = tx.getValueSentToMe(this);
             Coin valueSentFromMe = tx.getValueSentFromMe(this);
             if (log.isInfoEnabled()) {
-                log.info(String.format(Locale.US, "Received a pending transaction %s that spends %s from our own wallet," +
-                        " and sends us %s", tx.getHashAsString(), valueSentFromMe.toFriendlyString(),
+                log.info(String.format(Locale.US, "Received a pending transaction {} that spends {} from our own wallet," +
+                        " and sends us {}", tx.getTxId(), valueSentFromMe.toFriendlyString(),
                         valueSentToMe.toFriendlyString()));
             }
             if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
@@ -1806,7 +1806,7 @@ public class Wallet extends BaseTaggableObject
             // between pools.
             EnumSet<Pool> containingPools = getContainingPools(tx);
             if (!containingPools.equals(EnumSet.noneOf(Pool.class))) {
-                log.debug("Received tx we already saw in a block or created ourselves: " + tx.getHashAsString());
+                log.debug("Received tx we already saw in a block or created ourselves: " + tx.getTxId());
                 return false;
             }
             // We only care about transactions that:
@@ -1948,7 +1948,7 @@ public class Wallet extends BaseTaggableObject
         Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         log.info("Received tx{} for {}: {} [{}] in block {}", sideChain ? " on a side chain" : "",
-                valueDifference.toFriendlyString(), tx.getHashAsString(), relativityOffset,
+                valueDifference.toFriendlyString(), tx.getTxId(), relativityOffset,
                 block != null ? block.getHeader().getHash() : "(unit test)");
 
         // Inform the key chains that the issued keys were observed in a transaction, so they know to
@@ -2212,7 +2212,7 @@ public class Wallet extends BaseTaggableObject
             // entirely by this point. We could and maybe should rebroadcast them so the network remembers and tries
             // to confirm them again. But this is a deeply unusual edge case that due to the maturity rule should never
             // happen in practice, thus for simplicities sake we ignore it here.
-            log.info("  coinbase tx <-dead: confidence {}", tx.getHashAsString(),
+            log.info("  coinbase tx <-dead: confidence {}", tx.getTxId(),
                     tx.getConfidence().getConfidenceType().name());
             dead.remove(tx.getHash());
         }
@@ -2228,20 +2228,20 @@ public class Wallet extends BaseTaggableObject
         if (hasOutputsToMe) {
             // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
             if (tx.isEveryOwnedOutputSpent(this)) {
-                log.info("  tx {} ->spent (by pending)", tx.getHashAsString());
+                log.info("  tx {} ->spent (by pending)", tx.getTxId());
                 addWalletTransaction(Pool.SPENT, tx);
             } else {
-                log.info("  tx {} ->unspent", tx.getHashAsString());
+                log.info("  tx {} ->unspent", tx.getTxId());
                 addWalletTransaction(Pool.UNSPENT, tx);
             }
         } else if (tx.getValueSentFromMe(this).signum() > 0) {
             hasOutputsFromMe = true;
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
-            log.info("  tx {} ->spent", tx.getHashAsString());
+            log.info("  tx {} ->spent", tx.getTxId());
             addWalletTransaction(Pool.SPENT, tx);
         } else if (forceAddToPool) {
             // Was manually added to pending, so we should keep it to notify the user of confidence information
-            log.info("  tx {} ->spent (manually added)", tx.getHashAsString());
+            log.info("  tx {} ->spent (manually added)", tx.getTxId());
             addWalletTransaction(Pool.SPENT, tx);
         }
 
@@ -2327,7 +2327,7 @@ public class Wallet extends BaseTaggableObject
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
                 Transaction connected = checkNotNull(input.getConnectedTransaction());
-                log.info("  marked {} as spent by {}", input.getOutpoint(), tx.getHashAsString());
+                log.info("  marked {} as spent by {}", input.getOutpoint(), tx.getTxId());
                 maybeMovePool(connected, "prevtx");
                 // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
                 if (output.isMineOrWatched(this)) {
@@ -2351,7 +2351,7 @@ public class Wallet extends BaseTaggableObject
                 }
                 if (result == TransactionInput.ConnectionResult.SUCCESS) {
                     log.info("Connected pending tx input {}:{}",
-                            pendingTx.getHashAsString(), pendingTx.getInputs().indexOf(input));
+                            pendingTx.getTxId(), pendingTx.getInputs().indexOf(input));
                     // The unspents map might not have it if we never saw this tx until it was included in the chain
                     // and thus becomes spent the moment we become aware of it.
                     if (myUnspents.remove(input.getConnectedOutput()))
@@ -2372,8 +2372,8 @@ public class Wallet extends BaseTaggableObject
         LinkedList<Transaction> work = new LinkedList<>(txnsToKill);
         while (!work.isEmpty()) {
             final Transaction tx = work.poll();
-            log.warn("TX {} killed{}", tx.getHashAsString(),
-                    overridingTx != null ? " by " + overridingTx.getHashAsString() : "");
+            log.warn("TX {} killed{}", tx.getTxId(),
+                    overridingTx != null ? " by " + overridingTx.getTxId() : "");
             log.warn("Disconnecting each input and moving connected transactions.");
             // TX could be pending (finney attack), or in unspent/spent (coinbase killed by reorg).
             pending.remove(tx.getHash());
@@ -2433,14 +2433,14 @@ public class Wallet extends BaseTaggableObject
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("  {} {} <-unspent ->spent", tx.getHashAsString(), context);
+                    log.info("  {} {} <-unspent ->spent", tx.getTxId(), context);
                 }
                 spent.put(tx.getHash(), tx);
             }
         } else {
             if (spent.remove(tx.getHash()) != null) {
                 if (log.isInfoEnabled()) {
-                    log.info("  {} {} <-spent ->unspent", tx.getHashAsString(), context);
+                    log.info("  {} {} <-spent ->unspent", tx.getTxId(), context);
                 }
                 unspent.put(tx.getHash(), tx);
             }
@@ -2458,7 +2458,7 @@ public class Wallet extends BaseTaggableObject
         try {
             if (pending.containsKey(tx.getHash()))
                 return false;
-            log.info("commitTx of {}", tx.getHashAsString());
+            log.info("commitTx of {}", tx.getTxId());
             Coin balance = getBalance();
             tx.setUpdateTime(Utils.now());
             // Put any outputs that are sending money back to us into the unspents map, and calculate their total value.
@@ -2481,7 +2481,7 @@ public class Wallet extends BaseTaggableObject
                 !isNotSpendingTxnsInConfidenceType(tx, ConfidenceType.DEAD)) {
                 // tx is a double spend against a tx already in the best chain or spends outputs of a DEAD tx.
                 // Add tx to the dead pool and schedule confidence listener notifications.
-                log.info("->dead: {}", tx.getHashAsString());
+                log.info("->dead: {}", tx.getTxId());
                 tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.DEAD, tx);
@@ -2490,7 +2490,7 @@ public class Wallet extends BaseTaggableObject
                 // tx is a double spend against a pending tx or spends outputs of a tx already IN_CONFLICT.
                 // Add tx to the pending pool. Update the confidence type of tx, the txns in conflict with tx and all
                 // their dependencies to IN_CONFLICT and schedule confidence listener notifications.
-                log.info("->pending (IN_CONFLICT): {}", tx.getHashAsString());
+                log.info("->pending (IN_CONFLICT): {}", tx.getTxId());
                 addWalletTransaction(Pool.PENDING, tx);
                 doubleSpendPendingTxns.add(tx);
                 addTransactionsDependingOn(doubleSpendPendingTxns, getTransactions(true));
@@ -2501,7 +2501,7 @@ public class Wallet extends BaseTaggableObject
             } else {
                 // No conflict detected.
                 // Add to the pending pool and schedule confidence listener notifications.
-                log.info("->pending: {}", tx.getHashAsString());
+                log.info("->pending: {}", tx.getTxId());
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
@@ -3067,7 +3067,7 @@ public class Wallet extends BaseTaggableObject
             for (Iterator<Transaction> i = pending.values().iterator(); i.hasNext();) {
                 Transaction tx = i.next();
                 if (isTransactionRisky(tx, null) && !acceptRiskyTransactions) {
-                    log.debug("Found risky transaction {} in wallet during cleanup.", tx.getHashAsString());
+                    log.debug("Found risky transaction {} in wallet during cleanup.", tx.getTxId());
                     if (!tx.isAnyOutputSpent()) {
                         // Sync myUnspents with the change.
                         for (TransactionInput input : tx.getInputs()) {
@@ -3083,11 +3083,11 @@ public class Wallet extends BaseTaggableObject
                         i.remove();
                         transactions.remove(tx.getHash());
                         dirty = true;
-                        log.info("Removed transaction {} from pending pool during cleanup.", tx.getHashAsString());
+                        log.info("Removed transaction {} from pending pool during cleanup.", tx.getTxId());
                     } else {
                         log.info(
                                 "Cannot remove transaction {} from pending pool during cleanup, as it's already spent partially.",
-                                tx.getHashAsString());
+                                tx.getTxId());
                     }
                 }
             }
@@ -4453,7 +4453,7 @@ public class Wallet extends BaseTaggableObject
                         // graph we can never reliably kill all transactions we might have that were rooted in
                         // this coinbase tx. Some can just go pending forever, like the Bitcoin Core. However we
                         // can do our best.
-                        log.warn("Coinbase killed by re-org: {}", tx.getHashAsString());
+                        log.warn("Coinbase killed by re-org: {}", tx.getTxId());
                         killTxns(ImmutableSet.of(tx), null);
                     } else {
                         for (TransactionOutput output : tx.getOutputs()) {
