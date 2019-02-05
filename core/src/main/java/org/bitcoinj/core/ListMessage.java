@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.base.MoreObjects;
+
 /**
  * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
  * 
@@ -128,5 +130,12 @@ public abstract class ListMessage extends Message {
     @Override
     public int hashCode() {
         return items.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
+        helper.addValue(items);
+        return helper.toString();
     }
 }
