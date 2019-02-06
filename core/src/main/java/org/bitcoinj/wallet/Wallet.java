@@ -266,6 +266,15 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Creates a new, empty wallet with just a basic keychain and no transactions. No deterministic chains will be created
+     * automatically. This is meant for when you just want to import a few keys and operate on them.
+     * @param params network parameters
+     */
+    public static Wallet createBasic(NetworkParameters params) {
+        return new Wallet(params, KeyChainGroup.createBasic(params));
+    }
+
+    /**
      * @param params network parameters
      * @param seed deterministic seed
      * @return a wallet from a deterministic seed with a
@@ -352,12 +361,13 @@ public class Wallet extends BaseTaggableObject
         this.context = checkNotNull(context);
         this.params = checkNotNull(context.getParams());
         this.keyChainGroup = checkNotNull(keyChainGroup);
-        if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
+        if (this.keyChainGroup.isSupportsDeterministicChains()
+                && params.getId().equals(NetworkParameters.ID_UNITTESTNET))
             this.keyChainGroup.setLookaheadSize(5);  // Cut down excess computation for unit tests.
         // If this keyChainGroup was created fresh just now (new wallet), make HD so a backup can be made immediately
         // without having to call current/freshReceiveKey. If there are already keys in the chain of any kind then
         // we're probably being deserialized so leave things alone: the API user can upgrade later.
-        if (this.keyChainGroup.numKeys() == 0)
+        if (this.keyChainGroup.isSupportsDeterministicChains() && this.keyChainGroup.numKeys() == 0)
             this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<>();

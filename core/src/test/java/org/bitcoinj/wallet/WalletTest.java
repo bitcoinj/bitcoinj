@@ -135,6 +135,20 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void createBasic() {
+        Wallet wallet = Wallet.createBasic(UNITTEST);
+        assertEquals(0, wallet.getKeyChainGroupSize());
+        wallet.importKey(new ECKey());
+        assertEquals(1, wallet.getKeyChainGroupSize());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void createBasic_noDerivation() {
+        Wallet wallet = Wallet.createBasic(UNITTEST);
+        wallet.currentReceiveAddress();
+    }
+
+    @Test
     public void getSeedAsWords1() {
         // Can't verify much here as the wallet is random each time. We could fix the RNG for the unit tests and solve.
         assertEquals(12, wallet.getKeyChainSeed().getMnemonicCode().size());
