@@ -132,7 +132,9 @@ public class KeyChainGroup implements KeyBag {
 
         if (isMarried()) {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
-                Address address = makeP2SHOutputScript(entry.getValue(), getActiveKeyChain()).getToAddress(params);
+                Address address = ScriptBuilder
+                        .createP2SHOutputScript(getActiveKeyChain().getRedeemData(entry.getValue()).redeemScript)
+                        .getToAddress(params);
                 currentAddresses.put(entry.getKey(), address);
             }
         }
@@ -622,10 +624,6 @@ public class KeyChainGroup implements KeyBag {
 
     public boolean isRequiringUpdateAllBloomFilter() {
         throw new UnsupportedOperationException();   // Unused.
-    }
-
-    private Script makeP2SHOutputScript(DeterministicKey followedKey, DeterministicKeyChain chain) {
-        return ScriptBuilder.createP2SHOutputScript(chain.getRedeemData(followedKey).redeemScript);
     }
 
     /** Adds a listener for events that are run when keys are added, on the user thread. */
