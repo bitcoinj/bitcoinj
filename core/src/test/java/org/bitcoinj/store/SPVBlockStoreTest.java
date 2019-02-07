@@ -130,6 +130,7 @@ public class SPVBlockStoreTest {
     public void performanceTest() throws BlockStoreException {
         // On slow machines, this test could fail. Then either add @Ignore or adapt the threshold and please report to
         // us.
+        // See https://github.com/bitcoinj/bitcoinj/pull/1695
         final int ITERATIONS = 100000;
         final long THRESHOLD_MS = 1500;
         SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
@@ -145,5 +146,13 @@ public class SPVBlockStoreTest {
         assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
                 watch.elapsed(TimeUnit.MILLISECONDS) < THRESHOLD_MS);
         store.close();
+    }
+
+    @Test
+    public void oneStoreDelete() throws Exception {
+        // See https://github.com/bitcoinj/bitcoinj/pull/1695
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        store.close();
+        assertTrue (blockStoreFile.delete());
     }
 }
