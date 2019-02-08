@@ -33,6 +33,7 @@ import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -1514,17 +1515,18 @@ public class WalletTool {
     }
 
     private static void setCreationTime() {
-        DeterministicSeed seed = wallet.getActiveKeyChain().getSeed();
-        if (seed == null) {
-            System.err.println("Active chain does not have a seed.");
-            return;
-        }
         long creationTime = getCreationTimeSeconds();
+        for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
+            DeterministicSeed seed = chain.getSeed();
+            if (seed == null)
+                System.out.println("Active chain does not have a seed: " + chain);
+            else
+                seed.setCreationTimeSeconds(creationTime);
+        }
         if (creationTime > 0)
             System.out.println("Setting creation time to: " + Utils.dateTimeFormat(creationTime * 1000));
         else
             System.out.println("Clearing creation time.");
-        seed.setCreationTimeSeconds(creationTime);
     }
 
     static synchronized void onChange(final CountDownLatch latch) {

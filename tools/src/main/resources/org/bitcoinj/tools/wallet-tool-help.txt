@@ -61,7 +61,7 @@ Usage: wallet-tool --flags action-name
                        created before this date will be re-spent to a key (from an HD tree) that was created after it.
                        If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree
                        will be created from a new random seed.
-  set-creation-time    Modify the creation time of the active chain of this wallet. This is useful for repairing
+  set-creation-time    Modify the creation time of the active chains of this wallet. This is useful for repairing
                        wallets that accidently have been created "in the future". Currently, watching wallets are not
                        supported.
                        If --date is specified, that's the creation date.

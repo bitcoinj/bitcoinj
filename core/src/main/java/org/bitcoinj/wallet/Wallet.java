@@ -443,8 +443,9 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet containing a given set of keys. All further keys will be derived from the oldest key.
+     * @deprecated Use {@link #createBasic(NetworkParameters)}, then {@link #importKeys(List)}.
      */
+    @Deprecated
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
         for (ECKey key : keys)
             checkArgument(!(key instanceof DeterministicKey));
@@ -518,10 +519,28 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Gets the active keychain via {@link KeyChainGroup#getActiveKeyChain()}
+     * Gets the active keychains via {@link KeyChainGroup#getActiveKeyChains()}
+     */
+    public List<DeterministicKeyChain> getActiveKeyChains() {
+        keyChainGroupLock.lock();
+        try {
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            return keyChainGroup.getActiveKeyChains(keyRotationTimeSecs);
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+    }
+
+    /**
+     * Gets the default active keychain via {@link KeyChainGroup#getActiveKeyChain()}
      */
     public DeterministicKeyChain getActiveKeyChain() {
-        return keyChainGroup.getActiveKeyChain();
+        keyChainGroupLock.lock();
+        try {
+            return keyChainGroup.getActiveKeyChain();
+        } finally {
+            keyChainGroupLock.unlock();
+        }
     }
 
     /**
@@ -662,6 +681,25 @@ public class Wallet extends BaseTaggableObject
      */
     public Address freshReceiveAddress() {
         return freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
+    }
+
+    /**
+     * <p>Returns a fresh receive address for a given {@link Script.ScriptType}.</p>
+     * <p>This method is meant for when you really need a fallback address. Normally, you should be
+     * using {@link #freshAddress(KeyChain.KeyPurpose)} or
+     * {@link #currentAddress(KeyChain.KeyPurpose)}.</p>
+     */
+    public Address freshReceiveAddress(Script.ScriptType scriptType) {
+        Address address;
+        keyChainGroupLock.lock();
+        try {
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            address = keyChainGroup.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS, scriptType, keyRotationTimeSecs);
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+        saveNow();
+        return address;
     }
 
     /**
