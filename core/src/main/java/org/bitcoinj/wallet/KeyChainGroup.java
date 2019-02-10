@@ -62,6 +62,62 @@ import static com.google.common.base.Preconditions.*;
  */
 public class KeyChainGroup implements KeyBag {
 
+    /**
+     * Builder for {@link KeyChainGroup}. Use {@link KeyChainGroup#builder(NetworkParameters)} to acquire an instance.
+     */
+    public static class Builder {
+        private final NetworkParameters params;
+        private final List<DeterministicKeyChain> chains = new LinkedList<DeterministicKeyChain>();
+
+        private Builder(NetworkParameters params) {
+            this.params = params;
+        }
+
+        /**
+         * Add chain from a random source.
+         */
+        public Builder fromRandom() {
+            this.chains.clear();
+            DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
+            this.chains.add(chain);
+            return this;
+        }
+
+        /**
+         * Add chain from a given seed.
+         * @param seed deterministic seed to derive all keys from
+         */
+        public Builder fromSeed(DeterministicSeed seed) {
+            this.chains.clear();
+            DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
+            this.chains.add(chain);
+            return this;
+        }
+
+        /**
+         * Add a single chain.
+         * @param chain to add
+         */
+        public Builder addChain(DeterministicKeyChain chain) {
+            this.chains.add(chain);
+            return this;
+        }
+
+        /**
+         * Add multiple chains.
+         * @param chains to add
+         */
+        public Builder chains(List<DeterministicKeyChain> chains) {
+            this.chains.clear();
+            this.chains.addAll(chains);
+            return this;
+        }
+
+        public KeyChainGroup build() {
+            return new KeyChainGroup(params, null, chains, null, null);
+        }
+    }
+
     static {
         // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
         if (Utils.isAndroidRuntime())
@@ -71,7 +127,7 @@ public class KeyChainGroup implements KeyBag {
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
 
     private BasicKeyChain basic;
-    private NetworkParameters params;
+    private final NetworkParameters params;
     // Keychains for deterministically derived keys. If this is null, no chains should be created automatically.
     protected final @Nullable LinkedList<DeterministicKeyChain> chains;
     // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
@@ -87,41 +143,8 @@ public class KeyChainGroup implements KeyBag {
         return new KeyChainGroup(params, new BasicKeyChain(), null, null, null);
     }
 
-    /** Creates a keychain group with no basic chain, and a single, lazily created HD chain. */
-    public KeyChainGroup(NetworkParameters params) {
-        this(params, null, new ArrayList<DeterministicKeyChain>(1), null, null);
-    }
-
-    /** Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. */
-    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed) {
-        this(params, null, ImmutableList.of(DeterministicKeyChain.builder().seed(seed).build()), null, null);
-    }
-
-    /**
-     * Creates a keychain group with no basic chain, and an HD chain initialized from the given seed. Account path is
-     * provided.
-     */
-    public KeyChainGroup(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
-        this(params, null,
-                ImmutableList.of(DeterministicKeyChain.builder().seed(seed).accountPath(accountPath).build()), null,
-                null);
-    }
-
-    /**
-     * Creates a keychain group with no basic chain, and an HD chain that is watching the given watching key.
-     * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
-     */
-    public KeyChainGroup(NetworkParameters params, DeterministicKey watchKey) {
-        this(params, null, ImmutableList.of(DeterministicKeyChain.builder().watch(watchKey).build()), null, null);
-    }
-
-    /**
-     * Creates a keychain group with no basic chain, and an HD chain that is watching or spending the given key.
-     * This HAS to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
-     */
-    public KeyChainGroup(NetworkParameters params, DeterministicKey accountKey, boolean watch) {
-        this(params, null, ImmutableList.of(watch ? DeterministicKeyChain.builder().watch(accountKey).build()
-                : DeterministicKeyChain.builder().spend(accountKey).build()), null, null);
+    public static KeyChainGroup.Builder builder(NetworkParameters params) {
+        return new Builder(params);
     }
 
     private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, @Nullable List<DeterministicKeyChain> chains,

@@ -77,7 +77,7 @@ public class BloomFilterTest {
         Address addr = LegacyAddress.fromKey(MAINNET, privKey.getKey());
         assertTrue(addr.toString().equals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e"));
 
-        KeyChainGroup group = new KeyChainGroup(MAINNET);
+        KeyChainGroup group = KeyChainGroup.builder(MAINNET).build();
         // Add a random key which happens to have been used in a recent generation
         group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
         Wallet wallet = new Wallet(MAINNET, group);

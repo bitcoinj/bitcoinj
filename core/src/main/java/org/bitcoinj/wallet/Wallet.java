@@ -262,7 +262,7 @@ public class Wallet extends BaseTaggableObject
      * {@link #loadFromFile}.
      */
     public Wallet(Context context) {
-        this(context, new KeyChainGroup(context.getParams()));
+        this(context, KeyChainGroup.builder(context.getParams()).fromRandom().build());
     }
 
     /**
@@ -281,7 +281,8 @@ public class Wallet extends BaseTaggableObject
      * {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH 0 hardened path}
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        return new Wallet(params, new KeyChainGroup(params, seed));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
+        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -291,14 +292,17 @@ public class Wallet extends BaseTaggableObject
      * @return an instance of a wallet from a deterministic seed.
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
-        return new Wallet(params, new KeyChainGroup(params, seed, accountPath));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).accountPath(accountPath).build();
+        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key.
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
+     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        return new Wallet(params, new KeyChainGroup(params, watchKey));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).build();
+        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -313,11 +317,12 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
-     * This wallet can also spend.
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
+     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
      */
     public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
-        return new Wallet(params, new KeyChainGroup(params, spendKey, false));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).build();
+        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -332,13 +337,16 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
+     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
-    public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey, ChildNumber accountNumber) {
+    public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey,
+            ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
         accountKey = accountKey.dropParent();
         accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
-        return new Wallet(params, new KeyChainGroup(params, accountKey, false));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey).build();
+        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -348,7 +356,7 @@ public class Wallet extends BaseTaggableObject
         for (ECKey key : keys)
             checkArgument(!(key instanceof DeterministicKey));
 
-        KeyChainGroup group = new KeyChainGroup(params);
+        KeyChainGroup group = KeyChainGroup.builder(params).build();
         group.importKeys(keys);
         return new Wallet(params, group);
     }

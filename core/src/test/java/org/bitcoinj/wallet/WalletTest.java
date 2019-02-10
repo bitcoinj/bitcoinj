@@ -79,7 +79,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Utils.HEX;
@@ -181,9 +180,10 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void encryptDecryptWalletWithArbitraryPath() throws Exception {
         final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
-        KeyChainGroup keyChainGroup = new KeyChainGroup(UNITTEST,
-                new DeterministicSeed(ENTROPY, "", 1389353062L),
-                        DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH);
+        KeyChainGroup keyChainGroup = KeyChainGroup.builder(UNITTEST)
+                .addChain(DeterministicKeyChain.builder().seed(new DeterministicSeed(ENTROPY, "", 1389353062L))
+                        .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
+                .build();
         Wallet encryptedWallet = new Wallet(UNITTEST, keyChainGroup);
         encryptedWallet.encrypt(PASSWORD1);
         encryptedWallet.decrypt(PASSWORD1);
@@ -3040,17 +3040,11 @@ public class WalletTest extends TestWithWallet {
         goodKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
 
         // Do an upgrade based on the bad key.
-        final AtomicReference<List<DeterministicKeyChain>> fChains = new AtomicReference<>();
-        KeyChainGroup kcg = new KeyChainGroup(UNITTEST) {
-
-            {
-                fChains.set(chains);
-            }
-        };
+        KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST).build();
         kcg.importKeys(badKey, goodKey);
         Utils.rollMockClock(86400);
         wallet = new Wallet(UNITTEST, kcg);   // This avoids the automatic HD initialisation
-        assertTrue(fChains.get().isEmpty());
+        assertTrue(kcg.getDeterministicKeyChains().isEmpty());
         wallet.upgradeToDeterministic(null);
         DeterministicKey badWatchingKey = wallet.getWatchingKey();
         assertEquals(badKey.getCreationTimeSeconds(), badWatchingKey.getCreationTimeSeconds());
@@ -3065,17 +3059,17 @@ public class WalletTest extends TestWithWallet {
         assertEquals(goodKey.getCreationTimeSeconds(), usedKey.getCreationTimeSeconds());
         assertEquals(goodKey.getCreationTimeSeconds(), wallet.freshReceiveKey().getCreationTimeSeconds());
         assertEquals("mrM3TpCnav5YQuVA1xLercCGJH4DXujMtv", LegacyAddress.fromKey(UNITTEST, usedKey).toString());
-        DeterministicKeyChain c = fChains.get().get(1);
+        DeterministicKeyChain c = kcg.getDeterministicKeyChains().get(1);
         assertEquals(c.getEarliestKeyCreationTime(), goodKey.getCreationTimeSeconds());
-        assertEquals(2, fChains.get().size());
+        assertEquals(2, kcg.getDeterministicKeyChains().size());
 
         // Commit the maint txns.
         wallet.commitTx(txns.get(0));
 
         // Check next maintenance does nothing.
         assertTrue(wallet.doMaintenance(null, false).get().isEmpty());
-        assertEquals(c, fChains.get().get(1));
-        assertEquals(2, fChains.get().size());
+        assertEquals(c, kcg.getDeterministicKeyChains().get(1));
+        assertEquals(2, kcg.getDeterministicKeyChains().size());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -3277,7 +3271,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyEvents() throws Exception {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
-        wallet = new Wallet(UNITTEST);
+        wallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).build());
         final List<ECKey> keys = Lists.newLinkedList();
         wallet.addKeyChainEventListener(Threading.SAME_THREAD, new KeyChainEventListener() {
             @Override
@@ -3298,7 +3292,7 @@ public class WalletTest extends TestWithWallet {
         // much where it goes). Wallet on the other hand will try to auto-upgrade you when possible.
 
         // Create an old-style random wallet.
-        KeyChainGroup group = new KeyChainGroup(UNITTEST);
+        KeyChainGroup group = KeyChainGroup.builder(UNITTEST).build();
         group.importKeys(new ECKey(), new ECKey());
         wallet = new Wallet(UNITTEST, group);
         assertTrue(wallet.isDeterministicUpgradeRequired());
@@ -3310,7 +3304,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void upgradeToHDEncrypted() throws Exception {
         // Create an old-style random wallet.
-        KeyChainGroup group = new KeyChainGroup(UNITTEST);
+        KeyChainGroup group = KeyChainGroup.builder(UNITTEST).build();
         group.importKeys(new ECKey(), new ECKey());
         wallet = new Wallet(UNITTEST, group);
         assertTrue(wallet.isDeterministicUpgradeRequired());

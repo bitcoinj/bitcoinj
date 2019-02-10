@@ -26,6 +26,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -88,7 +89,7 @@ public class TestWithNetworkConnections {
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
-            wallet = new Wallet(UNITTEST);
+            wallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).build());
             key = wallet.freshReceiveKey();
             address = LegacyAddress.fromKey(UNITTEST, key);
         }

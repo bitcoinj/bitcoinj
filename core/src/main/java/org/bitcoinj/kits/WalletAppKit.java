@@ -434,17 +434,17 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     protected Wallet createWallet() {
-        KeyChainGroup kcg;
+        KeyChainGroup.Builder kcg = KeyChainGroup.builder(params);
         if (restoreFromSeed != null)
-            kcg = new KeyChainGroup(params, restoreFromSeed);
+            kcg.addChain(DeterministicKeyChain.builder().seed(restoreFromSeed).build());
         else if (restoreFromKey != null)
-            kcg = new KeyChainGroup(params, restoreFromKey, false);
+            kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).build());
         else
-            kcg = new KeyChainGroup(params);
+            kcg.fromRandom();
         if (walletFactory != null) {
-            return walletFactory.create(params, kcg);
+            return walletFactory.create(params, kcg.build());
         } else {
-            return new Wallet(params, kcg);  // default
+            return new Wallet(params, kcg.build()); // default
         }
     }
 

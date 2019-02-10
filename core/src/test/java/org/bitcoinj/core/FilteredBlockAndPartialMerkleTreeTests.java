@@ -56,7 +56,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
                 BigInteger.valueOf(1), 100000));
         store.setChainHead(store.get(Sha256Hash.wrap("000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506")));
 
-        KeyChainGroup group = new KeyChainGroup(UNITTEST);
+        KeyChainGroup group = KeyChainGroup.builder(UNITTEST).build();
         group.importKeys(ECKey.fromPublicOnly(HEX.decode("04b27f7e9475ccf5d9a431cb86d665b8302c140144ec2397fce792f4a4e7765fecf8128534eaa71df04f93c74676ae8279195128a1506ebf7379d23dab8fca0f63")),
                 ECKey.fromPublicOnly(HEX.decode("04732012cb962afa90d31b25d8fb0e32c94e513ab7a17805c14ca4c3423e18b4fb5d0e676841733cb83abaf975845c9f6f2a8097b7d04f4908b18368d6fc2d68ec")),
                 ECKey.fromPublicOnly(HEX.decode("04cfb4113b3387637131ebec76871fd2760fc430dd16de0110f0eb07bb31ffac85e2607c189cb8582ea1ccaeb64ffd655409106589778f3000fdfe3263440b0350")),
