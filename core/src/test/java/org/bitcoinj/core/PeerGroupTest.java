@@ -25,7 +25,6 @@ import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.*;
 import org.junit.runner.*;
@@ -643,8 +642,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void testBloomResendOnNewKey() throws Exception {
         // Check that when we add a new key to the wallet, the Bloom filter is re-calculated and re-sent but only once
         // we exceed the lookahead threshold.
-        wallet.setKeyChainGroupLookaheadSize(5);
-        wallet.setKeyChainGroupLookaheadThreshold(4);
         peerGroup.start();
         // Create a couple of peers.
         InboundMessageQueuer p1 = connectPeer(1);
@@ -788,9 +785,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         for (int i = 0; i < NUM_KEYS; i++) {
             keys.add(shadow.freshReceiveKey());
         }
-        // Reduce the number of keys we need to work with to speed up this test.
-        wallet.setKeyChainGroupLookaheadSize(4);
-        wallet.setKeyChainGroupLookaheadThreshold(2);
 
         peerGroup.start();
         InboundMessageQueuer p1 = connectPeer(1);

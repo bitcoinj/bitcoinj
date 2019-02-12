@@ -69,6 +69,7 @@ public class KeyChainGroup implements KeyBag {
         private final NetworkParameters params;
         private final KeyChainGroupStructure structure;
         private final List<DeterministicKeyChain> chains = new LinkedList<DeterministicKeyChain>();
+        private int lookaheadSize = -1, lookaheadThreshold = -1;
 
         private Builder(NetworkParameters params, KeyChainGroupStructure structure) {
             this.params = params;
@@ -119,8 +120,26 @@ public class KeyChainGroup implements KeyBag {
             return this;
         }
 
+        /**
+         * Set a custom lookahead size for all deterministic chains
+         * @param lookaheadSize lookahead size
+         */
+        public Builder lookaheadSize(int lookaheadSize) {
+            this.lookaheadSize = lookaheadSize;
+            return this;
+        }
+
+        /**
+         * Set a custom lookahead threshold for all deterministic chains
+         * @param lookaheadThreshold lookahead threshold
+         */
+        public Builder lookaheadThreshold(int lookaheadThreshold) {
+            this.lookaheadThreshold = lookaheadThreshold;
+            return this;
+        }
+
         public KeyChainGroup build() {
-            return new KeyChainGroup(params, null, chains, null, null);
+            return new KeyChainGroup(params, null, chains, lookaheadSize, lookaheadThreshold, null, null);
         }
     }
 
@@ -146,7 +165,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** Creates a keychain group with just a basic chain. No deterministic chains will be created automatically. */
     public static KeyChainGroup createBasic(NetworkParameters params) {
-        return new KeyChainGroup(params, new BasicKeyChain(), null, null, null);
+        return new KeyChainGroup(params, new BasicKeyChain(), null, -1, -1, null, null);
     }
 
     public static KeyChainGroup.Builder builder(NetworkParameters params) {
@@ -157,11 +176,28 @@ public class KeyChainGroup implements KeyBag {
         return new Builder(params, structure);
     }
 
-    private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain, @Nullable List<DeterministicKeyChain> chains,
-                          @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
+    private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain,
+            @Nullable List<DeterministicKeyChain> chains, int lookaheadSize, int lookaheadThreshold,
+            @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
         this.params = params;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
-        this.chains = chains != null ? new LinkedList<DeterministicKeyChain>(chains) : null;
+        if (chains != null) {
+            if (lookaheadSize > -1)
+                this.lookaheadSize = lookaheadSize;
+            else if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
+                this.lookaheadSize = 5; // Cut down excess computation for unit tests.
+            if (lookaheadThreshold > -1)
+                this.lookaheadThreshold = lookaheadThreshold;
+            this.chains = new LinkedList<DeterministicKeyChain>(chains);
+            for (DeterministicKeyChain chain : this.chains) {
+                if (this.lookaheadSize > -1)
+                    chain.setLookaheadSize(this.lookaheadSize);
+                if (this.lookaheadThreshold > -1)
+                    chain.setLookaheadThreshold(this.lookaheadThreshold);
+            }
+        } else {
+            this.chains = null;
+        }
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
                 ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
@@ -335,18 +371,6 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * Sets the lookahead buffer size for ALL deterministic key chains as well as for following key chains if any exist,
-     * see {@link DeterministicKeyChain#setLookaheadSize(int)}
-     * for more information.
-     */
-    public void setLookaheadSize(int lookaheadSize) {
-        checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        this.lookaheadSize = lookaheadSize;
-        for (DeterministicKeyChain chain : chains)
-            chain.setLookaheadSize(lookaheadSize);
-    }
-
-    /**
      * Gets the current lookahead size being used for ALL deterministic key chains. See
      * {@link DeterministicKeyChain#setLookaheadSize(int)}
      * for more information.
@@ -357,17 +381,6 @@ public class KeyChainGroup implements KeyBag {
             return getActiveKeyChain().getLookaheadSize();
         else
             return lookaheadSize;
-    }
-
-    /**
-     * Sets the lookahead buffer threshold for ALL deterministic key chains, see
-     * {@link DeterministicKeyChain#setLookaheadThreshold(int)}
-     * for more information.
-     */
-    public void setLookaheadThreshold(int num) {
-        checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        for (DeterministicKeyChain chain : chains)
-            chain.setLookaheadThreshold(num);
     }
 
     /**
@@ -739,11 +752,16 @@ public class KeyChainGroup implements KeyBag {
     public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, KeyChainFactory factory) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null, factory);
+        int lookaheadSize = -1, lookaheadThreshold = -1;
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
-        if (!chains.isEmpty())
+        if (!chains.isEmpty()) {
+            DeterministicKeyChain activeChain = chains.get(chains.size() - 1);
+            lookaheadSize = activeChain.getLookaheadSize();
+            lookaheadThreshold = activeChain.getLookaheadThreshold();
             currentKeys = createCurrentKeysMap(chains);
+        }
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, null);
+        return new KeyChainGroup(params, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, null);
     }
 
     static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
@@ -754,11 +772,16 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory);
+        int lookaheadSize = -1, lookaheadThreshold = -1;
         EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys = null;
-        if (!chains.isEmpty())
+        if (!chains.isEmpty()) {
+            DeterministicKeyChain activeChain = chains.get(chains.size() - 1);
+            lookaheadSize = activeChain.getLookaheadSize();
+            lookaheadThreshold = activeChain.getLookaheadThreshold();
             currentKeys = createCurrentKeysMap(chains);
+        }
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, currentKeys, crypter);
+        return new KeyChainGroup(params, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, crypter);
     }
 
     /**

@@ -471,9 +471,6 @@ public class Wallet extends BaseTaggableObject
         this.context = checkNotNull(context);
         this.params = checkNotNull(context.getParams());
         this.keyChainGroup = checkNotNull(keyChainGroup);
-        if (this.keyChainGroup.isSupportsDeterministicChains()
-                && params.getId().equals(NetworkParameters.ID_UNITTESTNET))
-            this.keyChainGroup.setLookaheadSize(5);  // Cut down excess computation for unit tests.
         // If this keyChainGroup was created fresh just now (new wallet), make HD so a backup can be made immediately
         // without having to call current/freshReceiveKey. If there are already keys in the chain of any kind then
         // we're probably being deserialized so leave things alone: the API user can upgrade later.
@@ -901,31 +898,10 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** See {@link DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
-    public void setKeyChainGroupLookaheadSize(int lookaheadSize) {
-        keyChainGroupLock.lock();
-        try {
-            keyChainGroup.setLookaheadSize(lookaheadSize);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /** See {@link DeterministicKeyChain#setLookaheadSize(int)} for more info on this. */
     public int getKeyChainGroupLookaheadSize() {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.getLookaheadSize();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /** See {@link DeterministicKeyChain#setLookaheadThreshold(int)} for more info on this. */
-    public void setKeyChainGroupLookaheadThreshold(int num) {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            keyChainGroup.setLookaheadThreshold(num);
         } finally {
             keyChainGroupLock.unlock();
         }

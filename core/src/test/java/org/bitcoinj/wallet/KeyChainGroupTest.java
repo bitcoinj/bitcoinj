@@ -59,18 +59,16 @@ public class KeyChainGroupTest {
     public void setup() {
         BriefLogFormatter.init();
         Utils.setMockClock();
-        group = KeyChainGroup.builder(MAINNET).fromRandom(Script.ScriptType.P2PKH).build();
-        group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).fromRandom(Script.ScriptType.P2PKH)
+                .build();
         group.getActiveKeyChain();  // Force create a chain.
 
         watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB, MAINNET);
     }
 
     private KeyChainGroup createMarriedKeyChainGroup() {
-        KeyChainGroup group = KeyChainGroup.builder(MAINNET).build();
         DeterministicKeyChain chain = createMarriedKeyChain();
-        group.addAndActivateHDChain(chain);
-        group.setLookaheadSize(LOOKAHEAD_SIZE);
+        KeyChainGroup group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).addChain(chain).build();
         group.getActiveKeyChain();
         return group;
     }
@@ -305,8 +303,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void encryptionWhilstEmpty() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).fromRandom(Script.ScriptType.P2PKH).build();
-        group.setLookaheadSize(5);
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(5).fromRandom(Script.ScriptType.P2PKH).build();
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
         final KeyParameter aesKey = scrypt.deriveKey("password");
         group.encrypt(scrypt, aesKey);
@@ -458,9 +455,8 @@ public class KeyChainGroupTest {
 
     @Test
     public void serializeWatching() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).addChain(DeterministicKeyChain.builder().watch(watchingAccountKey)
-                .outputScriptType(Script.ScriptType.P2PKH).build()).build();
-        group.setLookaheadSize(LOOKAHEAD_SIZE);
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).addChain(DeterministicKeyChain.builder()
+                .watch(watchingAccountKey).outputScriptType(Script.ScriptType.P2PKH).build()).build();
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         group.freshKey(KeyChain.KeyPurpose.CHANGE);
         group.getBloomFilterElementCount();  // Force lookahead.
@@ -496,10 +492,9 @@ public class KeyChainGroupTest {
     public void constructFromSeed() throws Exception {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         final DeterministicSeed seed = checkNotNull(group.getActiveKeyChain().getSeed());
-        KeyChainGroup group2 = KeyChainGroup.builder(MAINNET)
+        KeyChainGroup group2 = KeyChainGroup.builder(MAINNET).lookaheadSize(5)
                 .addChain(DeterministicKeyChain.builder().seed(seed).outputScriptType(Script.ScriptType.P2PKH).build())
                 .build();
-        group2.setLookaheadSize(5);
         ECKey key2 = group2.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(key1, key2);
     }
@@ -517,8 +512,7 @@ public class KeyChainGroupTest {
     public void deterministicUpgradeUnencrypted() throws Exception {
         // Check that a group that contains only random keys has its HD chain created using the private key bytes of
         // the oldest random key, so upgrading the same wallet twice gives the same outcome.
-        group = KeyChainGroup.builder(MAINNET).build();
-        group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).build();
         ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
         ECKey key2 = new ECKey();
@@ -545,8 +539,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void deterministicUpgradeRotating() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).build();
-        group.setLookaheadSize(LOOKAHEAD_SIZE);   // Don't want slow tests.
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).build();
         long now = Utils.currentTimeSeconds();
         ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
@@ -639,10 +632,10 @@ public class KeyChainGroupTest {
 
     @Test
     public void segwitKeyChainGroup() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).addChain(DeterministicKeyChain.builder().entropy(ENTROPY, 0)
-                .outputScriptType(Script.ScriptType.P2WPKH).accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).build())
+        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE)
+                .addChain(DeterministicKeyChain.builder().entropy(ENTROPY, 0).outputScriptType(Script.ScriptType.P2WPKH)
+                        .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).build())
                 .build();
-        group.setLookaheadSize(LOOKAHEAD_SIZE); // Don't want slow tests.
         assertEquals(Script.ScriptType.P2WPKH, group.getActiveKeyChain().getOutputScriptType());
         assertEquals("bc1qhcurdec849thpjjp3e27atvya43gy2snrechd9",
                 group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());

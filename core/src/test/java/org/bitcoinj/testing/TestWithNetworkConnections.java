@@ -89,7 +89,9 @@ public class TestWithNetworkConnections {
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
-            wallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).build());
+            // Reduce the number of keys we need to work with to speed up these tests.
+            KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST).lookaheadSize(4).lookaheadThreshold(2).build();
+            wallet = new Wallet(UNITTEST, kcg);
             key = wallet.freshReceiveKey();
             address = LegacyAddress.fromKey(UNITTEST, key);
         }
