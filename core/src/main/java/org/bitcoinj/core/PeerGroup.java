@@ -860,22 +860,27 @@ public class PeerGroup implements TransactionBroadcaster {
         int newMax;
         lock.lock();
         try {
-            addInactive(peerAddress);
-            newMax = getMaxConnections() + 1;
+            if(addInactive(peerAddress)) {
+                newMax = getMaxConnections() + 1;
+                setMaxConnections(newMax);
+            }
         } finally {
             lock.unlock();
         }
-        setMaxConnections(newMax);
     }
 
-    private void addInactive(PeerAddress peerAddress) {
+    // Adds peerAddress to backoffMap map nd inactives queue.
+    // Returns true if it was added, false if it was already there.
+    private boolean addInactive(PeerAddress peerAddress) {
         lock.lock();
         try {
             // Deduplicate
-            if (backoffMap.containsKey(peerAddress))
-                return;
+            if (backoffMap.containsKey(peerAddress)) {
+                return false;
+            }
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
             inactives.offer(peerAddress);
+            return true;
         } finally {
             lock.unlock();
         }
