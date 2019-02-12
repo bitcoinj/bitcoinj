@@ -29,6 +29,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -60,7 +61,7 @@ public class TestWithWallet {
     public void setUp() throws Exception {
         BriefLogFormatter.init();
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         myKey = wallet.currentReceiveKey();
         myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
         blockStore = new MemoryBlockStore(UNITTEST);

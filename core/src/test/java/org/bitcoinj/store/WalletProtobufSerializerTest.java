@@ -37,6 +37,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.FooWalletExtension;
@@ -96,7 +97,7 @@ public class WalletProtobufSerializerTest {
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
         myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
-        myWallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).build());
+        myWallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).fromRandom(Script.ScriptType.P2PKH).build());
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
         myWallet.addWatchedAddress(LegacyAddress.fromKey(UNITTEST, myWatchedKey), mScriptCreationTime);

@@ -77,6 +77,7 @@ import javax.annotation.*;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -471,11 +472,6 @@ public class Wallet extends BaseTaggableObject
         this.context = checkNotNull(context);
         this.params = checkNotNull(context.getParams());
         this.keyChainGroup = checkNotNull(keyChainGroup);
-        // If this keyChainGroup was created fresh just now (new wallet), make HD so a backup can be made immediately
-        // without having to call current/freshReceiveKey. If there are already keys in the chain of any kind then
-        // we're probably being deserialized so leave things alone: the API user can upgrade later.
-        if (this.keyChainGroup.isSupportsDeterministicChains() && this.keyChainGroup.numKeys() == 0)
-            this.keyChainGroup.createAndActivateNewHDChain();
         watchedScripts = Sets.newHashSet();
         unspent = new HashMap<>();
         spent = new HashMap<>();
@@ -5249,7 +5245,8 @@ public class Wallet extends BaseTaggableObject
             try {
                 if (keyChainGroup.getImportedKeys().isEmpty()) {
                     log.info("All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
-                    keyChainGroup.createAndActivateNewHDChain();
+                    DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
+                    keyChainGroup.addAndActivateHDChain(chain);
                 } else {
                     log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
                     keyChainGroup.upgradeToDeterministic(keyRotationTimestamp, aesKey);
@@ -5257,7 +5254,8 @@ public class Wallet extends BaseTaggableObject
                 }
             } catch (AllRandomKeysRotating rotating) {
                 log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
-                keyChainGroup.createAndActivateNewHDChain();
+                DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
+                keyChainGroup.addAndActivateHDChain(chain);
             }
             saveNow();
         }

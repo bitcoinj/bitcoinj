@@ -42,11 +42,10 @@ import java.util.concurrent.*;
 import static com.google.common.base.Preconditions.*;
 
 /**
- * <p>A KeyChainGroup is used by the {@link Wallet} and
- * manages: a {@link BasicKeyChain} object (which will normally be empty), and zero or more
- * {@link DeterministicKeyChain}s. A deterministic key chain will be created lazily/on demand
- * when a fresh or current key is requested, possibly being initialized from the private key bytes of the earliest non
- * rotating key in the basic key chain if one is available, or from a fresh random seed if not.</p>
+ * <p>A KeyChainGroup is used by the {@link Wallet} and manages: a {@link BasicKeyChain} object
+ * (which will normally be empty), and zero or more {@link DeterministicKeyChain}s. The last added
+ * deterministic keychain is always the active keychain, that's the one we normally derive keys and
+ * addresses from.</p>
  *
  * <p>If a key rotation time is set, it may be necessary to add a new DeterministicKeyChain with a fresh seed
  * and also preserve the old one, so funds can be swept from the rotating keys. In this case, there may be
@@ -227,21 +226,13 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    /** Adds a new HD chain to the chains list, and make it the default chain (from which keys are issued). */
-    public void createAndActivateNewHDChain() {
-        checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        // We can't do auto upgrade here because we don't know the rotation time, if any.
-        final DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-        addAndActivateHDChain(chain);
-    }
-
     /**
      * Adds an HD chain to the chains list, and make it the default chain (from which keys are issued).
      * Useful for adding a complex pre-configured keychain, such as a married wallet.
      */
     public void addAndActivateHDChain(DeterministicKeyChain chain) {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        log.info("Creating and activating a new HD chain: {}", chain);
+        log.info("Activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
         if (lookaheadSize >= 0)
@@ -357,16 +348,8 @@ public class KeyChainGroup implements KeyBag {
     /** Returns the key chain that's used for generation of fresh/current keys. This is always the newest HD chain. */
     public final DeterministicKeyChain getActiveKeyChain() {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        if (chains.isEmpty()) {
-            if (basic.numKeys() > 0) {
-                log.warn("No HD chain present but random keys are: you probably deserialized an old wallet.");
-                // If called from the wallet (most likely) it'll try to upgrade us, as it knows the rotation time
-                // but not the password.
-                throw new DeterministicUpgradeRequiredException();
-            }
-            // Otherwise we have no HD chains and no random keys: we are a new born! So a random seed is fine.
-            createAndActivateNewHDChain();
-        }
+        if (chains.isEmpty())
+            throw new DeterministicUpgradeRequiredException();
         return chains.get(chains.size() - 1);
     }
 
@@ -597,21 +580,17 @@ public class KeyChainGroup implements KeyBag {
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
+        checkState(chains == null || !chains.isEmpty() || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
         // This code must be exception safe.
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
-        List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
-        if (chains != null && chains.isEmpty() && basic.numKeys() == 0) {
-            // No HD chains and no random keys: encrypting an entirely empty keychain group. But we can't do that, we
-            // must have something to encrypt: so instantiate a new HD chain here.
-            createAndActivateNewHDChain();
-        }
+        List<DeterministicKeyChain> newChains = new ArrayList<>();
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toEncrypted(keyCrypter, aesKey));
         this.keyCrypter = keyCrypter;
         basic = newBasic;
-        chains.clear();
-        chains.addAll(newChains);
+        this.chains.clear();
+        this.chains.addAll(newChains);
     }
 
     /**
