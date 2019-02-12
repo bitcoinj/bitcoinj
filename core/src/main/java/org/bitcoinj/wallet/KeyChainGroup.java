@@ -50,7 +50,10 @@ import static com.google.common.base.Preconditions.*;
  * <p>There can be active keychains for each output script type. However this class almost entirely only works on
  * the default active keychain (see {@link #getActiveKeyChain()}). The other active keychains
  * (see {@link #getActiveKeyChain(ScriptType, long)}) are meant as fallback for if a sender doesn't understand a
- * certain new script type (e.g. P2WPKH which comes with the new Bech32 address format).</p>
+ * certain new script type (e.g. P2WPKH which comes with the new Bech32 address format). Active keychains
+ * share the same seed, so that upgrading the wallet
+ * (see {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)}) to understand
+ * a new script type doesn't require a fresh backup.</p>
  *
  * <p>If a key rotation time is set, it may be necessary to add a new DeterministicKeyChain with a fresh seed
  * and also preserve the old one, so funds can be swept from the rotating keys. In this case, there may be
@@ -422,6 +425,15 @@ public class KeyChainGroup implements KeyBag {
         if (chains.isEmpty())
             throw new DeterministicUpgradeRequiredException();
         return chains.get(chains.size() - 1);
+    }
+
+    /**
+     * Merge all active chains from the given keychain group into this keychain group.
+     */
+    public final void mergeActiveKeyChains(KeyChainGroup from, long keyRotationTimeSecs) {
+        checkArgument(isEncrypted() == from.isEncrypted(), "encrypted and non-encrypted keychains cannot be mixed");
+        for (DeterministicKeyChain chain : from.getActiveKeyChains(keyRotationTimeSecs))
+            addAndActivateHDChain(chain);
     }
 
     /**
@@ -835,9 +847,18 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * If the key chain contains only random keys and no deterministic key chains, this method will create a chain
-     * based on the oldest non-rotating private key (i.e. the seed is derived from the old wallet).
+     * <p>This method will upgrade the wallet along the following path: {@code Basic --> P2PKH --> P2WPKH}</p>
+     * <p>It won't skip any steps in that upgrade path because the user might be restoring from a backup and
+     * still expects money on the P2PKH chain.</p>
+     * <p>It will extract and reuse the seed from the current wallet, so that a fresh backup isn't required
+     * after upgrading. If coming from a basic chain containing only random keys this means it will pick the
+     * oldest non-rotating private key as a seed.</p>
+     * <p>Note that for upgrading an encrypted wallet, the decryption key is needed. In future, we could skip
+     * that requirement for a {@code P2PKH --> P2WPKH} upgrade and just clone the encryped seed, but currently
+     * the key is needed even for that.</p>
      *
+     * @param preferredScriptType desired script type for the active keychain
+     * @param structure keychain group structure to derive an account path from
      * @param keyRotationTimeSecs If non-zero, UNIX time for which keys created before this are assumed to be
      *                            compromised or weak, those keys will not be used for deterministic upgrade.
      * @param aesKey If non-null, the encryption key the keychain is encrypted under. If the keychain is encrypted
@@ -849,66 +870,95 @@ public class KeyChainGroup implements KeyBag {
      * @throws java.lang.IllegalArgumentException if the rotation time specified excludes all keys.
      * @throws DeterministicUpgradeRequiresPassword if the key chain group is encrypted
      *         and you should provide the users encryption key.
-     * @return the DeterministicKeyChain that was created by the upgrade.
      */
-    public DeterministicKeyChain upgradeToDeterministic(long keyRotationTimeSecs, @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword, AllRandomKeysRotating {
+    public void upgradeToDeterministic(Script.ScriptType preferredScriptType, KeyChainGroupStructure structure,
+            long keyRotationTimeSecs, @Nullable KeyParameter aesKey)
+            throws DeterministicUpgradeRequiresPassword, AllRandomKeysRotating {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        checkState(basic.numKeys() > 0);
+        checkNotNull(structure);
         checkArgument(keyRotationTimeSecs >= 0);
-        // Subtract one because the key rotation time might have been set to the creation time of the first known good
-        // key, in which case, that's the one we want to find.
-        ECKey keyToUse = basic.findOldestKeyAfter(keyRotationTimeSecs - 1);
-        if (keyToUse == null)
-            throw new AllRandomKeysRotating();
+        if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTimeSecs))
+            return; // Nothing to do.
 
-        if (keyToUse.isEncrypted()) {
-            if (aesKey == null) {
-                // We can't auto upgrade because we don't know the users password at this point. We throw an
-                // exception so the calling code knows to abort the load and ask the user for their password, they can
-                // then try loading the wallet again passing in the AES key.
-                //
-                // There are a few different approaches we could have used here, but they all suck. The most obvious
-                // is to try and be as lazy as possible, running in the old random-wallet mode until the user enters
-                // their password for some other reason and doing the upgrade then. But this could result in strange
-                // and unexpected UI flows for the user, as well as complicating the job of wallet developers who then
-                // have to support both "old" and "new" UI modes simultaneously, switching them on the fly. Given that
-                // this is a one-off transition, it seems more reasonable to just ask the user for their password
-                // on startup, and then the wallet app can have all the widgets for accessing seed words etc active
-                // all the time.
-                throw new DeterministicUpgradeRequiresPassword();
+        // Basic --> P2PKH upgrade
+        if (basic.numKeys() > 0 && getActiveKeyChain(Script.ScriptType.P2PKH, keyRotationTimeSecs) == null) {
+            // Subtract one because the key rotation time might have been set to the creation time of the first known good
+            // key, in which case, that's the one we want to find.
+            ECKey keyToUse = basic.findOldestKeyAfter(keyRotationTimeSecs - 1);
+            if (keyToUse == null)
+                throw new AllRandomKeysRotating();
+            boolean keyWasEncrypted = keyToUse.isEncrypted();
+            if (keyWasEncrypted) {
+                if (aesKey == null) {
+                    // We can't auto upgrade because we don't know the users password at this point. We throw an
+                    // exception so the calling code knows to abort the load and ask the user for their password, they can
+                    // then try loading the wallet again passing in the AES key.
+                    //
+                    // There are a few different approaches we could have used here, but they all suck. The most obvious
+                    // is to try and be as lazy as possible, running in the old random-wallet mode until the user enters
+                    // their password for some other reason and doing the upgrade then. But this could result in strange
+                    // and unexpected UI flows for the user, as well as complicating the job of wallet developers who then
+                    // have to support both "old" and "new" UI modes simultaneously, switching them on the fly. Given that
+                    // this is a one-off transition, it seems more reasonable to just ask the user for their password
+                    // on startup, and then the wallet app can have all the widgets for accessing seed words etc active
+                    // all the time.
+                    throw new DeterministicUpgradeRequiresPassword();
+                }
+                keyToUse = keyToUse.decrypt(aesKey);
+            } else if (aesKey != null) {
+                throw new IllegalStateException("AES Key was provided but wallet is not encrypted.");
             }
-            keyToUse = keyToUse.decrypt(aesKey);
-        } else if (aesKey != null) {
-            throw new IllegalStateException("AES Key was provided but wallet is not encrypted.");
+
+            log.info(
+                    "Upgrading from basic keychain to P2PKH deterministic keychain. Using oldest non-rotating private key (address: {})",
+                    LegacyAddress.fromKey(params, keyToUse));
+            byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
+            // Private keys should be at least 128 bits long.
+            checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+            // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
+            // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
+            // we all have bigger problems.
+            entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
+            checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
+            DeterministicKeyChain chain = DeterministicKeyChain.builder()
+                    .entropy(entropy, keyToUse.getCreationTimeSeconds())
+                    .outputScriptType(Script.ScriptType.P2PKH)
+                    .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+            if (keyWasEncrypted)
+                chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
+            addAndActivateHDChain(chain);
         }
 
-        if (chains.isEmpty()) {
-            log.info("Auto-upgrading pre-HD wallet to HD!");
-        } else {
-            log.info("Wallet with existing HD chain is being re-upgraded due to change in key rotation time.");
+        // P2PKH --> P2WPKH upgrade
+        if (preferredScriptType == Script.ScriptType.P2WPKH
+                && getActiveKeyChain(Script.ScriptType.P2WPKH, keyRotationTimeSecs) == null) {
+            DeterministicSeed seed = getActiveKeyChain(Script.ScriptType.P2PKH, keyRotationTimeSecs).getSeed();
+            boolean seedWasEncrypted = seed.isEncrypted();
+            if (seedWasEncrypted) {
+                if (aesKey == null)
+                    throw new DeterministicUpgradeRequiresPassword();
+                seed = seed.decrypt(keyCrypter, "", aesKey);
+            }
+            log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
+            DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
+                    .outputScriptType(Script.ScriptType.P2WPKH)
+                    .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+            if (seedWasEncrypted)
+                chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
+            addAndActivateHDChain(chain);
         }
-        log.info("Instantiating new HD chain using oldest non-rotating private key (address: {})", LegacyAddress.fromKey(params, keyToUse));
-        byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
-        // Private keys should be at least 128 bits long.
-        checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-        // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
-        // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
-        // we all have bigger problems.
-        entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
-        checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-        String passphrase = ""; // FIXME allow non-empty passphrase
-        DeterministicKeyChain chain = DeterministicKeyChain.builder()
-                .entropy(entropy, keyToUse.getCreationTimeSeconds()).passphrase(passphrase).build();
-        if (aesKey != null) {
-            chain = chain.toEncrypted(checkNotNull(basic.getKeyCrypter()), aesKey);
-        }
-        chains.add(chain);
-        return chain;
     }
 
-    /** Returns true if the group contains random keys but no HD chains. */
-    public boolean isDeterministicUpgradeRequired() {
-        return basic.numKeys() > 0 && chains != null && chains.isEmpty();
+    /**
+     * Returns true if a call to {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)} is required
+     * in order to have an active deterministic keychain of the desired script type.
+     */
+    public boolean isDeterministicUpgradeRequired(Script.ScriptType preferredScriptType, long keyRotationTimeSecs) {
+        if (!isSupportsDeterministicChains())
+            return false;
+        if (getActiveKeyChain(preferredScriptType, keyRotationTimeSecs) == null)
+            return true;
+        return false;
     }
 
     private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {

@@ -741,10 +741,24 @@ public class Wallet extends BaseTaggableObject
      * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
-    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+    public void upgradeToDeterministic(Script.ScriptType outputScriptType, @Nullable KeyParameter aesKey)
+            throws DeterministicUpgradeRequiresPassword {
+        upgradeToDeterministic(outputScriptType, KeyChainGroupStructure.DEFAULT, aesKey);
+    }
+
+    /**
+     * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption
+     * key, after loading a wallet produced by previous versions of bitcoinj. If the wallet is encrypted the key
+     * <b>must</b> be provided, due to the way the seed is derived deterministically from private key bytes: failing
+     * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
+     * you automatically the first time a new key is requested (this happens when spending due to the change address).
+     */
+    public void upgradeToDeterministic(Script.ScriptType outputScriptType, KeyChainGroupStructure structure,
+            @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         keyChainGroupLock.lock();
         try {
-            keyChainGroup.upgradeToDeterministic(vKeyRotationTimestamp, aesKey);
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            keyChainGroup.upgradeToDeterministic(outputScriptType, structure, keyRotationTimeSecs, aesKey);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -752,13 +766,14 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Returns true if the wallet contains random keys and no HD chains, in which case you should call
-     * {@link #upgradeToDeterministic(KeyParameter)} before attempting to do anything
+     * {@link #upgradeToDeterministic(ScriptType, KeyParameter)} before attempting to do anything
      * that would require a new address or key.
      */
-    public boolean isDeterministicUpgradeRequired() {
+    public boolean isDeterministicUpgradeRequired(Script.ScriptType outputScriptType) {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.isDeterministicUpgradeRequired();
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            return keyChainGroup.isDeterministicUpgradeRequired(outputScriptType, keyRotationTimeSecs);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -5218,18 +5233,39 @@ public class Wallet extends BaseTaggableObject
      * transactions. Maintenance might also include internal changes that involve some processing or work but
      * which don't require making transactions - these will happen automatically unless the password is required
      * in which case an exception will be thrown.
-     *
      * @param aesKey the users password, if any.
      * @param signAndSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
+     *
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
+    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend)
+            throws DeterministicUpgradeRequiresPassword {
+        return doMaintenance(KeyChainGroupStructure.DEFAULT, aesKey, signAndSend);
+    }
+
+    /**
+     * A wallet app should call this from time to time in order to let the wallet craft and send transactions needed
+     * to re-organise coins internally. A good time to call this would be after receiving coins for an unencrypted
+     * wallet, or after sending money for an encrypted wallet. If you have an encrypted wallet and just want to know
+     * if some maintenance needs doing, call this method with andSend set to false and look at the returned list of
+     * transactions. Maintenance might also include internal changes that involve some processing or work but
+     * which don't require making transactions - these will happen automatically unless the password is required
+     * in which case an exception will be thrown.
+     * @param structure to derive the account path from if a new seed needs to be created
+     * @param aesKey the users password, if any.
+     * @param signAndSend if true, send the transactions via the tx broadcaster and return them, if false just return them.
+     *
+     * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
+     * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
+     */
+    public ListenableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
+            @Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            txns = maybeRotateKeys(aesKey, signAndSend);
+            txns = maybeRotateKeys(structure, aesKey, signAndSend);
             if (!signAndSend)
                 return Futures.immediateFuture(txns);
         } finally {
@@ -5263,7 +5299,8 @@ public class Wallet extends BaseTaggableObject
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
     @GuardedBy("keyChainGroupLock")
-    private List<Transaction> maybeRotateKeys(@Nullable KeyParameter aesKey, boolean sign) throws DeterministicUpgradeRequiresPassword {
+    private List<Transaction> maybeRotateKeys(KeyChainGroupStructure structure, @Nullable KeyParameter aesKey,
+            boolean sign) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         checkState(keyChainGroupLock.isHeldByCurrentThread());
         List<Transaction> results = Lists.newLinkedList();
@@ -5273,27 +5310,50 @@ public class Wallet extends BaseTaggableObject
 
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
-        for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-            if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
-                allChainsRotating = false;
-                break;
+        Script.ScriptType preferredScriptType = Script.ScriptType.P2PKH;
+        if (keyChainGroup.isSupportsDeterministicChains()) {
+            for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
+                if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
+                    allChainsRotating = false;
+                    preferredScriptType = chain.getOutputScriptType();
+                }
             }
         }
         if (allChainsRotating) {
             try {
                 if (keyChainGroup.getImportedKeys().isEmpty()) {
                     log.info("All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
-                    DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-                    keyChainGroup.addAndActivateHDChain(chain);
+                    KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
+                            .build();
+                    if (keyChainGroup.isEncrypted()) {
+                        if (aesKey == null)
+                            throw new DeterministicUpgradeRequiresPassword();
+                        KeyCrypter keyCrypter = keyChainGroup.getKeyCrypter();
+                        keyChainGroup.decrypt(aesKey);
+                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                        keyChainGroup.encrypt(keyCrypter, aesKey);
+                    } else {
+                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                    }
                 } else {
                     log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
-                    keyChainGroup.upgradeToDeterministic(keyRotationTimestamp, aesKey);
+                    keyChainGroup.upgradeToDeterministic(preferredScriptType, structure, keyRotationTimestamp, aesKey);
                     log.info(" ... upgraded to HD again, based on next best oldest key.");
                 }
             } catch (AllRandomKeysRotating rotating) {
                 log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
-                DeterministicKeyChain chain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-                keyChainGroup.addAndActivateHDChain(chain);
+                KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
+                        .build();
+                if (keyChainGroup.isEncrypted()) {
+                    if (aesKey == null)
+                        throw new DeterministicUpgradeRequiresPassword();
+                    KeyCrypter keyCrypter = keyChainGroup.getKeyCrypter();
+                    keyChainGroup.decrypt(aesKey);
+                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                    keyChainGroup.encrypt(keyCrypter, aesKey);
+                } else {
+                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                }
             }
             saveNow();
         }
