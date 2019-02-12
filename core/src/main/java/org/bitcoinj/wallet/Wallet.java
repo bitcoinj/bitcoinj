@@ -569,7 +569,6 @@ public class Wallet extends BaseTaggableObject
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.currentKey(purpose);
         } finally {
             keyChainGroupLock.unlock();
@@ -590,7 +589,6 @@ public class Wallet extends BaseTaggableObject
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.currentAddress(purpose);
         } finally {
             keyChainGroupLock.unlock();
@@ -629,7 +627,6 @@ public class Wallet extends BaseTaggableObject
         List<DeterministicKey> keys;
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             keys = keyChainGroup.freshKeys(purpose, numberOfKeys);
         } finally {
             keyChainGroupLock.unlock();
@@ -730,25 +727,6 @@ public class Wallet extends BaseTaggableObject
             return keyChainGroup.isDeterministicUpgradeRequired();
         } finally {
             keyChainGroupLock.unlock();
-        }
-    }
-
-    private void maybeUpgradeToHD() throws DeterministicUpgradeRequiresPassword {
-        maybeUpgradeToHD(null);
-    }
-
-    @GuardedBy("keyChainGroupLock")
-    private void maybeUpgradeToHD(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        checkState(keyChainGroupLock.isHeldByCurrentThread());
-        if (keyChainGroup.isDeterministicUpgradeRequired()) {
-            log.info("Upgrade to HD wallets is required, attempting to do so.");
-            try {
-                upgradeToDeterministic(aesKey);
-            } catch (DeterministicUpgradeRequiresPassword e) {
-                log.error("Failed to auto upgrade due to encryption. You should call wallet.upgradeToDeterministic " +
-                        "with the users AES key to avoid this error.");
-                throw e;
-            }
         }
     }
 
@@ -911,7 +889,6 @@ public class Wallet extends BaseTaggableObject
     public int getKeyChainGroupLookaheadThreshold() {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.getLookaheadThreshold();
         } finally {
             keyChainGroupLock.unlock();
@@ -927,7 +904,6 @@ public class Wallet extends BaseTaggableObject
     public DeterministicKey getWatchingKey() {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.getActiveKeyChain().getWatchingKey();
         } finally {
             keyChainGroupLock.unlock();
@@ -944,7 +920,6 @@ public class Wallet extends BaseTaggableObject
     public boolean isWatching() {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.isWatching();
         } finally {
             keyChainGroupLock.unlock();
@@ -1254,7 +1229,6 @@ public class Wallet extends BaseTaggableObject
     public DeterministicKey getKeyByPath(List<ChildNumber> path) {
         keyChainGroupLock.lock();
         try {
-            maybeUpgradeToHD();
             return keyChainGroup.getActiveKeyChain().getKeyByPath(path, false);
         } finally {
             keyChainGroupLock.unlock();
@@ -5318,7 +5292,6 @@ public class Wallet extends BaseTaggableObject
             // TODO: Make this use the standard SendRequest.
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
             if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
-            maybeUpgradeToHD(aesKey);
             Transaction rekeyTx = new Transaction(params);
             for (TransactionOutput output : toMove.gathered) {
                 rekeyTx.addInput(output);

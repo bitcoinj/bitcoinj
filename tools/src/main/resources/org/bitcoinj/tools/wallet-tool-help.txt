@@ -17,7 +17,7 @@ Usage: wallet-tool --flags action-name
                        the wallet. See the set-creation-time action for the meaning of these flags.
   marry                Makes the wallet married with other parties, requiring multisig to spend funds.
                        External public keys for other signing parties must be specified with --xpubkeys (comma separated).
-  add-key              Adds a new key to the wallet, either specified or freshly generated.
+  add-key              Adds a new key to the wallet.
                        If --date is specified, that's the creation date.
                        If --unixtime is specified, that's the creation time and it overrides --date.
                        If --privkey is specified, use as a WIF-, hex- or base58-encoded private key.
