@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -132,9 +133,18 @@ public class DeterministicSeed implements EncryptableItem {
 
     @Override
     public String toString() {
-        return isEncrypted()
-            ? "DeterministicSeed [encrypted]"
-            : "DeterministicSeed " + toHexString() + " " + Utils.SPACE_JOINER.join(mnemonicCode);
+        return toString(false);
+    }
+
+    public String toString(boolean includePrivate) {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
+        if (isEncrypted())
+            helper.addValue("encrypted");
+        else if (includePrivate)
+            helper.addValue(toHexString()).add("mnemonicCode", Utils.SPACE_JOINER.join(mnemonicCode));
+        else
+            helper.addValue("unencrypted");
+        return helper.toString();
     }
 
     /** Returns the seed as hex or null if encrypted. */
