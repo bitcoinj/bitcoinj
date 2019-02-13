@@ -18,17 +18,26 @@
 package org.bitcoinj.store;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.base.Stopwatch;
 
 public class SPVBlockStoreTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
@@ -114,5 +123,26 @@ public class SPVBlockStoreTest {
         SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, true);
         store.close();
         store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, true);
+    }
+
+    @Test
+    public void performanceTest() throws BlockStoreException {
+        // On slow machines, this test could fail. Then either add @Ignore or adapt the threshold and please report to
+        // us.
+        final int ITERATIONS = 100000;
+        final long THRESHOLD_MS = 1500;
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        Stopwatch watch = Stopwatch.createStarted();
+        for (int i = 0; i < ITERATIONS; i++) {
+            // Using i as the nonce so that the block hashes are different.
+            Block block = new Block(UNITTEST, 0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0, 0, i,
+                    Collections.<Transaction> emptyList());
+            StoredBlock b = new StoredBlock(block, BigInteger.ZERO, i);
+            store.put(b);
+            store.setChainHead(b);
+        }
+        assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
+                watch.elapsed(TimeUnit.MILLISECONDS) < THRESHOLD_MS);
+        store.close();
     }
 }
