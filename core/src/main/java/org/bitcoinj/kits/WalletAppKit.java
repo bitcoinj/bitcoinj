@@ -387,7 +387,7 @@ public class WalletAppKit extends AbstractIdleService {
                         throw new RuntimeException(t);
 
                     }
-                });
+                }, MoreExecutors.directExecutor());
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);

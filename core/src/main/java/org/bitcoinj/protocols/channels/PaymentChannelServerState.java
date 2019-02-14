@@ -24,6 +24,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -212,7 +213,7 @@ public abstract class PaymentChannelServerState {
                 stateMachine.transition(State.ERROR);
                 future.setException(throwable);
             }
-        });
+        }, MoreExecutors.directExecutor());
         return future;
     }
 

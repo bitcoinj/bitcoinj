@@ -118,7 +118,7 @@ public class ForwardingService {
                         // This kind of future can't fail, just rethrow in case something weird happens.
                         throw new RuntimeException(t);
                     }
-                });
+                }, MoreExecutors.directExecutor());
             }
         });
 

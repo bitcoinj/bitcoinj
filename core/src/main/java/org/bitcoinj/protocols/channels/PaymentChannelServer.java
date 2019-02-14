@@ -26,6 +26,7 @@ import org.bitcoinj.wallet.Wallet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoin.paymentchannel.Protos;
@@ -457,7 +458,7 @@ public class PaymentChannelServer {
                         log.info("Failed retrieving paymentIncrease info future");
                         error("Failed processing payment update", Protos.Error.ErrorCode.OTHER, CloseReason.UPDATE_PAYMENT_FAILED);
                     }
-                });
+                }, MoreExecutors.directExecutor());
             }
         }
 
@@ -561,7 +562,7 @@ public class PaymentChannelServer {
                 public ListenableFuture<Transaction> apply(KeyParameter userKey) throws Exception {
                     return state.close(userKey);
                 }
-            });
+            }, MoreExecutors.directExecutor());
         } else {
             result = state.close();
         }
@@ -588,7 +589,7 @@ public class PaymentChannelServer {
                 log.error("Failed to broadcast settlement tx", t);
                 conn.destroyConnection(clientRequestedClose);
             }
-        });
+        }, MoreExecutors.directExecutor());
     }
 
     /**
