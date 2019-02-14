@@ -277,7 +277,7 @@ public class WalletTool {
 
         ActionEnum action;
         try {
-            String actionStr = options.nonOptionArguments().get(0);
+            String actionStr = (String) options.nonOptionArguments().get(0);
             actionStr = actionStr.toUpperCase().replace("-", "_");
             action = ActionEnum.valueOf(actionStr);
         } catch (IllegalArgumentException e) {

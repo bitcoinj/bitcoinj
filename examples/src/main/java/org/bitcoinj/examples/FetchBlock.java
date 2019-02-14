@@ -43,7 +43,7 @@ public class FetchBlock {
         // Parse command line arguments
         OptionParser parser = new OptionParser();
         OptionSet opts = null;
-        List<String> nonOpts = null;
+        List<byte[]> nonOpts = null;
         try {
             parser.accepts("localhost", "Connect to the localhost node");
             parser.accepts("help", "Displays program options");
@@ -53,7 +53,7 @@ public class FetchBlock {
                 parser.printHelpOn(System.out);
                 return;
             }
-            nonOpts = opts.nonOptionArguments();
+            nonOpts = (List<byte[]>) opts.nonOptionArguments();
             if (nonOpts.size() != 1) {
                 throw new IllegalArgumentException("Incorrect number of block hash, please provide only one block hash.");
             }

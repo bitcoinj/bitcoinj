@@ -89,7 +89,7 @@ public class ExamplePaymentChannelClient {
             }
         }
         NetworkParameters params = net.value(opts).get();
-        new ExamplePaymentChannelClient().run(opts.nonOptionArguments().get(0), clientChannelProperties, params);
+        new ExamplePaymentChannelClient().run((String) opts.nonOptionArguments().get(0), clientChannelProperties, params);
     }
 
     public ExamplePaymentChannelClient() {
