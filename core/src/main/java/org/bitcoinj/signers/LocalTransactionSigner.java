@@ -113,8 +113,8 @@ public class LocalTransactionSigner implements TransactionSigner {
             // a CHECKMULTISIG program for P2SH inputs
             byte[] script = redeemData.redeemScript.getProgram();
             try {
-                if (ScriptPattern.isPayToPubKey(scriptPubKey) || ScriptPattern.isPayToPubKeyHash(scriptPubKey)
-                        || ScriptPattern.isPayToScriptHash(scriptPubKey)) {
+                if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)
+                        || ScriptPattern.isP2SH(scriptPubKey)) {
                     TransactionSignature signature = tx.calculateSignature(i, key, script, Transaction.SigHash.ALL,
                             false);
 
@@ -130,7 +130,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                             sigIndex);
                     txIn.setScriptSig(inputScript);
                     txIn.setWitness(null);
-                } else if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
+                } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                     Script scriptCode = new ScriptBuilder().data(
                             ScriptBuilder.createOutputScript(LegacyAddress.fromKey(tx.getParams(), key)).getProgram())
                             .build();

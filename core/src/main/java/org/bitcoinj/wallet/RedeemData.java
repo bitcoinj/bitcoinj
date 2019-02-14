@@ -57,8 +57,8 @@ public class RedeemData {
      * to spend such inputs.
      */
     public static RedeemData of(ECKey key, Script redeemScript) {
-        checkArgument(ScriptPattern.isPayToPubKeyHash(redeemScript)
-                || ScriptPattern.isPayToWitnessPubKeyHash(redeemScript) || ScriptPattern.isPayToPubKey(redeemScript));
+        checkArgument(ScriptPattern.isP2PKH(redeemScript)
+                || ScriptPattern.isP2WPKH(redeemScript) || ScriptPattern.isP2PK(redeemScript));
         return key != null ? new RedeemData(Collections.singletonList(key), redeemScript) : null;
     }
 

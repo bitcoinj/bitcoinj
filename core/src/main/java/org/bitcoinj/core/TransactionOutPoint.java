@@ -141,14 +141,14 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
+        if (ScriptPattern.isP2PKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
             return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH);
-        } else if (ScriptPattern.isPayToWitnessPubKeyHash(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromPayToWitnessHash(connectedScript);
+        } else if (ScriptPattern.isP2WPKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
             return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH);
-        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
-            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
+        } else if (ScriptPattern.isP2PK(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
@@ -167,17 +167,17 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
+        if (ScriptPattern.isP2PKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH), connectedScript);
-        } else if (ScriptPattern.isPayToWitnessPubKeyHash(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromPayToWitnessHash(connectedScript);
+        } else if (ScriptPattern.isP2WPKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH), connectedScript);
-        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
-            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
+        } else if (ScriptPattern.isP2PK(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
-        } else if (ScriptPattern.isPayToScriptHash(connectedScript)) {
-            byte[] scriptHash = ScriptPattern.extractHashFromPayToScriptHash(connectedScript);
+        } else if (ScriptPattern.isP2SH(connectedScript)) {
+            byte[] scriptHash = ScriptPattern.extractHashFromP2SH(connectedScript);
             return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);

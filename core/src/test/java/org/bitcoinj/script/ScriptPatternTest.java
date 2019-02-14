@@ -32,19 +32,19 @@ public class ScriptPatternTest {
 
     @Test
     public void testCommonScripts() {
-        assertTrue(ScriptPattern.isPayToPubKeyHash(
+        assertTrue(ScriptPattern.isP2PKH(
                 ScriptBuilder.createP2PKHOutputScript(keys.get(0))
         ));
-        assertTrue(ScriptPattern.isPayToScriptHash(
+        assertTrue(ScriptPattern.isP2SH(
                 ScriptBuilder.createP2SHOutputScript(2, keys)
         ));
-        assertTrue(ScriptPattern.isPayToPubKey(
+        assertTrue(ScriptPattern.isP2PK(
                 ScriptBuilder.createP2PKOutputScript(keys.get(0))
         ));
-        assertTrue(ScriptPattern.isPayToWitnessPubKeyHash(
+        assertTrue(ScriptPattern.isP2WPKH(
                 ScriptBuilder.createP2WPKHOutputScript(keys.get(0))
         ));
-        assertTrue(ScriptPattern.isPayToWitnessScriptHash(
+        assertTrue(ScriptPattern.isP2WSH(
                 ScriptBuilder.createP2WSHOutputScript(new ScriptBuilder().build())
         ));
         assertTrue(ScriptPattern.isSentToMultisig(

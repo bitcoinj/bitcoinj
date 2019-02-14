@@ -80,8 +80,8 @@ public class TransactionOutputTest extends TestWithWallet {
         Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         assertTrue(ScriptPattern.isOpReturn(tx.getOutput(0).getScriptPubKey()));
-        assertFalse(ScriptPattern.isPayToPubKey(tx.getOutput(0).getScriptPubKey()));
-        assertFalse(ScriptPattern.isPayToPubKeyHash(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isP2PK(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isP2PKH(tx.getOutput(0).getScriptPubKey()));
     }
 
     @Test

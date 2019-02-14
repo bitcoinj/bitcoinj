@@ -1819,7 +1819,7 @@ public class FullBlockTestGenerator {
             input.setScriptSig(new ScriptBuilder().op(OP_1).build());
         } else {
             // Sign input
-            checkState(ScriptPattern.isPayToPubKey(prevOut.scriptPubKey));
+            checkState(ScriptPattern.isP2PK(prevOut.scriptPubKey));
             Sha256Hash hash = t.hashForSignature(0, prevOut.scriptPubKey, SigHash.ALL, false);
             input.setScriptSig(ScriptBuilder.createInputScript(
                             new TransactionSignature(coinbaseOutKey.sign(hash), SigHash.ALL, false))

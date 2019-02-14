@@ -63,12 +63,12 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 // We ignore any other kind of exotic output on the assumption we can't spend it ourselves.
                 final Script scriptPubKey = output.getScriptPubKey();
                 ECKey controllingKey;
-                if (ScriptPattern.isPayToPubKey(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromPayToPubKey(scriptPubKey));
-                } else if (ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToPubKeyHash(scriptPubKey), Script.ScriptType.P2PKH);
-                } else if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromPayToWitnessHash(scriptPubKey), Script.ScriptType.P2WPKH);
+                if (ScriptPattern.isP2PK(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
+                } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), Script.ScriptType.P2PKH);
+                } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), Script.ScriptType.P2WPKH);
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;

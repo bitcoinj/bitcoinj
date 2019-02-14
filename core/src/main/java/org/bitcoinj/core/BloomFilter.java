@@ -342,7 +342,7 @@ public class BloomFilter extends Message {
                 if (!chunk.isPushData())
                     continue;
                 if (contains(chunk.data)) {
-                    boolean isSendingToPubKeys = ScriptPattern.isPayToPubKey(script) || ScriptPattern.isSentToMultisig(script);
+                    boolean isSendingToPubKeys = ScriptPattern.isP2PK(script) || ScriptPattern.isSentToMultisig(script);
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
                         insert(output.getOutPointFor());
                     found = true;

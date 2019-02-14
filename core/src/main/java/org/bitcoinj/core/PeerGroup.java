@@ -199,7 +199,7 @@ public class PeerGroup implements TransactionBroadcaster {
             // filter. In case (1), we need to retransmit the filter to the connected peers. In case (2), we don't
             // and shouldn't, we should just recalculate and cache the new filter for next time.
             for (TransactionOutput output : tx.getOutputs()) {
-                if (ScriptPattern.isPayToPubKey(output.getScriptPubKey()) && output.isMine(wallet)) {
+                if (ScriptPattern.isP2PK(output.getScriptPubKey()) && output.isMine(wallet)) {
                     if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
                         recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
                     else

@@ -60,7 +60,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
                 continue;
             }
             Script scriptPubKey = txOut.getScriptPubKey();
-            if (!ScriptPattern.isPayToScriptHash(scriptPubKey)) {
+            if (!ScriptPattern.isP2SH(scriptPubKey)) {
                 log.warn("CustomTransactionSigner works only with P2SH transactions");
                 return false;
             }

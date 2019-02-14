@@ -108,7 +108,7 @@ public class SegwitAddressTest {
             if (valid.expectedWitnessVersion == 0) {
                 Script expectedScriptPubKey = new Script(Utils.HEX.decode(valid.expectedScriptPubKey));
                 assertEquals(address, SegwitAddress.fromHash(valid.expectedParams,
-                        ScriptPattern.extractHashFromPayToWitnessHash(expectedScriptPubKey)));
+                        ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
             }
             assertEquals(valid.expectedWitnessVersion, address.getWitnessVersion());
         }

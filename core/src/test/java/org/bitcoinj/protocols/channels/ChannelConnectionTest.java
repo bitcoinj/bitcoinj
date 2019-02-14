@@ -543,7 +543,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         if (isMultiSigContract()) {
             assertTrue(ScriptPattern.isSentToMultisig(broadcasts.take().getOutput(0).getScriptPubKey()));
         } else {
-            assertTrue(ScriptPattern.isPayToScriptHash(broadcasts.take().getOutput(0).getScriptPubKey()));
+            assertTrue(ScriptPattern.isP2SH(broadcasts.take().getOutput(0).getScriptPubKey()));
         }
         broadcastTxPause.release();
         assertEquals(TransactionConfidence.Source.SELF, broadcasts.take().getConfidence().getSource());

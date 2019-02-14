@@ -258,10 +258,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
             assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(ScriptPattern.isPayToScriptHash(script));
+            assertTrue(ScriptPattern.isP2SH(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
+        assertTrue(ScriptPattern.isP2PKH(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -383,10 +383,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
             assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(ScriptPattern.isPayToScriptHash(script));
+            assertTrue(ScriptPattern.isP2SH(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
+        assertTrue(ScriptPattern.isP2PKH(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -859,10 +859,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
             assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(ScriptPattern.isPayToScriptHash(script));
+            assertTrue(ScriptPattern.isP2SH(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
+        assertTrue(ScriptPattern.isP2PKH(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.
@@ -953,10 +953,10 @@ public class PaymentChannelStateTest extends TestWithWallet {
         if (versionSelector == PaymentChannelClient.VersionSelector.VERSION_1) {
             assertTrue(ScriptPattern.isSentToMultisig(script));
         } else {
-            assertTrue(ScriptPattern.isPayToScriptHash(script));
+            assertTrue(ScriptPattern.isP2SH(script));
         }
         script = multisigContract.getOutput(1).getScriptPubKey();
-        assertTrue(ScriptPattern.isPayToPubKeyHash(script));
+        assertTrue(ScriptPattern.isP2PKH(script));
         assertTrue(wallet.getPendingTransactions().contains(multisigContract));
 
         // Provide the server with the multisig contract and simulate successful propagation/acceptance.

@@ -237,12 +237,12 @@ public class Script {
 
     @Deprecated
     public boolean isSentToRawPubKey() {
-        return ScriptPattern.isPayToPubKey(this);
+        return ScriptPattern.isP2PK(this);
     }
 
     @Deprecated
     public boolean isSentToAddress() {
-        return ScriptPattern.isPayToPubKeyHash(this);
+        return ScriptPattern.isP2PKH(this);
     }
 
     /**
@@ -251,12 +251,12 @@ public class Script {
      * <p>Otherwise this method throws a ScriptException.</p>
      */
     public byte[] getPubKeyHash() throws ScriptException {
-        if (ScriptPattern.isPayToPubKeyHash(this))
-            return ScriptPattern.extractHashFromPayToPubKeyHash(this);
-        else if (ScriptPattern.isPayToScriptHash(this))
-            return ScriptPattern.extractHashFromPayToScriptHash(this);
-        else if (ScriptPattern.isPayToWitnessHash(this))
-            return ScriptPattern.extractHashFromPayToWitnessHash(this);
+        if (ScriptPattern.isP2PKH(this))
+            return ScriptPattern.extractHashFromP2PKH(this);
+        else if (ScriptPattern.isP2SH(this))
+            return ScriptPattern.extractHashFromP2SH(this);
+        else if (ScriptPattern.isP2WH(this))
+            return ScriptPattern.extractHashFromP2WH(this);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
@@ -297,14 +297,14 @@ public class Script {
      *            showing addresses rather than pubkeys.
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
-        if (ScriptPattern.isPayToPubKeyHash(this))
-            return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromPayToPubKeyHash(this));
-        else if (ScriptPattern.isPayToScriptHash(this))
-            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromPayToScriptHash(this));
-        else if (forcePayToPubKey && ScriptPattern.isPayToPubKey(this))
-            return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromPayToPubKey(this)));
-        else if (ScriptPattern.isPayToWitnessHash(this))
-            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromPayToWitnessHash(this));
+        if (ScriptPattern.isP2PKH(this))
+            return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromP2PKH(this));
+        else if (ScriptPattern.isP2SH(this))
+            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromP2SH(this));
+        else if (forcePayToPubKey && ScriptPattern.isP2PK(this))
+            return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)));
+        else if (ScriptPattern.isP2WH(this))
+            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromP2WH(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
     }
@@ -384,14 +384,14 @@ public class Script {
      * It is expected that this program later on will be updated with proper signatures.
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
-        if (ScriptPattern.isPayToPubKeyHash(this)) {
+        if (ScriptPattern.isP2PKH(this)) {
             checkArgument(key != null, "Key required to create P2PKH input script");
             return ScriptBuilder.createInputScript(null, key);
-        } else if (ScriptPattern.isPayToWitnessPubKeyHash(this)) {
+        } else if (ScriptPattern.isP2WPKH(this)) {
             return ScriptBuilder.createEmpty();
-        } else if (ScriptPattern.isPayToPubKey(this)) {
+        } else if (ScriptPattern.isP2PK(this)) {
             return ScriptBuilder.createInputScript(null);
-        } else if (ScriptPattern.isPayToScriptHash(this)) {
+        } else if (ScriptPattern.isP2SH(this)) {
             checkArgument(redeemScript != null, "Redeem script required to create P2SH input script");
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
@@ -400,11 +400,11 @@ public class Script {
     }
 
     public TransactionWitness createEmptyWitness(ECKey key) {
-        if (ScriptPattern.isPayToWitnessPubKeyHash(this)) {
+        if (ScriptPattern.isP2WPKH(this)) {
             checkArgument(key != null, "Key required to create P2WPKH witness");
             return TransactionWitness.EMPTY;
-        } else if (ScriptPattern.isPayToPubKey(this) || ScriptPattern.isPayToPubKeyHash(this)
-                || ScriptPattern.isPayToScriptHash(this)) {
+        } else if (ScriptPattern.isP2PK(this) || ScriptPattern.isP2PKH(this)
+                || ScriptPattern.isP2SH(this)) {
             return null; // no witness
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
@@ -417,12 +417,12 @@ public class Script {
     public Script getScriptSigWithSignature(Script scriptSig, byte[] sigBytes, int index) {
         int sigsPrefixCount = 0;
         int sigsSuffixCount = 0;
-        if (ScriptPattern.isPayToScriptHash(this)) {
+        if (ScriptPattern.isP2SH(this)) {
             sigsPrefixCount = 1; // OP_0 <sig>* <redeemScript>
             sigsSuffixCount = 1;
         } else if (ScriptPattern.isSentToMultisig(this)) {
             sigsPrefixCount = 1; // OP_0 <sig>*
-        } else if (ScriptPattern.isPayToPubKeyHash(this)) {
+        } else if (ScriptPattern.isP2PKH(this)) {
             sigsSuffixCount = 1; // <sig> <pubkey>
         }
         return ScriptBuilder.updateScriptWithSignature(scriptSig, sigBytes, index, sigsPrefixCount, sigsSuffixCount);
@@ -592,10 +592,10 @@ public class Script {
             // for N of M CHECKMULTISIG script we will need N signatures to spend
             ScriptChunk nChunk = chunks.get(0);
             return Script.decodeFromOpN(nChunk.opcode);
-        } else if (ScriptPattern.isPayToPubKeyHash(this) || ScriptPattern.isPayToPubKey(this)) {
+        } else if (ScriptPattern.isP2PKH(this) || ScriptPattern.isP2PK(this)) {
             // P2PKH and P2PK require single sig
             return 1;
-        } else if (ScriptPattern.isPayToScriptHash(this)) {
+        } else if (ScriptPattern.isP2SH(this)) {
             throw new IllegalStateException("For P2SH number of signatures depends on redeem script");
         } else {
             throw new IllegalStateException("Unsupported script type");
@@ -607,21 +607,21 @@ public class Script {
      * be required for certain types of script to estimate target size.
      */
     public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
-        if (ScriptPattern.isPayToScriptHash(this)) {
+        if (ScriptPattern.isP2SH(this)) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, "P2SH script requires redeemScript to be spent");
             return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
         } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;
-        } else if (ScriptPattern.isPayToPubKey(this)) {
+        } else if (ScriptPattern.isP2PK(this)) {
             // scriptSig: <sig>
             return SIG_SIZE;
-        } else if (ScriptPattern.isPayToPubKeyHash(this)) {
+        } else if (ScriptPattern.isP2PKH(this)) {
             // scriptSig: <sig> <pubkey>
             int uncompressedPubKeySize = 65;
             return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : uncompressedPubKeySize);
-        } else if (ScriptPattern.isPayToWitnessPubKeyHash(this)) {
+        } else if (ScriptPattern.isP2WPKH(this)) {
             // scriptSig is empty
             return 0;
         } else {
@@ -631,7 +631,7 @@ public class Script {
 
     @Deprecated
     public boolean isPayToScriptHash() {
-        return ScriptPattern.isPayToScriptHash(this);
+        return ScriptPattern.isP2SH(this);
     }
 
     @Deprecated
@@ -1565,7 +1565,7 @@ public class Script {
      */
     public void correctlySpends(Transaction txContainingThis, int scriptSigIndex, @Nullable TransactionWitness witness, @Nullable Coin value,
             Script scriptPubKey, Set<VerifyFlag> verifyFlags) throws ScriptException {
-        if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
+        if (ScriptPattern.isP2WPKH(scriptPubKey)) {
             // For SegWit, full validation isn't implemented. So we simply check the signature. P2SH_P2WPKH is handled
             // by the P2SH code for now.
             if (witness.getPushCount() < 2)
@@ -1638,7 +1638,7 @@ public class Script {
         //     overall scalability and performance.
 
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
-        if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isPayToScriptHash(scriptPubKey)) {
+        if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isP2SH(scriptPubKey)) {
             for (ScriptChunk chunk : chunks)
                 if (chunk.isOpCode() && chunk.opcode > OP_16)
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
@@ -1670,15 +1670,15 @@ public class Script {
      * @return The script type, or null if the script is of unknown type
      */
     public @Nullable ScriptType getScriptType() {
-        if (ScriptPattern.isPayToPubKeyHash(this))
+        if (ScriptPattern.isP2PKH(this))
             return ScriptType.P2PKH;
-        if (ScriptPattern.isPayToPubKey(this))
+        if (ScriptPattern.isP2PK(this))
             return ScriptType.P2PK;
-        if (ScriptPattern.isPayToScriptHash(this))
+        if (ScriptPattern.isP2SH(this))
             return ScriptType.P2SH;
-        if (ScriptPattern.isPayToWitnessPubKeyHash(this))
+        if (ScriptPattern.isP2WPKH(this))
             return ScriptType.P2WPKH;
-        if (ScriptPattern.isPayToWitnessScriptHash(this))
+        if (ScriptPattern.isP2WSH(this))
             return ScriptType.P2WSH;
         return null;
     }

@@ -69,8 +69,8 @@ public class MissingSigResolutionSigner implements TransactionSigner {
 
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             Script inputScript = txIn.getScriptSig();
-            if (ScriptPattern.isPayToScriptHash(scriptPubKey) || ScriptPattern.isSentToMultisig(scriptPubKey)) {
-                int sigSuffixCount = ScriptPattern.isPayToScriptHash(scriptPubKey) ? 1 : 0;
+            if (ScriptPattern.isP2SH(scriptPubKey) || ScriptPattern.isSentToMultisig(scriptPubKey)) {
+                int sigSuffixCount = ScriptPattern.isP2SH(scriptPubKey) ? 1 : 0;
                 // all chunks except the first one (OP_0) and the last (redeem script) are signatures
                 for (int j = 1; j < inputScript.getChunks().size() - sigSuffixCount; j++) {
                     ScriptChunk scriptChunk = inputScript.getChunks().get(j);
@@ -82,7 +82,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                         }
                     }
                 }
-            } else if (ScriptPattern.isPayToPubKey(scriptPubKey) || ScriptPattern.isPayToPubKeyHash(scriptPubKey)) {
+            } else if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)) {
                 if (inputScript.getChunks().get(0).equalsOpCode(0)) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
@@ -90,14 +90,14 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                         txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }
                 }
-            } else if (ScriptPattern.isPayToWitnessPubKeyHash(scriptPubKey)) {
+            } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                 if (txIn.getWitness() == null || txIn.getWitness().equals(TransactionWitness.EMPTY)
                         || txIn.getWitness().getPush(0).length == 0) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
                         ECKey key = keyBag.findKeyFromPubKeyHash(
-                                ScriptPattern.extractHashFromPayToWitnessHash(scriptPubKey), Script.ScriptType.P2WPKH);
+                                ScriptPattern.extractHashFromP2WH(scriptPubKey), Script.ScriptType.P2WPKH);
                         txIn.setWitness(TransactionWitness.redeemP2WPKH(TransactionSignature.dummy(), key));
                     }
                 }
