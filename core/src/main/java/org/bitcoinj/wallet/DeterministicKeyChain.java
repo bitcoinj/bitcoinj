@@ -25,6 +25,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
@@ -1353,6 +1354,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /** Create a new key and return the matching output script.  Only applicable to married keychains. */
     public Script freshOutputScript(KeyPurpose purpose) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
+        helper.addValue(outputScriptType);
+        helper.add("accountPath", accountPath);
+        helper.add("lookaheadSize", lookaheadSize);
+        helper.add("lookaheadThreshold", lookaheadThreshold);
+        if (isFollowing)
+            helper.addValue("following");
+        return helper.toString();
     }
 
     public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
