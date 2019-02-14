@@ -75,7 +75,7 @@ public class KeyChainGroup implements KeyBag {
     public static class Builder {
         private final NetworkParameters params;
         private final KeyChainGroupStructure structure;
-        private final List<DeterministicKeyChain> chains = new LinkedList<DeterministicKeyChain>();
+        private final List<DeterministicKeyChain> chains = new LinkedList<>();
         private int lookaheadSize = -1, lookaheadThreshold = -1;
 
         private Builder(NetworkParameters params, KeyChainGroupStructure structure) {
@@ -219,7 +219,7 @@ public class KeyChainGroup implements KeyBag {
                 this.lookaheadSize = 5; // Cut down excess computation for unit tests.
             if (lookaheadThreshold > -1)
                 this.lookaheadThreshold = lookaheadThreshold;
-            this.chains = new LinkedList<DeterministicKeyChain>(chains);
+            this.chains = new LinkedList<>(chains);
             for (DeterministicKeyChain chain : this.chains) {
                 if (this.lookaheadSize > -1)
                     chain.setLookaheadSize(this.lookaheadSize);

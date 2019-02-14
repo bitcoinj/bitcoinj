@@ -411,7 +411,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     public String toStringServices(long services) {
-        List<String> a = new LinkedList<String>();
+        List<String> a = new LinkedList<>();
         if ((services & VersionMessage.NODE_NETWORK) == VersionMessage.NODE_NETWORK) {
             a.add("NETWORK");
             services &= ~VersionMessage.NODE_NETWORK;

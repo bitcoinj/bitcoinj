@@ -49,7 +49,7 @@ public class PaymentChannelServerTest {
         broadcaster = createMock(TransactionBroadcaster.class);
         wallet = createMock(Wallet.class);
         connection = createMock(PaymentChannelServer.ServerConnection.class);
-        serverVersionCapture = new Capture<TwoWayChannelMessage>();
+        serverVersionCapture = new Capture<>();
         connection.sendToClient(capture(serverVersionCapture));
         Utils.setMockClock();
     }

@@ -4979,7 +4979,7 @@ public class Wallet extends BaseTaggableObject
                 valueNeeded = valueNeeded.add(fee);
             }
             if (req.recipientsPayFees) {
-                result.updatedOutputValues = new ArrayList<Coin>();
+                result.updatedOutputValues = new ArrayList<>();
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
                 TransactionOutput output = new TransactionOutput(params, tx,

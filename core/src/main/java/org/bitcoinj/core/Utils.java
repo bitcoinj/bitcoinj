@@ -611,7 +611,7 @@ public class Utils {
     }
 
     public static String toString(List<byte[]> stack) {
-        List<String> parts = new ArrayList<String>(stack.size());
+        List<String> parts = new ArrayList<>(stack.size());
         for (byte[] push : stack)
             parts.add('[' + HEX.encode(push) + ']');
         return SPACE_JOINER.join(parts);

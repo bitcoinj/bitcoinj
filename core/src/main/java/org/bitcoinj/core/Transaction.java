@@ -1213,7 +1213,7 @@ public class Transaction extends ChildMessage {
             if ((sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value) {
                 // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
                 // of other inputs. For example, this is useful for building assurance contracts.
-                tx.inputs = new ArrayList<TransactionInput>();
+                tx.inputs = new ArrayList<>();
                 tx.inputs.add(input);
             }
 
