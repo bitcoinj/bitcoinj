@@ -5313,16 +5313,18 @@ public class Wallet extends BaseTaggableObject
         Script.ScriptType preferredScriptType = Script.ScriptType.P2PKH;
         if (keyChainGroup.isSupportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-                if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp) {
+                if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp)
                     allChainsRotating = false;
+                else
                     preferredScriptType = chain.getOutputScriptType();
-                }
             }
         }
         if (allChainsRotating) {
             try {
                 if (keyChainGroup.getImportedKeys().isEmpty()) {
-                    log.info("All HD chains are currently rotating and we have no random keys, creating fresh HD chain ...");
+                    log.info(
+                            "All deterministic chains are currently rotating and we have no random keys, creating fresh {} chain: backup required after this.",
+                            preferredScriptType);
                     KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
                             .build();
                     if (keyChainGroup.isEncrypted()) {
@@ -5336,12 +5338,16 @@ public class Wallet extends BaseTaggableObject
                         keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
                     }
                 } else {
-                    log.info("All HD chains are currently rotating, attempting to create a new one from the next oldest non-rotating key material ...");
+                    log.info(
+                            "All deterministic chains are currently rotating, creating a new {} one from the next oldest non-rotating key material...",
+                            preferredScriptType);
                     keyChainGroup.upgradeToDeterministic(preferredScriptType, structure, keyRotationTimestamp, aesKey);
-                    log.info(" ... upgraded to HD again, based on next best oldest key.");
+                    log.info("...upgraded to HD again, based on next best oldest key.");
                 }
             } catch (AllRandomKeysRotating rotating) {
-                log.info(" ... no non-rotating random keys available, generating entirely new HD tree: backup required after this.");
+                log.info(
+                        "No non-rotating random keys available, generating entirely new {} tree: backup required after this.",
+                        preferredScriptType);
                 KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
                         .build();
                 if (keyChainGroup.isEncrypted()) {
