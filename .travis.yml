@@ -11,7 +11,7 @@ script:
   - gradle -q clean install
   - jdk_switcher use openjdk7
   - cd core
-  - gradle -q clean build
+  - gradle clean build
 
 notifications:
   irc:
