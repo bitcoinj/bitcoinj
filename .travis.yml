@@ -8,7 +8,7 @@ jdk:
 install:
   - sudo apt-get install -y protobuf-compiler
 script:
-  - gradle -q clean check -x :wallettemplate:check
+  - gradle clean check -x :wallettemplate:check
 
 notifications:
   irc:
