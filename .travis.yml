@@ -1,17 +1,14 @@
 # configuration for https://travis-ci.org/bitcoinj/bitcoinj
 sudo: false
-dist: trusty
+dist: xenial
 language: java
-jdk: oraclejdk8
+jdk:
+  - openjdk8
+  - openjdk11
 install:
-# before_install:
-  - sudo apt-get -qq update
   - sudo apt-get install -y protobuf-compiler
 script:
-  - gradle -q clean install
-  - jdk_switcher use openjdk7
-  - cd core
-  - gradle -q clean build
+  - gradle -q clean check -x :wallettemplate:check
 
 notifications:
   irc:
