@@ -73,6 +73,7 @@ public class SPVBlockStoreTest {
         // Check the chain head was stored correctly also.
         StoredBlock chainHead = store.getChainHead();
         assertEquals(b1, chainHead);
+        store.close();
     }
 
     @Test(expected = BlockStoreException.class)
