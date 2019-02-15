@@ -325,4 +325,23 @@ public class SPVBlockStore implements BlockStore {
         checkArgument(newCursor >= 0);
         buffer.putInt(4, newCursor);
     }
+
+    public void clear() throws Exception {
+        lock.lock();
+        try {
+            // Clear caches
+            blockCache.clear();
+            notFoundCache.clear();
+            // Clear file content
+            buffer.position(0);
+            long fileLength = randomAccessFile.length();
+            for (int i = 0; i < fileLength; i++) {
+                buffer.put((byte)0);
+            }
+            // Initialize store again
+            buffer.position(0);
+            initNewStore(params);
+        } finally { lock.unlock(); }
+    }
+
 }
