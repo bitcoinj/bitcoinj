@@ -1128,6 +1128,12 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
+    /** @deprecated Use {@link #findKeyFromPubKeyHash(byte[], ScriptType)} */
+    @Deprecated
+    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
+        return findKeyFromPubKeyHash(pubKeyHash, Script.ScriptType.P2PK);
+    }
+
     /**
      * Locates a keypair from the basicKeyChain given the hash of the public key. This is needed when finding out which
      * key we need to use to redeem a transaction output.
