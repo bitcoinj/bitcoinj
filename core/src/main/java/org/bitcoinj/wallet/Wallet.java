@@ -734,6 +734,12 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
+    /** @deprecated Use {@link #upgradeToDeterministic(ScriptType, KeyParameter)} */
+    @Deprecated
+    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) {
+        upgradeToDeterministic(Script.ScriptType.P2PKH, aesKey);
+    }
+
     /**
      * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption
      * key, after loading a wallet produced by previous versions of bitcoinj. If the wallet is encrypted the key
@@ -762,6 +768,12 @@ public class Wallet extends BaseTaggableObject
         } finally {
             keyChainGroupLock.unlock();
         }
+    }
+
+    /** @deprecated Use {@link #isDeterministicUpgradeRequired(ScriptType)} */
+    @Deprecated
+    public boolean isDeterministicUpgradeRequired() {
+        return isDeterministicUpgradeRequired(Script.ScriptType.P2PKH);
     }
 
     /**
