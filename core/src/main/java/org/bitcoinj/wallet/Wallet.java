@@ -1166,6 +1166,12 @@ public class Wallet extends BaseTaggableObject
             throw new IllegalArgumentException(address.toString());
     }
 
+    /** @deprecated Use {@link #isPubKeyHashMine(byte[], ScriptType))} */
+    @Deprecated
+    public boolean isPubKeyHashMine(byte[] pubKeyHash) {
+        return isPubKeyHashMine(pubKeyHash, Script.ScriptType.P2PKH);
+    }
+
     @Override
     public boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
         return findKeyFromPubKeyHash(pubKeyHash, scriptType) != null;
