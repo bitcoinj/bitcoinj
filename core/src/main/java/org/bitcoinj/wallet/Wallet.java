@@ -709,7 +709,11 @@ public class Wallet extends BaseTaggableObject
     public List<ECKey> getIssuedReceiveKeys() {
         keyChainGroupLock.lock();
         try {
-            return keyChainGroup.getActiveKeyChain().getIssuedReceiveKeys();
+            List<ECKey> keys = new LinkedList<>();
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTimeSecs))
+                keys.addAll(chain.getIssuedReceiveKeys());
+            return keys;
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -722,12 +726,13 @@ public class Wallet extends BaseTaggableObject
     public List<Address> getIssuedReceiveAddresses() {
         keyChainGroupLock.lock();
         try {
-            final DeterministicKeyChain activeKeyChain = keyChainGroup.getActiveKeyChain();
-            final List<ECKey> keys = activeKeyChain.getIssuedReceiveKeys();
-            final Script.ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
-            List<Address> addresses = new ArrayList<>(keys.size());
-            for (ECKey key : keys)
-                addresses.add(Address.fromKey(getParams(), key, outputScriptType));
+            List<Address> addresses = new ArrayList<>();
+            long keyRotationTimeSecs = vKeyRotationTimestamp;
+            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTimeSecs)) {
+                Script.ScriptType outputScriptType = chain.getOutputScriptType();
+                for (ECKey key : chain.getIssuedReceiveKeys())
+                    addresses.add(Address.fromKey(getParams(), key, outputScriptType));
+            }
             return addresses;
         } finally {
             keyChainGroupLock.unlock();
