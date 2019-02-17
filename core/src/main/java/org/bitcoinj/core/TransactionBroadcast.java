@@ -93,7 +93,7 @@ public class TransactionBroadcast {
         public Message onPreMessageReceived(Peer peer, Message m) {
             if (m instanceof RejectMessage) {
                 RejectMessage rejectMessage = (RejectMessage)m;
-                if (tx.getHash().equals(rejectMessage.getRejectedObjectHash())) {
+                if (tx.getTxId().equals(rejectMessage.getRejectedObjectHash())) {
                     rejects.put(peer, rejectMessage);
                     int size = rejects.size();
                     long threshold = Math.round(numWaitingFor / 2.0);
@@ -203,7 +203,7 @@ public class TransactionBroadcast {
                 //
                 // We're done! It's important that the PeerGroup lock is not held (by this thread) at this
                 // point to avoid triggering inversions when the Future completes.
-                log.info("broadcastTransaction: {} complete", tx.getHash());
+                log.info("broadcastTransaction: {} complete", tx.getTxId());
                 peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 conf.removeEventListener(this);
                 future.set(tx);  // RE-ENTRANCY POINT

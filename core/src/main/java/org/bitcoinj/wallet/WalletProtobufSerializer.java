@@ -255,7 +255,7 @@ public class WalletProtobufSerializer {
         Protos.Transaction.Builder txBuilder = Protos.Transaction.newBuilder();
 
         txBuilder.setPool(getProtoPool(wtx))
-                 .setHash(hashToByteString(tx.getHash()))
+                 .setHash(hashToByteString(tx.getTxId()))
                  .setVersion((int) tx.getVersion());
 
         if (tx.getUpdateTime() != null) {
@@ -294,7 +294,7 @@ public class WalletProtobufSerializer {
                 .setValue(output.getValue().value);
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
-                Sha256Hash spendingHash = spentBy.getParentTransaction().getHash();
+                Sha256Hash spendingHash = spentBy.getParentTransaction().getTxId();
                 outputBuilder.setSpentByTransactionHash(hashToByteString(spendingHash))
                              .setSpentByTransactionIndex(spentBy.getIndex());
             }
@@ -368,7 +368,7 @@ public class WalletProtobufSerializer {
                 // Copy in the overriding transaction, if available.
                 // (A dead coinbase transaction has no overriding transaction).
                 if (confidence.getOverridingTransaction() != null) {
-                    Sha256Hash overridingHash = confidence.getOverridingTransaction().getHash();
+                    Sha256Hash overridingHash = confidence.getOverridingTransaction().getTxId();
                     confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
                 }
             }
@@ -699,8 +699,8 @@ public class WalletProtobufSerializer {
 
         // Transaction should now be complete.
         Sha256Hash protoHash = byteStringToHash(txProto.getHash());
-        if (!tx.getHash().equals(protoHash))
-            throw new UnreadableWalletException(String.format(Locale.US, "Transaction did not deserialize completely: %s vs %s", tx.getHash(), protoHash));
+        if (!tx.getTxId().equals(protoHash))
+            throw new UnreadableWalletException(String.format(Locale.US, "Transaction did not deserialize completely: %s vs %s", tx.getTxId(), protoHash));
         if (txMap.containsKey(txProto.getHash()))
             throw new UnreadableWalletException("Wallet contained duplicate transaction " + byteStringToHash(txProto.getHash()));
         txMap.put(txProto.getHash(), tx);

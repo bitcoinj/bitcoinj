@@ -134,7 +134,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(tx, outbound(channels[1]));
         assertEquals(tx, outbound(channels[2]));
         assertEquals(tx, outbound(channels[4]));
-        RejectMessage reject = new RejectMessage(UNITTEST, RejectMessage.RejectCode.DUST, tx.getHash(), "tx", "dust");
+        RejectMessage reject = new RejectMessage(UNITTEST, RejectMessage.RejectCode.DUST, tx.getTxId(), "tx", "dust");
         inbound(channels[1], reject);
         inbound(channels[4], reject);
         try {
@@ -251,6 +251,6 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer. No extra Bloom filter because no change address was needed.
-        assertEquals(t3.getHash(), outbound(p1).getHash());
+        assertEquals(t3.getTxId(), outbound(p1).getHash());
     }
 }

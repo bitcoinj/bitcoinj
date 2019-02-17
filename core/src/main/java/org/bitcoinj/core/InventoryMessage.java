@@ -58,7 +58,7 @@ public class InventoryMessage extends ListMessage {
     }
 
     public void addTransaction(Transaction tx) {
-        addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getHash()));
+        addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId()));
     }
 
     /** Creates a new inv message for the given transactions. */

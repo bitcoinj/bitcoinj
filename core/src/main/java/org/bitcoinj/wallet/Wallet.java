@@ -1739,7 +1739,7 @@ public class Wallet extends BaseTaggableObject
 
             Set<Sha256Hash> hashes = new HashSet<>();
             for (Transaction tx : transactions) {
-                hashes.add(tx.getHash());
+                hashes.add(tx.getTxId());
             }
 
             int size1 = transactions.size();
@@ -1836,7 +1836,7 @@ public class Wallet extends BaseTaggableObject
                 tx = riskDropped.get(txHash);
                 if (tx != null) {
                     // If this happens our risk analysis is probably wrong and should be improved.
-                    log.info("Risk analysis dropped tx {} but was included in block anyway", tx.getHash());
+                    log.info("Risk analysis dropped tx {} but was included in block anyway", tx.getTxId());
                 } else {
                     // False positive that was broadcast to us and ignored by us because it was irrelevant to our keys.
                     return false;
@@ -1882,7 +1882,7 @@ public class Wallet extends BaseTaggableObject
                 return;
             if (isTransactionRisky(tx, dependencies) && !acceptRiskyTransactions) {
                 // isTransactionRisky already logged the reason.
-                riskDropped.put(tx.getHash(), tx);
+                riskDropped.put(tx.getTxId(), tx);
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
                 return;
             }
@@ -2033,16 +2033,16 @@ public class Wallet extends BaseTaggableObject
     void addTransactionsDependingOn(Set<Transaction> txSet, Set<Transaction> txPool) {
         Map<Sha256Hash, Transaction> txQueue = new LinkedHashMap<>();
         for (Transaction tx : txSet) {
-            txQueue.put(tx.getHash(), tx);
+            txQueue.put(tx.getTxId(), tx);
         }
         while(!txQueue.isEmpty()) {
             Transaction tx = txQueue.remove(txQueue.keySet().iterator().next());
             for (Transaction anotherTx : txPool) {
                 if (anotherTx.equals(tx)) continue;
                 for (TransactionInput input : anotherTx.getInputs()) {
-                    if (input.getOutpoint().getHash().equals(tx.getHash())) {
-                        if (txQueue.get(anotherTx.getHash()) == null) {
-                            txQueue.put(anotherTx.getHash(), anotherTx);
+                    if (input.getOutpoint().getHash().equals(tx.getTxId())) {
+                        if (txQueue.get(anotherTx.getTxId()) == null) {
+                            txQueue.put(anotherTx.getTxId(), anotherTx);
                             txSet.add(anotherTx);
                         }
                     }
@@ -2092,7 +2092,7 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
 
         Coin prevBalance = getBalance();
-        Sha256Hash txHash = tx.getHash();
+        Sha256Hash txHash = tx.getTxId();
         boolean bestChain = blockType == BlockChain.NewBlockType.BEST_CHAIN;
         boolean sideChain = blockType == BlockChain.NewBlockType.SIDE_CHAIN;
 
@@ -2113,7 +2113,7 @@ public class Wallet extends BaseTaggableObject
         // If this transaction is already in the wallet we may need to move it into a different pool. At the very
         // least we need to ensure we're manipulating the canonical object rather than a duplicate.
         {
-            Transaction tmp = transactions.get(tx.getHash());
+            Transaction tmp = transactions.get(tx.getTxId());
             if (tmp != null)
                 tx = tmp;
         }
@@ -2150,7 +2150,7 @@ public class Wallet extends BaseTaggableObject
             } else {
                 // Ignore the case where a tx appears on a side chain at the same time as the best chain (this is
                 // quite normal and expected).
-                Sha256Hash hash = tx.getHash();
+                Sha256Hash hash = tx.getTxId();
                 if (!unspent.containsKey(hash) && !spent.containsKey(hash) && !dead.containsKey(hash)) {
                     // Otherwise put it (possibly back) into pending.
                     // Committing it updates the spent flags and inserts into the pool as well.
@@ -2267,7 +2267,7 @@ public class Wallet extends BaseTaggableObject
     /** Finds whether txA spends txB */
     boolean spends(Transaction txA, Transaction txB) {
         for (TransactionInput txInput : txA.getInputs()) {
-            if (txInput.getOutpoint().getHash().equals(txB.getHash())) {
+            if (txInput.getOutpoint().getHash().equals(txB.getTxId())) {
                 return true;
             }
         }
@@ -2309,10 +2309,10 @@ public class Wallet extends BaseTaggableObject
             // This is so that they can update their depth.
             Set<Transaction> transactions = getTransactions(true);
             for (Transaction tx : transactions) {
-                if (ignoreNextNewBlock.contains(tx.getHash())) {
+                if (ignoreNextNewBlock.contains(tx.getTxId())) {
                     // tx was already processed in receive() due to it appearing in this block, so we don't want to
                     // increment the tx confidence depth twice, it'd result in miscounting.
-                    ignoreNextNewBlock.remove(tx.getHash());
+                    ignoreNextNewBlock.remove(tx.getTxId());
                 } else {
                     TransactionConfidence confidence = tx.getConfidence();
                     if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
@@ -2351,12 +2351,12 @@ public class Wallet extends BaseTaggableObject
      */
     private void processTxFromBestChain(Transaction tx, boolean forceAddToPool) throws VerificationException {
         checkState(lock.isHeldByCurrentThread());
-        checkState(!pending.containsKey(tx.getHash()));
+        checkState(!pending.containsKey(tx.getTxId()));
 
         // This TX may spend our existing outputs even though it was not pending. This can happen in unit
         // tests, if keys are moved between wallets, if we're catching up to the chain given only a set of keys,
         // or if a dead coinbase transaction has moved back onto the best chain.
-        boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getHash());
+        boolean isDeadCoinbase = tx.isCoinBase() && dead.containsKey(tx.getTxId());
         if (isDeadCoinbase) {
             // There is a dead coinbase tx being received on the best chain. A coinbase tx is made dead when it moves
             // to a side chain but it can be switched back on a reorg and resurrected back to spent or unspent.
@@ -2367,7 +2367,7 @@ public class Wallet extends BaseTaggableObject
             // happen in practice, thus for simplicities sake we ignore it here.
             log.info("  coinbase tx <-dead: confidence {}", tx.getTxId(),
                     tx.getConfidence().getConfidenceType().name());
-            dead.remove(tx.getHash());
+            dead.remove(tx.getTxId());
         }
 
         // Update tx and other unspent/pending transactions by connecting inputs/outputs.
@@ -2440,7 +2440,7 @@ public class Wallet extends BaseTaggableObject
     private void updateForSpends(Transaction tx, boolean fromChain) throws VerificationException {
         checkState(lock.isHeldByCurrentThread());
         if (fromChain)
-            checkState(!pending.containsKey(tx.getHash()));
+            checkState(!pending.containsKey(tx.getTxId()));
         for (TransactionInput input : tx.getInputs()) {
             TransactionInput.ConnectionResult result = input.connect(unspent, TransactionInput.ConnectMode.ABORT_ON_CONFLICT);
             if (result == TransactionInput.ConnectionResult.NO_SUCH_TX) {
@@ -2471,9 +2471,9 @@ public class Wallet extends BaseTaggableObject
                     // so the exact nature of the mutation can be examined.
                     log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
-                    log.warn("{}: {}", tx.getHash(), Utils.HEX.encode(tx.unsafeBitcoinSerialize()));
+                    log.warn("{}: {}", tx.getTxId(), Utils.HEX.encode(tx.unsafeBitcoinSerialize()));
                     Transaction other = output.getSpentBy().getParentTransaction();
-                    log.warn("{}: {}", other.getHash(), Utils.HEX.encode(other.unsafeBitcoinSerialize()));
+                    log.warn("{}: {}", other.getTxId(), Utils.HEX.encode(other.unsafeBitcoinSerialize()));
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
@@ -2529,16 +2529,16 @@ public class Wallet extends BaseTaggableObject
                     overridingTx != null ? " by " + overridingTx.getTxId() : "");
             log.warn("Disconnecting each input and moving connected transactions.");
             // TX could be pending (finney attack), or in unspent/spent (coinbase killed by reorg).
-            pending.remove(tx.getHash());
-            unspent.remove(tx.getHash());
-            spent.remove(tx.getHash());
+            pending.remove(tx.getTxId());
+            unspent.remove(tx.getTxId());
+            spent.remove(tx.getTxId());
             addWalletTransaction(Pool.DEAD, tx);
             for (TransactionInput deadInput : tx.getInputs()) {
                 Transaction connected = deadInput.getConnectedTransaction();
                 if (connected == null) continue;
                 if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD && deadInput.getConnectedOutput().getSpentBy() != null && deadInput.getConnectedOutput().getSpentBy().equals(deadInput)) {
                     checkState(myUnspents.add(deadInput.getConnectedOutput()));
-                    log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(), deadInput.getConnectedOutput().getParentTransaction().getHash());
+                    log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(), deadInput.getConnectedOutput().getParentTransaction().getTxId());
                 }
                 deadInput.disconnect();
                 maybeMovePool(connected, "kill");
@@ -2552,7 +2552,7 @@ public class Wallet extends BaseTaggableObject
                 TransactionInput connected = deadOutput.getSpentBy();
                 if (connected == null) continue;
                 final Transaction parentTransaction = connected.getParentTransaction();
-                log.info("This death invalidated dependent tx {}", parentTransaction.getHash());
+                log.info("This death invalidated dependent tx {}", parentTransaction.getTxId());
                 work.push(parentTransaction);
             }
         }
@@ -2584,18 +2584,18 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
         if (tx.isEveryOwnedOutputSpent(this)) {
             // There's nothing left I can spend in this transaction.
-            if (unspent.remove(tx.getHash()) != null) {
+            if (unspent.remove(tx.getTxId()) != null) {
                 if (log.isInfoEnabled()) {
                     log.info("  {} {} <-unspent ->spent", tx.getTxId(), context);
                 }
-                spent.put(tx.getHash(), tx);
+                spent.put(tx.getTxId(), tx);
             }
         } else {
-            if (spent.remove(tx.getHash()) != null) {
+            if (spent.remove(tx.getTxId()) != null) {
                 if (log.isInfoEnabled()) {
                     log.info("  {} {} <-spent ->unspent", tx.getTxId(), context);
                 }
-                unspent.put(tx.getHash(), tx);
+                unspent.put(tx.getTxId(), tx);
             }
         }
     }
@@ -2609,7 +2609,7 @@ public class Wallet extends BaseTaggableObject
         tx.verify();
         lock.lock();
         try {
-            if (pending.containsKey(tx.getHash()))
+            if (pending.containsKey(tx.getTxId()))
                 return false;
             log.info("commitTx of {}", tx.getTxId());
             Coin balance = getBalance();
@@ -3033,19 +3033,19 @@ public class Wallet extends BaseTaggableObject
      */
     private void addWalletTransaction(Pool pool, Transaction tx) {
         checkState(lock.isHeldByCurrentThread());
-        transactions.put(tx.getHash(), tx);
+        transactions.put(tx.getTxId(), tx);
         switch (pool) {
         case UNSPENT:
-            checkState(unspent.put(tx.getHash(), tx) == null);
+            checkState(unspent.put(tx.getTxId(), tx) == null);
             break;
         case SPENT:
-            checkState(spent.put(tx.getHash(), tx) == null);
+            checkState(spent.put(tx.getTxId(), tx) == null);
             break;
         case PENDING:
-            checkState(pending.put(tx.getHash(), tx) == null);
+            checkState(pending.put(tx.getTxId(), tx) == null);
             break;
         case DEAD:
-            checkState(dead.put(tx.getHash(), tx) == null);
+            checkState(dead.put(tx.getTxId(), tx) == null);
             break;
         default:
             throw new RuntimeException("Unknown wallet transaction type " + pool);
@@ -3234,7 +3234,7 @@ public class Wallet extends BaseTaggableObject
                             myUnspents.remove(output);
 
                         i.remove();
-                        transactions.remove(tx.getHash());
+                        transactions.remove(tx.getTxId());
                         dirty = true;
                         log.info("Removed transaction {} from pending pool during cleanup.", tx.getTxId());
                     } else {
@@ -3259,7 +3259,7 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         try {
             EnumSet<Pool> result = EnumSet.noneOf(Pool.class);
-            Sha256Hash txHash = tx.getHash();
+            Sha256Hash txHash = tx.getTxId();
             if (unspent.containsKey(txHash)) {
                 result.add(Pool.UNSPENT);
             }
@@ -4604,7 +4604,7 @@ public class Wallet extends BaseTaggableObject
             for (Sha256Hash blockHash : oldBlockHashes) {
                 for (TxOffsetPair pair : mapBlockTx.get(blockHash)) {
                     Transaction tx = pair.tx;
-                    final Sha256Hash txHash = tx.getHash();
+                    final Sha256Hash txHash = tx.getTxId();
                     if (tx.isCoinBase()) {
                         // All the transactions that we have in our wallet which spent this coinbase are now invalid
                         // and will never confirm. Hopefully this should never happen - that's the point of the maturity
@@ -4639,7 +4639,7 @@ public class Wallet extends BaseTaggableObject
                 // Coinbase transactions on the old part of the chain are dead for good and won't come back unless
                 // there's another re-org.
                 if (tx.isCoinBase()) continue;
-                log.info("  ->pending {}", tx.getHash());
+                log.info("  ->pending {}", tx.getTxId());
 
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);  // Wipe height/depth/work data.
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
@@ -4672,7 +4672,7 @@ public class Wallet extends BaseTaggableObject
             for (StoredBlock block : newBlocks) {
                 log.info("Replaying block {}", block.getHeader().getHashAsString());
                 for (TxOffsetPair pair : mapBlockTx.get(block.getHeader().getHash())) {
-                    log.info("  tx {}", pair.tx.getHash());
+                    log.info("  tx {}", pair.tx.getTxId());
                     try {
                         receive(pair.tx, block, BlockChain.NewBlockType.BEST_CHAIN, pair.offset);
                     } catch (ScriptException e) {
@@ -5180,7 +5180,7 @@ public class Wallet extends BaseTaggableObject
             // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
             //    never saw it, due to bugs.
             // 2) It can't really hurt.
-            log.info("New broadcaster so uploading waiting tx {}", tx.getHash());
+            log.info("New broadcaster so uploading waiting tx {}", tx.getTxId());
             broadcaster.broadcastTransaction(tx);
         }
     }

@@ -876,7 +876,7 @@ public abstract class AbstractBlockChain {
                                                    Set<Sha256Hash> falsePositives) throws VerificationException {
         for (Transaction tx : transactions) {
             try {
-                falsePositives.remove(tx.getHash());
+                falsePositives.remove(tx.getTxId());
                 if (clone)
                     tx = tx.params.getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
                 listener.receiveFromBlock(tx, block, blockType, relativityOffset++);

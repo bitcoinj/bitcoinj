@@ -160,7 +160,7 @@ public abstract class PaymentChannelClientState {
                 synchronized (PaymentChannelClientState.this) {
                     if (getContractInternal() == null) return;
                     if (isSettlementTransaction(tx)) {
-                        log.info("Close: transaction {} closed contract {}", tx.getHash(), getContractInternal().getHash());
+                        log.info("Close: transaction {} closed contract {}", tx.getTxId(), getContractInternal().getTxId());
                         // Record the fact that it was closed along with the transaction that closed it.
                         stateMachine.transition(State.CLOSED);
                         if (storedChannel == null) return;

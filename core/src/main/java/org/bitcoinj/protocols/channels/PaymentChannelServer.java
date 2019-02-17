@@ -419,7 +419,7 @@ public class PaymentChannelServer {
                 .addListener(new Runnable() {
                     @Override
                     public void run() {
-                        multisigContractPropogated(providedContract, contract.getHash());
+                        multisigContractPropogated(providedContract, contract.getTxId());
                     }
                 }, Threading.SAME_THREAD);
     }
@@ -611,7 +611,7 @@ public class PaymentChannelServer {
                     StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                             wallet.getExtensions().get(StoredPaymentChannelServerStates.EXTENSION_ID);
                     if (channels != null) {
-                        StoredServerChannel storedServerChannel = channels.getChannel(state.getContract().getHash());
+                        StoredServerChannel storedServerChannel = channels.getChannel(state.getContract().getTxId());
                         if (storedServerChannel != null) {
                             storedServerChannel.clearConnectedHandler();
                         }

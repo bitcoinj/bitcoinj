@@ -76,7 +76,7 @@ public class Transaction extends ChildMessage {
             final long time2 = tx2.getUpdateTime().getTime();
             final int updateTimeComparison = -(Longs.compare(time1, time2));
             //If time1==time2, compare by tx hash to make comparator consistent with equals
-            return updateTimeComparison != 0 ? updateTimeComparison : tx1.getHash().compareTo(tx2.getHash());
+            return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
         }
     };
     /** A comparator that can be used to sort transactions by their chain height. */
@@ -91,7 +91,7 @@ public class Transaction extends ChildMessage {
                     ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
             final int heightComparison = -(Ints.compare(height1, height2));
             //If height1==height2, compare by tx hash to make comparator consistent with equals
-            return heightComparison != 0 ? heightComparison : tx1.getHash().compareTo(tx2.getHash());
+            return heightComparison != 0 ? heightComparison : tx1.getTxId().compareTo(tx2.getTxId());
         }
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
@@ -1524,7 +1524,7 @@ public class Transaction extends ChildMessage {
      */
     public TransactionConfidence getConfidence(TxConfidenceTable table) {
         if (confidence == null)
-            confidence = table.getOrCreate(getHash()) ;
+            confidence = table.getOrCreate(getTxId()) ;
         return confidence;
     }
 
@@ -1537,12 +1537,12 @@ public class Transaction extends ChildMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return getHash().equals(((Transaction)o).getHash());
+        return getTxId().equals(((Transaction)o).getTxId());
     }
 
     @Override
     public int hashCode() {
-        return getHash().hashCode();
+        return getTxId().hashCode();
     }
 
     /**

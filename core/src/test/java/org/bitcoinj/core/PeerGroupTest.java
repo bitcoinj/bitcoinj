@@ -406,7 +406,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p3, inv);
         pingAndWait(p3);
         Threading.waitForUserCode();
-        assertEquals(tx.getHash(), confEvent[0].getTransactionHash());
+        assertEquals(tx.getTxId(), confEvent[0].getTransactionHash());
         assertEquals(3, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p3).getAddress()));
     }
@@ -622,7 +622,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
-        assertFalse(p1.lastReceivedFilter.contains(tx.getHash().getBytes()));
+        assertFalse(p1.lastReceivedFilter.contains(tx.getTxId().getBytes()));
         inbound(p1, tx);
         // p1 requests dep resolution, p2 is quiet.
         assertTrue(outbound(p1) instanceof GetDataMessage);

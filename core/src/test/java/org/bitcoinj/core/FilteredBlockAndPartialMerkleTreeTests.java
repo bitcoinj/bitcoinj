@@ -103,8 +103,8 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         assertEquals(4, filteredBlock.getTransactionCount());
         // This call triggers verification of the just created data.
         List<Sha256Hash> txns = filteredBlock.getTransactionHashes();
-        assertTrue(txns.contains(tx1.getHash()));
-        assertTrue(txns.contains(tx2.getHash()));
+        assertTrue(txns.contains(tx1.getTxId()));
+        assertTrue(txns.contains(tx2.getTxId()));
     }
 
     private Sha256Hash numAsHash(int num) {
@@ -142,21 +142,21 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         assertTrue(txHashList.size() == 4);
         // Four transactions (0, 1, 2, 6) from block 100001
         Transaction tx0 = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff07044c86041b010dffffffff0100f2052a01000000434104b27f7e9475ccf5d9a431cb86d665b8302c140144ec2397fce792f4a4e7765fecf8128534eaa71df04f93c74676ae8279195128a1506ebf7379d23dab8fca0f63ac00000000"));
-        assertTrue(tx0.getHash().equals(Sha256Hash.wrap("bb28a1a5b3a02e7657a81c38355d56c6f05e80b9219432e3352ddcfc3cb6304c")));
-        assertEquals(tx0.getHash(), txHashList.get(0));
+        assertTrue(tx0.getTxId().equals(Sha256Hash.wrap("bb28a1a5b3a02e7657a81c38355d56c6f05e80b9219432e3352ddcfc3cb6304c")));
+        assertEquals(tx0.getTxId(), txHashList.get(0));
         
         Transaction tx1 = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode("0100000001d992e5a888a86d4c7a6a69167a4728ee69497509740fc5f456a24528c340219a000000008b483045022100f0519bdc9282ff476da1323b8ef7ffe33f495c1a8d52cc522b437022d83f6a230220159b61d197fbae01b4a66622a23bc3f1def65d5fa24efd5c26fa872f3a246b8e014104839f9023296a1fabb133140128ca2709f6818c7d099491690bd8ac0fd55279def6a2ceb6ab7b5e4a71889b6e739f09509565eec789e86886f6f936fa42097adeffffffff02000fe208010000001976a914948c765a6914d43f2a7ac177da2c2f6b52de3d7c88ac00e32321000000001976a9140c34f4e29ab5a615d5ea28d4817f12b137d62ed588ac00000000"));
-        assertTrue(tx1.getHash().equals(Sha256Hash.wrap("fbde5d03b027d2b9ba4cf5d4fecab9a99864df2637b25ea4cbcb1796ff6550ca")));
-        assertEquals(tx1.getHash(), txHashList.get(1));
+        assertTrue(tx1.getTxId().equals(Sha256Hash.wrap("fbde5d03b027d2b9ba4cf5d4fecab9a99864df2637b25ea4cbcb1796ff6550ca")));
+        assertEquals(tx1.getTxId(), txHashList.get(1));
 
         Transaction tx2 = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode("01000000059daf0abe7a92618546a9dbcfd65869b6178c66ec21ccfda878c1175979cfd9ef000000004a493046022100c2f7f25be5de6ce88ac3c1a519514379e91f39b31ddff279a3db0b1a229b708b022100b29efbdbd9837cc6a6c7318aa4900ed7e4d65662c34d1622a2035a3a5534a99a01ffffffffd516330ebdf075948da56db13d22632a4fb941122df2884397dda45d451acefb0000000048473044022051243debe6d4f2b433bee0cee78c5c4073ead0e3bde54296dbed6176e128659c022044417bfe16f44eb7b6eb0cdf077b9ce972a332e15395c09ca5e4f602958d266101ffffffffe1f5aa33961227b3c344e57179417ce01b7ccd421117fe2336289b70489883f900000000484730440220593252bb992ce3c85baf28d6e3aa32065816271d2c822398fe7ee28a856bc943022066d429dd5025d3c86fd8fd8a58e183a844bd94aa312cefe00388f57c85b0ca3201ffffffffe207e83718129505e6a7484831442f668164ae659fddb82e9e5421a081fb90d50000000049483045022067cf27eb733e5bcae412a586b25a74417c237161a084167c2a0b439abfebdcb2022100efcc6baa6824b4c5205aa967e0b76d31abf89e738d4b6b014e788c9a8cccaf0c01ffffffffe23b8d9d80a9e9d977fab3c94dbe37befee63822443c3ec5ae5a713ede66c3940000000049483045022020f2eb35036666b1debe0d1d2e77a36d5d9c4e96c1dba23f5100f193dbf524790221008ce79bc1321fb4357c6daee818038d41544749127751726e46b2b320c8b565a201ffffffff0200ba1dd2050000001976a914366a27645806e817a6cd40bc869bdad92fe5509188ac40420f00000000001976a914ee8bd501094a7d5ca318da2506de35e1cb025ddc88ac00000000"));
-        assertTrue(tx2.getHash().equals(Sha256Hash.wrap("8131ffb0a2c945ecaf9b9063e59558784f9c3a74741ce6ae2a18d0571dac15bb")));
-        assertEquals(tx2.getHash(), txHashList.get(2));
+        assertTrue(tx2.getTxId().equals(Sha256Hash.wrap("8131ffb0a2c945ecaf9b9063e59558784f9c3a74741ce6ae2a18d0571dac15bb")));
+        assertEquals(tx2.getTxId(), txHashList.get(2));
 
 
         Transaction tx3 = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode("01000000011b56cf3aab3286d582c055a42af3a911ee08423f276da702bb67f1222ac1a5b6000000008c4930460221009e9fba682e162c9627b96b7df272006a727988680b956c61baff869f0907b8fb022100a9c19adc7c36144bafe526630783845e5cb9554d30d3edfb56f0740274d507f30141046e0efbfac7b1615ad553a6f097615bc63b7cdb3b8e1cb3263b619ba63740012f51c7c5b09390e3577e377b7537e61226e315f95f926444fc5e5f2978c112e448ffffffff02c0072b11010000001976a914b73e9e01933351ca076faf8e0d94dd58079d0b1f88ac80b63908000000001976a9141aca0bdf0d2cee63db19aa4a484f45a4e26a880c88ac00000000"));
-        assertTrue(tx3.getHash().equals(Sha256Hash.wrap("c5abc61566dbb1c4bce5e1fda7b66bed22eb2130cea4b721690bc1488465abc9")));
-        assertEquals(tx3.getHash(),txHashList.get(3));
+        assertTrue(tx3.getTxId().equals(Sha256Hash.wrap("c5abc61566dbb1c4bce5e1fda7b66bed22eb2130cea4b721690bc1488465abc9")));
+        assertEquals(tx3.getTxId(),txHashList.get(3));
 
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value

@@ -109,7 +109,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public void closeChannel(StoredServerChannel channel) {
         lock.lock();
         try {
-            if (mapChannels.remove(channel.contract.getHash()) == null)
+            if (mapChannels.remove(channel.contract.getTxId()) == null)
                 return;
         } finally {
             lock.unlock();
@@ -190,7 +190,7 @@ public class StoredPaymentChannelServerStates implements WalletExtension {
     public void putChannel(final StoredServerChannel channel) {
         lock.lock();
         try {
-            checkArgument(mapChannels.put(channel.contract.getHash(), checkNotNull(channel)) == null);
+            checkArgument(mapChannels.put(channel.contract.getTxId(), checkNotNull(channel)) == null);
             // Add the difference between real time and Utils.now() so that test-cases can use a mock clock.
             Date autocloseTime = new Date((channel.refundTransactionUnlockTimeSecs + CHANNEL_EXPIRE_OFFSET) * 1000L
                     + (System.currentTimeMillis() - Utils.currentTimeMillis()));

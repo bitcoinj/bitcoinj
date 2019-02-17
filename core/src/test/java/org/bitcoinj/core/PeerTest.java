@@ -266,13 +266,13 @@ public class PeerTest extends TestWithNetworkConnections {
         Coin value = COIN;
         Transaction tx = createFakeTx(UNITTEST, value, address);
         InventoryMessage inv = new InventoryMessage(UNITTEST);
-        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getHash());
+        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
         inv.addItem(item);
         inbound(writeTarget, inv);
         // Peer hasn't seen it before, so will ask for it.
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(1, getdata.getItems().size());
-        assertEquals(tx.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(tx.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, tx);
         // Ask for the dependency, it's not in the mempool (in chain).
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -299,7 +299,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Coin value = COIN;
         Transaction tx = createFakeTx(UNITTEST, value, this.address);
         InventoryMessage inv = new InventoryMessage(UNITTEST);
-        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getHash());
+        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
         inv.addItem(item);
 
         inbound(writeTarget, inv);
@@ -307,7 +307,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // We got a getdata message.
         GetDataMessage message = (GetDataMessage)outbound(writeTarget);
         assertEquals(1, message.getItems().size());
-        assertEquals(tx.getHash(), message.getItems().get(0).hash);
+        assertEquals(tx.getTxId(), message.getItems().get(0).hash);
         assertNotEquals(0, tx.getConfidence().numBroadcastPeers());
 
         // Advertising to peer2 results in no getdata message.
@@ -603,7 +603,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         Threading.waitForUserCode();
-        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t1.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t1);
         pingAndWait(writeTarget);
         assertEquals(t1, onTx[0]);
@@ -613,8 +613,8 @@ public class PeerTest extends TestWithNetworkConnections {
         // It will recursively ask for the dependencies of t1: t2, t3, t7, t8.
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(4, getdata.getItems().size());
-        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
-        assertEquals(t3.getHash(), getdata.getItems().get(1).hash);
+        assertEquals(t2.getTxId(), getdata.getItems().get(0).hash);
+        assertEquals(t3.getTxId(), getdata.getItems().get(1).hash);
         assertEquals(t7hash, getdata.getItems().get(2).hash);
         assertEquals(t8hash, getdata.getItems().get(3).hash);
         // Deliver the requested transactions.
@@ -635,7 +635,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(futures.isDone());
         // Request t4 ...
         getdata = (GetDataMessage) outbound(writeTarget);
-        assertEquals(t4.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t4.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t4);
         // Continue to explore the t4 branch and ask for t6, which is in the chain.
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -681,7 +681,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         Threading.waitForUserCode();
-        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t1.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t1);
         pingAndWait(writeTarget);
         // We want its dependencies so ask for them.
@@ -690,7 +690,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // level 1
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(1, getdata.getItems().size());
-        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t2.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t2);
         // no level 2
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -788,13 +788,13 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
         // Send it.
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
-        assertEquals(t1.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t1.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t1);
         // Nothing arrived at our event listener yet.
         assertNull(vtx[0]);
         // We request t2.
         getdata = (GetDataMessage) outbound(writeTarget);
-        assertEquals(t2.getHash(), getdata.getItems().get(0).hash);
+        assertEquals(t2.getTxId(), getdata.getItems().get(0).hash);
         inbound(writeTarget, t2);
         // We request t3.
         getdata = (GetDataMessage) outbound(writeTarget);

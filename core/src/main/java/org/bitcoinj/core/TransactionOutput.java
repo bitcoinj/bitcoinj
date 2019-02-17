@@ -315,7 +315,8 @@ public class TransactionOutput extends ChildMessage {
                 return false;
         } catch (ScriptException e) {
             // Just means we didn't understand the output of this transaction: ignore it.
-            log.debug("Could not parse tx {} output script: {}", parent != null ? parent.getHash() : "(no parent)", e.toString());
+            log.debug("Could not parse tx {} output script: {}",
+                    parent != null ? ((Transaction) parent).getTxId() : "(no parent)", e.toString());
             return false;
         }
     }
@@ -366,7 +367,7 @@ public class TransactionOutput extends ChildMessage {
      */
     @Nullable
     public Sha256Hash getParentTransactionHash() {
-        return parent == null ? null : parent.getHash();
+        return parent == null ? null : ((Transaction) parent).getTxId();
     }
 
     /**

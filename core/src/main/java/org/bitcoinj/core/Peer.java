@@ -836,7 +836,7 @@ public class Peer extends PeerSocketHandler {
                                         log.info("{}: Dependency download complete!", getAddress());
                                         wallet.receivePending(tx, dependencies);
                                     } catch (VerificationException e) {
-                                        log.error("{}: Wallet failed to process pending transaction {}", getAddress(), tx.getHash());
+                                        log.error("{}: Wallet failed to process pending transaction {}", getAddress(), tx.getTxId());
                                         log.error("Error was: ", e);
                                         // Not much more we can do at this point.
                                     }
@@ -917,7 +917,7 @@ public class Peer extends PeerSocketHandler {
             final Transaction tx, final Object marker, final List<Transaction> results) {
 
         final SettableFuture<Object> resultFuture = SettableFuture.create();
-        final Sha256Hash rootTxHash = tx.getHash();
+        final Sha256Hash rootTxHash = tx.getTxId();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
         // whether a transaction is dependent on a timelocked transaction or has an unexpectedly deep dependency tree
         // or depends on a no-fee transaction.
@@ -984,7 +984,7 @@ public class Peer extends PeerSocketHandler {
             // Start the operation.
             sendMessage(getdata);
         } catch (Exception e) {
-            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getHash(), e);
+            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getTxId(), e);
             resultFuture.setException(e);
             return resultFuture;
         } finally {

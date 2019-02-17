@@ -261,8 +261,8 @@ public abstract class PaymentChannelServerState {
         // Get the wallet's copy of the contract (ie with confidence information), if this is null, the wallet
         // was not connected to the peergroup when the contract was broadcast (which may cause issues down the road, and
         // disables our double-spend check next)
-        Transaction walletContract = wallet.getTransaction(contract.getHash());
-        checkNotNull(walletContract, "Wallet did not contain multisig contract {} after state was marked READY", contract.getHash());
+        Transaction walletContract = wallet.getTransaction(contract.getTxId());
+        checkNotNull(walletContract, "Wallet did not contain multisig contract {} after state was marked READY", contract.getTxId());
 
         // Note that we check for DEAD state here, but this test is essentially useless in production because we will
         // miss most double-spends due to bloom filtering right now anyway. This will eventually fixed by network-wide
@@ -368,7 +368,7 @@ public abstract class PaymentChannelServerState {
         if (storedServerChannel != null)
             return;
 
-        log.info("Storing state with contract hash {}.", getContract().getHash());
+        log.info("Storing state with contract hash {}.", getContract().getTxId());
         StoredPaymentChannelServerStates channels = (StoredPaymentChannelServerStates)
                 wallet.addOrGetExistingExtension(new StoredPaymentChannelServerStates(wallet, broadcaster));
         storedServerChannel = new StoredServerChannel(this, getMajorVersion(), getContract(), getClientOutput(), getExpiryTime(), serverKey, getClientKey(), bestValueToMe, bestValueSignature);

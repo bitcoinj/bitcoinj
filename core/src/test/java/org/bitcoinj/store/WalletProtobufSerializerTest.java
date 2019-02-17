@@ -134,7 +134,7 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true).size());
         assertEquals(v1, wallet1.getBalance(Wallet.BalanceType.ESTIMATED));
-        Transaction t1copy = wallet1.getTransaction(t1.getHash());
+        Transaction t1copy = wallet1.getTransaction(t1.getTxId());
         assertArrayEquals(t1.unsafeBitcoinSerialize(), t1copy.unsafeBitcoinSerialize());
         assertEquals(2, t1copy.getConfidence().numBroadcastPeers());
         assertNotNull(t1copy.getConfidence().getLastBroadcastedAt());
@@ -148,7 +148,7 @@ public class WalletProtobufSerializerTest {
         
         Protos.Transaction t1p = walletProto.getTransaction(0);
         assertEquals(0, t1p.getBlockHashCount());
-        assertArrayEquals(t1.getHash().getBytes(), t1p.getHash().toByteArray());
+        assertArrayEquals(t1.getTxId().getBytes(), t1p.getHash().toByteArray());
         assertEquals(Protos.Transaction.Pool.PENDING, t1p.getPool());
         assertFalse(t1p.hasLockTime());
         assertFalse(t1p.getTransactionInput(0).hasSequence());
@@ -166,7 +166,7 @@ public class WalletProtobufSerializerTest {
         t1.setPurpose(Purpose.RAISE_FEE);
         myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);
-        Transaction t1copy = wallet1.getTransaction(t1.getHash());
+        Transaction t1copy = wallet1.getTransaction(t1.getTxId());
         assertEquals(Purpose.RAISE_FEE, t1copy.getPurpose());
     }
 
@@ -180,7 +180,7 @@ public class WalletProtobufSerializerTest {
         myWallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN, 0);
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true).size());
-        Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getHash());
+        Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getTxId());
         assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
         assertEquals(Coin.ZERO, wallet1.getBalance());
 
@@ -241,9 +241,9 @@ public class WalletProtobufSerializerTest {
         tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
         wallet.receivePending(tx2, null);
         Wallet walletCopy = roundTrip(wallet);
-        Transaction tx1copy = checkNotNull(walletCopy.getTransaction(tx1.getHash()));
+        Transaction tx1copy = checkNotNull(walletCopy.getTransaction(tx1.getTxId()));
         assertEquals(TransactionInput.NO_SEQUENCE, tx1copy.getInput(0).getSequenceNumber());
-        Transaction tx2copy = checkNotNull(walletCopy.getTransaction(tx2.getHash()));
+        Transaction tx2copy = checkNotNull(walletCopy.getTransaction(tx2.getTxId()));
         assertEquals(TransactionInput.NO_SEQUENCE - 1, tx2copy.getInput(0).getSequenceNumber());
     }
 
@@ -384,7 +384,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(tx.getTxId().toString(), "0321b1413ed9048199815bd6bc2650cab1a9e8d543f109a42c769b1f18df4174");
         myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
         Wallet wallet1 = roundTrip(myWallet);
-        Transaction tx2 = wallet1.getTransaction(tx.getHash());
+        Transaction tx2 = wallet1.getTransaction(tx.getTxId());
         assertEquals(checkNotNull(tx2).getVersion(), 2);
     }
 
@@ -398,10 +398,10 @@ public class WalletProtobufSerializerTest {
         assertTrue(chain.add(b));
         // Wallet now has a coinbase tx in it.
         assertEquals(1, myWallet.getTransactions(true).size());
-        assertTrue(myWallet.getTransaction(coinbase.getHash()).isCoinBase());
+        assertTrue(myWallet.getTransaction(coinbase.getTxId()).isCoinBase());
         Wallet wallet2 = roundTrip(myWallet);
         assertEquals(1, wallet2.getTransactions(true).size());
-        assertTrue(wallet2.getTransaction(coinbase.getHash()).isCoinBase());
+        assertTrue(wallet2.getTransaction(coinbase.getTxId()).isCoinBase());
     }
 
     @Test
@@ -481,7 +481,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(tx.getTxId().toString(), "1c687396f4710f26206dbdd8bf07a28c76398be6750226ddfaf05a1a80d30034");
         myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
         Wallet wallet1 = roundTrip(myWallet);
-        Transaction tx2 = wallet1.getTransaction(tx.getHash());
+        Transaction tx2 = wallet1.getTransaction(tx.getTxId());
         assertEquals(tx.getInput(0).getWitness(), tx2.getInput(0).getWitness());
     }
 }

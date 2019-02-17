@@ -50,7 +50,7 @@ public class TxConfidenceTableTest {
 
         tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(UNITTEST, COIN, to, change);
-        assertEquals(tx1.getHash(), tx2.getHash());
+        assertEquals(tx1.getTxId(), tx2.getTxId());
 
         address1 = new PeerAddress(UNITTEST, InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }));
         address2 = new PeerAddress(UNITTEST, InetAddress.getByAddress(new byte[] { 127, 0, 0, 2 }));
@@ -60,7 +60,7 @@ public class TxConfidenceTableTest {
     @Test
     public void pinHandlers() throws Exception {
         Transaction tx = UNITTEST.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
-        Sha256Hash hash = tx.getHash();
+        Sha256Hash hash = tx.getTxId();
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());
         final int[] seen = new int[1];
@@ -85,10 +85,10 @@ public class TxConfidenceTableTest {
                 run[0] = reason;
             }
         });
-        table.seen(tx1.getHash(), address1);
+        table.seen(tx1.getTxId(), address1);
         assertEquals(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS, run[0]);
         run[0] = null;
-        table.seen(tx1.getHash(), address1);
+        table.seen(tx1.getTxId(), address1);
         assertNull(run[0]);
     }
 
@@ -129,15 +129,15 @@ public class TxConfidenceTableTest {
     @Test
     public void invAndDownload() throws Exception {
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
-        assertEquals(0, table.numBroadcastPeers(tx1.getHash()));
-        table.seen(tx1.getHash(), address1);
-        assertEquals(1, table.numBroadcastPeers(tx1.getHash()));
-        table.seen(tx1.getHash(), address2);
-        assertEquals(2, table.numBroadcastPeers(tx1.getHash()));
+        assertEquals(0, table.numBroadcastPeers(tx1.getTxId()));
+        table.seen(tx1.getTxId(), address1);
+        assertEquals(1, table.numBroadcastPeers(tx1.getTxId()));
+        table.seen(tx1.getTxId(), address2);
+        assertEquals(2, table.numBroadcastPeers(tx1.getTxId()));
         assertEquals(2, tx2.getConfidence().numBroadcastPeers());
         // And now we see another inv.
-        table.seen(tx1.getHash(), address3);
+        table.seen(tx1.getTxId(), address3);
         assertEquals(3, tx2.getConfidence().numBroadcastPeers());
-        assertEquals(3, table.numBroadcastPeers(tx1.getHash()));
+        assertEquals(3, table.numBroadcastPeers(tx1.getTxId()));
     }
 }

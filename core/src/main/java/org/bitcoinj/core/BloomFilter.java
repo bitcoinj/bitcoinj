@@ -318,7 +318,7 @@ public class BloomFilter extends Message {
         byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];
         for (int i = 0; i < txns.size(); i++) {
             Transaction tx = txns.get(i);
-            txHashes.add(tx.getHash());
+            txHashes.add(tx.getTxId());
             if (applyAndUpdate(tx)) {
                 Utils.setBitLE(bits, i);
                 matched.add(tx);
@@ -332,7 +332,7 @@ public class BloomFilter extends Message {
     }
 
     public synchronized boolean applyAndUpdate(Transaction tx) {
-        if (contains(tx.getHash().getBytes()))
+        if (contains(tx.getTxId().getBytes()))
             return true;
         boolean found = false;
         BloomUpdate flag = getUpdateFlag();

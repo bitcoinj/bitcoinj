@@ -50,7 +50,7 @@ public class TransactionOutPoint extends ChildMessage {
         super(params);
         this.index = index;
         if (fromTx != null) {
-            this.hash = fromTx.getHash();
+            this.hash = fromTx.getTxId();
             this.fromTx = fromTx;
         } else {
             // This happens when constructing the genesis block.

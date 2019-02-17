@@ -144,7 +144,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
             for (StoredClientChannel channel : setChannels) {
                 synchronized (channel) {
                     // Check if the channel is usable (has money, inactive) and if so, activate it.
-                    log.info("Considering channel {} contract {}", channel.hashCode(), channel.contract.getHash());
+                    log.info("Considering channel {} contract {}", channel.hashCode(), channel.contract.getTxId());
                     if (channel.close != null || channel.valueToMe.equals(Coin.ZERO)) {
                         log.info("  ... but is closed or empty");
                         continue;
@@ -172,7 +172,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
         try {
             Set<StoredClientChannel> setChannels = mapChannels.get(id);
             for (StoredClientChannel channel : setChannels) {
-                if (channel.contract.getHash().equals(contractHash))
+                if (channel.contract.getTxId().equals(contractHash))
                     return channel;
             }
             return null;
@@ -314,7 +314,7 @@ public class StoredPaymentChannelClientStates implements WalletExtension {
                         .setValueToMe(channel.valueToMe.value)
                         .setExpiryTime(channel.expiryTime);
                 if (channel.close != null)
-                    value.setCloseTransactionHash(ByteString.copyFrom(channel.close.getHash().getBytes()));
+                    value.setCloseTransactionHash(ByteString.copyFrom(channel.close.getTxId().getBytes()));
                 builder.addChannels(value);
             }
             return builder.build().toByteArray();

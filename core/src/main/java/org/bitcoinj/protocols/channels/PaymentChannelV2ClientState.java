@@ -199,7 +199,7 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
         StoredPaymentChannelClientStates channels = (StoredPaymentChannelClientStates)
                 wallet.getExtensions().get(StoredPaymentChannelClientStates.EXTENSION_ID);
         checkNotNull(channels, "You have not added the StoredPaymentChannelClientStates extension to the wallet.");
-        checkState(channels.getChannel(id, contract.getHash()) == null);
+        checkState(channels.getChannel(id, contract.getTxId()) == null);
         storedChannel = new StoredClientChannel(getMajorVersion(), id, contract, refundTx, myKey, serverKey, valueToMe, refundFees, expiryTime, true);
         channels.putChannel(storedChannel);
     }

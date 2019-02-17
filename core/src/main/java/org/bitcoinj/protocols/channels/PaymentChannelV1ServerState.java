@@ -252,7 +252,7 @@ public class PaymentChannelV1ServerState extends PaymentChannelServerState {
         ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
         Futures.addCallback(future, new FutureCallback<Transaction>() {
             @Override public void onSuccess(Transaction transaction) {
-                log.info("TX {} propagated, channel successfully closed.", transaction.getHash());
+                log.info("TX {} propagated, channel successfully closed.", transaction.getTxId());
                 stateMachine.transition(State.CLOSED);
                 closedFuture.set(transaction);
             }

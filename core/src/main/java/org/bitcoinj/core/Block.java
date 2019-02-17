@@ -620,7 +620,7 @@ public class Block extends Message {
         ArrayList<byte[]> tree = new ArrayList<>();
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction t : transactions) {
-            tree.add(t.getHash().getBytes());
+            tree.add(t.getTxId().getBytes());
         }
         int levelOffset = 0; // Offset in the list where the currently processed level starts.
         // Step through each level, stopping when we reach the root (levelSize == 1).

@@ -87,7 +87,7 @@ public class TestWithWallet {
                 wallet.notifyNewBestBlock(bp.storedBlock);
         }
         if (transactions.length == 1)
-            return wallet.getTransaction(transactions[0].getHash());  // Can be null if tx is a double spend that's otherwise irrelevant.
+            return wallet.getTransaction(transactions[0].getTxId());  // Can be null if tx is a double spend that's otherwise irrelevant.
         else
             return null;
     }

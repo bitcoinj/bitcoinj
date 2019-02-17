@@ -102,7 +102,7 @@ public class FilteredBlock extends Message {
      * @return false if the tx is not relevant to this FilteredBlock
      */
     public boolean provideTransaction(Transaction tx) throws VerificationException {
-        Sha256Hash hash = tx.getHash();
+        Sha256Hash hash = tx.getTxId();
         if (getTransactionHashes().contains(hash)) {
             associatedTransactions.put(hash, tx);
             return true;
