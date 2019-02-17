@@ -491,7 +491,7 @@ public class Block extends Message {
         if (transactions != null && transactions.size() > 0) {
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
             for (Transaction tx : transactions) {
-                s.append(tx);
+                s.append(tx).append('\n');
             }
         }
         return s.toString();
