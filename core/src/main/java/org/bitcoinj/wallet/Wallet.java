@@ -5072,6 +5072,7 @@ public class Wallet extends BaseTaggableObject
                 TransactionInput input = tx.addInput(selectedOutput);
                 // If the scriptBytes don't default to none, our size calculations will be thrown off.
                 checkState(input.getScriptBytes().length == 0);
+                checkState(!input.hasWitness());
             }
 
             int size = tx.unsafeBitcoinSerialize().length;
