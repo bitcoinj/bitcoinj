@@ -767,6 +767,8 @@ public class Transaction extends ChildMessage {
         if (isOptInFullRBF()) {
             s.append(indent).append("opts into full replace-by-fee\n");
         }
+        if (purpose != null)
+            s.append(indent).append("purpose: ").append(purpose).append('\n');
         if (isCoinBase()) {
             String script;
             String script2;
@@ -859,8 +861,6 @@ public class Transaction extends ChildMessage {
             s.append(indent).append("   fee  ").append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB, ")
                     .append(fee.toFriendlyString()).append(" for ").append(size).append(" bytes\n");
         }
-        if (purpose != null)
-            s.append(indent).append("   prps ").append(purpose).append('\n');
         return s.toString();
     }
 
