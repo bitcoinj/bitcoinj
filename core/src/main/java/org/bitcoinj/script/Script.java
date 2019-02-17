@@ -619,11 +619,13 @@ public class Script {
             return SIG_SIZE;
         } else if (ScriptPattern.isP2PKH(this)) {
             // scriptSig: <sig> <pubkey>
-            int uncompressedPubKeySize = 65;
+            int uncompressedPubKeySize = 65; // very conservative
             return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : uncompressedPubKeySize);
         } else if (ScriptPattern.isP2WPKH(this)) {
             // scriptSig is empty
-            return 0;
+            // witness: <sig> <pubKey>
+            int compressedPubKeySize = 33;
+            return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize);
         } else {
             throw new IllegalStateException("Unsupported script type");
         }
