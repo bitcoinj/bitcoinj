@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +52,8 @@ public class GetDataMessage extends ListMessage {
                 includeWitness ? InventoryItem.Type.WITNESS_TRANSACTION : InventoryItem.Type.TRANSACTION, hash));
     }
 
-    public void addBlock(Sha256Hash hash) {
-        addItem(new InventoryItem(InventoryItem.Type.BLOCK, hash));
+    public void addBlock(Sha256Hash hash, boolean includeWitness) {
+        addItem(new InventoryItem(includeWitness ? InventoryItem.Type.WITNESS_BLOCK : InventoryItem.Type.BLOCK, hash));
     }
 
     public void addFilteredBlock(Sha256Hash hash) {

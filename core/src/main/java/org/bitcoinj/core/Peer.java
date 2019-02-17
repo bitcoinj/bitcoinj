@@ -1288,7 +1288,7 @@ public class Peer extends PeerSocketHandler {
                                 getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
-                                getdata.addBlock(item.hash);
+                                getdata.addBlock(item.hash, vPeerVersionMessage.isWitnessSupported());
                             }
                             pendingBlockDownloads.add(item.hash);
                         }
@@ -1326,7 +1326,7 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
-        getdata.addBlock(blockHash);
+        getdata.addBlock(blockHash, true);
         return sendSingleGetData(getdata);
     }
 
