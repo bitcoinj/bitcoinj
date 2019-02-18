@@ -1161,7 +1161,9 @@ public class Transaction extends ChildMessage {
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
             // EC math so we'll do it anyway.
             for (int i = 0; i < tx.inputs.size(); i++) {
-                tx.inputs.get(i).clearScriptBytes();
+                TransactionInput input = tx.inputs.get(i);
+                input.clearScriptBytes();
+                input.setWitness(null);
             }
 
             // This step has no purpose beyond being synchronized with Bitcoin Core's bugs. OP_CODESEPARATOR
@@ -1217,8 +1219,8 @@ public class Transaction extends ChildMessage {
                 tx.inputs.add(input);
             }
 
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(tx.length == UNKNOWN_LENGTH ? 256 : tx.length + 4);
-            tx.bitcoinSerialize(bos);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(tx.length);
+            tx.bitcoinSerializeToStream(bos, false);
             // We also have to write a hash type (sigHashType is actually an unsigned char)
             uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out

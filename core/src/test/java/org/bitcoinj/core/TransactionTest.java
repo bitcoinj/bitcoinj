@@ -337,6 +337,8 @@ public class TransactionTest {
         assertEquals("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1", HEX.encode(scriptPubKey1.getProgram()));
         txIn1.connect(new TransactionOutput(TESTNET, null, Coin.COIN.multiply(6), scriptPubKey1.getProgram()));
 
+        assertEquals("63cec688ee06a91e913875356dd4dea2f8e0f2a2659885372da2a37e32c7532e",
+                tx.hashForSignature(0, scriptPubKey0, Transaction.SigHash.ALL, false).toString());
         TransactionSignature txSig0 = tx.calculateSignature(0, key0,
                 scriptPubKey0,
                 Transaction.SigHash.ALL, false);
@@ -347,6 +349,8 @@ public class TransactionTest {
         assertEquals("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
                 HEX.encode(scriptCode.getProgram()));
 
+        assertEquals("c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670",
+                tx.hashForSignatureWitness(1, scriptCode, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
         TransactionSignature txSig1 = tx.calculateWitnessSignature(1, key1,
                 scriptCode, txIn1.getValue(),
                 Transaction.SigHash.ALL, false);
@@ -421,6 +425,9 @@ public class TransactionTest {
         assertEquals("1976a91479091972186c449eb1ded22b78e40d009bdf008988ac",
                 HEX.encode(scriptCode.getProgram()));
 
+        assertEquals("64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6",
+                tx.hashForSignatureWitness(0, scriptCode, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
+                        .toString());
         TransactionSignature txSig = tx.calculateWitnessSignature(0, key,
                 scriptCode, Coin.COIN.multiply(10),
                 Transaction.SigHash.ALL, false);
