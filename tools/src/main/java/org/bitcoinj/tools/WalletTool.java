@@ -35,6 +35,8 @@ import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
+
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
@@ -1346,7 +1348,8 @@ public class WalletTool {
             String seedStr = options.valueOf(seedFlag);
             DeterministicSeed seed;
             // Parse as mnemonic code.
-            final List<String> split = ImmutableList.copyOf(Splitter.on(" ").omitEmptyStrings().split(seedStr));
+            final List<String> split = ImmutableList
+                    .copyOf(Splitter.on(CharMatcher.anyOf(" :;,")).omitEmptyStrings().split(seedStr));
             String passphrase = ""; // TODO allow user to specify a passphrase
             seed = new DeterministicSeed(split, null, passphrase, creationTimeSecs);
             try {
