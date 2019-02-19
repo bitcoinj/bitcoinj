@@ -233,14 +233,14 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
-            StringBuilder builder2) {
+    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
+            NetworkParameters params, StringBuilder builder) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
-            builder2.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params))
+            builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params))
                     .append('\n');
-        builder2.append('\n');
+        builder.append('\n');
         for (RedeemData redeemData : marriedKeysRedeemData.values())
-            formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder2, params);
+            formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder, params);
     }
 
     private void formatScript(Script script, StringBuilder builder, NetworkParameters params) {

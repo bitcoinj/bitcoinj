@@ -1371,7 +1371,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return helper.toString();
     }
 
-    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
         final DeterministicKey watchingKey = getWatchingKey();
         final StringBuilder builder = new StringBuilder();
         if (seed != null) {
@@ -1396,13 +1396,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params, outputScriptType))
                 .append('\n');
         builder.append("Lookahead siz/thr: ").append(lookaheadSize).append('/').append(lookaheadThreshold).append('\n');
-        formatAddresses(includePrivateKeys, aesKey, params, builder);
+        formatAddresses(includeLookahead, includePrivateKeys, aesKey, params, builder);
         return builder.toString();
     }
 
-    protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
-            StringBuilder builder) {
-        for (DeterministicKey key : getKeys(false, true)) {
+    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
+            NetworkParameters params, StringBuilder builder) {
+        for (DeterministicKey key : getKeys(includeLookahead, true)) {
             String comment = null;
             if (key.equals(rootKey))
                 comment = "root";

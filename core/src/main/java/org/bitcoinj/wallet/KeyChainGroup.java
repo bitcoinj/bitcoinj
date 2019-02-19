@@ -1006,13 +1006,13 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null)
             builder.append(basic.toString(includePrivateKeys, aesKey, params));
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
-                builder.append(chain.toString(includePrivateKeys, aesKey, params)).append('\n');
+                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params)).append('\n');
         return builder.toString();
     }
 

@@ -267,6 +267,7 @@ public class WalletTool {
         OptionSpec<String> paymentRequestLocation = parser.accepts("payment-request").withRequiredArg();
         parser.accepts("no-pki");
         parser.accepts("dump-privkeys");
+        parser.accepts("dump-lookahead");
         OptionSpec<String> refundFlag = parser.accepts("refund-to").withRequiredArg();
         OptionSpec<String> txHashFlag = parser.accepts("txhash").withRequiredArg();
         options = parser.parse(args);
@@ -1526,18 +1527,19 @@ public class WalletTool {
             setup();
 
         final boolean dumpPrivkeys = options.has("dump-privkeys");
+        final boolean dumpLookahead = options.has("dump-lookahead");
         if (dumpPrivkeys && wallet.isEncrypted()) {
             if (password != null) {
                 final KeyParameter aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return; // Error message already printed.
-                System.out.println(wallet.toString(true, aesKey, true, true, chain));
+                System.out.println(wallet.toString(dumpLookahead, true, aesKey, true, true, chain));
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return;
             }
         } else {
-            System.out.println(wallet.toString(dumpPrivkeys, null, true, true, chain));
+            System.out.println(wallet.toString(dumpLookahead, dumpPrivkeys, null, true, true, chain));
         }
     }
 
