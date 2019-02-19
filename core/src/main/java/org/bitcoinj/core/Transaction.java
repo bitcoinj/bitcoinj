@@ -1241,7 +1241,7 @@ public class Transaction extends ChildMessage {
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignatureWitness(inputIndex, scriptCode, value, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForWitnessSignature(inputIndex, scriptCode, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -1263,7 +1263,7 @@ public class Transaction extends ChildMessage {
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignatureWitness(inputIndex, scriptCode, value, hashType, anyoneCanPay);
+        Sha256Hash hash = hashForWitnessSignature(inputIndex, scriptCode, value, hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
@@ -1278,14 +1278,14 @@ public class Transaction extends ChildMessage {
         return calculateWitnessSignature(inputIndex, key, aesKey, scriptCode.getProgram(), value, hashType, anyoneCanPay);
     }
 
-    public synchronized Sha256Hash hashForSignatureWitness(
+    public synchronized Sha256Hash hashForWitnessSignature(
             int inputIndex,
             byte[] scriptCode,
             Coin prevValue,
             SigHash type,
             boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignatureWitness(inputIndex, scriptCode, prevValue, (byte) sigHash);
+        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
     }
 
     /**
@@ -1303,16 +1303,16 @@ public class Transaction extends ChildMessage {
      * @param type         Should be SigHash.ALL
      * @param anyoneCanPay should be false.
      */
-    public synchronized Sha256Hash hashForSignatureWitness(
+    public synchronized Sha256Hash hashForWitnessSignature(
             int inputIndex,
             Script scriptCode,
             Coin prevValue,
             SigHash type,
             boolean anyoneCanPay) {
-        return hashForSignatureWitness(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
+        return hashForWitnessSignature(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
     }
 
-    public synchronized Sha256Hash hashForSignatureWitness(
+    public synchronized Sha256Hash hashForWitnessSignature(
             int inputIndex,
             byte[] scriptCode,
             Coin prevValue,

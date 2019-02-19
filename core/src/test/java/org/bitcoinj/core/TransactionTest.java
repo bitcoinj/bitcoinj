@@ -350,7 +350,7 @@ public class TransactionTest {
                 HEX.encode(scriptCode.getProgram()));
 
         assertEquals("c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670",
-                tx.hashForSignatureWitness(1, scriptCode, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
+                tx.hashForWitnessSignature(1, scriptCode, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
         TransactionSignature txSig1 = tx.calculateWitnessSignature(1, key1,
                 scriptCode, txIn1.getValue(),
                 Transaction.SigHash.ALL, false);
@@ -426,7 +426,7 @@ public class TransactionTest {
                 HEX.encode(scriptCode.getProgram()));
 
         assertEquals("64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6",
-                tx.hashForSignatureWitness(0, scriptCode, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
+                tx.hashForWitnessSignature(0, scriptCode, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
                         .toString());
         TransactionSignature txSig = tx.calculateWitnessSignature(0, key,
                 scriptCode, Coin.COIN.multiply(10),

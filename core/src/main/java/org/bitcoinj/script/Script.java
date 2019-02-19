@@ -1581,7 +1581,7 @@ public class Script {
             ECKey pubkey = ECKey.fromPublicOnly(witness.getPush(1));
             Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(pubkey).getProgram())
                     .build();
-            Sha256Hash sigHash = txContainingThis.hashForSignatureWitness(scriptSigIndex, scriptCode, value,
+            Sha256Hash sigHash = txContainingThis.hashForWitnessSignature(scriptSigIndex, scriptCode, value,
                     signature.sigHashMode(), false);
             boolean validSig = pubkey.verify(sigHash, signature);
             if (!validSig)
