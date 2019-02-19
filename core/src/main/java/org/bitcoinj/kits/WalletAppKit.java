@@ -463,8 +463,7 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {
-        if (restoreFromSeed == null) return;
-        if (restoreFromKey == null) return;
+        if (restoreFromSeed == null && restoreFromKey == null) return;
         if (!vWalletFile.exists()) return;
         int counter = 1;
         File newName;
