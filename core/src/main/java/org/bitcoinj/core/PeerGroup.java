@@ -1822,9 +1822,10 @@ public class PeerGroup implements TransactionBroadcaster {
                     warmupSeconds = 15;
                 }
 
-                boolean behindPeers = chain != null && chain.getBestChainHeight() < getMostCommonChainHeight();
-                if (!behindPeers)
+                int mostCommonChainHeight = getMostCommonChainHeight();
+                if (chain != null && mostCommonChainHeight > 0 && chain.getBestChainHeight() >= mostCommonChainHeight)
                     syncDone = true;
+
                 if (!syncDone) {
                     if (warmupSeconds < 0) {
                         // Calculate the moving average.
