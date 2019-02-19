@@ -1392,6 +1392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         builder.append("Ouput script type: ").append(outputScriptType).append('\n');
         builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params, outputScriptType))
                 .append('\n');
+        builder.append("Lookahead siz/thr: ").append(lookaheadSize).append('/').append(lookaheadThreshold).append('\n');
         formatAddresses(includePrivateKeys, aesKey, params, builder);
         return builder.toString();
     }
