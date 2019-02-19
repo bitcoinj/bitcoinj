@@ -3699,4 +3699,16 @@ public class WalletTest extends TestWithWallet {
         assertNull(wallet.findKeyFromAddress(LegacyAddress.fromKey(UNITTEST, p2wpkhKey)));
         assertEquals(p2wpkhKey, wallet.findKeyFromAddress(SegwitAddress.fromKey(UNITTEST, p2wpkhKey)));
     }
+
+    @Test
+    public void roundtripViaMnemonicCode() {
+        Wallet wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
+        List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
+        final DeterministicSeed clonedSeed = new DeterministicSeed(mnemonicCode, null, "",
+                wallet.getEarliestKeyCreationTime());
+        Wallet clone = Wallet.fromSeed(UNITTEST, clonedSeed, Script.ScriptType.P2WPKH);
+        assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
+        assertEquals(wallet.freshReceiveAddress(Script.ScriptType.P2PKH),
+                clone.freshReceiveAddress(Script.ScriptType.P2PKH));
+    }
 }
