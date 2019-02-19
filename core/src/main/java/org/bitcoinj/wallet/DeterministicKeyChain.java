@@ -1402,8 +1402,22 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
             StringBuilder builder) {
-        for (ECKey key : getKeys(false, true))
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, outputScriptType);
+        for (DeterministicKey key : getKeys(false, true)) {
+            String comment = null;
+            if (key.equals(rootKey))
+                comment = "root";
+            else if (key.equals(getWatchingKey()))
+                comment = "account";
+            else if (key.equals(internalParentKey))
+                comment = "internal";
+            else if (key.equals(externalParentKey))
+                comment = "external";
+            else if (internalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedInternalKeys)
+                comment = "*";
+            else if (externalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedExternalKeys)
+                comment = "*";
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, outputScriptType, comment);
+        }
     }
 
     /** The number of signatures required to spend coins received by this keychain. */
