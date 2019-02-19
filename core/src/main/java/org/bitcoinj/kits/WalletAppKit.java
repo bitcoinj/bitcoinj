@@ -450,7 +450,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected Wallet createWallet() {
         KeyChainGroup.Builder kcg = KeyChainGroup.builder(params, structure);
         if (restoreFromSeed != null)
-            kcg.addChain(DeterministicKeyChain.builder().seed(restoreFromSeed).outputScriptType(preferredOutputScriptType).build());
+            kcg.fromSeed(restoreFromSeed, preferredOutputScriptType).build();
         else if (restoreFromKey != null)
             kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).outputScriptType(preferredOutputScriptType).build());
         else
