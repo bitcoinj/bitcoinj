@@ -20,7 +20,6 @@ package org.bitcoinj.core;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 
-import org.bitcoinj.core.listeners.BlockChainListener;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.Wallet;
