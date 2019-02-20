@@ -105,29 +105,6 @@ public class PeerTest extends TestWithNetworkConnections {
         writeTarget = connect(peer, peerVersion);
     }
 
-    @Test
-    public void testAddConnectedEventListener() throws Exception {
-        connect();
-        PeerConnectedEventListener listener = new AbstractPeerConnectionEventListener() {
-        };
-        assertFalse(peer.removeConnectedEventListener(listener));
-        peer.addConnectedEventListener(listener);
-        assertTrue(peer.removeConnectedEventListener(listener));
-        assertFalse(peer.removeConnectedEventListener(listener));
-    }
-
-    @Test
-    public void testAddDisconnectedEventListener() throws Exception {
-        connect();
-        PeerDisconnectedEventListener listener = new AbstractPeerConnectionEventListener() {
-        };
-
-        assertFalse(peer.removeDisconnectedEventListener(listener));
-        peer.addDisconnectedEventListener(listener);
-        assertTrue(peer.removeDisconnectedEventListener(listener));
-        assertFalse(peer.removeDisconnectedEventListener(listener));
-    }
-
     // Check that it runs through the event loop and shut down correctly
     @Test
     public void shutdown() throws Exception {

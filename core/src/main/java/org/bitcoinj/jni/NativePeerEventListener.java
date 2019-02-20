@@ -28,7 +28,8 @@ import java.util.Set;
  * this class using JNI on the native side, thus several instances of this can point to different actual
  * native implementations.
  */
-public class NativePeerEventListener implements PeerConnectionEventListener, PeerDataEventListener, OnTransactionBroadcastListener {
+public class NativePeerEventListener implements PeerConnectedEventListener, PeerDiscoveredEventListener,
+        PeerDisconnectedEventListener, PeerDataEventListener, OnTransactionBroadcastListener {
     public long ptr;
 
     @Override
