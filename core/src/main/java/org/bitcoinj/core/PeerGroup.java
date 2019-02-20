@@ -1734,7 +1734,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     @GuardedBy("lock") private int stallPeriodSeconds = 10;
-    @GuardedBy("lock") private int stallMinSpeedBytesSec = Block.HEADER_SIZE * 20;
+    @GuardedBy("lock") private int stallMinSpeedBytesSec = Block.HEADER_SIZE * 10;
 
     /**
      * Configures the stall speed: the speed at which a peer is considered to be serving us the block chain
@@ -1745,7 +1745,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * avoid false stalls.
      *
      * @param periodSecs How many seconds the download speed must be below blocksPerSec, defaults to 10.
-     * @param bytesPerSecond Download speed (only blocks/txns count) must be consistently below this for a stall, defaults to the bandwidth required for 20 block headers per second.
+     * @param bytesPerSecond Download speed (only blocks/txns count) must be consistently below this for a stall, defaults to the bandwidth required for 10 block headers per second.
      */
     public void setStallThreshold(int periodSecs, int bytesPerSecond) {
         lock.lock();
