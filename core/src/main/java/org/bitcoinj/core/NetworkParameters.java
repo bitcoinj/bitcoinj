@@ -158,36 +158,6 @@ public abstract class NetworkParameters {
      */
     public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
-    /** Alias for TestNet3Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet() {
-        return TestNet3Params.get();
-    }
-
-    /** Alias for TestNet3Params.get(), use that instead. */
-    @Deprecated
-    public static NetworkParameters testNet3() {
-        return TestNet3Params.get();
-    }
-
-    /** Alias for MainNetParams.get(), use that instead */
-    @Deprecated
-    public static NetworkParameters prodNet() {
-        return MainNetParams.get();
-    }
-
-    /** Returns a testnet params modified to allow any difficulty target. */
-    @Deprecated
-    public static NetworkParameters unitTests() {
-        return UnitTestParams.get();
-    }
-
-    /** Returns a standard regression test params (similar to unitTests) */
-    @Deprecated
-    public static NetworkParameters regTests() {
-        return RegTestParams.get();
-    }
-
     /**
      * A Java package style string acting as unique ID for these parameters
      */
