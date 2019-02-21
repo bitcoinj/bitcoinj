@@ -41,22 +41,9 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
     private final byte[] bytes;
 
-    /**
-     * Use {@link #wrap(byte[])} instead.
-     */
-    @Deprecated
-    public Sha256Hash(byte[] rawHashBytes) {
+    private Sha256Hash(byte[] rawHashBytes) {
         checkArgument(rawHashBytes.length == LENGTH);
         this.bytes = rawHashBytes;
-    }
-
-    /**
-     * Use {@link #wrap(String)} instead.
-     */
-    @Deprecated
-    public Sha256Hash(String hexString) {
-        checkArgument(hexString.length() == LENGTH * 2);
-        this.bytes = Utils.HEX.decode(hexString);
     }
 
     /**
@@ -66,7 +53,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return a new instance
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
-    @SuppressWarnings("deprecation") // the constructor will be made private in the future
     public static Sha256Hash wrap(byte[] rawHashBytes) {
         return new Sha256Hash(rawHashBytes);
     }
@@ -90,15 +76,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * @return a new instance
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
-    @SuppressWarnings("deprecation") // the constructor will be made private in the future
     public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
         return wrap(Utils.reverseBytes(rawHashBytes));
-    }
-
-    /** Use {@link #of(byte[])} instead: this old name is ambiguous. */
-    @Deprecated
-    public static Sha256Hash create(byte[] contents) {
-        return of(contents);
     }
 
     /**
@@ -109,12 +88,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public static Sha256Hash of(byte[] contents) {
         return wrap(hash(contents));
-    }
-
-    /** Use {@link #twiceOf(byte[])} instead: this old name is ambiguous. */
-    @Deprecated
-    public static Sha256Hash createDouble(byte[] contents) {
-        return twiceOf(contents);
     }
 
     /**
