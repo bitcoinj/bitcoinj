@@ -8,7 +8,8 @@ jdk:
 install:
   - sudo apt-get install -y protobuf-compiler
 script:
-  - gradle clean check -x :wallettemplate:check
+    # excluding wallet-template because of the unreliable JavaFX dependency
+  - gradle clean build -x :wallettemplate:compileJava
 
 notifications:
   irc:
