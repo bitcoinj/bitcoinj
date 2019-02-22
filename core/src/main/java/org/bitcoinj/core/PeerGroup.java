@@ -1281,8 +1281,8 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns the number of currently connected peers. To be informed when this count changes, register a 
-     * {@link PeerConnectionEventListener} and use the onPeerConnected/onPeerDisconnected methods.
+     * Returns the number of currently connected peers. To be informed when this count changes, use
+     * {@link PeerConnectedEventListener#onPeerConnected} and {@link PeerDisconnectedEventListener#onPeerDisconnected}.
      */
     public int numConnectedPeers() {
         return peers.size();

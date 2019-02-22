@@ -223,9 +223,9 @@ public class TransactionConfidence {
      *
      * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
      * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in
-     * the best chain). If you want to know when the transaction gets buried under another block, implement a
-     * {@link BlockChainListener}, attach it to a {@link BlockChain} and then use the getters on the
-     * confidence object to determine the new depth.</p>
+     * the best chain). If you want to know when the transaction gets buried under another block, implement
+     * {@link org.bitcoinj.core.listeners.NewBestBlockListener} and related listeners, attach them to a
+     * {@link BlockChain} and then use the getters on the confidence object to determine the new depth.</p>
      */
     public void addEventListener(Listener listener) {
         addEventListener(Threading.USER_THREAD, listener);
