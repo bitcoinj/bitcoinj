@@ -252,9 +252,8 @@ public class BlockTest {
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getTxId().toString());
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90",
                 coinbase.getWTxId().toString());
-        Sha256Hash witnessCommitmentFromScript = coinbase.findWitnessCommitment();
-        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7",
-                witnessCommitmentFromScript.toString());
+        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
+        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7", witnessCommitment.toString());
     }
 
     @Test
@@ -271,9 +270,8 @@ public class BlockTest {
         assertEquals("9c1ab453283035800c43eb6461eb46682b81be110a0cb89ee923882a5fd9daa4", coinbase.getTxId().toString());
         assertEquals("2bbda73aa4e561e7f849703994cc5e563e4bcf103fb0f6fef5ae44c95c7b83a6",
                 coinbase.getWTxId().toString());
-        Sha256Hash witnessCommitmentFromScript = coinbase.findWitnessCommitment();
-        assertEquals("c3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca106",
-                witnessCommitmentFromScript.toString());
+        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
+        assertEquals("c3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca106", witnessCommitment.toString());
     }
 
     @Test
