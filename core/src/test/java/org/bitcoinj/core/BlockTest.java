@@ -23,9 +23,7 @@ import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptOpCodes;
-import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
@@ -238,22 +236,29 @@ public class BlockTest {
     }
 
     @Test
-    public void testBlock481815_segwitCommitmentInCoinbase() throws Exception {
-        Block block481815 = MAINNET.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(
-                getClass().getResourceAsStream("block481815.dat")));
+    public void testBlock481815_witnessCommitmentInCoinbase() throws Exception {
+        Block block481815 = MAINNET.getDefaultSerializer()
+                .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block481815.dat")));
         assertEquals(2097, block481815.getTransactions().size());
         Transaction coinbase = block481815.getTransactions().get(0);
-        final Script segwitCommitment = coinbase.getOutput(1).getScriptPubKey();
-        assertTrue(ScriptPattern.isSegwitCommitment(segwitCommitment));
-        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7",
-                ScriptPattern.extractSegwitCommitmentHash(segwitCommitment).toString());
+        assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getTxId().toString());
+        assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90",
+                coinbase.getWTxId().toString());
+        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
+        assertEquals("3d03076733467c45b08ec503a0c5d406647b073e1914d35b5111960ed625f3b7", witnessCommitment.toString());
     }
 
     @Test
-    public void testBlock481829_segwitTransaction() throws Exception {
+    public void testBlock481829_witnessTransactions() throws Exception {
         Block block481829 = MAINNET.getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block481829.dat")));
         assertEquals(2020, block481829.getTransactions().size());
+        Transaction coinbase = block481829.getTransactions().get(0);
+        assertEquals("9c1ab453283035800c43eb6461eb46682b81be110a0cb89ee923882a5fd9daa4", coinbase.getTxId().toString());
+        assertEquals("2bbda73aa4e561e7f849703994cc5e563e4bcf103fb0f6fef5ae44c95c7b83a6",
+                coinbase.getWTxId().toString());
+        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
+        assertEquals("c3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca106", witnessCommitment.toString());
     }
 
     @Test
