@@ -284,7 +284,7 @@ public class ScriptPattern {
      * Returns whether this script matches the pattern for a segwit commitment (in an output of the coinbase
      * transaction).
      */
-    public static boolean isSegwitCommitment(Script script) {
+    public static boolean isWitnessCommitment(Script script) {
         List<ScriptChunk> chunks = script.chunks;
         if (chunks.size() < 2)
             return false;
@@ -301,7 +301,7 @@ public class ScriptPattern {
     /**
      * Retrieves the hash from a segwit commitment (in an output of the coinbase transaction).
      */
-    public static Sha256Hash extractSegwitCommitmentHash(Script script) {
+    public static Sha256Hash extractWitnessCommitmentHash(Script script) {
         return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).data, 4, 36));
     }
 }
