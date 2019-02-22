@@ -101,6 +101,17 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     }
 
     /**
+     * Creates a new instance containing the hash of the calculated hash of the given bytes.
+     *
+     * @param content1 first bytes on which the hash value is calculated
+     * @param content2 second bytes on which the hash value is calculated
+     * @return a new instance containing the calculated (two-time) hash
+     */
+    public static Sha256Hash twiceOf(byte[] content1, byte[] content2) {
+        return wrap(hashTwice(content1, content2));
+    }
+
+    /**
      * Creates a new instance containing the calculated (one-time) hash of the given file's contents.
      *
      * The file contents are read fully into memory, so this method should only be used with small files.
@@ -167,6 +178,17 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      */
     public static byte[] hashTwice(byte[] input) {
         return hashTwice(input, 0, input.length);
+    }
+
+    /**
+     * Calculates the hash of hash on the given chunks of bytes. This is equivalent to concatenating the two
+     * chunks and then passing the result to {@link #hashTwice(byte[])}.
+     */
+    public static byte[] hashTwice(byte[] input1, byte[] input2) {
+        MessageDigest digest = newDigest();
+        digest.update(input1);
+        digest.update(input2);
+        return digest.digest(digest.digest());
     }
 
     /**

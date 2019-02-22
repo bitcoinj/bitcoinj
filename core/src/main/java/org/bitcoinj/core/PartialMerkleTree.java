@@ -215,9 +215,7 @@ public class PartialMerkleTree extends Message {
     }
 
     private static Sha256Hash combineLeftRight(byte[] left, byte[] right) {
-        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(
-            reverseBytes(left), 0, 32,
-            reverseBytes(right), 0, 32));
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(reverseBytes(left), reverseBytes(right)));
     }
 
     /**
