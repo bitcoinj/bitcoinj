@@ -240,6 +240,14 @@ public class BlockTest {
         Block block481815 = MAINNET.getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block481815.dat")));
         assertEquals(2097, block481815.getTransactions().size());
+        assertEquals("f115afa8134171a0a686bfbe9667b60ae6fb5f6a439e0265789babc315333262",
+                block481815.getMerkleRoot().toString());
+
+        // This block has no witnesses.
+        for (Transaction tx : block481815.getTransactions())
+            assertFalse(tx.hasWitnesses());
+
+        // Nevertheless, there is a witness commitment (but no witness reserved).
         Transaction coinbase = block481815.getTransactions().get(0);
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getTxId().toString());
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90",
@@ -254,6 +262,11 @@ public class BlockTest {
         Block block481829 = MAINNET.getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block481829.dat")));
         assertEquals(2020, block481829.getTransactions().size());
+        assertEquals("f06f697be2cac7af7ed8cd0b0b81eaa1a39e444c6ebd3697e35ab34461b6c58d",
+                block481829.getMerkleRoot().toString());
+        assertEquals("0a02ddb2f86a14051294f8d98dd6959dd12bf3d016ca816c3db9b32d3e24fc2d",
+                block481829.getWitnessRoot().toString());
+
         Transaction coinbase = block481829.getTransactions().get(0);
         assertEquals("9c1ab453283035800c43eb6461eb46682b81be110a0cb89ee923882a5fd9daa4", coinbase.getTxId().toString());
         assertEquals("2bbda73aa4e561e7f849703994cc5e563e4bcf103fb0f6fef5ae44c95c7b83a6",
