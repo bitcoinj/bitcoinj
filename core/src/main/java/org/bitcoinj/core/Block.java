@@ -28,6 +28,7 @@ import java.io.*;
 import java.math.*;
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.Sha256Hash.*;
 
@@ -579,6 +580,32 @@ public class Block extends Message {
         if (!calculatedRoot.equals(merkleRoot)) {
             log.error("Merkle tree did not verify");
             throw new VerificationException("Merkle hashes do not match: " + calculatedRoot + " vs " + merkleRoot);
+        }
+    }
+
+    @VisibleForTesting
+    void checkWitnessRoot() throws VerificationException {
+        Transaction coinbase = transactions.get(0);
+        checkState(coinbase.isCoinBase());
+        Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
+        if (witnessCommitment != null) {
+            byte[] witnessReserved = null;
+            TransactionWitness witness = coinbase.getInput(0).getWitness();
+            if (witness.getPushCount() != 1)
+                throw new VerificationException("Coinbase witness reserved invalid: push count");
+            witnessReserved = witness.getPush(0);
+            if (witnessReserved.length != 32)
+                throw new VerificationException("Coinbase witness reserved invalid: length");
+
+            Sha256Hash witnessRootHash = Sha256Hash.twiceOf(getWitnessRoot().getReversedBytes(), witnessReserved);
+            if (!witnessRootHash.equals(witnessCommitment))
+                throw new VerificationException("Witness merkle root invalid. Expected " + witnessCommitment.toString()
+                        + " but got " + witnessRootHash.toString());
+        } else {
+            for (Transaction tx : transactions) {
+                if (tx.hasWitnesses())
+                    throw new VerificationException("Transaction witness found but no witness commitment present");
+            }
         }
     }
 

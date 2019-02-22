@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.bitcoinj.core.Utils.HEX;
 
 public class BlockTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
@@ -272,6 +273,9 @@ public class BlockTest {
                 coinbase.getWTxId().toString());
         Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
         assertEquals("c3c1145d8070a57e433238e42e4c022c1e51ca2a958094af243ae1ee252ca106", witnessCommitment.toString());
+        byte[] witnessReserved = coinbase.getInput(0).getWitness().getPush(0);
+        assertEquals("0000000000000000000000000000000000000000000000000000000000000000", HEX.encode(witnessReserved));
+        block481829.checkWitnessRoot();
     }
 
     @Test
