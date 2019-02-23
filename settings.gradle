@@ -1,4 +1,13 @@
+import org.gradle.util.GradleVersion
+
 include 'core'
 include 'tools'
 include 'examples'
-include 'wallettemplate'
+
+def minGradleVersion = GradleVersion.version("4.10")
+if (GradleVersion.current().compareTo(minGradleVersion) >= 0 && JavaVersion.current().isJava11Compatible()) {
+    println "Including wallettemplate because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+    include 'wallettemplate'
+} else {
+    println "Skipping wallettemplate: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+}

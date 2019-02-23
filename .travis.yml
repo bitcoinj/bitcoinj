@@ -7,8 +7,7 @@ jdk:
   - openjdk11
 install: true
 script:
-    # excluding wallet-template because of the unreliable JavaFX dependency
-  - gradle clean build -x :wallettemplate:compileJava
+  - gradle clean build
 
 notifications:
   irc:
