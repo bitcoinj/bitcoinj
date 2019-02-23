@@ -5,8 +5,7 @@ language: java
 jdk:
   - openjdk8
   - openjdk11
-install:
-  - sudo apt-get install -y protobuf-compiler
+install: true
 script:
     # excluding wallet-template because of the unreliable JavaFX dependency
   - gradle clean build -x :wallettemplate:compileJava

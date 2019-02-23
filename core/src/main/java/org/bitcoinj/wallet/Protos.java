@@ -52,6 +52,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.PeerAddress)
       PeerAddressOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use PeerAddress.newBuilder() to construct.
     private PeerAddress(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -72,6 +73,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -83,13 +87,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               ipAddress_ = input.readBytes();
@@ -103,6 +100,13 @@ public final class Protos {
             case 24: {
               bitField0_ |= 0x00000004;
               services_ = input.readUInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -122,6 +126,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_PeerAddress_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_PeerAddress_fieldAccessorTable
@@ -176,6 +181,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -197,6 +203,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -211,6 +218,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -233,7 +241,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -270,7 +277,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasIpAddress()) {
         hash = (37 * hash) + IP_ADDRESS_FIELD_NUMBER;
         hash = (53 * hash) + getIpAddress().hashCode();
@@ -289,6 +296,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.PeerAddress parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.PeerAddress parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.PeerAddress parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -348,6 +366,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -355,6 +374,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.PeerAddress prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -378,6 +398,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_PeerAddress_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_PeerAddress_fieldAccessorTable
@@ -400,6 +421,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         ipAddress_ = com.google.protobuf.ByteString.EMPTY;
@@ -411,15 +433,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_PeerAddress_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.PeerAddress getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.PeerAddress.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.PeerAddress build() {
         org.bitcoinj.wallet.Protos.PeerAddress result = buildPartial();
         if (!result.isInitialized()) {
@@ -428,6 +453,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.PeerAddress buildPartial() {
         org.bitcoinj.wallet.Protos.PeerAddress result = new org.bitcoinj.wallet.Protos.PeerAddress(this);
         int from_bitField0_ = bitField0_;
@@ -449,32 +475,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.PeerAddress) {
           return mergeFrom((org.bitcoinj.wallet.Protos.PeerAddress)other);
@@ -500,6 +533,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasIpAddress()) {
           return false;
@@ -513,6 +547,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -630,11 +665,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -656,11 +693,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<PeerAddress>
         PARSER = new com.google.protobuf.AbstractParser<PeerAddress>() {
+      @java.lang.Override
       public PeerAddress parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new PeerAddress(input, extensionRegistry);
+        return new PeerAddress(input, extensionRegistry);
       }
     };
 
@@ -673,6 +711,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.PeerAddress getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -724,6 +763,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.EncryptedData)
       EncryptedDataOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use EncryptedData.newBuilder() to construct.
     private EncryptedData(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -743,6 +783,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -754,13 +797,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               initialisationVector_ = input.readBytes();
@@ -769,6 +805,13 @@ public final class Protos {
             case 18: {
               bitField0_ |= 0x00000002;
               encryptedPrivateKey_ = input.readBytes();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -788,6 +831,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_fieldAccessorTable
@@ -843,6 +887,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -860,6 +905,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -871,6 +917,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -889,7 +936,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -921,7 +967,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasInitialisationVector()) {
         hash = (37 * hash) + INITIALISATION_VECTOR_FIELD_NUMBER;
         hash = (53 * hash) + getInitialisationVector().hashCode();
@@ -935,6 +981,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.EncryptedData parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -994,6 +1051,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -1001,6 +1059,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.EncryptedData prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -1024,6 +1083,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_fieldAccessorTable
@@ -1046,6 +1106,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         initialisationVector_ = com.google.protobuf.ByteString.EMPTY;
@@ -1055,15 +1116,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_EncryptedData_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.EncryptedData getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.EncryptedData build() {
         org.bitcoinj.wallet.Protos.EncryptedData result = buildPartial();
         if (!result.isInitialized()) {
@@ -1072,6 +1136,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.EncryptedData buildPartial() {
         org.bitcoinj.wallet.Protos.EncryptedData result = new org.bitcoinj.wallet.Protos.EncryptedData(this);
         int from_bitField0_ = bitField0_;
@@ -1089,32 +1154,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.EncryptedData) {
           return mergeFrom((org.bitcoinj.wallet.Protos.EncryptedData)other);
@@ -1137,6 +1209,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasInitialisationVector()) {
           return false;
@@ -1147,6 +1220,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1267,11 +1341,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -1293,11 +1369,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<EncryptedData>
         PARSER = new com.google.protobuf.AbstractParser<EncryptedData>() {
+      @java.lang.Override
       public EncryptedData parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new EncryptedData(input, extensionRegistry);
+        return new EncryptedData(input, extensionRegistry);
       }
     };
 
@@ -1310,6 +1387,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.EncryptedData getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -1455,6 +1533,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.DeterministicKey)
       DeterministicKeyOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use DeterministicKey.newBuilder() to construct.
     private DeterministicKey(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -1478,6 +1557,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -1489,13 +1571,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               chainCode_ = input.readBytes();
@@ -1542,6 +1617,13 @@ public final class Protos {
               sigsRequiredToSpend_ = input.readUInt32();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1562,6 +1644,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_DeterministicKey_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_DeterministicKey_fieldAccessorTable
@@ -1733,6 +1816,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1746,6 +1830,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -1769,6 +1854,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -1808,7 +1894,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -1857,7 +1942,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasChainCode()) {
         hash = (37 * hash) + CHAIN_CODE_FIELD_NUMBER;
         hash = (53 * hash) + getChainCode().hashCode();
@@ -1888,6 +1973,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.DeterministicKey parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.DeterministicKey parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.DeterministicKey parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1947,6 +2043,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -1954,6 +2051,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.DeterministicKey prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -1982,6 +2080,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_DeterministicKey_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_DeterministicKey_fieldAccessorTable
@@ -2004,6 +2103,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         chainCode_ = com.google.protobuf.ByteString.EMPTY;
@@ -2021,15 +2121,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_DeterministicKey_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.DeterministicKey getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.DeterministicKey.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.DeterministicKey build() {
         org.bitcoinj.wallet.Protos.DeterministicKey result = buildPartial();
         if (!result.isInitialized()) {
@@ -2038,6 +2141,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.DeterministicKey buildPartial() {
         org.bitcoinj.wallet.Protos.DeterministicKey result = new org.bitcoinj.wallet.Protos.DeterministicKey(this);
         int from_bitField0_ = bitField0_;
@@ -2072,32 +2176,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.DeterministicKey) {
           return mergeFrom((org.bitcoinj.wallet.Protos.DeterministicKey)other);
@@ -2139,6 +2250,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasChainCode()) {
           return false;
@@ -2146,6 +2258,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2528,11 +2641,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -2554,11 +2669,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<DeterministicKey>
         PARSER = new com.google.protobuf.AbstractParser<DeterministicKey>() {
+      @java.lang.Override
       public DeterministicKey parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new DeterministicKey(input, extensionRegistry);
+        return new DeterministicKey(input, extensionRegistry);
       }
     };
 
@@ -2571,6 +2687,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.DeterministicKey getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -2813,6 +2930,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Key)
       KeyOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Key.newBuilder() to construct.
     private Key(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -2838,6 +2956,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -2849,15 +2970,9 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.Key.Type value = org.bitcoinj.wallet.Protos.Key.Type.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
@@ -2955,12 +3070,20 @@ public final class Protos {
             }
             case 88: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.Key.OutputScriptType value = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(11, rawValue);
               } else {
                 bitField0_ |= 0x00000200;
                 outputScriptType_ = rawValue;
+              }
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
               }
               break;
             }
@@ -2984,6 +3107,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Key_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Key_fieldAccessorTable
@@ -3248,6 +3372,7 @@ public final class Protos {
      * <code>required .wallet.Key.Type type = 1;</code>
      */
     public org.bitcoinj.wallet.Protos.Key.Type getType() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Key.Type result = org.bitcoinj.wallet.Protos.Key.Type.valueOf(type_);
       return result == null ? org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL : result;
     }
@@ -3548,11 +3673,13 @@ public final class Protos {
      * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
      */
     public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
       return result == null ? org.bitcoinj.wallet.Protos.Key.OutputScriptType.P2PKH : result;
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -3584,6 +3711,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
@@ -3627,6 +3755,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -3690,7 +3819,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -3762,7 +3890,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasType()) {
         hash = (37 * hash) + TYPE_FIELD_NUMBER;
         hash = (53 * hash) + type_;
@@ -3813,6 +3941,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.Key parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Key parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.Key parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3872,6 +4011,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -3879,6 +4019,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Key prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -3911,6 +4052,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Key_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Key_fieldAccessorTable
@@ -3936,6 +4078,7 @@ public final class Protos {
           getEncryptedDeterministicSeedFieldBuilder();
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         type_ = 1;
@@ -3975,15 +4118,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Key_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Key getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Key.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Key build() {
         org.bitcoinj.wallet.Protos.Key result = buildPartial();
         if (!result.isInitialized()) {
@@ -3992,6 +4138,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Key buildPartial() {
         org.bitcoinj.wallet.Protos.Key result = new org.bitcoinj.wallet.Protos.Key(this);
         int from_bitField0_ = bitField0_;
@@ -4058,32 +4205,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Key) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Key)other);
@@ -4142,6 +4296,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasType()) {
           return false;
@@ -4164,6 +4319,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -4194,6 +4350,7 @@ public final class Protos {
        * <code>required .wallet.Key.Type type = 1;</code>
        */
       public org.bitcoinj.wallet.Protos.Key.Type getType() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Key.Type result = org.bitcoinj.wallet.Protos.Key.Type.valueOf(type_);
         return result == null ? org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL : result;
       }
@@ -5075,6 +5232,7 @@ public final class Protos {
        * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
        */
       public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
         return result == null ? org.bitcoinj.wallet.Protos.Key.OutputScriptType.P2PKH : result;
       }
@@ -5107,11 +5265,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -5133,11 +5293,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Key>
         PARSER = new com.google.protobuf.AbstractParser<Key>() {
+      @java.lang.Override
       public Key parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Key(input, extensionRegistry);
+        return new Key(input, extensionRegistry);
       }
     };
 
@@ -5150,6 +5311,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Key getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -5195,6 +5357,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Script)
       ScriptOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Script.newBuilder() to construct.
     private Script(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -5214,6 +5377,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -5225,13 +5391,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               program_ = input.readBytes();
@@ -5240,6 +5399,13 @@ public final class Protos {
             case 16: {
               bitField0_ |= 0x00000002;
               creationTimestamp_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -5259,6 +5425,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Script_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Script_fieldAccessorTable
@@ -5308,6 +5475,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -5325,6 +5493,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -5336,6 +5505,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -5354,7 +5524,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -5386,7 +5555,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasProgram()) {
         hash = (37 * hash) + PROGRAM_FIELD_NUMBER;
         hash = (53 * hash) + getProgram().hashCode();
@@ -5401,6 +5570,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.Script parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Script parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.Script parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5460,6 +5640,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -5467,6 +5648,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Script prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -5490,6 +5672,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Script_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Script_fieldAccessorTable
@@ -5512,6 +5695,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         program_ = com.google.protobuf.ByteString.EMPTY;
@@ -5521,15 +5705,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Script_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Script getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Script.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Script build() {
         org.bitcoinj.wallet.Protos.Script result = buildPartial();
         if (!result.isInitialized()) {
@@ -5538,6 +5725,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Script buildPartial() {
         org.bitcoinj.wallet.Protos.Script result = new org.bitcoinj.wallet.Protos.Script(this);
         int from_bitField0_ = bitField0_;
@@ -5555,32 +5743,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Script) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Script)other);
@@ -5603,6 +5798,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasProgram()) {
           return false;
@@ -5613,6 +5809,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -5718,11 +5915,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -5744,11 +5943,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Script>
         PARSER = new com.google.protobuf.AbstractParser<Script>() {
+      @java.lang.Override
       public Script parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Script(input, extensionRegistry);
+        return new Script(input, extensionRegistry);
       }
     };
 
@@ -5761,6 +5961,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Script getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -5791,6 +5992,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ScriptWitness)
       ScriptWitnessOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use ScriptWitness.newBuilder() to construct.
     private ScriptWitness(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -5809,6 +6011,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -5820,19 +6025,19 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 data_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
                 mutable_bitField0_ |= 0x00000001;
               }
               data_.add(input.readBytes());
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -5855,6 +6060,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_fieldAccessorTable
@@ -5885,6 +6091,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -5894,6 +6101,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       for (int i = 0; i < data_.size(); i++) {
@@ -5902,6 +6110,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -5921,7 +6130,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -5945,7 +6153,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (getDataCount() > 0) {
         hash = (37 * hash) + DATA_FIELD_NUMBER;
         hash = (53 * hash) + getDataList().hashCode();
@@ -5955,6 +6163,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.ScriptWitness parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6014,6 +6233,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -6021,6 +6241,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.ScriptWitness prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -6044,6 +6265,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_fieldAccessorTable
@@ -6066,6 +6288,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         data_ = java.util.Collections.emptyList();
@@ -6073,15 +6296,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScriptWitness_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScriptWitness getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScriptWitness build() {
         org.bitcoinj.wallet.Protos.ScriptWitness result = buildPartial();
         if (!result.isInitialized()) {
@@ -6090,6 +6316,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScriptWitness buildPartial() {
         org.bitcoinj.wallet.Protos.ScriptWitness result = new org.bitcoinj.wallet.Protos.ScriptWitness(this);
         int from_bitField0_ = bitField0_;
@@ -6102,32 +6329,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.ScriptWitness) {
           return mergeFrom((org.bitcoinj.wallet.Protos.ScriptWitness)other);
@@ -6154,10 +6388,12 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -6248,11 +6484,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -6274,11 +6512,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<ScriptWitness>
         PARSER = new com.google.protobuf.AbstractParser<ScriptWitness>() {
+      @java.lang.Override
       public ScriptWitness parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new ScriptWitness(input, extensionRegistry);
+        return new ScriptWitness(input, extensionRegistry);
       }
     };
 
@@ -6291,6 +6530,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScriptWitness getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -6418,6 +6658,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionInput)
       TransactionInputOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use TransactionInput.newBuilder() to construct.
     private TransactionInput(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -6440,6 +6681,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -6451,13 +6695,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               transactionOutPointHash_ = input.readBytes();
@@ -6496,6 +6733,13 @@ public final class Protos {
               bitField0_ |= 0x00000020;
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -6513,6 +6757,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionInput_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionInput_fieldAccessorTable
@@ -6670,6 +6915,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -6691,6 +6937,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -6714,6 +6961,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -6748,7 +6996,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -6800,7 +7047,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasTransactionOutPointHash()) {
         hash = (37 * hash) + TRANSACTION_OUT_POINT_HASH_FIELD_NUMBER;
         hash = (53 * hash) + getTransactionOutPointHash().hashCode();
@@ -6831,6 +7078,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.TransactionInput parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.TransactionInput parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.TransactionInput parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -6890,6 +7148,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -6897,6 +7156,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.TransactionInput prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -6920,6 +7180,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionInput_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionInput_fieldAccessorTable
@@ -6943,6 +7204,7 @@ public final class Protos {
           getWitnessFieldBuilder();
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         transactionOutPointHash_ = com.google.protobuf.ByteString.EMPTY;
@@ -6964,15 +7226,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionInput_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionInput getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.TransactionInput.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionInput build() {
         org.bitcoinj.wallet.Protos.TransactionInput result = buildPartial();
         if (!result.isInitialized()) {
@@ -6981,6 +7246,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionInput buildPartial() {
         org.bitcoinj.wallet.Protos.TransactionInput result = new org.bitcoinj.wallet.Protos.TransactionInput(this);
         int from_bitField0_ = bitField0_;
@@ -7018,32 +7284,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.TransactionInput) {
           return mergeFrom((org.bitcoinj.wallet.Protos.TransactionInput)other);
@@ -7078,6 +7351,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasTransactionOutPointHash()) {
           return false;
@@ -7091,6 +7365,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -7509,11 +7784,13 @@ public final class Protos {
         }
         return witnessBuilder_;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -7535,11 +7812,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<TransactionInput>
         PARSER = new com.google.protobuf.AbstractParser<TransactionInput>() {
+      @java.lang.Override
       public TransactionInput parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new TransactionInput(input, extensionRegistry);
+        return new TransactionInput(input, extensionRegistry);
       }
     };
 
@@ -7552,6 +7830,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionInput getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -7629,6 +7908,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionOutput)
       TransactionOutputOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use TransactionOutput.newBuilder() to construct.
     private TransactionOutput(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -7650,6 +7930,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -7661,13 +7944,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               bitField0_ |= 0x00000001;
               value_ = input.readInt64();
@@ -7688,6 +7964,13 @@ public final class Protos {
               spentByTransactionIndex_ = input.readInt32();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -7705,6 +7988,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionOutput_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionOutput_fieldAccessorTable
@@ -7798,6 +8082,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -7815,6 +8100,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -7832,6 +8118,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -7858,7 +8145,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -7900,7 +8186,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasValue()) {
         hash = (37 * hash) + VALUE_FIELD_NUMBER;
         hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
@@ -7923,6 +8209,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.TransactionOutput parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.TransactionOutput parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.TransactionOutput parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -7982,6 +8279,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -7989,6 +8287,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.TransactionOutput prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -8012,6 +8311,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionOutput_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionOutput_fieldAccessorTable
@@ -8034,6 +8334,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         value_ = 0L;
@@ -8047,15 +8348,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionOutput_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionOutput getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.TransactionOutput.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionOutput build() {
         org.bitcoinj.wallet.Protos.TransactionOutput result = buildPartial();
         if (!result.isInitialized()) {
@@ -8064,6 +8368,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionOutput buildPartial() {
         org.bitcoinj.wallet.Protos.TransactionOutput result = new org.bitcoinj.wallet.Protos.TransactionOutput(this);
         int from_bitField0_ = bitField0_;
@@ -8089,32 +8394,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.TransactionOutput) {
           return mergeFrom((org.bitcoinj.wallet.Protos.TransactionOutput)other);
@@ -8143,6 +8455,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasValue()) {
           return false;
@@ -8153,6 +8466,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -8353,11 +8667,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -8379,11 +8695,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<TransactionOutput>
         PARSER = new com.google.protobuf.AbstractParser<TransactionOutput>() {
+      @java.lang.Override
       public TransactionOutput parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new TransactionOutput(input, extensionRegistry);
+        return new TransactionOutput(input, extensionRegistry);
       }
     };
 
@@ -8396,6 +8713,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionOutput getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -8544,6 +8862,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionConfidence)
       TransactionConfidenceOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use TransactionConfidence.newBuilder() to construct.
     private TransactionConfidence(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -8568,6 +8887,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -8579,15 +8901,9 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.TransactionConfidence.Type value = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
@@ -8623,6 +8939,7 @@ public final class Protos {
             }
             case 56: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.TransactionConfidence.Source value = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(7, rawValue);
@@ -8635,6 +8952,13 @@ public final class Protos {
             case 64: {
               bitField0_ |= 0x00000010;
               lastBroadcastedAt_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -8657,6 +8981,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionConfidence_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionConfidence_fieldAccessorTable
@@ -8986,6 +9311,7 @@ public final class Protos {
      * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
      */
     public org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.TransactionConfidence.Type result = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.valueOf(type_);
       return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN : result;
     }
@@ -9135,11 +9461,13 @@ public final class Protos {
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
      */
     public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.TransactionConfidence.Source result = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(source_);
       return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN : result;
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -9155,6 +9483,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -9181,6 +9510,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -9219,7 +9549,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -9271,7 +9600,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasType()) {
         hash = (37 * hash) + TYPE_FIELD_NUMBER;
         hash = (53 * hash) + type_;
@@ -9306,6 +9635,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.TransactionConfidence parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.TransactionConfidence parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.TransactionConfidence parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -9365,6 +9705,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -9372,6 +9713,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.TransactionConfidence prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -9402,6 +9744,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionConfidence_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionConfidence_fieldAccessorTable
@@ -9425,6 +9768,7 @@ public final class Protos {
           getBroadcastByFieldBuilder();
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         type_ = 0;
@@ -9448,15 +9792,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_TransactionConfidence_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionConfidence getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.TransactionConfidence.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionConfidence build() {
         org.bitcoinj.wallet.Protos.TransactionConfidence result = buildPartial();
         if (!result.isInitialized()) {
@@ -9465,6 +9812,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionConfidence buildPartial() {
         org.bitcoinj.wallet.Protos.TransactionConfidence result = new org.bitcoinj.wallet.Protos.TransactionConfidence(this);
         int from_bitField0_ = bitField0_;
@@ -9507,32 +9855,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.TransactionConfidence) {
           return mergeFrom((org.bitcoinj.wallet.Protos.TransactionConfidence)other);
@@ -9593,6 +9948,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         for (int i = 0; i < getBroadcastByCount(); i++) {
           if (!getBroadcastBy(i).isInitialized()) {
@@ -9602,6 +9958,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -9640,6 +9997,7 @@ public final class Protos {
        * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
        */
       public org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.TransactionConfidence.Type result = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.valueOf(type_);
         return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN : result;
       }
@@ -10131,6 +10489,7 @@ public final class Protos {
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
        */
       public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.TransactionConfidence.Source result = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(source_);
         return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN : result;
       }
@@ -10155,11 +10514,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -10181,11 +10542,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<TransactionConfidence>
         PARSER = new com.google.protobuf.AbstractParser<TransactionConfidence>() {
+      @java.lang.Override
       public TransactionConfidence parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new TransactionConfidence(input, extensionRegistry);
+        return new TransactionConfidence(input, extensionRegistry);
       }
     };
 
@@ -10198,6 +10560,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionConfidence getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -10475,6 +10838,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Transaction)
       TransactionOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Transaction.newBuilder() to construct.
     private Transaction(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -10503,6 +10867,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -10514,13 +10881,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               bitField0_ |= 0x00000001;
               version_ = input.readInt32();
@@ -10533,6 +10893,7 @@ public final class Protos {
             }
             case 24: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.Transaction.Pool value = org.bitcoinj.wallet.Protos.Transaction.Pool.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(3, rawValue);
@@ -10593,6 +10954,7 @@ public final class Protos {
             }
             case 80: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.Transaction.Purpose value = org.bitcoinj.wallet.Protos.Transaction.Purpose.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(10, rawValue);
@@ -10642,6 +11004,13 @@ public final class Protos {
               memo_ = bs;
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -10671,6 +11040,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Transaction_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Transaction_fieldAccessorTable
@@ -11109,6 +11479,7 @@ public final class Protos {
      * <code>optional .wallet.Transaction.Pool pool = 3;</code>
      */
     public org.bitcoinj.wallet.Protos.Transaction.Pool getPool() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Transaction.Pool result = org.bitcoinj.wallet.Protos.Transaction.Pool.valueOf(pool_);
       return result == null ? org.bitcoinj.wallet.Protos.Transaction.Pool.UNSPENT : result;
     }
@@ -11333,6 +11704,7 @@ public final class Protos {
      * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
      */
     public org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Transaction.Purpose result = org.bitcoinj.wallet.Protos.Transaction.Purpose.valueOf(purpose_);
       return result == null ? org.bitcoinj.wallet.Protos.Transaction.Purpose.UNKNOWN : result;
     }
@@ -11428,6 +11800,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -11469,6 +11842,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -11513,6 +11887,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -11584,7 +11959,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -11657,7 +12031,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasVersion()) {
         hash = (37 * hash) + VERSION_FIELD_NUMBER;
         hash = (53 * hash) + getVersion();
@@ -11717,6 +12091,17 @@ public final class Protos {
     }
 
     public static org.bitcoinj.wallet.Protos.Transaction parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Transaction parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Transaction parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
@@ -11775,6 +12160,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -11782,6 +12168,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Transaction prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -11805,6 +12192,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Transaction_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Transaction_fieldAccessorTable
@@ -11831,6 +12219,7 @@ public final class Protos {
           getExchangeRateFieldBuilder();
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         version_ = 0;
@@ -11878,15 +12267,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Transaction_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Transaction getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Transaction.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Transaction build() {
         org.bitcoinj.wallet.Protos.Transaction result = buildPartial();
         if (!result.isInitialized()) {
@@ -11895,6 +12287,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Transaction buildPartial() {
         org.bitcoinj.wallet.Protos.Transaction result = new org.bitcoinj.wallet.Protos.Transaction(this);
         int from_bitField0_ = bitField0_;
@@ -11976,32 +12369,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Transaction) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Transaction)other);
@@ -12119,6 +12519,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasVersion()) {
           return false;
@@ -12149,6 +12550,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -12276,6 +12678,7 @@ public final class Protos {
        * <code>optional .wallet.Transaction.Pool pool = 3;</code>
        */
       public org.bitcoinj.wallet.Protos.Transaction.Pool getPool() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Transaction.Pool result = org.bitcoinj.wallet.Protos.Transaction.Pool.valueOf(pool_);
         return result == null ? org.bitcoinj.wallet.Protos.Transaction.Pool.UNSPENT : result;
       }
@@ -13229,6 +13632,7 @@ public final class Protos {
        * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
        */
       public org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Transaction.Purpose result = org.bitcoinj.wallet.Protos.Transaction.Purpose.valueOf(purpose_);
         return result == null ? org.bitcoinj.wallet.Protos.Transaction.Purpose.UNKNOWN : result;
       }
@@ -13513,11 +13917,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -13539,11 +13945,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Transaction>
         PARSER = new com.google.protobuf.AbstractParser<Transaction>() {
+      @java.lang.Override
       public Transaction parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Transaction(input, extensionRegistry);
+        return new Transaction(input, extensionRegistry);
       }
     };
 
@@ -13556,6 +13963,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Transaction getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -13649,6 +14057,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ScryptParameters)
       ScryptParametersOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use ScryptParameters.newBuilder() to construct.
     private ScryptParameters(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -13670,6 +14079,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -13681,13 +14093,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               bitField0_ |= 0x00000001;
               salt_ = input.readBytes();
@@ -13708,6 +14113,13 @@ public final class Protos {
               p_ = input.readInt32();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -13725,6 +14137,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ScryptParameters_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ScryptParameters_fieldAccessorTable
@@ -13826,6 +14239,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -13839,6 +14253,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -13856,6 +14271,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -13882,7 +14298,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -13924,7 +14339,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasSalt()) {
         hash = (37 * hash) + SALT_FIELD_NUMBER;
         hash = (53 * hash) + getSalt().hashCode();
@@ -13947,6 +14362,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.ScryptParameters parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.ScryptParameters parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.ScryptParameters parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -14006,6 +14432,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -14013,6 +14440,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.ScryptParameters prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -14044,6 +14472,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScryptParameters_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScryptParameters_fieldAccessorTable
@@ -14066,6 +14495,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         salt_ = com.google.protobuf.ByteString.EMPTY;
@@ -14079,15 +14509,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ScryptParameters_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScryptParameters getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.ScryptParameters.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScryptParameters build() {
         org.bitcoinj.wallet.Protos.ScryptParameters result = buildPartial();
         if (!result.isInitialized()) {
@@ -14096,6 +14529,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ScryptParameters buildPartial() {
         org.bitcoinj.wallet.Protos.ScryptParameters result = new org.bitcoinj.wallet.Protos.ScryptParameters(this);
         int from_bitField0_ = bitField0_;
@@ -14121,32 +14555,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.ScryptParameters) {
           return mergeFrom((org.bitcoinj.wallet.Protos.ScryptParameters)other);
@@ -14175,6 +14616,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasSalt()) {
           return false;
@@ -14182,6 +14624,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -14395,11 +14838,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -14421,11 +14866,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<ScryptParameters>
         PARSER = new com.google.protobuf.AbstractParser<ScryptParameters>() {
+      @java.lang.Override
       public ScryptParameters parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new ScryptParameters(input, extensionRegistry);
+        return new ScryptParameters(input, extensionRegistry);
       }
     };
 
@@ -14438,6 +14884,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScryptParameters getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -14515,6 +14962,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Extension)
       ExtensionOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Extension.newBuilder() to construct.
     private Extension(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -14535,6 +14983,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -14546,13 +14997,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -14567,6 +15011,13 @@ public final class Protos {
             case 24: {
               bitField0_ |= 0x00000004;
               mandatory_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -14586,6 +15037,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Extension_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Extension_fieldAccessorTable
@@ -14691,6 +15143,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -14712,6 +15165,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -14726,6 +15180,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -14747,7 +15202,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -14784,7 +15238,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasId()) {
         hash = (37 * hash) + ID_FIELD_NUMBER;
         hash = (53 * hash) + getId().hashCode();
@@ -14803,6 +15257,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.Extension parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Extension parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.Extension parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -14862,6 +15327,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -14869,6 +15335,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Extension prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -14896,6 +15363,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Extension_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Extension_fieldAccessorTable
@@ -14918,6 +15386,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         id_ = "";
@@ -14929,15 +15398,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Extension_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Extension getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Extension.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Extension build() {
         org.bitcoinj.wallet.Protos.Extension result = buildPartial();
         if (!result.isInitialized()) {
@@ -14946,6 +15418,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Extension buildPartial() {
         org.bitcoinj.wallet.Protos.Extension result = new org.bitcoinj.wallet.Protos.Extension(this);
         int from_bitField0_ = bitField0_;
@@ -14967,32 +15440,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Extension) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Extension)other);
@@ -15020,6 +15500,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasId()) {
           return false;
@@ -15033,6 +15514,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -15242,11 +15724,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -15268,11 +15752,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Extension>
         PARSER = new com.google.protobuf.AbstractParser<Extension>() {
+      @java.lang.Override
       public Extension parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Extension(input, extensionRegistry);
+        return new Extension(input, extensionRegistry);
       }
     };
 
@@ -15285,6 +15770,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Extension getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -15332,6 +15818,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Tag)
       TagOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Tag.newBuilder() to construct.
     private Tag(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -15351,6 +15838,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -15362,13 +15852,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -15378,6 +15861,13 @@ public final class Protos {
             case 18: {
               bitField0_ |= 0x00000002;
               data_ = input.readBytes();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -15397,6 +15887,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_fieldAccessorTable
@@ -15463,6 +15954,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -15480,6 +15972,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -15491,6 +15984,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -15508,7 +16002,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -15540,7 +16033,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasTag()) {
         hash = (37 * hash) + TAG_FIELD_NUMBER;
         hash = (53 * hash) + getTag().hashCode();
@@ -15554,6 +16047,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Tag parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.Tag parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -15613,6 +16117,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -15620,6 +16125,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Tag prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -15650,6 +16156,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_fieldAccessorTable
@@ -15672,6 +16179,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         tag_ = "";
@@ -15681,15 +16189,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Tag_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Tag getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Tag.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Tag build() {
         org.bitcoinj.wallet.Protos.Tag result = buildPartial();
         if (!result.isInitialized()) {
@@ -15698,6 +16209,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Tag buildPartial() {
         org.bitcoinj.wallet.Protos.Tag result = new org.bitcoinj.wallet.Protos.Tag(this);
         int from_bitField0_ = bitField0_;
@@ -15715,32 +16227,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Tag) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Tag)other);
@@ -15765,6 +16284,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasTag()) {
           return false;
@@ -15775,6 +16295,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -15904,11 +16425,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -15930,11 +16453,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Tag>
         PARSER = new com.google.protobuf.AbstractParser<Tag>() {
+      @java.lang.Override
       public Tag parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Tag(input, extensionRegistry);
+        return new Tag(input, extensionRegistry);
       }
     };
 
@@ -15947,6 +16471,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Tag getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -16247,6 +16772,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Wallet)
       WalletOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Wallet.newBuilder() to construct.
     private Wallet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -16277,6 +16803,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -16288,13 +16817,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000001;
@@ -16326,6 +16848,7 @@ public final class Protos {
             }
             case 40: {
               int rawValue = input.readEnum();
+                @SuppressWarnings("deprecation")
               org.bitcoinj.wallet.Protos.Wallet.EncryptionType value = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(5, rawValue);
@@ -16401,6 +16924,13 @@ public final class Protos {
                   input.readMessage(org.bitcoinj.wallet.Protos.Tag.PARSER, extensionRegistry));
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -16433,6 +16963,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Wallet_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_Wallet_fieldAccessorTable
@@ -16787,6 +17318,7 @@ public final class Protos {
      * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
      */
     public org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType() {
+      @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Wallet.EncryptionType result = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.valueOf(encryptionType_);
       return result == null ? org.bitcoinj.wallet.Protos.Wallet.EncryptionType.UNENCRYPTED : result;
     }
@@ -16991,6 +17523,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -17040,6 +17573,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -17087,6 +17621,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -17151,7 +17686,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -17227,7 +17761,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasNetworkIdentifier()) {
         hash = (37 * hash) + NETWORK_IDENTIFIER_FIELD_NUMBER;
         hash = (53 * hash) + getNetworkIdentifier().hashCode();
@@ -17292,6 +17826,17 @@ public final class Protos {
     }
 
     public static org.bitcoinj.wallet.Protos.Wallet parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.Wallet parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.bitcoinj.wallet.Protos.Wallet parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
@@ -17350,6 +17895,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -17357,6 +17903,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.Wallet prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -17384,6 +17931,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Wallet_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Wallet_fieldAccessorTable
@@ -17412,6 +17960,7 @@ public final class Protos {
           getTagsFieldBuilder();
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         networkIdentifier_ = "";
@@ -17469,15 +18018,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_Wallet_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Wallet getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.Wallet.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Wallet build() {
         org.bitcoinj.wallet.Protos.Wallet result = buildPartial();
         if (!result.isInitialized()) {
@@ -17486,6 +18038,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Wallet buildPartial() {
         org.bitcoinj.wallet.Protos.Wallet result = new org.bitcoinj.wallet.Protos.Wallet(this);
         int from_bitField0_ = bitField0_;
@@ -17580,32 +18133,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.Wallet) {
           return mergeFrom((org.bitcoinj.wallet.Protos.Wallet)other);
@@ -17783,6 +18343,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasNetworkIdentifier()) {
           return false;
@@ -17820,6 +18381,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -18801,6 +19363,7 @@ public final class Protos {
        * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
        */
       public org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType() {
+        @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Wallet.EncryptionType result = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.valueOf(encryptionType_);
         return result == null ? org.bitcoinj.wallet.Protos.Wallet.EncryptionType.UNENCRYPTED : result;
       }
@@ -19635,11 +20198,13 @@ public final class Protos {
         }
         return tagsBuilder_;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -19661,11 +20226,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<Wallet>
         PARSER = new com.google.protobuf.AbstractParser<Wallet>() {
+      @java.lang.Override
       public Wallet parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Wallet(input, extensionRegistry);
+        return new Wallet(input, extensionRegistry);
       }
     };
 
@@ -19678,6 +20244,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Wallet getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -19759,6 +20326,7 @@ public final class Protos {
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ExchangeRate)
       ExchangeRateOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use ExchangeRate.newBuilder() to construct.
     private ExchangeRate(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -19779,6 +20347,9 @@ public final class Protos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -19790,13 +20361,6 @@ public final class Protos {
             case 0:
               done = true;
               break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               bitField0_ |= 0x00000001;
               coinValue_ = input.readInt64();
@@ -19811,6 +20375,13 @@ public final class Protos {
               com.google.protobuf.ByteString bs = input.readBytes();
               bitField0_ |= 0x00000004;
               fiatCurrencyCode_ = bs;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -19830,6 +20401,7 @@ public final class Protos {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ExchangeRate_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.wallet.Protos.internal_static_wallet_ExchangeRate_fieldAccessorTable
@@ -19939,6 +20511,7 @@ public final class Protos {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -19960,6 +20533,7 @@ public final class Protos {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -19974,6 +20548,7 @@ public final class Protos {
       unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -19995,7 +20570,6 @@ public final class Protos {
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -20032,7 +20606,7 @@ public final class Protos {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasCoinValue()) {
         hash = (37 * hash) + COIN_VALUE_FIELD_NUMBER;
         hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
@@ -20052,6 +20626,17 @@ public final class Protos {
       return hash;
     }
 
+    public static org.bitcoinj.wallet.Protos.ExchangeRate parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.bitcoinj.wallet.Protos.ExchangeRate parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static org.bitcoinj.wallet.Protos.ExchangeRate parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -20111,6 +20696,7 @@ public final class Protos {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -20118,6 +20704,7 @@ public final class Protos {
     public static Builder newBuilder(org.bitcoinj.wallet.Protos.ExchangeRate prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -20145,6 +20732,7 @@ public final class Protos {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ExchangeRate_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ExchangeRate_fieldAccessorTable
@@ -20167,6 +20755,7 @@ public final class Protos {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         coinValue_ = 0L;
@@ -20178,15 +20767,18 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return org.bitcoinj.wallet.Protos.internal_static_wallet_ExchangeRate_descriptor;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ExchangeRate getDefaultInstanceForType() {
         return org.bitcoinj.wallet.Protos.ExchangeRate.getDefaultInstance();
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ExchangeRate build() {
         org.bitcoinj.wallet.Protos.ExchangeRate result = buildPartial();
         if (!result.isInitialized()) {
@@ -20195,6 +20787,7 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.ExchangeRate buildPartial() {
         org.bitcoinj.wallet.Protos.ExchangeRate result = new org.bitcoinj.wallet.Protos.ExchangeRate(this);
         int from_bitField0_ = bitField0_;
@@ -20216,32 +20809,39 @@ public final class Protos {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
         return (Builder) super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
         return (Builder) super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
         return (Builder) super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
+          int index, java.lang.Object value) {
         return (Builder) super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
+          java.lang.Object value) {
         return (Builder) super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.wallet.Protos.ExchangeRate) {
           return mergeFrom((org.bitcoinj.wallet.Protos.ExchangeRate)other);
@@ -20269,6 +20869,7 @@ public final class Protos {
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         if (!hasCoinValue()) {
           return false;
@@ -20282,6 +20883,7 @@ public final class Protos {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -20496,11 +21098,13 @@ public final class Protos {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.mergeUnknownFields(unknownFields);
@@ -20522,11 +21126,12 @@ public final class Protos {
 
     @java.lang.Deprecated public static final com.google.protobuf.Parser<ExchangeRate>
         PARSER = new com.google.protobuf.AbstractParser<ExchangeRate>() {
+      @java.lang.Override
       public ExchangeRate parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new ExchangeRate(input, extensionRegistry);
+        return new ExchangeRate(input, extensionRegistry);
       }
     };
 
@@ -20539,6 +21144,7 @@ public final class Protos {
       return PARSER;
     }
 
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ExchangeRate getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -20638,7 +21244,7 @@ public final class Protos {
       "s\030\003 \001(\r\022\026\n\016lookahead_size\030\004 \001(\r\022\023\n\013isFol" +
       "lowing\030\005 \001(\010\022\036\n\023sigsRequiredToSpend\030\006 \001(" +
       "\r:\0011\"\231\004\n\003Key\022\036\n\004type\030\001 \002(\0162\020.wallet.Key." +
-      "Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016encrypted_",
+      "Type\022\024\n\014secret_bytes\030\002 \001(\014\022-\n\016encrypted_" +
       "data\030\006 \001(\0132\025.wallet.EncryptedData\022\022\n\npub" +
       "lic_key\030\003 \001(\014\022\r\n\005label\030\004 \001(\t\022\032\n\022creation" +
       "_timestamp\030\005 \001(\003\0223\n\021deterministic_key\030\007 " +
@@ -20648,7 +21254,7 @@ public final class Protos {
       "\n\014account_path\030\n \003(\rB\002\020\001\0228\n\022output_scrip" +
       "t_type\030\013 \001(\0162\034.wallet.Key.OutputScriptTy" +
       "pe\"a\n\004Type\022\014\n\010ORIGINAL\020\001\022\030\n\024ENCRYPTED_SC" +
-      "RYPT_AES\020\002\022\032\n\026DETERMINISTIC_MNEMONIC\020\003\022\025",
+      "RYPT_AES\020\002\022\032\n\026DETERMINISTIC_MNEMONIC\020\003\022\025" +
       "\n\021DETERMINISTIC_KEY\020\004\")\n\020OutputScriptTyp" +
       "e\022\t\n\005P2PKH\020\001\022\n\n\006P2WPKH\020\002\"5\n\006Script\022\017\n\007pr" +
       "ogram\030\001 \002(\014\022\032\n\022creation_timestamp\030\002 \002(\003\"" +
@@ -20658,7 +21264,7 @@ public final class Protos {
       " \002(\r\022\024\n\014script_bytes\030\003 \002(\014\022\020\n\010sequence\030\004" +
       " \001(\r\022\r\n\005value\030\005 \001(\003\022&\n\007witness\030\006 \001(\0132\025.w" +
       "allet.ScriptWitness\"\177\n\021TransactionOutput" +
-      "\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n",
+      "\022\r\n\005value\030\001 \002(\003\022\024\n\014script_bytes\030\002 \002(\014\022!\n" +
       "\031spent_by_transaction_hash\030\003 \001(\014\022\"\n\032spen" +
       "t_by_transaction_index\030\004 \001(\005\"\267\003\n\025Transac" +
       "tionConfidence\0220\n\004type\030\001 \001(\0162\".wallet.Tr" +
@@ -20668,7 +21274,7 @@ public final class Protos {
       "\0132\023.wallet.PeerAddress\022\033\n\023last_broadcast" +
       "ed_at\030\010 \001(\003\0224\n\006source\030\007 \001(\0162$.wallet.Tra" +
       "nsactionConfidence.Source\"`\n\004Type\022\013\n\007UNK" +
-      "NOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT",
+      "NOWN\020\000\022\014\n\010BUILDING\020\001\022\013\n\007PENDING\020\002\022\025\n\021NOT" +
       "_IN_BEST_CHAIN\020\003\022\010\n\004DEAD\020\004\022\017\n\013IN_CONFLIC" +
       "T\020\005\"A\n\006Source\022\022\n\016SOURCE_UNKNOWN\020\000\022\022\n\016SOU" +
       "RCE_NETWORK\020\001\022\017\n\013SOURCE_SELF\020\002\"\303\005\n\013Trans" +
@@ -20678,7 +21284,7 @@ public final class Protos {
       "transaction_input\030\006 \003(\0132\030.wallet.Transac" +
       "tionInput\0225\n\022transaction_output\030\007 \003(\0132\031." +
       "wallet.TransactionOutput\022\022\n\nblock_hash\030\010" +
-      " \003(\014\022 \n\030block_relativity_offsets\030\013 \003(\005\0221",
+      " \003(\014\022 \n\030block_relativity_offsets\030\013 \003(\005\0221" +
       "\n\nconfidence\030\t \001(\0132\035.wallet.TransactionC" +
       "onfidence\0225\n\007purpose\030\n \001(\0162\033.wallet.Tran" +
       "saction.Purpose:\007UNKNOWN\022+\n\rexchange_rat" +
@@ -20688,7 +21294,7 @@ public final class Protos {
       "ING_INACTIVE\020\022\"\243\001\n\007Purpose\022\013\n\007UNKNOWN\020\000\022" +
       "\020\n\014USER_PAYMENT\020\001\022\020\n\014KEY_ROTATION\020\002\022\034\n\030A" +
       "SSURANCE_CONTRACT_CLAIM\020\003\022\035\n\031ASSURANCE_C" +
-      "ONTRACT_PLEDGE\020\004\022\033\n\027ASSURANCE_CONTRACT_S",
+      "ONTRACT_PLEDGE\020\004\022\033\n\027ASSURANCE_CONTRACT_S" +
       "TUB\020\005\022\r\n\tRAISE_FEE\020\006\"N\n\020ScryptParameters" +
       "\022\014\n\004salt\030\001 \002(\014\022\020\n\001n\030\002 \001(\003:\00516384\022\014\n\001r\030\003 " +
       "\001(\005:\0018\022\014\n\001p\030\004 \001(\005:\0011\"8\n\tExtension\022\n\n\002id\030" +
@@ -20698,7 +21304,7 @@ public final class Protos {
       "seen_block_hash\030\002 \001(\014\022\036\n\026last_seen_block" +
       "_height\030\014 \001(\r\022!\n\031last_seen_block_time_se" +
       "cs\030\016 \001(\003\022\030\n\003key\030\003 \003(\0132\013.wallet.Key\022(\n\013tr" +
-      "ansaction\030\004 \003(\0132\023.wallet.Transaction\022&\n\016",
+      "ansaction\030\004 \003(\0132\023.wallet.Transaction\022&\n\016" +
       "watched_script\030\017 \003(\0132\016.wallet.Script\022C\n\017" +
       "encryption_type\030\005 \001(\0162\035.wallet.Wallet.En" +
       "cryptionType:\013UNENCRYPTED\0227\n\025encryption_" +
@@ -20708,7 +21314,7 @@ public final class Protos {
       "\t\022\031\n\021key_rotation_time\030\r \001(\004\022\031\n\004tags\030\020 \003" +
       "(\0132\013.wallet.Tag\";\n\016EncryptionType\022\017\n\013UNE" +
       "NCRYPTED\020\001\022\030\n\024ENCRYPTED_SCRYPT_AES\020\002\"R\n\014" +
-      "ExchangeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfiat",
+      "ExchangeRate\022\022\n\ncoin_value\030\001 \002(\003\022\022\n\nfiat" +
       "_value\030\002 \002(\003\022\032\n\022fiat_currency_code\030\003 \002(\t" +
       "B\035\n\023org.bitcoinj.walletB\006Protos"
     };

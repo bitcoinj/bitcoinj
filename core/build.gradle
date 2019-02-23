@@ -29,6 +29,9 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
     generatedFilesBaseDir = new File(projectDir, '/src') // workaround for '$projectDir/src'
 }
 
