@@ -38,8 +38,8 @@ public class Bech32 {
     };
 
     public static class Bech32Data {
-        final String hrp;
-        final byte[] data;
+        public final String hrp;
+        public final byte[] data;
 
         private Bech32Data(final String hrp, final byte[] data) {
             this.hrp = hrp;
