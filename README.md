@@ -41,3 +41,13 @@ These are found in the `examples` module.
 ### Where next?
 
 Now you are ready to [follow the tutorial](https://bitcoinj.github.io/getting-started).
+
+### Testing a SNAPSHOT build
+
+Building apps with official releases of **bitcoinj** is covered in the [tutorial](https://bitcoinj.github.io/getting-started).
+
+If you want to develop or test your app with a [Jitpack](https://jitpack.io)-powered build of the latest `master` or `release-0.15` branch of **bitcoinj** follow the dynamically-generated instructions for that branch by following the correct link.
+
+
+* [master](https://jitpack.io/#bitcoinj/bitcoinj/master-SNAPSHOT) branch
+* [release-0.15](https://jitpack.io/#bitcoinj/bitcoinj/release-0.15-SNAPSHOT) branch
