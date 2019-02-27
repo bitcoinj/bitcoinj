@@ -217,6 +217,11 @@ public class MonetaryFormatTest {
     }
 
     @Test
+    public void standardSymbol() throws Exception {
+        assertEquals(MonetaryFormat.SYMBOL_BTC + " 0.00", new MonetaryFormat(true).format(Coin.ZERO).toString());
+    }
+
+    @Test
     public void customCode() throws Exception {
         assertEquals("dBTC 0", MonetaryFormat.UBTC.code(1, "dBTC").shift(1).format(Coin.ZERO).toString());
     }
