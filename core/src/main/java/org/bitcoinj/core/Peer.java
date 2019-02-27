@@ -1496,21 +1496,21 @@ public class Peer extends PeerSocketHandler {
 
     private class PendingPing {
         // The future that will be invoked when the pong is heard back.
-        public SettableFuture<Long> future;
+        public final SettableFuture<Long> future;
         // The random nonce that lets us tell apart overlapping pings/pongs.
         public final long nonce;
         // Measurement of the time elapsed.
         public final long startTimeMsec;
 
         public PendingPing(long nonce) {
-            future = SettableFuture.create();
+            this.future = SettableFuture.create();
             this.nonce = nonce;
-            startTimeMsec = Utils.currentTimeMillis();
+            this.startTimeMsec = Utils.currentTimeMillis();
         }
 
         public void complete() {
             if (!future.isDone()) {
-                Long elapsed = Utils.currentTimeMillis() - startTimeMsec;
+                long elapsed = Utils.currentTimeMillis() - startTimeMsec;
                 Peer.this.addPingTimeData(elapsed);
                 log.debug("{}: ping time is {} msec", Peer.this.toString(), elapsed);
                 future.set(elapsed);
