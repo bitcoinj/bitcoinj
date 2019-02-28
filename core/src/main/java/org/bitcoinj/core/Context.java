@@ -66,7 +66,7 @@ public class Context {
      * Creates a new custom context object. This is mainly meant for unit tests for now.
      *
      * @param params The network parameters that will be associated with this context.
-     * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs (see {@link #getEventHorizon()}.
+     * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
      * @param feePerKb The default fee per 1000 bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
      */
