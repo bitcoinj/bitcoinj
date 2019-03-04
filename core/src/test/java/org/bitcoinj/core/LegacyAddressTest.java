@@ -218,15 +218,6 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void comparisonEqualTo() throws Exception {
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        LegacyAddress b = a.clone();
-
-        int result = a.compareTo(b);
-        assertEquals(0, result);
-    }
-
-    @Test
     public void comparisonLessThan() throws Exception {
         LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
         LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
