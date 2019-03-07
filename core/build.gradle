@@ -4,8 +4,6 @@ apply plugin: 'maven'
 apply plugin: 'eclipse'
 
 version = '0.16-SNAPSHOT'
-archivesBaseName = 'bitcoinj-core'
-eclipse.project.name = 'bitcoinj-core'
 
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'

@@ -1,13 +1,21 @@
 import org.gradle.util.GradleVersion
 
+rootProject.name = 'bitcoinj-parent'
+
 include 'core'
+project(':core').name = 'bitcoinj-core'
+
 include 'tools'
+project(':tools').name = 'bitcoinj-tools'
+
 include 'examples'
+project(':examples').name = 'bitcoinj-examples'
 
 def minGradleVersion = GradleVersion.version("4.10")
 if (GradleVersion.current().compareTo(minGradleVersion) >= 0 && JavaVersion.current().isJava11Compatible()) {
     println "Including wallettemplate because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
     include 'wallettemplate'
+    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 } else {
     println "Skipping wallettemplate: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
 }
