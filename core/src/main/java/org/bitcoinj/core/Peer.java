@@ -150,6 +150,8 @@ public class Peer extends PeerSocketHandler {
     private final ReentrantLock lastPingTimesLock = new ReentrantLock();
     @GuardedBy("lastPingTimesLock") private long[] lastPingTimes = null;
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
+    // Disconnect form a peer that is not responding to Pings
+    private static final int PENDING_PINGS_LIMIT = 50;
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private volatile VersionMessage vPeerVersionMessage;
@@ -1558,6 +1560,10 @@ public class Peer extends PeerSocketHandler {
         final VersionMessage ver = vPeerVersionMessage;
         if (!ver.isPingPongSupported())
             throw new ProtocolException("Peer version is too low for measurable pings: " + ver);
+        if (pendingPings.size() > PENDING_PINGS_LIMIT) {
+            log.info("{}: Too many pending pings, disconnecting", this);
+            close();
+        }
         PendingPing pendingPing = new PendingPing(nonce);
         pendingPings.add(pendingPing);
         sendMessage(new Ping(pendingPing.nonce));
