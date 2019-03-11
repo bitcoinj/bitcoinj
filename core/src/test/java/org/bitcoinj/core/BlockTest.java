@@ -135,7 +135,7 @@ public class BlockTest {
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
         // NB: This tests the bitcoin serialization protocol.
-        assertTrue(Arrays.equals(block700000Bytes, block700000.bitcoinSerialize()));
+        assertArrayEquals(block700000Bytes, block700000.bitcoinSerialize());
     }
     
     @Test

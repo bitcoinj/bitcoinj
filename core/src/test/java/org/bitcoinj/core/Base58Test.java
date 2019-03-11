@@ -17,11 +17,10 @@
 
 package org.bitcoinj.core;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -60,10 +59,10 @@ public class Base58Test {
     public void testDecode() throws Exception {
         byte[] testbytes = "Hello World".getBytes();
         byte[] actualbytes = Base58.decode("JxF12TrwUP45BMd");
-        assertTrue(new String(actualbytes), Arrays.equals(testbytes, actualbytes));
-        
-        assertTrue("1", Arrays.equals(Base58.decode("1"), new byte[1]));
-        assertTrue("1111", Arrays.equals(Base58.decode("1111"), new byte[4]));
+        assertArrayEquals(new String(actualbytes), testbytes, actualbytes);
+
+        assertArrayEquals("1", Base58.decode("1"), new byte[1]);
+        assertArrayEquals("1111", Base58.decode("1111"), new byte[4]);
 
         // Test decode of empty String.
         assertEquals(0, Base58.decode("").length);

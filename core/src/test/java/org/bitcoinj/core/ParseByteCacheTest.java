@@ -173,7 +173,7 @@ public class ParseByteCacheTest {
         // verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
         bsRef.serialize(bRef, bos);
-        assertTrue(Arrays.equals(bos.toByteArray(), blockBytes));
+        assertArrayEquals(bos.toByteArray(), blockBytes);
         
         // check retain status survive both before and after a serialization
         assertEquals(retain, b1.isHeaderBytesValid());
@@ -366,7 +366,7 @@ public class ParseByteCacheTest {
         // verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
         bsRef.serialize(tRef, bos);
-        assertTrue(Arrays.equals(bos.toByteArray(), txBytes));
+        assertArrayEquals(bos.toByteArray(), txBytes);
 
         // check and retain status survive both before and after a serialization
         assertEquals(retain, t1.isCached());
@@ -423,8 +423,8 @@ public class ParseByteCacheTest {
 
         bos.reset();
         bs.serialize(m2, bos);
-        byte[] b2 = bos.toByteArray(); 
-        assertTrue(Arrays.equals(b1, b2));
+        byte[] b2 = bos.toByteArray();
+        assertArrayEquals(b1, b2);
 
         if (sourceBytes != null) {
             assertTrue(arrayContains(sourceBytes, b1));
