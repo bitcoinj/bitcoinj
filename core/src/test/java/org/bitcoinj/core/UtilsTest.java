@@ -86,7 +86,7 @@ public class UtilsTest {
         BigInteger b = BigInteger.valueOf(0);
         byte[] expected = new byte[]{0b0000_0000};
         byte[] actual = Utils.bigIntegerToBytes(b, 1);
-        assertTrue(Arrays.equals(expected, actual));
+        assertArrayEquals(expected, actual);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class UtilsTest {
         BigInteger b = BigInteger.valueOf(0b0000_1111);
         byte[] expected = new byte[]{0b0000_1111};
         byte[] actual = Utils.bigIntegerToBytes(b, 1);
-        assertTrue(Arrays.equals(expected, actual));
+        assertArrayEquals(expected, actual);
     }
 
     @Test
@@ -102,7 +102,7 @@ public class UtilsTest {
         BigInteger b = BigInteger.valueOf(0b0000_1111);
         byte[] expected = new byte[]{0, 0b0000_1111};
         byte[] actual = Utils.bigIntegerToBytes(b, 2);
-        assertTrue(Arrays.equals(expected, actual));
+        assertArrayEquals(expected, actual);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class UtilsTest {
         BigInteger b = BigInteger.valueOf(0b1000_0000);     // 128 (2-compl does not fit in one byte)
         byte[] expected = new byte[]{-128};                 // -128 == 1000_0000 (compl-2)
         byte[] actual = Utils.bigIntegerToBytes(b, 1);
-        assertTrue(Arrays.equals(expected, actual));
+        assertArrayEquals(expected, actual);
     }
 
     @Test
