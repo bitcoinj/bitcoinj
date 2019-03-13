@@ -16,4 +16,4 @@
 
 set -e
 args="$@"
-gradle -q build_checkpoints "-PappArgs=$args"
+gradle -q --no-daemon build_checkpoints "-PappArgs=$args"
