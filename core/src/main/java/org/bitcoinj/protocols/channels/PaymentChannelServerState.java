@@ -228,7 +228,7 @@ public abstract class PaymentChannelServerState {
     }
 
     /**
-     * Called when the client provides us with a new signature and wishes to increment total payment by size.		+
+     * Called when the client provides us with a new signature and wishes to increment total payment by size.
      * Verifies the provided signature and only updates values if everything checks out.
      * If the new refundSize is not the lowest we have seen, it is simply ignored.
      *
