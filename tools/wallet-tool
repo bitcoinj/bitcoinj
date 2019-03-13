@@ -16,4 +16,4 @@
 
 set -e
 args="$@"
-gradle -q wallet_tool "-PappArgs=$args"
+gradle -q --no-daemon wallet_tool "-PappArgs=$args"
