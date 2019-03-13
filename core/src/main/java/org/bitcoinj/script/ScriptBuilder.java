@@ -332,7 +332,7 @@ public class ScriptBuilder {
 
     /** Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. */
     public static Script createMultiSigInputScriptBytes(List<byte[]> signatures) {
-    	return createMultiSigInputScriptBytes(signatures, null);
+        return createMultiSigInputScriptBytes(signatures, null);
     }
 
     /**
@@ -366,7 +366,7 @@ public class ScriptBuilder {
         for (byte[] signature : signatures)
             builder.data(signature);
         if (multisigProgramBytes!= null)
-        	builder.data(multisigProgramBytes);
+            builder.data(multisigProgramBytes);
         return builder.build();
     }
 

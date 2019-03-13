@@ -809,7 +809,7 @@ public abstract class BtcFormat extends Format {
      * locale.
      */
     public static BtcFormat getCodeInstance(int minDecimals) {
-	return getCodeInstance(defaultLocale(), minDecimals);
+        return getCodeInstance(defaultLocale(), minDecimals);
     }
 
     /**
@@ -835,7 +835,7 @@ public abstract class BtcFormat extends Format {
      * fractional satoshis.
      */
     public static BtcFormat getInstance(Locale locale, int minDecimals) {
-	return getCodeInstance(locale, minDecimals);
+        return getCodeInstance(locale, minDecimals);
     }
 
     /**
@@ -847,7 +847,7 @@ public abstract class BtcFormat extends Format {
      * fractional satoshis.
      */
     public static BtcFormat getCodeInstance(Locale locale, int minDecimals) {
-	return getInstance(CODE, locale, minDecimals);
+        return getInstance(CODE, locale, minDecimals);
     }
 
     /**
@@ -856,7 +856,7 @@ public abstract class BtcFormat extends Format {
      * units using a currency symbol, for example, {@code "µ฿"}.
      */
     public static BtcFormat getSymbolInstance(Locale locale) {
-	return getInstance(SYMBOL, locale);
+        return getInstance(SYMBOL, locale);
     }
 
     /**
@@ -868,7 +868,7 @@ public abstract class BtcFormat extends Format {
      * fractional satoshis.
      */
     public static BtcFormat getSymbolInstance(Locale locale, int fractionPlaces) {
-	return getInstance(SYMBOL, locale, fractionPlaces);
+        return getInstance(SYMBOL, locale, fractionPlaces);
     }
 
     /**
@@ -889,7 +889,7 @@ public abstract class BtcFormat extends Format {
      * parsing will be done according to the default locale.
      */
     public static BtcFormat getInstance(Style style, int fractionPlaces) {
-	return getInstance(style, defaultLocale(), fractionPlaces);
+        return getInstance(style, defaultLocale(), fractionPlaces);
     }
 
     /**
@@ -902,7 +902,7 @@ public abstract class BtcFormat extends Format {
      * as necessary to avoid giving a place to fractional satoshis.
      */
     public static BtcFormat getInstance(Style style, Locale locale) {
-	return getInstance(style, locale, 2);
+        return getInstance(style, locale, 2);
     }
 
     /**
@@ -918,7 +918,7 @@ public abstract class BtcFormat extends Format {
      * fractional satoshis.
      */
     public static BtcFormat getInstance(Style style, Locale locale, int fractionPlaces) {
-	return new BtcAutoFormat(locale, style, fractionPlaces);
+        return new BtcAutoFormat(locale, style, fractionPlaces);
     }
 
     /**
@@ -1131,7 +1131,7 @@ public abstract class BtcFormat extends Format {
         AttributedCharacterIterator i = numberFormat.formatToCharacterIterator(units);
         numberFormat.setDecimalFormatSymbols(anteSigns);
         setFormatterDigits(numberFormat, anteDigits.get(0), anteDigits.get(1));
-	return i;
+        return i;
     }}
 
     /**
@@ -1282,19 +1282,19 @@ public abstract class BtcFormat extends Format {
      * client is permitted to pass us, and return a BigInteger representing the
      * number of satoshis having the equivalent value. */
     private static BigInteger inSatoshis(Object qty) {
-	BigInteger satoshis;
+        BigInteger satoshis;
         // the value might be bitcoins or satoshis
-	if (qty instanceof Long || qty instanceof Integer)
-	    satoshis = BigInteger.valueOf(((Number)qty).longValue());
-	else if (qty instanceof BigInteger)
-	    satoshis = (BigInteger)qty;
-	else if (qty instanceof BigDecimal)
-	    satoshis = ((BigDecimal)qty).movePointRight(Coin.SMALLEST_UNIT_EXPONENT).
+        if (qty instanceof Long || qty instanceof Integer)
+            satoshis = BigInteger.valueOf(((Number)qty).longValue());
+        else if (qty instanceof BigInteger)
+            satoshis = (BigInteger)qty;
+        else if (qty instanceof BigDecimal)
+            satoshis = ((BigDecimal)qty).movePointRight(Coin.SMALLEST_UNIT_EXPONENT).
                        setScale(0,BigDecimal.ROUND_HALF_UP).unscaledValue();
-	else if (qty instanceof Coin)
-	    satoshis = BigInteger.valueOf(((Coin)qty).value);
-	else
-	    throw new IllegalArgumentException("Cannot format a " + qty.getClass().getSimpleName() +
+        else if (qty instanceof Coin)
+            satoshis = BigInteger.valueOf(((Coin)qty).value);
+        else
+            throw new IllegalArgumentException("Cannot format a " + qty.getClass().getSimpleName() +
                                                " as a Bicoin value");
         return satoshis;
     }
