@@ -39,7 +39,7 @@ public class Base58DecodeCheckedTest {
         Base58.decodeChecked(input);
     }
 
-    @Theory()
+    @Theory
     public void decode_invalidCharacter_notInAlphabet(String input) {
         Assume.assumeFalse(containsOnlyValidBase58Chars(input));
         Assume.assumeTrue(input.length() > 4);
