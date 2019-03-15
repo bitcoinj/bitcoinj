@@ -292,8 +292,8 @@ public class Block extends Message {
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
-        // check for no transaction conditions first
-        // must be a more efficient way to do this but I'm tired atm.
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
         if (transactions == null) {
             return;
         }
@@ -566,6 +566,11 @@ public class Block extends Message {
         // Check there aren't too many signature verifications in the block. This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
         int sigOps = 0;
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
+        if (transactions == null) {
+            return;
+        }
         for (Transaction tx : transactions) {
             sigOps += tx.getSigOpCount();
         }
@@ -583,6 +588,11 @@ public class Block extends Message {
 
     @VisibleForTesting
     void checkWitnessRoot() throws VerificationException {
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
+        if (transactions == null) {
+            return;
+        }
         Transaction coinbase = transactions.get(0);
         checkState(coinbase.isCoinBase());
         Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
@@ -648,6 +658,11 @@ public class Block extends Message {
         //    2     3    4  4
         //  / \   / \   / \
         // t1 t2 t3 t4 t5 t5
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
+        if (transactions == null) {
+            throw new VerificationException("Block had no transactions");
+        }
         ArrayList<byte[]> tree = new ArrayList<>(transactions.size());
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction tx : transactions) {
@@ -686,6 +701,11 @@ public class Block extends Message {
     private void checkTransactions(final int height, final EnumSet<VerifyFlag> flags)
             throws VerificationException {
         // The first transaction in a block must always be a coinbase transaction.
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
+        if (transactions == null) {
+            return;
+        }
         if (!transactions.get(0).isCoinBase())
             throw new VerificationException("First tx is not coinbase");
         if (flags.contains(Block.VerifyFlag.HEIGHT_IN_COINBASE) && height >= BLOCK_HEIGHT_GENESIS) {
@@ -730,6 +750,12 @@ public class Block extends Message {
         // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
         // valid block from the network and simply replace the transactions in it with their own fictional
         // transactions that reference spent or non-existent inputs.
+
+        // Check for no transaction conditions first
+        // must be a more efficient way to do this and may be implemented in the future.
+        if (transactions == null) {
+            return;
+        }
         if (transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
         if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
