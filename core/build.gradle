@@ -39,6 +39,7 @@ test {
     exclude 'org/bitcoinj/core/PeerTest*'
     exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
     exclude 'org/bitcoinj/net/NetworkAbstractionTests*'
+    exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     exclude 'org/bitcoinj/protocols/channels/ChannelConnectionTest*'
     testLogging {
         events "failed"
