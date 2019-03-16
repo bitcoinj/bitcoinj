@@ -1897,11 +1897,9 @@ public class Wallet extends BaseTaggableObject
             }
             Coin valueSentToMe = tx.getValueSentToMe(this);
             Coin valueSentFromMe = tx.getValueSentFromMe(this);
-            if (log.isInfoEnabled()) {
-                log.info(String.format(Locale.US, "Received a pending transaction {} that spends {} from our own wallet," +
-                        " and sends us {}", tx.getTxId(), valueSentFromMe.toFriendlyString(),
-                        valueSentToMe.toFriendlyString()));
-            }
+            if (log.isInfoEnabled())
+                log.info("Received a pending transaction {} that spends {} from our own wallet, and sends us {}",
+                        tx.getTxId(), valueSentFromMe.toFriendlyString(), valueSentToMe.toFriendlyString());
             if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
                 log.warn("Wallet received transaction with an unknown source. Consider tagging it!");
             }
