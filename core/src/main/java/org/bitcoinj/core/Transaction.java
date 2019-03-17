@@ -808,9 +808,10 @@ public class Transaction extends ChildMessage {
                         ScriptType scriptType = scriptPubKey.getScriptType();
                         s.append(indent).append("        ");
                         if (scriptType != null)
-                            s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params))
-                                    .append("  ");
-                        s.append("outpoint:").append(outpoint).append('\n');
+                            s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params));
+                        else
+                            s.append("unknown script type");
+                        s.append("  outpoint:").append(outpoint).append('\n');
                     }
                     if (in.hasSequence()) {
                         s.append(indent).append("        sequence:").append(Long.toHexString(in.getSequenceNumber()));
@@ -838,9 +839,12 @@ public class Transaction extends ChildMessage {
                 s.append("  ");
                 s.append(out.getValue().toFriendlyString());
                 s.append('\n');
+                s.append(indent).append("        ");
                 ScriptType scriptType = scriptPubKey.getScriptType();
                 if (scriptType != null)
-                    s.append(indent).append("        " + scriptType + " addr:" + scriptPubKey.getToAddress(params));
+                    s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params));
+                else
+                    s.append("unknown script type");
                 if (!out.isAvailableForSpending()) {
                     s.append("  spent");
                     final TransactionInput spentBy = out.getSpentBy();
