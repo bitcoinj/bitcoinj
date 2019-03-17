@@ -68,6 +68,8 @@ import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -89,12 +91,24 @@ import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.*;
-
+@RunWith(Parameterized.class)
 public class WalletTest extends TestWithWallet {
-    private static final Logger log = LoggerFactory.getLogger(WalletTest.class);
 
-    private static final CharSequence PASSWORD1 = "my helicopter contains eels";
-    private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
+    @Parameterized.Parameter(0)
+    public  Logger log = LoggerFactory.getLogger(WalletTest.class);
+
+    @Parameterized.Parameter(1)
+    public  CharSequence PASSWORD1 = "";
+
+    @Parameterized.Parameter(2)
+    public  CharSequence WRONG_PASSWORD = "";
+
+    @Parameterized.Parameters(name = "{index}: Test with Logger={0}, CharSequence Pass ={1}, CharSequence Wrong Pass is:{2} ")
+    public static Iterable<Object[]> data() {
+        Object[][] data = new Object[][]{
+                {LoggerFactory.getLogger(WalletTest.class),"my helicopter contains eels", "nothing noone nobody nowhere"}};
+        return Arrays.asList(data);
+    }
 
     private final Address OTHER_ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
