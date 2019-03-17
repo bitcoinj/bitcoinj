@@ -803,16 +803,18 @@ public class Transaction extends ChildMessage {
                     }
                     final TransactionOutPoint outpoint = in.getOutpoint();
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+                    s.append(indent).append("        ");
                     if (connectedOutput != null) {
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
                         ScriptType scriptType = scriptPubKey.getScriptType();
-                        s.append(indent).append("        ");
                         if (scriptType != null)
                             s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params));
                         else
                             s.append("unknown script type");
-                        s.append("  outpoint:").append(outpoint).append('\n');
+                    } else {
+                        s.append("unconnected");
                     }
+                    s.append("  outpoint:").append(outpoint).append('\n');
                     if (in.hasSequence()) {
                         s.append(indent).append("        sequence:").append(Long.toHexString(in.getSequenceNumber()));
                         if (in.isOptInFullRBF())
