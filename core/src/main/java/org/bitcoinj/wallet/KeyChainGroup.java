@@ -502,12 +502,14 @@ public class KeyChainGroup implements KeyBag {
     @Override
     @Nullable
     public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
-        // Iterate in reverse order, since the active keychain is the one most likely to have the hit
-        for (Iterator<DeterministicKeyChain> iter = chains.descendingIterator() ; iter.hasNext() ; ) {
-            DeterministicKeyChain chain = iter.next();
-            RedeemData redeemData = chain.findRedeemDataByScriptHash(ByteString.copyFrom(scriptHash));
-            if (redeemData != null)
-                return redeemData;
+        if (chains != null) {
+            // Iterate in reverse order, since the active keychain is the one most likely to have the hit
+            for (Iterator<DeterministicKeyChain> iter = chains.descendingIterator(); iter.hasNext();) {
+                DeterministicKeyChain chain = iter.next();
+                RedeemData redeemData = chain.findRedeemDataByScriptHash(ByteString.copyFrom(scriptHash));
+                if (redeemData != null)
+                    return redeemData;
+            }
         }
         return null;
     }
