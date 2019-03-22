@@ -146,9 +146,10 @@ public class BitcoinURI {
         String blockchainInfoScheme = scheme + "://";
         String correctScheme = scheme + ":";
         String schemeSpecificPart;
-        if (input.startsWith(blockchainInfoScheme)) {
+        final String inputLc = input.toLowerCase(Locale.US);
+        if (inputLc.startsWith(blockchainInfoScheme)) {
             schemeSpecificPart = input.substring(blockchainInfoScheme.length());
-        } else if (input.startsWith(correctScheme)) {
+        } else if (inputLc.startsWith(correctScheme)) {
             schemeSpecificPart = input.substring(correctScheme.length());
         } else {
             throw new BitcoinURIParseException("Unsupported URI scheme: " + uri.getScheme());
