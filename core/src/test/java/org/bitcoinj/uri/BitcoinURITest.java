@@ -29,6 +29,8 @@ import org.bitcoinj.core.SegwitAddress;
 
 import static org.junit.Assert.*;
 
+import java.util.Locale;
+
 public class BitcoinURITest {
     private BitcoinURI testObject = null;
 
@@ -95,6 +97,15 @@ public class BitcoinURITest {
     @Test
     public void testGood_legacy() throws BitcoinURIParseException {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
+        assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
+        assertNull("Unexpected amount", testObject.getAmount());
+        assertNull("Unexpected label", testObject.getLabel());
+        assertEquals("Unexpected label", 20, testObject.getAddress().getHash().length);
+    }
+
+    @Test
+    public void testGood_uppercaseScheme() throws BitcoinURIParseException {
+        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME.toUpperCase(Locale.US) + ":" + MAINNET_GOOD_ADDRESS);
         assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
