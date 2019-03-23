@@ -162,7 +162,7 @@ public class ProtobufConnection<MessageType extends MessageLite> extends Abstrac
 
             // If length is larger than the maximum message size (or is negative/overflows) throw an exception and close the
             // connection
-            if (len > maxMessageSize || len + 4 < 4)
+            if (len > maxMessageSize || len < 0)
                 throw new IllegalStateException("Message too large or length underflowed");
 
             // If the buffer's capacity is less than the next messages length + 4 (length prefix), we must use messageBytes
