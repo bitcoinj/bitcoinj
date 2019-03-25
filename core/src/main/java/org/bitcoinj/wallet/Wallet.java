@@ -4980,7 +4980,7 @@ public class Wallet extends BaseTaggableObject
         } catch (Throwable throwable) {
             log.error("Error during extension deserialization", throwable);
             extensions.remove(extension.getWalletExtensionID());
-            Throwables.propagate(throwable);
+            throw throwable;
         } finally {
             keyChainGroupLock.unlock();
             lock.unlock();
