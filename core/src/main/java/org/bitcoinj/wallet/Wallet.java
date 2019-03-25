@@ -18,7 +18,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.annotations.*;
-import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.primitives.*;
 import com.google.common.util.concurrent.*;
@@ -4980,7 +4979,7 @@ public class Wallet extends BaseTaggableObject
         } catch (Throwable throwable) {
             log.error("Error during extension deserialization", throwable);
             extensions.remove(extension.getWalletExtensionID());
-            Throwables.propagate(throwable);
+            throw throwable;
         } finally {
             keyChainGroupLock.unlock();
             lock.unlock();

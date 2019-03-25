@@ -17,7 +17,6 @@
 package org.bitcoinj.protocols.channels;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -38,6 +37,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 
 /**
  * <p>A payment channel is a method of sending money to someone such that the amount of money you send can be adjusted
@@ -188,7 +188,8 @@ public abstract class PaymentChannelClientState {
 
             @Override
             public void onFailure(Throwable t) {
-                Throwables.propagate(t);
+                throwIfUnchecked(t);
+                throw new RuntimeException(t);
             }
         }, MoreExecutors.directExecutor());
     }

@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.base.*;
 import org.bitcoinj.core.*;
 import org.slf4j.*;
 
@@ -51,7 +50,7 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
                     r.run();
                 } catch (Exception e) {
                     log.error("Exception in thread", e);
-                    Throwables.propagate(e);
+                    throw e;
                 }
             }
         }, name);
