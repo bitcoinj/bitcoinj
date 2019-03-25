@@ -359,7 +359,7 @@ public class WalletProtobufSerializer {
                                         TransactionConfidence confidence,
                                         Protos.TransactionConfidence.Builder confidenceBuilder) {
         synchronized (confidence) {
-            confidenceBuilder.setType(Protos.TransactionConfidence.Type.valueOf(confidence.getConfidenceType().getValue()));
+            confidenceBuilder.setType(Protos.TransactionConfidence.Type.forNumber(confidence.getConfidenceType().getValue()));
             if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
                 confidenceBuilder.setAppearedAtHeight(confidence.getAppearedAtChainHeight());
                 confidenceBuilder.setDepth(confidence.getDepthInBlocks());
