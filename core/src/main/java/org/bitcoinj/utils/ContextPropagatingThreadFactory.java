@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.base.*;
 import org.bitcoinj.core.*;
 import org.slf4j.*;
 
