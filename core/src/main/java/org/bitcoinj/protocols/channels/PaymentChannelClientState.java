@@ -38,6 +38,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 
 /**
  * <p>A payment channel is a method of sending money to someone such that the amount of money you send can be adjusted
@@ -188,7 +189,8 @@ public abstract class PaymentChannelClientState {
 
             @Override
             public void onFailure(Throwable t) {
-                Throwables.propagate(t);
+                throwIfUnchecked(t);
+                throw new RuntimeException(t);
             }
         }, MoreExecutors.directExecutor());
     }
