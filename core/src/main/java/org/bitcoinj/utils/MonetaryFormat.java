@@ -489,7 +489,7 @@ public final class MonetaryFormat {
             return false;
         if (!Objects.equals(this.roundingMode, other.roundingMode))
             return false;
-        if (!Objects.equals(this.codes, other.codes))
+        if (!Arrays.equals(this.codes, other.codes))
             return false;
         if (!Objects.equals(this.codeSeparator, other.codeSeparator))
             return false;
@@ -501,6 +501,6 @@ public final class MonetaryFormat {
     @Override
     public int hashCode() {
         return Objects.hash(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
-                roundingMode, codes, codeSeparator, codePrefixed);
+                roundingMode, Arrays.hashCode(codes), codeSeparator, codePrefixed);
     }
 }

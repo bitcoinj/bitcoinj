@@ -352,4 +352,18 @@ public class MonetaryFormatTest {
     public void fiat() throws Exception {
         assertEquals(ONE_EURO, NO_CODE.parseFiat("EUR", "1"));
     }
+
+    @Test
+    public void testEquals() {
+        MonetaryFormat mf1 = new MonetaryFormat(true);
+        MonetaryFormat mf2 = new MonetaryFormat(true);
+        assertEquals(mf1, mf2);
+    }
+
+    @Test
+    public void testHashCode() {
+        MonetaryFormat mf1 = new MonetaryFormat(true);
+        MonetaryFormat mf2 = new MonetaryFormat(true);
+        assertEquals(mf1.hashCode(), mf2.hashCode());
+    }
 }
