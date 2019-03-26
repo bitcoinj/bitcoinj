@@ -489,7 +489,7 @@ public final class MonetaryFormat {
             return false;
         if (!Objects.equals(this.roundingMode, other.roundingMode))
             return false;
-        if (!Objects.equals(this.codes, other.codes))
+        if (!Arrays.equals(this.codes, other.codes))
             return false;
         if (!Objects.equals(this.codeSeparator, other.codeSeparator))
             return false;
