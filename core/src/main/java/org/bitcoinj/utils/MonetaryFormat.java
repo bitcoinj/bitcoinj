@@ -501,6 +501,6 @@ public final class MonetaryFormat {
     @Override
     public int hashCode() {
         return Objects.hash(negativeSign, positiveSign, zeroDigit, decimalMark, minDecimals, decimalGroups, shift,
-                roundingMode, codes, codeSeparator, codePrefixed);
+                roundingMode, Arrays.hashCode(codes), codeSeparator, codePrefixed);
     }
 }
