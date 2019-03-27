@@ -490,11 +490,16 @@ public class PeerGroup implements TransactionBroadcaster {
                 do {
                     addrToTry = inactives.poll();
                 } while (ipv6Unreachable && addrToTry.getAddr() instanceof Inet6Address);
+                if (addrToTry == null) {
+                    // We have exhausted the queue of reachable peers, so just settle down.
+                    // Most likely we were given a fixed set of addresses in some test scenario.
+                    return;
+                }
                 long retryTime = backoffMap.get(addrToTry).getRetryTime();
                 retryTime = Math.max(retryTime, groupBackoff.getRetryTime());
                 if (retryTime > now) {
                     long delay = retryTime - now;
-                    log.info("Waiting {} ms before next connect attempt {}", delay, addrToTry == null ? "" : "to " + addrToTry);
+                    log.info("Waiting {} ms before next connect attempt to {}", delay, addrToTry);
                     inactives.add(addrToTry);
                     executor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     return;
