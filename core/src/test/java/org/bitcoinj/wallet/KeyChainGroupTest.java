@@ -713,4 +713,14 @@ public class KeyChainGroupTest {
                 group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());
         assertEquals("bc1qw8sf3mwuwn74qnhj83gjg0cwkk78fun2pxl9t2", group.currentAddress(KeyPurpose.CHANGE).toString());
     }
+
+    @Test
+    public void onlyBasicKeyEncryption() {
+        group = KeyChainGroup.createBasic(MAINNET);
+        final ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+        group.importKeys(key);
+        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
+        KeyParameter aesKey = scrypt.deriveKey("password");
+        group.encrypt(scrypt, aesKey);
+    }
 }
