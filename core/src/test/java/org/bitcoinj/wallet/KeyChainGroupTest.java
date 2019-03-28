@@ -52,6 +52,8 @@ public class KeyChainGroupTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
     private static final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
+    private static final KeyCrypterScrypt KEY_CRYPTER = new KeyCrypterScrypt(2);
+    private static final KeyParameter AES_KEY = KEY_CRYPTER.deriveKey("password");
     private KeyChainGroup group;
     private DeterministicKey watchingAccountKey;
 
@@ -267,9 +269,7 @@ public class KeyChainGroupTest {
             group.importKeys(b);
             assertEquals(yesterday, group.getEarliestKeyCreationTime());
         }
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
-        final KeyParameter aesKey = scrypt.deriveKey("password");
-        group.encrypt(scrypt, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.isEncrypted());
         assertTrue(group.checkPassword("password"));
         assertFalse(group.checkPassword("wrong password"));
@@ -294,22 +294,22 @@ public class KeyChainGroupTest {
                 fail();
             } catch (KeyCrypterException e) {
             }
-            group.importKeysAndEncrypt(ImmutableList.of(c), aesKey);
+            group.importKeysAndEncrypt(ImmutableList.of(c), AES_KEY);
             ECKey ec = group.findKeyFromPubKey(c.getPubKey());
             try {
-                group.importKeysAndEncrypt(ImmutableList.of(ec), aesKey);
+                group.importKeysAndEncrypt(ImmutableList.of(ec), AES_KEY);
                 fail();
             } catch (IllegalArgumentException e) {
             }
         }
 
         try {
-            group.decrypt(scrypt.deriveKey("WRONG PASSWORD"));
+            group.decrypt(KEY_CRYPTER.deriveKey("WRONG PASSWORD"));
             fail();
         } catch (KeyCrypterException e) {
         }
 
-        group.decrypt(aesKey);
+        group.decrypt(AES_KEY);
         assertFalse(group.isEncrypted());
         assertFalse(checkNotNull(group.findKeyFromPubKey(a.getPubKey())).isEncrypted());
         if (withImported) {
@@ -323,12 +323,10 @@ public class KeyChainGroupTest {
     @Test
     public void encryptionWhilstEmpty() throws Exception {
         group = KeyChainGroup.builder(MAINNET).lookaheadSize(5).fromRandom(Script.ScriptType.P2PKH).build();
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
-        final KeyParameter aesKey = scrypt.deriveKey("password");
-        group.encrypt(scrypt, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).isEncrypted());
         final ECKey key = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        group.decrypt(aesKey);
+        group.decrypt(AES_KEY);
         assertFalse(checkNotNull(group.findKeyFromPubKey(key.getPubKey())).isEncrypted());
     }
 
@@ -460,14 +458,12 @@ public class KeyChainGroupTest {
         assertTrue(group.hasKey(key1));
         assertTrue(group.hasKey(key2));
 
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
-        final KeyParameter aesKey = scrypt.deriveKey("password");
-        group.encrypt(scrypt, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
         List<Protos.Key> protoKeys3 = group.serializeToProtobuf();
-        group = KeyChainGroup.fromProtobufEncrypted(MAINNET, protoKeys3, scrypt);
+        group = KeyChainGroup.fromProtobufEncrypted(MAINNET, protoKeys3, KEY_CRYPTER);
         assertTrue(group.isEncrypted());
         assertTrue(group.checkPassword("password"));
-        group.decrypt(aesKey);
+        group.decrypt(AES_KEY);
 
         // No need for extensive contents testing here, as that's done in the keychain class tests.
     }
@@ -606,10 +602,8 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET).build();
         final ECKey key = new ECKey();
         group.importKeys(key);
-        final KeyCrypterScrypt crypter = new KeyCrypterScrypt();
-        final KeyParameter aesKey = crypter.deriveKey("abc");
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
-        group.encrypt(crypter, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
         try {
             group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, null);
@@ -617,14 +611,14 @@ public class KeyChainGroupTest {
         } catch (DeterministicUpgradeRequiresPassword e) {
             // Expected.
         }
-        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, aesKey);
+        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, AES_KEY);
         assertTrue(group.isEncrypted());
         assertFalse(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2WPKH, 0));
         final DeterministicSeed deterministicSeed = group.getActiveKeyChain().getSeed();
         assertNotNull(deterministicSeed);
         assertTrue(deterministicSeed.isEncrypted());
-        byte[] entropy = checkNotNull(group.getActiveKeyChain().toDecrypted(aesKey).getSeed()).getEntropyBytes();
+        byte[] entropy = checkNotNull(group.getActiveKeyChain().toDecrypted(AES_KEY).getSeed()).getEntropyBytes();
         // Check we used the right key: oldest non rotating.
         byte[] truncatedBytes = Arrays.copyOfRange(key.getSecretBytes(), 0, 16);
         assertArrayEquals(entropy, truncatedBytes);
@@ -697,17 +691,15 @@ public class KeyChainGroupTest {
         assertEquals("bc1qw8sf3mwuwn74qnhj83gjg0cwkk78fun2pxl9t2", group.currentAddress(KeyPurpose.CHANGE).toString());
 
         // encryption
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
-        KeyParameter aesKey = scrypt.deriveKey("password");
-        group.encrypt(scrypt, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
         assertEquals(Script.ScriptType.P2WPKH, group.getActiveKeyChain().getOutputScriptType());
         assertEquals("bc1qhcurdec849thpjjp3e27atvya43gy2snrechd9",
                 group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());
         assertEquals("bc1qw8sf3mwuwn74qnhj83gjg0cwkk78fun2pxl9t2", group.currentAddress(KeyPurpose.CHANGE).toString());
 
         // round-trip encrypted again, then dectypt
-        group = KeyChainGroup.fromProtobufEncrypted(MAINNET, group.serializeToProtobuf(), scrypt);
-        group.decrypt(aesKey);
+        group = KeyChainGroup.fromProtobufEncrypted(MAINNET, group.serializeToProtobuf(), KEY_CRYPTER);
+        group.decrypt(AES_KEY);
         assertEquals(Script.ScriptType.P2WPKH, group.getActiveKeyChain().getOutputScriptType());
         assertEquals("bc1qhcurdec849thpjjp3e27atvya43gy2snrechd9",
                 group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());
@@ -719,8 +711,6 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.createBasic(MAINNET);
         final ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         group.importKeys(key);
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(2);
-        KeyParameter aesKey = scrypt.deriveKey("password");
-        group.encrypt(scrypt, aesKey);
+        group.encrypt(KEY_CRYPTER, AES_KEY);
     }
 }
