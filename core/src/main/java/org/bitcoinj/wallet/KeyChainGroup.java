@@ -667,17 +667,19 @@ public class KeyChainGroup implements KeyBag {
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
-        checkState(chains == null || !chains.isEmpty() || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
+        checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
         // This code must be exception safe.
+
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
+        basic = newBasic;
         List<DeterministicKeyChain> newChains = new ArrayList<>();
-        if (chains != null)
+        if (chains != null) {
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toEncrypted(keyCrypter, aesKey));
+            this.chains.clear();
+            this.chains.addAll(newChains);
+        }
         this.keyCrypter = keyCrypter;
-        basic = newBasic;
-        this.chains.clear();
-        this.chains.addAll(newChains);
     }
 
     /**
