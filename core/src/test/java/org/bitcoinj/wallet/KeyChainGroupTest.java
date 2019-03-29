@@ -707,10 +707,12 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void onlyBasicKeyEncryption() {
+    public void onlyBasicKeyEncryptionAndDecryption() {
         group = KeyChainGroup.createBasic(MAINNET);
         final ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         group.importKeys(key);
         group.encrypt(KEY_CRYPTER, AES_KEY);
+        group.decrypt(AES_KEY);
     }
+
 }

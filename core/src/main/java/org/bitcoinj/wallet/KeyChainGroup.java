@@ -693,16 +693,17 @@ public class KeyChainGroup implements KeyBag {
     public void decrypt(KeyParameter aesKey) {
         // This code must be exception safe.
         checkNotNull(aesKey);
+
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
-        List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
-        if (chains != null)
+        basic = newBasic;
+        if (chains != null) {
+            List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toDecrypted(aesKey));
-
+            chains.clear();
+            chains.addAll(newChains);
+        }
         this.keyCrypter = null;
-        basic = newBasic;
-        chains.clear();
-        chains.addAll(newChains);
     }
 
     /** Returns true if the group is encrypted. */
