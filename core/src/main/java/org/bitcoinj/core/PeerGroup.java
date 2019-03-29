@@ -501,7 +501,9 @@ public class PeerGroup implements TransactionBroadcaster {
                     executor.schedule(this, delay, TimeUnit.MILLISECONDS);
                     return;
                 }
-                connectTo(addrToTry, false, vConnectTimeoutMillis);
+                if (addrToTry != null) {
+                    connectTo(addrToTry, false, vConnectTimeoutMillis);
+                }
             } finally {
                 lock.unlock();
             }
