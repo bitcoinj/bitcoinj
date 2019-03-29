@@ -671,15 +671,17 @@ public class KeyChainGroup implements KeyBag {
         // This code must be exception safe.
 
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
-        this.basic = newBasic;
         List<DeterministicKeyChain> newChains = new ArrayList<>();
         if (chains != null) {
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toEncrypted(keyCrypter, aesKey));
+        }
+        this.keyCrypter = keyCrypter;
+        this.basic = newBasic;
+        if (chains != null) {
             this.chains.clear();
             this.chains.addAll(newChains);
         }
-        this.keyCrypter = keyCrypter;
     }
 
     /**
