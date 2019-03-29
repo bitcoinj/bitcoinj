@@ -677,10 +677,10 @@ public class KeyChainGroup implements KeyBag {
                 newChains.add(chain.toEncrypted(keyCrypter, aesKey));
         }
         this.keyCrypter = keyCrypter;
-        this.basic = newBasic;
+        basic = newBasic;
         if (chains != null) {
-            this.chains.clear();
-            this.chains.addAll(newChains);
+            chains.clear();
+            chains.addAll(newChains);
         }
     }
 
@@ -695,7 +695,6 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(aesKey);
 
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
-        basic = newBasic;
         if (chains != null) {
             List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
             for (DeterministicKeyChain chain : chains)
@@ -703,7 +702,8 @@ public class KeyChainGroup implements KeyBag {
             chains.clear();
             chains.addAll(newChains);
         }
-        this.keyCrypter = null;
+        basic = newBasic;
+        keyCrypter = null;
     }
 
     /** Returns true if the group is encrypted. */
