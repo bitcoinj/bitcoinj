@@ -33,6 +33,7 @@ public class ChildKeyDerivationTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
+    private static final int SCRYPT_ITERATIONS = 256;
     private static final int HDW_CHAIN_EXTERNAL = 0;
     private static final int HDW_CHAIN_INTERNAL = 1;
 
@@ -142,7 +143,7 @@ public class ChildKeyDerivationTest {
     public void encryptedDerivation() throws Exception {
         // Check that encrypting a parent key in the hierarchy and then deriving from it yields a DeterministicKey
         // with no private key component, and that the private key bytes are derived on demand.
-        KeyCrypter scrypter = new KeyCrypterScrypt();
+        KeyCrypter scrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
         KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
 
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
