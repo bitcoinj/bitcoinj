@@ -310,7 +310,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock = rollingBlock.createNextBlock(null);
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        Wallet wallet = new Wallet(PARAMS);
+        Wallet wallet = Wallet.createDeterministic(PARAMS, Script.ScriptType.P2PKH);
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 

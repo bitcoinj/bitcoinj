@@ -18,6 +18,7 @@ package org.bitcoinj.protocols.channels;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.protocols.channels.PaymentChannelClient.VersionSelector;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.utils.Threading;
@@ -117,7 +118,7 @@ public class ChannelConnectionTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
         wallet.addExtension(new StoredPaymentChannelClientStates(wallet, failBroadcaster));
-        serverWallet = new Wallet(UNITTEST);
+        serverWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         serverWallet.addExtension(new StoredPaymentChannelServerStates(serverWallet, failBroadcaster));
         serverWallet.freshReceiveKey();
         // Use an atomic boolean to indicate failure because fail()/assert*() don't work in network threads
@@ -689,7 +690,7 @@ public class ChannelConnectionTest extends TestWithWallet {
 
     @Test
     public void testEmptyWallet() throws Exception {
-        Wallet emptyWallet = new Wallet(UNITTEST);
+        Wallet emptyWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         emptyWallet.freshReceiveKey();
         ChannelTestUtils.RecordingPair pair = ChannelTestUtils.makeRecorders(serverWallet, mockBroadcaster);
         PaymentChannelServer server = pair.server;

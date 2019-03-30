@@ -257,19 +257,7 @@ public class Wallet extends BaseTaggableObject
     public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType) {
         return createDeterministic(Context.getOrCreate(params), outputScriptType);
     }
-
-    /**
-     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
-     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
-     * {@link #loadFromFile}.
-     * @param params network parameters
-     * @deprecated Use {@link #createDeterministic(NetworkParameters, ScriptType)}
-     */
-    @Deprecated
-    public Wallet(NetworkParameters params) {
-        this(params, KeyChainGroup.builder(params).fromRandom(Script.ScriptType.P2PKH).build());
-    }
-
+    
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
@@ -287,7 +275,8 @@ public class Wallet extends BaseTaggableObject
      * @deprecated Use {@link #createDeterministic(Context, ScriptType)}
      */
     @Deprecated
-    public Wallet(Context context) {
+    @VisibleForTesting
+    protected Wallet(Context context) {
         this(context, KeyChainGroup.builder(context.getParams()).fromRandom(Script.ScriptType.P2PKH).build());
     }
 
@@ -2077,7 +2066,7 @@ public class Wallet extends BaseTaggableObject
      * Called by the {@link BlockChain} when we receive a new block that sends coins to one of our addresses or
      * spends coins from one of our addresses (note that a single transaction can do both).<p>
      *
-     * This is necessary for the internal book-keeping Wallet does. When a transaction is received that sends us
+     * This is necessary for the internal bookkeeping Wallet does. When a transaction is received that sends us
      * coins it is added to a pool so we can use it later to create spends. When a transaction is received that
      * consumes outputs they are marked as spent so they won't be used in future.<p>
      *

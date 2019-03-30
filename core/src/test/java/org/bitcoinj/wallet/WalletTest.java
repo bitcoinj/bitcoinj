@@ -115,7 +115,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         blockStore = new MemoryBlockStore(UNITTEST);
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
@@ -173,7 +173,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         Address myEncryptedAddress = LegacyAddress.fromKey(UNITTEST, encryptedWallet.freshReceiveKey());
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, OTHER_ADDRESS, encryptedWallet);
@@ -723,7 +723,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void isTxConsistentReturnsFalseAsExpected() {
-        Wallet wallet = new Wallet(UNITTEST);
+        Wallet wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         TransactionOutput to = createMock(TransactionOutput.class);
         EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
         EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
@@ -739,7 +739,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void isTxConsistentReturnsFalseAsExpected_WhenAvailableForSpendingEqualsFalse() {
-        Wallet wallet = new Wallet(UNITTEST);
+        Wallet wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         TransactionOutput to = createMock(TransactionOutput.class);
         EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
         EasyMock.expect(to.getSpentBy()).andReturn(null);
@@ -1525,7 +1525,7 @@ public class WalletTest extends TestWithWallet {
     public void keyCreationTime() throws Exception {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(60);
         wallet.freshReceiveKey();
@@ -1536,7 +1536,7 @@ public class WalletTest extends TestWithWallet {
     public void scriptCreationTime() throws Exception {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
         Utils.rollMockClock(-120);
         wallet.addWatchedAddress(OTHER_ADDRESS);
@@ -1970,7 +1970,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionAESBasic() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -1993,7 +1993,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionPasswordBasic() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         assertTrue(encryptedWallet.isEncrypted());
@@ -2011,7 +2011,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionBadPassword() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
@@ -2031,7 +2031,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void changePasswordTest() {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         CharSequence newPassword = "My name is Tom";
         encryptedWallet.changeEncryptionPassword(PASSWORD1, newPassword);
@@ -2041,7 +2041,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void changeAesKeyTest() {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -2058,7 +2058,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionCheckExceptions() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -2097,7 +2097,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void addUnencryptedKeyToEncryptedWallet() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         ECKey key1 = new ECKey();
@@ -2106,7 +2106,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void addEncryptedKeyToUnencryptedWallet() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
 
@@ -2117,7 +2117,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void mismatchedCrypter() throws Exception {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -2132,7 +2132,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void importAndEncrypt() throws InsufficientMoneyException {
-        Wallet encryptedWallet = new Wallet(UNITTEST);
+        Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         final ECKey key = new ECKey();
@@ -2926,7 +2926,7 @@ public class WalletTest extends TestWithWallet {
     public void keyRotationRandom() throws Exception {
         Utils.setMockClock();
         // Start with an empty wallet (no HD chain).
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
@@ -3009,7 +3009,7 @@ public class WalletTest extends TestWithWallet {
     public void keyRotationHD() throws Exception {
         // Test that if we rotate an HD chain, a new one is created and all arrivals on the old keys are moved.
         Utils.setMockClock();
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(UNITTEST, key1));

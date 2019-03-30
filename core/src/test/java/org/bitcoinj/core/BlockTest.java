@@ -23,6 +23,7 @@ import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -220,7 +221,7 @@ public class BlockTest {
         ECKey miningKey = DumpedPrivateKey.fromBase58(MAINNET, MINING_PRIVATE_KEY).getKey();
         assertNotNull(miningKey);
         Context context = new Context(MAINNET);
-        Wallet wallet = new Wallet(context);
+        Wallet wallet = Wallet.createDeterministic(context, Script.ScriptType.P2PKH);
         wallet.importKey(miningKey);
 
         // Initial balance should be zero by construction.
