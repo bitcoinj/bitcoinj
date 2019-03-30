@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,6 +24,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -209,7 +209,7 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(addr, port, time, services);
+        return Objects.hash(addr, port, time, services);
     }
     
     public InetSocketAddress toSocketAddress() {

@@ -17,7 +17,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
+import java.util.Objects;
 
 public class InventoryItem {
     
@@ -70,6 +70,6 @@ public class InventoryItem {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(type, hash);
+        return Objects.hash(type, hash);
     }
 }

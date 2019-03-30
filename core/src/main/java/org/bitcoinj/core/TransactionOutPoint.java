@@ -17,12 +17,12 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import org.bitcoinj.script.*;
 import org.bitcoinj.wallet.*;
 
 import javax.annotation.*;
 import java.io.*;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -219,6 +219,6 @@ public class TransactionOutPoint extends ChildMessage {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getIndex(), getHash());
+        return Objects.hash(getIndex(), getHash());
     }
 }

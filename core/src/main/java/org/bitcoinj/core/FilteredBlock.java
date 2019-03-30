@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
@@ -136,7 +135,7 @@ public class FilteredBlock extends Message {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(associatedTransactions, header, merkleTree);
+        return Objects.hash(associatedTransactions, header, merkleTree);
     }
 
     @Override

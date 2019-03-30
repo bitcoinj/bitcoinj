@@ -16,12 +16,12 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>This command is supported only by <a href="http://github.com/bitcoinxt/bitcoinxt">Bitcoin XT</a> nodes, which
@@ -99,6 +99,6 @@ public class GetUTXOsMessage extends Message {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(includeMempool, outPoints);
+        return Objects.hash(includeMempool, outPoints);
     }
 }

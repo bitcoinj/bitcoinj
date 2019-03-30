@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
 import com.lambdaworks.crypto.SCrypt;
@@ -36,6 +35,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -266,13 +266,13 @@ public class KeyCrypterScrypt implements KeyCrypter {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(scryptParameters);
+        return Objects.hash(scryptParameters);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return Objects.equal(scryptParameters, ((KeyCrypterScrypt)o).scryptParameters);
+        return Objects.equals(scryptParameters, ((KeyCrypterScrypt)o).scryptParameters);
     }
 }

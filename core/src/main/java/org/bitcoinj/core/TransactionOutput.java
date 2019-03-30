@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import org.bitcoinj.script.*;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
@@ -26,6 +25,7 @@ import javax.annotation.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -411,6 +411,6 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(value, parent, Arrays.hashCode(scriptBytes));
+        return Objects.hash(value, parent, Arrays.hashCode(scriptBytes));
     }
 }

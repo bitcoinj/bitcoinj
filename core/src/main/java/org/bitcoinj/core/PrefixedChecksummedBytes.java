@@ -23,8 +23,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Objects;
 
-import com.google.common.base.Objects;
 import com.google.common.primitives.UnsignedBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -59,7 +59,7 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(params, Arrays.hashCode(bytes));
+        return Objects.hash(params, Arrays.hashCode(bytes));
     }
 
     @Override
