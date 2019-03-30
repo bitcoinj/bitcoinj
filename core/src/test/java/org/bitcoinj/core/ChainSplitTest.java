@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -61,7 +62,7 @@ public class ChainSplitTest {
         Utils.setMockClock(); // Use mock clock
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         MemoryBlockStore blockStore = new MemoryBlockStore(UNITTEST);
-        wallet = new Wallet(UNITTEST);
+        wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         chain = new BlockChain(UNITTEST, wallet, blockStore);

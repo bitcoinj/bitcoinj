@@ -102,7 +102,7 @@ public class PaymentChannelStateTest extends TestWithWallet {
         }));
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
         chain = new BlockChain(UNITTEST, wallet, blockStore); // Recreate chain as sendMoneyToWallet will confuse it
-        serverWallet = new Wallet(UNITTEST);
+        serverWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         serverKey = serverWallet.freshReceiveKey();
         chain.addWallet(serverWallet);
 

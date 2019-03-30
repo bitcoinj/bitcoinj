@@ -243,7 +243,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Create a peer.
         InboundMessageQueuer p1 = connectPeer(1);
         
-        Wallet wallet2 = new Wallet(UNITTEST);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         ECKey key2 = wallet2.freshReceiveKey();
         Address address2 = LegacyAddress.fromKey(UNITTEST, key2);
         
@@ -419,7 +419,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final long now = Utils.currentTimeSeconds();
         peerGroup.start();
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
-        Wallet w2 = new Wallet(UNITTEST);
+        Wallet w2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         ECKey key1 = new ECKey();
         key1.setCreationTimeSeconds(now - 86400);  // One day ago.
         w2.importKey(key1);
