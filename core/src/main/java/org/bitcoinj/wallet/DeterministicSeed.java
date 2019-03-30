@@ -21,7 +21,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
+import java.util.Objects;
 import com.google.common.base.Splitter;
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -217,13 +217,13 @@ public class DeterministicSeed implements EncryptableItem {
         if (o == null || getClass() != o.getClass()) return false;
         DeterministicSeed other = (DeterministicSeed) o;
         return creationTimeSeconds == other.creationTimeSeconds
-            && Objects.equal(encryptedMnemonicCode, other.encryptedMnemonicCode)
-            && Objects.equal(mnemonicCode, other.mnemonicCode);
+            && Objects.equals(encryptedMnemonicCode, other.encryptedMnemonicCode)
+            && Objects.equals(mnemonicCode, other.mnemonicCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(creationTimeSeconds, encryptedMnemonicCode, mnemonicCode);
+        return Objects.hash(creationTimeSeconds, encryptedMnemonicCode, mnemonicCode);
     }
 
     /**

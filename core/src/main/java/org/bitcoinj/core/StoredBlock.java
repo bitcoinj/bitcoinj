@@ -18,11 +18,11 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import com.google.common.base.Objects;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Locale;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -91,7 +91,7 @@ public class StoredBlock {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(header, chainWork, height);
+        return Objects.hash(header, chainWork, height);
     }
 
     /**

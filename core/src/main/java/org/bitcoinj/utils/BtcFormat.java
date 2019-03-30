@@ -20,7 +20,7 @@ import org.bitcoinj.utils.BtcAutoFormat.Style;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.*;
 
 import org.bitcoinj.core.Coin;
-import com.google.common.base.Objects;
+import java.util.Objects;
 import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -1588,7 +1588,7 @@ public abstract class BtcFormat extends Format {
      *  @see java.lang.Object#hashCode
      */
     @Override public int hashCode() {
-        return Objects.hashCode(pattern(), symbols(), minimumFractionDigits, decimalGroups);
+        return Objects.hash(pattern(), symbols(), minimumFractionDigits, decimalGroups);
     }
 
 }

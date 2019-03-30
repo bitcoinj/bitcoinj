@@ -17,7 +17,6 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.*;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -61,7 +60,7 @@ class StoredTransactionOutPoint {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getIndex(), getHash());
+        return Objects.hash(getIndex(), getHash());
     }
     
     @Override
@@ -74,7 +73,7 @@ class StoredTransactionOutPoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StoredTransactionOutPoint other = (StoredTransactionOutPoint) o;
-        return getIndex() == other.getIndex() && Objects.equal(getHash(), other.getHash());
+        return getIndex() == other.getIndex() && Objects.equals(getHash(), other.getHash());
     }
 }
 

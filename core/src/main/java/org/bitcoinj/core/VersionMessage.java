@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Objects;
 import com.google.common.net.InetAddresses;
 
 import javax.annotation.Nullable;
@@ -26,6 +25,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * <p>A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
@@ -199,7 +199,7 @@ public class VersionMessage extends Message {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(bestHeight, clientVersion, localServices,
+        return Objects.hash(bestHeight, clientVersion, localServices,
             time, subVer, receivingAddr, fromAddr, relayTxesBeforeFilter);
     }
 

@@ -21,6 +21,7 @@ package org.bitcoinj.core;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -29,7 +30,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptPattern;
 
-import com.google.common.base.Objects;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
@@ -240,7 +240,7 @@ public class LegacyAddress extends Address {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), p2sh);
+        return Objects.hash(super.hashCode(), p2sh);
     }
 
     @Override

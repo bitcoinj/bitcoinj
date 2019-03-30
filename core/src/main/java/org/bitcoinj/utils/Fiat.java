@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Monetary;
-import com.google.common.base.Objects;
+import java.util.Objects;
 import com.google.common.math.LongMath;
 
 /**
@@ -226,7 +226,7 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(value, currencyCode);
+        return Objects.hash(value, currencyCode);
     }
 
     @Override

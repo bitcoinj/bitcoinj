@@ -17,11 +17,11 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.script.*;
-import com.google.common.base.Objects;
 
 import java.io.*;
 import java.math.*;
 import java.util.Locale;
+import java.util.Objects;
 
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
@@ -133,7 +133,7 @@ public class UTXO implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getIndex(), getHash());
+        return Objects.hash(getIndex(), getHash());
     }
 
     @Override
