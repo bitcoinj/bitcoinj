@@ -25,7 +25,6 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Monetary;
 import com.google.common.base.Objects;
 import com.google.common.math.LongMath;
-import com.google.common.primitives.Longs;
 
 /**
  * Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type
@@ -234,6 +233,6 @@ public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
     public int compareTo(final Fiat other) {
         if (!this.currencyCode.equals(other.currencyCode))
             return this.currencyCode.compareTo(other.currencyCode);
-        return Longs.compare(this.value, other.value);
+        return Long.compare(this.value, other.value);
     }
 }

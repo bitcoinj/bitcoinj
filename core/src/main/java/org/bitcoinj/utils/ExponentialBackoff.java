@@ -17,7 +17,6 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.core.Utils;
-import com.google.common.primitives.Longs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -92,7 +91,7 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
     @Override
     public int compareTo(ExponentialBackoff other) {
         // note that in this implementation compareTo() is not consistent with equals()
-        return Longs.compare(retryTime, other.retryTime);
+        return Long.compare(retryTime, other.retryTime);
     }
 
     @Override
