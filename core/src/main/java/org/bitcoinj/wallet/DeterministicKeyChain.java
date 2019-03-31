@@ -1014,7 +1014,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, getAccountPath(), outputScriptType);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
-            throw new KeyCrypterException("Provided AES key is wrong");
+            throw new KeyCrypterException.PublicPrivateMismatch("Provided AES key is wrong");
         chain.lookaheadSize = lookaheadSize;
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to decrypt.
