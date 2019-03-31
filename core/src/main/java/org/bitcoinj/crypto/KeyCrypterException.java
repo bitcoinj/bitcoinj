@@ -49,4 +49,18 @@ public class KeyCrypterException extends RuntimeException {
             super(message, throwable);
         }
     }
+
+    /**
+     * This exception is thrown when a private key or seed is decrypted, the decrypted message is damaged
+     * (e.g. the padding is damaged). This likely means the wrong decryption key has been used.
+     */
+    public static class InvalidCipherText extends KeyCrypterException {
+        public InvalidCipherText(String message) {
+            super(message);
+        }
+
+        public InvalidCipherText(String message, Throwable throwable) {
+            super(message, throwable);
+        }
+    }
 }
