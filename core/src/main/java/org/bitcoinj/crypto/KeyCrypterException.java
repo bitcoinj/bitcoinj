@@ -28,11 +28,25 @@ package org.bitcoinj.crypto;
 public class KeyCrypterException extends RuntimeException {
     private static final long serialVersionUID = -4441989608332681377L;
 
-    public KeyCrypterException(String s) {
-        super(s);
+    public KeyCrypterException(String message) {
+        super(message);
     }
 
-    public KeyCrypterException(String s, Throwable throwable) {
-        super(s, throwable);
+    public KeyCrypterException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
+
+    /**
+     * This exception is thrown when a private key or seed is decrypted, it doesn't match its public key any
+     * more. This likely means the wrong decryption key has been used.
+     */
+    public static class PublicPrivateMismatch extends KeyCrypterException {
+        public PublicPrivateMismatch(String message) {
+            super(message);
+        }
+
+        public PublicPrivateMismatch(String message, Throwable throwable) {
+            super(message, throwable);
+        }
     }
 }

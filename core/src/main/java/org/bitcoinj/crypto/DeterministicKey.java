@@ -377,7 +377,7 @@ public class DeterministicKey extends ECKey {
         BigInteger privKey = findOrDeriveEncryptedPrivateKey(keyCrypter, aesKey);
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, privKey, parent);
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
-            throw new KeyCrypterException("Provided AES key is wrong");
+            throw new KeyCrypterException.PublicPrivateMismatch("Provided AES key is wrong");
         if (parent == null)
             key.setCreationTimeSeconds(getCreationTimeSeconds());
         return key;
@@ -436,7 +436,7 @@ public class DeterministicKey extends ECKey {
         // If it's not, it means we tried decrypting with an invalid password and earlier checks e.g. for padding didn't
         // catch it.
         if (!downCursor.pub.equals(pub))
-            throw new KeyCrypterException("Could not decrypt bytes");
+            throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
         return checkNotNull(downCursor.priv);
     }
 
