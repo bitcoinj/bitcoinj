@@ -102,10 +102,10 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private final PriorityQueue<PeerAddress> inactives;
     @GuardedBy("lock") private final Map<PeerAddress, ExponentialBackoff> backoffMap;
 
-    // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
-    private final CopyOnWriteArrayList<Peer> peers;
+    // Currently active peers.
+    private final PeerSet peers;
     // Currently connecting peers.
-    private final CopyOnWriteArrayList<Peer> pendingPeers;
+    private final PeerSet pendingPeers;
     private final ClientConnectionManager channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
@@ -350,8 +350,8 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         });
         backoffMap = new HashMap<>();
-        peers = new CopyOnWriteArrayList<>();
-        pendingPeers = new CopyOnWriteArrayList<>();
+        peers = new PeerSet();
+        pendingPeers = new PeerSet();
         channels = connectionManager;
         peerDiscoverers = new CopyOnWriteArraySet<>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
@@ -2144,7 +2144,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Returns most commonly reported chain height from the given list of {@link Peer}s.
      * If multiple heights are tied, the highest is returned. If no peers are connected, returns zero.
      */
-    public static int getMostCommonChainHeight(final List<Peer> peers) {
+    public static int getMostCommonChainHeight(final Collection<Peer> peers) {
         if (peers.isEmpty())
             return 0;
         List<Integer> heights = new ArrayList<>(peers.size());
@@ -2157,7 +2157,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * download peer statuses for you, just override this and always return null.
      */
     @Nullable
-    protected Peer selectDownloadPeer(List<Peer> peers) {
+    protected Peer selectDownloadPeer(Collection<Peer> peers) {
         // Characteristics to select for in order of importance:
         //  - Chain height is reasonable (majority of nodes)
         //  - High enough protocol version for the features we want (but we'll settle for less)
@@ -2268,5 +2268,84 @@ public class PeerGroup implements TransactionBroadcaster {
     /** Returns whether the Bloom filtering protocol optimisation is in use: defaults to true. */
     public boolean isBloomFilteringEnabled() {
         return vBloomFilteringEnabled;
+    }
+
+    /**
+     * A collection of Peers that does not allow multiple Peers with the same PeerAddress.
+     * Iteration order is insertion order.
+     */
+    private static final class PeerSet extends ForwardingCollection<Peer> {
+        // LinkedHashMap preserves insertion order
+        private final Map<PeerAddress, Peer> map = Collections.synchronizedMap(new LinkedHashMap<PeerAddress, Peer>());
+
+        @Override
+        protected Collection<Peer> delegate() {
+            return map.values();
+        }
+
+        @Override
+        public boolean contains(Object o) {
+            if (!(o instanceof Peer)) {
+                return false;
+            }
+            Peer peer = (Peer) o;
+            return map.containsKey(peer.getAddress());
+        }
+
+        @Override
+        public boolean add(Peer peer) {
+            checkNotNull(peer);
+            // because of the check above, the logic below holds.
+            return map.put(peer.getAddress(), peer) == null;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            if (!(o instanceof Peer)) {
+                return false;
+            }
+            Peer peer = (Peer) o;
+            // Because we cannot add null peers, this logic holds.
+            return map.remove(peer.getAddress()) != null;
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> c) {
+            Set<Object> addressSet = ImmutableSet.copyOf(c);
+            return map.keySet().containsAll(addressSet);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends Peer> c) {
+            boolean modified = false;
+            for (Peer peer : c)
+                if (add(peer))
+                    modified = true;
+
+            return modified;
+        }
+
+        @Override
+        public boolean removeAll(Collection<?> c) {
+            boolean modified = false;
+            for (Object o : c)
+                if (remove(o))
+                    modified = true;
+            return modified;
+        }
+
+        @Override
+        public boolean retainAll(Collection<?> c) {
+            Set<?> others = ImmutableSet.copyOf(c);
+            Set<?> ours = ImmutableSet.copyOf(map.values());
+            Sets.SetView<?> diff = Sets.difference(ours, others);
+            return removeAll(diff);
+        }
+
+        @Override
+        public void clear() {
+            map.clear();
+        }
+
     }
 }
