@@ -28,6 +28,7 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.BufferedBlockCipher;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -224,7 +225,9 @@ public class KeyCrypterScrypt implements KeyCrypter {
             final int length2 = cipher.doFinal(decryptedBytes, length1);
 
             return Arrays.copyOf(decryptedBytes, length1 + length2);
-        } catch (Exception e) {
+        } catch (InvalidCipherTextException e) {
+            throw new KeyCrypterException.InvalidCipherText("Could not decrypt bytes", e);
+        } catch (RuntimeException e) {
             throw new KeyCrypterException("Could not decrypt bytes", e);
         }
     }
