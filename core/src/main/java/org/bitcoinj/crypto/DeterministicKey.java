@@ -391,8 +391,13 @@ public class DeterministicKey extends ECKey {
     // For when a key is encrypted, either decrypt our encrypted private key bytes, or work up the tree asking parents
     // to decrypt and re-derive.
     private BigInteger findOrDeriveEncryptedPrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
-        if (encryptedPrivateKey != null)
-            return new BigInteger(1, keyCrypter.decrypt(encryptedPrivateKey, aesKey));
+        if (encryptedPrivateKey != null) {
+            byte[] decryptedKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
+            if (decryptedKey.length != 32)
+                throw new KeyCrypterException.InvalidCipherText(
+                        "Decrypted key must be 32 bytes long, but is " + decryptedKey.length);
+            return new BigInteger(1, decryptedKey);
+        }
         // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
         // the first key that has some encrypted private key data.
         DeterministicKey cursor = parent;
@@ -403,6 +408,9 @@ public class DeterministicKey extends ECKey {
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
+        if (parentalPrivateKeyBytes.length != 32)
+            throw new KeyCrypterException.InvalidCipherText(
+                    "Decrypted key must be 32 bytes long, but is " + parentalPrivateKeyBytes.length);
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
