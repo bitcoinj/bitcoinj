@@ -367,8 +367,10 @@ public class WalletTest extends TestWithWallet {
             try {
                 wallet.completeTx(req);
                 fail("No exception was thrown trying to sign an encrypted key with the wrong password supplied.");
-            } catch (KeyCrypterException kce) {
-                assertEquals("Could not decrypt bytes", kce.getMessage());
+            } catch (KeyCrypterException.InvalidCipherText e) {
+                // Expected, either this...
+            } catch (KeyCrypterException.PublicPrivateMismatch e) {
+                // ...or this.
             }
 
             assertEquals("Wrong number of UNSPENT", 1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
