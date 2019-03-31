@@ -2024,8 +2024,10 @@ public class WalletTest extends TestWithWallet {
         try {
             encryptedWallet.decrypt(wrongAesKey);
             fail("Incorrectly decoded wallet with wrong password");
-        } catch (KeyCrypterException ede) {
-            // Expected.
+        } catch (KeyCrypterException.InvalidCipherText e) {
+            // Expected, either this...
+        } catch (KeyCrypterException.PublicPrivateMismatch e) {
+            // ...or this.
         }
     }
 
