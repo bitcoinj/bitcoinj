@@ -714,5 +714,4 @@ public class KeyChainGroupTest {
         group.encrypt(KEY_CRYPTER, AES_KEY);
         group.decrypt(AES_KEY);
     }
-
 }

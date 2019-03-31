@@ -668,7 +668,6 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
         checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
-        // This code must be exception safe.
 
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<>();
@@ -691,7 +690,6 @@ public class KeyChainGroup implements KeyBag {
      * @throws org.bitcoinj.crypto.KeyCrypterException Thrown if the wallet decryption fails for some reason, leaving the group unchanged.
      */
     public void decrypt(KeyParameter aesKey) {
-        // This code must be exception safe.
         checkNotNull(aesKey);
 
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
