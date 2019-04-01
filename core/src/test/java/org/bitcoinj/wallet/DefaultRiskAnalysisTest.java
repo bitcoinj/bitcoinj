@@ -43,17 +43,9 @@ public class DefaultRiskAnalysisTest {
 
     @Before
     public void setup() {
-        wallet = new Wallet(new Context(MAINNET)) {
-            @Override
-            public int getLastBlockSeenHeight() {
-                return 1000;
-            }
-
-            @Override
-            public long getLastBlockSeenTimeSecs() {
-                return TIMESTAMP;
-            }
-        };
+        wallet = new Wallet(new Context(MAINNET));
+        wallet.setLastBlockSeenHeight(1000);
+        wallet.setLastBlockSeenTimeSecs(TIMESTAMP);
     }
 
     @Test(expected = IllegalStateException.class)
