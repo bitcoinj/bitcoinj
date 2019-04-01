@@ -278,6 +278,22 @@ public class PeerAddress extends ChildMessage {
         return !(services != null ? !services.equals(that.services) : that.services != null);
     }
 
+    public boolean equalsIgnoringMetadata(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PeerAddress that = (PeerAddress) o;
+
+        if (port != that.port) return false;
+        // Don't compare the time field
+        // if (time != that.time) return false;
+        if (addr != null ? !addr.equals(that.addr) : that.addr != null) return false;
+        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
+        // Don't compare the services field
+        // return !(services != null ? !services.equals(that.services) : that.services != null);
+        return true;
+    }
+
     @Override
     public int hashCode() {
         int result = addr != null ? addr.hashCode() : 0;
