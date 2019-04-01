@@ -896,7 +896,14 @@ public class PeerGroup implements TransactionBroadcaster {
         lock.lock();
         try {
             // Deduplicate
-            if (backoffMap.containsKey(peerAddress))
+            boolean backoffMapContainsPeerAddress = false;
+            for (PeerAddress a : backoffMap.keySet()) {
+                if (a.equalsIgnoringMetadata(peerAddress)) {
+                    backoffMapContainsPeerAddress = true;
+                    break;
+                }
+            }
+            if (backoffMapContainsPeerAddress)
                 return false;
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
             if (priority != 0)
