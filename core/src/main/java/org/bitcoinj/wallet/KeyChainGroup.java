@@ -675,6 +675,8 @@ public class KeyChainGroup implements KeyBag {
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toEncrypted(keyCrypter, aesKey));
         }
+
+        // Code below this point must be exception safe.
         this.keyCrypter = keyCrypter;
         basic = newBasic;
         if (chains != null) {
@@ -697,6 +699,7 @@ public class KeyChainGroup implements KeyBag {
             List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
             for (DeterministicKeyChain chain : chains)
                 newChains.add(chain.toDecrypted(aesKey));
+            // Code below this point must be exception safe.
             chains.clear();
             chains.addAll(newChains);
         }
