@@ -45,6 +45,15 @@ test {
     }
 }
 
+ext.moduleName = 'org.bitcoinj.core'
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes  'Automatic-Module-Name': moduleName
+    }
+}
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
