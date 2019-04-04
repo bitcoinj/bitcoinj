@@ -3,13 +3,16 @@ plugins {
     id 'eclipse'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.7'
+    id 'org.beryx.jlink' version '2.10.2'
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
+
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.3.3'
+    implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'org.slf4j:slf4j-jdk14:1.7.25'
 }
 
@@ -17,8 +20,30 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 1.11
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-mainClassName = 'wallettemplate.Main'
+mainClassName = "$moduleName/wallettemplate.Main"
+
+jlink {
+    addExtraDependencies("javafx")
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    launcher {
+        name = 'WalletTemplate'
+        jvmArgs = []
+    }
+    mergedModule {
+        requires 'java.logging'
+        requires 'java.desktop'
+
+        requires 'javafx.graphics'
+        requires 'javafx.controls'
+    }
+    jpackage {
+        // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for
+        // where the plugin's jpackage task finds the path to the jpackage tool by default
+        // (Currently you need to manually install a OpenJDK 13 Early Access Build of jpackage)
+        skipInstaller = false
+    }
+}
