@@ -9,7 +9,7 @@ apply plugin: 'org.openjfx.javafxplugin'
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'com.google.guava:guava:27.1-android'
     implementation 'org.fxmisc.easybind:easybind:1.0.3'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'net.glxn:qrgen:1.3'

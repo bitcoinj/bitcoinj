@@ -8,7 +8,7 @@ version = '0.16-SNAPSHOT'
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
     implementation 'com.lambdaworks:scrypt:1.4.0'
-    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'com.google.guava:guava:27.1-android'
     compile 'com.google.protobuf:protobuf-java:3.6.1'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation 'org.slf4j:slf4j-api:1.7.25'
