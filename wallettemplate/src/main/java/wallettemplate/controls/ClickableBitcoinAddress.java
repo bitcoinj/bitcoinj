@@ -16,6 +16,12 @@
 
 package wallettemplate.controls;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.Writer;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
@@ -38,13 +44,12 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import net.glxn.qrgen.QRCode;
-import net.glxn.qrgen.image.ImageType;
 import wallettemplate.Main;
 import wallettemplate.utils.GuiUtils;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 
@@ -134,15 +139,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
 
     @FXML
     protected void showQRCode(MouseEvent event) {
-        // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
-        // lazy tonight.
-        final byte[] imageBytes = QRCode
-                .from(uri())
-                .withSize(320, 240)
-                .to(ImageType.PNG)
-                .stream()
-                .toByteArray();
-        Image qrImage = new Image(new ByteArrayInputStream(imageBytes));
+        Image qrImage = qrCodeImage(uri());
         ImageView view = new ImageView(qrImage);
         view.setEffect(new DropShadow());
         // Embed the image in a pane to ensure the drop-shadow interacts with the fade nicely, otherwise it looks weird.
@@ -152,5 +149,39 @@ public class ClickableBitcoinAddress extends AnchorPane {
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
         final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
+    }
+
+    /**
+     * Create an Image from a Bitcoin URI
+     * @param uri Bitcoin URI
+     * @return a javafx Image
+     */
+    private static Image qrCodeImage(String uri) {
+        // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
+        // lazy tonight.
+        byte[] imageBytes = qrCodePNGBytes(uri);
+        return new Image(new ByteArrayInputStream(imageBytes));
+    }
+
+    /**
+     * Create a PNG-format image byte string from a Bitcoin URI
+     * @param uri Bitcoin URI
+     * @return PNG-format bytes
+     */
+    private static byte[] qrCodePNGBytes(String uri) {
+        Writer qrWriter = new QRCodeWriter();
+        BitMatrix matrix;
+        try {
+            matrix = qrWriter.encode(uri, BarcodeFormat.QR_CODE, 320, 240);
+        } catch (WriterException e) {
+            throw new RuntimeException(e);
+        }
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try {
+            MatrixToImageWriter.writeToStream(matrix, "PNG", stream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return stream.toByteArray();
     }
 }
