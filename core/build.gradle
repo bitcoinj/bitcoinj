@@ -1,7 +1,9 @@
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'maven'
-apply plugin: 'eclipse'
+plugins {
+    id 'java'
+    id 'com.google.protobuf'
+    id 'maven'
+    id 'eclipse'
+}
 
 version = '0.16-SNAPSHOT'
 
