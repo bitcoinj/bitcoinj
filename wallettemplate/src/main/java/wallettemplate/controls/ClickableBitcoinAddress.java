@@ -38,8 +38,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import net.glxn.qrgen.QRCode;
-import net.glxn.qrgen.image.ImageType;
+import net.glxn.qrgen.javase.QRCode;
+import net.glxn.qrgen.core.image.ImageType;
 import wallettemplate.Main;
 import wallettemplate.utils.GuiUtils;
 
