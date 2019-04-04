@@ -1,11 +1,9 @@
 plugins {
-    id 'org.openjfx.javafxplugin' version '0.0.7' apply false
+    id 'java'
+    id 'eclipse'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.7'
 }
-
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'application'
-apply plugin: 'org.openjfx.javafxplugin'
 
 dependencies {
     implementation project(':bitcoinj-core')
@@ -20,7 +18,7 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 1.11
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
