@@ -573,6 +573,7 @@ public class Transaction extends ChildMessage {
         super.unCache();
         cachedTxId = null;
         cachedWTxId = null;
+        confidence = null;
     }
 
     protected static int calcLength(byte[] buf, int offset) {
