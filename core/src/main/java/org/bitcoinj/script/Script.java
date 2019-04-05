@@ -1613,7 +1613,7 @@ public class Script {
         
         LinkedList<byte[]> stack = new LinkedList<>();
         LinkedList<byte[]> p2shStack = null;
-        
+
         executeScript(txContainingThis, scriptSigIndex, this, stack, verifyFlags);
         if (verifyFlags.contains(VerifyFlag.P2SH))
             p2shStack = new LinkedList<>(stack);
@@ -1641,7 +1641,7 @@ public class Script {
         //     overall scalability and performance.
 
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
-        if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isP2SH(scriptPubKey)) {
+        if (p2shStack != null && ScriptPattern.isP2SH(scriptPubKey)) {
             for (ScriptChunk chunk : chunks)
                 if (chunk.isOpCode() && chunk.opcode > OP_16)
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
@@ -1650,12 +1650,13 @@ public class Script {
             Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
             
             executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
-            
-            if (p2shStack.size() == 0)
+
+            byte[] p2shLastChunk = p2shStack.pollLast();
+            if (p2shLastChunk == null)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.");
             
             List<byte[]> p2shStackCopy = new LinkedList<>(p2shStack);
-            if (!castToBool(p2shStack.pollLast()))
+            if (!castToBool(p2shLastChunk))
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE,
                         "P2SH script execution resulted in a non-true stack: " + Utils.toString(p2shStackCopy));
         }
