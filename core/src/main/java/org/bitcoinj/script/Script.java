@@ -1618,12 +1618,13 @@ public class Script {
         if (verifyFlags.contains(VerifyFlag.P2SH))
             p2shStack = new LinkedList<>(stack);
         executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
-        
-        if (stack.size() == 0)
+
+        byte[] lastChunk = stack.pollLast();
+        if (lastChunk == null)
             throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Stack empty at end of script execution.");
 
         List<byte[]> stackCopy = new LinkedList<>(stack);
-        if (!castToBool(stack.pollLast()))
+        if (!castToBool(lastChunk))
             throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE,
                     "Script resulted in a non-true stack: " + Utils.toString(stackCopy));
 
