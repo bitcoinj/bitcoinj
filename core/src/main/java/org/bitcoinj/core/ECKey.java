@@ -1264,7 +1264,7 @@ public class ECKey implements EncryptableItem {
         return getPrivateKeyEncoded(params).toString();
     }
 
-    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, NetworkParameters params) {
+    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, @Nullable NetworkParameters params) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
