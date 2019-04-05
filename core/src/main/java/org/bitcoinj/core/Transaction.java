@@ -1755,6 +1755,7 @@ public class Transaction extends ChildMessage {
     /**
      * Returns the transaction {@link #memo}.
      */
+    @Nullable
     public String getMemo() {
         return memo;
     }
