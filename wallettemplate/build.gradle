@@ -25,7 +25,3 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 mainClassName = 'wallettemplate.Main'
-
-// task wallet_template can be replaced with the 'run' task
-task wallet_template(dependsOn: 'run') {
-}
