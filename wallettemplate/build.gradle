@@ -7,16 +7,12 @@ apply plugin: 'eclipse'
 apply plugin: 'application'
 apply plugin: 'org.openjfx.javafxplugin'
 
-repositories {
-    maven { url "https://jitpack.io" }
-}
-
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'org.fxmisc.easybind:easybind:1.0.2'
     implementation 'de.jensd:fontawesomefx:8.0.0'
-    implementation 'com.github.kenglxn.QRGen:javase:2.5.0'
+    implementation 'com.google.zxing:javase:3.3.0'
     implementation 'org.slf4j:slf4j-jdk14:1.7.25'
 }
 

@@ -27,7 +27,6 @@ import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
 
-// See: https://blog.codefx.org/java/jsr-305-java-9/
 import javax.annotation.*;
 import java.util.*;
 import java.util.concurrent.*;
