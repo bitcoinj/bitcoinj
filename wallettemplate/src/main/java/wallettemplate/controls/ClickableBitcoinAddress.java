@@ -16,6 +16,11 @@
 
 package wallettemplate.controls;
 
+import com.google.zxing.Writer;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
@@ -45,7 +50,9 @@ import wallettemplate.utils.GuiUtils;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 
 import static javafx.beans.binding.Bindings.convert;
@@ -136,12 +143,27 @@ public class ClickableBitcoinAddress extends AnchorPane {
     protected void showQRCode(MouseEvent event) {
         // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
         // lazy tonight.
-        final byte[] imageBytes = QRCode
-                .from(uri())
-                .withSize(320, 240)
-                .to(ImageType.PNG)
-                .stream()
-                .toByteArray();
+//        final byte[] imageBytes = QRCode
+//                .from(uri())
+//                .withSize(320, 240)
+//                .to(ImageType.PNG)
+//                .stream()
+//                .toByteArray();
+        Writer qrWriter = new QRCodeWriter();
+        BitMatrix matrix = null;
+        try {
+            matrix = qrWriter.encode(uri(), com.google.zxing.BarcodeFormat.QR_CODE, 320, 240);
+        } catch (WriterException e) {
+            e.printStackTrace();
+        }
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try {
+            writeToStream(matrix, stream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final byte[] imageBytes = stream.toByteArray();
+
         Image qrImage = new Image(new ByteArrayInputStream(imageBytes));
         ImageView view = new ImageView(qrImage);
         view.setEffect(new DropShadow());
@@ -153,4 +175,11 @@ public class ClickableBitcoinAddress extends AnchorPane {
         final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
+
+    private void writeToStream(BitMatrix matrix, OutputStream stream) throws IOException {
+        MatrixToImageWriter.writeToStream(matrix, "PNG", stream);
+    }
+
+
+
 }
