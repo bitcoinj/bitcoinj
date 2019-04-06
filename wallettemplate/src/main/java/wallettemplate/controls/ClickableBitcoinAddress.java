@@ -16,16 +16,10 @@
 
 package wallettemplate.controls;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.Writer;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.uri.BitcoinURI;
-import de.jensd.fx.fontawesome.AwesomeDude;
-import de.jensd.fx.fontawesome.AwesomeIcon;
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -38,20 +32,28 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.uri.BitcoinURI;
+
 import wallettemplate.Main;
 import wallettemplate.utils.GuiUtils;
 
-import java.awt.*;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URI;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.Writer;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import de.jensd.fx.fontawesome.AwesomeDude;
+import de.jensd.fx.fontawesome.AwesomeIcon;
 
 import static javafx.beans.binding.Bindings.convert;
 
@@ -157,18 +159,15 @@ public class ClickableBitcoinAddress extends AnchorPane {
      * @return a javafx Image
      */
     private static Image qrCodeImage(String uri) {
-        // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
-        // lazy tonight.
-        byte[] imageBytes = qrCodePNGBytes(uri);
-        return new Image(new ByteArrayInputStream(imageBytes));
+        return toImage(qrCodeMatrix(uri));
     }
 
     /**
-     * Create a PNG-format image byte string from a Bitcoin URI
+     * Create a BitMatrix from a Bitcoin URI
      * @param uri Bitcoin URI
-     * @return PNG-format bytes
+     * @return A BitMatrix for the QRCode for the URI
      */
-    private static byte[] qrCodePNGBytes(String uri) {
+    private static BitMatrix qrCodeMatrix(String uri) {
         Writer qrWriter = new QRCodeWriter();
         BitMatrix matrix;
         try {
@@ -176,12 +175,24 @@ public class ClickableBitcoinAddress extends AnchorPane {
         } catch (WriterException e) {
             throw new RuntimeException(e);
         }
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try {
-            MatrixToImageWriter.writeToStream(matrix, "PNG", stream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        return matrix;
+    }
+
+    /**
+     * Create a JavaFX Image from a BitMatrix
+     * @param matrix the matrix
+     * @return the QRCode Image
+     */
+    private static Image toImage(BitMatrix matrix) {
+        int height = matrix.getHeight();
+        int width = matrix.getWidth();
+        WritableImage image = new WritableImage(width, height);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Color color = matrix.get(x,y) ? Color.BLACK : Color.WHITE;
+                image.getPixelWriter().setColor(x, y, color);
+            }
         }
-        return stream.toByteArray();
+        return image;
     }
 }
