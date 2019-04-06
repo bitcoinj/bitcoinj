@@ -16,6 +16,7 @@
 
 package wallettemplate.controls;
 
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Writer;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -50,7 +51,6 @@ import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 
 import static javafx.beans.binding.Bindings.convert;
@@ -172,7 +172,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
         Writer qrWriter = new QRCodeWriter();
         BitMatrix matrix;
         try {
-            matrix = qrWriter.encode(uri, com.google.zxing.BarcodeFormat.QR_CODE, 320, 240);
+            matrix = qrWriter.encode(uri, BarcodeFormat.QR_CODE, 320, 240);
         } catch (WriterException e) {
             throw new RuntimeException(e);
         }
