@@ -1107,6 +1107,9 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, "This key is not encrypted");
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
+        if (unencryptedPrivateKey.length != 32)
+            throw new KeyCrypterException.InvalidCipherText(
+                    "Decrypted key must be 32 bytes long, but is " + unencryptedPrivateKey.length);
         ECKey key = ECKey.fromPrivate(unencryptedPrivateKey);
         if (!isCompressed())
             key = key.decompress();
