@@ -131,6 +131,9 @@ public class ECKey implements EncryptableItem {
      */
     public static final BigInteger HALF_CURVE_ORDER;
 
+    // You must use enough secure random numbers to try to ensure randomness.
+    // So here is the use of Java's SecureRandom, it is highly recommended not to
+    // modify or generate random numbers by yourself.
     private static final SecureRandom secureRandom;
 
     static {
