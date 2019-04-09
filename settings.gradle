@@ -1,6 +1,16 @@
 import org.gradle.util.GradleVersion
+import org.gradle.api.GradleScriptException
+
+// Minimum Gradle version for main build
+def minGradleVersion = GradleVersion.version("3.4")
+// Minimum Gradle version for builds of JavaFX 11 module
+def minFxGradleVersion = GradleVersion.version("4.10")
 
 rootProject.name = 'bitcoinj-parent'
+
+if (GradleVersion.current().compareTo(minGradleVersion) < 0) {
+    throw new GradleScriptException("bitcoinj build requires Gradle ${minGradleVersion} or later", null)
+}
 
 include 'core'
 project(':core').name = 'bitcoinj-core'
@@ -11,11 +21,10 @@ project(':tools').name = 'bitcoinj-tools'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-def minGradleVersion = GradleVersion.version("4.10")
-if (GradleVersion.current().compareTo(minGradleVersion) >= 0 && JavaVersion.current().isJava11Compatible()) {
-    println "Including wallettemplate because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+if (GradleVersion.current().compareTo(minFxGradleVersion) >= 0 && JavaVersion.current().isJava11Compatible()) {
+    System.err.println "Including wallettemplate because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
     include 'wallettemplate'
     project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 } else {
-    println "Skipping wallettemplate: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+    System.err.println "Skipping wallettemplate, requires ${minFxGradleVersion}+ and Java 11+, currently running: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
 }
