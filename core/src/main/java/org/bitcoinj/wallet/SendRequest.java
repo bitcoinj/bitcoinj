@@ -85,6 +85,22 @@ public class SendRequest {
      * a way for people to prioritize their transactions over others and is used as a way to make denial of service
      * attacks expensive.</p>
      *
+     * <p>This is a constant fee (in satoshis) which will be added to the transaction. It is recommended that it be
+     * at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE} if it is set, as default Bitcoin Core will
+     * otherwise simply treat the transaction as if there were no fee at all.</p>
+     *
+     * <p>You might also consider adding a {@link SendRequest#feePerKb} to set the fee per kb of transaction size
+     * (rounded down to the nearest kb) as that is how transactions are sorted when added to a block by miners.</p>
+     */
+    public Coin fee = null;
+
+    /**
+     * <p>A transaction can have a fee attached, which is defined as the difference between the input values
+     * and output values. Any value taken in that is not provided to an output can be claimed by a miner. This
+     * is how mining is incentivized in later years of the Bitcoin system when inflation drops. It also provides
+     * a way for people to prioritize their transactions over others and is used as a way to make denial of service
+     * attacks expensive.</p>
+     *
      * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size
      * including the first. This is useful as as miners usually sort pending transactions by their fee per unit size
      * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
@@ -263,6 +279,7 @@ public class SendRequest {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("emptyWallet", emptyWallet);
         helper.add("changeAddress", changeAddress);
+        helper.add("fee", fee);
         helper.add("feePerKb", feePerKb);
         helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
         helper.add("signInputs", signInputs);
