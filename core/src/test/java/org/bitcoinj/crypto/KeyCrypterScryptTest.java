@@ -18,8 +18,8 @@
 package org.bitcoinj.crypto;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Random;
@@ -42,6 +42,7 @@ public class KeyCrypterScryptTest {
     private static final CharSequence PASSWORD1 = "aTestPassword";
     private static final CharSequence PASSWORD2 = "0123456789";
     private static final CharSequence WRONG_PASSWORD = "thisIsTheWrongPassword";
+    private static final CharSequence WRONG_PASSWORD2 = "anotherWrongPassword";
 
     private KeyCrypterScrypt keyCrypter;
 
@@ -94,15 +95,21 @@ public class KeyCrypterScryptTest {
             builder.append(i).append(" The quick brown fox");
         }
 
-        EncryptedData data = keyCrypter.encrypt(builder.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
+        byte[] plainText = builder.toString().getBytes();
+        EncryptedData data = keyCrypter.encrypt(plainText, keyCrypter.deriveKey(PASSWORD2));
         assertNotNull(data);
 
         try {
-            keyCrypter.decrypt(data, keyCrypter.deriveKey(WRONG_PASSWORD));
-            // TODO: This test sometimes fails due to relying on padding.
+            // This sometimes doesn't throw due to relying on padding...
+            byte[] cipherText = keyCrypter.decrypt(data, keyCrypter.deriveKey(WRONG_PASSWORD));
+            // ...so we also check for length, because that's the 2nd level test we're doing e.g. in ECKey/DeterministicKey...
+            assertNotEquals(plainText.length, cipherText.length);
+            // ...and then try with another wrong password again.
+            keyCrypter.decrypt(data, keyCrypter.deriveKey(WRONG_PASSWORD2));
+            // Note: it can still fail, but it should be extremely rare.
             fail("Decrypt with wrong password did not throw exception");
-        } catch (KeyCrypterException ede) {
-            assertTrue(ede.getMessage().contains("Could not decrypt"));
+        } catch (KeyCrypterException.InvalidCipherText x) {
+            // expected
         }
     }
 
