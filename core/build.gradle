@@ -3,8 +3,6 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 
-version = '0.16-SNAPSHOT'
-
 dependencies {
     compile 'org.bouncycastle:bcprov-jdk15on:1.60'
     implementation 'com.lambdaworks:scrypt:1.4.0'
