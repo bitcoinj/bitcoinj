@@ -1122,7 +1122,7 @@ public class Wallet extends BaseTaggableObject
     /** @deprecated Use {@link #findKeyFromPubKeyHash(byte[], ScriptType)} */
     @Deprecated
     public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
-        return findKeyFromPubKeyHash(pubKeyHash, Script.ScriptType.P2PK);
+        return findKeyFromPubKeyHash(pubKeyHash, Script.ScriptType.P2PKH);
     }
 
     /**
