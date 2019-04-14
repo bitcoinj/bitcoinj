@@ -1431,7 +1431,7 @@ public class Script {
         boolean sigValid = false;
         try {
             TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical,
-                    verifyFlags.contains(VerifyFlag.LOW_S));
+                verifyFlags.contains(VerifyFlag.LOW_S));
 
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
