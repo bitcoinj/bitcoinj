@@ -86,4 +86,10 @@ public class VerificationException extends RuntimeException {
             super(message);
         }
     }
+
+    public static class NoncanonicalSignature extends VerificationException {
+        public NoncanonicalSignature() {
+            super("Signature encoding is not canonical");
+        }
+    }
 }

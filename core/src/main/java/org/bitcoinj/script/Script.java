@@ -1430,12 +1430,14 @@ public class Script {
         // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
         boolean sigValid = false;
         try {
-            TransactionSignature sig  = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical,
-                verifyFlags.contains(VerifyFlag.LOW_S));
+            TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical,
+                    verifyFlags.contains(VerifyFlag.LOW_S));
 
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
             sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
+        } catch (VerificationException.NoncanonicalSignature e) {
+            throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Script contains non-canonical signature");
         } catch (SignatureDecodeException e) {
             // This exception occurs when signing as we run partial/invalid scripts to see if they need more
             // signing work to be done inside LocalTransactionSigner.signInputs.
