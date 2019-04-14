@@ -990,7 +990,7 @@ public class Wallet extends BaseTaggableObject
      * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
     public boolean addWatchedAddress(final Address address) {
-        long now = Utils.currentTimeMillis() / 1000;
+        long now = Utils.currentTimeSeconds();
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
 

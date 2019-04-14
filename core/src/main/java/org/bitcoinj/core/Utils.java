@@ -427,12 +427,16 @@ public class Utils {
         return mockTime != null ? mockTime : new Date();
     }
 
-    // TODO: Replace usages of this where the result is / 1000 with currentTimeSeconds.
-    /** Returns the current time in milliseconds since the epoch, or a mocked out equivalent. */
+    /**
+     * Returns the current time in milliseconds since the epoch, or a mocked out equivalent.
+     */
     public static long currentTimeMillis() {
         return mockTime != null ? mockTime.getTime() : System.currentTimeMillis();
     }
 
+    /**
+     * Returns the current time in seconds since the epoch, or a mocked out equivalent.
+     */
     public static long currentTimeSeconds() {
         return currentTimeMillis() / 1000;
     }
