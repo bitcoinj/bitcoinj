@@ -480,7 +480,7 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
 
-    protected PeerGroup createPeerGroup() throws TimeoutException {
+    protected PeerGroup createPeerGroup() {
         return new PeerGroup(params, vChain);
     }
 
