@@ -6,8 +6,10 @@ jdk:
   - openjdk8
   - openjdk11
 install: true
+before_script:
+  - gradle wrapper --gradle-version=4.10.3
 script:
-  - gradle clean build
+  - ./gradlew clean build
 
 notifications:
   irc:
