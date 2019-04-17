@@ -1622,25 +1622,25 @@ public class Transaction extends ChildMessage {
         if (this.getMessageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
-        Coin valueOut = Coin.ZERO;
         HashSet<TransactionOutPoint> outpoints = new HashSet<>();
         for (TransactionInput input : inputs) {
             if (outpoints.contains(input.getOutpoint()))
                 throw new VerificationException.DuplicatedOutPoint();
             outpoints.add(input.getOutpoint());
         }
-        try {
-            for (TransactionOutput output : outputs) {
-                if (output.getValue().signum() < 0)    // getValue() can throw IllegalStateException
-                    throw new VerificationException.NegativeValueOutput();
-                valueOut = valueOut.add(output.getValue());
-                if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
-                    throw new IllegalArgumentException();
+
+        Coin valueOut = Coin.ZERO;
+        for (TransactionOutput output : outputs) {
+            Coin value = output.getValue();
+            if (value.signum() < 0)
+                throw new VerificationException.NegativeValueOutput();
+            try {
+                valueOut = valueOut.add(value);
+            } catch (ArithmeticException e) {
+                throw new VerificationException.ExcessiveValue();
             }
-        } catch (IllegalStateException e) {
-            throw new VerificationException.ExcessiveValue();
-        } catch (IllegalArgumentException e) {
-            throw new VerificationException.ExcessiveValue();
+            if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
+                throw new VerificationException.ExcessiveValue();
         }
 
         if (isCoinBase()) {
