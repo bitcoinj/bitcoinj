@@ -156,11 +156,7 @@ public class TransactionOutput extends ChildMessage {
      * receives.
      */
     public Coin getValue() {
-        try {
-            return Coin.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
+        return Coin.valueOf(value);
     }
 
     /**
