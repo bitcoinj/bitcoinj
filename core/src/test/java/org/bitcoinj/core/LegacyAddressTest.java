@@ -68,7 +68,7 @@ public class LegacyAddressTest {
 
         LegacyAddress b = LegacyAddress.fromPubKeyHash(MAINNET, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
-        assertEquals(ScriptType.P2PKH, a.getOutputScriptType());
+        assertEquals(ScriptType.P2PKH, b.getOutputScriptType());
     }
 
     @Test
