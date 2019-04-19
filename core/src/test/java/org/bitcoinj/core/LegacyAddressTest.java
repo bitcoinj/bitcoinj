@@ -61,6 +61,7 @@ public class LegacyAddressTest {
 
     @Test
     public void stringification() {
+        // TODO: test with instanceof and ensure we get a deprecation warning on getOutputScriptType
         // Test a testnet address.
         LegacyAddress a = LegacyAddress.fromPubKeyHash(TESTNET, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
@@ -125,7 +126,7 @@ public class LegacyAddressTest {
     public void getAltNetwork() {
         // An alternative network
         class AltNetwork extends MainNetParams {
-            AltNetwork() {
+            private AltNetwork() {
                 super();
                 id = "alt.network";
                 addressHeader = 48;
