@@ -524,9 +524,16 @@ public class ScriptBuilder {
 
     /**
      * Creates redeem script with given public keys and threshold. Given public keys will be placed in
-     * redeem script in the lexicographical sorting order.
+     * redeem script in the lexicographical sorting order, as described in
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki">BIP 67</a>.
      */
     public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
+        for (ECKey pubkey : pubkeys) {
+            if (!pubkey.isCompressed()) {
+                throw new IllegalArgumentException("P2SH redeem scripts require compressed public keys");
+            }
+        }
+
         pubkeys = new ArrayList<>(pubkeys);
         Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
         return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
