@@ -215,7 +215,9 @@ public class ChildKeyDerivationTest {
         {
             final String pub58 = key1.serializePubB58(params);
             final String priv58 = key1.serializePrivB58(params);
+            @SuppressWarnings("deprecation")
             final byte[] pub = key1.serializePublic(params);
+            @SuppressWarnings("deprecation")
             final byte[] priv = key1.serializePrivate(params);
             assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
             assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
@@ -233,7 +235,9 @@ public class ChildKeyDerivationTest {
         {
             final String pub58 = key2.serializePubB58(params);
             final String priv58 = key2.serializePrivB58(params);
+            @SuppressWarnings("deprecation")
             final byte[] pub = key2.serializePublic(params);
+            @SuppressWarnings("deprecation")
             final byte[] priv = key2.serializePrivate(params);
             assertEquals(DeterministicKey.deserializeB58(key1, priv58, params), key2);
             assertEquals(DeterministicKey.deserializeB58(key1, pub58, params).getPubKeyPoint(), key2.getPubKeyPoint());
@@ -249,9 +253,12 @@ public class ChildKeyDerivationTest {
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
         DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
         assertEquals(key4.getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST), key3).getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST), null).getPath().size(), 1);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST)).getPath().size(), 1);
+
+        @SuppressWarnings("deprecation")
+        byte[] priv = key4.serializePrivate(UNITTEST);
+        assertEquals(DeterministicKey.deserialize(UNITTEST, priv, key3).getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(UNITTEST, priv, null).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(UNITTEST, priv).getPath().size(), 1);
     }
 
     /** Reserializing a deserialized key should yield the original input */
