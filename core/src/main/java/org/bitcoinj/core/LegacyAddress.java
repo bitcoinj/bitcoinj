@@ -32,15 +32,15 @@ import org.bitcoinj.script.ScriptPattern;
 
 
 /**
- * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
- * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
- * which are about network (TCP) addresses.</p>
+ * <p>A legacy (base58) Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic
+ * curve public key plus a set of network parameters. Not to be confused with a {@link PeerAddress} or
+ * {@link AddressMessage} which are about network (TCP) addresses.</p>
  *
- * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
+ * <p>A legacy address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
  * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
  * which the address is valid (see {@link NetworkParameters}, and also to indicate how the bytes inside the address
- * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
- * type) can contain a hash of a script instead.</p>
+ * should be interpreted. Legacy addresses are divided into two types: P2PKH addresses that are hashes of public
+ * keys, and P2SH addresses that are hashes of a script.</p>
  */
 public class LegacyAddress extends Address {
     /**
@@ -53,7 +53,7 @@ public class LegacyAddress extends Address {
 
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
-     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromP2SHHash(NetworkParameters, byte[])} or
+     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromScriptHash(NetworkParameters, byte[])} or
      * {@link #fromKey(NetworkParameters, ECKey)}.
      * 
      * @param params
