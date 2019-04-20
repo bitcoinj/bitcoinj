@@ -16,13 +16,23 @@
 
 package org.bitcoinj.script;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
+import org.bitcoinj.core.ECKey;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class ScriptBuilderTest {
 
@@ -120,4 +130,5 @@ public class ScriptBuilderTest {
         byte[] s = new ScriptBuilder().opFalse().build().getProgram();
         assertArrayEquals(expected, s);
     }
+
 }
