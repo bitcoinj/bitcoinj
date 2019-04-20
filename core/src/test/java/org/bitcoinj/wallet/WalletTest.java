@@ -2789,7 +2789,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request2.tx.getOutputs().size());
         assertEquals(CENT, request2.tx.getOutput(0).getValue());
         // Make sure it was properly signed
-        request2.tx.getInput(0).getScriptSig().correctlySpends(request2.tx, 0, tx3.getOutput(0).getScriptPubKey());
+        request2.tx.getInput(0).getScriptSig().correctlySpends(
+                request2.tx, 0, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
@@ -3211,7 +3212,8 @@ public class WalletTest extends TestWithWallet {
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
                 assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
-                input.getScriptSig().correctlySpends(req.tx, i, t3.getOutput(0).getScriptPubKey());
+                input.getScriptSig().correctlySpends(
+                        req.tx, i, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));
@@ -3540,6 +3542,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void fromKeys() {
         ECKey key = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
+        @SuppressWarnings("deprecation")
         Wallet wallet = Wallet.fromKeys(UNITTEST, Arrays.asList(key));
         assertEquals(1, wallet.getImportedKeys().size());
         assertEquals(key, wallet.getImportedKeys().get(0));
