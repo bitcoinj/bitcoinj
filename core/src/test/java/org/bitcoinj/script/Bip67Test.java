@@ -93,7 +93,7 @@ public class Bip67Test {
 
     @Test
     public void sorting() {
-        ImmutableList<ECKey> result = ScriptBuilder.sortMultisigPubkeys(list);
+        List<ECKey> result = ScriptBuilder.sortMultisigPubkeys(list);
         assertEquals(sorted, result);
     }
 
