@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.collect.ImmutableSet;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
@@ -34,6 +35,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
@@ -177,7 +179,7 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void p2shAddressCreationFromKeys() throws Exception {
+    public void multisigFromKeys() {
         // import some keys from this example: https://gist.github.com/gavinandresen/3966071
         ECKey key1 = DumpedPrivateKey.fromBase58(MAINNET, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
         key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
@@ -186,10 +188,8 @@ public class LegacyAddressTest {
         ECKey key3 = DumpedPrivateKey.fromBase58(MAINNET, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
         key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
 
-        List<ECKey> keys = Arrays.asList(key1, key2, key3);
-        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
-        LegacyAddress address = LegacyAddress.fromScriptHash(MAINNET,
-                ScriptPattern.extractHashFromP2SH(p2shScript));
+        Set<ECKey> keys = ImmutableSet.of(key1, key2, key3);
+        LegacyAddress address = LegacyAddress.multisigFromKeys(MAINNET, 2, keys);
         assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
 
