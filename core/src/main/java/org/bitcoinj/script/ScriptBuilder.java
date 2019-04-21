@@ -20,8 +20,6 @@ package org.bitcoinj.script;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 
 import org.bitcoinj.core.Address;
