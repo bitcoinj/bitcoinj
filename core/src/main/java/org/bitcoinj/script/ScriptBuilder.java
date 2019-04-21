@@ -534,12 +534,12 @@ public class ScriptBuilder {
             }
         }
 
-        ImmutableList<ECKey> sorted = sortMultisigPubkeys(pubkeys);
+        List<ECKey> sorted = sortMultisigPubkeys(pubkeys);
         return ScriptBuilder.createMultiSigOutputScript(threshold, sorted);
     }
 
     @VisibleForTesting
-    static ImmutableList<ECKey> sortMultisigPubkeys(Collection<ECKey> pubkeys) {
+    static List<ECKey> sortMultisigPubkeys(Collection<ECKey> pubkeys) {
         List<ECKey> sorted = new ArrayList<>(pubkeys);
         Collections.sort(sorted, ECKey.PUBKEY_COMPARATOR);
         return ImmutableList.copyOf(sorted);
