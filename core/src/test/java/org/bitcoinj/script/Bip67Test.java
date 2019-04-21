@@ -1,14 +1,18 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
@@ -22,6 +26,8 @@ import static org.junit.Assert.assertEquals;
 public class Bip67Test {
 
     private static final int THRESHOLD = 2;
+
+    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Parameterized.Parameters
     public static Collection<Bip67TestVector> data() {
@@ -98,6 +104,13 @@ public class Bip67Test {
         assertEquals(script, outScriptHex);
     }
 
+    @Test
+    public void multisigFromKeys() {
+        Set<ECKey> keys = ImmutableSet.copyOf(list);
+        LegacyAddress createdAddress = LegacyAddress.multisigFromKeys(MAINNET, THRESHOLD, keys);
+        assertEquals(address, createdAddress.toBase58());
+    }
+
     private static ImmutableList<ECKey> pubkeysFromHex(Collection<String> publicKeys) {
         ImmutableList.Builder<ECKey> serialized = new ImmutableList.Builder<>();
         for (String publicKeyHex : publicKeys) {
@@ -107,8 +120,8 @@ public class Bip67Test {
     }
 
     private final static class Bip67TestVector {
-        private final ImmutableList<String> list;
-        private final ImmutableList<String> sorted;
+        private final List<String> list;
+        private final List<String> sorted;
         private final String script;
         private final String address;
 
