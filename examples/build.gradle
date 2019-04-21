@@ -11,6 +11,13 @@ dependencies {
     implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
 }
 
+// Allows for executing the examples. Example invocation:
+// gradle -PmainClass=org.bitcoinj.examples.FetchBlock execute --args='--help'
+task execute(type:JavaExec) {
+     main = mainClass
+     classpath = sourceSets.main.runtimeClasspath
+}
+
 sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
