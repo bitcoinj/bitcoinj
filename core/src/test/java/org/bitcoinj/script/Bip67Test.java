@@ -20,6 +20,9 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(Parameterized.class)
 public class Bip67Test {
+
+    private static final int THRESHOLD = 2;
+
     @Parameterized.Parameters
     public static Collection<Bip67TestVector> data() {
         Bip67TestVector test1 = new Bip67TestVector(
@@ -70,31 +73,37 @@ public class Bip67Test {
         return ImmutableList.of(test1, test2, test3, test4);
     }
 
-    private final ImmutableList<String> list;
-    private final ImmutableList<String> sorted;
+    private final ImmutableList<ECKey> list;
+    private final ImmutableList<ECKey> sorted;
     private final String script;
     private final String address;
 
     public Bip67Test(Bip67TestVector testVector) {
-        this.list = testVector.list;
-        this.sorted = testVector.sorted;
+        this.list = pubkeysFromHex(testVector.list);
+        this.sorted = pubkeysFromHex(testVector.sorted);
         this.script = testVector.script;
         this.address = testVector.address;
     }
 
     @Test
     public void sorting() {
-        List<ECKey> pubkeys = new ArrayList<>(list.size());
-        for (String pubkeyHex : list) {
-            pubkeys.add(ECKey.fromPublicOnly(HEX.decode(pubkeyHex)));
-        }
+        ImmutableList<ECKey> result = ScriptBuilder.sortMultisigPubkeys(list);
+        assertEquals(sorted, result);
+    }
 
-        ImmutableList<ECKey> result = ScriptBuilder.sortMultisigPubkeys(pubkeys);
-        List<String> hexKeys = new ArrayList<>(result.size());
-        for (ECKey pubkey : result) {
-            hexKeys.add(pubkey.getPublicKeyAsHex());
+    @Test
+    public void createMultiSigOutputScript() {
+        Script outScript = ScriptBuilder.createMultiSigOutputScript(THRESHOLD, sorted);
+        String outScriptHex = HEX.encode(outScript.getProgram());
+        assertEquals(script, outScriptHex);
+    }
+
+    private static ImmutableList<ECKey> pubkeysFromHex(Collection<String> publicKeys) {
+        ImmutableList.Builder<ECKey> serialized = new ImmutableList.Builder<>();
+        for (String publicKeyHex : publicKeys) {
+            serialized.add(ECKey.fromPublicOnly(HEX.decode(publicKeyHex)));
         }
-        assertEquals(sorted, hexKeys);
+        return serialized.build();
     }
 
     private final static class Bip67TestVector {
