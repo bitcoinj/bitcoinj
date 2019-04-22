@@ -235,11 +235,13 @@ public class Script {
         }
     }
 
+    /** @deprecated use {@link ScriptPattern#isP2PK(Script)} */
     @Deprecated
     public boolean isSentToRawPubKey() {
         return ScriptPattern.isP2PK(this);
     }
 
+    /** @deprecated use {@link ScriptPattern#isP2PKH(Script)} */
     @Deprecated
     public boolean isSentToAddress() {
         return ScriptPattern.isP2PKH(this);
@@ -631,16 +633,19 @@ public class Script {
         }
     }
 
+    /** @deprecated use {@link ScriptPattern#isP2SH(Script)} */
     @Deprecated
     public boolean isPayToScriptHash() {
         return ScriptPattern.isP2SH(this);
     }
 
+    /** @deprecated use {@link ScriptPattern#isSentToMultisig(Script)} */
     @Deprecated
     public boolean isSentToMultiSig() {
         return ScriptPattern.isSentToMultisig(this);
     }
 
+    /** @deprecated use {@link ScriptPattern#isSentToCltvPaymentChannel(Script)} */
     @Deprecated
     public boolean isSentToCLTVPaymentChannel() {
         return ScriptPattern.isSentToCltvPaymentChannel(this);
@@ -755,6 +760,7 @@ public class Script {
         return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
     }
 
+    /** @deprecated use {@link ScriptPattern#isOpReturn(Script)} */
     @Deprecated
     public boolean isOpReturn() {
         return ScriptPattern.isOpReturn(this);
