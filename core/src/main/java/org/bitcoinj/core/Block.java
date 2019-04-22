@@ -98,8 +98,8 @@ public class Block extends Message {
     private long difficultyTarget; // "nBits"
     private long nonce;
 
-    // TODO: Get rid of all the direct accesses to this field. It's a long-since unnecessary holdover from the Dalvik days.
-    /** If null, it means this object holds only the headers. */
+    // If null, it means this object holds only the headers.
+    @VisibleForTesting
     @Nullable List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */

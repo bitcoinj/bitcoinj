@@ -2,12 +2,19 @@
 sudo: false
 dist: xenial
 language: java
-jdk:
-  - openjdk8
-  - openjdk11
+matrix:
+  include:
+  - jdk: openjdk8
+    env: GRADLE_VERSION=4.4.1
+  - jdk: openjdk8
+    env: GRADLE_VERSION=4.10.3
+  - jdk: openjdk11
+    env: GRADLE_VERSION=4.10.3
 install: true
+before_script:
+  - gradle wrapper --gradle-version=$GRADLE_VERSION
 script:
-  - gradle clean build
+  - ./gradlew clean build
 
 notifications:
   irc:
