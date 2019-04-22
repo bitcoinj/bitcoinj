@@ -4129,7 +4129,7 @@ public class Wallet extends BaseTaggableObject
                 value = value.add(output.getValue());
             }
 
-            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/kB", req.tx.getOutputs().size(),
+            log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
                     value.toFriendlyString(), req.feePerKb.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
@@ -4303,8 +4303,8 @@ public class Wallet extends BaseTaggableObject
     /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin baseFee, Coin feePerKb,
             boolean ensureMinRequiredFee) {
-        final int size = tx.unsafeBitcoinSerialize().length + estimateBytesForSigning(coinSelection);
-        Coin fee = baseFee.add(feePerKb.multiply(size).divide(1000));
+        final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection);
+        Coin fee = baseFee.add(feePerKb.multiply(vsize).divide(1000));
         if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
             fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
@@ -5122,13 +5122,12 @@ public class Wallet extends BaseTaggableObject
                 checkState(!input.hasWitness());
             }
 
-            int size = tx.unsafeBitcoinSerialize().length;
-            size += estimateBytesForSigning(selection);
+            final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(selection);
 
             Coin baseFeeNeeded = req.fee == null ? Coin.ZERO : req.fee;
             Coin feePerKbNeeded = req.feePerKb;
-            Coin feeNeeded = baseFeeNeeded.add(feePerKbNeeded.multiply(size).divide(1000));
-            Coin minFeeNeeded = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(size).divide(1000);
+            Coin feeNeeded = baseFeeNeeded.add(feePerKbNeeded.multiply(vsize).divide(1000));
+            Coin minFeeNeeded = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(vsize).divide(1000);
             if (needAtLeastReferenceFee && feeNeeded.isLessThan(minFeeNeeded)) {
                 feeNeeded = minFeeNeeded;
             }
@@ -5150,33 +5149,35 @@ public class Wallet extends BaseTaggableObject
             tx.addInput(new TransactionInput(params, tx, input.bitcoinSerialize()));
     }
 
-    private int estimateBytesForSigning(CoinSelection selection) {
-        int size = 0;
+    private int estimateVirtualBytesForSigning(CoinSelection selection) {
+        int vsize = 0;
         for (TransactionOutput output : selection.gathered) {
             try {
                 Script script = output.getScriptPubKey();
                 ECKey key = null;
                 Script redeemScript = null;
                 if (ScriptPattern.isP2PKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
-                            Script.ScriptType.P2PKH);
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), Script.ScriptType.P2PKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
+                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else if (ScriptPattern.isP2WPKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script),
-                            Script.ScriptType.P2WPKH);
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), Script.ScriptType.P2WPKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
+                    vsize += (script.getNumberOfBytesRequiredToSpend(key, redeemScript) + 3) / 4; // round up
                 } else if (ScriptPattern.isP2SH(script)) {
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
+                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
+                } else {
+                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 }
-                size += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
             } catch (ScriptException e) {
                 // If this happens it means an output script in a wallet tx could not be understood. That should never
                 // happen, if it does it means the wallet has got into an inconsistent state.
                 throw new IllegalStateException(e);
             }
         }
-        return size;
+        return vsize;
     }
 
     //endregion

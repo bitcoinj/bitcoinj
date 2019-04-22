@@ -101,12 +101,16 @@ public class SendRequest {
      * a way for people to prioritize their transactions over others and is used as a way to make denial of service
      * attacks expensive.</p>
      *
-     * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each kilobyte in size
+     * <p>This is a dynamic fee (in satoshis) which will be added to the transaction for each virtual kilobyte in size
      * including the first. This is useful as as miners usually sort pending transactions by their fee per unit size
      * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
-     * definition, a kilobyte is defined as 1000 bytes, not 1024.</p>
+     * definition, a virtual kilobyte is defined as 1000 virtual bytes, not 1024.</p>
      */
     public Coin feePerKb = Context.get().getFeePerKb();
+
+    public void setFeePerVkb(Coin feePerVkb) {
+        this.feePerKb = feePerVkb;
+    }
 
     /**
      * <p>Requires that there be enough fee for a default Bitcoin Core to at least relay the transaction.

@@ -97,6 +97,7 @@ public class WalletTest extends TestWithWallet {
     private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
     private final Address OTHER_ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
+    private final Address OTHER_SEGWIT_ADDRESS = SegwitAddress.fromKey(UNITTEST, new ECKey());
 
     @Before
     @Override
@@ -2722,6 +2723,23 @@ public class WalletTest extends TestWithWallet {
         request.feePerKb = Transaction.DEFAULT_TX_FEE;
         wallet.completeTx(request);
         assertEquals(Coin.valueOf(22700), request.tx.getFee());
+    }
+
+    @Test
+    public void witnessTransactionGetFeeTest() throws Exception {
+        Wallet mySegwitWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
+        Address mySegwitAddress = mySegwitWallet.freshReceiveAddress(Script.ScriptType.P2WPKH);
+
+        // Prepare wallet to spend
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_SEGWIT_ADDRESS), BigInteger.ONE, 1);
+        Transaction tx = createFakeTx(UNITTEST, COIN, mySegwitAddress);
+        mySegwitWallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // Create a transaction
+        SendRequest request = SendRequest.to(OTHER_SEGWIT_ADDRESS, CENT);
+        request.feePerKb = Transaction.DEFAULT_TX_FEE;
+        mySegwitWallet.completeTx(request);
+        assertEquals(Coin.valueOf(14000), request.tx.getFee());
     }
 
     @Test
