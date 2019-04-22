@@ -894,6 +894,9 @@ public class Transaction extends ChildMessage {
         final Coin fee = getFee();
         if (fee != null) {
             s.append(indent).append("   fee  ");
+            s.append(fee.multiply(1000).divide(weight).toFriendlyString()).append("/wu, ");
+            if (size != vsize)
+                s.append(fee.multiply(1000).divide(vsize).toFriendlyString()).append("/vkB, ");
             s.append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB  ");
             s.append(fee.toFriendlyString()).append('\n');
         }

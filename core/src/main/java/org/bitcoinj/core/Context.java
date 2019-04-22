@@ -67,7 +67,7 @@ public class Context {
      *
      * @param params The network parameters that will be associated with this context.
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
-     * @param feePerKb The default fee per 1000 bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
+     * @param feePerKb The default fee per 1000 virtual bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
      */
     public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
@@ -181,7 +181,7 @@ public class Context {
     }
 
     /**
-     * The default fee per 1000 bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
+     * The default fee per 1000 virtual bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      */
     public Coin getFeePerKb() {
         return feePerKb;
