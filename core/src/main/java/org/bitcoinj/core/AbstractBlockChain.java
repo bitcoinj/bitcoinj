@@ -33,7 +33,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 import static com.google.common.base.Preconditions.*;
-import static java.util.Objects.requireNonNull;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
