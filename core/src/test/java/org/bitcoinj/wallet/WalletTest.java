@@ -3542,7 +3542,6 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void fromKeys() {
         ECKey key = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
-        @SuppressWarnings("deprecation")
         Wallet wallet = Wallet.fromKeys(UNITTEST, Arrays.asList(key));
         assertEquals(1, wallet.getImportedKeys().size());
         assertEquals(key, wallet.getImportedKeys().get(0));
