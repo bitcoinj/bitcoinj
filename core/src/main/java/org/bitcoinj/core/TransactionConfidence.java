@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.*;
  * <li>Receiving it from multiple peers on the network. If your network connection is not being intercepted,
  *     hearing about a transaction from multiple peers indicates the network has accepted the transaction and
  *     thus miners likely have too (miners have the final say in whether a transaction becomes valid or not).</li>
- * <li>Seeing the transaction appear appear in a block on the best chain. Your confidence increases as the transaction
+ * <li>Seeing the transaction appear in a block on the best chain. Your confidence increases as the transaction
  *     becomes further buried under work. Work can be measured either in blocks (roughly, units of time), or
  *     amount of work done.</li>
  * </ul>
