@@ -3127,7 +3127,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test (expected = ECKey.MissingPrivateKeyException.class)
     public void completeTxPartiallySignedThrows() throws Exception {
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, wallet.currentReceiveKey());
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, myKey);
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         wallet.completeTx(req);
         // Delete the sigs
@@ -3135,7 +3135,7 @@ public class WalletTest extends TestWithWallet {
             input.clearScriptBytes();
         Wallet watching = Wallet.fromWatchingKey(UNITTEST, wallet.getWatchingKey().dropParent().dropPrivateBytes(),
                 Script.ScriptType.P2PKH);
-        watching.currentReceiveKey();
+        watching.freshReceiveKey();
         watching.completeTx(SendRequest.forTx(req.tx));
     }
 
