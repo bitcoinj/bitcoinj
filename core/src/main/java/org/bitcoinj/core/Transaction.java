@@ -121,10 +121,6 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
-    /** @deprecated use {@link TransactionOutput#getMinNonDustValue()} */
-    @Deprecated
-    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546); // satoshis
-
     // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;

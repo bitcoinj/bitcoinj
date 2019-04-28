@@ -4066,9 +4066,6 @@ public class Wallet extends BaseTaggableObject
      * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
      * able to spend those same coins again.</p>
      *
-     * <p>You MUST ensure that value is not smaller than {@link TransactionOutput#getMinNonDustValue()} or the transaction will
-     * almost certainly be rejected by the network as dust.</p>
-     *
      * @param broadcaster a {@link TransactionBroadcaster} to use to send the transactions out.
      * @param to Which address to send coins to.
      * @param value How much value to send.
