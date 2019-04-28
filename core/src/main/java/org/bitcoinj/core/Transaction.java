@@ -766,10 +766,18 @@ public class Transaction extends ChildMessage {
         if (!wTxId.equals(txId))
             s.append(", wtxid ").append(wTxId);
         s.append('\n');
+        int weight = getWeight();
+        int size = unsafeBitcoinSerialize().length;
+        int vsize = getVsize();
+        s.append(indent).append("weight: ").append(weight).append(" wu, ");
+        if (size != vsize)
+            s.append(vsize).append(" virtual bytes, ");
+        s.append(size).append(" bytes\n");
         if (updatedAt != null)
             s.append(indent).append("updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');
+
         if (isTimeLocked()) {
             s.append(indent).append("time locked until ");
             if (lockTime < LOCKTIME_THRESHOLD) {
@@ -885,14 +893,9 @@ public class Transaction extends ChildMessage {
         }
         final Coin fee = getFee();
         if (fee != null) {
-            final int size = unsafeBitcoinSerialize().length;
-            final int vsize = getVsize();
-            s.append(indent).append("   fee  ").append(fee.multiply(1000).divide(size).toFriendlyString())
-                    .append("/kB – ");
-            s.append(fee.toFriendlyString()).append(" for ");
-            if (size != vsize)
-                s.append(vsize).append(" virtual bytes, ");
-            s.append(size).append(" bytes\n");
+            s.append(indent).append("   fee  ");
+            s.append(fee.multiply(1000).divide(size).toFriendlyString()).append("/kB  ");
+            s.append(fee.toFriendlyString()).append('\n');
         }
         return s.toString();
     }
