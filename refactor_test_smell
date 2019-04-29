@@ -1,0 +1,2 @@
+Refactored test smell in the KeyCrypterScryptTest in the KeyCrypterGood1 test method. 
+Provided explanation to the assertion in the test cases in the test class - TxConfidenceTableTest. 
