@@ -29,31 +29,31 @@ import java.util.List;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
-public class LegacyP2SHAddressTest {
+public class P2SHAddressTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
     public void creation() {
         // Test that we can construct P2SH addresses
-        LegacyP2SHAddress mainNetP2SHAddress = LegacyP2SHAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        P2SHAddress mainNetP2SHAddress = P2SHAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(mainNetP2SHAddress.getVersion(), MAINNET.p2shHeader);
-        LegacyP2SHAddress testNetP2SHAddress = LegacyP2SHAddress.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        P2SHAddress testNetP2SHAddress = P2SHAddress.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
         assertEquals(testNetP2SHAddress.getVersion(), TESTNET.p2shHeader);
 
         // Test that we can determine what network a P2SH address belongs to
-        NetworkParameters mainNetParams = LegacyP2SHAddress.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        NetworkParameters mainNetParams = P2SHAddress.getParametersFromAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertEquals(MAINNET.getId(), mainNetParams.getId());
-        NetworkParameters testNetParams = LegacyP2SHAddress.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        NetworkParameters testNetParams = P2SHAddress.getParametersFromAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
         assertEquals(TESTNET.getId(), testNetParams.getId());
 
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
-        LegacyP2SHAddress a = LegacyP2SHAddress.fromScriptHash(MAINNET, hex);
+        P2SHAddress a = P2SHAddress.fromScriptHash(MAINNET, hex);
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
-        LegacyP2SHAddress b = LegacyP2SHAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        P2SHAddress b = P2SHAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
-        LegacyP2SHAddress c = LegacyP2SHAddress.fromScriptHash(MAINNET,
+        P2SHAddress c = P2SHAddress.fromScriptHash(MAINNET,
                 ScriptPattern.extractHashFromP2SH(ScriptBuilder.createP2SHOutputScript(hex)));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
     }
@@ -70,7 +70,7 @@ public class LegacyP2SHAddressTest {
 
         List<ECKey> keys = Arrays.asList(key1, key2, key3);
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
-        LegacyP2SHAddress address = LegacyP2SHAddress.fromScriptHash(MAINNET,
+        P2SHAddress address = P2SHAddress.fromScriptHash(MAINNET,
                 ScriptPattern.extractHashFromP2SH(p2shScript));
         assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
@@ -79,7 +79,7 @@ public class LegacyP2SHAddressTest {
     public void errorPaths() {
         // Check what happens if we try and decode garbage.
         try {
-            LegacyP2SHAddress.fromBase58(TESTNET, "this is not a valid address!");
+            P2SHAddress.fromBase58(TESTNET, "this is not a valid address!");
             fail();
         } catch (AddressFormatException.WrongNetwork | AddressFormatException.WrongAddressType e) {
             fail();
@@ -90,7 +90,7 @@ public class LegacyP2SHAddressTest {
 
         // Check the empty case.
         try {
-            LegacyP2SHAddress.fromBase58(TESTNET, "");
+            P2SHAddress.fromBase58(TESTNET, "");
             fail();
         } catch (AddressFormatException.WrongNetwork | AddressFormatException.WrongAddressType e) {
             fail();
@@ -100,7 +100,7 @@ public class LegacyP2SHAddressTest {
 
         // Check the case of a mismatched network.
         try {
-            LegacyP2SHAddress.fromBase58(TESTNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+            P2SHAddress.fromBase58(TESTNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
             fail();
         } catch (AddressFormatException.WrongNetwork e) {
             // Success.
@@ -110,7 +110,7 @@ public class LegacyP2SHAddressTest {
 
         // Check the case of decoding a P2PKH address
         try {
-            LegacyP2SHAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+            P2SHAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
             fail();
         } catch (AddressFormatException.WrongAddressType e) {
             // Success.
@@ -121,8 +121,8 @@ public class LegacyP2SHAddressTest {
 
     @Test
     public void cloning() throws Exception {
-        LegacyP2SHAddress a = LegacyP2SHAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
-        LegacyP2SHAddress b = a.clone();
+        P2SHAddress a = P2SHAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
+        P2SHAddress b = a.clone();
 
         assertEquals(a, b);
         assertNotSame(a, b);
@@ -131,7 +131,7 @@ public class LegacyP2SHAddressTest {
     @Test
     public void roundtripBase58() {
         String base58 = "3N25saC4dT24RphDAwLtD8LUN4E2gZPJke";
-        assertEquals(base58, LegacyP2SHAddress.fromBase58(null, base58).toBase58());
+        assertEquals(base58, P2SHAddress.fromBase58(null, base58).toBase58());
     }
 
     @Test

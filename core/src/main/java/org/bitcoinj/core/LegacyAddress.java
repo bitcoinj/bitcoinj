@@ -29,8 +29,8 @@ import org.bitcoinj.script.ScriptPattern;
 
 /**
  * A legacy (base58) Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is divided into two
- * concrete types: {@link LegacyP2PKHAddress}, which is derived from the RIPE-MD160 hash of public key bytes,
- * and {@link LegacyP2SHAddress}, which is derived from the hash of a {@link Script}.
+ * concrete types: {@link P2PKHAddress}, which is derived from the RIPE-MD160 hash of public key bytes,
+ * and {@link P2SHAddress}, which is derived from the hash of a {@link Script}.
  */
 public abstract class LegacyAddress extends Address {
     /**
@@ -56,7 +56,7 @@ public abstract class LegacyAddress extends Address {
     }
 
     /**
-     * Construct a {@link LegacyP2PKHAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
+     * Construct a {@link P2PKHAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
      * address.
      * 
      * @param params
@@ -65,12 +65,12 @@ public abstract class LegacyAddress extends Address {
      *            20-byte pubkey hash
      * @return constructed address
      */
-    public static LegacyP2PKHAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return LegacyP2PKHAddress.fromPubKeyHash(params, hash160);
+    public static P2PKHAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+        return P2PKHAddress.fromPubKeyHash(params, hash160);
     }
 
     /**
-     * Construct a {@link LegacyP2PKHAddress} that represents the public part of the given {@link ECKey}. Note that an address is
+     * Construct a {@link P2PKHAddress} that represents the public part of the given {@link ECKey}. Note that an address is
      * derived from a hash of the public key and is not the public key itself.
      * 
      * @param params
@@ -79,12 +79,12 @@ public abstract class LegacyAddress extends Address {
      *            only the public part is used
      * @return constructed address
      */
-    public static LegacyP2PKHAddress fromKey(NetworkParameters params, ECKey key) {
+    public static P2PKHAddress fromKey(NetworkParameters params, ECKey key) {
         return fromPubKeyHash(params, key.getPubKeyHash());
     }
 
     /**
-     * Construct a {@link LegacyP2SHAddress} that represents the given P2SH script hash.
+     * Construct a {@link P2SHAddress} that represents the given P2SH script hash.
      * 
      * @param params
      *            network this address is valid for
@@ -92,13 +92,13 @@ public abstract class LegacyAddress extends Address {
      *            P2SH script hash
      * @return constructed address
      */
-    public static LegacyP2SHAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return LegacyP2SHAddress.fromScriptHash(params, hash160);
+    public static P2SHAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+        return P2SHAddress.fromScriptHash(params, hash160);
     }
 
     /** @deprecated use {@link #fromScriptHash(NetworkParameters, byte[])} */
     @Deprecated
-    public static LegacyP2SHAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
+    public static P2SHAddress fromP2SHHash(NetworkParameters params, byte[] hash160) {
         return fromScriptHash(params, hash160);
     }
 
@@ -107,7 +107,7 @@ public abstract class LegacyAddress extends Address {
      *             {@link ScriptPattern#extractHashFromP2SH(Script)}
      */
     @Deprecated
-    public static LegacyP2SHAddress fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
+    public static P2SHAddress fromP2SHScript(NetworkParameters params, Script scriptPubKey) {
         checkArgument(ScriptPattern.isP2SH(scriptPubKey), "Not a P2SH script");
         return fromScriptHash(params, ScriptPattern.extractHashFromP2SH(scriptPubKey));
     }
@@ -128,10 +128,10 @@ public abstract class LegacyAddress extends Address {
     public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
         try {
-            return LegacyP2PKHAddress.fromBase58(params, base58);
+            return P2PKHAddress.fromBase58(params, base58);
         } catch (AddressFormatException.WrongAddressType ignore) {
             try {
-                return LegacyP2SHAddress.fromBase58(params, base58);
+                return P2SHAddress.fromBase58(params, base58);
             } catch (AddressFormatException.WrongAddressType e) {
                 throw new IllegalStateException("Address type is somehow neither P2SH or P2PKH", e);
             }

@@ -93,7 +93,7 @@ public class AddressFormatException extends IllegalArgumentException {
     /**
      * This exception is thrown by the {@link Address} hierarchy of classes when you try and decode an
      * address with a prefix (version header or human-readable part) corresponding to a different address
-     * type than the one you are trying to decode: for example, you call LegacyP2PKHAddress.fromBase58
+     * type than the one you are trying to decode: for example, you call P2PKHAddress.fromBase58
      * on a legacy P2SH address.
      */
     public static class WrongAddressType extends InvalidPrefix {
