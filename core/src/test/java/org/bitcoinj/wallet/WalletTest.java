@@ -97,6 +97,7 @@ public class WalletTest extends TestWithWallet {
     private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
     private final Address OTHER_ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
+    private final Address OTHER_SEGWIT_ADDRESS = SegwitAddress.fromKey(UNITTEST, new ECKey());
 
     @Before
     @Override
@@ -2718,6 +2719,23 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
+    public void witnessTransactionGetFeeTest() throws Exception {
+        Wallet mySegwitWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
+        Address mySegwitAddress = mySegwitWallet.freshReceiveAddress(Script.ScriptType.P2WPKH);
+
+        // Prepare wallet to spend
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_SEGWIT_ADDRESS), BigInteger.ONE, 1);
+        Transaction tx = createFakeTx(UNITTEST, COIN, mySegwitAddress);
+        mySegwitWallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // Create a transaction
+        SendRequest request = SendRequest.to(OTHER_SEGWIT_ADDRESS, CENT);
+        request.feePerKb = Transaction.DEFAULT_TX_FEE;
+        mySegwitWallet.completeTx(request);
+        assertEquals(Coin.valueOf(14000), request.tx.getFee());
+    }
+
+    @Test
     public void lowerThanDefaultFee() throws InsufficientMoneyException {
         int feeFactor = 50;
         Coin fee = Transaction.DEFAULT_TX_FEE.divide(feeFactor);
@@ -2789,7 +2807,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request2.tx.getOutputs().size());
         assertEquals(CENT, request2.tx.getOutput(0).getValue());
         // Make sure it was properly signed
-        request2.tx.getInput(0).getScriptSig().correctlySpends(request2.tx, 0, tx3.getOutput(0).getScriptPubKey());
+        request2.tx.getInput(0).getScriptSig().correctlySpends(
+                request2.tx, 0, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
@@ -3126,7 +3145,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test (expected = ECKey.MissingPrivateKeyException.class)
     public void completeTxPartiallySignedThrows() throws Exception {
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, wallet.currentReceiveKey());
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, myKey);
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         wallet.completeTx(req);
         // Delete the sigs
@@ -3134,7 +3153,7 @@ public class WalletTest extends TestWithWallet {
             input.clearScriptBytes();
         Wallet watching = Wallet.fromWatchingKey(UNITTEST, wallet.getWatchingKey().dropParent().dropPrivateBytes(),
                 Script.ScriptType.P2PKH);
-        watching.currentReceiveKey();
+        watching.freshReceiveKey();
         watching.completeTx(SendRequest.forTx(req.tx));
     }
 
@@ -3211,7 +3230,8 @@ public class WalletTest extends TestWithWallet {
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
                 assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
-                input.getScriptSig().correctlySpends(req.tx, i, t3.getOutput(0).getScriptPubKey());
+                input.getScriptSig().correctlySpends(
+                        req.tx, i, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));

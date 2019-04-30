@@ -23,7 +23,6 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
@@ -62,8 +61,8 @@ public class TestWithWallet {
         BriefLogFormatter.init();
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
-        myKey = wallet.currentReceiveKey();
-        myAddress = LegacyAddress.fromKey(UNITTEST, myKey);
+        myKey = wallet.freshReceiveKey();
+        myAddress = wallet.freshReceiveAddress(Script.ScriptType.P2PKH);
         blockStore = new MemoryBlockStore(UNITTEST);
         chain = new BlockChain(UNITTEST, wallet, blockStore);
     }

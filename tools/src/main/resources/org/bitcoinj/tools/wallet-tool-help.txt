@@ -51,7 +51,7 @@ Usage: wallet-tool --flags action-name
                          --payment-request=http://merchant.com/pay.php?123
 
                        Other options include:
-                          --fee-per-kb=0.0005 or --fee-sat-per-byte=50 sets the network fee
+                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
                           --locktime=1234  sets the lock time to block 1234
                           --locktime=2013/01/01  sets the lock time to 1st Jan 2013
                           --allow-unconfirmed will let you create spends of pending non-change outputs.
@@ -77,14 +77,14 @@ Usage: wallet-tool --flags action-name
                        Options:
                           --output=pubkey:value sets the amount to lock and the recipient
                           --refund-to=pubkey sets "our" public key
-                          --fee-per-kb=0.0005 or --fee-sat-per-byte=50 sets the network fee
+                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
                           --locktime=YYYY/MM/DD sets the expiry time for the channel
   settle-cltvpaymentchannel
                        Creates and broadcasts a transaction settling a previous micropayment channel.
                        This tool, for testing, requires the presence of both private keys.
                        Options:
                           --output=pubkey:value sets the destination for the money
-                          --fee-per-kb=0.0005 or --fee-sat-per-byte=50 sets the network fee
+                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
                           --txhash=hash sets the transaction to spend
   refund-cltvpaymentchannel
                        Creates and broadcasts a transaction refunding a previous micropayment channel.
@@ -92,7 +92,7 @@ Usage: wallet-tool --flags action-name
                        the created transaction won't be accepted into the mempool until that point.
                        Options:
                           --output=pubkey:value sets the destination for the money
-                          --fee-per-kb=0.0005 or --fee-sat-per-byte=50 sets the network fee
+                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
                           --txhash=hash sets the transaction to spend
 
 >>> GENERAL OPTIONS
@@ -103,6 +103,8 @@ Usage: wallet-tool --flags action-name
   --chain=<file>       Specifies the name of the file that stores the block chain.
   --force              Overrides any safety checks on the requested action.
   --date               Provide a date in form YYYY/MM/DD to any action that requires one.
+  --fee-per-vkb        Sets the network fee in Bitcoin per kilobyte when sending, e.g. --fee-per-vkb=0.0005
+  --fee-sat-per-vbyte  Sets the network fee in satoshi per byte when sending, e.g. --fee-sat-per-vbyte=50
   --output-script-type Provide an output script type to any action that requires one. May be P2PKH or P2WPKH.
   --peers=1.2.3.4      Comma separated IP addresses/domain names for connections instead of peer discovery.
   --offline            If specified when sending, don't try and connect, just write the tx to the wallet.
