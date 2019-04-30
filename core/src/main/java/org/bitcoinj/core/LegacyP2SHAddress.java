@@ -77,16 +77,20 @@ public class LegacyP2SHAddress extends LegacyAddress {
                 if (version == p.getP2SHHeader())
                     return fromScriptHash(p, bytes);
                 if (version == p.getAddressHeader())
-                    throw new AddressFormatException.WrongAddressType("P2SH");
+                    throw wrongAddressTypeException();
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + base58);
         } else {
             if (version == params.getP2SHHeader())
                 return fromScriptHash(params, bytes);
             if (version == params.getAddressHeader())
-                throw new AddressFormatException.WrongAddressType("P2SH");
+                throw wrongAddressTypeException();
             throw new AddressFormatException.WrongNetwork(version);
         }
+    }
+
+    private static AddressFormatException.WrongAddressType wrongAddressTypeException() {
+        return new AddressFormatException.WrongAddressType(LegacyP2SHAddress.class, Script.ScriptType.P2PKH);
     }
 
     @Override

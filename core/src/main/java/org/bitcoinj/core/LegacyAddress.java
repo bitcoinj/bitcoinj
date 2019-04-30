@@ -48,7 +48,7 @@ public abstract class LegacyAddress extends Address {
      * @param hash160
      *            20-byte hash of pubkey or script
      */
-     protected LegacyAddress(NetworkParameters params, byte[] hash160) throws AddressFormatException {
+    protected LegacyAddress(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         super(params, hash160);
         if (hash160.length != 20)
             throw new AddressFormatException.InvalidDataLength(

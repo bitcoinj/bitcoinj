@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.script.Script;
+
 @SuppressWarnings("serial")
 public class AddressFormatException extends IllegalArgumentException {
     public AddressFormatException() {
@@ -95,9 +97,10 @@ public class AddressFormatException extends IllegalArgumentException {
      * on a legacy P2SH address.
      */
     public static class WrongAddressType extends InvalidPrefix {
-        public WrongAddressType(String attemptedType) {
+        public WrongAddressType(Class<? extends Address> addressClass, Script.ScriptType matchedType) {
             super(String.format(
-                    "Attempted to decode an address of type %s. Address was of a different type.", attemptedType));
+                    "Attempted to decode address class %s from address with script type %s.",
+                    addressClass, matchedType));
         }
     }
 

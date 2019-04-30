@@ -126,7 +126,7 @@ public class LegacyAddressTest {
     public void getAltNetwork() {
         // An alternative network
         class AltNetwork extends MainNetParams {
-            private AltNetwork() {
+            AltNetwork() {
                 super();
                 id = "alt.network";
                 addressHeader = 48;

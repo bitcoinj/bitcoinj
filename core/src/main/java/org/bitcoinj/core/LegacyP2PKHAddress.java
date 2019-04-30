@@ -89,16 +89,20 @@ public class LegacyP2PKHAddress extends LegacyAddress {
                 if (version == p.getAddressHeader())
                     return fromPubKeyHash(p, bytes);
                 if (version == p.getP2SHHeader())
-                    throw new AddressFormatException.WrongAddressType("P2PKH");
+                    throw wrongAddressTypeException();
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + base58);
         } else {
             if (version == params.getAddressHeader())
                 return fromPubKeyHash(params, bytes);
             if (version == params.getP2SHHeader())
-                throw new AddressFormatException.WrongAddressType("P2PKH");
+                throw wrongAddressTypeException();
             throw new AddressFormatException.WrongNetwork(version);
         }
+    }
+
+    private static AddressFormatException.WrongAddressType wrongAddressTypeException() {
+        return new AddressFormatException.WrongAddressType(LegacyP2PKHAddress.class, Script.ScriptType.P2SH);
     }
 
     @Override
