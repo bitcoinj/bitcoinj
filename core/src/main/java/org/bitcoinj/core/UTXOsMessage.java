@@ -103,7 +103,7 @@ public class UTXOsMessage extends Message {
         //   vector<CCoin> outs;
         //
         // A CCoin is  { int nVersion, int nHeight, CTxOut output }
-        // The bitmap indicates which of the requested TXOs were found in the UTXO set.
+        // hitsBitmap indicates which of the queried outputs were found in the UTXO set.
         height = readUint32();
         chainHead = readHash();
         int numBytes = (int) readVarInt();
