@@ -29,8 +29,8 @@ public class FiatTest {
 
     @Before
     public void setUp() throws Exception {
-        Fiat fiatA = parseFiat("USD", "666");
-        Fiat fiatB = parseFiat("USD", "2");
+        fiatA = parseFiat("USD", "666");
+        fiatB = parseFiat("USD", "2");
     }
 
     @Test
