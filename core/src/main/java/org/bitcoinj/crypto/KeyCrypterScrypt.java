@@ -19,12 +19,12 @@ package org.bitcoinj.crypto;
 
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
-import com.lambdaworks.crypto.SCrypt;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.generators.SCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -157,7 +157,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             }
 
             final Stopwatch watch = Stopwatch.createStarted();
-            byte[] keyBytes = SCrypt.scrypt(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
+            byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
             watch.stop();
             log.info("Deriving key took {} for {} scrypt iterations.", watch, scryptParameters.getN());
             return new KeyParameter(keyBytes);
