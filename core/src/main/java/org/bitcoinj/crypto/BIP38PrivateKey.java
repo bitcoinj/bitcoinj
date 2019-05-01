@@ -17,8 +17,9 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.*;
+import org.bouncycastle.crypto.generators.SCrypt;
+
 import com.google.common.primitives.Bytes;
-import com.lambdaworks.crypto.SCrypt;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -126,7 +127,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
     private ECKey decryptNoEC(String normalizedPassphrase) {
         try {
-            byte[] derived = SCrypt.scrypt(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), addressHash, 16384, 8, 8, 64);
+            byte[] derived = SCrypt.generate(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), addressHash, 16384, 8, 8, 64);
             byte[] key = Arrays.copyOfRange(derived, 32, 64);
             SecretKeySpec keyspec = new SecretKeySpec(key, "AES");
 
@@ -148,7 +149,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
             byte[] ownerEntropy = Arrays.copyOfRange(content, 0, 8);
             byte[] ownerSalt = hasLotAndSequence ? Arrays.copyOfRange(ownerEntropy, 0, 4) : ownerEntropy;
 
-            byte[] passFactorBytes = SCrypt.scrypt(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), ownerSalt, 16384, 8, 8, 32);
+            byte[] passFactorBytes = SCrypt.generate(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), ownerSalt, 16384, 8, 8, 32);
             if (hasLotAndSequence) {
                 byte[] hashBytes = Bytes.concat(passFactorBytes, ownerEntropy);
                 checkState(hashBytes.length == 40);
@@ -159,7 +160,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
             byte[] salt = Bytes.concat(addressHash, ownerEntropy);
             checkState(salt.length == 12);
-            byte[] derived = SCrypt.scrypt(k.getPubKey(), salt, 1024, 1, 1, 64);
+            byte[] derived = SCrypt.generate(k.getPubKey(), salt, 1024, 1, 1, 64);
             byte[] aeskey = Arrays.copyOfRange(derived, 32, 64);
 
             SecretKeySpec keyspec = new SecretKeySpec(aeskey, "AES");
