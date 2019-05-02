@@ -45,13 +45,6 @@ import static com.google.common.base.Preconditions.checkState;
 public class DefaultRiskAnalysis implements RiskAnalysis {
     private static final Logger log = LoggerFactory.getLogger(DefaultRiskAnalysis.class);
 
-    /**
-     * Any standard output smaller than this value (in satoshis) will be considered risky, as it's most likely be
-     * rejected by the network. This is usually the same as {@link Transaction#MIN_NONDUST_OUTPUT} but can be
-     * different when the fee is about to change in Bitcoin Core.
-     */
-    public static final Coin MIN_ANALYSIS_NONDUST_OUTPUT = Transaction.MIN_NONDUST_OUTPUT;
-
     protected final Transaction tx;
     protected final List<Transaction> dependencies;
     @Nullable protected final Wallet wallet;
@@ -173,7 +166,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
      * Checks the output to see if the script violates a standardness rule. Not complete.
      */
     public static RuleViolation isOutputStandard(TransactionOutput output) {
-        if (output.getValue().compareTo(MIN_ANALYSIS_NONDUST_OUTPUT) < 0)
+        if (output.isDust())
             return RuleViolation.DUST;
         for (ScriptChunk chunk : output.getScriptPubKey().getChunks()) {
             if (chunk.isPushData() && !chunk.isShortestPossiblePushData())

@@ -2249,7 +2249,8 @@ public class WalletTest extends TestWithWallet {
     public void sendDustTest() throws InsufficientMoneyException {
         // Tests sending dust, should throw DustySendRequested.
         Transaction tx = new Transaction(UNITTEST);
-        tx.addOutput(Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI), OTHER_ADDRESS);
+        Coin dustThreshold = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
+        tx.addOutput(dustThreshold.subtract(SATOSHI), OTHER_ADDRESS);
         SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
@@ -2286,7 +2287,8 @@ public class WalletTest extends TestWithWallet {
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction(UNITTEST);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
-        tx.addOutput(Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI), OTHER_ADDRESS);
+        Coin dustThreshold = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
+        tx.addOutput(dustThreshold.subtract(SATOSHI), OTHER_ADDRESS);
         SendRequest request = SendRequest.forTx(tx);
         request.ensureMinRequiredFee = true;
         wallet.completeTx(request);
@@ -2568,14 +2570,14 @@ public class WalletTest extends TestWithWallet {
             request26.tx.addOutput(CENT, OTHER_ADDRESS);
         // Hardcoded tx length because actual length may vary depending on actual signature length
         Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3560).divide(1000);
-        Coin dustMinusOne = Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI);
-        request26.tx.addOutput(CENT.subtract(fee.add(dustMinusOne)),
+        Coin dustThresholdMinusOne = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
+        request26.tx.addOutput(CENT.subtract(fee.add(dustThresholdMinusOne)),
                 OTHER_ADDRESS);
         assertTrue(request26.tx.unsafeBitcoinSerialize().length > 1000);
         request26.feePerKb = SATOSHI;
         request26.ensureMinRequiredFee = true;
         wallet.completeTx(request26);
-        assertEquals(fee.add(dustMinusOne), request26.tx.getFee());
+        assertEquals(fee.add(dustThresholdMinusOne), request26.tx.getFee());
         Transaction spend26 = request26.tx;
         assertEquals(100, spend26.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one
@@ -2650,7 +2652,8 @@ public class WalletTest extends TestWithWallet {
         // Output when subtracted fee is dust
         // Hardcoded tx length because actual length may vary depending on actual signature length
         Coin fee4 = Transaction.DEFAULT_TX_FEE.multiply(227).divide(1000);
-        valueToSend = fee4.add(Transaction.MIN_NONDUST_OUTPUT).subtract(SATOSHI);
+        Coin dustThreshold = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
+        valueToSend = fee4.add(dustThreshold).subtract(SATOSHI);
         SendRequest request4 = SendRequest.to(OTHER_ADDRESS, valueToSend);
         request4.feePerKb = Transaction.DEFAULT_TX_FEE;
         request4.ensureMinRequiredFee = true;
@@ -2676,12 +2679,12 @@ public class WalletTest extends TestWithWallet {
         assertEquals(fee5, request5.tx.getFee());
         Transaction spend5 = request5.tx;
         assertEquals(3, spend5.getOutputs().size());
-        Coin valueSubtractedFromFirstOutput = Transaction.MIN_NONDUST_OUTPUT
+        Coin valueSubtractedFromFirstOutput = dustThreshold
                 .subtract(COIN.subtract(valueToSend.multiply(2)));
         assertEquals(valueToSend.subtract(fee5.divide(2)).subtract(valueSubtractedFromFirstOutput),
                 spend5.getOutput(0).getValue());
         assertEquals(valueToSend.subtract(fee5.divide(2)), spend5.getOutput(1).getValue());
-        assertEquals(Transaction.MIN_NONDUST_OUTPUT, spend5.getOutput(2).getValue());
+        assertEquals(dustThreshold, spend5.getOutput(2).getValue());
         assertEquals(1, spend5.getInputs().size());
         assertEquals(COIN, spend5.getInput(0).getValue());
 
@@ -2689,7 +2692,7 @@ public class WalletTest extends TestWithWallet {
         // compensate, but after subtracting some satoshis, first output is dust.
         // Hardcoded tx length because actual length may vary depending on actual signature length
         Coin fee6 = Transaction.DEFAULT_TX_FEE.multiply(261).divide(1000);
-        Coin valueToSend1 = fee6.divide(2).add(Transaction.MIN_NONDUST_OUTPUT).add(Coin.MICROCOIN);
+        Coin valueToSend1 = fee6.divide(2).add(dustThreshold).add(Coin.MICROCOIN);
         Coin valueToSend2 = COIN.subtract(valueToSend1).subtract(Coin.MICROCOIN.multiply(2));
         SendRequest request6 = SendRequest.to(OTHER_ADDRESS, valueToSend1);
         request6.tx.addOutput(valueToSend2, OTHER_ADDRESS);
@@ -2908,8 +2911,8 @@ public class WalletTest extends TestWithWallet {
 
         // Add an unsendable value
         block = new StoredBlock(block.getHeader().createNextBlock(OTHER_ADDRESS), BigInteger.ONE, 3);
-        Coin outputValue = Transaction.MIN_NONDUST_OUTPUT.subtract(SATOSHI);
-        tx = createFakeTx(UNITTEST, outputValue, myAddress);
+        Coin dustThresholdMinusOne = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
+        tx = createFakeTx(UNITTEST, dustThresholdMinusOne, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         try {
             request = SendRequest.emptyWallet(OTHER_ADDRESS);
