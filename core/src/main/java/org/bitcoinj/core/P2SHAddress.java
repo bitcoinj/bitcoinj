@@ -23,10 +23,10 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 
 /**
- * A legacy P2SH (Pay 2 Script Hash) address is built by taking the RIPE-MD160 hash of the redemption {@link Script}
+ * A legacy P2SH (Pay to Script Hash) address is built by taking the RIPE-MD160 hash of the redemption {@link Script}
  * bytes, with a version prefix and a checksum suffix, then encoding it textually as base58. The version prefix is used
  * to both denote the network for which the address is valid (see {@link NetworkParameters}, and also to indicate how
- * the bytes inside the address * should be interpreted (in this case, as P2SH rather than P2PKH).
+ * the bytes inside the address should be interpreted (in this case, as P2SH rather than P2PKH).
  *
  * <p>For further details on this address type, see its definition in
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki">BIP 13</a>.</p>
