@@ -3912,7 +3912,7 @@ public class Wallet extends BaseTaggableObject
      * prevent this, but that should only occur once the transaction has been accepted by the network. This implies
      * you cannot have more than one outstanding sending tx at once.</p>
      *
-     * <p>You MUST ensure that the value is not smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction
+     * <p>You MUST ensure that the value is not smaller than {@link TransactionOutput#getMinNonDustValue()} or the transaction
      * will almost certainly be rejected by the network as dust.</p>
      *
      * @param address The Bitcoin address to send the money to.
@@ -3974,7 +3974,7 @@ public class Wallet extends BaseTaggableObject
      * successfully broadcast. This means that even if the network hasn't heard about your transaction you won't be
      * able to spend those same coins again.</p>
      *
-     * <p>You MUST ensure that value is not smaller than {@link Transaction#MIN_NONDUST_OUTPUT} or the transaction will
+     * <p>You MUST ensure that value is not smaller than {@link TransactionOutput#getMinNonDustValue()} or the transaction will
      * almost certainly be rejected by the network as dust.</p>
      *
      * @param broadcaster a {@link TransactionBroadcaster} to use to send the transactions out.

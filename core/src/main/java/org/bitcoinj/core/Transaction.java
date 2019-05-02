@@ -114,11 +114,8 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
-    /**
-     * Any standard (ie P2PKH) output smaller than this value (in satoshis) will most likely be rejected by the network.
-     * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
-     * {@link TransactionOutput#getMinNonDustValue(Coin)}.
-     */
+    /** @deprecated use {@link TransactionOutput#getMinNonDustValue()} */
+    @Deprecated
     public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546); // satoshis
 
     // These are bitcoin serialized.

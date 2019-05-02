@@ -165,8 +165,9 @@ public class SendRequest {
     /**
      * <p>Creates a new SendRequest to the given address for the given value.</p>
      *
-     * <p>Be very careful when value is smaller than {@link Transaction#MIN_NONDUST_OUTPUT} as the transaction will
-     * likely be rejected by the network in this case.</p>
+     * <p>Be careful to check the output's value is reasonable using
+     * {@link TransactionOutput#getMinNonDustValue(Coin)} afterwards or you risk having the transaction
+     * rejected by the network.</p>
      */
     public static SendRequest to(Address destination, Coin value) {
         SendRequest req = new SendRequest();

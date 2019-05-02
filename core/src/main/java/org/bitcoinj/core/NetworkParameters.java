@@ -367,10 +367,8 @@ public abstract class NetworkParameters {
      */
     public abstract Coin getMaxMoney();
 
-    /**
-     * Any standard (ie P2PKH) output smaller than this value will
-     * most likely be rejected by the network.
-     */
+    /** @deprecated use {@link TransactionOutput#getMinNonDustValue()} */
+    @Deprecated
     public abstract Coin getMinNonDustOutput();
 
     /**

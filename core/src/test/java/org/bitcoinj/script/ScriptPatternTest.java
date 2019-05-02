@@ -1,6 +1,7 @@
 /*
  * Copyright 2017 John L. Jegutanis
  * Copyright 2018 Andreas Schildbach
+ * Copyright 2019 Tim Strasser
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,28 +32,56 @@ public class ScriptPatternTest {
     private List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
 
     @Test
-    public void testCommonScripts() {
+    public void testCreateP2PKHOutputScript() {
         assertTrue(ScriptPattern.isP2PKH(
                 ScriptBuilder.createP2PKHOutputScript(keys.get(0))
         ));
+    }
+
+    @Test
+    public void testCreateP2SHOutputScript() {
         assertTrue(ScriptPattern.isP2SH(
                 ScriptBuilder.createP2SHOutputScript(2, keys)
         ));
+    }
+
+    @Test
+    public void testCreateP2PKOutputScript() {
         assertTrue(ScriptPattern.isP2PK(
                 ScriptBuilder.createP2PKOutputScript(keys.get(0))
         ));
+    }
+
+    @Test
+    public void testCreateP2WPKHOutputScript() {
         assertTrue(ScriptPattern.isP2WPKH(
                 ScriptBuilder.createP2WPKHOutputScript(keys.get(0))
         ));
+    }
+
+    @Test
+    public void testCreateP2WSHOutputScript() {
         assertTrue(ScriptPattern.isP2WSH(
                 ScriptBuilder.createP2WSHOutputScript(new ScriptBuilder().build())
         ));
+    }
+
+    @Test
+    public void testCreateMultiSigOutputScript() {
         assertTrue(ScriptPattern.isSentToMultisig(
                 ScriptBuilder.createMultiSigOutputScript(2, keys)
         ));
+    }
+
+    @Test
+    public void testCreateCLTVPaymentChannelOutput() {
         assertTrue(ScriptPattern.isSentToCltvPaymentChannel(
                 ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1))
         ));
+    }
+
+    @Test
+    public void testCreateOpReturnScript() {
         assertTrue(ScriptPattern.isOpReturn(
                 ScriptBuilder.createOpReturnScript(new byte[10])
         ));
