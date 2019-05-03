@@ -189,8 +189,11 @@ public class WalletTest extends TestWithWallet {
                         .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
                 .build();
         Wallet encryptedWallet = new Wallet(UNITTEST, keyChainGroup);
+        encryptedWallet = roundTrip(encryptedWallet);
         encryptedWallet.encrypt(PASSWORD1);
+        encryptedWallet = roundTrip(encryptedWallet);
         encryptedWallet.decrypt(PASSWORD1);
+        encryptedWallet = roundTrip(encryptedWallet);
     }
 
     @Test
@@ -3023,8 +3026,27 @@ public class WalletTest extends TestWithWallet {
     }
 
     private Wallet roundTrip(Wallet wallet) throws UnreadableWalletException {
+        int numActiveKeyChains = wallet.getActiveKeyChains().size();
+        DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
+        int numKeys = activeKeyChain.getKeys(false, true).size();
+        int numIssuedInternal = activeKeyChain.getIssuedInternalKeys();
+        int numIssuedExternal = activeKeyChain.getIssuedExternalKeys();
+        DeterministicKey watchingKey = activeKeyChain.getWatchingKey();
+        ImmutableList<ChildNumber> accountPath = activeKeyChain.getAccountPath();
+        Script.ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
+
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
-        return new WalletProtobufSerializer().readWallet(UNITTEST, null, protos);
+        Wallet roundTrippedWallet = new WalletProtobufSerializer().readWallet(UNITTEST, null, protos);
+
+        assertEquals(numActiveKeyChains, roundTrippedWallet.getActiveKeyChains().size());
+        DeterministicKeyChain roundTrippedActiveKeyChain = roundTrippedWallet.getActiveKeyChain();
+        assertEquals(numKeys, roundTrippedActiveKeyChain.getKeys(false, true).size());
+        assertEquals(numIssuedInternal, roundTrippedActiveKeyChain.getIssuedInternalKeys());
+        assertEquals(numIssuedExternal, roundTrippedActiveKeyChain.getIssuedExternalKeys());
+        assertEquals(watchingKey, roundTrippedActiveKeyChain.getWatchingKey());
+        assertEquals(accountPath, roundTrippedActiveKeyChain.getAccountPath());
+        assertEquals(outputScriptType, roundTrippedActiveKeyChain.getOutputScriptType());
+        return roundTrippedWallet;
     }
 
     @Test
