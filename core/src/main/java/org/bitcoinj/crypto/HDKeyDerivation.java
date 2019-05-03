@@ -186,7 +186,7 @@ public final class HDKeyDerivation {
     }
 
     public static RawKeyBytes deriveChildKeyBytesFromPublic(DeterministicKey parent, ChildNumber childNumber, PublicDeriveMode mode) throws HDDerivationException {
-        checkArgument(!childNumber.isHardened(), "Can't use private derivation with public keys only.");
+        checkArgument(!childNumber.isHardened(), "Hardened derivation is unsupported (%s).", childNumber);
         byte[] parentPublicKey = parent.getPubKeyPoint().getEncoded(true);
         checkState(parentPublicKey.length == 33, "Parent pubkey must be 33 bytes, but is " + parentPublicKey.length);
         ByteBuffer data = ByteBuffer.allocate(37);
