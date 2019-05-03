@@ -54,8 +54,9 @@ public class ChildKeyDerivationTest {
                         "cc9c753a63b8678ce647b7457397acef",
                 "7012bc411228495f25d666d55fdce3f10a93908b5f9b9b7baa6e7573603a7bda"
         };
+        assertEquals(0, ckdTestVectors.length % 3);
 
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < ckdTestVectors.length / 3; i++) {
             byte[] priv  = HEX.decode(ckdTestVectors[3 * i]);
             byte[] pub   = HEX.decode(ckdTestVectors[3 * i + 1]);
             byte[] chain = HEX.decode(ckdTestVectors[3 * i + 2]); // chain code
