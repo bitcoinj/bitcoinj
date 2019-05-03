@@ -628,6 +628,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return hierarchy.get(path, false, create);
     }
 
+    @Nullable
+    public DeterministicKey getRootKey() {
+        return rootKey;
+    }
+
     /**
      * <p>An alias for {@code getKeyByPath(getAccountPath())}.</p>
      *
@@ -1404,7 +1409,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             NetworkParameters params, StringBuilder builder) {
         for (DeterministicKey key : getKeys(includeLookahead, true)) {
             String comment = null;
-            if (key.equals(rootKey))
+            if (key.equals(getRootKey()))
                 comment = "root";
             else if (key.equals(getWatchingKey()))
                 comment = "account";
