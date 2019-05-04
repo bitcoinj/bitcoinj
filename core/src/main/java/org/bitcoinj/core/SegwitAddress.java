@@ -71,7 +71,7 @@ public class SegwitAddress extends Address {
     private static byte[] encode(int witnessVersion, byte[] witnessProgram) throws AddressFormatException {
         byte[] convertedProgram = convertBits(witnessProgram, 0, witnessProgram.length, 8, 5, true);
         byte[] bytes = new byte[1 + convertedProgram.length];
-        bytes[0] = (byte) (Script.encodeToOpN(witnessVersion) & 0xff);
+        bytes[0] = (byte) (witnessVersion & 0xff);
         System.arraycopy(convertedProgram, 0, bytes, 1, convertedProgram.length);
         return bytes;
     }
