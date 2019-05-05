@@ -8,7 +8,7 @@ plugins {
 version = '0.16-SNAPSHOT'
 
 dependencies {
-    compile 'org.bouncycastle:bcprov-jdk15on:1.60'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.61'
     implementation 'com.google.guava:guava:27.1-android'
     compile 'com.google.protobuf:protobuf-java:3.6.1'
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
