@@ -146,8 +146,7 @@ public class ECKey implements EncryptableItem {
         secureRandom = new SecureRandom();
     }
 
-    // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
-    // can only verify signatures not make them.
+    // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
     @Nullable protected final BigInteger priv;  // A field element.
     protected final LazyECPoint pub;
 
