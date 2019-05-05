@@ -65,6 +65,10 @@ public class LazyECPoint {
         return get().getDetachedPoint();
     }
 
+    /**
+     * @deprecated per-point compression property will be removed, refer {@link #getEncoded(boolean)}
+     * @return a byte encoding.
+     */
     public byte[] getEncoded() {
         if (bits != null)
             return Arrays.copyOf(bits, bits.length);
@@ -92,6 +96,9 @@ public class LazyECPoint {
         return get().isNormalized();
     }
 
+    /**
+     * @deprecated per-point compression property will be removed, refer {@link #getEncoded(boolean)}
+     */
     public boolean isCompressed() {
         if (bits != null)
             return bits[0] == 2 || bits[0] == 3;
