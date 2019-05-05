@@ -48,6 +48,8 @@ public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_MIN_LENGTH = 2;
     public static final int WITNESS_PROGRAM_MAX_LENGTH = 40;
 
+    private final int witnessVersion;
+
     /**
      * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
      * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)}.
@@ -61,39 +63,13 @@ public class SegwitAddress extends Address {
      */
     private SegwitAddress(NetworkParameters params, int witnessVersion, byte[] witnessProgram)
             throws AddressFormatException {
-        this(params, encode(witnessVersion, witnessProgram));
-    }
+        super(params, witnessProgram);
+        this.witnessVersion = witnessVersion;
 
-    /**
-     * Helper for the above constructor.
-     */
-    private static byte[] encode(int witnessVersion, byte[] witnessProgram) throws AddressFormatException {
-        byte[] convertedProgram = convertBits(witnessProgram, 0, witnessProgram.length, 8, 5, true);
-        byte[] bytes = new byte[1 + convertedProgram.length];
-        bytes[0] = (byte) (witnessVersion & 0xff);
-        System.arraycopy(convertedProgram, 0, bytes, 1, convertedProgram.length);
-        return bytes;
-    }
-
-    /**
-     * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
-     * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)}.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param data
-     *            in segwit address format, before bit re-arranging and bech32 encoding
-     * @throws AddressFormatException
-     *             if any of the sanity checks fail
-     */
-    private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
-        super(params, data);
-        if (data.length < 1)
+        if (bytes.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
-        final int witnessVersion = getWitnessVersion();
         if (witnessVersion < 0 || witnessVersion > 16)
             throw new AddressFormatException("Invalid script version: " + witnessVersion);
-        byte[] witnessProgram = getWitnessProgram();
         if (witnessProgram.length < WITNESS_PROGRAM_MIN_LENGTH || witnessProgram.length > WITNESS_PROGRAM_MAX_LENGTH)
             throw new AddressFormatException.InvalidDataLength("Invalid length: " + witnessProgram.length);
         // Check script length for version 0
@@ -109,7 +85,7 @@ public class SegwitAddress extends Address {
      * @return witness version, between 0 and 16
      */
     public int getWitnessVersion() {
-        return bytes[0] & 0xff;
+        return witnessVersion;
     }
 
     /**
@@ -118,8 +94,7 @@ public class SegwitAddress extends Address {
      * @return witness program
      */
     public byte[] getWitnessProgram() {
-        // skip version byte
-        return convertBits(bytes, 1, bytes.length - 1, 5, 8, false);
+        return bytes;
     }
 
     @Override
@@ -167,14 +142,34 @@ public class SegwitAddress extends Address {
         if (params == null) {
             for (NetworkParameters p : Networks.get()) {
                 if (bechData.hrp.equals(p.getSegwitAddressHrp()))
-                    return new SegwitAddress(p, bechData.data);
+                    return fromBase32Data(p, bechData.data);
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
-                return new SegwitAddress(params, bechData.data);
+                return fromBase32Data(params, bechData.data);
             throw new AddressFormatException.WrongNetwork(bechData.hrp);
         }
+    }
+
+    /**
+     * Construct a {@link SegwitAddress} from Base32-encoded data.
+     *
+     * @param params
+     *            expected network this address is valid for, or null if the network should be derived from the bech32
+     * @param data
+     *            base32-encoded data (only 5 bits in each byte are used)
+     * @return constructed address
+     * @throws AddressFormatException.InvalidDataLength
+     *             if given empty data
+     */
+    private static SegwitAddress fromBase32Data(NetworkParameters params, byte[] data) throws AddressFormatException {
+        if (data.length < 1) {
+            throw new AddressFormatException.InvalidDataLength("Can't decode address with empty data section.");
+        }
+        byte[] witnessData = convertBits(data, 1, data.length - 1, 5, 8, false);
+        int witnessVersion = data[0] & 0xff;
+        return new SegwitAddress(params, witnessVersion, witnessData);
     }
 
     /**
@@ -212,7 +207,11 @@ public class SegwitAddress extends Address {
      * @return textual form encoded in bech32
      */
     public String toBech32() {
-        return Bech32.encode(params.getSegwitAddressHrp(), bytes);
+        byte[] convertedProgram = convertBits(bytes, 0, bytes.length, 8, 5, true);
+        byte[] bech32Bytes = new byte[1 + convertedProgram.length];
+        bech32Bytes[0] = (byte) (witnessVersion & 0xff);
+        System.arraycopy(convertedProgram, 0, bech32Bytes, 1, convertedProgram.length);
+        return Bech32.encode(params.getSegwitAddressHrp(), bech32Bytes);
     }
 
     /**
