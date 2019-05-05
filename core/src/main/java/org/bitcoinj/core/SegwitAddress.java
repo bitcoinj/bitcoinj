@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import javax.annotation.Nullable;
 
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
 /**
