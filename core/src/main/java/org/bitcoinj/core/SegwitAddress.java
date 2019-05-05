@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
@@ -135,14 +134,14 @@ public class SegwitAddress extends Address {
      * @return type of output script
      */
     @Override
-    public ScriptType getOutputScriptType() {
+    public Script.ScriptType getOutputScriptType() {
         int version = getWitnessVersion();
         checkState(version == 0);
         int programLength = getWitnessProgram().length;
         if (programLength == WITNESS_PROGRAM_LENGTH_PKH)
-            return ScriptType.P2WPKH;
+            return Script.ScriptType.P2WPKH;
         if (programLength == WITNESS_PROGRAM_LENGTH_SH)
-            return ScriptType.P2WSH;
+            return Script.ScriptType.P2WSH;
         throw new IllegalStateException("Cannot happen.");
     }
 
