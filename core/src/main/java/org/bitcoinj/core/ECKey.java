@@ -148,7 +148,7 @@ public class ECKey implements EncryptableItem {
 
     // The two parts of the key. If "priv" is set, "pub" can always be calculated. If "pub" is set but not "priv", we
     // can only verify signatures not make them.
-    protected final BigInteger priv;  // A field element.
+    @Nullable protected final BigInteger priv;  // A field element.
     protected final LazyECPoint pub;
 
     // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
