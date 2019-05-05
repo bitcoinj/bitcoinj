@@ -129,7 +129,7 @@ public class SegwitAddress extends Address {
 
     /**
      * Get the type of output script that will be used for sending to the address. This is either
-     * {@link ScriptType#P2WPKH} or {@link ScriptType#P2WSH}.
+     * {@link Script.ScriptType#P2WPKH} or {@link Script.ScriptType#P2WSH}.
      * 
      * @return type of output script
      */
