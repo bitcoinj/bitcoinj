@@ -25,6 +25,8 @@ import javax.annotation.Nullable;
 
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
+import org.bouncycastle.util.Arrays;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
@@ -69,10 +71,8 @@ public class SegwitAddress extends Address {
      */
     private static byte[] encode(int witnessVersion, byte[] witnessProgram) throws AddressFormatException {
         byte[] convertedProgram = convertBits(witnessProgram, 0, witnessProgram.length, 8, 5, true);
-        byte[] bytes = new byte[1 + convertedProgram.length];
-        bytes[0] = (byte) (witnessVersion & 0xff);
-        System.arraycopy(convertedProgram, 0, bytes, 1, convertedProgram.length);
-        return bytes;
+        byte witnessVersionByte = (byte) (witnessVersion & 0xff);
+        return Arrays.prepend(convertedProgram, witnessVersionByte);
     }
 
     /**
