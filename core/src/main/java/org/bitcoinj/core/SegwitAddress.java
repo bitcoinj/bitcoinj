@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -212,6 +214,21 @@ public class SegwitAddress extends Address {
         bech32Bytes[0] = (byte) (witnessVersion & 0xff);
         System.arraycopy(convertedProgram, 0, bech32Bytes, 1, convertedProgram.length);
         return Bech32.encode(params.getSegwitAddressHrp(), bech32Bytes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), witnessVersion);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SegwitAddress other = (SegwitAddress) o;
+        return this.params.equals(other.params)
+                && Arrays.equals(this.bytes, other.bytes)
+                && (this.witnessVersion == other.witnessVersion);
     }
 
     /**
