@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.testing.ClassSanityTester;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.Test;
@@ -43,6 +46,13 @@ public class PrefixedChecksummedBytesTest {
         public String toString() {
             return Base58.encodeChecked(params.getAddressHeader(), bytes);
         }
+    }
+
+    @Test
+    public void equalsAndHashCode() {
+        new ClassSanityTester()
+                .setDistinctValues(NetworkParameters.class, TestNet3Params.get(), MainNetParams.get())
+                .testEquals(PrefixedChecksummedBytesToTest.class);
     }
 
     @Test

@@ -26,6 +26,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Locale;
 
+import com.google.common.testing.ClassSanityTester;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
@@ -39,6 +40,13 @@ import com.google.common.base.MoreObjects;
 public class SegwitAddressTest {
     private static final MainNetParams MAINNET = MainNetParams.get();
     private static final TestNet3Params TESTNET = TestNet3Params.get();
+
+    @Test
+    public void equalsAndHashCode() {
+        new ClassSanityTester()
+                .setDistinctValues(NetworkParameters.class, TESTNET, MAINNET)
+                .testEquals(SegwitAddress.class);
+    }
 
     @Test
     public void example_p2wpkh_mainnet() {

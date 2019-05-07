@@ -17,6 +17,7 @@ dependencies {
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.easymock:easymock:3.2'
+    testImplementation 'com.google.guava:guava-testlib:27.1-jre'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.5.2'
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.25'
     testImplementation 'com.h2database:h2:1.3.167'

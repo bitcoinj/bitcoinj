@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.testing.ClassSanityTester;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
@@ -41,6 +42,13 @@ import static org.junit.Assert.*;
 public class LegacyAddressTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
+
+    @Test
+    public void equalsAndHashCode() {
+        new ClassSanityTester()
+                .setDistinctValues(NetworkParameters.class, TESTNET, MAINNET)
+                .testEquals(LegacyAddress.class);
+    }
 
     @Test
     public void testJavaSerialization() throws Exception {
