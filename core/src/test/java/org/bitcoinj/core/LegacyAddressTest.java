@@ -237,6 +237,17 @@ public class LegacyAddressTest {
     }
 
     @Test
+    public void equalsComparisonConsistency() {
+        byte[] fakeHash160 = HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722");
+        LegacyAddress a = LegacyAddress.fromPubKeyHash(MAINNET, fakeHash160);
+        LegacyAddress b = LegacyAddress.fromScriptHash(MAINNET, fakeHash160);
+        assertNotEquals(a, b);
+
+        // ordering is not important for this test, we merely care that comparison does not result in equality
+        assertFalse(byteComparator.compare(a, b) == 0);
+    }
+
+    @Test
     public void comparisonBytesVsString() throws Exception {
         BufferedReader dataSetReader = new BufferedReader(
                 new InputStreamReader(getClass().getResourceAsStream("LegacyAddressTestDataset.txt")));
