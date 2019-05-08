@@ -22,6 +22,7 @@ import org.easymock.Mock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.bitcoinj.core.PrefixedChecksummedBytes.comparator;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -79,6 +80,6 @@ public class PrefixedChecksummedBytesTest {
         PrefixedChecksummedBytes a = new PrefixedChecksummedBytesToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         PrefixedChecksummedBytes b = a.clone();
 
-        assertEquals(0, a.compareTo(b));
+        assertEquals(0, comparator.compare(a, b));
     }
 }

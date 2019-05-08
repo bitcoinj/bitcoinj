@@ -35,6 +35,7 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.bitcoinj.core.LegacyAddress.byteComparator;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.*;
 
@@ -213,7 +214,7 @@ public class LegacyAddressTest {
         LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
         LegacyAddress b = a.clone();
 
-        int result = a.compareTo(b);
+        int result = byteComparator.compare(a, b);
         assertEquals(0, result);
     }
 
@@ -222,7 +223,7 @@ public class LegacyAddressTest {
         LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
         LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
 
-        int result = a.compareTo(b);
+        int result = byteComparator.compare(a, b);
         assertTrue(result < 0);
     }
 
@@ -231,7 +232,7 @@ public class LegacyAddressTest {
         LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
         LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
 
-        int result = a.compareTo(b);
+        int result = byteComparator.compare(a, b);
         assertTrue(result > 0);
     }
 
@@ -244,7 +245,7 @@ public class LegacyAddressTest {
             String addr[] = line.split(",");
             LegacyAddress first = LegacyAddress.fromBase58(MAINNET, addr[0]);
             LegacyAddress second = LegacyAddress.fromBase58(MAINNET, addr[1]);
-            assertTrue(first.compareTo(second) < 0);
+            assertTrue(byteComparator.compare(first, second) < 0);
             assertTrue(first.toString().compareTo(second.toString()) < 0);
         }
     }

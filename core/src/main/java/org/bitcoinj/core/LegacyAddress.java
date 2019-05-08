@@ -21,10 +21,13 @@ package org.bitcoinj.core;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
@@ -50,6 +53,17 @@ public class LegacyAddress extends Address {
 
     /** True if P2SH, false if P2PKH. */
     public final boolean p2sh;
+
+    public static final Comparator<LegacyAddress> byteComparator = new Comparator<LegacyAddress>() {
+        @Override
+        public int compare(LegacyAddress o1, LegacyAddress o2) {
+            return ComparisonChain.start()
+                    .compare(o1.params.getId(), o2.params.getId())
+                    .compareFalseFirst(o1.p2sh, o2.p2sh)
+                    .compare(o1.bytes, o2.bytes, UnsignedBytes.lexicographicalComparator())
+                    .result();
+        }
+    };
 
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
