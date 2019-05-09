@@ -1,6 +1,6 @@
 /*
  * Copyright by the original author or authors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,38 +16,53 @@
 
 package wallettemplate;
 
-import com.google.common.util.concurrent.*;
-import javafx.scene.input.*;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.*;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.DeterministicSeed;
-import javafx.application.Application;
+import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.consensusj.supernautfx.SupernautFxApp;
+import org.consensusj.supernautfx.SupernautFxLauncher;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.AppDataDirectory;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
 
 import javax.annotation.Nullable;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static wallettemplate.utils.GuiUtils.*;
+import static wallettemplate.utils.GuiUtils.blurIn;
+import static wallettemplate.utils.GuiUtils.blurOut;
+import static wallettemplate.utils.GuiUtils.checkGuiThread;
+import static wallettemplate.utils.GuiUtils.explodeOut;
+import static wallettemplate.utils.GuiUtils.fadeIn;
+import static wallettemplate.utils.GuiUtils.fadeOutAndRemove;
+import static wallettemplate.utils.GuiUtils.informationalAlert;
+import static wallettemplate.utils.GuiUtils.zoomIn;
 
-@Deprecated
-public class Main extends Application {
+/**
+ * Main class for WalletTemplate that uses SupernautFx and does not have
+ * to subclass javafx.application.Application. This is basically copied from the old
+ * Main class which is now deprecated.
+ */
+@Singleton
+public class WalletTemplateSuperApp implements SupernautFxApp {
     public static NetworkParameters params = TestNet3Params.get();
     public static final Script.ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = Script.ScriptType.P2WPKH;
     public static final String APP_NAME = "WalletTemplate";
@@ -55,7 +70,7 @@ public class Main extends Application {
             + params.getPaymentProtocolId();
 
     public static WalletAppKit bitcoin;
-    public static Main instance;
+    public static WalletTemplateSuperApp instance;
 
     private StackPane uiStack;
     private Pane mainUI;
@@ -152,8 +167,8 @@ public class Main extends Application {
             bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         }
         bitcoin.setDownloadListener(controller.progressBarUpdater())
-               .setBlockingStartup(false)
-               .setUserAgent(APP_NAME, "1.0");
+                .setBlockingStartup(false)
+                .setUserAgent(APP_NAME, "1.0");
         if (seed != null)
             bitcoin.restoreWalletFromSeed(seed);
     }
@@ -256,6 +271,6 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        SupernautFxLauncher.superLaunch(WalletTemplateSuperApp.class, args);
     }
 }

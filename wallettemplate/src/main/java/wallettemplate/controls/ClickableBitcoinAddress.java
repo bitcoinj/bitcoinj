@@ -42,7 +42,7 @@ import javafx.scene.layout.Pane;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
-import wallettemplate.Main;
+import wallettemplate.WalletTemplateSuperApp;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.QRCodeImages;
 
@@ -88,7 +88,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
     }
 
     public String uri() {
-        return BitcoinURI.convertToBitcoinURI(address.get(), null, Main.APP_NAME, null);
+        return BitcoinURI.convertToBitcoinURI(address.get(), null, WalletTemplateSuperApp.APP_NAME, null);
     }
 
     public Address getAddress() {
@@ -143,7 +143,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
-        final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
+        final WalletTemplateSuperApp.OverlayUI<ClickableBitcoinAddress> overlay = WalletTemplateSuperApp.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
 

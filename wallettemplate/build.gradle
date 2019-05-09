@@ -4,27 +4,43 @@ plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.7'
     id 'org.beryx.jlink' version '2.10.2'
+    id 'org.javamodularity.moduleplugin'    version "1.5.0"
+}
+
+repositories {
+    maven { url 'https://dl.bintray.com/consensusj/maven' }
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
 
+    implementation 'org.consensusj.supernautfx:supernautfx:0.0.1'
+    implementation "io.micronaut:micronaut-inject-java:1.1.0"
+
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.3.3'
-    implementation 'org.slf4j:slf4j-api:1.7.25'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.25'
+    implementation 'org.slf4j:slf4j-api:1.8.0-beta4'
+    implementation 'org.slf4j:slf4j-jdk14:1.8.0-beta4'
+    implementation "javax.inject:javax.inject:1"
+    
+    annotationProcessor "io.micronaut:micronaut-inject-java:1.1.0"
 }
+
 
 javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 11
+patchModules.config = [
+        "java.annotation=jsr305-3.0.2.jar"
+]
+
+sourceCompatibility = 12
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-mainClassName = "$moduleName/wallettemplate.Main"
+mainClassName = "$moduleName/wallettemplate.WalletTemplateSuperApp"
 
 jlink {
     addExtraDependencies("javafx")

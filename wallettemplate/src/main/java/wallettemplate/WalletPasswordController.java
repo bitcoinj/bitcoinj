@@ -54,7 +54,7 @@ public class WalletPasswordController {
     @FXML GridPane widgetGrid;
     @FXML Label explanationLabel;
 
-    public Main.OverlayUI overlayUI;
+    public WalletTemplateSuperApp.OverlayUI overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
@@ -70,13 +70,13 @@ public class WalletPasswordController {
             return;
         }
 
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) WalletTemplateSuperApp.bitcoin.wallet().getKeyCrypter();
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
             protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
-                if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
+                if (WalletTemplateSuperApp.bitcoin.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
                 } else {
                     log.warn("User entered incorrect password");
@@ -113,11 +113,11 @@ public class WalletPasswordController {
     // Writes the given time to the wallet as a tag so we can find it again in this class.
     public static void setTargetTime(Duration targetTime) {
         ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-        Main.bitcoin.wallet().setTag(TAG, bytes);
+        WalletTemplateSuperApp.bitcoin.wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
     public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+        return Duration.ofMillis(Longs.fromByteArray(WalletTemplateSuperApp.bitcoin.wallet().getTag(TAG).toByteArray()));
     }
 }

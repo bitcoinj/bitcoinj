@@ -36,7 +36,7 @@ import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
 
-import static wallettemplate.Main.bitcoin;
+import static wallettemplate.WalletTemplateSuperApp.bitcoin;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
@@ -87,16 +87,16 @@ public class MainController {
     }
 
     private void showBitcoinSyncMessage() {
-        syncItem = Main.instance.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
+        syncItem = WalletTemplateSuperApp.instance.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
     }
 
     public void sendMoneyOut(ActionEvent event) {
         // Hide this UI and show the send money UI. This UI won't be clickable until the user dismisses send_money.
-        Main.instance.overlayUI("send_money.fxml");
+        WalletTemplateSuperApp.instance.overlayUI("send_money.fxml");
     }
 
     public void settingsClicked(ActionEvent event) {
-        Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
+        WalletTemplateSuperApp.OverlayUI<WalletSettingsController> screen = WalletTemplateSuperApp.instance.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);
     }
 

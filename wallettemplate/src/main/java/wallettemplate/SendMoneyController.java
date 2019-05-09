@@ -47,20 +47,20 @@ public class SendMoneyController {
     public TextField amountEdit;
     public Label btcLabel;
 
-    public Main.OverlayUI overlayUI;
+    public WalletTemplateSuperApp.OverlayUI overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
     // Called by FXMLLoader
     public void initialize() {
-        Coin balance = Main.bitcoin.wallet().getBalance();
+        Coin balance = WalletTemplateSuperApp.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(Main.params, address, sendBtn);
+        new BitcoinAddressValidator(WalletTemplateSuperApp.params, address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
-        address.setPromptText(Address.fromKey(Main.params, new ECKey(), Main.PREFERRED_OUTPUT_SCRIPT_TYPE).toString());
+        address.setPromptText(Address.fromKey(WalletTemplateSuperApp.params, new ECKey(), WalletTemplateSuperApp.PREFERRED_OUTPUT_SCRIPT_TYPE).toString());
     }
 
     public void cancel(ActionEvent event) {
@@ -71,14 +71,14 @@ public class SendMoneyController {
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(Main.params, address.getText());
+            Address destination = Address.fromString(WalletTemplateSuperApp.params, address.getText());
             SendRequest req;
-            if (amount.equals(Main.bitcoin.wallet().getBalance()))
+            if (amount.equals(WalletTemplateSuperApp.bitcoin.wallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);
             req.aesKey = aesKey;
-            sendResult = Main.bitcoin.wallet().sendCoins(req);
+            sendResult = WalletTemplateSuperApp.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
@@ -111,14 +111,14 @@ public class SendMoneyController {
     }
 
     private void askForPasswordAndRetry() {
-        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
+        WalletTemplateSuperApp.OverlayUI<WalletPasswordController> pwd = WalletTemplateSuperApp.instance.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            Main.OverlayUI<SendMoneyController> screen = Main.instance.overlayUI("send_money.fxml");
+            WalletTemplateSuperApp.OverlayUI<SendMoneyController> screen = WalletTemplateSuperApp.instance.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);
