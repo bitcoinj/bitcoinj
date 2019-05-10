@@ -17,13 +17,16 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.testing.ClassSanityTester;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
@@ -49,10 +52,13 @@ public class PrefixedChecksummedBytesTest {
     }
 
     @Test
-    public void equalsAndHashCode() {
-        new ClassSanityTester()
-                .setDistinctValues(NetworkParameters.class, TestNet3Params.get(), MainNetParams.get())
-                .testEquals(PrefixedChecksummedBytesToTest.class);
+    public void equalsContract() {
+        EqualsVerifier.forClass(PrefixedChecksummedBytes.class)
+                .withPrefabValues(NetworkParameters.class, MainNetParams.get(), TestNet3Params.get())
+                .suppress(Warning.NULL_FIELDS)
+                .suppress(Warning.TRANSIENT_FIELDS)
+                .usingGetClass()
+                .verify();
     }
 
     @Test

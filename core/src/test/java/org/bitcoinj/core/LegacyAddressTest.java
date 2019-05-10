@@ -17,7 +17,8 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.testing.ClassSanityTester;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
@@ -44,10 +45,13 @@ public class LegacyAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Test
-    public void equalsAndHashCode() {
-        new ClassSanityTester()
-                .setDistinctValues(NetworkParameters.class, TESTNET, MAINNET)
-                .testEquals(LegacyAddress.class);
+    public void equalsContract() {
+        EqualsVerifier.forClass(LegacyAddress.class)
+                .withPrefabValues(NetworkParameters.class, MAINNET, TESTNET)
+                .suppress(Warning.NULL_FIELDS)
+                .suppress(Warning.TRANSIENT_FIELDS)
+                .usingGetClass()
+                .verify();
     }
 
     @Test
