@@ -9,6 +9,8 @@ build:
     - LC_ALL=en_US.UTF-8 ./gradlew build
   artifacts:
     paths:
-      - build/distributions/
-      - build/libs/
-      - build/reports/
+      - core/build
+      - examples/build
+      - tools/build
+      - wallettemplate/build
+
