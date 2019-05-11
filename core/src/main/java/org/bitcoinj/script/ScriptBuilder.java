@@ -18,6 +18,8 @@
 
 package org.bitcoinj.script;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import org.bitcoinj.core.Address;
@@ -32,11 +34,7 @@ import org.bitcoinj.script.Script.ScriptType;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -517,19 +515,32 @@ public class ScriptBuilder {
      * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
      * redeem script in the lexicographical sorting order.
      */
-    public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
+    public static Script createP2SHOutputScript(int threshold, Collection<ECKey> pubkeys) {
         Script redeemScript = createRedeemScript(threshold, pubkeys);
         return createP2SHOutputScript(redeemScript);
     }
 
     /**
      * Creates redeem script with given public keys and threshold. Given public keys will be placed in
-     * redeem script in the lexicographical sorting order.
+     * redeem script in the lexicographical sorting order, as described in
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki">BIP 67</a>.
      */
-    public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
-        pubkeys = new ArrayList<>(pubkeys);
-        Collections.sort(pubkeys, ECKey.PUBKEY_COMPARATOR);
-        return ScriptBuilder.createMultiSigOutputScript(threshold, pubkeys);
+    public static Script createRedeemScript(int threshold, Collection<ECKey> pubkeys) {
+        for (ECKey pubkey : pubkeys) {
+            if (!pubkey.isCompressed()) {
+                throw new IllegalArgumentException("P2SH redeem scripts require compressed public keys");
+            }
+        }
+
+        List<ECKey> sorted = sortMultisigPubkeys(pubkeys);
+        return ScriptBuilder.createMultiSigOutputScript(threshold, sorted);
+    }
+
+    @VisibleForTesting
+    static List<ECKey> sortMultisigPubkeys(Collection<ECKey> pubkeys) {
+        List<ECKey> sorted = new ArrayList<>(pubkeys);
+        Collections.sort(sorted, ECKey.PUBKEY_COMPARATOR);
+        return ImmutableList.copyOf(sorted);
     }
 
     /**

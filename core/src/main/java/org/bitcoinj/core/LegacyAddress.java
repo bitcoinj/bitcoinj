@@ -19,9 +19,11 @@
 package org.bitcoinj.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.script.ScriptBuilder.createP2SHOutputScript;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -110,6 +112,29 @@ public class LegacyAddress extends Address {
      */
     public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(params, true, hash160);
+    }
+
+    /**
+     * Construct an n-of-m multisig P2SH {@link LegacyAddress}.
+     *
+     * The resulting address is deterministically generated for the combination of parameters
+     * to this function, independently of the ordering of the keys parameters.
+     *
+     * The algorithm for address generation is described in
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0067.mediawiki">BIP 67</a>.
+     *
+     * @param params
+     *            network this address is valid for
+     * @param threshold
+     *            the n in n-of-m: the number of signatures necessary to spend
+     * @param keys
+     *            the m in n-of-m: the keys usable for signing. Ordering is ignored.
+     * @return constructed address
+     */
+    public static LegacyAddress multisigFromKeys(NetworkParameters params, int threshold, Set<ECKey> keys) {
+        Script outputScript = createP2SHOutputScript(threshold, keys);
+        byte[] scriptHash = ScriptPattern.extractHashFromP2SH(outputScript);
+        return LegacyAddress.fromScriptHash(params, scriptHash);
     }
 
     /** @deprecated use {@link #fromScriptHash(NetworkParameters, byte[])} */
