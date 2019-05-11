@@ -42,7 +42,10 @@ import javafx.scene.layout.Pane;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
-import wallettemplate.WalletTemplateSuperApp;
+import wallettemplate.OverlayWindowController;
+import wallettemplate.OverlayableWindow;
+import wallettemplate.WalletFxApp;
+import wallettemplate.WalletMainWindow;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.QRCodeImages;
 
@@ -56,15 +59,18 @@ import static javafx.beans.binding.Bindings.convert;
  * address looks like a blue hyperlink. Next to it there are two icons, one that copies to the clipboard and another
  * that shows a QRcode.
  */
-public class ClickableBitcoinAddress extends AnchorPane {
+public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindowController {
     @FXML protected Label addressLabel;
     @FXML protected ContextMenu addressMenu;
     @FXML protected Label copyWidget;
     @FXML protected Label qrCode;
 
+    private OverlayableWindow.OverlayUI overlayUI;
+
     protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
 
+    /* TODO: Figure out how to inject custom components, we need injected is APP_NAME and OverlayableWindow */
     public ClickableBitcoinAddress() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("bitcoin_address.fxml"));
@@ -87,8 +93,18 @@ public class ClickableBitcoinAddress extends AnchorPane {
         }
     }
 
+    @Override
+    public OverlayableWindow.OverlayUI getOverlayUI() {
+        return overlayUI;
+    }
+
+    @Override
+    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+        overlayUI = ui;
+    }
+
     public String uri() {
-        return BitcoinURI.convertToBitcoinURI(address.get(), null, WalletTemplateSuperApp.APP_NAME, null);
+        return BitcoinURI.convertToBitcoinURI(address.get(), null, WalletFxApp.instance.getAppName(), null);
     }
 
     public Address getAddress() {
@@ -143,7 +159,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
-        final WalletTemplateSuperApp.OverlayUI<ClickableBitcoinAddress> overlay = WalletTemplateSuperApp.instance.overlayUI(pane, this);
+        final OverlayableWindow.OverlayUI<ClickableBitcoinAddress> overlay = WalletMainWindow.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
 

@@ -30,21 +30,25 @@ import com.google.protobuf.ByteString;
 
 import wallettemplate.utils.*;
 
+import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.concurrent.*;
 
 import static wallettemplate.utils.GuiUtils.*;
 
-public class WalletSetPasswordController {
+@Singleton
+public class WalletSetPasswordController implements OverlayWindowController {
     private static final Logger log = LoggerFactory.getLogger(WalletSetPasswordController.class);
-    public PasswordField pass1, pass2;
+    @FXML private PasswordField pass1;
+    @FXML private PasswordField pass2;
 
-    public ProgressIndicator progressMeter;
-    public GridPane widgetGrid;
-    public Button closeButton;
-    public Label explanationLabel;
+    @FXML private ProgressIndicator progressMeter;
+    @FXML private GridPane widgetGrid;
+    @FXML private Button closeButton;
+    @FXML private Label explanationLabel;
 
-    public WalletTemplateSuperApp.OverlayUI overlayUI;
+    private OverlayableWindow.OverlayUI overlayUI;
+
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder()
@@ -53,6 +57,24 @@ public class WalletSetPasswordController {
             .setN(32768)
             .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()))
             .build();
+    
+    private final WalletFxApp app;
+    private final WalletMainWindow mainWindow;
+
+    public WalletSetPasswordController(WalletFxApp app, WalletMainWindow mainWindow) {
+        this.app = app;
+        this.mainWindow = mainWindow;
+    }
+
+    @Override
+    public OverlayableWindow.OverlayUI getOverlayUI() {
+        return overlayUI;
+    }
+
+    @Override
+    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+        overlayUI = ui;
+    }
 
     public void initialize() {
         progressMeter.setOpacity(0);
@@ -106,14 +128,14 @@ public class WalletSetPasswordController {
             @Override
             protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 // Write the target time to the wallet so we can make the progress bar work when entering the password.
-                WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
+                app.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                WalletTemplateSuperApp.bitcoin.wallet().encrypt(scrypt, aesKey);
+                app.getWallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");
-                overlayUI.done();
+                mainWindow.currentOverlay.done();
             }
         };
         progressMeter.progressProperty().bind(tasks.progress);
@@ -121,6 +143,6 @@ public class WalletSetPasswordController {
     }
 
     public void closeClicked(ActionEvent event) {
-        overlayUI.done();
+        mainWindow.currentOverlay.done();
     }
 }

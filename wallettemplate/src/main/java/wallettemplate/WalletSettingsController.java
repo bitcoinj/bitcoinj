@@ -34,6 +34,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import wallettemplate.utils.TextFieldValidator;
 
 import javax.annotation.Nullable;
+import javax.inject.Singleton;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -47,31 +48,50 @@ import static wallettemplate.utils.GuiUtils.informationalAlert;
 import static wallettemplate.utils.WTUtils.didThrow;
 import static wallettemplate.utils.WTUtils.unchecked;
 
-public class WalletSettingsController {
+@Singleton
+public class WalletSettingsController implements OverlayWindowController {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
-    @FXML Button passwordButton;
-    @FXML DatePicker datePicker;
-    @FXML TextArea wordsArea;
-    @FXML Button restoreButton;
+    @FXML private Button passwordButton;
+    @FXML private DatePicker datePicker;
+    @FXML private TextArea wordsArea;
+    @FXML private Button restoreButton;
 
-    public WalletTemplateSuperApp.OverlayUI overlayUI;
+    private OverlayableWindow.OverlayUI overlayUI;
 
     private KeyParameter aesKey;
 
+    private final WalletFxApp app;
+    private final WalletMainWindow mainWindow;
+
+    public WalletSettingsController(WalletFxApp app, WalletMainWindow mainWindow) {
+        this.app = app;
+        this.mainWindow = mainWindow;
+    }
+
+    @Override
+    public OverlayableWindow.OverlayUI getOverlayUI() {
+        return overlayUI;
+    }
+
+    @Override
+    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+        overlayUI = ui;
+    }
+
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = WalletTemplateSuperApp.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = app.getWallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
                 // Delay execution of this until after we've finished initialising this screen.
-                Platform.runLater(() -> askForPasswordAndRetry());
+                Platform.runLater(this::askForPasswordAndRetry);
                 return;
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(WalletTemplateSuperApp.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(checkNotNull(app.getWallet().getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -132,12 +152,12 @@ public class WalletSettingsController {
     }
 
     private void askForPasswordAndRetry() {
-        WalletTemplateSuperApp.OverlayUI<WalletPasswordController> pwd = WalletTemplateSuperApp.instance.overlayUI("wallet_password.fxml");
+        OverlayableWindow.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
-            WalletTemplateSuperApp.OverlayUI<WalletSettingsController> screen = WalletTemplateSuperApp.instance.overlayUI("wallet_settings.fxml");
+            OverlayableWindow.OverlayUI<WalletSettingsController> screen = mainWindow.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
         });
     }
@@ -149,7 +169,7 @@ public class WalletSettingsController {
     public void restoreClicked(ActionEvent event) {
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
-        if (WalletTemplateSuperApp.bitcoin.wallet().getBalance().value > 0) {
+        if (app.getWallet().getBalance().value > 0) {
             informationalAlert("Wallet is not empty",
                     "You must empty this wallet out before attempting to restore an older one, as mixing wallets " +
                             "together can lead to invalidated backups.");
@@ -166,27 +186,27 @@ public class WalletSettingsController {
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
         overlayUI.done();
-        WalletTemplateSuperApp.instance.controller.restoreFromSeedAnimation();
+        mainWindow.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
         // Shut down bitcoinj and restart it with the new seed.
-        WalletTemplateSuperApp.bitcoin.addListener(new Service.Listener() {
+        app.getWalletAppKit().addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
-                WalletTemplateSuperApp.instance.setupWalletKit(seed);
-                WalletTemplateSuperApp.bitcoin.startAsync();
+                app.setupWalletKit(seed);
+                app.getWalletAppKit().startAsync();
             }
         }, Platform::runLater);
-        WalletTemplateSuperApp.bitcoin.stopAsync();
+        app.getWalletAppKit().stopAsync();
     }
 
 
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
-            WalletTemplateSuperApp.instance.overlayUI("wallet_set_password.fxml");
+            mainWindow.overlayUI("wallet_set_password.fxml");
         } else {
-            WalletTemplateSuperApp.bitcoin.wallet().decrypt(aesKey);
+            app.getWallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
             passwordButton.setText("Set password");
             aesKey = null;

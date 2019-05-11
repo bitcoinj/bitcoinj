@@ -19,6 +19,7 @@ package wallettemplate;
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
+import javafx.fxml.FXML;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.utils.MonetaryFormat;
@@ -36,21 +37,31 @@ import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.easing.EasingMode;
 import wallettemplate.utils.easing.ElasticInterpolator;
 
-import static wallettemplate.WalletTemplateSuperApp.bitcoin;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
+@Singleton
 public class MainController {
-    public HBox controlsBox;
-    public Label balance;
-    public Button sendMoneyOutBtn;
-    public ClickableBitcoinAddress addressControl;
+    @FXML private HBox controlsBox;
+    @FXML private Label balance;
+    @FXML private Button sendMoneyOutBtn;
+    @FXML private ClickableBitcoinAddress addressControl;
 
     private BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
     private static final MonetaryFormat MONETARY_FORMAT = MonetaryFormat.BTC.noCode();
+
+    private final WalletFxApp app;
+    private final WalletMainWindow mainWindow;
+
+    public MainController(WalletFxApp app, WalletMainWindow mainWindow) {
+        this.app = app;
+        this.mainWindow = mainWindow;
+    }
 
     // Called by FXMLLoader.
     public void initialize() {
@@ -58,7 +69,7 @@ public class MainController {
     }
 
     public void onBitcoinSetup() {
-        model.setWallet(bitcoin.wallet());
+        model.setWallet(app.getWallet());
         addressControl.addressProperty().bind(model.addressProperty());
         balance.textProperty().bind(createBalanceStringBinding(model.balanceProperty()));
         // Don't let the user click send money when the wallet is empty.
@@ -87,16 +98,16 @@ public class MainController {
     }
 
     private void showBitcoinSyncMessage() {
-        syncItem = WalletTemplateSuperApp.instance.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
+        syncItem = mainWindow.notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
     }
 
     public void sendMoneyOut(ActionEvent event) {
         // Hide this UI and show the send money UI. This UI won't be clickable until the user dismisses send_money.
-        WalletTemplateSuperApp.instance.overlayUI("send_money.fxml");
+        mainWindow.overlayUI("send_money.fxml");
     }
 
     public void settingsClicked(ActionEvent event) {
-        WalletTemplateSuperApp.OverlayUI<WalletSettingsController> screen = WalletTemplateSuperApp.instance.overlayUI("wallet_settings.fxml");
+        OverlayableWindow.OverlayUI<WalletSettingsController> screen = mainWindow.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);
     }
 

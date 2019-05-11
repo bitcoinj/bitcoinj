@@ -16,6 +16,7 @@
 
 package wallettemplate;
 
+import javafx.fxml.FXML;
 import javafx.scene.layout.HBox;
 import org.bitcoinj.core.*;
 import org.bitcoinj.wallet.SendRequest;
@@ -38,29 +39,49 @@ import static com.google.common.base.Preconditions.checkState;
 import static wallettemplate.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;
+import javax.inject.Singleton;
 
-public class SendMoneyController {
-    public Button sendBtn;
-    public Button cancelBtn;
-    public TextField address;
-    public Label titleLabel;
-    public TextField amountEdit;
-    public Label btcLabel;
+@Singleton
+public class SendMoneyController implements OverlayWindowController {
+    @FXML private Button sendBtn;
+    @FXML private Button cancelBtn;
+    @FXML private TextField address;
+    @FXML private Label titleLabel;
+    @FXML private TextField amountEdit;
+    @FXML private Label btcLabel;
 
-    public WalletTemplateSuperApp.OverlayUI overlayUI;
+    private OverlayableWindow.OverlayUI overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
+    private final WalletFxApp app;
+    private final WalletMainWindow mainWindow;
+
+    public SendMoneyController(WalletFxApp app, WalletMainWindow mainWindow) {
+        this.app = app;
+        this.mainWindow = mainWindow;
+    }
+
+    @Override
+    public OverlayableWindow.OverlayUI getOverlayUI() {
+        return overlayUI;
+    }
+
+    @Override
+    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+        overlayUI = ui;
+    }
+
     // Called by FXMLLoader
     public void initialize() {
-        Coin balance = WalletTemplateSuperApp.bitcoin.wallet().getBalance();
+        Coin balance = app.getWallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(WalletTemplateSuperApp.params, address, sendBtn);
+        new BitcoinAddressValidator(app.getNetParams(), address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
-        address.setPromptText(Address.fromKey(WalletTemplateSuperApp.params, new ECKey(), WalletTemplateSuperApp.PREFERRED_OUTPUT_SCRIPT_TYPE).toString());
+        address.setPromptText(Address.fromKey(app.getNetParams(), new ECKey(), app.getPreferredOutputScriptType()).toString());
     }
 
     public void cancel(ActionEvent event) {
@@ -71,14 +92,14 @@ public class SendMoneyController {
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(WalletTemplateSuperApp.params, address.getText());
+            Address destination = Address.fromString(app.getNetParams(), address.getText());
             SendRequest req;
-            if (amount.equals(WalletTemplateSuperApp.bitcoin.wallet().getBalance()))
+            if (amount.equals(app.getWallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);
             req.aesKey = aesKey;
-            sendResult = WalletTemplateSuperApp.bitcoin.wallet().sendCoins(req);
+            sendResult = app.getWallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
@@ -111,14 +132,14 @@ public class SendMoneyController {
     }
 
     private void askForPasswordAndRetry() {
-        WalletTemplateSuperApp.OverlayUI<WalletPasswordController> pwd = WalletTemplateSuperApp.instance.overlayUI("wallet_password.fxml");
+        OverlayableWindow.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            WalletTemplateSuperApp.OverlayUI<SendMoneyController> screen = WalletTemplateSuperApp.instance.overlayUI("send_money.fxml");
+            OverlayableWindow.OverlayUI<SendMoneyController> screen = mainWindow.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);

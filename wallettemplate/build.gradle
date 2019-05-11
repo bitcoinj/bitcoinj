@@ -14,7 +14,7 @@ repositories {
 dependencies {
     implementation project(':bitcoinj-core')
 
-    implementation 'org.consensusj.supernautfx:supernautfx:0.0.1'
+    implementation 'org.consensusj.supernautfx:supernautfx:0.0.2'
     implementation "io.micronaut:micronaut-inject-java:1.1.0"
 
     implementation 'com.google.guava:guava:27.1-android'
@@ -40,7 +40,7 @@ sourceCompatibility = 12
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-mainClassName = "$moduleName/wallettemplate.WalletTemplateSuperApp"
+mainClassName = "$moduleName/wallettemplate.WalletTemplateApp"
 
 jlink {
     addExtraDependencies("javafx")
@@ -55,6 +55,8 @@ jlink {
 
         requires 'javafx.graphics'
         requires 'javafx.controls'
+
+        requires 'org.slf4j'
     }
     jpackage {
         // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for
