@@ -188,7 +188,7 @@ public class Script {
      *
      * <p>The reason for this split, instead of just interpreting directly, is to make it easier
      * to reach into a programs structure and pull out bits of data without having to run it.
-     * This is necessary to render the to/from addresses of transactions in a user interface.
+     * This is necessary to render the to addresses of transactions in a user interface.
      * Bitcoin Core does something similar.</p>
      */
     private void parse(byte[] program) throws ScriptException {
