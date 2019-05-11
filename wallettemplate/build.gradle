@@ -36,7 +36,7 @@ patchModules.config = [
         "java.annotation=jsr305-3.0.2.jar"
 ]
 
-sourceCompatibility = 12
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
