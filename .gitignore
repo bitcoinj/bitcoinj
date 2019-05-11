@@ -1,9 +1,6 @@
 target
 build
 .gradle
-gradlew
-gradlew.bat
-gradle/wrapper
 .project
 .classpath
 .settings
