@@ -6,7 +6,7 @@ before_script:
 build:
   script:
     - java -version
-    - LC_ALL=en_US.UTF-8 ./gradlew buildCI
+    - LC_ALL=en_US.UTF-8 ./gradlew build
   artifacts:
     paths:
       - build/distributions/
