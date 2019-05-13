@@ -29,6 +29,8 @@ import java.text.AttributedCharacterIterator.Attribute;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
@@ -43,19 +45,14 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class BtcFormatTest {
 
-    @Parameters
-    public static Set<Locale[]> data() {
-        Set<Locale[]> localeSet = new HashSet<>();
-        for (Locale locale : Locale.getAvailableLocales()) {
-            localeSet.add(new Locale[]{locale});
-        }
-        return localeSet;
-    }
+    private String inputMetricTest;
+    private String expectedMetricTest;
 
-    public BtcFormatTest(Locale defaultLocale) {
-        Locale.setDefault(defaultLocale);
+
+    public BtcFormatTest( String inputMetricTest, String expectedMetricTest) {
+        this.inputMetricTest = inputMetricTest;
+        this.expectedMetricTest = expectedMetricTest;
     }
- 
     @Test
     public void prefixTest() { // prefix b/c symbol is prefixed
         BtcFormat usFormat = BtcFormat.getSymbolInstance(Locale.US);
@@ -496,41 +493,96 @@ public class BtcFormatTest {
         } catch (ParseException e) {}
     }
 
+
+    @Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                {"1","BTC1.00"},
+                {"1","฿1.00"},
+                {"1","B⃦1.00"},
+                {"1","Ƀ1.00"},
+                {"0.001","mBTC1.00"},
+                {"0.001","m฿1.00"},
+                {"0.001","mB⃦1.00"},
+                {"0.001","mɃ1.00"},
+                {"0.001","₥BTC1.00"},
+                {"0.001","₥฿1.00"},
+                {"0.001","₥B⃦1.00"},
+                {"0.001","₥Ƀ1.00"},
+                {"0.000001","uBTC1.00"},
+                {"0.000001","u฿1.00"},
+                {"0.000001","uB⃦1.00"},
+                {"0.000001","uɃ1.00"},
+                {"0.000001","µBTC1.00"},
+                {"0.000001","µ฿1.00"},
+                {"0.000001","µB⃦1.00"},
+                {"0.000001","µɃ1.00"},
+                {"0.00000001","uBTC0.01"},
+                {"0.00000001","u฿0.01"},
+                {"0.00000001","uB⃦0.01"},
+                {"0.00000001","uɃ0.01"},
+                {"0.00000001","µBTC0.01"},
+                {"0.00000001","µ฿0.01"},
+                {"0.00000001","µB⃦0.01"},
+                {"0.00000001","µɃ0.01"},
+                {"0.01234567","cBTC1.234567"},
+                {"0.01234567","c฿1.234567"},
+                {"0.01234567","cB⃦1.234567"},
+                {"0.01234567","cɃ1.234567"},
+                {"0.01234567","¢BTC1.234567"},
+                {"0.01234567","¢฿1.234567"},
+                {"0.01234567","¢B⃦1.234567"},
+                {"0.01234567","¢Ƀ1.234567"},
+                {"12.34567","daBTC1.234567"},
+                {"12.34567","da฿1.234567"},
+                {"12.34567","daB⃦1.234567"},
+                {"12.34567","daɃ1.234567"},
+                {"123.4567","hBTC1.234567"},
+                {"123.4567","h฿1.234567"},
+                {"123.4567","hB⃦1.234567"},
+                {"123.4567","hɃ1.234567"},
+                {"1234.567","kBTC1.234567"},
+                {"1234.567","k฿1.234567"},
+                {"1234.567","kB⃦1.234567"},
+                {"1234.567","kɃ1.234567"},
+                {"1234567","MBTC1.234567"},
+                {"1234567","M฿1.234567"},
+                {"1234567","MB⃦1.234567"},
+                {"1234567","MɃ1.234567"}
+        });
+    }
+    @Test
+    public void parseCodeMetricTest() throws ParseException {
+        BtcFormat cp = BtcFormat.getCodeInstance(Locale.US);
+        assertEquals(parseCoin((String)inputMetricTest), cp.parseObject((String)expectedMetricTest));
+    }
+
+    @Test
+    public void parseSymbolMetricTest() throws ParseException {
+        BtcFormat sp = BtcFormat.getSymbolInstance(Locale.US);
+    }
+
     @Test
     public void parseMetricTest() throws ParseException {
         BtcFormat cp = BtcFormat.getCodeInstance(Locale.US);
         BtcFormat sp = BtcFormat.getSymbolInstance(Locale.US);
         // coin
         assertEquals(parseCoin("1"), cp.parseObject("BTC 1.00"));
-        assertEquals(parseCoin("1"), sp.parseObject("BTC1.00"));
         assertEquals(parseCoin("1"), cp.parseObject("฿ 1.00"));
-        assertEquals(parseCoin("1"), sp.parseObject("฿1.00"));
         assertEquals(parseCoin("1"), cp.parseObject("B⃦ 1.00"));
-        assertEquals(parseCoin("1"), sp.parseObject("B⃦1.00"));
         assertEquals(parseCoin("1"), cp.parseObject("Ƀ 1.00"));
-        assertEquals(parseCoin("1"), sp.parseObject("Ƀ1.00"));
         // milli
         assertEquals(parseCoin("0.001"), cp.parseObject("mBTC 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("mBTC1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("m฿ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("m฿1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("mB⃦ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("mB⃦1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("mɃ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("mɃ1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("₥BTC 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("₥BTC1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("₥฿ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("₥฿1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("₥B⃦ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("₥B⃦1.00"));
         assertEquals(parseCoin("0.001"), cp.parseObject("₥Ƀ 1.00"));
-        assertEquals(parseCoin("0.001"), sp.parseObject("₥Ƀ1.00"));
         // micro
         assertEquals(parseCoin("0.000001"), cp.parseObject("uBTC 1.00"));
-        assertEquals(parseCoin("0.000001"), sp.parseObject("uBTC1.00"));
         assertEquals(parseCoin("0.000001"), cp.parseObject("u฿ 1.00"));
-        assertEquals(parseCoin("0.000001"), sp.parseObject("u฿1.00"));
         assertEquals(parseCoin("0.000001"), cp.parseObject("uB⃦ 1.00"));
         assertEquals(parseCoin("0.000001"), sp.parseObject("uB⃦1.00"));
         assertEquals(parseCoin("0.000001"), cp.parseObject("uɃ 1.00"));
