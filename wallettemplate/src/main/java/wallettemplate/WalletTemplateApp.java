@@ -19,6 +19,7 @@ package wallettemplate;
 import javafx.stage.Stage;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.walletfx.WalletFxApp;
+import org.consensusj.supernautfx.FxmlLoaderFactory;
 import org.consensusj.supernautfx.SupernautFxLauncher;
 
 import javax.inject.Singleton;
@@ -29,15 +30,19 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class WalletTemplateApp extends WalletFxApp {
-    @Deprecated
-    public static final String APP_NAME = "WalletTemplate";
+    private static final String APP_NAME = "WalletTemplate";
+    private static final String mainFxmlResName = "main.fxml";
+    private static final String mainCssResName = "wallet.css";
 
     public static void main(String[] args) {
         SupernautFxLauncher.superLaunch(WalletTemplateApp.class, args);
     }
 
-    WalletTemplateApp(WalletTemplateMainWindow mainWindow) {
-        super(mainWindow, TestNet3Params.get());
+    WalletTemplateApp(FxmlLoaderFactory loaderFactory) {
+        super(loaderFactory,
+                TestNet3Params.get(),
+                mainFxmlResName,
+                mainCssResName);
     }
 
     @Override

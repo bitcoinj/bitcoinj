@@ -19,21 +19,27 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.Service;
 import com.google.protobuf.ByteString;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
+import org.consensusj.supernautfx.FxmlLoaderFactory;
 import org.consensusj.supernautfx.SupernautFxApp;
 import org.bitcoinj.walletfx.utils.AppDataDirectory;
 import org.bitcoinj.walletfx.utils.GuiUtils;
-import wallettemplate.WalletTemplateApp;
-import wallettemplate.WalletTemplateMainWindow;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.time.Duration;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
@@ -44,14 +50,23 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 public abstract class WalletFxApp implements SupernautFxApp {
     private final Script.ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = Script.ScriptType.P2WPKH;
     public static WalletFxApp instance;
+    private final FxmlLoaderFactory loaderFactory;
+    private final String mainFxmlResName;
+    private final String mainCssResName;
+    protected Stage primaryStage;
     protected WalletAppKit bitcoin;
-    protected final WalletMainWindow mainWindow;
+    protected WalletMainWindowController mainWindowController;
     protected final NetworkParameters networkParameters;
     
-    public WalletFxApp(WalletTemplateMainWindow mainWindow, NetworkParameters networkParameters) {
+    public WalletFxApp(FxmlLoaderFactory loaderFactory,
+                       NetworkParameters networkParameters,
+                       String mainFxmlResName,
+                       String mainCssResName) {
         instance = this;
-        this.mainWindow = mainWindow;
+        this.loaderFactory = loaderFactory;
         this.networkParameters = networkParameters;
+        this.mainFxmlResName = mainFxmlResName;
+        this.mainCssResName = mainCssResName;
     }
 
     abstract public String getAppName();
@@ -71,30 +86,46 @@ public abstract class WalletFxApp implements SupernautFxApp {
 
     public void start(Stage primaryStage) throws Exception {
         try {
-            mainWindow.realStart(primaryStage);
+            this.primaryStage = primaryStage;
+            primaryStage.setTitle(getAppName());
+
+            // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
+            GuiUtils.handleCrashesOnThisThread();
+
+            mainWindowController = startMainWindow(primaryStage, mainFxmlResName, mainCssResName);
+
+            // Make log output concise.
+            BriefLogFormatter.init();
+            // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
+            // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
+            // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
+            // a future version.
+            Threading.USER_THREAD = Platform::runLater;
+            // Create the app kit. It won't do any heavyweight initialization until after we start it.
+
+            setupWalletKit(null);
+
+            if (bitcoin.isChainFileLocked()) {
+                informationalAlert("Already running", "This application is already running and cannot be started twice.");
+                Platform.exit();
+                return;
+            }
+
+            primaryStage.show();
+
+            WalletSetPasswordController.estimateKeyDerivationTimeMsec();
+
+            bitcoin.addListener(new Service.Listener() {
+                @Override
+                public void failed(Service.State from, Throwable failure) {
+                    GuiUtils.crashAlert(failure);
+                }
+            }, Platform::runLater);
+            bitcoin.startAsync();
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
             throw e;
         }
-        setupWalletKit(null);
-
-        if (bitcoin.isChainFileLocked()) {
-            informationalAlert("Already running", "This application is already running and cannot be started twice.");
-            Platform.exit();
-            return;
-        }
-
-        primaryStage.show();
-
-        WalletSetPasswordController.estimateKeyDerivationTimeMsec();
-
-        bitcoin.addListener(new Service.Listener() {
-            @Override
-            public void failed(Service.State from, Throwable failure) {
-                GuiUtils.crashAlert(failure);
-            }
-        }, Platform::runLater);
-        bitcoin.startAsync();
     }
 
     public void stop() throws Exception  {
@@ -104,14 +135,14 @@ public abstract class WalletFxApp implements SupernautFxApp {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        File appDataDirectory = AppDataDirectory.get(WalletTemplateApp.APP_NAME).toFile();
+        File appDataDirectory = AppDataDirectory.get(getAppName()).toFile();
         bitcoin = new WalletAppKit(networkParameters, PREFERRED_OUTPUT_SCRIPT_TYPE, null, appDataDirectory, getWalletFileName()) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
                 // their own money!
                 bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-                Platform.runLater(mainWindow.controller::onBitcoinSetup);
+                Platform.runLater(mainWindowController::onBitcoinSetup);
             }
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
@@ -119,13 +150,32 @@ public abstract class WalletFxApp implements SupernautFxApp {
         if (networkParameters == RegTestParams.get()) {
             bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         }
-        bitcoin.setDownloadListener(mainWindow.controller.progressBarUpdater())
+        bitcoin.setDownloadListener(mainWindowController.progressBarUpdater())
                 .setBlockingStartup(false)
-                .setUserAgent(WalletTemplateApp.APP_NAME, "1.0");
+                .setUserAgent(getAppName(), "1.0");
         if (seed != null)
             bitcoin.restoreWalletFromSeed(seed);
     }
 
+    public WalletMainWindowController startMainWindow(Stage primaryStage, String fxmlName, String cssName) throws IOException {
+        // Load the GUI. The MainWindowController class will be automagically created and wired up.
+        // Note that the location URL returned from getResource() will be in the package of the concrete subclass
+        URL location = getClass().getResource(fxmlName);
+        FXMLLoader loader = getFxmlLoaderFactory().get(location);
+        Pane mainUI = loader.load();
+        WalletMainWindowController mainWindowController = loader.getController();
+        mainWindowController.mainUI = mainUI;
+
+        Scene scene = mainWindowController.controllerStart(mainUI, cssName);
+        primaryStage.setScene(scene);
+
+        return mainWindowController;
+    }
+
+    public FxmlLoaderFactory getFxmlLoaderFactory() {
+        return loaderFactory;
+    }
+    
     public WalletAppKit getWalletAppKit() {
         return bitcoin;
     }

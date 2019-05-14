@@ -27,10 +27,8 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.bitcoinj.walletfx.MainController;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.function.BiConsumer;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -169,18 +167,7 @@ public class GuiUtils {
         scale.play();
         return scale;
     }
-
-    /**
-     * A useful helper for development purposes. Used as a switch for loading files from local disk, allowing live
-     * editing whilst the app runs without rebuilds.
-     */
-    public static URL getResource(String name) {
-        if (false)
-            return unchecked(() -> new URL("file:///your/path/here/src/main/wallettemplate/" + name));
-        else
-            return MainController.class.getResource(name);
-    }
-
+    
     public static void checkGuiThread() {
         checkState(Platform.isFxApplicationThread());
     }

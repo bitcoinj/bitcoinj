@@ -47,7 +47,7 @@ public class WalletSetPasswordController implements OverlayWindowController {
     @FXML private Button closeButton;
     @FXML private Label explanationLabel;
 
-    private OverlayableWindow.OverlayUI overlayUI;
+    private OverlayableWindowController.OverlayUI overlayUI;
 
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
@@ -59,20 +59,20 @@ public class WalletSetPasswordController implements OverlayWindowController {
             .build();
     
     private final WalletFxApp app;
-    private final WalletMainWindow mainWindow;
+    private final WalletMainWindowController mainWindow;
 
-    public WalletSetPasswordController(WalletFxApp app, WalletMainWindow mainWindow) {
+    public WalletSetPasswordController(WalletFxApp app, WalletMainWindowController mainWindow) {
         this.app = app;
         this.mainWindow = mainWindow;
     }
 
     @Override
-    public OverlayableWindow.OverlayUI getOverlayUI() {
+    public OverlayableWindowController.OverlayUI getOverlayUI() {
         return overlayUI;
     }
 
     @Override
-    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+    public void setOverlayUI(OverlayableWindowController.OverlayUI ui) {
         overlayUI = ui;
     }
 

@@ -57,25 +57,25 @@ public class WalletSettingsController implements OverlayWindowController {
     @FXML private TextArea wordsArea;
     @FXML private Button restoreButton;
 
-    private OverlayableWindow.OverlayUI overlayUI;
+    private OverlayableWindowController.OverlayUI overlayUI;
 
     private KeyParameter aesKey;
 
     private final WalletFxApp app;
-    private final WalletMainWindow mainWindow;
+    private final WalletMainWindowController mainWindow;
 
-    public WalletSettingsController(WalletFxApp app, WalletMainWindow mainWindow) {
+    public WalletSettingsController(WalletFxApp app, WalletMainWindowController mainWindow) {
         this.app = app;
         this.mainWindow = mainWindow;
     }
 
     @Override
-    public OverlayableWindow.OverlayUI getOverlayUI() {
+    public OverlayableWindowController.OverlayUI getOverlayUI() {
         return overlayUI;
     }
 
     @Override
-    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+    public void setOverlayUI(OverlayableWindowController.OverlayUI ui) {
         overlayUI = ui;
     }
 
@@ -152,12 +152,12 @@ public class WalletSettingsController implements OverlayWindowController {
     }
 
     private void askForPasswordAndRetry() {
-        OverlayableWindow.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
+        OverlayableWindowController.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
-            OverlayableWindow.OverlayUI<WalletSettingsController> screen = mainWindow.overlayUI("wallet_settings.fxml");
+            OverlayableWindowController.OverlayUI<WalletSettingsController> screen = mainWindow.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
         });
     }

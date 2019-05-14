@@ -50,7 +50,7 @@ public class WalletPasswordController implements OverlayWindowController {
     @FXML private GridPane widgetGrid;
     @FXML private Label explanationLabel;
 
-    private OverlayableWindow.OverlayUI overlayUI;
+    private OverlayableWindowController.OverlayUI overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
@@ -61,12 +61,12 @@ public class WalletPasswordController implements OverlayWindowController {
     }
 
     @Override
-    public OverlayableWindow.OverlayUI getOverlayUI() {
+    public OverlayableWindowController.OverlayUI getOverlayUI() {
         return overlayUI;
     }
 
     @Override
-    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+    public void setOverlayUI(OverlayableWindowController.OverlayUI ui) {
         overlayUI = ui;
     }
 

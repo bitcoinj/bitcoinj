@@ -20,7 +20,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import org.consensusj.supernautfx.FxmlLoaderFactory;
-import org.bitcoinj.walletfx.utils.GuiUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -37,21 +36,21 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.fadeOutAndRemove;
 /**
  * A window that can have another Pane displayed on top of it as a modal
  */
-public abstract class OverlayableWindow {
+public abstract class OverlayableWindowController {
 
     protected StackPane uiStack;
     protected Pane mainUI;
     @Nullable
-    OverlayableWindow.OverlayUI currentOverlay;
+    OverlayableWindowController.OverlayUI currentOverlay;
 
     private Node stopClickPane = new Pane();
 
 
     abstract FxmlLoaderFactory getFxmlLoaderFactory();
 
-    public <T extends OverlayWindowController> OverlayableWindow.OverlayUI<T> overlayUI(Node node, T controller) {
+    public <T extends OverlayWindowController> OverlayableWindowController.OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
-        OverlayableWindow.OverlayUI<T> pair = new OverlayableWindow.OverlayUI<T>(this, node, controller);
+        OverlayableWindowController.OverlayUI<T> pair = new OverlayableWindowController.OverlayUI<T>(this, node, controller);
         if (controller != null) {
             controller.setOverlayUI(pair);
         }
@@ -60,15 +59,16 @@ public abstract class OverlayableWindow {
     }
 
     /** Loads the FXML file with the given name, blurs out the main UI and puts this one on top. */
-    public <T extends OverlayWindowController> OverlayableWindow.OverlayUI<T> overlayUI(String name) {
+    public <T extends OverlayWindowController> OverlayableWindowController.OverlayUI<T> overlayUI(String name) {
         try {
             checkGuiThread();
             // Load the UI from disk.
-            URL location = GuiUtils.getResource(name);
+            // Note that the location URL returned from getResource() will be in the package of the concrete subclass
+            URL location = OverlayableWindowController.class.getResource(name);
             FXMLLoader loader = getFxmlLoaderFactory().get(location);
             Pane ui = loader.load();
             T controller = loader.getController();
-            OverlayableWindow.OverlayUI<T> pair = new OverlayableWindow.OverlayUI<T>(this, ui, controller);
+            OverlayableWindowController.OverlayUI<T> pair = new OverlayableWindowController.OverlayUI<T>(this, ui, controller);
             if (controller != null) {
                 controller.setOverlayUI(pair);
             }
@@ -80,11 +80,11 @@ public abstract class OverlayableWindow {
     }
 
     public class OverlayUI<T> {
-        private OverlayableWindow parentWindow;
+        private OverlayableWindowController parentWindow;
         public Node ui;
         public T controller;
 
-        public OverlayUI(OverlayableWindow parentWindow, Node ui, T controller) {
+        public OverlayUI(OverlayableWindowController parentWindow, Node ui, T controller) {
             this.ui = ui;
             this.controller = controller;
         }

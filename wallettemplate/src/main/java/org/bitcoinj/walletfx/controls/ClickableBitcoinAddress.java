@@ -43,9 +43,9 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
 import org.bitcoinj.walletfx.OverlayWindowController;
-import org.bitcoinj.walletfx.OverlayableWindow;
+import org.bitcoinj.walletfx.OverlayableWindowController;
 import org.bitcoinj.walletfx.WalletFxApp;
-import org.bitcoinj.walletfx.WalletMainWindow;
+import org.bitcoinj.walletfx.WalletMainWindowController;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.QRCodeImages;
 
@@ -65,7 +65,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindow
     @FXML protected Label copyWidget;
     @FXML protected Label qrCode;
 
-    private OverlayableWindow.OverlayUI overlayUI;
+    private OverlayableWindowController.OverlayUI overlayUI;
 
     protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
@@ -94,12 +94,12 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindow
     }
 
     @Override
-    public OverlayableWindow.OverlayUI getOverlayUI() {
+    public OverlayableWindowController.OverlayUI getOverlayUI() {
         return overlayUI;
     }
 
     @Override
-    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+    public void setOverlayUI(OverlayableWindowController.OverlayUI ui) {
         overlayUI = ui;
     }
 
@@ -159,7 +159,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindow
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
-        final OverlayableWindow.OverlayUI<ClickableBitcoinAddress> overlay = WalletMainWindow.instance.overlayUI(pane, this);
+        final OverlayableWindowController.OverlayUI<ClickableBitcoinAddress> overlay = WalletMainWindowController.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
 

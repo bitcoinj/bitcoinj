@@ -50,26 +50,26 @@ public class SendMoneyController implements OverlayWindowController {
     @FXML private TextField amountEdit;
     @FXML private Label btcLabel;
 
-    private OverlayableWindow.OverlayUI overlayUI;
+    private OverlayableWindowController.OverlayUI overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
     private final WalletFxApp app;
-    private final WalletMainWindow mainWindow;
+    private final WalletMainWindowController mainWindow;
 
-    public SendMoneyController(WalletFxApp app, WalletMainWindow mainWindow) {
+    public SendMoneyController(WalletFxApp app, WalletMainWindowController mainWindow) {
         this.app = app;
         this.mainWindow = mainWindow;
     }
 
     @Override
-    public OverlayableWindow.OverlayUI getOverlayUI() {
+    public OverlayableWindowController.OverlayUI getOverlayUI() {
         return overlayUI;
     }
 
     @Override
-    public void setOverlayUI(OverlayableWindow.OverlayUI ui) {
+    public void setOverlayUI(OverlayableWindowController.OverlayUI ui) {
         overlayUI = ui;
     }
 
@@ -132,14 +132,14 @@ public class SendMoneyController implements OverlayWindowController {
     }
 
     private void askForPasswordAndRetry() {
-        OverlayableWindow.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
+        OverlayableWindowController.OverlayUI<WalletPasswordController> pwd = mainWindow.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            OverlayableWindow.OverlayUI<SendMoneyController> screen = mainWindow.overlayUI("send_money.fxml");
+            OverlayableWindowController.OverlayUI<SendMoneyController> screen = mainWindow.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);

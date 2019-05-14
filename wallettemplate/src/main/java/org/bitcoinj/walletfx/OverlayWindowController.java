@@ -19,6 +19,6 @@ package org.bitcoinj.walletfx;
  * Interface for controllers displayed via OverlayWindow.OverlayUI
  */
 public interface OverlayWindowController {
-    OverlayableWindow.OverlayUI getOverlayUI();
-    void setOverlayUI(OverlayableWindow.OverlayUI ui);
+    OverlayableWindowController.OverlayUI getOverlayUI();
+    void setOverlayUI(OverlayableWindowController.OverlayUI ui);
 }
