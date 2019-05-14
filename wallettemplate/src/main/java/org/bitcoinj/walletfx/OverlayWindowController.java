@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package wallettemplate;
-
-import org.bitcoinj.walletfx.WalletMainWindow;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
-
-import javax.inject.Singleton;
+package org.bitcoinj.walletfx;
 
 /**
- * Subclass of WalletMainWindow that allows customization
- * TODO: Consider moving some of existing template functionality down to this class.
+ * Interface for controllers displayed via OverlayWindow.OverlayUI
  */
-@Singleton
-public class WalletTemplateMainWindow extends WalletMainWindow {
-    public WalletTemplateMainWindow(FxmlLoaderFactory loaderFactory) {
-        super(loaderFactory);
-    }
+public interface OverlayWindowController {
+    OverlayableWindow.OverlayUI getOverlayUI();
+    void setOverlayUI(OverlayableWindow.OverlayUI ui);
 }

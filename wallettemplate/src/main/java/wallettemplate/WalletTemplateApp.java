@@ -16,46 +16,19 @@
 
 package wallettemplate;
 
-import com.google.common.util.concurrent.Service;
-import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.Wallet;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
-import org.consensusj.supernautfx.SupernautFxApp;
+import org.bitcoinj.walletfx.WalletFxApp;
 import org.consensusj.supernautfx.SupernautFxLauncher;
-import wallettemplate.controls.NotificationBarPane;
-import wallettemplate.utils.AppDataDirectory;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.TextFieldValidator;
 
-import javax.annotation.Nullable;
 import javax.inject.Singleton;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-
-import static wallettemplate.utils.GuiUtils.informationalAlert;
 
 /**
  * Main class for WalletTemplate that uses SupernautFx and does not have
- * to subclass javafx.application.Application. This is basically copied from the old
- * Main class which is now deprecated.
+ * to subclass javafx.application.Application.
  */
 @Singleton
-public class WalletTemplateApp extends WalletFxApp   {
+public class WalletTemplateApp extends WalletFxApp {
     @Deprecated
     public static final String APP_NAME = "WalletTemplate";
 
