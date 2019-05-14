@@ -20,6 +20,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -48,15 +49,25 @@ public class BitcoinUIModel {
     public final void setWallet(Wallet wallet) {
         wallet.addChangeEventListener(Platform::runLater, new WalletChangeEventListener() {
             @Override
-            public void onWalletChanged(Wallet wallet) {
-                update(wallet);
+            public void onWalletChanged(Wallet w) {
+                updateBalance(wallet);
             }
         });
-        update(wallet);
+        wallet.addCurrentKeyChangeEventListener(Platform::runLater, new CurrentKeyChangeEventListener() {
+            @Override
+            public void onCurrentKeyChanged() {
+                updateAddress(wallet);
+            }
+        });
+        updateBalance(wallet);
+        updateAddress(wallet);
     }
 
-    private void update(Wallet wallet) {
+    private void updateBalance(Wallet wallet) {
         balance.set(wallet.getBalance());
+    }
+
+    private void updateAddress(Wallet wallet) {
         address.set(wallet.currentReceiveAddress());
     }
 

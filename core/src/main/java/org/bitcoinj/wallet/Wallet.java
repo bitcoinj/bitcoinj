@@ -62,6 +62,7 @@ import org.bitcoinj.signers.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.*;
+import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
@@ -2790,6 +2791,22 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Adds an event listener object. Methods on this object are called when a current key and/or address
+     * changes. The listener is executed in the user thread.
+     */
+    public void addCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener) {
+        keyChainGroup.addCurrentKeyChangeEventListener(listener);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when a current key and/or address
+     * changes. The listener is executed by the given executor.
+     */
+    public void addCurrentKeyChangeEventListener(Executor executor, CurrentKeyChangeEventListener listener) {
+        keyChainGroup.addCurrentKeyChangeEventListener(listener, executor);
+    }
+
+    /**
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. Runs the listener methods in the user thread.
      */
@@ -2870,6 +2887,14 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean removeKeyChainEventListener(KeyChainEventListener listener) {
         return keyChainGroup.removeEventListener(listener);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that
+     * listener was never added.
+     */
+    public boolean removeCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener) {
+        return keyChainGroup.removeCurrentKeyChangeEventListener(listener);
     }
 
     /**
