@@ -1,0 +1,4 @@
+# Set JDK version for Jitpack.io builds
+jdk:
+  - openjdk11
+
