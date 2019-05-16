@@ -62,10 +62,4 @@ module org.bitcoinj.walletfx {
     opens org.bitcoinj.walletfx to javafx.fxml;
     opens org.bitcoinj.walletfx.controls to javafx.fxml;
     opens org.bitcoinj.walletfx.utils to javafx.fxml;
-
-    /* Export/Open the WalletTemplate App itself -- will eventually be its own module */
-    exports wallettemplate;
-    
-    opens wallettemplate to javafx.fxml, java.base;
-
 }

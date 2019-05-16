@@ -22,9 +22,11 @@ include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
 if (GradleVersion.current().compareTo(minFxGradleVersion) >= 0 && JavaVersion.current().isJava11Compatible()) {
-    System.err.println "Including wallettemplate because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
-    include 'wallettemplate'
-    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+    System.err.println "Including bitcoinj-walletfx because ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+    include 'bitcoinj-walletfx'
+    include 'bitcoinj-walletfx-template'
 } else {
-    System.err.println "Skipping wallettemplate, requires ${minFxGradleVersion}+ and Java 11+, currently running: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
+    System.err.println "Skipping bitcoinj-walletfx, requires ${minFxGradleVersion}+ and Java 11+, currently running: ${GradleVersion.current()} and Java ${JavaVersion.current()}"
 }
+include 'bitcoinj-walletfx-template'
+
