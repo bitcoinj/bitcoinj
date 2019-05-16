@@ -50,7 +50,7 @@ module org.bitcoinj.walletfx {
     requires com.google.common;
 
     requires protobuf.java;
-    requires core;                  // ZXing Filename-based automatic module name
+    requires com.google.zxing;
     requires fontawesomefx;         // Filename-based automatic module name
 
     /* Export/Open Wallet Framework packages */

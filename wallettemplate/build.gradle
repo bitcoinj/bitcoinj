@@ -10,6 +10,7 @@ plugins {
 
 repositories {
     maven { url 'https://dl.bintray.com/consensusj/maven' }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -20,7 +21,8 @@ dependencies {
 
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
-    implementation 'com.google.zxing:core:3.3.3'
+    //implementation 'com.google.zxing:core:3.3.3'
+    implementation "com.github.msgilligan.zxing:core:msgilligan-modular-javase-SNAPSHOT"
 
     implementation 'org.slf4j:slf4j-api:1.8.0-beta4'
     implementation 'org.slf4j:slf4j-jdk14:1.8.0-beta4'
