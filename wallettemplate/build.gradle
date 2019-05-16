@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'maven'
     id 'eclipse'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.7'
@@ -27,6 +28,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:1.1.0"
 }
 
+version = '0.16-SNAPSHOT'
 
 javafx {
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
@@ -41,6 +43,21 @@ compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 mainClassName = "$moduleName/wallettemplate.WalletTemplateApp"
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
 
 jlink {
     addExtraDependencies("javafx")
