@@ -57,6 +57,7 @@ module org.bitcoinj.walletfx {
     exports org.bitcoinj.walletfx;
     exports org.bitcoinj.walletfx.controls;
     exports org.bitcoinj.walletfx.utils;
+    exports org.bitcoinj.walletfx.utils.easing;
 
     opens org.bitcoinj.walletfx to javafx.fxml;
     opens org.bitcoinj.walletfx.controls to javafx.fxml;
