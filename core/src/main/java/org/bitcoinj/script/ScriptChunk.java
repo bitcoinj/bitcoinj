@@ -44,11 +44,11 @@ public class ScriptChunk {
     public final byte[] data;
     private final int startLocationInProgram;
 
-    public ScriptChunk(int opcode, byte[] data) {
+    public ScriptChunk(int opcode, @Nullable byte[] data) {
         this(opcode, data, -1);
     }
 
-    public ScriptChunk(int opcode, byte[] data, int startLocationInProgram) {
+    public ScriptChunk(int opcode, @Nullable byte[] data, int startLocationInProgram) {
         this.opcode = opcode;
         this.data = data;
         this.startLocationInProgram = startLocationInProgram;
