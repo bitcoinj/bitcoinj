@@ -81,12 +81,12 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
     }
 
     /**
-     * This implementation uses an optimized Google Guava method to compare {@code bytes}.
+     * We compare using toString(). This has the advantage of being consistent with equals() for subclasses,
+     * as well as producing a sort order that is sensible from a human perspective.
      */
     @Override
     public int compareTo(PrefixedChecksummedBytes o) {
-        int result = this.params.getId().compareTo(o.params.getId());
-        return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
+        return toString().compareTo(o.toString());
     }
 
     // Java serialization
