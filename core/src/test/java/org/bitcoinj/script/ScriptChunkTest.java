@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
 import com.google.common.primitives.Bytes;
@@ -34,6 +35,13 @@ import com.google.common.primitives.Bytes;
 public class ScriptChunkTest {
 
     private static final Random RANDOM = new Random(42);
+
+    @Test
+    public void equalsContract() {
+        EqualsVerifier.forClass(ScriptChunk.class)
+                .usingGetClass()
+                .verify();
+    }
 
     @Test
     public void testShortestPossibleDataPush() {

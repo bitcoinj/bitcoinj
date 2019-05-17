@@ -42,7 +42,7 @@ public class ScriptChunk {
      */
     @Nullable
     public final byte[] data;
-    private int startLocationInProgram;
+    private final int startLocationInProgram;
 
     public ScriptChunk(int opcode, byte[] data) {
         this(opcode, data, -1);
