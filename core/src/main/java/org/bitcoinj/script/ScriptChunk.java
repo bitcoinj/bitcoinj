@@ -42,16 +42,10 @@ public class ScriptChunk {
      */
     @Nullable
     public final byte[] data;
-    private final int startLocationInProgram;
 
     public ScriptChunk(int opcode, @Nullable byte[] data) {
-        this(opcode, data, -1);
-    }
-
-    public ScriptChunk(int opcode, @Nullable byte[] data, int startLocationInProgram) {
         this.opcode = opcode;
         this.data = data;
-        this.startLocationInProgram = startLocationInProgram;
     }
 
     public boolean equalsOpCode(int opcode) {
@@ -70,11 +64,6 @@ public class ScriptChunk {
      */
     public boolean isPushData() {
         return opcode <= OP_16;
-    }
-
-    public int getStartLocationInProgram() {
-        checkState(startLocationInProgram >= 0);
-        return startLocationInProgram;
     }
 
     /** If this chunk is an OP_N opcode returns the equivalent integer value. */
@@ -150,6 +139,22 @@ public class ScriptChunk {
         return stream.toByteArray();
     }
 
+    /*
+     * The size, in bytes, that this chunk would occupy if serialized into a Script.
+     */
+    public int size() {
+        final int opcodeLength = 1;
+
+        int pushDataSizeLength = 0;
+        if (opcode == OP_PUSHDATA1) pushDataSizeLength = 1;
+        else if (opcode == OP_PUSHDATA2) pushDataSizeLength = 2;
+        else if (opcode == OP_PUSHDATA4) pushDataSizeLength = 4;
+
+        final int dataLength = data == null ? 0 : data.length;
+
+        return opcodeLength + pushDataSizeLength + dataLength;
+    }
+
     @Override
     public String toString() {
         if (data == null)
@@ -162,12 +167,11 @@ public class ScriptChunk {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ScriptChunk other = (ScriptChunk) o;
-        return opcode == other.opcode && startLocationInProgram == other.startLocationInProgram
-            && Arrays.equals(data, other.data);
+        return opcode == other.opcode && Arrays.equals(data, other.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(opcode, startLocationInProgram, Arrays.hashCode(data));
+        return Objects.hash(opcode, Arrays.hashCode(data));
     }
 }
