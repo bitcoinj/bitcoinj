@@ -1650,8 +1650,8 @@ public class Script {
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
         if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isP2SH(scriptPubKey)) {
             for (ScriptChunk chunk : chunks)
-                if (chunk.isOpCode() && chunk.opcode > OP_16)
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained script ops");
+                if (!chunk.isPushData())
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained the script op " + chunk);
             
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
             Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
