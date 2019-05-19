@@ -22,6 +22,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -41,6 +42,18 @@ public class ScriptChunkTest {
         EqualsVerifier.forClass(ScriptChunk.class)
                 .usingGetClass()
                 .verify();
+    }
+
+    @Test
+    public void testToStringOnInvalidScriptChunk() {
+        // see https://github.com/bitcoinj/bitcoinj/issues/1860
+        // In summary: toString() throws when given an invalid ScriptChunk.
+        // It should perhaps be impossible to even construct such a ScriptChunk, but
+        // until that is the case, toString() should not throw.
+        ScriptChunk pushWithoutData = new ScriptChunk(OP_PUSHDATA1, null);
+
+        // the chunk is invalid, but at least we can determine its opcode
+        assertEquals("PUSHDATA1", pushWithoutData.toString());
     }
 
     @Test
