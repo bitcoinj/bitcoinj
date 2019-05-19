@@ -281,6 +281,8 @@ public class ScriptOpCodes {
 
     private static final Map<String, Integer> opCodeNameMap = ImmutableMap.<String, Integer>builder()
             .putAll(opCodeMap.inverse())
+            .put("OP_FALSE", OP_FALSE)
+            .put("OP_TRUE", OP_TRUE)
             .put("NOP2", OP_NOP2)
             .put("NOP3", OP_NOP3)
             .build();
