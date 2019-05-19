@@ -205,7 +205,6 @@ public class ScriptPattern {
         if (chunks.size() < 4) return false;
         ScriptChunk chunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY].
-        if (!chunk.isOpCode()) return false;
         if (!(chunk.equalsOpCode(OP_CHECKMULTISIG) || chunk.equalsOpCode(OP_CHECKMULTISIGVERIFY))) return false;
         try {
             // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
