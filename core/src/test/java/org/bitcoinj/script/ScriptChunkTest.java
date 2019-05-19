@@ -44,6 +44,18 @@ public class ScriptChunkTest {
     }
 
     @Test
+    public void testToStringOnInvalidScriptChunk() {
+        // see https://github.com/bitcoinj/bitcoinj/issues/1860
+        // In summary: toString() exploded when given an invalid ScriptChunk.
+        // It should perhaps be impossible to even construct such a ScriptChunk, but
+        // until that is the case, toString() should not throw.
+        ScriptChunk pushWithoutData = new ScriptChunk(OP_PUSHDATA1, null);
+
+        // all we care about, for now, is that the line below does not throw
+        pushWithoutData.toString();
+    }
+
+    @Test
     public void testShortestPossibleDataPush() {
         assertTrue("empty push", new ScriptBuilder().data(new byte[0]).build().getChunks().get(0)
                 .isShortestPossiblePushData());
