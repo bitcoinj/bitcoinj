@@ -27,20 +27,20 @@ public class ScriptChunkSizeTest {
     @Parameterized.Parameters
     public static Collection<ScriptChunk> data() {
         ArrayList<ScriptChunk> opcodes = new ArrayList<>(0xff);
-        for (int op = OP_NOP; op < 0xff; op++) opcodes.add(new ScriptChunk(op, null));
+        for (int op = OP_NOP; op < 0xff + 1; op++) opcodes.add(new ScriptChunk(op, null));
 
         ArrayList<ScriptChunk> smallData = new ArrayList<>(OP_PUSHDATA1);
         for (int op = 1; op < OP_PUSHDATA1; op++) smallData.add(new ScriptChunk(op, randomBytes(op)));
 
         ArrayList<ScriptChunk> pushData1 = new ArrayList<>(0xff);
-        for (int i = 0; i < 0xff; i++) pushData1.add(new ScriptChunk(OP_PUSHDATA1, randomBytes(i)));
+        for (int i = 0; i < 0xff + 1; i++) pushData1.add(new ScriptChunk(OP_PUSHDATA1, randomBytes(i)));
 
-        ArrayList<ScriptChunk> pushData2 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE);
-        for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE; i++)
+        ArrayList<ScriptChunk> pushData2 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
+        for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE + 1; i++)
             pushData2.add(new ScriptChunk(OP_PUSHDATA2, randomBytes(i)));
 
-        ArrayList<ScriptChunk> pushData4 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE);
-        for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE; i++)
+        ArrayList<ScriptChunk> pushData4 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
+        for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE + 1; i++)
             pushData4.add(new ScriptChunk(OP_PUSHDATA4, randomBytes(i)));
 
         return ImmutableList.<ScriptChunk>builder()
