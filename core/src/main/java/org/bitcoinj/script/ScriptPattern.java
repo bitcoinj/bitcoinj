@@ -218,7 +218,7 @@ public class ScriptPattern {
             }
             // First chunk must be an OP_N opcode too.
             if (decodeFromOpN(chunks.get(0).opcode) < 1) return false;
-        } catch (IllegalStateException e) {
+        } catch (RuntimeException e) {
             return false;   // Not an OP_N opcode.
         }
         return true;
