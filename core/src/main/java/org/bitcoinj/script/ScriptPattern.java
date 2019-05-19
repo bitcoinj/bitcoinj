@@ -210,7 +210,6 @@ public class ScriptPattern {
         try {
             // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
             ScriptChunk m = chunks.get(chunks.size() - 2);
-            if (!m.isOpCode()) return false;
             int numKeys = decodeFromOpN(m.opcode);
             if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
             for (int i = 1; i < chunks.size() - 2; i++) {
