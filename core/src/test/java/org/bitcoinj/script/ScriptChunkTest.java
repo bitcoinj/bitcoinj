@@ -21,9 +21,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Random;
 
@@ -51,8 +49,8 @@ public class ScriptChunkTest {
         // until that is the case, toString() should not throw.
         ScriptChunk pushWithoutData = new ScriptChunk(OP_PUSHDATA1, null);
 
-        // all we care about, for now, is that the line below does not throw
-        pushWithoutData.toString();
+        // the chunk is invalid, but at least we can determine its opcode
+        assertEquals("PUSHDATA1", pushWithoutData.toString());
     }
 
     @Test

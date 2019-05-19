@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 import static org.bitcoinj.script.ScriptOpCodes.*;
 
 /**
@@ -152,17 +153,9 @@ public class ScriptChunk {
 
     @Override
     public String toString() {
-        StringBuilder buf = new StringBuilder();
-        if (isOpCode()) {
-            buf.append(getOpCodeName(opcode));
-        } else if (data != null) {
-            // Data chunk
-            buf.append(getPushDataName(opcode)).append("[").append(Utils.HEX.encode(data)).append("]");
-        } else {
-            // Small num
-            buf.append(Script.decodeFromOpN(opcode));
-        }
-        return buf.toString();
+        if (data == null)
+            return getOpCodeName(opcode);
+        return format("%s[%s]", getPushDataName(opcode), Utils.HEX.encode(data));
     }
 
     @Override
