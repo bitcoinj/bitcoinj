@@ -68,7 +68,6 @@ public class ScriptChunk {
 
     /** If this chunk is an OP_N opcode returns the equivalent integer value. */
     public int decodeOpN() {
-        checkState(isOpCode());
         return Script.decodeFromOpN(opcode);
     }
 
