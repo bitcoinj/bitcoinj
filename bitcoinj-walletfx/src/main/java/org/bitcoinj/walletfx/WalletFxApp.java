@@ -142,7 +142,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(getAppName()).toFile();
-        bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, null, appDataDirectory, getWalletFileName()) {
+        bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, getWalletFileName()) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
