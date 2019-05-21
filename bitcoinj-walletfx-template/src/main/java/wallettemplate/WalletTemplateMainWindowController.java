@@ -26,6 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.walletfx.OverlayableWindowController;
+import org.bitcoinj.walletfx.SendMoneyController;
 import org.bitcoinj.walletfx.WalletFxApp;
 import org.bitcoinj.walletfx.WalletMainWindowController;
 import org.bitcoinj.walletfx.WalletSettingsController;
@@ -70,6 +71,8 @@ public class WalletTemplateMainWindowController extends WalletMainWindowControll
     private void sendMoneyOut(ActionEvent event) {
         // Hide this UI and show the send money UI. This UI won't be clickable until the user dismisses send_money.
         overlayUI("send_money.fxml");
+        OverlayableWindowController.OverlayUI<SendMoneyController> screen = overlayUI("send_money.fxml");
+        // screen.controller.setSigner(xxx);  // A HWSigner can be set here
     }
 
     @FXML

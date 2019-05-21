@@ -16,6 +16,7 @@
 
 package org.bitcoinj.walletfx;
 
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.layout.HBox;
 import org.bitcoinj.core.*;
@@ -45,6 +46,7 @@ import javax.inject.Singleton;
 public class SendMoneyController implements OverlayWindowController {
     @FXML private Button sendBtn;
     @FXML private Button cancelBtn;
+    @FXML private Button signBtn;
     @FXML private TextField address;
     @FXML private Label titleLabel;
     @FXML private TextField amountEdit;
@@ -57,6 +59,8 @@ public class SendMoneyController implements OverlayWindowController {
 
     private final WalletFxApp app;
     private final WalletMainWindowController mainWindow;
+
+    private HardwareSigner hwSigner;
 
     public SendMoneyController(WalletFxApp app, WalletMainWindowController mainWindow) {
         this.app = app;
@@ -77,29 +81,55 @@ public class SendMoneyController implements OverlayWindowController {
     public void initialize() {
         Coin balance = app.getWallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(app.getNetParams(), address, sendBtn);
+        BitcoinAddressValidator addressValidator = new BitcoinAddressValidator(app.getNetParams(), address);
+        addressValidator.getObservableValidity().addListener(this::addressValidityChanged);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
         address.setPromptText(Address.fromKey(app.getNetParams(), new ECKey(), app.getPreferredOutputScriptType()).toString());
+        initSigner();
+    }
+
+    public void setSigner(HardwareSigner hardwareSigner) {
+        this.hwSigner = hardwareSigner;
+        initSigner();
+    }
+
+    private void initSigner() {
+        if (hwSigner != null) {
+            signBtn.setText(hwSigner.getButtonText());
+        }
+    }
+
+    private void addressValidityChanged(ObservableValue<? extends Boolean> observable, Boolean oldVal, Boolean newVal) {
+        // Send is disabled if address is not valid
+        sendBtn.setDisable(!newVal);
+        // Sign is disabled if address is not valid OR there is no hwSigner
+        signBtn.setDisable(!newVal || hwSigner == null);
     }
 
     public void cancel(ActionEvent event) {
         overlayUI.done();
     }
 
+    public void sign(ActionEvent event) {
+        SendRequest req = createSendRequest();
+        try {
+            req.signInputs = false;
+            app.getWallet().completeTx(req);
+        } catch (InsufficientMoneyException e) {
+            informationalAlert("Could not empty the wallet",
+                    "You may have too little money left in the wallet to make a transaction.");
+            overlayUI.done();
+        }
+        hwSigner.displaySigningOverlay(req.tx, this);
+    }
+
     public void send(ActionEvent event) {
         // Address exception cannot happen as we validated it beforehand.
         try {
-            Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(app.getNetParams(), address.getText());
-            SendRequest req;
-            if (amount.equals(app.getWallet().getBalance()))
-                req = SendRequest.emptyWallet(destination);
-            else
-                req = SendRequest.to(destination, amount);
-            req.aesKey = aesKey;
-            sendResult = app.getWallet().sendCoins(req);
+            SendRequest req = createSendRequest();
+            sendResult = app.getWallet().sendCoins(req); // Sign and broadcast
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
@@ -129,6 +159,18 @@ public class SendMoneyController implements OverlayWindowController {
         } catch (ECKey.KeyIsEncryptedException e) {
             askForPasswordAndRetry();
         }
+    }
+
+    private SendRequest createSendRequest() {
+        Coin amount = Coin.parseCoin(amountEdit.getText());
+        Address destination = Address.fromString(app.getNetParams(), address.getText());
+        SendRequest req;
+        if (amount.equals(app.getWallet().getBalance()))
+            req = SendRequest.emptyWallet(destination);
+        else
+            req = SendRequest.to(destination, amount);
+        req.aesKey = aesKey;
+        return req;
     }
 
     private void askForPasswordAndRetry() {
