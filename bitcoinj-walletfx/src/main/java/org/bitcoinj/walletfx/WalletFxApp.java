@@ -49,7 +49,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
  *  Interface for a Java FX Wallet Application
  */
 public abstract class WalletFxApp implements SupernautFxApp {
-    private final Script.ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = Script.ScriptType.P2WPKH;
+    private final Script.ScriptType preferredOutputScriptType;
     public static WalletFxApp instance;
     private final FxmlLoaderFactory loaderFactory;
     private final String mainFxmlResName;
@@ -62,12 +62,14 @@ public abstract class WalletFxApp implements SupernautFxApp {
     
     public WalletFxApp(FxmlLoaderFactory loaderFactory,
                        NetworkParameters networkParameters,
+                       Script.ScriptType preferredOutputScriptType,
                        KeyChainGroupStructure structure,
                        String mainFxmlResName,
                        String mainCssResName) {
         instance = this;
         this.loaderFactory = loaderFactory;
         this.networkParameters = networkParameters;
+        this.preferredOutputScriptType = preferredOutputScriptType;
         this.keyChainGroupStructure = structure != null ? structure : KeyChainGroupStructure.DEFAULT;
         this.mainFxmlResName = mainFxmlResName;
         this.mainCssResName = mainCssResName;
@@ -80,7 +82,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
     }
 
     public Script.ScriptType getPreferredOutputScriptType() {
-        return PREFERRED_OUTPUT_SCRIPT_TYPE;
+        return preferredOutputScriptType;
     }
     
     public String getWalletFileName() {
@@ -140,7 +142,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(getAppName()).toFile();
-        bitcoin = new WalletAppKit(networkParameters, PREFERRED_OUTPUT_SCRIPT_TYPE, null, appDataDirectory, getWalletFileName()) {
+        bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, null, appDataDirectory, getWalletFileName()) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
