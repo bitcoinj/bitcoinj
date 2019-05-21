@@ -30,6 +30,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.consensusj.supernautfx.FxmlLoaderFactory;
 import org.consensusj.supernautfx.SupernautFxApp;
@@ -57,14 +58,17 @@ public abstract class WalletFxApp implements SupernautFxApp {
     protected WalletAppKit bitcoin;
     protected WalletMainWindowController mainWindowController;
     protected final NetworkParameters networkParameters;
+    protected final KeyChainGroupStructure keyChainGroupStructure;
     
     public WalletFxApp(FxmlLoaderFactory loaderFactory,
                        NetworkParameters networkParameters,
+                       KeyChainGroupStructure structure,
                        String mainFxmlResName,
                        String mainCssResName) {
         instance = this;
         this.loaderFactory = loaderFactory;
         this.networkParameters = networkParameters;
+        this.keyChainGroupStructure = structure != null ? structure : KeyChainGroupStructure.DEFAULT;
         this.mainFxmlResName = mainFxmlResName;
         this.mainCssResName = mainCssResName;
     }

@@ -18,6 +18,7 @@ package wallettemplate;
 
 import javafx.stage.Stage;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.WalletFxApp;
 import org.consensusj.supernautfx.FxmlLoaderFactory;
 import org.consensusj.supernautfx.SupernautFxLauncher;
@@ -41,6 +42,7 @@ public class WalletTemplateApp extends WalletFxApp {
     WalletTemplateApp(FxmlLoaderFactory loaderFactory) {
         super(loaderFactory,
                 TestNet3Params.get(),
+                KeyChainGroupStructure.DEFAULT,
                 mainFxmlResName,
                 mainCssResName);
     }
