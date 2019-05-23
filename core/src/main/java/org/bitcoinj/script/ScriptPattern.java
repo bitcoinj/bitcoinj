@@ -197,8 +197,8 @@ public class ScriptPattern {
     }
 
     /**
-     * Returns whether this script matches the format used for multisig outputs:
-     * {@code [n] [keys...] [m] CHECKMULTISIG}
+     * Returns whether this script matches the format used for m-of-n multisig outputs:
+     * {@code [m] [keys...] [n] CHECKMULTISIG}
      */
     public static boolean isSentToMultisig(Script script) {
         List<ScriptChunk> chunks = script.chunks;
