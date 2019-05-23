@@ -207,21 +207,17 @@ public class ScriptPattern {
         // Must end in OP_CHECKMULTISIG[VERIFY].
         if (!chunk.isOpCode()) return false;
         if (!(chunk.equalsOpCode(OP_CHECKMULTISIG) || chunk.equalsOpCode(OP_CHECKMULTISIGVERIFY))) return false;
-        try {
-            // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
-            ScriptChunk m = chunks.get(chunks.size() - 2);
-            if (!m.isOpCode()) return false;
-            int numKeys = decodeFromOpN(m.opcode);
-            if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
-            for (int i = 1; i < chunks.size() - 2; i++) {
-                if (chunks.get(i).isOpCode()) return false;
-            }
-            // First chunk must be an OP_N opcode too.
-            if (decodeFromOpN(chunks.get(0).opcode) < 1) return false;
-        } catch (IllegalStateException e) {
-            return false;   // Not an OP_N opcode.
+        // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
+        int nOpCode = chunks.get(chunks.size() - 2).opcode;
+        if (nOpCode < OP_1 || nOpCode > OP_16) return false;
+        int numKeys = decodeFromOpN(nOpCode);
+        if (numKeys < 1 || chunks.size() != 3 + numKeys) return false;
+        for (int i = 1; i < chunks.size() - 2; i++) {
+            if (chunks.get(i).isOpCode()) return false;
         }
-        return true;
+        // First chunk must be an OP_N opcode too.
+        int mOpCode = chunks.get(0).opcode;
+        return mOpCode >= OP_1 && mOpCode <= OP_16;
     }
 
     /**
