@@ -33,6 +33,8 @@ import javax.inject.Singleton;
 @Singleton
 public class WalletTemplateApp extends WalletFxApp {
     private static final String APP_NAME = "WalletTemplate";
+    private static final String APP_DATA_DIR_NAME = "bitcoinj";
+    private static final String WALLET_FILE_BASE_NAME = APP_DATA_DIR_NAME;
     private static final String mainFxmlResName = "main.fxml";
     private static final String mainCssResName = "wallet.css";
 
@@ -52,6 +54,16 @@ public class WalletTemplateApp extends WalletFxApp {
     @Override
     public String getAppName() {
         return WalletTemplateApp.APP_NAME;
+    }
+
+    @Override
+    protected String getAppDataDirName() {
+        return APP_DATA_DIR_NAME;
+    }
+
+    @Override
+    protected String getWalletFileBaseName() {
+        return WALLET_FILE_BASE_NAME;
     }
 
     @Override

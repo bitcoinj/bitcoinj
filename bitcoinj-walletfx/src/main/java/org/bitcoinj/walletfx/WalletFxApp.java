@@ -75,7 +75,41 @@ public abstract class WalletFxApp implements SupernautFxApp {
         this.mainCssResName = mainCssResName;
     }
 
+    /**
+     * You must provide your App name via this getter in your subclass
+     *
+     * @return The name of your app
+     */
     abstract public String getAppName();
+
+    /**
+     * Override this getter if you want to use a Data Dir with a different
+     * name from your App name.
+     * 
+     * @return The name of your apps data directory
+     */
+    protected String getAppDataDirName() {
+        return getAppName();
+    }
+
+    /**
+     * Override this getter if you want a wallet file with a different
+     * base name from your App name.
+     *
+     * @return The name of your apps data directory
+     */
+    protected String getWalletFileBaseName() {
+        return getAppName();
+    }
+
+    /**
+     * Get the full system-dependent path of the apps data directory
+     *
+     * @return The data directory
+     */
+    public File getAppDataDir() {
+        return AppDataDirectory.get(getAppDataDirName()).toFile();
+    }
 
     public NetworkParameters getNetParams() {
         return networkParameters;
@@ -86,7 +120,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
     }
     
     public String getWalletFileName() {
-        return getAppName().replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
+        return getWalletFileBaseName().replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
                 + networkParameters.getPaymentProtocolId();
     }
 
@@ -107,8 +141,9 @@ public abstract class WalletFxApp implements SupernautFxApp {
             // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
             // a future version.
             Threading.USER_THREAD = Platform::runLater;
-            // Create the app kit. It won't do any heavyweight initialization until after we start it.
 
+
+            // Create the WalletAppKit. It won't do any heavyweight initialization until after we start it.
             setupWalletKit(null);
 
             if (bitcoin.isChainFileLocked()) {
@@ -141,8 +176,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        File appDataDirectory = AppDataDirectory.get(getAppName()).toFile();
-        bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, getWalletFileName()) {
+        bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, keyChainGroupStructure, getAppDataDir(), getWalletFileName()) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
