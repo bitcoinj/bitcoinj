@@ -991,7 +991,7 @@ public class ECKey implements EncryptableItem {
         //   1.2. Convert the integer x to an octet string X of length mlen using the conversion routine
         //        specified in Section 2.3.7, where mlen = ⌈(log2 p)/8⌉ or mlen = ⌈m/8⌉.
         //   1.3. Convert the octet string (16 set binary digits)||X to an elliptic curve point R using the
-        //        conversion routine specified in Section 2.3.4. If this conversion routine outputs “invalid”, then
+        //        conversion routine specified in Section 2.3.4. If this conversion routine outputs "invalid", then
         //        do another iteration of Step 1.
         //
         // More concisely, what these points mean is to use X as a compressed public key.
