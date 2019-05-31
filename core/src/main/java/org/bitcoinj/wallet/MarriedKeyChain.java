@@ -31,6 +31,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,6 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * <p>A multi-signature keychain using synchronized HD keys (a.k.a HDM)</p>
@@ -185,7 +185,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         checkState(numLeafKeysIssued() == 0, "Active keychain already has keys in use");
         checkState(followingKeyChains == null);
 
-        List<DeterministicKeyChain> followingKeyChains = Lists.newArrayList();
+        List<DeterministicKeyChain> followingKeyChains = new ArrayList<>();
 
         for (DeterministicKey key : followingAccountKeys) {
             checkArgument(key.getPath().size() == getAccountPath().size(), "Following keys have to be account keys");
@@ -219,7 +219,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = newArrayList();
+        List<Protos.Key> result = new ArrayList<>();
         lock.lock();
         try {
             for (DeterministicKeyChain chain : followingKeyChains) {

@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.io.BaseEncoding;
 
@@ -532,7 +531,7 @@ public class Utils {
             return 0;
         // This would be much easier in a functional language (or in Java 8).
         items = Ordering.natural().reverse().sortedCopy(items);
-        LinkedList<Pair> pairs = Lists.newLinkedList();
+        LinkedList<Pair> pairs = new LinkedList<>();
         pairs.add(new Pair(items.get(0), 0));
         for (int item : items) {
             Pair pair = pairs.getLast();

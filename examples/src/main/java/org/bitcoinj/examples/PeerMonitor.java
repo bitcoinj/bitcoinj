@@ -25,7 +25,6 @@ import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
-import com.google.common.collect.Lists;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -37,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -169,8 +169,8 @@ public class PeerMonitor {
         public static final int PING_TIME = 4;
         public static final int LAST_PING_TIME = 5;
 
-        public List<Peer> connectedPeers = Lists.newArrayList();
-        public List<Peer> pendingPeers = Lists.newArrayList();
+        public List<Peer> connectedPeers = new ArrayList<>();
+        public List<Peer> pendingPeers = new ArrayList<>();
 
         public void updateFromPeerGroup() {
             connectedPeers = peerGroup.getConnectedPeers();

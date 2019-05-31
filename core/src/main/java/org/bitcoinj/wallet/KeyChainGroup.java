@@ -494,7 +494,7 @@ public class KeyChainGroup implements KeyBag {
     public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
         // TODO: Firstly check if the aes key can decrypt any of the existing keys successfully.
         checkState(keyCrypter != null, "Not encrypted");
-        LinkedList<ECKey> encryptedKeys = Lists.newLinkedList();
+        LinkedList<ECKey> encryptedKeys = new LinkedList<>();
         for (ECKey key : keys) {
             if (key.isEncrypted())
                 throw new IllegalArgumentException("Cannot provide already encrypted keys");
@@ -848,7 +848,7 @@ public class KeyChainGroup implements KeyBag {
         if (basic != null)
             result = basic.serializeToProtobuf();
         else
-            result = Lists.newArrayList();
+            result = new ArrayList<>();
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
                 result.addAll(chain.serializeToProtobuf());
@@ -1037,7 +1037,7 @@ public class KeyChainGroup implements KeyBag {
 
     private static void extractFollowingKeychains(List<DeterministicKeyChain> chains) {
         // look for following key chains and map them to the watch keys of followed keychains
-        List<DeterministicKeyChain> followingChains = Lists.newArrayList();
+        List<DeterministicKeyChain> followingChains = new ArrayList<>();
         for (Iterator<DeterministicKeyChain> it = chains.iterator(); it.hasNext(); ) {
             DeterministicKeyChain chain = it.next();
             if (chain.isFollowing()) {
@@ -1047,7 +1047,7 @@ public class KeyChainGroup implements KeyBag {
                 if (!(chain instanceof MarriedKeyChain))
                     throw new IllegalStateException();
                 ((MarriedKeyChain)chain).setFollowingKeyChains(followingChains);
-                followingChains = Lists.newArrayList();
+                followingChains = new ArrayList<>();
             }
         }
     }

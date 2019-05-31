@@ -17,11 +17,8 @@
 
 package org.bitcoinj.net.discovery;
 
-import com.google.common.collect.Lists;
-
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
 import org.bitcoinj.utils.*;
 import org.slf4j.Logger;
@@ -56,7 +53,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      */
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
-        List<PeerDiscovery> discoveries = Lists.newArrayList();
+        List<PeerDiscovery> discoveries = new ArrayList<>();
         HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
         if (httpSeeds != null) {
             OkHttpClient httpClient = new OkHttpClient();
@@ -86,7 +83,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     public InetSocketAddress[] getPeers(final long services, final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
         vThreadPool = createExecutor();
         try {
-            List<Callable<InetSocketAddress[]>> tasks = Lists.newArrayList();
+            List<Callable<InetSocketAddress[]>> tasks = new ArrayList<>();
             for (final PeerDiscovery seed : seeds) {
                 tasks.add(new Callable<InetSocketAddress[]>() {
                     @Override
@@ -96,7 +93,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
                 });
             }
             final List<Future<InetSocketAddress[]>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);
-            ArrayList<InetSocketAddress> addrs = Lists.newArrayList();
+            ArrayList<InetSocketAddress> addrs = new ArrayList<>();
             for (int i = 0; i < futures.size(); i++) {
                 Future<InetSocketAddress[]> future = futures.get(i);
                 if (future.isCancelled()) {

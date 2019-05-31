@@ -39,6 +39,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -73,7 +74,7 @@ public class ECKeyTest {
         // issue that can allow someone to change a transaction [hash] without invalidating the signature.
         final int ITERATIONS = 10;
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(ITERATIONS));
-        List<ListenableFuture<ECKey.ECDSASignature>> sigFutures = Lists.newArrayList();
+        List<ListenableFuture<ECKey.ECDSASignature>> sigFutures = new ArrayList<>();
         final ECKey key = new ECKey();
         for (byte i = 0; i < ITERATIONS; i++) {
             final Sha256Hash hash = Sha256Hash.of(new byte[]{i});

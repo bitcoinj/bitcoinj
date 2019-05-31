@@ -37,7 +37,6 @@ import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
@@ -503,7 +502,7 @@ public class WalletProtobufSerializer {
         }
         Wallet wallet = factory.create(params, keyChainGroup);
 
-        List<Script> scripts = Lists.newArrayList();
+        List<Script> scripts = new ArrayList<>();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {
             try {
                 Script script =

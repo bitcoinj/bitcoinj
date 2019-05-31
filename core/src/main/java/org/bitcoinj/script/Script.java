@@ -21,7 +21,6 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -108,7 +107,7 @@ public class Script {
 
     /** Creates an empty script that serializes to nothing. */
     private Script() {
-        chunks = Lists.newArrayList();
+        chunks = new ArrayList<>();
     }
 
     // Used from ScriptBuilder.
@@ -481,7 +480,7 @@ public class Script {
         if (!ScriptPattern.isSentToMultisig(this))
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Only usable for multisig scripts.");
 
-        ArrayList<ECKey> result = Lists.newArrayList();
+        ArrayList<ECKey> result = new ArrayList<>();
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         for (int i = 0 ; i < numKeys ; i++)
             result.add(ECKey.fromPublicOnly(chunks.get(1 + i).data));

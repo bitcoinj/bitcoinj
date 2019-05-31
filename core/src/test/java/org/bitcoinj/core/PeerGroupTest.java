@@ -795,7 +795,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNextMessageIs(p1, GetBlocksMessage.class);
 
         // Make some transactions and blocks that send money to the wallet thus using up all the keys.
-        List<Block> blocks = Lists.newArrayList();
+        List<Block> blocks = new ArrayList<>();
         Coin expectedBalance = Coin.ZERO;
         Block prev = blockStore.getChainHead().getHeader();
         for (ECKey key1 : keys) {
