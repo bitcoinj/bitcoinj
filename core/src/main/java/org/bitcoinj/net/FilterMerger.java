@@ -16,7 +16,6 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
 import com.google.common.collect.ImmutableList;
@@ -57,7 +56,7 @@ public class FilterMerger {
     }
 
     public Result calculate(ImmutableList<PeerFilterProvider> providers) {
-        LinkedList<PeerFilterProvider> begunProviders = Lists.newLinkedList();
+        LinkedList<PeerFilterProvider> begunProviders = new LinkedList<>();
         try {
             // All providers must be in a consistent, unchanging state because the filter is a merged one that's
             // large enough for all providers elements: if a provider were to get more elements in the middle of the

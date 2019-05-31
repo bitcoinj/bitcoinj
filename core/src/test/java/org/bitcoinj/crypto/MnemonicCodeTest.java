@@ -18,6 +18,7 @@
 package org.bitcoinj.crypto;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -67,7 +68,7 @@ public class MnemonicCodeTest {
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
     public void testEmptyMnemonic() throws Exception {
-        List<String> words = Lists.newArrayList();
+        List<String> words = new ArrayList<>();
         mc.check(words);
     }
 

@@ -54,7 +54,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
-            LinkedList<TransactionOutput> gathered = Lists.newLinkedList();
+            LinkedList<TransactionOutput> gathered = new LinkedList<>();
             Coin valueGathered = Coin.ZERO;
             for (TransactionOutput output : candidates) {
                 if (ignorePending && !isConfirmed(output))

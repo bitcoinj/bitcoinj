@@ -43,8 +43,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.*;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.newLinkedList;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the
@@ -730,7 +728,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = newArrayList();
+        List<Protos.Key> result = new ArrayList<>();
         lock.lock();
         try {
             result.addAll(serializeMyselfToProtobuf());
@@ -743,7 +741,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     protected List<Protos.Key> serializeMyselfToProtobuf() {
         // Most of the serialization work is delegated to the basic key chain, which will serialize the bulk of the
         // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
-        LinkedList<Protos.Key> entries = newLinkedList();
+        LinkedList<Protos.Key> entries = new LinkedList<>();
         if (seed != null) {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
@@ -795,21 +793,21 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * key rotation it can happen that there are multiple chains found.
      */
     public static List<DeterministicKeyChain> fromProtobuf(List<Protos.Key> keys, @Nullable KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
-        List<DeterministicKeyChain> chains = newLinkedList();
+        List<DeterministicKeyChain> chains = new LinkedList<>();
         DeterministicSeed seed = null;
         DeterministicKeyChain chain = null;
 
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        List<ChildNumber> accountPath = newArrayList();
+        List<ChildNumber> accountPath = new ArrayList<>();
         Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                accountPath = newArrayList();
+                accountPath = new ArrayList<>();
                 for (int i : key.getAccountPathList()) {
                     accountPath.add(new ChildNumber(i));
                 }
@@ -855,7 +853,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the path through the tree.
-                LinkedList<ChildNumber> path = newLinkedList();
+                LinkedList<ChildNumber> path = new LinkedList<>();
                 for (int i : key.getDeterministicKey().getPathList())
                     path.add(new ChildNumber(i));
                 // Deserialize the public key and path.
