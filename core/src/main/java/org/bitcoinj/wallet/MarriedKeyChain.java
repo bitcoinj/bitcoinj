@@ -133,7 +133,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, Script.ScriptType outputScriptType, ImmutableList<ChildNumber> accountPath) {
+    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
         super(seed, crypter, outputScriptType, accountPath);
     }
 

@@ -56,7 +56,7 @@ public class DeterministicKeyChainTest {
     private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final ImmutableList<ChildNumber> BIP44_COIN_1_ACCOUNT_ZERO_PATH = ImmutableList.of(new ChildNumber(44, true),
+    private static final List<ChildNumber> BIP44_COIN_1_ACCOUNT_ZERO_PATH = ImmutableList.of(new ChildNumber(44, true),
             new ChildNumber(1, true), ChildNumber.ZERO_HARDENED);
 
     @Before
@@ -112,7 +112,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void deriveAccountOne() throws Exception {
         final long secs = 1389353062L;
-        final ImmutableList<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -134,7 +134,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void serializeAccountOne() throws Exception {
         final long secs = 1389353062L;
-        final ImmutableList<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -468,7 +468,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void watchingChainAccountOne() throws UnreadableWalletException {
         Utils.setMockClock();
-        final ImmutableList<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .seed(chain.getSeed()).build();
         DeterministicKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -591,7 +591,7 @@ public class DeterministicKeyChainTest {
     public void spendingChainAccountTwo() throws UnreadableWalletException {
         Utils.setMockClock();
         final long secs = 1389353062L;
-        final ImmutableList<ChildNumber> accountTwo = ImmutableList.of(new ChildNumber(2, true));
+        final List<ChildNumber> accountTwo = ImmutableList.of(new ChildNumber(2, true));
         chain = DeterministicKeyChain.builder().accountPath(accountTwo).entropy(ENTROPY, secs).build();
         DeterministicKey firstReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey secondReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);

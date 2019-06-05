@@ -333,7 +333,7 @@ public class Wallet extends BaseTaggableObject
      * @return an instance of a wallet from a deterministic seed.
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
-            ImmutableList<ChildNumber> accountPath) {
+            List<ChildNumber> accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
@@ -344,10 +344,10 @@ public class Wallet extends BaseTaggableObject
      * @param seed deterministic seed
      * @param accountPath account path
      * @return an instance of a wallet from a deterministic seed.
-     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, ImmutableList)}
+     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, List)}
      */
     @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, List<ChildNumber> accountPath) {
         return fromSeed(params, seed, Script.ScriptType.P2PKH, accountPath);
     }
 
