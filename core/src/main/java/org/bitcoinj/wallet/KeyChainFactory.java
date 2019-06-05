@@ -17,11 +17,12 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
+
+import java.util.List;
 
 /**
  * Factory interface for creation keychains while de-serializing a wallet.
@@ -37,7 +38,7 @@ public interface KeyChainFactory {
      * @param accountPath account path to generate receiving addresses on
      */
     DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
-            Script.ScriptType outputScriptType, ImmutableList<ChildNumber> accountPath);
+            Script.ScriptType outputScriptType, List<ChildNumber> accountPath);
 
     /**
      * Make a watching keychain.

@@ -16,20 +16,18 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.script.Script;
-
-import com.google.common.collect.ImmutableList;
 
 /** Defines a structure for hierarchical deterministic wallets. */
 public interface KeyChainGroupStructure {
     /** Map desired output script type to an account path */
-    ImmutableList<ChildNumber> accountPathFor(Script.ScriptType outputScriptType);
+    HDPath accountPathFor(Script.ScriptType outputScriptType);
 
     /** Default {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure". */
     public static final KeyChainGroupStructure DEFAULT = new KeyChainGroupStructure() {
         @Override
-        public ImmutableList<ChildNumber> accountPathFor(Script.ScriptType outputScriptType) {
+        public HDPath accountPathFor(Script.ScriptType outputScriptType) {
             if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
                 return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
             else if (outputScriptType == Script.ScriptType.P2WPKH)

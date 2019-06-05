@@ -20,7 +20,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 /**
  * Default factory for creating keychains while de-serializing.
@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableList;
 public class DefaultKeyChainFactory implements KeyChainFactory {
     @Override
     public DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
-            Script.ScriptType outputScriptType, ImmutableList<ChildNumber> accountPath) {
+            Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
         DeterministicKeyChain chain;
         if (isMarried)
             chain = new MarriedKeyChain(seed, crypter, outputScriptType, accountPath);

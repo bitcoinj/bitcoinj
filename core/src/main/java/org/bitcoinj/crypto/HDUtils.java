@@ -19,7 +19,6 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.ECKey;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.macs.HMac;
@@ -68,13 +67,13 @@ public final class HDUtils {
     }
 
     /** Append a derivation level to an existing path */
-    public static ImmutableList<ChildNumber> append(List<ChildNumber> path, ChildNumber childNumber) {
-        return ImmutableList.<ChildNumber>builder().addAll(path).add(childNumber).build();
+    public static HDPath append(List<ChildNumber> path, ChildNumber childNumber) {
+        return new HDPath(path).extend(childNumber);
     }
 
     /** Concatenate two derivation paths */
-    public static ImmutableList<ChildNumber> concat(List<ChildNumber> path, List<ChildNumber> path2) {
-        return ImmutableList.<ChildNumber>builder().addAll(path).addAll(path2).build();
+    public static HDPath concat(List<ChildNumber> path, List<ChildNumber> path2) {
+        return new HDPath(path).extend(path2);
     }
 
     /** Convert to a string path, starting with "M/" */
@@ -89,7 +88,7 @@ public final class HDUtils {
      *
      * Where a letter "H" means hardened key. Spaces are ignored.
      */
-    public static List<ChildNumber> parsePath(@Nonnull String path) {
+    public static HDPath parsePath(@Nonnull String path) {
         String[] parsedNodes = path.replace("M", "").split("/");
         List<ChildNumber> nodes = new ArrayList<>();
 
@@ -102,6 +101,6 @@ public final class HDUtils {
             nodes.add(new ChildNumber(nodeNumber, isHard));
         }
 
-        return nodes;
+        return new HDPath(nodes);
     }
 }

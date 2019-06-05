@@ -3033,7 +3033,7 @@ public class WalletTest extends TestWithWallet {
         int numIssuedExternal = activeKeyChain.getIssuedExternalKeys();
         DeterministicKey rootKey = wallet.getActiveKeyChain().getRootKey();
         DeterministicKey watchingKey = activeKeyChain.getWatchingKey();
-        ImmutableList<ChildNumber> accountPath = activeKeyChain.getAccountPath();
+        HDPath accountPath = activeKeyChain.getAccountPath();
         Script.ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
 
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
