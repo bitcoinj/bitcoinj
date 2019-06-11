@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package org.bitcoinj.utils;
 
 import org.bitcoinj.core.Utils;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
  * Find/create App Data Directory in correct platform-specific location.
+ * This class is based on the conventions used in Bitcoin Core which
+ * uses the following locations:
+ * <dl>
+ *     <dt>Windows</dt><dd>{@code ${APPDATA}/.bitcoin}</dd>
+ *     <dt>macOS</dt><dd>{@code ${HOME}/Library/Application Support/Bitcoin}</dd>
+ *     <dt>Linux</dt><dd>{@code ${HOME}/.bitcoin}</dd>
+ * </dl>
+ * Note that {@code appName} is converted to lower-case on Windows and Linux/Unix.
  */
 public class AppDataDirectory {
 
@@ -45,19 +54,36 @@ public class AppDataDirectory {
         return applicationDataDirectory;
     }
 
-    private static Path getPath(String appName) {
+    /**
+     * Return the Path to the application data directory without making
+     * sure it exists or creating it. (No disk I/O)
+     *
+     * @param appName The name of the current application
+     * @return Path to the application data directory
+     */
+    public static Path getPath(String appName) {
         final Path applicationDataDirectory;
 
         if (Utils.isWindows()) {
-            applicationDataDirectory = Path.of(System.getenv("APPDATA"), appName.toLowerCase());
+            applicationDataDirectory = pathOf(System.getenv("APPDATA"), appName.toLowerCase());
         } else if (Utils.isMac()) {
-            applicationDataDirectory = Path.of(System.getProperty("user.home"),"Library/Application Support", appName);
+            applicationDataDirectory = pathOf(System.getProperty("user.home"),"Library/Application Support", appName);
         } else if (Utils.isLinux()) {
-            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName.toLowerCase());
+            applicationDataDirectory = pathOf(System.getProperty("user.home"), "." + appName.toLowerCase());
         } else {
             // Unknown, assume unix-like
-            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName.toLowerCase());
+            applicationDataDirectory = pathOf(System.getProperty("user.home"), "." + appName.toLowerCase());
         }
         return applicationDataDirectory;
+    }
+
+    /**
+     * Create a {@code Path} by joining path strings. Same functionality as Path.of() in JDK 11+
+     * @param first A base path string
+     * @param additional additional components to add
+     * @return the joined {@code Path}
+     */
+    private static Path pathOf(String first, String... additional) {
+        return FileSystems.getDefault().getPath(first, additional);
     }
 }
