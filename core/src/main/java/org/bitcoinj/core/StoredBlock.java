@@ -43,9 +43,9 @@ public class StoredBlock {
     public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
     public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
 
-    private Block header;
-    private BigInteger chainWork;
-    private int height;
+    private final Block header;
+    private final BigInteger chainWork;
+    private final int height;
 
     public StoredBlock(Block header, BigInteger chainWork, int height) {
         this.header = header;
