@@ -49,14 +49,14 @@ public class AppDataDirectory {
         final Path applicationDataDirectory;
 
         if (Utils.isWindows()) {
-            applicationDataDirectory = Path.of(System.getenv("APPDATA"), appName);
+            applicationDataDirectory = Path.of(System.getenv("APPDATA"), appName.toLowerCase());
         } else if (Utils.isMac()) {
             applicationDataDirectory = Path.of(System.getProperty("user.home"),"Library/Application Support", appName);
         } else if (Utils.isLinux()) {
-            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName);
+            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName.toLowerCase());
         } else {
             // Unknown, assume unix-like
-            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName);
+            applicationDataDirectory = Path.of(System.getProperty("user.home"), "." + appName.toLowerCase());
         }
         return applicationDataDirectory;
     }
