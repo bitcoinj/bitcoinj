@@ -39,8 +39,8 @@ public class StoredBlock {
 
     // A BigInteger representing the total amount of work done so far on this chain. As of May 2011 it takes 8
     // bytes to represent this field, so 12 bytes should be plenty for now.
-    public static final int CHAIN_WORK_BYTES = 12;
-    public static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
+    private static final int CHAIN_WORK_BYTES = 12;
+    private static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
     public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
 
     private final Block header;
