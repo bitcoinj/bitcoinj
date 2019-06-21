@@ -69,8 +69,8 @@ import static com.google.common.base.Preconditions.*;
  * we say it is an orphan chain. Orphan chains can occur when blocks are solved and received during the initial block
  * chain download, or if we connect to a peer that doesn't send us blocks in order.</p>
  *
- * <p>A reorganize occurs when the blocks that make up the best known chain changes. Note that simply adding a
- * new block to the top of the best chain isn't as reorganize, but that a reorganize is always triggered by adding
+ * <p>A reorganize occurs when the blocks that make up the best known chain change. Note that simply adding a
+ * new block to the top of the best chain isn't a reorganize, but that a reorganize is always triggered by adding
  * a new block that connects to some other (non best head) block. By "best" we mean the chain representing the largest
  * amount of work done.</p>
  *
