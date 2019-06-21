@@ -47,6 +47,13 @@ public class StoredBlock {
     private final BigInteger chainWork;
     private final int height;
 
+    /**
+     * Create a StoredBlock from a (header-only) {@link Block}, chain work value, and block height
+     *
+     * @param header A Block object with only a header (no transactions should be included)
+     * @param chainWork Calculated chainWork for this block
+     * @param height block height for this block
+     */
     public StoredBlock(Block header, BigInteger chainWork, int height) {
         this.header = header;
         this.chainWork = chainWork;
