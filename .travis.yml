@@ -1,6 +1,6 @@
 # configuration for https://travis-ci.org/bitcoinj/bitcoinj
 sudo: false
-dist: xenial
+dist: bionic
 language: java
 matrix:
   include:
