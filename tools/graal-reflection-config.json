@@ -1,0 +1,17 @@
+[
+  {
+    "name" : "org.bitcoinj.script.Script",
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "org.bitcoinj.script.Script$ScriptType",
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "org.bitcoinj.tools.NetworkEnum",
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  }
+]
