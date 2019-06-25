@@ -1,5 +1,6 @@
 /*
  * Copyright 2019 Michael Sean Gilligan
+ * Copyright 2019 Tim Strasser
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +58,24 @@ public class AppDataDirectoryTest {
             assertEquals("Path wrong on unknown/default",  unixPath(appName), path);
         }
     }
+
+    @Test(expected = RuntimeException.class)
+    public void throwsIOExceptionIfPathNotFound() {
+        // The null character is non printable and an ASCII control character
+        // Forbidden on all OSs
+        if (Utils.isWindows()) {
+            AppDataDirectory.get("/");
+        }
+        if (Utils.isMac()) {
+            // The only illegal character for folder names in OSX is the colon
+            AppDataDirectory.get(":");
+        }
+        if (Utils.isLinux()) {
+            // NUL character
+            AppDataDirectory.get("\0");
+        }
+    }
+
 
     private static String winPath(String appName) {
         return WINAPPDATA + "\\." + appName.toLowerCase();
