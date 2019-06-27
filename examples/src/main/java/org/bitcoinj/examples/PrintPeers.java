@@ -27,7 +27,6 @@ import org.bitcoinj.net.discovery.PeerDiscoveryException;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -78,7 +77,7 @@ public class PrintPeers {
         final Object lock = new Object();
         final long[] bestHeight = new long[1];
 
-        List<ListenableFuture<Void>> futures = Lists.newArrayList();
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
         NioClientManager clientManager = new NioClientManager();
         for (final InetAddress addr : addrs) {
             InetSocketAddress address = new InetSocketAddress(addr, params.getPort());

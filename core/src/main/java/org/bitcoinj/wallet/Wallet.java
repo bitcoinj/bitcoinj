@@ -62,6 +62,7 @@ import org.bitcoinj.signers.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
 import org.bitcoinj.wallet.WalletTransaction.*;
+import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
@@ -332,7 +333,7 @@ public class Wallet extends BaseTaggableObject
      * @return an instance of a wallet from a deterministic seed.
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
-            ImmutableList<ChildNumber> accountPath) {
+            List<ChildNumber> accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
@@ -343,10 +344,10 @@ public class Wallet extends BaseTaggableObject
      * @param seed deterministic seed
      * @param accountPath account path
      * @return an instance of a wallet from a deterministic seed.
-     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, ImmutableList)}
+     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, List)}
      */
     @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ImmutableList<ChildNumber> accountPath) {
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, List<ChildNumber> accountPath) {
         return fromSeed(params, seed, Script.ScriptType.P2PKH, accountPath);
     }
 
@@ -1011,7 +1012,7 @@ public class Wallet extends BaseTaggableObject
      * @return how many addresses were added successfully
      */
     public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
-        List<Script> scripts = Lists.newArrayList();
+        List<Script> scripts = new ArrayList<>();
 
         for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
@@ -1070,7 +1071,7 @@ public class Wallet extends BaseTaggableObject
      * @return true if successful
      */
     public boolean removeWatchedAddresses(final List<Address> addresses) {
-        List<Script> scripts = Lists.newArrayList();
+        List<Script> scripts = new ArrayList<>();
 
         for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
@@ -2790,6 +2791,22 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Adds an event listener object. Methods on this object are called when a current key and/or address
+     * changes. The listener is executed in the user thread.
+     */
+    public void addCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener) {
+        keyChainGroup.addCurrentKeyChangeEventListener(listener);
+    }
+
+    /**
+     * Adds an event listener object. Methods on this object are called when a current key and/or address
+     * changes. The listener is executed by the given executor.
+     */
+    public void addCurrentKeyChangeEventListener(Executor executor, CurrentKeyChangeEventListener listener) {
+        keyChainGroup.addCurrentKeyChangeEventListener(listener, executor);
+    }
+
+    /**
      * Adds an event listener object. Methods on this object are called when something interesting happens,
      * like receiving money. Runs the listener methods in the user thread.
      */
@@ -2870,6 +2887,14 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean removeKeyChainEventListener(KeyChainEventListener listener) {
         return keyChainGroup.removeEventListener(listener);
+    }
+
+    /**
+     * Removes the given event listener object. Returns true if the listener was removed, false if that
+     * listener was never added.
+     */
+    public boolean removeCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener) {
+        return keyChainGroup.removeCurrentKeyChangeEventListener(listener);
     }
 
     /**
@@ -3199,7 +3224,7 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+            LinkedList<TransactionOutput> candidates = new LinkedList<>();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
                 if (excludeImmatureCoinbases && !tx.isMature()) continue;
                 for (TransactionOutput output : tx.getOutputs()) {
@@ -3722,7 +3747,7 @@ public class Wallet extends BaseTaggableObject
         public Coin value;
         public BalanceType type;
     }
-    @GuardedBy("lock") private List<BalanceFutureRequest> balanceFutureRequests = Lists.newLinkedList();
+    @GuardedBy("lock") private List<BalanceFutureRequest> balanceFutureRequests = new LinkedList<>();
 
     /**
      * <p>Returns a future that will complete when the balance of the given type has becom equal or larger to the given
@@ -4411,7 +4436,7 @@ public class Wallet extends BaseTaggableObject
     protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
+        LinkedList<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
             for (UTXO output : getStoredOutputsFromUTXOProvider()) {
@@ -4655,7 +4680,7 @@ public class Wallet extends BaseTaggableObject
             Collections.reverse(newBlocks);  // Need bottom-to-top but we get top-to-bottom.
 
             // For each block in the old chain, disconnect the transactions in reverse order.
-            LinkedList<Transaction> oldChainTxns = Lists.newLinkedList();
+            LinkedList<Transaction> oldChainTxns = new LinkedList<>();
             for (Sha256Hash blockHash : oldBlockHashes) {
                 for (TxOffsetPair pair : mapBlockTx.get(blockHash)) {
                     Transaction tx = pair.tx;
@@ -4770,7 +4795,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Bloom filtering
 
-    private final ArrayList<TransactionOutPoint> bloomOutPoints = Lists.newArrayList();
+    private final ArrayList<TransactionOutPoint> bloomOutPoints = new ArrayList<>();
     // Used to track whether we must automatically begin/end a filter calculation and calc outpoints/take the locks.
     private final AtomicInteger bloomFilterGuard = new AtomicInteger(0);
 
@@ -5386,7 +5411,7 @@ public class Wallet extends BaseTaggableObject
             boolean sign) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         checkState(keyChainGroupLock.isHeldByCurrentThread());
-        List<Transaction> results = Lists.newLinkedList();
+        List<Transaction> results = new LinkedList<>();
         // TODO: Handle chain replays here.
         final long keyRotationTimestamp = vKeyRotationTimestamp;
         if (keyRotationTimestamp == 0) return results;  // Nothing to do.

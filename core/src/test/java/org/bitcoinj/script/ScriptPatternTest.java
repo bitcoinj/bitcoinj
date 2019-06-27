@@ -26,6 +26,8 @@ import org.junit.Test;
 import java.math.BigInteger;
 import java.util.List;
 
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ScriptPatternTest {
@@ -71,6 +73,19 @@ public class ScriptPatternTest {
         assertTrue(ScriptPattern.isSentToMultisig(
                 ScriptBuilder.createMultiSigOutputScript(2, keys)
         ));
+    }
+
+    @Test
+    public void testIsSentToMultisigFailure() {
+        // at the time this test was written, the following script would result in throwing
+        // put a non OP_N opcode first and second-to-last positions
+        Script evil = new ScriptBuilder()
+                .op(0xff)
+                .op(0xff)
+                .op(0xff)
+                .op(OP_CHECKMULTISIG)
+                .build();
+        assertFalse(ScriptPattern.isSentToMultisig(evil));
     }
 
     @Test

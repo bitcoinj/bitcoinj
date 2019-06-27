@@ -71,16 +71,9 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     }
 
     public static File defaultBlocksDir() {
-        final File defaultBlocksDir;
-        if (Utils.isWindows()) {
-            defaultBlocksDir = new File(System.getenv("APPDATA") + "\\.bitcoin\\blocks\\");
-        } else if (Utils.isMac()) {
-            defaultBlocksDir = new File(System.getProperty("user.home") + "/Library/Application Support/Bitcoin/blocks/");
-        } else if (Utils.isLinux()) {
-            defaultBlocksDir = new File(System.getProperty("user.home") + "/.bitcoin/blocks/");
-        } else {
-            throw new RuntimeException("Unsupported system");
-        }
+        File defaultBlocksDir = AppDataDirectory.getPath("Bitcoin").resolve("blocks").toFile();
+        if (!defaultBlocksDir.isDirectory())
+            throw new RuntimeException("Default blocks directory not found");
         return defaultBlocksDir;
     }
 

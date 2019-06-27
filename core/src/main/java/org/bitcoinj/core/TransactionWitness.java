@@ -73,9 +73,8 @@ public class TransactionWitness {
 
     @Override
     public String toString() {
-        List<String> stringPushes = new ArrayList<>();
-        for (int j = 0; j < this.getPushCount(); j++) {
-            byte[] push = this.getPush(j);
+        List<String> stringPushes = new ArrayList<>(pushes.size());
+        for (byte[] push : pushes) {
             if (push == null) {
                 stringPushes.add("NULL");
             } else if (push.length == 0) {

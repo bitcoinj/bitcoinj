@@ -34,7 +34,7 @@ import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.consensusj.supernautfx.FxmlLoaderFactory;
 import org.consensusj.supernautfx.SupernautFxApp;
-import org.bitcoinj.walletfx.utils.AppDataDirectory;
+import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 
 import javax.annotation.Nullable;

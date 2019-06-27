@@ -26,7 +26,6 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -608,7 +607,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public List<ECKey> findKeysBefore(long timeSecs) {
         lock.lock();
         try {
-            List<ECKey> results = Lists.newLinkedList();
+            List<ECKey> results = new LinkedList<>();
             for (ECKey key : hashToKeys.values()) {
                 final long keyTime = key.getCreationTimeSeconds();
                 if (keyTime < timeSecs) {

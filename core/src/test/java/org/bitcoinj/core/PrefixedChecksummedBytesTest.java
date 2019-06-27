@@ -17,6 +17,10 @@
 
 package org.bitcoinj.core;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.Test;
@@ -43,6 +47,16 @@ public class PrefixedChecksummedBytesTest {
         public String toString() {
             return Base58.encodeChecked(params.getAddressHeader(), bytes);
         }
+    }
+
+    @Test
+    public void equalsContract() {
+        EqualsVerifier.forClass(PrefixedChecksummedBytes.class)
+                .withPrefabValues(NetworkParameters.class, MainNetParams.get(), TestNet3Params.get())
+                .suppress(Warning.NULL_FIELDS)
+                .suppress(Warning.TRANSIENT_FIELDS)
+                .usingGetClass()
+                .verify();
     }
 
     @Test

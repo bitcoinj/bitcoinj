@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.*;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.store.*;
 import org.bitcoinj.testing.*;
@@ -118,7 +117,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
     @Test(expected = VerificationException.class)
     public void merkleTreeMalleability() throws Exception {
-        List<Sha256Hash> hashes = Lists.newArrayList();
+        List<Sha256Hash> hashes = new ArrayList<>();
         for (byte i = 1; i <= 10; i++) hashes.add(numAsHash(i));
         hashes.add(numAsHash(9));
         hashes.add(numAsHash(10));
@@ -126,7 +125,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
         Utils.setBitLE(includeBits, 9);
         Utils.setBitLE(includeBits, 10);
         PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(UNITTEST, includeBits, hashes);
-        List<Sha256Hash> matchedHashes = Lists.newArrayList();
+        List<Sha256Hash> matchedHashes = new ArrayList<>();
         pmt.getTxnHashAndMerkleRoot(matchedHashes);
     }
 

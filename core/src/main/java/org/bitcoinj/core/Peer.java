@@ -33,7 +33,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -904,7 +903,7 @@ public class Peer extends PeerSocketHandler {
         lock.lock();
         try {
             // Build the request for the missing dependencies.
-            List<ListenableFuture<Transaction>> futures = Lists.newArrayList();
+            List<ListenableFuture<Transaction>> futures = new ArrayList<>();
             GetDataMessage getdata = new GetDataMessage(params);
             if (needToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
@@ -920,7 +919,7 @@ public class Peer extends PeerSocketHandler {
                 public void onSuccess(List<Transaction> transactions) {
                     // Once all transactions either were received, or we know there are no more to come ...
                     // Note that transactions will contain "null" for any positions that weren't successful.
-                    List<ListenableFuture<Object>> childFutures = Lists.newLinkedList();
+                    List<ListenableFuture<Object>> childFutures = new LinkedList<>();
                     for (Transaction tx : transactions) {
                         if (tx == null) continue;
                         log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getTxId());

@@ -22,7 +22,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
-            LinkedList<TransactionOutput> gathered = Lists.newLinkedList();
+            LinkedList<TransactionOutput> gathered = new LinkedList<>();
             Coin valueGathered = Coin.ZERO;
             for (TransactionOutput output : candidates) {
                 if (ignorePending && !isConfirmed(output))
