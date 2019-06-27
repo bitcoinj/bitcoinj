@@ -116,6 +116,8 @@ public class SendMoneyController implements OverlayWindowController {
         SendRequest req = createSendRequest();
         try {
             req.signInputs = false;
+            // TODO: Make a configuration setting to enable/disable shuffleOutputs setting
+            req.shuffleOutputs = false; // false for reproducible tests, true for privacy
             app.getWallet().completeTx(req);
         } catch (InsufficientMoneyException e) {
             informationalAlert("Could not empty the wallet",
