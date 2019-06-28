@@ -114,14 +114,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // a payment request that can generate lots of addresses independently.
     // The account path may be overridden by subclasses.
     // m / 0'
-    public static final HDPath ACCOUNT_ZERO_PATH = HDPath.of(ChildNumber.ZERO_HARDENED);
+    public static final HDPath ACCOUNT_ZERO_PATH = HDPath.M(ChildNumber.ZERO_HARDENED);
     // m / 1'
-    public static final HDPath ACCOUNT_ONE_PATH = HDPath.of(ChildNumber.ONE_HARDENED);
+    public static final HDPath ACCOUNT_ONE_PATH = HDPath.M(ChildNumber.ONE_HARDENED);
     // m / 44' / 0' / 0'
-    public static final HDPath BIP44_ACCOUNT_ZERO_PATH = HDPath.of(new ChildNumber(44, true))
+    public static final HDPath BIP44_ACCOUNT_ZERO_PATH = HDPath.M(new ChildNumber(44, true))
                         .extend(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
-    public static final HDPath EXTERNAL_SUBPATH = HDPath.of(ChildNumber.ZERO);
-    public static final HDPath INTERNAL_SUBPATH = HDPath.of(ChildNumber.ONE);
+    public static final HDPath EXTERNAL_SUBPATH = HDPath.M(ChildNumber.ZERO);
+    public static final HDPath INTERNAL_SUBPATH = HDPath.M(ChildNumber.ONE);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
@@ -276,7 +276,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          */
         public T accountPath(List<ChildNumber> accountPath) {
             checkState(watchingKey == null, "either watch or accountPath");
-            this.accountPath = HDPath.of(checkNotNull(accountPath));
+            this.accountPath = HDPath.M(checkNotNull(accountPath));
             return self();
         }
 
@@ -362,7 +362,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkArgument(outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH
                 || outputScriptType == Script.ScriptType.P2WPKH, "Only P2PKH or P2WPKH allowed.");
         this.outputScriptType = outputScriptType != null ? outputScriptType : Script.ScriptType.P2PKH;
-        this.accountPath = HDPath.of(accountPath);
+        this.accountPath = HDPath.M(accountPath);
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
@@ -613,7 +613,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
     protected DeterministicKey getKeyByPath(ChildNumber... path) {
-        return getKeyByPath(HDPath.of(Arrays.asList(path)));
+        return getKeyByPath(HDPath.M(Arrays.asList(path)));
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
@@ -858,7 +858,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     path.add(new ChildNumber(i));
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(ECKey.CURVE.getCurve(), key.getPublicKey().toByteArray());
-                final HDPath immutablePath = HDPath.of(path);
+                final HDPath immutablePath = HDPath.M(path);
                 if (key.hasOutputScriptType())
                     outputScriptType = Script.ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
@@ -896,7 +896,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         isWatchingAccountKey = true;
                     } else {
                         chain = factory.makeKeyChain(seed, crypter, isMarried,
-                                outputScriptType, HDPath.of(accountPath));
+                                outputScriptType, HDPath.M(accountPath));
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded

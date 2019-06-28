@@ -88,7 +88,7 @@ public final class HDUtils {
      */
     @Deprecated
     public static String formatPath(List<ChildNumber> path) {
-        return HDPath.of(path).toString();
+        return HDPath.M(path).toString();
     }
 
     /**
