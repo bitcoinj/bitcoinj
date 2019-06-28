@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
  * The {@code hasPrivateKey} {@code boolean} is used for rendering to {@code String}
- * but (at present) not much else. It defaults to {@code false} which will also be the setting for a relative path.
+ * but (at present) not much else. It defaults to {@code false} which is the preferred setting for a relative path.
  * <p>
  * {@code HDPath} is immutable and uses the {@code Collections.UnmodifiableList} type internally.
  * <p>
@@ -34,6 +34,9 @@ import java.util.List;
  * from the previous Guava {@code ImmutableList<ChildNumber>}. It should be a minor breaking change
  * to replace {@code ImmutableList<ChildNumber>} with {@code List<ChildNumber>} where necessary in your code. Although
  * it is recommended to use the {@code HDPath} type for clarity and for access to {@code HDPath}-specific functionality.
+ * <p>
+ * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
+ * concisely create HDPath objects (especially when statically imported.)
  */
 public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
@@ -42,29 +45,102 @@ public class HDPath extends AbstractList<ChildNumber> {
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
+    /**
+     * Constructs a path for a public or private key.
+     *
+     * @param hasPrivateKey Whether it is a path to a private key or not
+     * @param list List of children in the path
+     */
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
         this.hasPrivateKey = hasPrivateKey;
         this.unmodifiableList = Collections.unmodifiableList(list);
     }
 
+    /**
+     * Constructs a path for a public key.
+     *
+     * @param list List of children in the path
+     */
     public HDPath(List<ChildNumber> list) {
         this(false, list);
     }
 
+    /**
+     * Returns a path for a public or private key.
+     *
+     * @param hasPrivateKey Whether it is a path to a private key or not
+     * @param list List of children in the path
+     */
     private static HDPath of(boolean hasPrivateKey, List<ChildNumber> list) {
         return new HDPath(hasPrivateKey, list);
     }
 
-    public static HDPath of(List<ChildNumber> list) {
+    /**
+     * Returns a path for a public key.
+     *
+     * @param list List of children in the path
+     */
+    public static HDPath M(List<ChildNumber> list) {
         return HDPath.of(false, list);
     }
 
-    public static HDPath of(ChildNumber childNumber) {
-        return HDPath.of(Collections.singletonList(childNumber));
+    /**
+     * Returns an empty path for a public key.
+     */
+    public static HDPath M() {
+        return HDPath.M(Collections.<ChildNumber>emptyList());
     }
 
-    public static HDPath of() {
-        return HDPath.of(Collections.<ChildNumber>emptyList());
+    /**
+     * Returns a path for a public key.
+     *
+     * @param childNumber Single child in path
+     */
+    public static HDPath M(ChildNumber childNumber) {
+        return HDPath.M(Collections.singletonList(childNumber));
+    }
+
+    /**
+     * Returns a path for a public key.
+     *
+     * @param children Children in the path
+     */
+    public static HDPath M(ChildNumber... children) {
+        return HDPath.M(Arrays.asList(children));
+    }
+
+    /**
+     * Returns a path for a private key.
+     *
+     * @param list List of children in the path
+     */
+    public static HDPath m(List<ChildNumber> list) {
+        return HDPath.of(true, list);
+    }
+
+    /**
+     * Returns an empty path for a private key.
+     */
+    public static HDPath m() {
+        return HDPath.m(Collections.<ChildNumber>emptyList());
+    }
+
+    /**
+     * Returns a path for a private key.
+     *
+     * @param childNumber Single child in path
+     */
+    public static HDPath m(ChildNumber childNumber) {
+        return HDPath.m(Collections.singletonList(childNumber));
+    }
+
+    /**
+     * Returns a path for a private key.
+     *
+     * @param children Children in the path
+     */
+    public static HDPath m(ChildNumber... children) {
+        return HDPath.m(Arrays.asList(children));
     }
 
     /**
@@ -132,7 +208,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return A new immutable path
      */
     public HDPath extend(List<ChildNumber> path2) {
-        return this.extend(HDPath.of(path2));
+        return this.extend(HDPath.M(path2));
     }
 
     @Override

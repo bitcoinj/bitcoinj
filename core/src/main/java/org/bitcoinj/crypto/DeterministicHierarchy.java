@@ -79,7 +79,7 @@ public class DeterministicHierarchy {
      * @throws IllegalArgumentException if create is false and the path was not found.
      */
     public DeterministicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
-        HDPath inputPath = HDPath.of(path);
+        HDPath inputPath = HDPath.M(path);
         HDPath absolutePath = relativePath
                 ? rootPath.extend(path)
                 : inputPath;
