@@ -18,6 +18,7 @@ package org.bitcoinj.crypto;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -73,30 +74,18 @@ public class HDPath extends AbstractList<ChildNumber> {
     public boolean hasPrivateKey() {
         return hasPrivateKey;
     }
-
+    
     /**
-     * Extend the path by appending a ChildNumber
-     *
-     * @param child the child to append
-     * @return A new immutable path
-     */
-    public HDPath extend(ChildNumber child) {
-        List<ChildNumber> mutable = new ArrayList<>(this.unmodifiableList); // Mutable copy
-        mutable.add(child);
-        return new HDPath(this.hasPrivateKey, mutable);
-    }
-
-    /**
-     * Extend the path by appending two ChildNumber objects.
+     * Extend the path by appending additional ChildNumber objects.
      *
      * @param child1 the first child to append
-     * @param child2 the second child to append
+     * @param children zero or more additional children to append
      * @return A new immutable path
      */
-    public HDPath extend(ChildNumber child1, ChildNumber child2) {
+    public HDPath extend(ChildNumber child1, ChildNumber... children) {
         List<ChildNumber> mutable = new ArrayList<>(this.unmodifiableList); // Mutable copy
         mutable.add(child1);
-        mutable.add(child2);
+        mutable.addAll(Arrays.asList(children));
         return new HDPath(this.hasPrivateKey, mutable);
     }
 
