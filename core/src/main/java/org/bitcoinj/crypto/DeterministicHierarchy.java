@@ -80,13 +80,14 @@ public class DeterministicHierarchy {
      * @throws IllegalArgumentException if create is false and the path was not found.
      */
     public DeterministicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
+        HDPath inputPath = HDPath.of(path);
         HDPath absolutePath = relativePath
                 ? rootPath.extend(path)
-                : HDPath.of(path);
+                : inputPath;
         if (!keys.containsKey(absolutePath)) {
             if (!create)
                 throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
-                    relativePath ? "relative" : "absolute", HDUtils.formatPath(path)));
+                    relativePath ? "relative" : "absolute", inputPath.toString()));
             checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
             DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), false, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));
@@ -102,7 +103,7 @@ public class DeterministicHierarchy {
      * @param relative whether the path is relative to the root path
      * @param createParent whether the parent corresponding to path should be created (with any necessary ancestors) if it doesn't exist already
      * @param privateDerivation whether to use private or public derivation
-     * @return next newly created key using the child derivation funtcion
+     * @return next newly created key using the child derivation function
      * @throws IllegalArgumentException if the parent doesn't exist and createParent is false.
      */
     public DeterministicKey deriveNextChild(List<ChildNumber> parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
@@ -117,14 +118,14 @@ public class DeterministicHierarchy {
         throw new HDDerivationException("Maximum number of child derivation attempts reached, this is probably an indication of a bug.");
     }
 
-    private ChildNumber getNextChildNumberToDerive(List<ChildNumber> path, boolean privateDerivation) {
+    private ChildNumber getNextChildNumberToDerive(HDPath path, boolean privateDerivation) {
         ChildNumber lastChildNumber = lastChildNumbers.get(path);
         ChildNumber nextChildNumber = new ChildNumber(lastChildNumber != null ? lastChildNumber.num() + 1 : 0, privateDerivation);
-        lastChildNumbers.put(HDPath.of(path), nextChildNumber);
+        lastChildNumbers.put(path, nextChildNumber);
         return nextChildNumber;
     }
 
-    public int getNumChildren(List<ChildNumber> path) {
+    public int getNumChildren(HDPath path) {
         final ChildNumber cn = lastChildNumbers.get(path);
         if (cn == null)
             return 0;

@@ -1019,17 +1019,17 @@ public class KeyChainGroup implements KeyBag {
         // kinds of KeyPurpose are introduced.
         if (activeChain.getIssuedExternalKeys() > 0) {
             DeterministicKey currentExternalKey = activeChain.getKeyByPath(
-                    HDUtils.append(
-                            HDUtils.concat(activeChain.getAccountPath(), DeterministicKeyChain.EXTERNAL_SUBPATH),
-                            new ChildNumber(activeChain.getIssuedExternalKeys() - 1)));
+                    activeChain.getAccountPath()
+                            .extend(DeterministicKeyChain.EXTERNAL_SUBPATH)
+                            .extend(new ChildNumber(activeChain.getIssuedExternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
         }
 
         if (activeChain.getIssuedInternalKeys() > 0) {
             DeterministicKey currentInternalKey = activeChain.getKeyByPath(
-                    HDUtils.append(
-                            HDUtils.concat(activeChain.getAccountPath(), DeterministicKeyChain.INTERNAL_SUBPATH),
-                            new ChildNumber(activeChain.getIssuedInternalKeys() - 1)));
+                    activeChain.getAccountPath()
+                            .extend(DeterministicKeyChain.INTERNAL_SUBPATH)
+                            .extend(new ChildNumber(activeChain.getIssuedInternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
         }
         return currentKeys;
