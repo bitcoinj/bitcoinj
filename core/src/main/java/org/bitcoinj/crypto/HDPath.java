@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import javax.annotation.Nonnull;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +65,29 @@ public class HDPath extends AbstractList<ChildNumber> {
 
     public static HDPath of() {
         return HDPath.of(Collections.<ChildNumber>emptyList());
+    }
+
+    /**
+     * Create an HDPath from a path string. The path string is a human-friendly representation of the deterministic path. For example:
+     *
+     * "44H / 0H / 0H / 1 / 1"
+     *
+     * Where a letter "H" means hardened key. Spaces are ignored.
+     */
+    public static HDPath parsePath(@Nonnull String path) {
+        String[] parsedNodes = path.replace("M", "").split("/");
+        List<ChildNumber> nodes = new ArrayList<>();
+
+        for (String n : parsedNodes) {
+            n = n.replaceAll(" ", "");
+            if (n.length() == 0) continue;
+            boolean isHard = n.endsWith("H");
+            if (isHard) n = n.substring(0, n.length() - 1);
+            int nodeNumber = Integer.parseInt(n);
+            nodes.add(new ChildNumber(nodeNumber, isHard));
+        }
+
+        return new HDPath(nodes);
     }
 
     /**

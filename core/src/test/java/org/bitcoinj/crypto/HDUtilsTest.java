@@ -125,6 +125,7 @@ public class HDUtilsTest {
     }
 
 
+    // TODO: Move this test to HDPath test class and call HDPath directly
     @Test
     public void testFormatPath() {
         Object[] tv = {
@@ -154,6 +155,7 @@ public class HDUtilsTest {
 
     }
 
+    // TODO: Move this test to HDPath test class and call HDPath directly
     @Test
     public void testParsePath() {
         Object[] tv = {

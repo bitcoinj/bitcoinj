@@ -188,10 +188,10 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns the path of this key as a human readable string starting with M to indicate the master key.
+     * Returns the path of this key as a human readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
-        return HDUtils.formatPath(getPath());
+        return getPath().toString();
     }
 
     /**
@@ -558,7 +558,7 @@ public class DeterministicKey extends ECKey {
                 throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
             if (parent.getFingerprint() != parentFingerprint)
                 throw new IllegalArgumentException("Parent fingerprints don't match");
-            path = HDUtils.append(parent.getPath(), childNumber);
+            path = parent.getPath().extend(childNumber);
             if (path.size() != depth)
                 throw new IllegalArgumentException("Depth does not match");
         } else {
