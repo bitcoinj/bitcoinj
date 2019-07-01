@@ -433,12 +433,27 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected Wallet createWallet() {
         KeyChainGroup.Builder kcg = KeyChainGroup.builder(params, structure);
-        if (restoreFromSeed != null)
+        if (restoreFromSeed != null) {
+            log.info("createWallet(): restoring from seed");
             kcg.fromSeed(restoreFromSeed, preferredOutputScriptType);
-        else if (restoreFromKey != null)
-            kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).outputScriptType(preferredOutputScriptType).build());
-        else
+        }
+        else if (restoreFromKey != null) {
+            log.info("createWallet(): restoring from key");
+            DeterministicKeyChain restorefromKeyKeyChain;
+            // key call builder.watch() if it's an xpub, Call builder.spend() if it's a "sub-account"
+            if (restoreFromKey.isWatching()) {
+                restorefromKeyKeyChain = DeterministicKeyChain.builder().watch(restoreFromKey).outputScriptType(preferredOutputScriptType).build();
+
+            } else {
+                restorefromKeyKeyChain = DeterministicKeyChain.builder().spend(restoreFromKey).outputScriptType(preferredOutputScriptType).build();
+
+            }
+            kcg.addChain(restorefromKeyKeyChain);
+        }
+        else {
+            log.info("createWallet(): creating from random");
             kcg.fromRandom(preferredOutputScriptType);
+        }
         if (walletFactory != null) {
             return walletFactory.create(params, kcg.build());
         } else {

@@ -24,6 +24,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.script.Script;
@@ -144,7 +145,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
 
 
             // Create the WalletAppKit. It won't do any heavyweight initialization until after we start it.
-            setupWalletKit(null);
+            setupWalletKit();
 
             if (bitcoin.isChainFileLocked()) {
                 informationalAlert("Already running", "This application is already running and cannot be started twice.");
@@ -174,7 +175,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
         getWalletAppKit().awaitTerminated();
     }
 
-    public void setupWalletKit(@Nullable DeterministicSeed seed) {
+    public void setupWalletKit() {
         // If seed is non-null it means we are restoring from backup.
         bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, keyChainGroupStructure, getAppDataDir(), getWalletFileName()) {
             @Override
@@ -193,8 +194,18 @@ public abstract class WalletFxApp implements SupernautFxApp {
         bitcoin.setDownloadListener(mainWindowController.progressBarUpdater())
                 .setBlockingStartup(false)
                 .setUserAgent(getAppName(), "1.0");
-        if (seed != null)
-            bitcoin.restoreWalletFromSeed(seed);
+    }
+
+    public void setupWalletKit(DeterministicSeed seed) {
+        setupWalletKit();
+        // Restore from backup.
+        bitcoin.restoreWalletFromSeed(seed);
+    }
+
+    public void setupWalletKit(DeterministicKey accountKey) {
+        setupWalletKit();
+        // Restore from account key (xpub)
+        bitcoin.restoreWalletFromKey(accountKey);
     }
 
     public WalletMainWindowController startMainWindow(Stage primaryStage, String fxmlName, String cssName) throws IOException {

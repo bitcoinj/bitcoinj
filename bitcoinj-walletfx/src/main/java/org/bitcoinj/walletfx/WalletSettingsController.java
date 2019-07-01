@@ -17,7 +17,9 @@
 package org.bitcoinj.walletfx;
 
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
@@ -110,7 +112,13 @@ public class WalletSettingsController implements OverlayWindowController {
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
         TextFieldValidator validator = new TextFieldValidator(wordsArea, text ->
-            !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text)))
+            !didThrow(() -> {
+                if (text.startsWith("tpub")) {
+                    // TODO: Maybe a little validition of the xpub string here
+                } else {
+                    codec.check(Splitter.on(' ').splitToList(text));
+                }
+            })
         );
 
         // Clear the date picker if the user starts editing the words, if it contained the current wallets date.
@@ -189,19 +197,38 @@ public class WalletSettingsController implements OverlayWindowController {
         mainWindow.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
-        DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
-        // Shut down bitcoinj and restart it with the new seed.
-        app.getWalletAppKit().addListener(new Service.Listener() {
-            @Override
-            public void terminated(Service.State from) {
-                app.setupWalletKit(seed);
-                app.getWalletAppKit().startAsync();
-            }
-        }, Platform::runLater);
+
+        var wordsText = wordsArea.getText();
+        if (wordsText.startsWith("tpub")) {
+            // It's an xpub string (temporary hack until we can redo the UI)
+            log.info("preparing to restart with xpub string");
+            var key = DeterministicKey.deserializeB58(wordsText, TestNet3Params.get());
+            key.setCreationTimeSeconds(birthday);   // Set key creation time to speed blockchain sync
+            // Shut down bitcoinj and restart it with the new key.
+            app.getWalletAppKit().addListener(new Service.Listener() {
+                @Override
+                public void terminated(Service.State from) {
+                    app.setupWalletKit(key);
+                    app.getWalletAppKit().startAsync();
+                }
+            }, Platform::runLater);
+
+        } else {
+            log.info("preparing to restart with wallet words");
+            var seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsText), null, "", birthday);
+            // Shut down bitcoinj and restart it with the new seed.
+            app.getWalletAppKit().addListener(new Service.Listener() {
+                @Override
+                public void terminated(Service.State from) {
+                    app.setupWalletKit(seed);
+                    app.getWalletAppKit().startAsync();
+                }
+            }, Platform::runLater);
+        }
+
         app.getWalletAppKit().stopAsync();
     }
-
-
+    
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
             mainWindow.overlayUI("wallet_set_password.fxml");
