@@ -94,19 +94,17 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class WalletTest extends TestWithWallet {
 
-    @Parameterized.Parameter(0)
-    public  Logger log = LoggerFactory.getLogger(WalletTest.class);
 
-    @Parameterized.Parameter(1)
+    @Parameterized.Parameter(0)
     public  CharSequence PASSWORD1 = "";
 
-    @Parameterized.Parameter(2)
+    @Parameterized.Parameter(1)
     public  CharSequence WRONG_PASSWORD = "";
 
-    @Parameterized.Parameters(name = "{index}: Test with Logger={0}, CharSequence Pass ={1}, CharSequence Wrong Pass is:{2} ")
+    @Parameterized.Parameters(name = "{index}: CharSequence Pass ={0}, CharSequence Wrong Pass is:{1} ")
     public static Iterable<Object[]> data() {
         Object[][] data = new Object[][]{
-                {LoggerFactory.getLogger(WalletTest.class),"my helicopter contains eels", "nothing noone nobody nowhere"}};
+                {"my helicopter contains eels", "MY HELICOPTER CONTAINS EELS"}, {"nothing noone nobody nowhere", "other wrong password"}};
         return Arrays.asList(data);
     }
 
@@ -2842,7 +2840,6 @@ public class WalletTest extends TestWithWallet {
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                log.info("onCoinsReceived 1");
                 throw new RuntimeException("barf");
             }
         });
@@ -2850,15 +2847,12 @@ public class WalletTest extends TestWithWallet {
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
             public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                log.info("onCoinsReceived 2");
                 flag.incrementAndGet();
             }
         });
 
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
-        log.info("Wait for user thread");
         Threading.waitForUserCode();
-        log.info("... and test flag.");
         assertEquals(1, flag.get());
     }
 
@@ -2991,7 +2985,6 @@ public class WalletTest extends TestWithWallet {
         tx = broadcaster.waitForTransactionAndSucceed();
         assertNotNull(wallet.findKeyFromPubKeyHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash(),
                 toAddress.getOutputScriptType()));
-        log.info("Unexpected thing: {}", tx);
         assertEquals(Coin.valueOf(19300), tx.getFee());
         assertEquals(1, tx.getInputs().size());
         assertEquals(1, tx.getOutputs().size());
