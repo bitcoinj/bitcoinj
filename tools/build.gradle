@@ -3,6 +3,8 @@ plugins {
     id 'eclipse'
 }
 
+version = '0.16-SNAPSHOT'
+
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'com.google.guava:guava:27.1-android'
@@ -13,6 +15,19 @@ dependencies {
 sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
+
+def mainClassName = "org.bitcoinj.tools.WalletTool"
+ext.moduleName = 'org.bitcoinj.tools'
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes  'Implementation-Title': 'bitcoinj tools (including WalletTool)',
+                    'Automatic-Module-Name': moduleName,
+                    'Main-Class': mainClassName,
+                    'Implementation-Version': version
+    }
+}
 
 task wallet_tool(type: JavaExec) {
     description = 'Print and manipulate wallets.'
@@ -28,4 +43,21 @@ task build_checkpoints(type: JavaExec) {
     if (project.hasProperty('appArgs') && appArgs.length() > 0)
         args = Arrays.asList(appArgs.split("\\s+"))
     classpath = sourceSets.main.runtimeClasspath
+}
+
+// Compile a native image using GraalVM's native-image tool
+// Graal must be installed at $GRAAL_HOME and the native-image tool
+// should have been installed using `gu install native-image`
+task graalNativeImage(type:Exec, dependsOn: jar) {
+    workingDir = projectDir
+    executable = "${System.env.GRAAL_HOME}/bin/native-image"
+    args = [ '--verbose',
+             '-cp', configurations.runtimeClasspath.asPath,
+             '-jar', jar.archivePath,
+             '-H:Path=build',
+             '-H:Name=wallettool',
+             '-H:ReflectionConfigurationFiles=graal-reflection-config.json',
+             '-H:EnableURLProtocols=http',
+             '--initialize-at-build-time=com.google.protobuf.ExtensionRegistry'
+    ]
 }
