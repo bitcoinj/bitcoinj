@@ -20,6 +20,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
@@ -30,6 +31,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -83,38 +85,49 @@ public class WalletSettingsController implements OverlayWindowController {
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = app.getWallet().getKeyChainSeed();
-        if (aesKey == null) {
-            if (seed.isEncrypted()) {
-                log.info("Wallet is encrypted, requesting password first.");
-                // Delay execution of this until after we've finished initialising this screen.
-                Platform.runLater(this::askForPasswordAndRetry);
-                return;
-            }
+        Wallet wallet = app.getWallet();
+
+        Instant creationTime;
+        String origWords;
+        if (wallet.isWatching()) {
+            creationTime = Instant.ofEpochSecond(wallet.getWatchingKey().getCreationTimeSeconds());
+            origWords = wallet.getWatchingKey().serializePubB58(app.getNetParams(),  Script.ScriptType.P2PKH);
         } else {
-            this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(app.getWallet().getKeyCrypter()), "", aesKey);
-            // Now we can display the wallet seed as appropriate.
-            passwordButton.setText("Remove password");
+            DeterministicSeed seed = app.getWallet().getKeyChainSeed();
+            if (aesKey == null) {
+                if (seed.isEncrypted()) {
+                    log.info("Wallet is encrypted, requesting password first.");
+                    // Delay execution of this until after we've finished initialising this screen.
+                    Platform.runLater(this::askForPasswordAndRetry);
+                    return;
+                }
+            } else {
+                this.aesKey = aesKey;
+                seed = seed.decrypt(checkNotNull(app.getWallet().getKeyCrypter()), "", aesKey);
+                // Now we can display the wallet seed as appropriate.
+                passwordButton.setText("Remove password");
+            }
+
+            // Set the date picker to show the birthday of this wallet.
+            creationTime = Instant.ofEpochSecond(seed.getCreationTimeSeconds());
+
+            // Set the mnemonic seed words.
+            final List<String> mnemonicCode = seed.getMnemonicCode();
+            checkNotNull(mnemonicCode);    // Already checked for encryption.
+            origWords = Utils.SPACE_JOINER.join(mnemonicCode);
+
         }
-
-        // Set the date picker to show the birthday of this wallet.
-        Instant creationTime = Instant.ofEpochSecond(seed.getCreationTimeSeconds());
-        LocalDate origDate = creationTime.atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate origDate = creationTime.atZone(getZoneId()).toLocalDate();
         datePicker.setValue(origDate);
-
-        // Set the mnemonic seed words.
-        final List<String> mnemonicCode = seed.getMnemonicCode();
-        checkNotNull(mnemonicCode);    // Already checked for encryption.
-        String origWords = Utils.SPACE_JOINER.join(mnemonicCode);
         wordsArea.setText(origWords);
+
 
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
         TextFieldValidator validator = new TextFieldValidator(wordsArea, text ->
             !didThrow(() -> {
                 if (text.startsWith("tpub")) {
-                    // TODO: Maybe a little validition of the xpub string here
+                    // TODO: Maybe a little validation of the xpub string here
                 } else {
                     codec.check(Splitter.on(' ').splitToList(text));
                 }
@@ -196,7 +209,7 @@ public class WalletSettingsController implements OverlayWindowController {
         overlayUI.done();
         mainWindow.restoreFromSeedAnimation();
 
-        long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
+        long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.of(getZoneId().getId()));
 
         var wordsText = wordsArea.getText();
         if (wordsText.startsWith("tpub")) {
@@ -238,5 +251,9 @@ public class WalletSettingsController implements OverlayWindowController {
             passwordButton.setText("Set password");
             aesKey = null;
         }
+    }
+
+    private ZoneId getZoneId() {
+        return ZoneId.systemDefault();
     }
 }
