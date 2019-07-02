@@ -37,6 +37,7 @@ import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.utils.WTUtils;
 
 import static com.google.common.base.Preconditions.checkState;
+import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;
@@ -116,6 +117,7 @@ public class SendMoneyController implements OverlayWindowController {
         SendRequest req = createSendRequest();
         try {
             req.signInputs = false;
+            req.missingSigsMode = MissingSigsMode.USE_OP_ZERO;
             // TODO: Make a configuration setting to enable/disable shuffleOutputs setting
             req.shuffleOutputs = false; // false for reproducible tests, true for privacy
             app.getWallet().completeTx(req);
