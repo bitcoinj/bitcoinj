@@ -563,8 +563,8 @@ public class Utils {
     private static Runtime runtime = null;
     private static OS os = null;
     static {
-        String runtimeProp = System.getProperty("java.runtime.name").toLowerCase(Locale.US);
-        if (runtimeProp == null)
+        String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
+        if (runtimeProp.equals(""))
             runtime = null;
         else if (runtimeProp.contains("android"))
             runtime = Runtime.ANDROID;
@@ -575,8 +575,8 @@ public class Utils {
         else
             log.info("Unknown java.runtime.name '{}'", runtimeProp);
 
-        String osProp = System.getProperty("os.name").toLowerCase(Locale.US);
-        if (osProp == null)
+        String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
+        if (osProp.equals(""))
             os = null;
         else if (osProp.contains("linux"))
             os = OS.LINUX;
