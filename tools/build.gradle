@@ -57,6 +57,13 @@ task graalNativeImage(type:Exec, dependsOn: jar) {
              '-H:Path=build',
              '-H:Name=wallettool',
              '-H:ReflectionConfigurationFiles=graal-reflection-config.json',
+             '--no-server',
+             '-H:Path=build',
+             '-H:Name=wallettool',
+             //'--no-fallback',
+             '-H:ReflectionConfigurationFiles=graal-reflection-config.json',
+             '-H:ResourceConfigurationFiles=/Users/sean/git/bitcoinj/tools/graal-resource-config.json',
+             '-H:Log=registerResource:',
              '-H:EnableURLProtocols=http',
              '--initialize-at-build-time=com.google.protobuf.ExtensionRegistry'
     ]
