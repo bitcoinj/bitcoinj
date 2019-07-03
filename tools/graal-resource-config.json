@@ -1,0 +1,5 @@
+{
+  "resources": [
+    {"pattern": ".*/wallet-tool-help.txt$"}
+  ]
+}
