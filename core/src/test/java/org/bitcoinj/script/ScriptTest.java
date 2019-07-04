@@ -430,12 +430,6 @@ public class ScriptTest {
     }
 
     @Test
-    public void testCLTVPaymentChannelOutput() {
-        Script script = ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
-        assertTrue("script is locktime-verify", ScriptPattern.isSentToCltvPaymentChannel(script));
-    }
-
-    @Test
     public void getToAddress() throws Exception {
         // pay to pubkey
         ECKey toKey = new ECKey();

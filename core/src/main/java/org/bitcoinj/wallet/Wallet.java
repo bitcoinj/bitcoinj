@@ -4412,19 +4412,6 @@ public class Wallet extends BaseTaggableObject
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
-        } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
-            // Any script for which we are the recipient or sender counts.
-            byte[] sender = ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(script);
-            ECKey senderKey = findKeyFromPubKey(sender);
-            if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
-                return true;
-            }
-            byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
-            ECKey recipientKey = findKeyFromPubKey(recipient);
-            if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
-                return true;
-            }
-            return false;
         }
         return false;
     }

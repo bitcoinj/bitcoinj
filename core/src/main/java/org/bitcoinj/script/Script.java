@@ -260,27 +260,6 @@ public class Script {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }
 
-    @Deprecated
-    public byte[] getCLTVPaymentChannelSenderPubKey() throws ScriptException {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
-        return ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(this);
-    }
-
-    @Deprecated
-    public byte[] getCLTVPaymentChannelRecipientPubKey() throws ScriptException {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMVERIFY transaction: " + this);
-        return ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(this);
-    }
-
-    @Deprecated
-    public BigInteger getCLTVPaymentChannelExpiry() throws ScriptException {
-        if (!ScriptPattern.isSentToCltvPaymentChannel(this))
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not a standard CHECKLOCKTIMEVERIFY transaction: " + this);
-        return ScriptPattern.extractExpiryFromCltvPaymentChannel(this);
-    }
-
     /**
      * Gets the destination address from this script, if it's in the required form.
      */
@@ -640,12 +619,6 @@ public class Script {
     @Deprecated
     public boolean isSentToMultiSig() {
         return ScriptPattern.isSentToMultisig(this);
-    }
-
-    /** @deprecated use {@link ScriptPattern#isSentToCltvPaymentChannel(Script)} */
-    @Deprecated
-    public boolean isSentToCLTVPaymentChannel() {
-        return ScriptPattern.isSentToCltvPaymentChannel(this);
     }
 
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
