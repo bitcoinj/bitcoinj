@@ -631,8 +631,10 @@ public class DeterministicKey extends ECKey {
         helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());
-        if (creationTimeSeconds > 0)
-            helper.add("creationTimeSeconds", creationTimeSeconds);
+        if (parent != null)
+            helper.add("creationTimeSeconds", getCreationTimeSeconds() + " (inherited)");
+        else
+            helper.add("creationTimeSeconds", getCreationTimeSeconds());
         helper.add("isEncrypted", isEncrypted());
         helper.add("isPubKeyOnly", isPubKeyOnly());
         return helper.toString();
