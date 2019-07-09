@@ -1,12 +1,15 @@
-image: openjdk:11-jdk
+image: ubuntu:bionic
 
 before_script:
+  - apt-get update
+  - apt-get -y upgrade
+  - apt-get -y install openjdk-11-jdk
   - chmod +x ./gradlew
 
 build:
   script:
     - java -version
-    - LC_ALL=en_US.UTF-8 ./gradlew build
+    - LC_ALL=C.UTF-8 ./gradlew build
   artifacts:
     paths:
       - core/build
