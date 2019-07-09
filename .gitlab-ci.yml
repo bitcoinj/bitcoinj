@@ -1,4 +1,4 @@
-image: openjdk:12-jdk
+image: openjdk:11-jdk
 
 before_script:
   - chmod +x ./gradlew
