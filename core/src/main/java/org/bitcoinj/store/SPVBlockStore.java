@@ -43,7 +43,7 @@ public class SPVBlockStore implements BlockStore {
     /** The default number of headers that will be stored in the ring buffer. */
     public static final int DEFAULT_CAPACITY = 5000;
     public static final String HEADER_MAGIC = "SPVB";
-
+    private static final Map<Sha256Hash, Integer> blockIndex = new LinkedHashMap<>();
     protected volatile MappedByteBuffer buffer;
     protected final NetworkParameters params;
 
@@ -145,6 +145,7 @@ public class SPVBlockStore implements BlockStore {
                 buffer.get(header);
                 if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
                     throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
+                createIndex();
             } else {
                 initNewStore(params);
             }
@@ -174,7 +175,13 @@ public class SPVBlockStore implements BlockStore {
         put(storedGenesis);
         setChainHead(storedGenesis);
     }
-
+    private void createIndex(){
+        int cursor = getRingCursor(buffer);
+        for(int i = FILE_PROLOGUE_BYTES; i < cursor; i += RECORD_SIZE){
+            buffer.position(i);
+            blockIndex.put(StoredBlock.deserializeCompact(params,buffer).getHeader().getHash(),i);
+        }
+    }
     /** Returns the size in bytes of the file that is used to store the chain with the current parameters. */
     public static final int getFileSize(int capacity) {
         return RECORD_SIZE * capacity + FILE_PROLOGUE_BYTES /* extra kilobyte for stuff */;
@@ -195,6 +202,7 @@ public class SPVBlockStore implements BlockStore {
             buffer.position(cursor);
             Sha256Hash hash = block.getHeader().getHash();
             notFoundCache.remove(hash);
+            blockIndex.put(hash, cursor);
             buffer.put(hash.getBytes());
             block.serializeCompact(buffer);
             setRingCursor(buffer, buffer.position());
@@ -210,35 +218,17 @@ public class SPVBlockStore implements BlockStore {
 
         lock.lock();
         try {
-            StoredBlock cacheHit = blockCache.get(hash);
-            if (cacheHit != null)
-                return cacheHit;
-            if (notFoundCache.get(hash) != null)
-                return null;
+            StoredBlock block = blockCache.get(hash);
+            if(block != null){
+                return block;
+            }
+            Integer integer = blockIndex.get(hash);
+            if (integer != null) {
+                buffer.position(integer + 32);
+                block = StoredBlock.deserializeCompact(params, buffer);
+                return block;
+            }
 
-            // Starting from the current tip of the ring work backwards until we have either found the block or
-            // wrapped around.
-            int cursor = getRingCursor(buffer);
-            final int startingPoint = cursor;
-            final byte[] targetHashBytes = hash.getBytes();
-            byte[] scratch = new byte[32];
-            do {
-                cursor -= RECORD_SIZE;
-                if (cursor < FILE_PROLOGUE_BYTES) {
-                    // We hit the start, so wrap around.
-                    cursor = fileLength - RECORD_SIZE;
-                }
-                // Cursor is now at the start of the next record to check, so read the hash and compare it.
-                buffer.position(cursor);
-                buffer.get(scratch);
-                if (Arrays.equals(scratch, targetHashBytes)) {
-                    // Found the target.
-                    StoredBlock storedBlock = StoredBlock.deserializeCompact(params, buffer);
-                    blockCache.put(hash, storedBlock);
-                    return storedBlock;
-                }
-            } while (cursor != startingPoint);
-            // Not found.
             notFoundCache.put(hash, NOT_FOUND_MARKER);
             return null;
         } catch (ProtocolException e) {
@@ -333,6 +323,7 @@ public class SPVBlockStore implements BlockStore {
             // Clear caches
             blockCache.clear();
             notFoundCache.clear();
+            blockIndex.clear();
             // Clear file content
             buffer.position(0);
             long fileLength = randomAccessFile.length();
