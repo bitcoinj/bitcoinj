@@ -38,13 +38,14 @@ public class TransactionInputTest {
     @Test
     public void testStandardWalletDisconnect() throws Exception {
         Wallet w = Wallet.createDeterministic(new Context(UNITTEST), Script.ScriptType.P2PKH);
-        w.setCoinSelector(new AllowUnconfirmedCoinSelector());
         Address a = w.currentReceiveAddress();
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(UNITTEST, Coin.COIN, a);
         w.receivePending(tx1, null);
         Transaction tx2 = new Transaction(UNITTEST);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
-        w.completeTx(SendRequest.forTx(tx2));
+        SendRequest req = SendRequest.forTx(tx2);
+        req.allowUnconfirmed();
+        w.completeTx(req);
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
 

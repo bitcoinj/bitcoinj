@@ -602,7 +602,7 @@ public class WalletTool {
             if (feePerVkb != null)
                 req.setFeePerVkb(feePerVkb);
             if (allowUnconfirmed) {
-                wallet.allowSpendingUnconfirmedTransactions();
+                req.allowUnconfirmed();
             }
             if (password != null) {
                 req.aesKey = passwordToKey(true);

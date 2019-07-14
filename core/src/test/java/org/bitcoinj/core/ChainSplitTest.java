@@ -530,10 +530,9 @@ public class ChainSplitTest {
         chain.add(b1);
 
         // Send a couple of payments one after the other (so the second depends on the change output of the first).
-        wallet.allowSpendingUnconfirmedTransactions();
-        Transaction t2 = checkNotNull(wallet.createSend(LegacyAddress.fromKey(UNITTEST, new ECKey()), CENT));
+        Transaction t2 = checkNotNull(wallet.createSend(LegacyAddress.fromKey(UNITTEST, new ECKey()), CENT, true));
         wallet.commitTx(t2);
-        Transaction t3 = checkNotNull(wallet.createSend(LegacyAddress.fromKey(UNITTEST, new ECKey()), CENT));
+        Transaction t3 = checkNotNull(wallet.createSend(LegacyAddress.fromKey(UNITTEST, new ECKey()), CENT, true));
         wallet.commitTx(t3);
         chain.add(FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3));
 

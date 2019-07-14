@@ -139,9 +139,6 @@ public class Main extends Application {
         bitcoin = new WalletAppKit(params, PREFERRED_OUTPUT_SCRIPT_TYPE, null, appDataDirectory, WALLET_FILE_NAME) {
             @Override
             protected void onSetupCompleted() {
-                // Don't make the user wait for confirmations for now, as the intention is they're sending it
-                // their own money!
-                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
                 Platform.runLater(controller::onBitcoinSetup);
             }
         };
