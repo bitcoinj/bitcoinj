@@ -120,6 +120,13 @@ public class SendRequest {
     public CoinSelector coinSelector = null;
 
     /**
+     * Shortcut for {@code req.coinSelector = AllowUnconfirmedCoinSelector.get();}.
+     */
+    public void allowUnconfirmed() {
+        coinSelector = AllowUnconfirmedCoinSelector.get();
+    }
+
+    /**
      * If true (the default), the outputs will be shuffled during completion to randomize the location of the change
      * output, if any. This is normally what you want for privacy reasons but in unit tests it can be annoying
      * so it can be disabled here.

@@ -2755,7 +2755,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.feePerKb = fee;
         emptyReq.ensureMinRequiredFee = true;
         emptyReq.emptyWallet = true;
-        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
         assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE, emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
@@ -2774,7 +2774,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.emptyWallet = true;
-        emptyReq.coinSelector = AllowUnconfirmedCoinSelector.get();
+        emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
         assertEquals(Coin.valueOf(342000), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
