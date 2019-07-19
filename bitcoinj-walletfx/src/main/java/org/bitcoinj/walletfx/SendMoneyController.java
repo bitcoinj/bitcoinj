@@ -126,7 +126,7 @@ public class SendMoneyController implements OverlayWindowController {
                     "You may have too little money left in the wallet to make a transaction.");
             overlayUI.done();
         }
-        hwSigner.displaySigningOverlay(req.tx, this);
+            hwSigner.displaySigningOverlay(req, this);
     }
 
     public void send(ActionEvent event) {
