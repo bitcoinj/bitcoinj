@@ -2608,9 +2608,17 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Calls {@link Wallet#commitTx} if tx is not already in the pending pool
+     * Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener.
+     * <p>
+     * Triggers an auto save (if enabled.)
+     * <p>
+     * Unlike {@link Wallet#commitTx} this method does not throw an exception if the transaction
+     * was already added to the wallet, instead it will return {@code false}
      *
+     * @param tx transaction to commit
      * @return true if the tx was added to the wallet, or false if it was already in the pending pool
+     * @throws VerificationException If transaction fails to verify
      */
     public boolean maybeCommitTx(Transaction tx) throws VerificationException {
         tx.verify();
@@ -2698,15 +2706,21 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * <p>Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
-     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:</p>
-     *
+     * Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
+     * the onCoinsSent/onCoinsReceived event listener. Used in two situations:
+     * <p>
      * <ol>
      *     <li>When we have just successfully transmitted the tx we created to the network.</li>
      *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
      * </ol>
+     * <p>
+     * Triggers an auto save (if enabled.)
+     * <p>
+     * Unlike {@link Wallet#maybeCommitTx} {@code commitTx} throws an exception if the transaction
+     * was already added to the wallet.
      *
-     * <p>Triggers an auto save.</p>
+     * @param tx transaction to commit
+     * @throws VerificationException if transaction was already in the pending pool
      */
     public void commitTx(Transaction tx) throws VerificationException {
         checkArgument(maybeCommitTx(tx), "commitTx called on the same transaction twice");
