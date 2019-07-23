@@ -83,7 +83,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode)
             throws HDDerivationException {
         // childNumberPath is an empty list because we are creating the root key.
-        return createMasterPrivKeyFromBytes(privKeyBytes, chainCode, HDPath.of());
+        return createMasterPrivKeyFromBytes(privKeyBytes, chainCode, HDPath.M());
     }
 
     /**
@@ -98,7 +98,7 @@ public final class HDKeyDerivation {
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new DeterministicKey(HDPath.of(), chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), pubKeyBytes), null, null);
+        return new DeterministicKey(HDPath.M(), chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), pubKeyBytes), null, null);
     }
 
     /**
@@ -146,7 +146,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey deriveChildKeyFromPrivate(DeterministicKey parent, ChildNumber childNumber)
             throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPrivate(parent, childNumber);
-        return new DeterministicKey(HDUtils.append(parent.getPath(), childNumber), rawKey.chainCode,
+        return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
                 new BigInteger(1, rawKey.keyBytes), parent);
     }
 
@@ -182,7 +182,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey deriveChildKeyFromPublic(DeterministicKey parent, ChildNumber childNumber,
             PublicDeriveMode mode) throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPublic(parent, childNumber, PublicDeriveMode.NORMAL);
-        return new DeterministicKey(HDUtils.append(parent.getPath(), childNumber), rawKey.chainCode,
+        return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
                 new LazyECPoint(ECKey.CURVE.getCurve(), rawKey.keyBytes), null, parent);
     }
 

@@ -32,6 +32,9 @@ import java.util.*;
  * "spending" more priority than would be required to get the transaction we are creating confirmed.
  */
 public class DefaultCoinSelector implements CoinSelector {
+    protected DefaultCoinSelector() {
+    }
+
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         ArrayList<TransactionOutput> selected = new ArrayList<>();
@@ -101,5 +104,16 @@ public class DefaultCoinSelector implements CoinSelector {
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
                // TODO: The value 1 below dates from a time when transactions we broadcast *to* were counted, set to 0
                (confidence.numBroadcastPeers() > 1 || tx.getParams().getId().equals(NetworkParameters.ID_REGTEST));
+    }
+
+    private static DefaultCoinSelector instance;
+
+    /** Returns a global static instance of the selector. */
+    public static DefaultCoinSelector get() {
+        // This doesn't have to be thread safe as the object has no state, so discarded duplicates are
+        // harmless.
+        if (instance == null)
+            instance = new DefaultCoinSelector();
+        return instance;
     }
 }

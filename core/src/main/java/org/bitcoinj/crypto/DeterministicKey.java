@@ -70,7 +70,7 @@ public class DeterministicKey extends ECKey {
         super(priv, compressPoint(checkNotNull(publicAsPoint)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.of(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
@@ -92,7 +92,7 @@ public class DeterministicKey extends ECKey {
         super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.of(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
@@ -140,7 +140,7 @@ public class DeterministicKey extends ECKey {
         super(null, compressPoint(checkNotNull(publicAsPoint)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.of(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
@@ -160,7 +160,7 @@ public class DeterministicKey extends ECKey {
         super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.of(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
@@ -188,10 +188,10 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns the path of this key as a human readable string starting with M to indicate the master key.
+     * Returns the path of this key as a human readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
-        return HDUtils.formatPath(getPath());
+        return getPath().toString();
     }
 
     /**
@@ -558,7 +558,7 @@ public class DeterministicKey extends ECKey {
                 throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
             if (parent.getFingerprint() != parentFingerprint)
                 throw new IllegalArgumentException("Parent fingerprints don't match");
-            path = HDUtils.append(parent.getPath(), childNumber);
+            path = parent.getPath().extend(childNumber);
             if (path.size() != depth)
                 throw new IllegalArgumentException("Depth does not match");
         } else {
@@ -567,8 +567,8 @@ public class DeterministicKey extends ECKey {
                 // This can happen when deserializing an account key for a watching wallet.  In this case, we assume that
                 // the client wants to conceal the key's position in the hierarchy.  The path is truncated at the
                 // parent's node.
-                path = HDPath.of(childNumber);
-            else path = HDPath.of();
+                path = HDPath.M(childNumber);
+            else path = HDPath.M();
         }
         byte[] chainCode = new byte[32];
         buffer.get(chainCode);
@@ -631,8 +631,10 @@ public class DeterministicKey extends ECKey {
         helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());
-        if (creationTimeSeconds > 0)
-            helper.add("creationTimeSeconds", creationTimeSeconds);
+        if (parent != null)
+            helper.add("creationTimeSeconds", getCreationTimeSeconds() + " (inherited)");
+        else
+            helper.add("creationTimeSeconds", getCreationTimeSeconds());
         helper.add("isEncrypted", isEncrypted());
         helper.add("isPubKeyOnly", isPubKeyOnly());
         return helper.toString();

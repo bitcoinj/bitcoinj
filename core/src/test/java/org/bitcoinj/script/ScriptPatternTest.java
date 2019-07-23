@@ -23,7 +23,6 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.core.ECKey;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
@@ -86,13 +85,6 @@ public class ScriptPatternTest {
                 .op(OP_CHECKMULTISIG)
                 .build();
         assertFalse(ScriptPattern.isSentToMultisig(evil));
-    }
-
-    @Test
-    public void testCreateCLTVPaymentChannelOutput() {
-        assertTrue(ScriptPattern.isSentToCltvPaymentChannel(
-                ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.ONE, keys.get(0), keys.get(1))
-        ));
     }
 
     @Test

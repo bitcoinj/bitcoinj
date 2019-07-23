@@ -26,9 +26,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
-import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
@@ -69,11 +67,8 @@ import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
@@ -207,9 +202,6 @@ public class WalletTool {
         SYNC,
         RESET,
         SEND,
-        SEND_CLTVPAYMENTCHANNEL,
-        SETTLE_CLTVPAYMENTCHANNEL,
-        REFUND_CLTVPAYMENTCHANNEL,
         ENCRYPT,
         DECRYPT,
         MARRY,
@@ -268,8 +260,6 @@ public class WalletTool {
         parser.accepts("no-pki");
         parser.accepts("dump-privkeys");
         parser.accepts("dump-lookahead");
-        OptionSpec<String> refundFlag = parser.accepts("refund-to").withRequiredArg();
-        OptionSpec<String> txHashFlag = parser.accepts("txhash").withRequiredArg();
         options = parser.parse(args);
 
         if (args.length == 0 || options.has("help") ||
@@ -414,74 +404,6 @@ public class WalletTool {
                     return;
                 }
                 break;
-            case SEND_CLTVPAYMENTCHANNEL: {
-                if (options.has(feePerVkbOption) && options.has(feeSatPerVbyteOption)) {
-                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
-                    return;
-                }
-                if (!options.has(outputFlag)) {
-                    System.err.println("You must specify a --output=addr:value");
-                    return;
-                }
-                Coin feePerVkb = null;
-                if (options.has(feePerVkbOption))
-                    feePerVkb = parseCoin((String) options.valueOf(feePerVkbOption));
-                if (options.has(feeSatPerVbyteOption))
-                    feePerVkb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerVbyteOption)) * 1000);
-                if (!options.has("locktime")) {
-                    System.err.println("You must specify a --locktime");
-                    return;
-                }
-                String lockTime = (String) options.valueOf("locktime");
-                boolean allowUnconfirmed = options.has("allow-unconfirmed");
-                if (!options.has(refundFlag)) {
-                    System.err.println("You must specify an address to refund money to after expiry: --refund-to=addr");
-                    return;
-                }
-                sendCLTVPaymentChannel(refundFlag.value(options), outputFlag.value(options), feePerVkb, lockTime, allowUnconfirmed);
-                } break;
-            case SETTLE_CLTVPAYMENTCHANNEL: {
-                if (options.has(feePerVkbOption) && options.has(feeSatPerVbyteOption)) {
-                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
-                    return;
-                }
-                if (!options.has(outputFlag)) {
-                    System.err.println("You must specify a --output=addr:value");
-                    return;
-                }
-                Coin feePerVkb = null;
-                if (options.has(feePerVkbOption))
-                    feePerVkb = parseCoin((String) options.valueOf(feePerVkbOption));
-                if (options.has(feeSatPerVbyteOption))
-                    feePerVkb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerVbyteOption)) * 1000);
-                boolean allowUnconfirmed = options.has("allow-unconfirmed");
-                if (!options.has(txHashFlag)) {
-                    System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
-                    return;
-                }
-                settleCLTVPaymentChannel(txHashFlag.value(options), outputFlag.value(options), feePerVkb, allowUnconfirmed);
-                } break;
-            case REFUND_CLTVPAYMENTCHANNEL: {
-                if (options.has(feePerVkbOption) && options.has(feeSatPerVbyteOption)) {
-                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
-                    return;
-                }
-                if (!options.has(outputFlag)) {
-                    System.err.println("You must specify a --output=addr:value");
-                    return;
-                }
-                Coin feePerVkb = null;
-                if (options.has(feePerVkbOption))
-                    feePerVkb = parseCoin((String) options.valueOf(feePerVkbOption));
-                if (options.has(feeSatPerVbyteOption))
-                    feePerVkb = Coin.valueOf(Long.parseLong(options.valueOf(feeSatPerVbyteOption)) * 1000);
-                boolean allowUnconfirmed = options.has("allow-unconfirmed");
-                if (!options.has(txHashFlag)) {
-                    System.err.println("You must specify the transaction to spend: --txhash=tx-hash");
-                    return;
-                }
-                refundCLTVPaymentChannel(txHashFlag.value(options), outputFlag.value(options), feePerVkb, allowUnconfirmed);
-            } break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
             case MARRY: marry(); break;
@@ -762,298 +684,6 @@ public class WalletTool {
 
         public boolean isAddress() {
             return addr != null;
-        }
-    }
-
-    private static void sendCLTVPaymentChannel(String refund, String output, Coin feePerVkb, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
-        try {
-            // Convert the input strings to outputs.
-            ECKey outputKey, refundKey;
-            Coin value;
-            try {
-                OutputSpec outputSpec = new OutputSpec(output);
-                if (outputSpec.isAddress()) {
-                    System.err.println("Output specification must be a public key");
-                    return;
-                }
-                outputKey = outputSpec.key;
-                value = outputSpec.value;
-                byte[] refundPubKey = new BigInteger(refund, 16).toByteArray();
-                refundKey = ECKey.fromPublicOnly(refundPubKey);
-            } catch (AddressFormatException.WrongNetwork e) {
-                System.err.println("Malformed output specification, address is for a different network.");
-                return;
-            } catch (AddressFormatException e) {
-                System.err.println("Malformed output specification, could not parse as address.");
-                return;
-            } catch (NumberFormatException e) {
-                System.err.println("Malformed output specification, could not parse as value.");
-                return;
-            } catch (IllegalArgumentException e) {
-                System.err.println(e.getMessage());
-                return;
-            }
-
-            long lockTime;
-            try {
-                lockTime = parseLockTimeStr(lockTimeStr);
-            } catch (ParseException e) {
-                System.err.println("Could not understand --locktime of " + lockTimeStr);
-                return;
-            } catch (ScriptException e) {
-                throw new RuntimeException(e);
-            }
-
-            SendRequest req = SendRequest.toCLTVPaymentChannel(params, BigInteger.valueOf(lockTime), refundKey, outputKey, value);
-            if (req.tx.getOutputs().size() == 1 && req.tx.getOutput(0).getValue().equals(wallet.getBalance())) {
-                log.info("Emptying out wallet, recipient may get less than what you expect");
-                req.emptyWallet = true;
-            }
-            if (feePerVkb != null)
-                req.setFeePerVkb(feePerVkb);
-            if (allowUnconfirmed) {
-                wallet.allowSpendingUnconfirmedTransactions();
-            }
-            if (password != null) {
-                req.aesKey = passwordToKey(true);
-                if (req.aesKey == null)
-                    return;  // Error message already printed.
-            }
-            wallet.completeTx(req);
-
-            System.out.println(req.tx.getTxId());
-            if (options.has("offline")) {
-                wallet.commitTx(req.tx);
-                return;
-            }
-
-            setup();
-            peerGroup.start();
-            // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
-            // network. Once propagation is complete and we heard the transaction back from all our peers, it will
-            // be committed to the wallet.
-            peerGroup.broadcastTransaction(req.tx).future().get();
-            // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
-            List<Peer> peerList = peerGroup.getConnectedPeers();
-            if (peerList.size() == 1)
-                peerList.get(0).ping().get();
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        } catch (KeyCrypterException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
-        }
-    }
-
-    /**
-     * Settles a CLTV payment channel transaction given that we own both private keys (ie. for testing).
-     */
-    private static void settleCLTVPaymentChannel(String txHash, String output, Coin feePerVkb, boolean allowUnconfirmed) {
-        try {
-            OutputSpec outputSpec;
-            Coin value;
-            try {
-                outputSpec = new OutputSpec(output);
-                value = outputSpec.value;
-            } catch (AddressFormatException.WrongNetwork e) {
-                System.err.println("Malformed output specification, address is for a different network.");
-                return;
-            } catch (AddressFormatException e) {
-                System.err.println("Malformed output specification, could not parse as address.");
-                return;
-            } catch (NumberFormatException e) {
-                System.err.println("Malformed output specification, could not parse as value.");
-                return;
-            } catch (IllegalArgumentException e) {
-                System.err.println(e.getMessage());
-                return;
-            }
-
-            SendRequest req = outputSpec.isAddress() ?
-                    SendRequest.to(outputSpec.addr, value) :
-                    SendRequest.to(params, outputSpec.key, value);
-            if (feePerVkb != null)
-                req.setFeePerVkb(feePerVkb);
-
-            Transaction lockTimeVerify = wallet.getTransaction(Sha256Hash.wrap(txHash));
-            if (lockTimeVerify == null) {
-                System.err.println("Couldn't find transaction with given hash");
-                return;
-            }
-            TransactionOutput lockTimeVerifyOutput = null;
-            for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
-                    lockTimeVerifyOutput = out;
-                }
-            }
-            if (lockTimeVerifyOutput == null) {
-                System.err.println("TX to spend wasn't sent to LockTimeVerify");
-                return;
-            }
-
-            if (!value.equals(lockTimeVerifyOutput.getValue())) {
-                System.err.println("You must spend all the money in the input transaction");
-            }
-
-            if (allowUnconfirmed) {
-                wallet.allowSpendingUnconfirmedTransactions();
-            }
-            if (password != null) {
-                req.aesKey = passwordToKey(true);
-                if (req.aesKey == null)
-                    return;  // Error message already printed.
-            }
-
-            ECKey key1 = wallet.findKeyFromPubKey(
-                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
-            ECKey key2 = wallet.findKeyFromPubKey(
-                    ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
-            if (key1 == null || key2 == null) {
-                System.err.println("Don't own private keys for both pubkeys");
-                return;
-            }
-
-            TransactionInput input = new TransactionInput(
-                    params, req.tx, new byte[] {}, lockTimeVerifyOutput.getOutPointFor());
-            req.tx.addInput(input);
-            TransactionSignature sig1 =
-                    req.tx.calculateSignature(0, key1, lockTimeVerifyOutput.getScriptPubKey(), Transaction.SigHash.SINGLE, false);
-            TransactionSignature sig2 =
-                    req.tx.calculateSignature(0, key2, lockTimeVerifyOutput.getScriptPubKey(), Transaction.SigHash.SINGLE, false);
-            input.setScriptSig(ScriptBuilder.createCLTVPaymentChannelInput(sig1, sig2));
-
-            System.out.println(req.tx.getTxId());
-            if (options.has("offline")) {
-                wallet.commitTx(req.tx);
-                return;
-            }
-
-            setup();
-            peerGroup.start();
-            // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
-            // network. Once propagation is complete and we heard the transaction back from all our peers, it will
-            // be committed to the wallet.
-            peerGroup.broadcastTransaction(req.tx).future().get();
-            // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
-            List<Peer> peerList = peerGroup.getConnectedPeers();
-            if (peerList.size() == 1)
-                peerList.get(0).ping().get();
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        } catch (KeyCrypterException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Refunds a CLTV payment channel transaction after the lock time has expired.
-     */
-    private static void refundCLTVPaymentChannel(String txHash, String output, Coin feePerVkb, boolean allowUnconfirmed) {
-        try {
-            OutputSpec outputSpec;
-            Coin value;
-            try {
-                outputSpec = new OutputSpec(output);
-                value = outputSpec.value;
-            } catch (AddressFormatException.WrongNetwork e) {
-                System.err.println("Malformed output specification, address is for a different network.");
-                return;
-            } catch (AddressFormatException e) {
-                System.err.println("Malformed output specification, could not parse as address.");
-                return;
-            } catch (NumberFormatException e) {
-                System.err.println("Malformed output specification, could not parse as value.");
-                return;
-            } catch (IllegalArgumentException e) {
-                System.err.println(e.getMessage());
-                return;
-            }
-
-            SendRequest req = outputSpec.isAddress() ?
-                    SendRequest.to(outputSpec.addr, value) :
-                    SendRequest.to(params, outputSpec.key, value);
-            if (feePerVkb != null)
-                req.setFeePerVkb(feePerVkb);
-
-            Transaction lockTimeVerify = wallet.getTransaction(Sha256Hash.wrap(txHash));
-            if (lockTimeVerify == null) {
-                System.err.println("Couldn't find transaction with given hash");
-                return;
-            }
-            TransactionOutput lockTimeVerifyOutput = null;
-            for (TransactionOutput out : lockTimeVerify.getOutputs()) {
-                if (ScriptPattern.isSentToCltvPaymentChannel(out.getScriptPubKey())) {
-                    lockTimeVerifyOutput = out;
-                }
-            }
-            if (lockTimeVerifyOutput == null) {
-                System.err.println("TX to spend wasn't sent to LockTimeVerify");
-                return;
-            }
-
-            req.tx.setLockTime(ScriptPattern.extractExpiryFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()).longValue());
-
-            if (!value.equals(lockTimeVerifyOutput.getValue())) {
-                System.err.println("You must spend all the money in the input transaction");
-            }
-
-            if (allowUnconfirmed) {
-                wallet.allowSpendingUnconfirmedTransactions();
-            }
-            if (password != null) {
-                req.aesKey = passwordToKey(true);
-                if (req.aesKey == null)
-                    return;  // Error message already printed.
-            }
-
-            ECKey key = wallet.findKeyFromPubKey(
-                    ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(lockTimeVerifyOutput.getScriptPubKey()));
-            if (key == null) {
-                System.err.println("Don't own private key for pubkey");
-                return;
-            }
-
-            TransactionInput input = new TransactionInput(
-                    params, req.tx, new byte[] {}, lockTimeVerifyOutput.getOutPointFor());
-            input.setSequenceNumber(0);
-            req.tx.addInput(input);
-            TransactionSignature sig =
-                    req.tx.calculateSignature(0, key, lockTimeVerifyOutput.getScriptPubKey(), Transaction.SigHash.SINGLE, false);
-            input.setScriptSig(ScriptBuilder.createCLTVPaymentChannelRefund(sig));
-
-            System.out.println(req.tx.getTxId());
-            if (options.has("offline")) {
-                wallet.commitTx(req.tx);
-                return;
-            }
-
-            setup();
-            peerGroup.start();
-            // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
-            // network. Once propagation is complete and we heard the transaction back from all our peers, it will
-            // be committed to the wallet.
-            peerGroup.broadcastTransaction(req.tx).future().get();
-            // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
-            List<Peer> peerList = peerGroup.getConnectedPeers();
-            if (peerList.size() == 1)
-                peerList.get(0).ping().get();
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
-        } catch (KeyCrypterException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
         }
     }
 

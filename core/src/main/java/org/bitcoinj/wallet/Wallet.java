@@ -230,7 +230,7 @@ public class Wallet extends BaseTaggableObject
     // that was created after it. Useful when you believe some keys have been compromised.
     private volatile long vKeyRotationTimestamp;
 
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
+    protected CoinSelector coinSelector = DefaultCoinSelector.get();
 
     // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
     // You can also use it to detect wallets that come from the future (ie they contain features you
@@ -4412,19 +4412,6 @@ public class Wallet extends BaseTaggableObject
                 if (key != null && (key.isEncrypted() || key.hasPrivKey()))
                     return true;
             }
-        } else if (ScriptPattern.isSentToCltvPaymentChannel(script)) {
-            // Any script for which we are the recipient or sender counts.
-            byte[] sender = ScriptPattern.extractSenderPubKeyFromCltvPaymentChannel(script);
-            ECKey senderKey = findKeyFromPubKey(sender);
-            if (senderKey != null && (senderKey.isEncrypted() || senderKey.hasPrivKey())) {
-                return true;
-            }
-            byte[] recipient = ScriptPattern.extractRecipientPubKeyFromCltvPaymentChannel(script);
-            ECKey recipientKey = findKeyFromPubKey(recipient);
-            if (recipientKey != null && (recipientKey.isEncrypted() || recipientKey.hasPrivKey())) {
-                return true;
-            }
-            return false;
         }
         return false;
     }
