@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'com.google.guava:guava:27.1-android'
+    implementation "com.google.guava:guava:${guavaVersion}"
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.26'
+    implementation "org.slf4j:slf4j-jdk14:${slf4jVersion}"
     implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
 }
 
