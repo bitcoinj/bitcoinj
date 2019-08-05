@@ -70,30 +70,6 @@ Usage: wallet-tool --flags action-name
                        If --date is specified, that's the creation date.
                        If --unixtime is specified, that's the creation time and it overrides --date.
                        If you omit both options, the creation time is being cleared (set to 0).
-  send-cltvpaymentchannel
-                       Creates and broadcasts a transaction paying to a CHECKLOCKTIMEVERIFY micropayment channel.
-                       Requires a public key for the money recipient, public key to create the transactions (the
-                       "return" address) and an expiry time.
-                       Options:
-                          --output=pubkey:value sets the amount to lock and the recipient
-                          --refund-to=pubkey sets "our" public key
-                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
-                          --locktime=YYYY/MM/DD sets the expiry time for the channel
-  settle-cltvpaymentchannel
-                       Creates and broadcasts a transaction settling a previous micropayment channel.
-                       This tool, for testing, requires the presence of both private keys.
-                       Options:
-                          --output=pubkey:value sets the destination for the money
-                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
-                          --txhash=hash sets the transaction to spend
-  refund-cltvpaymentchannel
-                       Creates and broadcasts a transaction refunding a previous micropayment channel.
-                       This command can only be called once the expiry for the micropayment channel has passed -
-                       the created transaction won't be accepted into the mempool until that point.
-                       Options:
-                          --output=pubkey:value sets the destination for the money
-                          --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below
-                          --txhash=hash sets the transaction to spend
 
 >>> GENERAL OPTIONS
   --debuglog           Enables logging from the core library.

@@ -12,13 +12,13 @@ dependencies {
     implementation 'com.google.guava:guava:27.1-android'
     compile 'com.google.protobuf:protobuf-java:3.7.1'
     implementation 'com.squareup.okhttp3:okhttp:3.12.3'
-    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'org.slf4j:slf4j-api:1.7.26'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.easymock:easymock:3.2'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.5.2'
-    testImplementation 'org.slf4j:slf4j-jdk14:1.7.25'
+    testImplementation 'org.slf4j:slf4j-jdk14:1.7.26'
     testImplementation 'com.h2database:h2:1.3.167'
     testImplementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:2.5.2'
@@ -27,6 +27,7 @@ dependencies {
 sourceCompatibility = 1.7
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
 
 protobuf {
     protoc {
@@ -38,9 +39,7 @@ protobuf {
 test {
     exclude 'org/bitcoinj/core/PeerTest*'
     exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
-    exclude 'org/bitcoinj/net/NetworkAbstractionTests*'
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
-    exclude 'org/bitcoinj/protocols/channels/ChannelConnectionTest*'
     testLogging {
         events "failed"
         exceptionFormat "full"

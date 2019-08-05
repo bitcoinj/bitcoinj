@@ -159,7 +159,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             final Stopwatch watch = Stopwatch.createStarted();
             byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
             watch.stop();
-            log.info("Deriving key took {} for {} scrypt iterations.", watch, scryptParameters.getN());
+            log.info("Deriving key took {} for {}.", watch, scryptParametersString());
             return new KeyParameter(keyBytes);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not generate key from password and salt.", e);
@@ -264,7 +264,11 @@ public class KeyCrypterScrypt implements KeyCrypter {
 
     @Override
     public String toString() {
-        return "AES-" + KEY_LENGTH * 8 + "-CBC, Scrypt (N: " + scryptParameters.getN() + ")";
+        return "AES-" + KEY_LENGTH * 8 + "-CBC, Scrypt (" + scryptParametersString() + ")";
+    }
+
+    private String scryptParametersString() {
+        return "N=" + scryptParameters.getN() + ", r=" + scryptParameters.getR() + ", p=" + scryptParameters.getP();
     }
 
     @Override

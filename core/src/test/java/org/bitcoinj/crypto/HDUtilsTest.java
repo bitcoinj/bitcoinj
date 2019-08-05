@@ -17,12 +17,10 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
-import java.util.List;
 
 public class HDUtilsTest {
     @Test
@@ -122,63 +120,5 @@ public class HDUtilsTest {
     public void testLongToByteArray() throws Exception {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
         Assert.assertEquals("00000402", HEX.encode(bytes));
-    }
-
-
-    @Test
-    public void testFormatPath() {
-        Object[] tv = {
-                "M/44H/0H/0H/1/1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
-
-                "M/7H/3/3/1H",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
-
-                "M/1H/2H/3H",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
-
-                "M/1/2/3",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
-        };
-
-        for (int i = 0; i < tv.length; i += 2) {
-            String expectedStrPath = (String) tv[i];
-            List<ChildNumber> path = (List<ChildNumber>) tv[i+1];
-
-            String generatedStrPath = HDUtils.formatPath(path);
-
-            Assert.assertEquals(generatedStrPath, expectedStrPath);
-        }
-
-    }
-
-    @Test
-    public void testParsePath() {
-        Object[] tv = {
-                "M / 44H / 0H / 0H / 1 / 1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
-
-                "M/7H/3/3/1H/",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
-
-                "1 H / 2 H / 3 H /",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
-
-                "1 / 2 / 3 /",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
-        };
-
-        for (int i = 0; i < tv.length; i += 2) {
-            String strPath = (String) tv[i];
-            List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i+1];
-
-            List<ChildNumber> path = HDUtils.parsePath(strPath);
-
-            Assert.assertEquals(path, expectedPath);
-        }
     }
 }

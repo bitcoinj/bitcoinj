@@ -180,9 +180,6 @@ public abstract class WalletFxApp implements SupernautFxApp {
         bitcoin = new WalletAppKit(networkParameters, preferredOutputScriptType, keyChainGroupStructure, getAppDataDir(), getWalletFileName()) {
             @Override
             protected void onSetupCompleted() {
-                // Don't make the user wait for confirmations for now, as the intention is they're sending it
-                // their own money!
-                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
                 Platform.runLater(mainWindowController::onBitcoinSetup);
             }
         };

@@ -174,6 +174,9 @@ public class SendMoneyController implements OverlayWindowController {
         else
             req = SendRequest.to(destination, amount);
         req.aesKey = aesKey;
+        // Don't make the user wait for confirmations for now, as the intention is they're sending it
+        // their own money!
+        req.allowUnconfirmed();
         return req;
     }
 

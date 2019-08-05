@@ -9,12 +9,13 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.25'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.26'
 }
 
 sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
 
 def mainClassName = "org.bitcoinj.tools.WalletTool"
 ext.moduleName = 'org.bitcoinj.tools'

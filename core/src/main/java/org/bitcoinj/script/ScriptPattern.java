@@ -220,52 +220,6 @@ public class ScriptPattern {
     }
 
     /**
-     * Returns whether this script matches the format used for LOCKTIMEVERIFY transactions.
-     */
-    public static boolean isSentToCltvPaymentChannel(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
-        if (chunks.size() != 10) return false;
-        // Check that opcodes match the pre-determined format.
-        if (!chunks.get(0).equalsOpCode(OP_IF)) return false;
-        // chunk[1] = recipient pubkey
-        if (!chunks.get(2).equalsOpCode(OP_CHECKSIGVERIFY)) return false;
-        if (!chunks.get(3).equalsOpCode(OP_ELSE)) return false;
-        // chunk[4] = locktime
-        if (!chunks.get(5).equalsOpCode(OP_CHECKLOCKTIMEVERIFY)) return false;
-        if (!chunks.get(6).equalsOpCode(OP_DROP)) return false;
-        if (!chunks.get(7).equalsOpCode(OP_ENDIF)) return false;
-        // chunk[8] = sender pubkey
-        if (!chunks.get(9).equalsOpCode(OP_CHECKSIG)) return false;
-        return true;
-    }
-
-    /**
-     * Retrieves the public key of the sender from a LOCKTIMEVERIFY transaction. It's important that the script is in
-     * the correct form, so you will want to guard calls to this method with
-     * {@link #isSentToCltvPaymentChannel(Script)}.
-     */
-    public static byte[] extractSenderPubKeyFromCltvPaymentChannel(Script script) {
-        return script.chunks.get(8).data;
-    }
-
-    /**
-     * Retrieves the public key of the recipient from a LOCKTIMEVERIFY transaction. It's important that the script is in
-     * the correct form, so you will want to guard calls to this method with
-     * {@link #isSentToCltvPaymentChannel(Script)}.
-     */
-    public static byte[] extractRecipientPubKeyFromCltvPaymentChannel(Script script) {
-        return script.chunks.get(1).data;
-    }
-
-    /**
-     * Retrieves the locktime from a LOCKTIMEVERIFY transaction. It's important that the script is in the correct form,
-     * so you will want to guard calls to this method with {@link #isSentToCltvPaymentChannel(Script)}.
-     */
-    public static BigInteger extractExpiryFromCltvPaymentChannel(Script script) {
-        return Script.castToBigInteger(script.chunks.get(4).data, 5, false);
-    }
-
-    /**
      * Returns whether this script is using OP_RETURN to store arbitrary data.
      */
     public static boolean isOpReturn(Script script) {
