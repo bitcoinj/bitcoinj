@@ -25,8 +25,8 @@ dependencies {
     //implementation 'com.google.zxing:core:3.3.3'
     implementation "com.github.msgilligan.zxing:core:msgilligan-modular-javase-SNAPSHOT"
 
-    implementation 'org.slf4j:slf4j-api:1.8.0-beta4'
-    implementation 'org.slf4j:slf4j-jdk14:1.8.0-beta4'
+    implementation 'org.slf4j:slf4j-api:1.7.26'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.26'
 
     implementation "javax.inject:javax.inject:1"
 

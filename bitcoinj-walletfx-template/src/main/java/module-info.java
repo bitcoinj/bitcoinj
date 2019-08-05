@@ -38,8 +38,8 @@ module wallettemplate {
     requires org.bitcoinj.walletfx;
 
     //requires jsr305;  // This is only needed for IntelliJ because IntelliJ doesn't know about the patch-module command apparently
-    requires org.slf4j;
-    requires org.slf4j.jul;
+    requires slf4j.api;
+    requires slf4j.jdk14;
 
     requires org.bitcoinj.core;     // Automatic module
 
