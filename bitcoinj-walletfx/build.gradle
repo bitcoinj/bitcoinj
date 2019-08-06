@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'maven'
     id 'eclipse'
-    id 'org.openjfx.javafxplugin' version '0.0.7'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
     id 'org.javamodularity.moduleplugin'    version "1.5.0"
 }
 
@@ -22,8 +22,8 @@ dependencies {
     //implementation 'com.google.zxing:core:3.3.3'
     implementation "com.github.msgilligan.zxing:core:msgilligan-modular-javase-SNAPSHOT"
 
-    implementation 'org.slf4j:slf4j-api:1.7.26'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.26'
+    implementation 'org.slf4j:slf4j-api:1.7.27'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.27'
     
     implementation "javax.inject:javax.inject:1"
     
@@ -33,6 +33,7 @@ dependencies {
 version = '0.16-SNAPSHOT'
 
 javafx {
+    version = 11
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
 }
 

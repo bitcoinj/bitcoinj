@@ -3,8 +3,8 @@ plugins {
     id 'maven'
     id 'eclipse'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.7'
-    id 'org.beryx.jlink' version '2.10.2'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'org.beryx.jlink' version '2.14.0'
     id 'org.javamodularity.moduleplugin'    version "1.5.0"
 }
 
@@ -25,8 +25,8 @@ dependencies {
     //implementation 'com.google.zxing:core:3.3.3'
     implementation "com.github.msgilligan.zxing:core:msgilligan-modular-javase-SNAPSHOT"
 
-    implementation 'org.slf4j:slf4j-api:1.7.26'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.26'
+    implementation 'org.slf4j:slf4j-api:1.7.27'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.27'
 
     implementation "javax.inject:javax.inject:1"
 
@@ -36,6 +36,7 @@ dependencies {
 version = '0.16-SNAPSHOT'
 
 javafx {
+    version = 11
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
 }
 
@@ -58,17 +59,17 @@ jlink {
     }
     mergedModule {
         requires 'java.logging'
-        requires 'java.desktop'
-
         requires 'javafx.graphics'
         requires 'javafx.controls'
-
+        
         requires 'org.slf4j'
     }
     jpackage {
         // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for
         // where the plugin's jpackage task finds the path to the jpackage tool by default
-        // (Currently you need to manually install a OpenJDK 13 Early Access Build of jpackage)
-        skipInstaller = false
+        // (Currently you need to manually install a OpenJDK 14 Early Access Build including jpackage)
+        jpackageHome = System.getenv('BADASS_JLINK_JPACKAGE_HOME')
+        skipInstaller = true
+        //installerType = "dmg"
     }
 }
