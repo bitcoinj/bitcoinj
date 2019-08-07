@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'eclipse'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'org.javamodularity.moduleplugin'    version "1.5.0"
+}
+
+repositories {
+    maven { url 'https://dl.bintray.com/consensusj/maven' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation project(':bitcoinj-core')
+
+    implementation 'org.consensusj.supernautfx:supernautfx:0.0.2'
+    implementation "io.micronaut:micronaut-inject-java:1.1.0"
+
+    implementation 'com.google.guava:guava:27.1-android'
+    implementation 'de.jensd:fontawesomefx:8.0.0'
+    //implementation 'com.google.zxing:core:3.3.3'
+    implementation "com.github.msgilligan.zxing:core:msgilligan-modular-javase-SNAPSHOT"
+
+    implementation 'org.slf4j:slf4j-api:1.7.27'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.27'
+    
+    implementation "javax.inject:javax.inject:1"
+    
+    annotationProcessor "io.micronaut:micronaut-inject-java:1.1.0"
+}
+
+version = '0.16-SNAPSHOT'
+
+javafx {
+    version = 11
+    modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
+}
+
+patchModules.config = [
+        "java.annotation=jsr305-3.0.2.jar"
+]
+
+sourceCompatibility = 11
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+//task javadocJar(type: Jar, dependsOn: javadoc) {
+//    classifier = 'javadoc'
+//    from javadoc.destinationDir
+//}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+    // archives javadocJar
+}
+

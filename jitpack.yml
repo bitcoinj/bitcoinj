@@ -1,0 +1,8 @@
+# Set JDK version for Jitpack.io builds
+jdk:
+  - openjdk11
+
+# It seems openjdk12 is not supported yet, so we're using openjdk11 instead
+# which requires us to (temporarily) disable JavaDoc
+
+
