@@ -75,13 +75,14 @@ public class PrivateKeys {
             peerGroup.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
             peerGroup.startAsync();
             peerGroup.downloadBlockChain();
-            peerGroup.stopAsync();
 
             // And take them!
             System.out.println("Claiming " + wallet.getBalance().toFriendlyString());
             wallet.sendCoins(peerGroup, destination, wallet.getBalance());
+
             // Wait a few seconds to let the packets flush out to the network (ugly).
             Thread.sleep(5000);
+            peerGroup.stopAsync();
             System.exit(0);
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("First arg should be private key in Base58 format. Second argument should be address " +
