@@ -50,11 +50,13 @@ compileTestJava.options.encoding = 'UTF-8'
 
 mainClassName = "$moduleName/wallettemplate.WalletTemplateApp"
 
+def appName = 'WalletTemplate'
+
 jlink {
     addExtraDependencies("javafx")
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     launcher {
-        name = 'WalletTemplate'
+        name = appName
         jvmArgs = []
     }
     mergedModule {
@@ -69,7 +71,8 @@ jlink {
         // where the plugin's jpackage task finds the path to the jpackage tool by default
         // (Currently you need to manually install a OpenJDK 14 Early Access Build including jpackage)
         jpackageHome = System.getenv('BADASS_JLINK_JPACKAGE_HOME')
-        skipInstaller = true
-        //installerType = "dmg"
+        skipInstaller = false
+        installerType = "dmg"
+        installerOptions = ["--identifier", appName]
     }
 }
