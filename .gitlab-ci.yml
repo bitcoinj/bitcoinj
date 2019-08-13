@@ -2,14 +2,27 @@ image: ubuntu:bionic
 
 variables:
   GRADLE_VERSION: "4.10.3"
+  JDK14_FILENAME: "openjdk-14-jpackage+8_linux-x64_bin.tar.gz"
+  BADASS_JLINK_JPACKAGE_HOME: "$CI_PROJECT_DIR/jdk-14"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
 before_script:
+  - echo $BADASS_JLINK_JPACKAGE_HOME
+  - echo $GRADLE_OPTS
   - apt-get update
   - apt-get -y upgrade
-  - apt-get -y install openjdk-11-jdk gradle
-  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace
+  - apt-get -y install openjdk-11-jdk gradle curl fakeroot
+  - curl -O https://download.java.net/java/early_access/jpackage/8/$JDK14_FILENAME
+  - tar xvf $JDK14_FILENAME
+  - ls $BADASS_JLINK_JPACKAGE_HOME
+  - $BADASS_JLINK_JPACKAGE_HOME/bin/jpackage --version
+  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace --info
 
 build:
   script:
     - java -version
-    - ./gradlew build --stacktrace
+    - ./gradlew build bitcoinj-walletfx-template:jpackage --stacktrace --info
+  artifacts:
+    paths:
+      - bitcoinj-walletfx-template/build
+
