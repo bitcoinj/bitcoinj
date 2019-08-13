@@ -24,5 +24,6 @@ build:
     - ./gradlew build bitcoinj-walletfx-template:jpackage --stacktrace
   artifacts:
     paths:
-      - bitcoinj-walletfx-template/build
+      - bitcoinj-walletfx-template/build/jpackage
+      - bitcoinj-walletfx-template/build/libs
 
