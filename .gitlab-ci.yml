@@ -12,7 +12,7 @@ before_script:
   - echo $GRADLE_OPTS
   - apt-get update
   - apt-get -y upgrade
-  - apt-get -y install openjdk-11-jdk gradle curl fakeroot
+  - apt-get -y install openjdk-11-jdk gradle curl rpm fakeroot
   - curl --silent --show-error -O $JDK14_URL
   - tar xf $JDK14_FILENAME
   - $BADASS_JLINK_JPACKAGE_HOME/bin/jpackage --version

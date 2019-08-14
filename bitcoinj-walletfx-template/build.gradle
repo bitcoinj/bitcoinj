@@ -4,7 +4,7 @@ plugins {
     id 'eclipse'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.8'
-    id 'org.beryx.jlink' version '2.14.0'
+    id 'org.beryx.jlink' version '2.14.1'
     id 'org.javamodularity.moduleplugin'    version "1.5.0"
 }
 
@@ -76,13 +76,6 @@ jlink {
         // (Currently you need to manually install a OpenJDK 14 Early Access Build including jpackage)
         jpackageHome = System.getenv('BADASS_JLINK_JPACKAGE_HOME')
         skipInstaller = false
-        if (System.properties['os.name'].toLowerCase() == "mac os x") {
-            installerType = "dmg"
-        } else if (System.properties['os.name'].toLowerCase().contains('windows')) {
-            installerType = "exe"
-        } else {
-            installerType = "deb"
-        }
-        installerOptions = ["--identifier", appName]
+        identifier = appName
     }
 }
