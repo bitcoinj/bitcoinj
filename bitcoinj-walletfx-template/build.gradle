@@ -19,7 +19,7 @@ dependencies {
     }
     implementation project(':bitcoinj-core')
 
-    implementation('org.consensusj.supernautfx:supernautfx:0.0.2') {
+    implementation('org.consensusj.supernaut:supernautfx:0.0.4') {
         exclude group: 'org.openjfx'
     }
     implementation "io.micronaut:micronaut-inject-java:1.1.0"
@@ -68,7 +68,7 @@ jlink {
         requires 'javafx.graphics'
         requires 'javafx.controls'
         
-        requires 'org.slf4j'
+        forceMerge 'org.slf4j'
     }
     jpackage {
         // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for

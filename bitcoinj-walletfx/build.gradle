@@ -14,8 +14,8 @@ repositories {
 dependencies {
     implementation project(':bitcoinj-core')
 
-    implementation 'org.consensusj.supernautfx:supernautfx:0.0.2'
-    implementation "io.micronaut:micronaut-inject-java:1.1.0"
+    implementation 'org.consensusj.supernaut:supernautfx:0.0.4'
+    implementation "io.micronaut:micronaut-inject-java:1.2.0"
 
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
@@ -27,7 +27,7 @@ dependencies {
     
     implementation "javax.inject:javax.inject:1"
     
-    annotationProcessor "io.micronaut:micronaut-inject-java:1.1.0"
+    annotationProcessor "io.micronaut:micronaut-inject-java:1.2.0"
 }
 
 version = '0.16-SNAPSHOT'
