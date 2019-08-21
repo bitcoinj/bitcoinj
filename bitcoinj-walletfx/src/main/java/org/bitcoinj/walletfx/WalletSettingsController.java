@@ -209,7 +209,8 @@ public class WalletSettingsController implements OverlayWindowController {
         overlayUI.done();
         mainWindow.restoreFromSeedAnimation();
 
-        long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.of(getZoneId().getId()));
+        ZoneOffset offset = getSystemZoneOffset();
+        long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(offset);
 
         var wordsText = wordsArea.getText();
         if (wordsText.startsWith("tpub")) {
@@ -255,5 +256,9 @@ public class WalletSettingsController implements OverlayWindowController {
 
     private ZoneId getZoneId() {
         return ZoneId.systemDefault();
+    }
+
+    private ZoneOffset getSystemZoneOffset() {
+        return getZoneId().getRules().getOffset(Instant.now());
     }
 }
