@@ -104,7 +104,7 @@ public class SendMoneyController implements OverlayWindowController {
 
     private void addressValidityChanged(ObservableValue<? extends Boolean> observable, Boolean oldVal, Boolean newVal) {
         // Send is disabled if address is not valid or if wallet is watching wallet
-        sendBtn.setDisable(!newVal || app.getWallet().isWatching());
+        sendBtn.setDisable(!newVal || address.getText().isEmpty() || hwSigner != null);
         // Sign is disabled if address is not valid OR there is no hwSigner
         signBtn.setDisable(!newVal || hwSigner == null);
     }
