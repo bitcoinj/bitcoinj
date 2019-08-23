@@ -2,8 +2,8 @@ image: ubuntu:bionic
 
 variables:
   GRADLE_VERSION: "4.10.3"
-  JDK14_FILENAME: "openjdk-14-jpackage+8_linux-x64_bin.tar.gz"
-  JDK14_URL: "https://download.java.net/java/early_access/jpackage/8/$JDK14_FILENAME"
+  JDK14_FILENAME: "openjdk-14-jpackage+1-33_linux-x64_bin.tar.gz"
+  JDK14_URL: "https://download.java.net/java/early_access/jpackage/1/$JDK14_FILENAME"
   BADASS_JLINK_JPACKAGE_HOME: "$CI_PROJECT_DIR/jdk-14"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
@@ -26,4 +26,7 @@ build:
     paths:
       - bitcoinj-walletfx-template/build/jpackage
       - bitcoinj-walletfx-template/build/libs
+
+# Note: You can test changes to this file locally with:
+# gitlab-runner exec docker --docker-privileged build
 
