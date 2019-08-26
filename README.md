@@ -37,6 +37,38 @@ gradle clean assemble
 
 Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Gradle integration built-in and has a free Community Edition. Simply use `File | New | Project from Existing Sources` and locate the `build.gradle` in the root of the cloned project source tree.
 
+### Building and Using the Wallet Tool
+
+The **bitcoinj** `tools` subproject includes a command-line Wallet Tool (`wallet_tool`) that can be used to create and manage **bitcoinj**-based wallets (both the HD keychain and SPV blockchain state.) Using `wallet_tool` on Bitcoin's test net is a great way to learn about Bitcoin and **bitcoinj**.
+
+To build an executable shell script that runs the command-line Wallet Tool, use:
+```
+gradle bitcoinj-tools:installDist
+```
+
+You can now run the `wallet_tool` without parameters to get help on its operation:
+```
+./tools/build/install/wallet_tool/bin/wallet_tool
+```
+
+To create a test net wallet file in `~/bitcoinj/bitcoinj-test.wallet`, you would use:
+```
+mkdir ~/bitcoinj
+./tools/build/install/wallet_tool/bin/wallet_tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet create
+```
+
+To sync the newly created wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
+```
+./tools/build/install/wallet_tool/bin/wallet_tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet sync
+```
+
+To dump the state of the wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
+```
+./tools/build/install/wallet_tool/bin/wallet_tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet dump
+```
+
+Note: These instructions are for macOS/Linux, for Windows use the `tools/build/install/wallet_tool/bin/wallet_tool.bat` batch file with the equivalent Windows command-line commands and options.
+
 ### Example applications
 
 These are found in the `examples` module.
