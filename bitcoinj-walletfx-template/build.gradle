@@ -27,8 +27,8 @@ dependencies {
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.4.0'
 
-    implementation 'org.slf4j:slf4j-api:1.7.27'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.27'
+    implementation 'org.slf4j:slf4j-api:1.7.28'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.28'
 
     implementation "javax.inject:javax.inject:1"
 
