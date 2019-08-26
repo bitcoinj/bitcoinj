@@ -7,7 +7,7 @@ dependencies {
     implementation project(':core')
     implementation 'com.google.guava:guava:27.0.1-android'
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.25'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.28'
     implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
 }
 
