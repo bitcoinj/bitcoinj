@@ -48,6 +48,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final int COMMAND_LEN = 12;
 
     private final NetworkParameters params;
+    private final int protocolVersion;
     private final boolean parseRetain;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
@@ -83,8 +84,31 @@ public class BitcoinSerializer extends MessageSerializer {
      * @param parseRetain      retain the backing byte array of a message for fast reserialization.
      */
     public BitcoinSerializer(NetworkParameters params, boolean parseRetain) {
+        this(params, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT), parseRetain);
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param params           networkParams used to create Messages instances and determining packetMagic
+     * @param protocolVersion  the protocol version to use
+     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
+     */
+    public BitcoinSerializer(NetworkParameters params, int protocolVersion, boolean parseRetain) {
         this.params = params;
+        this.protocolVersion = protocolVersion;
         this.parseRetain = parseRetain;
+    }
+
+    @Override
+    public BitcoinSerializer withProtocolVersion(int protocolVersion) {
+        return protocolVersion == this.protocolVersion ?
+                this : new BitcoinSerializer(params, protocolVersion, parseRetain);
+    }
+
+    @Override
+    public int getProtocolVersion() {
+        return protocolVersion;
     }
 
     /**
@@ -386,11 +410,12 @@ public class BitcoinSerializer extends MessageSerializer {
         if (o == null || !(o instanceof BitcoinSerializer)) return false;
         BitcoinSerializer other = (BitcoinSerializer) o;
         return Objects.equals(params, other.params) &&
+                protocolVersion == other.protocolVersion &&
                 parseRetain == other.parseRetain;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, parseRetain);
+        return Objects.hash(params, protocolVersion, parseRetain);
     }
 }

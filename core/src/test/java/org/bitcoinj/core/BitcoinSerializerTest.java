@@ -241,5 +241,6 @@ public class BitcoinSerializerTest {
     public void testEquals() {
         assertTrue(MAINNET.getDefaultSerializer().equals(MAINNET.getDefaultSerializer()));
         assertFalse(MAINNET.getDefaultSerializer().equals(TestNet3Params.get().getDefaultSerializer()));
+        assertFalse(MAINNET.getDefaultSerializer().equals(MAINNET.getDefaultSerializer().withProtocolVersion(0)));
     }
 }

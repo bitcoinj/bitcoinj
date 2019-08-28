@@ -71,7 +71,7 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.addr = checkNotNull(addr);
         this.port = port;
-        this.protocolVersion = protocolVersion;
+        setSerializer(serializer.withProtocolVersion(protocolVersion));
         this.services = services;
         length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
@@ -107,7 +107,6 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.hostname = hostname;
         this.port = port;
-        this.protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         this.services = BigInteger.ZERO;
     }
 
@@ -140,7 +139,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     private boolean isSerializeTime() {
-        return protocolVersion >= 31402 && !(parent instanceof VersionMessage);
+        return serializer.getProtocolVersion() >= 31402 && !(parent instanceof VersionMessage);
     }
 
     @Override
