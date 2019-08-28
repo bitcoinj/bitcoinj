@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.CURRENT;
 import static org.bitcoinj.core.Utils.*;
 
 /**
@@ -47,6 +49,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final int COMMAND_LEN = 12;
 
     private final NetworkParameters params;
+    private final int protocolVersion;
     private final boolean parseRetain;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
@@ -82,8 +85,31 @@ public class BitcoinSerializer extends MessageSerializer {
      * @param parseRetain      retain the backing byte array of a message for fast reserialization.
      */
     public BitcoinSerializer(NetworkParameters params, boolean parseRetain) {
+        this(params, params.getProtocolVersionNum(CURRENT), parseRetain);
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param params           networkParams used to create Messages instances and determining packetMagic
+     * @param protocolVersion  the protocol version to use
+     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
+     */
+    public BitcoinSerializer(NetworkParameters params, int protocolVersion, boolean parseRetain) {
         this.params = params;
+        this.protocolVersion = protocolVersion;
         this.parseRetain = parseRetain;
+    }
+
+    @Override
+    public BitcoinSerializer withProtocolVersion(int protocolVersion) {
+        return protocolVersion == this.protocolVersion ?
+                this : new BitcoinSerializer(params, protocolVersion, parseRetain);
+    }
+
+    @Override
+    public int getProtocolVersion() {
+        return protocolVersion;
     }
 
     /**
@@ -377,5 +403,20 @@ public class BitcoinSerializer extends MessageSerializer {
             System.arraycopy(header, cursor, checksum, 0, 4);
             cursor += 4;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BitcoinSerializer)) return false;
+        BitcoinSerializer that = (BitcoinSerializer) o;
+        return protocolVersion == that.protocolVersion &&
+                parseRetain == that.parseRetain &&
+                Objects.equal(params, that.params);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(params, protocolVersion, parseRetain);
     }
 }

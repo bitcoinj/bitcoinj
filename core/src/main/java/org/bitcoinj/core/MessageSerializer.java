@@ -18,6 +18,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.Beta;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
@@ -28,6 +30,39 @@ import java.nio.ByteBuffer;
  * classes should be immutable.
  */
 public abstract class MessageSerializer {
+
+    /**
+     * <p>
+     * Create a new serializer with a specific protocol version. Mainly used to disable SegWit when parsing transactions
+     * </p>
+     * <p>
+     * Note: this is an experimental "beta" API and could change in future releases
+     * </p>
+     */
+    @Beta
+    public abstract MessageSerializer withProtocolVersion(int protocolVersion);
+
+    @Beta
+    public MessageSerializer withProtocolVersionFlag(int flag, boolean set) {
+        int newProtocolVersion = getProtocolVersion();
+        if (set) {
+            newProtocolVersion |= flag;
+        } else {
+            newProtocolVersion &= ~flag;
+        }
+        return withProtocolVersion(newProtocolVersion);
+    }
+
+    /**
+     * <p>
+     * Get the protocol version of this serializer
+     * </p>
+     * <p>
+     * Note: this is an experimental "beta" API and could change in future releases
+     * </p>
+     */
+    @Beta
+    public abstract int getProtocolVersion();
 
     /**
      * Reads a message from the given ByteBuffer and returns it.
