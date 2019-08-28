@@ -77,7 +77,7 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.addr = checkNotNull(addr);
         this.port = port;
-        this.protocolVersion = protocolVersion;
+        setSerializer(serializer.withProtocolVersion(protocolVersion));
         this.services = services;
         length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
@@ -101,48 +101,9 @@ public class PeerAddress extends ChildMessage {
     /**
      * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
      * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
-     * Protocol version is the default for Bitcoin.
-     */
-    public PeerAddress(InetSocketAddress addr) {
-        InetAddress inetAddress = addr.getAddress();
-        if(inetAddress != null) {
-            this.addr = inetAddress;
-        } else {
-            this.hostname = checkNotNull(addr.getHostString());
-        }
-        this.port = addr.getPort();
-        this.protocolVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
-        this.services = BigInteger.ZERO;
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
-    }
-
-    /**
-     * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
-     * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
      */
     public PeerAddress(NetworkParameters params, InetSocketAddress addr) {
-        super(params);
-        InetAddress inetAddress = addr.getAddress();
-        if(inetAddress != null) {
-            this.addr = inetAddress;
-        } else {
-            this.hostname = checkNotNull(addr.getHostString());
-        }
-        this.port = addr.getPort();
-        this.protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
-        this.services = BigInteger.ZERO;
-        length = protocolVersion > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
-    }
-
-    /**
-     * Constructs a peer address from a stringified hostname+port.
-     * Protocol version is the default for Bitcoin.
-     */
-    public PeerAddress(String hostname, int port) {
-        this.hostname = hostname;
-        this.port = port;
-        this.protocolVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
-        this.services = BigInteger.ZERO;
+        this(params, addr.getAddress(), addr.getPort());
     }
 
     /**
@@ -152,7 +113,6 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.hostname = hostname;
         this.port = port;
-        this.protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         this.services = BigInteger.ZERO;
     }
 
@@ -163,7 +123,7 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.hostname = hostname;
         this.port = port;
-        this.protocolVersion = protocolVersion;
+        setSerializer(serializer.withProtocolVersion(protocolVersion));
         this.services = services;
         length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
@@ -209,7 +169,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     private boolean isSerializeTime() {
-        return protocolVersion >= 31402 && !(parent instanceof VersionMessage);
+        return serializer.getProtocolVersion() >= 31402 && !(parent instanceof VersionMessage);
     }
 
     @Override

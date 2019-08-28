@@ -54,8 +54,6 @@ public abstract class Message {
     protected boolean recached = false;
     protected MessageSerializer serializer;
 
-    protected int protocolVersion;
-
     protected NetworkParameters params;
 
     protected Message() {
@@ -64,7 +62,6 @@ public abstract class Message {
 
     protected Message(NetworkParameters params) {
         this.params = params;
-        this.protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
         this.serializer = params.getDefaultSerializer();
     }
 
@@ -84,8 +81,7 @@ public abstract class Message {
      * @throws ProtocolException
      */
     protected Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion, MessageSerializer serializer, int length) throws ProtocolException {
-        this.serializer = serializer;
-        this.protocolVersion = protocolVersion;
+        this.serializer = serializer.withProtocolVersion(protocolVersion);
         this.params = params;
         this.payload = payload;
         this.cursor = this.offset = offset;
@@ -102,13 +98,12 @@ public abstract class Message {
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        this(params, payload, offset, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),
+        this(params, payload, offset, params.getDefaultSerializer().getProtocolVersion(),
              params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
-        this(params, payload, offset, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),
-             serializer, length);
+        this(params, payload, offset, serializer.getProtocolVersion(), serializer, length);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
@@ -151,6 +146,17 @@ public abstract class Message {
 
     public boolean isRecached() {
         return recached;
+    }
+
+    /**
+     * Overrides the message serializer.
+     * @param serializer the new serializer
+     */
+    public void setSerializer(MessageSerializer serializer) {
+        if (!this.serializer.equals(serializer)) {
+            this.serializer = serializer;
+            unCache();
+        }
     }
 
     /**
@@ -322,7 +328,7 @@ public abstract class Message {
             throw new ProtocolException(e);
         }
     }
-    
+
     protected byte[] readByteArray() throws ProtocolException {
         long len = readVarInt();
         return readBytes((int)len);
