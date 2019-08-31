@@ -574,7 +574,8 @@ public class Peer extends PeerSocketHandler {
         // Now it's our turn ...
         // Send an ACK message stating we accept the peers protocol version.
         sendMessage(new VersionAck());
-        log.debug("{}: Incoming version handshake complete.", this);
+        if (log.isDebugEnabled())
+            log.debug("{}: Incoming version handshake complete.", this);
         incomingVersionHandshakeFuture.set(this);
     }
 
@@ -585,12 +586,14 @@ public class Peer extends PeerSocketHandler {
         if (outgoingVersionHandshakeFuture.isDone()) {
             throw new ProtocolException("got more than one version ack");
         }
-        log.debug("{}: Outgoing version handshake complete.", this);
+        if (log.isDebugEnabled())
+            log.debug("{}: Outgoing version handshake complete.", this);
         outgoingVersionHandshakeFuture.set(this);
     }
 
     private void versionHandshakeComplete() {
-        log.debug("{}: Handshake complete.", this);
+        if (log.isDebugEnabled())
+            log.debug("{}: Handshake complete.", this);
         setTimeoutEnabled(false);
         for (final ListenerRegistration<PeerConnectedEventListener> registration : connectedEventListeners) {
             registration.executor.execute(new Runnable() {
@@ -639,10 +642,11 @@ public class Peer extends PeerSocketHandler {
 
     protected void processAlert(AlertMessage m) {
         try {
-            if (m.isSignatureValid()) {
-                log.debug("Received alert from peer {}: {}", this, m.getStatusBar());
-            } else {
-                log.debug("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
+            if (log.isDebugEnabled()) {
+                if (m.isSignatureValid())
+                    log.debug("Received alert from peer {}: {}", this, m.getStatusBar());
+                else
+                    log.debug("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
             }
         } catch (Throwable t) {
             // Signature checking can FAIL on Android platforms before Gingerbread apparently due to bugs in their
@@ -757,7 +761,8 @@ public class Peer extends PeerSocketHandler {
         tx.verify();
         lock.lock();
         try {
-            log.debug("{}: Received tx {}", getAddress(), tx.getTxId());
+            if (log.isDebugEnabled())
+                log.debug("{}: Received tx {}", getAddress(), tx.getTxId());
             // Label the transaction as coming in from the P2P network (as opposed to being created by us, direct import,
             // etc). This helps the wallet decide how to risk analyze it later.
             //
@@ -966,18 +971,19 @@ public class Peer extends PeerSocketHandler {
     }
 
     protected void processBlock(Block m) {
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
-        }
         // Was this block requested by getBlock()?
         if (maybeHandleRequestedData(m)) return;
         if (blockChain == null) {
-            log.debug("Received block but was not configured with an AbstractBlockChain");
+            if (log.isDebugEnabled())
+                log.debug("Received block but was not configured with an AbstractBlockChain");
             return;
         }
         // Did we lose download peer status after requesting block data?
         if (!vDownloadData) {
-            log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHashAsString());
+            if (log.isDebugEnabled())
+                log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHashAsString());
             return;
         }
         pendingBlockDownloads.remove(m.getHash());
@@ -1031,11 +1037,13 @@ public class Peer extends PeerSocketHandler {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast filtered block {}", getAddress(), m.getHash().toString());
         if (!vDownloadData) {
-            log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHash().toString());
+            if (log.isDebugEnabled())
+                log.debug("{}: Received block we did not ask for: {}", getAddress(), m.getHash().toString());
             return;
         }
         if (blockChain == null) {
-            log.debug("Received filtered block but was not configured with an AbstractBlockChain");
+            if (log.isDebugEnabled())
+                log.debug("Received filtered block but was not configured with an AbstractBlockChain");
             return;
         }
         // Note that we currently do nothing about peers which maliciously do not include transactions which
@@ -1219,7 +1227,8 @@ public class Peer extends PeerSocketHandler {
                 // We created this transaction ourselves, so don't download.
                 it.remove();
             } else {
-                log.debug("{}: getdata on tx {}", getAddress(), item.hash);
+                if (log.isDebugEnabled())
+                    log.debug("{}: getdata on tx {}", getAddress(), item.hash);
                 getdata.addTransaction(item.hash, vPeerVersionMessage.isWitnessSupported());
                 if (pendingTxDownloads.size() > PENDING_TX_DOWNLOADS_LIMIT) {
                     log.info("{}: Too many pending transactions, disconnecting", this);
@@ -1525,7 +1534,8 @@ public class Peer extends PeerSocketHandler {
             if (!future.isDone()) {
                 long elapsed = Utils.currentTimeMillis() - startTimeMsec;
                 Peer.this.addPingTimeData(elapsed);
-                log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed);
+                if (log.isDebugEnabled())
+                    log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed);
                 future.set(elapsed);
             }
         }
