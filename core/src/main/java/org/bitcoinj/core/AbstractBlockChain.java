@@ -542,7 +542,8 @@ public abstract class AbstractBlockChain {
                     block.getTransactions() == null ? block : block.cloneAsHeader(), txOutChanges);
             versionTally.add(block.getVersion());
             setChainHead(newStoredBlock);
-            log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
+            if (log.isDebugEnabled())
+                log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());
             informListenersForNewBlock(block, NewBlockType.BEST_CHAIN, filteredTxHashList, filteredTxn, newStoredBlock);
         } else {
             // This block connects to somewhere other than the top of the best known chain. We treat these differently.
@@ -897,7 +898,8 @@ public abstract class AbstractBlockChain {
                 StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.getPrevBlockHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
-                    log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
+                    if (log.isDebugEnabled())
+                        log.debug("Orphan block {} is not connectable right now", orphanBlock.block.getHash());
                     continue;
                 }
                 // Otherwise we can connect it now.
@@ -1041,7 +1043,7 @@ public abstract class AbstractBlockChain {
         // Track false positives in batch by adding alpha to the false positive estimate once per count.
         // Each false positive counts as 1.0 towards the estimate.
         falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
-        if (count > 0)
+        if (count > 0 && log.isDebugEnabled())
             log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
     }
 
