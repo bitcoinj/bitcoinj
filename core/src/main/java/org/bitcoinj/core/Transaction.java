@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.util.*;
 
+import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
 import static org.bitcoinj.core.Utils.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -94,6 +95,12 @@ public class Transaction extends ChildMessage {
         }
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
+
+    /**
+     * When this bit is set in protocolVersion, do not include witness. The actual value is the same as in Bitcoin Core
+     * for consistency.
+     */
+    public static final int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
     /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
     public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
@@ -281,6 +288,15 @@ public class Transaction extends ChildMessage {
             }
         }
         return cachedTxId;
+    }
+
+    /**
+     * Returns if tx witnesses are allowed based on the protocol version
+     */
+    private boolean allowWitness() {
+        int protocolVersion = serializer.getProtocolVersion();
+        return (protocolVersion & SERIALIZE_TRANSACTION_NO_WITNESS) == 0
+                && protocolVersion >= WITNESS_VERSION.getBitcoinProtocolVersion();
     }
 
     /**
@@ -619,26 +635,46 @@ public class Transaction extends ChildMessage {
      */
     @Override
     protected void parse() throws ProtocolException {
+        boolean allowWitness = allowWitness();
+
         cursor = offset;
         optimalEncodingMessageSize = 4;
 
         // version
         version = readUint32();
-        // peek at marker
-        byte marker = payload[cursor];
-        boolean useSegwit = marker == 0;
-        // marker, flag
-        if (useSegwit) {
-            readBytes(2);
-            optimalEncodingMessageSize += 2;
-        }
-        // txin_count, txins
+        byte flags = 0;
+        // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
         parseInputs();
-        // txout_count, txouts
-        parseOutputs();
-        // script_witnesses
-        if (useSegwit)
+        if (inputs.size() == 0 && allowWitness) {
+            // We read a dummy or an empty input
+            flags = readByte();
+            optimalEncodingMessageSize += 2;
+
+            if (flags != 0) {
+                parseInputs();
+                parseOutputs();
+            } else {
+                outputs = new ArrayList<>(0);
+            }
+        } else {
+            // We read non-empty inputs. Assume normal outputs follows.
+            parseOutputs();
+        }
+
+        if (((flags & 1) != 0) && allowWitness) {
+            // The witness flag is present, and we support witnesses.
+            flags ^= 1;
+            // script_witnesses
             parseWitnesses();
+            if (!hasWitnesses()) {
+                // It's illegal to encode witnesses when all witness stacks are empty.
+                throw new ProtocolException("Superfluous witness record");
+            }
+        }
+        if (flags != 0) {
+            // Unknown flag in the serialization
+            throw new ProtocolException("Unknown transaction optional data");
+        }
         // lock_time
         lockTime = readUint32();
         optimalEncodingMessageSize += 4;
@@ -1421,8 +1457,7 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        boolean useSegwit = hasWitnesses()
-                && serializer.getProtocolVersion() >= NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+        boolean useSegwit = hasWitnesses() && allowWitness();
         bitcoinSerializeToStream(stream, useSegwit);
     }
 
