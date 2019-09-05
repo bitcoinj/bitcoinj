@@ -23,8 +23,8 @@ import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-
 import org.jspecify.annotations.Nullable;
+
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
@@ -157,6 +158,27 @@ public class TransactionWitness {
     }
 
     /**
+     * Check if the witness is empty
+     * @return true if empty
+     */
+    boolean isEmpty() {
+        return pushes.isEmpty();
+    }
+
+    /**
+     * Set a stack push at a specified index.
+     *
+     * @param i index to get push at
+     * @param value stack push
+     */
+    void setPush(int i, byte[] value) {
+        while (i >= pushes.size()) {
+            pushes.add(new byte[]{});
+        }
+        pushes.set(i, value);
+    }
+
+    /**
      * Allocates a byte array and writes this transaction witness into it.
      *
      * @return byte array containing the transaction witness
@@ -210,5 +232,15 @@ public class TransactionWitness {
             hashCode = 31 * hashCode + Arrays.hashCode(push);
         }
         return hashCode;
+    }
+
+    /**
+     * Make a copy if the transaction witness
+     * @return the copied witness
+     */
+    TransactionWitness copy() {
+        return TransactionWitness.of(pushes.stream()
+                .map(push -> Arrays.copyOf(push, push.length))
+                .collect(Collectors.toList()));
     }
 }
