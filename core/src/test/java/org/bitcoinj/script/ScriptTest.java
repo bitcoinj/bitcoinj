@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
@@ -394,7 +395,17 @@ public class ScriptTest {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
                 continue; // This is a comment.
             Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-            Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(HEX.decode(test.get(1).asText().toLowerCase()));
+            byte[] txBytes = HEX.decode(test.get(1).asText().toLowerCase());
+            MessageSerializer serializer = TESTNET.getDefaultSerializer();
+            Transaction transaction;
+            try {
+                transaction = serializer.makeTransaction(txBytes);
+            } catch (ProtocolException ignore) {
+                // Try to parse as a no-witness transaction because some vectors are 0-input, 1-output txs that fail
+                // to correctly parse as witness transactions.
+                int protoVersionNoWitness = serializer.getProtocolVersion() | SERIALIZE_TRANSACTION_NO_WITNESS;
+                transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(txBytes);
+            }
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
             boolean valid = true;

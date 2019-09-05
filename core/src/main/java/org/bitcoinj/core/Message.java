@@ -335,10 +335,14 @@ public abstract class Message {
         }
     }
 
-    protected byte[] readBytes(int length) throws ProtocolException {
+    private void checkReadLength(int length) throws ProtocolException {
         if ((length > MAX_SIZE) || (cursor + length > payload.length)) {
             throw new ProtocolException("Claimed value length too large: " + length);
         }
+    }
+
+    protected byte[] readBytes(int length) throws ProtocolException {
+        checkReadLength(length);
         try {
             byte[] b = new byte[length];
             System.arraycopy(payload, cursor, b, 0, length);
@@ -347,6 +351,11 @@ public abstract class Message {
         } catch (IndexOutOfBoundsException e) {
             throw new ProtocolException(e);
         }
+    }
+
+    protected byte readByte() throws ProtocolException {
+        checkReadLength(1);
+        return payload[cursor++];
     }
 
     protected byte[] readByteArray() throws ProtocolException {
