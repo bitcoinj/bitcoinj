@@ -243,4 +243,15 @@ public class BitcoinSerializerTest {
         assertFalse(MAINNET.getDefaultSerializer().equals(TestNet3Params.get().getDefaultSerializer()));
         assertFalse(MAINNET.getDefaultSerializer().equals(MAINNET.getDefaultSerializer().withProtocolVersion(0)));
     }
+
+    @Test
+    public void testWithProtocolVersionFlag() {
+        MessageSerializer serializer = MAINNET.getDefaultSerializer();
+        int version = serializer.getProtocolVersion();
+        int flags = 0x40000000;
+        serializer = serializer.withProtocolVersionFlag(flags, true);
+        assertEquals(version | flags, serializer.getProtocolVersion());
+        serializer = serializer.withProtocolVersionFlag(flags, false);
+        assertEquals(version, serializer.getProtocolVersion());
+    }
 }

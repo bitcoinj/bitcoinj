@@ -152,6 +152,23 @@ public class TransactionOutput extends ChildMessage {
     }
 
     /**
+     * Returns wherever this output is considered "null", meaning it's value is -1.
+     * @return true if value is -1
+     */
+    boolean isNull() {
+        return value == -1;
+    }
+
+    /**
+     * Convert it to a null value
+     */
+    static TransactionOutput createNull(NetworkParameters params) {
+        TransactionOutput nullTxOut = new TransactionOutput(params, null, Coin.ZERO, new byte[0]);
+        nullTxOut.value = -1;
+        return nullTxOut;
+    }
+
+    /**
      * Returns the value of this output. This is the amount of currency that the destination address
      * receives.
      */

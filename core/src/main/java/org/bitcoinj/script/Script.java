@@ -52,6 +52,7 @@ import static com.google.common.base.Preconditions.*;
  * static methods for building scripts.</p>
  */
 public class Script {
+    public static final Script EMPTY = new Script();
 
     /** Enumeration to encapsulate the type of this script. */
     public enum ScriptType {
@@ -142,6 +143,20 @@ public class Script {
     }
 
     /**
+     * Returns true if this script is empty
+     */
+    public boolean isEmpty() {
+        return chunks.isEmpty();
+    }
+
+    /**
+     * Returns a copy of this script
+     */
+    public Script copy() {
+        return new Script(getProgram(), creationTimeSeconds);
+    }
+
+    /**
      * Returns the program opcodes as a string, for example "[1234] DUP HASH160", or "&lt;empty&gt;".
      */
     @Override
@@ -163,7 +178,7 @@ public class Script {
                 chunk.write(bos);
             }
             program = bos.toByteArray();
-            return program;
+            return Arrays.copyOf(program, program.length);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }

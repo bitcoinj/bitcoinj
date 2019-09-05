@@ -1826,4 +1826,12 @@ public class Transaction extends ChildMessage {
     public void setMemo(String memo) {
         this.memo = memo;
     }
+
+    /**
+     * Make a copy of this transaction by serializing and de-serializing
+     * @return the copied transaction
+     */
+    public Transaction copy() {
+        return serializer.makeTransaction(this.bitcoinSerialize());
+    }
 }
