@@ -12,9 +12,9 @@ matrix:
     env: GRADLE_VERSION=4.10.3
 install: true
 before_script:
-  - gradle wrapper --gradle-version=$GRADLE_VERSION
+  - gradle wrapper --gradle-version=$GRADLE_VERSION -PchecksumFailOn=never
 script:
-  - ./gradlew clean build
+  - ./gradlew clean build -PchecksumFailOn=build_finish -PchecksumPrint
 
 notifications:
   irc:
