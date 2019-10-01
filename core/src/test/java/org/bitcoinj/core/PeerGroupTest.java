@@ -622,6 +622,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
+        assertTrue(p1.lastReceivedFilter.contains(key.getPubKeyHash()));
         assertFalse(p1.lastReceivedFilter.contains(tx.getTxId().getBytes()));
         inbound(p1, tx);
         // p1 requests dep resolution, p2 is quiet.
@@ -635,6 +636,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Now we connect p3 and there is a new bloom filter sent, that DOES match the relevant outpoint.
         InboundMessageQueuer p3 = connectPeer(3);
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
+        assertTrue(p3.lastReceivedFilter.contains(key.getPubKeyHash()));
         assertTrue(p3.lastReceivedFilter.contains(outpoint.unsafeBitcoinSerialize()));
     }
 
