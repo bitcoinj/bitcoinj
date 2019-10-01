@@ -209,7 +209,7 @@ public class DefaultRiskAnalysisTest {
         tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKHOutputScript(key1));
-        // A pay to pubkey output
+        // A P2PK output
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         // 1-of-2 multisig output.

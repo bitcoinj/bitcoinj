@@ -186,15 +186,15 @@ public class PeerGroup implements TransactionBroadcaster {
             //
             // Unfortunately, whilst this is required for correct sync of the chain in blocks, there are two edge cases.
             //
-            // (1) If a wallet receives a relevant, confirmed p2pubkey output that was not broadcast across the network,
+            // (1) If a wallet receives a relevant, confirmed P2PK output that was not broadcast across the network,
             // for example in a coinbase transaction, then the node that's serving us the chain will update its filter
             // but the rest will not. If another transaction then spends it, the other nodes won't match/relay it.
             //
-            // (2) If we receive a p2pubkey output broadcast across the network, all currently connected nodes will see
+            // (2) If we receive a P2PK output broadcast across the network, all currently connected nodes will see
             // it and update their filter themselves, but any newly connected nodes will receive the last filter we
             // calculated, which would not include this transaction.
             //
-            // For this reason we check if the transaction contained any relevant pay to pubkeys and force a recalc
+            // For this reason we check if the transaction contained any relevant P2PKs and force a recalc
             // and possibly retransmit if so. The recalculation process will end up including the tx hash into the
             // filter. In case (1), we need to retransmit the filter to the connected peers. In case (2), we don't
             // and shouldn't, we should just recalculate and cache the new filter for next time.
