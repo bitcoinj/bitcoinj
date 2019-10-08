@@ -10,7 +10,7 @@ version = '0.16-SNAPSHOT'
 dependencies {
     api 'org.bouncycastle:bcprov-jdk15to18:1.68'
     api 'com.google.guava:guava:30.0-android'
-    api 'com.google.protobuf:protobuf-java:3.13.0'
+    api 'com.google.protobuf:protobuf-javalite:3.13.0'
     api 'com.squareup.okhttp3:okhttp:3.12.12'
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'net.jcip:jcip-annotations:1.0'
@@ -33,6 +33,15 @@ javadoc.options.encoding = 'UTF-8'
 protobuf {
     protoc {
         artifact = 'com.google.protobuf:protoc:3.13.0'
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option "lite"
+                }
+            }
+        }
     }
     generatedFilesBaseDir = new File(projectDir, '/src') // workaround for '$projectDir/src'
 }
