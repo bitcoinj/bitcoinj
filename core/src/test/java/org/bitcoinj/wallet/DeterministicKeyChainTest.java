@@ -41,7 +41,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -745,8 +747,18 @@ public class DeterministicKeyChainTest {
     private String protoToString(List<Protos.Key> keys) {
         StringBuilder sb = new StringBuilder();
         for (Protos.Key key : keys) {
-            sb.append(key.toString());
-            sb.append("\n");
+            try {
+                BufferedReader reader = new BufferedReader(new StringReader(key.toString()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.startsWith("#"))
+                        sb.append(line).append('\n');
+                }
+                sb.append('\n');
+                reader.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e); // cannot happen
+            }
         }
         return sb.toString().trim();
     }
