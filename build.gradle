@@ -5,6 +5,7 @@ buildscript {
 
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+        classpath "org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.0"
     }
 }
 
@@ -14,4 +15,21 @@ allprojects {
     }
 
     group = 'org.bitcoinj'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'com.github.kt3k.coveralls'
+
+    jacoco {
+        toolVersion = '0.8.4'
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+    }
 }

@@ -15,6 +15,8 @@ before_script:
   - gradle wrapper --gradle-version=$GRADLE_VERSION
 script:
   - ./gradlew clean build
+after_success:
+  - ./gradlew jacocoTestReport coveralls
 
 notifications:
   irc:
