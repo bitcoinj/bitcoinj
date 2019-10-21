@@ -303,6 +303,7 @@ public class ECKey implements EncryptableItem {
      * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
      * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
      */
+    @Deprecated
     public ECKey decompress() {
         if (!pub.isCompressed())
             return this;
