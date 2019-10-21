@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'com.google.guava:guava:27.1-android'
+    implementation 'com.google.guava:guava:28.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.3.3'
     implementation 'org.slf4j:slf4j-jdk14:1.7.28'
