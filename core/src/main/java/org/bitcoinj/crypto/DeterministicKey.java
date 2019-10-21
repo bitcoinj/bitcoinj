@@ -67,7 +67,7 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, compressPoint(checkNotNull(publicAsPoint)));
+        super(priv, checkNotNull(publicAsPoint), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
@@ -89,7 +89,7 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
+        super(priv, ECKey.publicPointFromPrivate(priv), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
@@ -137,7 +137,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(null, compressPoint(checkNotNull(publicAsPoint)));
+        super(null, checkNotNull(publicAsPoint), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
@@ -157,7 +157,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(priv, compressPoint(ECKey.publicPointFromPrivate(priv)));
+        super(priv, ECKey.publicPointFromPrivate(priv), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
@@ -169,7 +169,7 @@ public class DeterministicKey extends ECKey {
     
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        super(keyToClone.priv, keyToClone.pub.get());
+        super(keyToClone.priv, keyToClone.pub.get(), true);
         this.parent = newParent;
         this.childNumberPath = keyToClone.childNumberPath;
         this.chainCode = keyToClone.chainCode;
@@ -628,7 +628,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        helper.add("pub", Utils.HEX.encode(pub.getEncoded(isCompressed())));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());
         if (parent != null)

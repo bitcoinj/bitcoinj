@@ -65,13 +65,6 @@ public class LazyECPoint {
         return get().getDetachedPoint();
     }
 
-    public byte[] getEncoded() {
-        if (bits != null)
-            return Arrays.copyOf(bits, bits.length);
-        else
-            return get().getEncoded();
-    }
-
     public boolean isInfinity() {
         return get().isInfinity();
     }
@@ -90,13 +83,6 @@ public class LazyECPoint {
 
     public boolean isNormalized() {
         return get().isNormalized();
-    }
-
-    public boolean isCompressed() {
-        if (bits != null)
-            return bits[0] == 2 || bits[0] == 3;
-        else
-            return get().isCompressed();
     }
 
     public ECPoint multiply(BigInteger k) {
@@ -140,7 +126,7 @@ public class LazyECPoint {
     }
 
     public byte[] getEncoded(boolean compressed) {
-        if (compressed == isCompressed() && bits != null)
+        if (bits != null)
             return Arrays.copyOf(bits, bits.length);
         else
             return get().getEncoded(compressed);
