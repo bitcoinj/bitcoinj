@@ -106,7 +106,7 @@ public class DumpedPrivateKeyTest {
 
     @Test
     public void roundtripBase58_getKey() throws Exception {
-        ECKey k = new ECKey().decompress();
+        ECKey k = ECKey.fromPrivate(new ECKey().getPrivKey(), false);
         assertFalse(k.isCompressed());
         assertEquals(k.getPrivKey(),
                 DumpedPrivateKey.fromBase58(null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
