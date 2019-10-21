@@ -5,7 +5,7 @@ eclipse.project.name = 'bitcoinj-tools'
 
 dependencies {
     implementation project(':core')
-    implementation 'com.google.guava:guava:27.1-android'
+    implementation 'com.google.guava:guava:28.1-android'
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
     implementation 'org.slf4j:slf4j-jdk14:1.7.28'
 }
