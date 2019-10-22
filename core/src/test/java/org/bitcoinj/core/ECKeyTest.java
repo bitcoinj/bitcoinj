@@ -158,7 +158,7 @@ public class ECKeyTest {
         // Now re-encode and decode the ASN.1 to see if it is equivalent (it does not produce the exact same byte
         // sequence, some integers are padded now).
         ECKey roundtripKey =
-            ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey.getPubKeyPoint());
+            ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey.getPubKeyPoint(), decodedKey.isCompressed());
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
             byte[] message = reverseBytes(HEX.decode(
@@ -245,7 +245,7 @@ public class ECKeyTest {
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
-        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        key = ECKey.fromPublicOnly(key);
 
         List<Byte> possibleRecIds = Lists.newArrayList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
         byte recId = key.findRecoveryId(hash, sig);
@@ -261,13 +261,13 @@ public class ECKeyTest {
         String message = "Maarten Bodewes generated this test vector on 2016-11-08";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
-        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        key = ECKey.fromPublicOnly(key);
 
         byte recId = key.findRecoveryId(hash, sig);
         byte expectedRecId = 0;
         assertEquals(recId, expectedRecId);
 
-        ECKey pubKey = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        ECKey pubKey = ECKey.fromPublicOnly(key);
         ECKey recoveredKey = ECKey.recoverFromSignature(recId, sig, hash, true);
         assertEquals(recoveredKey, pubKey);
     }
@@ -280,7 +280,7 @@ public class ECKeyTest {
         ECKey.ECDSASignature sig = key.sign(hash);
 
         byte recId = key.findRecoveryId(hash, sig);
-        ECKey pubKey = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        ECKey pubKey = ECKey.fromPublicOnly(key);
         ECKey recoveredKey = ECKey.recoverFromSignature(recId, sig, hash, true);
         assertEquals(recoveredKey, pubKey);
     }
@@ -291,7 +291,7 @@ public class ECKeyTest {
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
-        key = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        key = ECKey.fromPublicOnly(key);
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
@@ -390,7 +390,7 @@ public class ECKeyTest {
         String message = "Goodbye Jupiter!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = encryptedKey.sign(hash, aesKey);
-        unencryptedKey = ECKey.fromPublicOnly(unencryptedKey.getPubKeyPoint());
+        unencryptedKey = ECKey.fromPublicOnly(unencryptedKey);
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
@@ -526,7 +526,7 @@ public class ECKeyTest {
     @Test
     public void testPublicKeysAreEqual() {
         ECKey key = new ECKey();
-        ECKey pubKey1 = ECKey.fromPublicOnly(key.getPubKeyPoint());
+        ECKey pubKey1 = ECKey.fromPublicOnly(key);
         assertTrue(pubKey1.isCompressed());
         ECKey pubKey2 = pubKey1.decompress();
         assertEquals(pubKey1, pubKey2);
