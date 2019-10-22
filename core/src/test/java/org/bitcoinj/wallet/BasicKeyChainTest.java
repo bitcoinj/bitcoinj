@@ -233,7 +233,7 @@ public class BasicKeyChainTest {
     @Test
     public void watching() throws UnreadableWalletException {
         ECKey key1 = new ECKey();
-        ECKey pub = ECKey.fromPublicOnly(key1.getPubKeyPoint());
+        ECKey pub = ECKey.fromPublicOnly(key1);
         chain.importKeys(pub);
         assertEquals(1, chain.numKeys());
         List<Protos.Key> keys = chain.serializeToProtobuf();
