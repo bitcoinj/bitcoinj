@@ -497,6 +497,26 @@ public class ECKeyTest {
         }
     }
 
+    @Test
+    public void isPubKeyCompressed() {
+        assertFalse(ECKey.isPubKeyCompressed(HEX.decode(
+                "04cfb4113b3387637131ebec76871fd2760fc430dd16de0110f0eb07bb31ffac85e2607c189cb8582ea1ccaeb64ffd655409106589778f3000fdfe3263440b0350")));
+        assertTrue(ECKey.isPubKeyCompressed(HEX.decode(
+                "036d27f617ce7b0cbdce0abebd1c7aafc147bd406276e6a08d64d7a7ed0ca68f0e")));
+        assertTrue(ECKey.isPubKeyCompressed(HEX.decode(
+                "0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void isPubKeyCompressed_tooShort() {
+        ECKey.isPubKeyCompressed(HEX.decode("036d"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void isPubKeyCompressed_illegalSign() {
+        ECKey.isPubKeyCompressed(HEX.decode("0438746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f"));
+    }
+
     private static boolean checkSomeBytesAreNonZero(byte[] bytes) {
         if (bytes == null) return false;
         for (byte b : bytes) if (b != 0) return true;

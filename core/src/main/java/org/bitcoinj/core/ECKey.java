@@ -807,6 +807,18 @@ public class ECKey implements EncryptableItem {
         return true;
     }
 
+    /**
+     * Returns true if the given pubkey is in its compressed form.
+     */
+    public static boolean isPubKeyCompressed(byte[] encoded) {
+        if (encoded.length == 33 && (encoded[0] == 0x02 || encoded[0] == 0x03))
+            return true;
+        else if (encoded.length == 65 && encoded[0] == 0x04)
+            return false;
+        else
+            throw new IllegalArgumentException(Utils.HEX.encode(encoded));
+    }
+
     private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
         // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
         // code in ec_asn1.c:
@@ -841,7 +853,7 @@ public class ECKey implements EncryptableItem {
             checkArgument(encoding >= 2 && encoding <= 4, "Input has 'publicKey' with invalid encoding");
 
             // Now sanity check to ensure the pubkey bytes match the privkey.
-            boolean compressed = (pubbits.length == 33);
+            boolean compressed = isPubKeyCompressed(pubbits);
             ECKey key = new ECKey(privkey, null, compressed);
             if (!Arrays.equals(key.getPubKey(), pubbits))
                 throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
