@@ -198,19 +198,19 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Utility for compressing an elliptic curve point. Returns the same point if it's already compressed.
-     * See the ECKey class docs for a discussion of point compression.
+     * @deprecated Use {@link LazyECPoint#compress()}
      */
+    @Deprecated
     public static LazyECPoint compressPoint(LazyECPoint point) {
-        return point.isCompressed() ? point : new LazyECPoint(point.get(), true);
+        return point.compress();
     }
 
     /**
-     * Utility for decompressing an elliptic curve point. Returns the same point if it's already uncompressed.
-     * See the ECKey class docs for a discussion of point compression.
+     * @deprecated Use {@link LazyECPoint#decompress()}
      */
+    @Deprecated
     public static LazyECPoint decompressPoint(LazyECPoint point) {
-        return !point.isCompressed() ? point : new LazyECPoint(point.get(), false);
+        return point.decompress();
     }
 
     /**

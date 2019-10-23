@@ -70,6 +70,22 @@ public class LazyECPoint {
         this.bits = null;
     }
 
+    /**
+     * Returns a compressed version of this elliptic curve point. Returns the same point if it's already compressed.
+     * See the {@link ECKey} class docs for a discussion of point compression.
+     */
+    public LazyECPoint compress() {
+        return compressed ? this : new LazyECPoint(get(), true);
+    }
+
+    /**
+     * Returns a decompressed version of this elliptic curve point. Returns the same point if it's already compressed.
+     * See the {@link ECKey} class docs for a discussion of point compression.
+     */
+    public LazyECPoint decompress() {
+        return !compressed ? this : new LazyECPoint(get(), false);
+    }
+
     public ECPoint get() {
         if (point == null)
             point = curve.decodePoint(bits);
