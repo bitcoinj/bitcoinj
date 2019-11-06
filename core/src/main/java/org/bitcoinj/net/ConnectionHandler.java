@@ -45,15 +45,15 @@ import static com.google.common.base.Preconditions.checkState;
  */
 class ConnectionHandler implements MessageWriteTarget {
     private static final org.slf4j.Logger log = LoggerFactory.getLogger(ConnectionHandler.class);
+    // We lock when touching local flags and when writing data, but NEVER when calling any methods which leave this
+    // class into non-Java classes.
+    private final ReentrantLock lock = Threading.lock(ConnectionHandler.class);
 
     private static final int BUFFER_SIZE_LOWER_BOUND = 4096;
     private static final int BUFFER_SIZE_UPPER_BOUND = 65536;
 
     private static final int OUTBOUND_BUFFER_BYTE_COUNT = Message.MAX_SIZE + 24; // 24 byte message header
 
-    // We lock when touching local flags and when writing data, but NEVER when calling any methods which leave this
-    // class into non-Java classes.
-    private final ReentrantLock lock = Threading.lock("nioConnectionHandler");
     @GuardedBy("lock") private final ByteBuffer readBuff;
     @GuardedBy("lock") private final SocketChannel channel;
     @GuardedBy("lock") private final SelectionKey key;

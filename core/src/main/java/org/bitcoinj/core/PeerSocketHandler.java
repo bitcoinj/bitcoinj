@@ -43,6 +43,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
+    private final Lock lock = Threading.lock(PeerSocketHandler.class);
 
     private final MessageSerializer serializer;
     protected PeerAddress peerAddress;
@@ -57,8 +58,6 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     private byte[] largeReadBuffer;
     private int largeReadBufferPos;
     private BitcoinSerializer.BitcoinPacketHeader header;
-
-    private Lock lock = Threading.lock("PeerSocketHandler");
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
         checkNotNull(params);

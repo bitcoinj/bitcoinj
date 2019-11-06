@@ -97,9 +97,9 @@ import static com.google.common.base.Preconditions.*;
 @SuppressWarnings("PublicStaticCollectionField")
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
-    public static final String DEFAULT_PASSPHRASE_FOR_MNEMONIC = "";
+    protected final ReentrantLock lock = Threading.lock(DeterministicKeyChain.class);
 
-    protected final ReentrantLock lock = Threading.lock("DeterministicKeyChain");
+    public static final String DEFAULT_PASSPHRASE_FOR_MNEMONIC = "";
 
     private DeterministicHierarchy hierarchy;
     @Nullable private DeterministicKey rootKey;

@@ -150,6 +150,10 @@ public class Threading {
     private static CycleDetectingLockFactory.Policy policy;
     public static CycleDetectingLockFactory factory;
 
+    public static ReentrantLock lock(Class clazz) {
+        return lock(clazz.getSimpleName() + " lock");
+    }
+
     public static ReentrantLock lock(String name) {
         if (Utils.isAndroidRuntime())
             return new ReentrantLock(true);

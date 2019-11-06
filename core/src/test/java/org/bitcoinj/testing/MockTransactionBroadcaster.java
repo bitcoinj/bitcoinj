@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * set the returned future when you want the "broadcast" to be completed.
  */
 public class MockTransactionBroadcaster implements TransactionBroadcaster {
-    private final ReentrantLock lock = Threading.lock("mock tx broadcaster");
+    private final ReentrantLock lock = Threading.lock(MockTransactionBroadcaster.class);
     private final Wallet wallet;
 
     public static class TxFuturePair {

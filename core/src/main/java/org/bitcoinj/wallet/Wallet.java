@@ -124,12 +124,12 @@ import static com.google.common.base.Preconditions.*;
 public class Wallet extends BaseTaggableObject
     implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider, KeyBag, TransactionBag, ReorganizeListener {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
-    private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
-
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately to allow fast querying of current receive address
     // even if the wallet itself is busy e.g. saving or processing a big reorg. Useful for reducing UI latency.
-    protected final ReentrantLock lock = Threading.lock("wallet");
-    protected final ReentrantLock keyChainGroupLock = Threading.lock("wallet-keychaingroup");
+    protected final ReentrantLock lock = Threading.lock(Wallet.class);
+    protected final ReentrantLock keyChainGroupLock = Threading.lock("Wallet-KeyChainGroup lock");
+
+    private static final int MINIMUM_BLOOM_DATA_LENGTH = 8;
 
     // The various pools below give quick access to wallet-relevant transactions by the state they're in:
     //

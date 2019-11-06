@@ -79,7 +79,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
-    protected final ReentrantLock lock = Threading.lock("blockchain");
+    protected final ReentrantLock lock = Threading.lock(AbstractBlockChain.class);
 
     /** Keeps a map of block hashes to StoredBlocks. */
     private final BlockStore blockStore;

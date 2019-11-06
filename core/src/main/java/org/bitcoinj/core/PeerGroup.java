@@ -66,6 +66,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class PeerGroup implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
+    protected final ReentrantLock lock = Threading.lock(PeerGroup.class);
 
     // All members in this class should be marked with final, volatile, @GuardedBy or a mix as appropriate to define
     // their thread safety semantics. Volatile requires a Hungarian-style v prefix.
@@ -82,8 +83,6 @@ public class PeerGroup implements TransactionBroadcaster {
     private volatile int vMaxPeersToDiscoverCount = 100;
     private static final long DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS = 5000;
     private volatile long vPeerDiscoveryTimeoutMillis = DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS;
-
-    protected final ReentrantLock lock = Threading.lock("peergroup");
 
     protected final NetworkParameters params;
     @Nullable protected final AbstractBlockChain chain;

@@ -65,8 +65,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class Peer extends PeerSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
-
-    protected final ReentrantLock lock = Threading.lock("peer");
+    protected final ReentrantLock lock = Threading.lock(Peer.class);
 
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;

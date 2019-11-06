@@ -43,7 +43,7 @@ import static com.google.common.base.Preconditions.*;
  * it will automatically add one to itself if it's empty or if encryption is requested.
  */
 public class BasicKeyChain implements EncryptableKeyChain {
-    private final ReentrantLock lock = Threading.lock("BasicKeyChain");
+    private final ReentrantLock lock = Threading.lock(BasicKeyChain.class);
 
     // Maps used to let us quickly look up a key given data we find in transactions or the block chain.
     private final LinkedHashMap<ByteString, ECKey> hashToKeys;

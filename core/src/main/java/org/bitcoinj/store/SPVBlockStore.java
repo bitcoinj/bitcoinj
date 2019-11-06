@@ -39,6 +39,7 @@ import static com.google.common.base.Preconditions.*;
  */
 public class SPVBlockStore implements BlockStore {
     private static final Logger log = LoggerFactory.getLogger(SPVBlockStore.class);
+    protected final ReentrantLock lock = Threading.lock(SPVBlockStore.class);
 
     /** The default number of headers that will be stored in the ring buffer. */
     public static final int DEFAULT_CAPACITY = 10000;
@@ -46,8 +47,6 @@ public class SPVBlockStore implements BlockStore {
 
     protected volatile MappedByteBuffer buffer;
     protected final NetworkParameters params;
-
-    protected ReentrantLock lock = Threading.lock("SPVBlockStore");
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
     // faulted in. Unfortunately, in theory practice and theory are the same. In practice they aren't.
