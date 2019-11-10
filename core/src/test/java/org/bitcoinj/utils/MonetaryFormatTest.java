@@ -214,6 +214,7 @@ public class MonetaryFormatTest {
         assertEquals("BTC 0.00", MonetaryFormat.BTC.format(Coin.ZERO).toString());
         assertEquals("mBTC 0.00", MonetaryFormat.MBTC.format(Coin.ZERO).toString());
         assertEquals("µBTC 0", MonetaryFormat.UBTC.format(Coin.ZERO).toString());
+        assertEquals("sat 0", MonetaryFormat.SAT.format(Coin.ZERO).toString());
     }
 
     @Test
