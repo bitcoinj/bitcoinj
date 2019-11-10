@@ -70,8 +70,6 @@ public final class MonetaryFormat {
     public static final String SYMBOL_MBTC = "m" + SYMBOL_BTC;
     /** Currency symbol for base 1/1000000 Bitcoin. */
     public static final String SYMBOL_UBTC = "µ" + SYMBOL_BTC;
-    /** Currency symbol for base 1/100000000 Bitcoin (satoshi). */
-    public static final String SYMBOL_SAT = "sat";
 
     public static final int MAX_DECIMALS = 8;
 
