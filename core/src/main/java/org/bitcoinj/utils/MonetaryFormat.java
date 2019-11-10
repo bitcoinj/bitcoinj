@@ -52,6 +52,8 @@ public final class MonetaryFormat {
     public static final MonetaryFormat MBTC = new MonetaryFormat().shift(3).minDecimals(2).optionalDecimals(2);
     /** Standard format for the µBTC denomination. */
     public static final MonetaryFormat UBTC = new MonetaryFormat().shift(6).minDecimals(0).optionalDecimals(2);
+    /** Standard format for the SAT denomination. */
+    public static final MonetaryFormat SAT = new MonetaryFormat().shift(8).minDecimals(0).optionalDecimals(0);
     /** Standard format for fiat amounts. */
     public static final MonetaryFormat FIAT = new MonetaryFormat().shift(0).minDecimals(2).repeatOptionalDecimals(2, 1);
     /** Currency code for base 1 Bitcoin. */
@@ -61,11 +63,15 @@ public final class MonetaryFormat {
     /** Currency code for base 1/1000000 Bitcoin. */
     public static final String CODE_UBTC = "µBTC";
     /** Currency symbol for base 1 Bitcoin. */
+    public static final String CODE_SAT = "sat";
+    /** Currency symbol for base 1 Bitcoin. */
     public static final String SYMBOL_BTC = "\u20bf";
     /** Currency symbol for base 1/1000 Bitcoin. */
     public static final String SYMBOL_MBTC = "m" + SYMBOL_BTC;
     /** Currency symbol for base 1/1000000 Bitcoin. */
     public static final String SYMBOL_UBTC = "µ" + SYMBOL_BTC;
+    /** Currency symbol for base 1/100 000 000 Bitcoin (satoshi). */
+    public static final String SYMBOL_UBTC = "sat";
 
     public static final int MAX_DECIMALS = 8;
 
