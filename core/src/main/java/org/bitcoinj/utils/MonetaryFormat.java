@@ -62,7 +62,7 @@ public final class MonetaryFormat {
     public static final String CODE_MBTC = "mBTC";
     /** Currency code for base 1/1000000 Bitcoin. */
     public static final String CODE_UBTC = "µBTC";
-    /** Currency symbol for base 1 Bitcoin. */
+    /** Currency symbol for base 1/100000000 Bitcoin. */
     public static final String CODE_SAT = "sat";
     /** Currency symbol for base 1 Bitcoin. */
     public static final String SYMBOL_BTC = "\u20bf";
@@ -70,7 +70,7 @@ public final class MonetaryFormat {
     public static final String SYMBOL_MBTC = "m" + SYMBOL_BTC;
     /** Currency symbol for base 1/1000000 Bitcoin. */
     public static final String SYMBOL_UBTC = "µ" + SYMBOL_BTC;
-    /** Currency symbol for base 1/100 000 000 Bitcoin (satoshi). */
+    /** Currency symbol for base 1/100000000 Bitcoin (satoshi). */
     public static final String SYMBOL_UBTC = "sat";
 
     public static final int MAX_DECIMALS = 8;
