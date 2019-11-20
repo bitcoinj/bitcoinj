@@ -121,7 +121,7 @@ public class CheckpointManager {
             digestInputStream.on(false);
             byte[] header = new byte[BINARY_MAGIC.length()];
             dis.readFully(header);
-            if (!Arrays.equals(header, BINARY_MAGIC.getBytes("US-ASCII")))
+            if (!Arrays.equals(header, BINARY_MAGIC.getBytes(StandardCharsets.US_ASCII)))
                 throw new IOException("Header bytes did not match expected version");
             int numSignatures = checkPositionIndex(dis.readInt(), MAX_SIGNATURES, "Num signatures out of range");
             for (int i = 0; i < numSignatures; i++) {
