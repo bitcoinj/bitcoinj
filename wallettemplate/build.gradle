@@ -10,7 +10,7 @@ dependencies {
     implementation 'com.google.guava:guava:28.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.3.3'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.28'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.29'
 }
 
 javafx {
