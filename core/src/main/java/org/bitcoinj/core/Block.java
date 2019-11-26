@@ -119,7 +119,7 @@ public class Block extends Message {
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
-        time = System.currentTimeMillis() / 1000;
+        time = Utils.currentTimeSeconds();
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;

@@ -37,7 +37,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         addressHeader = 111;
         p2shHeader = 196;
         maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        genesisBlock.setTime(System.currentTimeMillis() / 1000);
+        genesisBlock.setTime(Utils.currentTimeSeconds());
         genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         genesisBlock.solve();
         port = 18333;
