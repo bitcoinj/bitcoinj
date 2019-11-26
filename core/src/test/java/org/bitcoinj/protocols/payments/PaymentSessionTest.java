@@ -26,6 +26,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -52,7 +53,7 @@ public class PaymentSessionTest {
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
     private static final String paymentMemo = "take ze coinz";
     private static final ByteString merchantData = ByteString.copyFromUtf8("merchant data");
-    private static final long time = System.currentTimeMillis() / 1000L;
+    private static final long time = Utils.currentTimeSeconds();
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;

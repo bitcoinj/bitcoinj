@@ -22,6 +22,7 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
@@ -99,7 +100,7 @@ public class PaymentProtocolTest {
 
     private Protos.PaymentRequest minimalPaymentRequest() {
         Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
-        paymentDetails.setTime(System.currentTimeMillis());
+        paymentDetails.setTime(Utils.currentTimeSeconds());
         Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
         return paymentRequest.build();

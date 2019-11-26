@@ -75,6 +75,7 @@ public class BlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
+        Utils.setMockClock(); // Use mock clock
         Context.propagate(new Context(TESTNET, 100, Coin.ZERO, false));
         testNetChain = new BlockChain(TESTNET, new Wallet(TESTNET), new MemoryBlockStore(TESTNET));
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
@@ -156,7 +157,7 @@ public class BlockChainTest {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
         Block prev = UNITTEST.getGenesisBlock();
-        Utils.setMockClock(System.currentTimeMillis()/1000);
+        Utils.setMockClock(Utils.currentTimeSeconds());
         for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), height);
             assertTrue(chain.add(newBlock));
