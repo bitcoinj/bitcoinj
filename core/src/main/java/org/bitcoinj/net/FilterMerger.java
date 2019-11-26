@@ -69,11 +69,9 @@ public class FilterMerger {
             Result result = new Result();
             result.earliestKeyTimeSecs = Long.MAX_VALUE;
             int elements = 0;
-            boolean requiresUpdateAll = false;
             for (PeerFilterProvider p : providers) {
                 result.earliestKeyTimeSecs = Math.min(result.earliestKeyTimeSecs, p.getEarliestKeyCreationTime());
                 elements += p.getBloomFilterElementCount();
-                requiresUpdateAll = requiresUpdateAll || p.isRequiringUpdateAllBloomFilter();
             }
 
             if (elements > 0) {
@@ -82,10 +80,10 @@ public class FilterMerger {
                 // The constant 100 here is somewhat arbitrary, but makes sense for small to medium wallets -
                 // it will likely mean we never need to create a filter with different parameters.
                 lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
-                BloomFilter.BloomUpdate bloomFlags =
-                        requiresUpdateAll ? BloomFilter.BloomUpdate.UPDATE_ALL : BloomFilter.BloomUpdate.UPDATE_P2PUBKEY_ONLY;
                 double fpRate = vBloomFilterFPRate;
-                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak, bloomFlags);
+                // We now always use UPDATE_ALL because with SegWit there is hardly any wallet that can do without.
+                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak,
+                        BloomFilter.BloomUpdate.UPDATE_ALL);
                 for (PeerFilterProvider p : providers)
                     filter.merge(p.getBloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak));
 

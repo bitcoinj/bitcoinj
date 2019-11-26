@@ -54,11 +54,6 @@ public interface PeerFilterProvider {
     BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
 
     /**
-     * Whether this filter provider depends on the server updating the filter on all matches.
-     */
-    boolean isRequiringUpdateAllBloomFilter();
-
-    /**
      * See {@link #beginBloomFilterCalculation()}.
      */
     void endBloomFilterCalculation();

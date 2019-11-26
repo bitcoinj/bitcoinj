@@ -4875,29 +4875,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * If we are watching any scripts, the bloom filter must update on peers whenever an output is
-     * identified.  This is because we don't necessarily have the associated pubkey, so we can't
-     * watch for it on spending transactions.
-     */
-    @Override
-    public boolean isRequiringUpdateAllBloomFilter() {
-        // This is typically called by the PeerGroup, in which case it will have already explicitly taken the lock
-        // before calling, but because this is public API we must still lock again regardless.
-        keyChainGroupLock.lock();
-        try {
-            if (!watchedScripts.isEmpty())
-                return true;
-            if (keyChainGroup.chains != null)
-                for (DeterministicKeyChain chain : keyChainGroup.chains)
-                    if (chain.getOutputScriptType() == Script.ScriptType.P2WPKH)
-                        return true;
-            return false;
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
      * Gets a bloom filter that contains all of the public keys from this wallet, and which will provide the given
      * false-positive rate. See the docs for {@link BloomFilter} for a brief explanation of anonymity when using filters.
      */
