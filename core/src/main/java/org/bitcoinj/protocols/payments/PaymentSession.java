@@ -270,7 +270,7 @@ public class PaymentSession {
      * This should always be called before attempting to call sendPayment.
      */
     public boolean isExpired() {
-        return paymentDetails.hasExpires() && System.currentTimeMillis() / 1000L > paymentDetails.getExpires();
+        return paymentDetails.hasExpires() && Utils.currentTimeSeconds() > paymentDetails.getExpires();
     }
 
     /**
