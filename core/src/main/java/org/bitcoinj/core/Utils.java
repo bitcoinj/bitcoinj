@@ -386,7 +386,7 @@ public class Utils {
     /**
      * If non-null, overrides the return value of now().
      */
-    public static volatile Date mockTime;
+    private static volatile Date mockTime;
 
     /**
      * Advances (or rewinds) the mock clock by the given number of seconds.
