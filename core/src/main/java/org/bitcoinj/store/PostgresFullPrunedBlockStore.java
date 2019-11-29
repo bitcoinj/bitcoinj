@@ -74,7 +74,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    height integer NOT NULL,\n" +
             "    value bigint NOT NULL,\n" +
             "    scriptbytes bytea NOT NULL,\n" +
-            "    toaddress character varying(35),\n" +
+            "    toaddress character varying(74),\n" +
             "    addresstargetable smallint,\n" +
             "    coinbase boolean,\n" +
             "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,index)\n" +
