@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Matt Corallo.
  * Copyright 2014 Kalpesh Parmar.
+ * Copyright 2019 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +66,7 @@ public class H2FullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             + "height INT NOT NULL,"
             + "value BIGINT NOT NULL,"
             + "scriptbytes BLOB NOT NULL,"
-            + "toaddress VARCHAR(35),"
+            + "toaddress VARCHAR(74),"
             + "addresstargetable TINYINT,"
             + "coinbase BOOLEAN,"
             + "PRIMARY KEY (hash, index),"
