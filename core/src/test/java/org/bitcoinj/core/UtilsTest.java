@@ -19,9 +19,7 @@
 package org.bitcoinj.core;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -34,15 +32,6 @@ public class UtilsTest {
         assertArrayEquals(new byte[]{1, 2, 3, 4, 5}, Utils.reverseBytes(new byte[]{5, 4, 3, 2, 1}));
         assertArrayEquals(new byte[]{0}, Utils.reverseBytes(new byte[]{0}));
         assertArrayEquals(new byte[]{}, Utils.reverseBytes(new byte[]{}));
-    }
-
-    @Test
-    public void testMaxOfMostFreq() throws Exception {
-        assertEquals(0, Utils.maxOfMostFreq());
-        assertEquals(0, Utils.maxOfMostFreq(0, 0, 1));
-        assertEquals(2, Utils.maxOfMostFreq(1, 1, 2, 2));
-        assertEquals(1, Utils.maxOfMostFreq(1, 1, 2, 2, 1));
-        assertEquals(-1, Utils.maxOfMostFreq(-1, -1, 2, 2, -1));
     }
 
     @Test
