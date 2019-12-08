@@ -468,25 +468,35 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void downloadPeerSelection() throws Exception {
         peerGroup.start();
-        VersionMessage versionMessage2 = new VersionMessage(UNITTEST, 2);
-        versionMessage2.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
-        versionMessage2.localServices = VersionMessage.NODE_NETWORK;
-        VersionMessage versionMessage3 = new VersionMessage(UNITTEST, 3);
-        versionMessage3.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
-        versionMessage3.localServices = VersionMessage.NODE_NETWORK;
+        VersionMessage v1 = new VersionMessage(UNITTEST, 2);
+        v1.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
+        v1.localServices = VersionMessage.NODE_NETWORK;
+        VersionMessage v2 = new VersionMessage(UNITTEST, 4);
+        v2.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
+        v2.localServices = VersionMessage.NODE_NETWORK;
         assertNull(peerGroup.getDownloadPeer());
-        Peer a = connectPeer(1, versionMessage2).peer;
+
+        Peer p1 = connectPeer(0, v1).peer;
         assertEquals(2, peerGroup.getMostCommonChainHeight());
-        assertEquals(a, peerGroup.getDownloadPeer());
-        connectPeer(2, versionMessage2);
-        assertEquals(2, peerGroup.getMostCommonChainHeight());
-        assertEquals(a, peerGroup.getDownloadPeer());  // No change.
-        Peer c = connectPeer(3, versionMessage3).peer;
-        assertEquals(2, peerGroup.getMostCommonChainHeight());
-        assertEquals(a, peerGroup.getDownloadPeer());  // No change yet.
-        connectPeer(4, versionMessage3);
-        assertEquals(3, peerGroup.getMostCommonChainHeight());
-        assertEquals(a, peerGroup.getDownloadPeer());  // Still no change.
+        assertEquals(2, peerGroup.selectDownloadPeer(peerGroup.getConnectedPeers()).getBestHeight());
+        assertEquals(p1, peerGroup.getDownloadPeer());
+
+        connectPeer(1, v1);
+        assertEquals(2, peerGroup.getMostCommonChainHeight()); // No change.
+        assertEquals(2, peerGroup.selectDownloadPeer(peerGroup.getConnectedPeers()).getBestHeight());
+
+        Peer p2 = connectPeer(2, v2).peer;
+        assertEquals(2, peerGroup.getMostCommonChainHeight()); // No change yet.
+        assertEquals(2, peerGroup.selectDownloadPeer(peerGroup.getConnectedPeers()).getBestHeight());
+
+        connectPeer(3, v2);
+        assertEquals(0, peerGroup.getMostCommonChainHeight()); // Most common height tied between two...
+        assertNull(peerGroup.selectDownloadPeer(peerGroup.getConnectedPeers())); // ...so no peer would be selected.
+
+        connectPeer(4, v2);
+        assertEquals(4, peerGroup.getMostCommonChainHeight()); // Now we have a new winner...
+        assertEquals(4, peerGroup.selectDownloadPeer(peerGroup.getConnectedPeers()).getBestHeight());
+        assertEquals(p1, peerGroup.getDownloadPeer()); // ...but the download peer doesn't change unless it misbehaves.
 
         // New peer with a higher protocol version but same chain height.
         // TODO: When PeerGroup.selectDownloadPeer.PREFERRED_VERSION is not equal to vMinRequiredProtocolVersion,
@@ -866,7 +876,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void testMaxOfMostFreq() throws Exception {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.<Integer>emptyList()));
         assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
-        assertEquals(2, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
+        assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(-1, 1, 1, 2, 2)));
         assertEquals(1, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2, 1)));
         assertEquals(-1, PeerGroup.maxOfMostFreq(Arrays.asList(-1, -1, 2, 2, -1)));
     }
