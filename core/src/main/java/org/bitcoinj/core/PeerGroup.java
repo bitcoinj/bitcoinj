@@ -1492,6 +1492,8 @@ public class PeerGroup implements TransactionBroadcaster {
                     if (shouldDownloadChain) {
                         startBlockChainDownloadFromPeer(downloadPeer);
                     }
+                } else {
+                    log.info("Not yet setting download peer because there is no clear candidate.");
                 }
             }
             // Make sure the peer knows how to upload transactions that are requested from us.
@@ -2134,8 +2136,8 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Returns our peers most commonly reported chain height. If multiple heights are tied, the highest is returned.
-     * If no peers are connected, returns zero.
+     * Returns our peers most commonly reported chain height.
+     * If the most common heights are tied, or no peers are connected, returns {@code 0}.
      */
     public int getMostCommonChainHeight() {
         lock.lock();
@@ -2148,7 +2150,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Returns most commonly reported chain height from the given list of {@link Peer}s.
-     * If multiple heights are tied, the highest is returned. If no peers are connected, returns zero.
+     * If the most common heights are tied, or no peers are connected, returns {@code 0}.
      */
     public static int getMostCommonChainHeight(final List<Peer> peers) {
         if (peers.isEmpty())
@@ -2159,8 +2161,9 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     private static class Pair implements Comparable<Pair> {
-        int item, count;
-        public Pair(int item, int count) { this.count = count; this.item = item; }
+        final int item;
+        int count = 0;
+        public Pair(int item) { this.item = item; }
         // note that in this implementation compareTo() is not consistent with equals()
         @Override public int compareTo(Pair o) { return -Integer.compare(count, o.count); }
     }
@@ -2171,24 +2174,25 @@ public class PeerGroup implements TransactionBroadcaster {
         // This would be much easier in a functional language (or in Java 8).
         items = Ordering.natural().reverse().sortedCopy(items);
         LinkedList<Pair> pairs = new LinkedList<>();
-        pairs.add(new Pair(items.get(0), 0));
+        pairs.add(new Pair(items.get(0)));
         for (int item : items) {
             Pair pair = pairs.getLast();
             if (pair.item != item)
-                pairs.add((pair = new Pair(item, 0)));
+                pairs.add((pair = new Pair(item)));
             pair.count++;
         }
-        // pairs now contains a uniqified list of the sorted inputs, with counts for how often that item appeared.
-        // Now sort by how frequently they occur, and pick the max of the most frequent.
+        // pairs now contains a uniquified list of the sorted inputs, with counts for how often that item appeared.
+        // Now sort by how frequently they occur, and pick the most frequent. If the first place is tied between two,
+        // don't pick any.
         Collections.sort(pairs);
-        int maxCount = pairs.getFirst().count;
-        int maxItem = pairs.getFirst().item;
-        for (Pair pair : pairs) {
-            if (pair.count != maxCount)
-                break;
-            maxItem = Math.max(maxItem, pair.item);
-        }
-        return maxItem;
+        final Pair firstPair = pairs.get(0);
+        if (pairs.size() == 1)
+            return firstPair.item;
+        final Pair secondPair = pairs.get(1);
+        if (firstPair.count > secondPair.count)
+            return firstPair.item;
+        checkState(firstPair.count == secondPair.count);
+        return 0;
     }
 
     /**
@@ -2203,13 +2207,18 @@ public class PeerGroup implements TransactionBroadcaster {
         //  - Randomly, to try and spread the load.
         if (peers.isEmpty())
             return null;
-        // Make sure we don't select a peer that is behind/synchronizing itself.
+
         int mostCommonChainHeight = getMostCommonChainHeight(peers);
+        // Make sure we don't select a peer if there is no consensus about block height.
+        if (mostCommonChainHeight == 0)
+            return null;
+        // Make sure we don't select a peer that is behind/synchronizing itself or announces an unrealistic height.
         List<Peer> candidates = new ArrayList<>();
         for (Peer peer : peers) {
             if (!peer.getPeerVersionMessage().hasBlockChain())
                 continue;
-            if (peer.getBestHeight() < mostCommonChainHeight)
+            final long peerHeight = peer.getBestHeight();
+            if (peerHeight < mostCommonChainHeight || peerHeight > mostCommonChainHeight + 1)
                 continue;
             candidates.add(peer);
         }
