@@ -861,4 +861,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 inbound(p1, tx);
         }
     }
+
+    @Test
+    public void testMaxOfMostFreq() throws Exception {
+        assertEquals(0, PeerGroup.maxOfMostFreq(Collections.<Integer>emptyList()));
+        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
+        assertEquals(2, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
+        assertEquals(1, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2, 1)));
+        assertEquals(-1, PeerGroup.maxOfMostFreq(Arrays.asList(-1, -1, 2, 2, -1)));
+    }
 }
