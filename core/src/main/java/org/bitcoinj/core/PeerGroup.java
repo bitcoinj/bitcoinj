@@ -1799,7 +1799,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 int chainHeight = chain != null ? chain.getBestChainHeight() : -1;
                 int mostCommonChainHeight = getMostCommonChainHeight();
                 if (!syncDone && mostCommonChainHeight > 0 && chainHeight >= mostCommonChainHeight) {
-                    log.info("End of sync detected.");
+                    log.info("End of sync detected at height {}.", chainHeight);
                     syncDone = true;
                 }
 
