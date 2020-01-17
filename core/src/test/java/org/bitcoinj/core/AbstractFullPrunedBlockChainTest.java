@@ -65,6 +65,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
+        Utils.resetMocking();
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
     }
 
