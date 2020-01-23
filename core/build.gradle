@@ -11,7 +11,7 @@ dependencies {
     compile 'org.bouncycastle:bcprov-jdk15to18:1.63'
     implementation 'com.google.guava:guava:28.2-android'
     compile 'com.google.protobuf:protobuf-java:3.6.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.12.6'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.8'
     implementation 'org.slf4j:slf4j-api:1.7.29'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
