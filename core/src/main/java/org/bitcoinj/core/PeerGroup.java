@@ -98,7 +98,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private volatile boolean vUsedUp;
 
     // Addresses to try to connect to, excluding active peers.
-    @GuardedBy("lock") private final PriorityQueue<PeerAddress> inactives;
+    @GuardedBy("lock") private final TreeSet<PeerAddress> inactives;
     @GuardedBy("lock") private final Map<PeerAddress, ExponentialBackoff> backoffMap;
 
     // Currently active peers. This is an ordered list rather than a set to make unit tests predictable.
@@ -339,15 +339,14 @@ public class PeerGroup implements TransactionBroadcaster {
 
         downloadTxDependencyDepth = Integer.MAX_VALUE;
 
-        inactives = new PriorityQueue<>(1, new Comparator<PeerAddress>() {
+        inactives = new TreeSet<>(new Comparator<PeerAddress>() {
             @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
             @Override
             public int compare(PeerAddress a, PeerAddress b) {
                 checkState(lock.isHeldByCurrentThread());
                 int result = backoffMap.get(a).compareTo(backoffMap.get(b));
-                // Sort by port if otherwise equals - for testing
                 if (result == 0)
-                    result = Integer.compare(a.getPort(), b.getPort());
+                    result = Integer.compare(a.hashCode(), b.hashCode());
                 return result;
             }
         });
@@ -451,7 +450,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     return;
                 }
 
-                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).getRetryTime() <= now;
+                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.first()).getRetryTime() <= now;
                 doDiscovery = !havePeerWeCanTry;
             } finally {
                 firstRun = false;
@@ -490,7 +489,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
                 PeerAddress addrToTry;
                 do {
-                    addrToTry = inactives.poll();
+                    addrToTry = inactives.pollFirst();
                 } while (ipv6Unreachable && addrToTry.getAddr() instanceof Inet6Address);
                 if (addrToTry == null) {
                     // We have exhausted the queue of reachable peers, so just settle down.
@@ -878,7 +877,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (backoffMap.containsKey(peerAddress))
                 return false;
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
-            inactives.offer(peerAddress);
+            inactives.add(peerAddress);
             return true;
         } finally {
             lock.unlock();
@@ -1666,7 +1665,7 @@ public class PeerGroup implements TransactionBroadcaster {
             } else {
                 backoffMap.get(address).trackFailure();
                 // Put back on inactive list
-                inactives.offer(address);
+                inactives.add(address);
             }
 
             if (numPeers < getMaxConnections()) {
