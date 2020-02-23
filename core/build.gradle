@@ -3,6 +3,7 @@ plugins {
     id 'com.google.protobuf'
     id 'maven'
     id 'eclipse'
+    id 'me.champeau.gradle.jmh'
 }
 
 version = '0.16-SNAPSHOT'
