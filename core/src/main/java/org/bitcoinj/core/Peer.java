@@ -70,7 +70,7 @@ public class Peer extends PeerSocketHandler {
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
     private final Context context;
-
+    private CopyOnWriteArrayList<Peer> addresses = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
         = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>> chainDownloadStartedEventListeners
@@ -209,7 +209,11 @@ public class Peer extends PeerSocketHandler {
                 @Nullable AbstractBlockChain chain) {
         this(params, ver, remoteAddress, chain, Integer.MAX_VALUE);
     }
-
+    public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
+                @Nullable AbstractBlockChain chain, int downloadTxDependencyDepth, Collection<Peer> addrs){
+        this(params, ver,remoteAddress, chain, downloadTxDependencyDepth);
+        this.addresses.addAll(addrs);
+    }
     /**
      * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
@@ -239,7 +243,6 @@ public class Peer extends PeerSocketHandler {
         this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
         this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
-
         this.versionHandshakeFuture.addListener(new Runnable() {
             @Override
             public void run() {
@@ -480,6 +483,8 @@ public class Peer extends PeerSocketHandler {
 
         if (m instanceof Ping) {
             processPing((Ping) m);
+        } else if (m instanceof GetAddrMessage) {
+            processGetAddr();
         } else if (m instanceof Pong) {
             processPong((Pong) m);
         } else if (m instanceof NotFoundMessage) {
@@ -518,6 +523,12 @@ public class Peer extends PeerSocketHandler {
         } else {
             log.warn("{}: Received unhandled message: {}", this, m);
         }
+    }
+
+    private void processGetAddr() {
+        List<PeerAddress> addrs = new LinkedList<>();
+        for(Peer i : addresses){ addrs.add(i.getAddress());}
+        if(!addresses.isEmpty()) sendMessage(new AddressMessage(params, addrs));
     }
 
     protected void processUTXOMessage(UTXOsMessage m) {
