@@ -1724,15 +1724,19 @@ public class Peer extends PeerSocketHandler {
      */
     public void setBloomFilter(BloomFilter filter, boolean andQueryMemPool) {
         checkNotNull(filter, "Clearing filters is not currently supported");
-        final VersionMessage ver = vPeerVersionMessage;
-        if (ver == null || !ver.isBloomFilteringSupported())
-            return;
-        vBloomFilter = filter;
-        log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
-        sendMessage(filter);
-        if (andQueryMemPool)
-            sendMessage(new MemoryPoolMessage());
-        maybeRestartChainDownload();
+        final VersionMessage version = vPeerVersionMessage;
+        checkNotNull(version, "Cannot set filter before version handshake is complete");
+        if (version.isBloomFilteringSupported()) {
+            vBloomFilter = filter;
+            log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
+            sendMessage(filter);
+            if (andQueryMemPool)
+                sendMessage(new MemoryPoolMessage());
+            maybeRestartChainDownload();
+        } else {
+            log.info("{}: Peer does not support bloom filtering.", this);
+            close();
+        }
     }
 
     private void maybeRestartChainDownload() {
