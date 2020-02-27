@@ -22,6 +22,8 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.*;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 
 import java.net.*;
 import java.util.concurrent.*;
@@ -45,6 +47,9 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
             throw new RuntimeException();
         this.clientType = clientType;
     }
+
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(10);
 
     @Override
     public void setUp() throws Exception {
