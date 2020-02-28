@@ -54,7 +54,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
         assertFalse(DefaultCoinSelector.isSelectable(t));
         t.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("1.2.3.4")));
-        assertFalse(DefaultCoinSelector.isSelectable(t));
+        assertTrue(DefaultCoinSelector.isSelectable(t));
         t.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("5.6.7.8")));
         assertTrue(DefaultCoinSelector.isSelectable(t));
         t = new Transaction(UNITTEST);
