@@ -44,6 +44,7 @@ public class TransactionBroadcast {
     private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
+    private boolean dropPeersAfterBroadcast = false;
     private int numWaitingFor;
 
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
@@ -86,6 +87,10 @@ public class TransactionBroadcast {
 
     public void setMinConnections(int minConnections) {
         this.minConnections = minConnections;
+    }
+
+    public void setDropPeersAfterBroadcast(boolean dropPeersAfterBroadcast) {
+        this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
     private PreMessageReceivedEventListener rejectionListener = new PreMessageReceivedEventListener() {
@@ -154,9 +159,19 @@ public class TransactionBroadcast {
             peers = peers.subList(0, numToBroadcastTo);
             log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getTxId());
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Joiner.on(",").join(peers));
-            for (Peer peer : peers) {
+            for (final Peer peer : peers) {
                 try {
-                    peer.sendMessage(tx);
+                    ListenableFuture future = peer.sendMessage(tx);
+                    if (dropPeersAfterBroadcast) {
+                        // We drop the peer as soon as the transaction has been sent, because this peer will not send us
+                        // back useful broadcast confirmations.
+                        future.addListener(new Runnable() {
+                            @Override
+                            public void run() {
+                                peer.close();
+                            }
+                        }, Threading.THREAD_POOL);
+                    }
                     // We don't record the peer as having seen the tx in the memory pool because we want to track only
                     // how many peers announced to us.
                 } catch (Exception e) {
