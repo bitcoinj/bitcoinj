@@ -1,7 +1,5 @@
 plugins {
-    id 'java'
     id 'application'
-    id 'eclipse'
 }
 
 dependencies {

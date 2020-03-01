@@ -9,9 +9,16 @@ buildscript {
 }
 
 allprojects {
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+
     repositories {
         jcenter()
     }
 
     group = 'org.bitcoinj'
+
+    compileJava.options.encoding = 'UTF-8'
+    compileTestJava.options.encoding = 'UTF-8'
+    javadoc.options.encoding = 'UTF-8'
 }

@@ -1,8 +1,3 @@
-plugins {
-    id 'java'
-    id 'eclipse'
-}
-
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'net.sf.jopt-simple:jopt-simple:5.0.4'
@@ -11,6 +6,3 @@ dependencies {
 }
 
 sourceCompatibility = 1.8
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'

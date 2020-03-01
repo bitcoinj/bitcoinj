@@ -1,6 +1,4 @@
 plugins {
-    id 'java'
-    id 'eclipse'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.8'
 }
@@ -18,8 +16,5 @@ javafx {
 }
 
 sourceCompatibility = 1.11
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
-javadoc.options.encoding = 'UTF-8'
 
 mainClassName = 'wallettemplate.Main'
