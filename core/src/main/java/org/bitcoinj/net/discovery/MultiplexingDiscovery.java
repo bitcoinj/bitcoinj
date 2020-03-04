@@ -35,7 +35,7 @@ import okhttp3.OkHttpClient;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * MultiplexingDiscovery queries multiple PeerDiscovery objects, shuffles their responses and then returns the results,
+ * MultiplexingDiscovery queries multiple PeerDiscovery objects, optionally shuffles their responses and then returns the results,
  * thus selecting randomly between them and reducing the influence of any particular seed. Any that don't respond
  * within the timeout are ignored. Backends are queried in parallel. Backends may block.
  */
@@ -45,6 +45,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     protected final List<PeerDiscovery> seeds;
     protected final NetworkParameters netParams;
     private volatile ExecutorService vThreadPool;
+    private final boolean shufflePeers;
 
     /**
      * Builds a suitable set of peer discoveries. Will query them in parallel before producing a merged response.
@@ -53,6 +54,17 @@ public class MultiplexingDiscovery implements PeerDiscovery {
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      */
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
+        return forServices(params, services, true);
+    }
+
+    /**
+     * Builds a suitable set of peer discoveries. Will query them in parallel before producing a merged response.
+     * If specific services are required, DNS is not used as the protocol can't handle it.
+     * @param params Network to use.
+     * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
+     * @param shufflePeers When true, queried peers are shuffled
+     */
+    public static MultiplexingDiscovery forServices(NetworkParameters params, long services, boolean shufflePeers) {
         List<PeerDiscovery> discoveries = new ArrayList<>();
         HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
         if (httpSeeds != null) {
@@ -67,16 +79,21 @@ public class MultiplexingDiscovery implements PeerDiscovery {
                 for (String dnsSeed : dnsSeeds)
                     discoveries.add(new DnsSeedDiscovery(params, dnsSeed));
         }
-        return new MultiplexingDiscovery(params, discoveries);
+        return new MultiplexingDiscovery(params, discoveries, shufflePeers);
     }
 
     /**
      * Will query the given seeds in parallel before producing a merged response.
      */
     public MultiplexingDiscovery(NetworkParameters params, List<PeerDiscovery> seeds) {
+        this(params, seeds, true);
+    }
+
+    private MultiplexingDiscovery(NetworkParameters params, List<PeerDiscovery> seeds, boolean shufflePeers) {
         checkArgument(!seeds.isEmpty());
         this.netParams = params;
         this.seeds = seeds;
+        this.shufflePeers = shufflePeers;
     }
 
     @Override
@@ -112,7 +129,8 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             if (addrs.size() == 0)
                 throw new PeerDiscoveryException("No peer discovery returned any results in "
                         + timeoutUnit.toMillis(timeoutValue) + "ms. Check internet connection?");
-            Collections.shuffle(addrs);
+            if (shufflePeers)
+                Collections.shuffle(addrs);
             vThreadPool.shutdownNow();
             return addrs.toArray(new InetSocketAddress[addrs.size()]);
         } catch (InterruptedException e) {
