@@ -175,18 +175,8 @@ public class Peer extends PeerSocketHandler {
                 }
             }, MoreExecutors.directExecutor());
 
-    /**
-     * <p>Construct a peer that reads/writes from the given block chain.</p>
-     *
-     * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
-     * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
-     * or
-     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
-     *
-     * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
-     * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
-     */
+    /** @deprecated Use {@link #Peer(NetworkParameters, VersionMessage, PeerAddress, AbstractBlockChain)}. */
+    @Deprecated
     public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
         this(params, ver, remoteAddress, chain);
     }
