@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Joiner;
 import com.google.common.net.InetAddresses;
 
 import javax.annotation.Nullable;
@@ -24,6 +25,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -308,5 +311,32 @@ public class VersionMessage extends Message {
     /** Returns true if the peer has at least the last two days worth of blockchain (BIP159). */
     public boolean hasLimitedBlockChain() {
         return hasBlockChain() || (localServices & NODE_NETWORK_LIMITED) == NODE_NETWORK_LIMITED;
+    }
+
+    public static String toStringServices(long services) {
+        List<String> strings = new LinkedList<>();
+        if ((services & NODE_NETWORK) == NODE_NETWORK) {
+            strings.add("NETWORK");
+            services &= ~NODE_NETWORK;
+        }
+        if ((services & NODE_GETUTXOS) == NODE_GETUTXOS) {
+            strings.add("GETUTXOS");
+            services &= ~NODE_GETUTXOS;
+        }
+        if ((services & NODE_BLOOM) == NODE_BLOOM) {
+            strings.add("BLOOM");
+            services &= ~NODE_BLOOM;
+        }
+        if ((services & NODE_WITNESS) == NODE_WITNESS) {
+            strings.add("WITNESS");
+            services &= ~NODE_WITNESS;
+        }
+        if ((services & NODE_NETWORK_LIMITED) == NODE_NETWORK_LIMITED) {
+            strings.add("NETWORK_LIMITED");
+            services &= ~NODE_NETWORK_LIMITED;
+        }
+        if (services != 0)
+            strings.add("remaining: " + Long.toBinaryString(services));
+        return Joiner.on(", ").join(strings);
     }
 }

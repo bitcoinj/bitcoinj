@@ -28,7 +28,6 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -371,7 +370,7 @@ public class Peer extends PeerSocketHandler {
         helper.addValue(getAddress());
         helper.add("version", vPeerVersionMessage.clientVersion);
         helper.add("subVer", vPeerVersionMessage.subVer);
-        String servicesStr = Strings.emptyToNull(toStringServices(vPeerVersionMessage.localServices));
+        String servicesStr = Strings.emptyToNull(VersionMessage.toStringServices(vPeerVersionMessage.localServices));
         helper.add("services",
                 vPeerVersionMessage.localServices + (servicesStr != null ? " (" + servicesStr + ")" : ""));
         long peerTime = vPeerVersionMessage.time * 1000;
@@ -380,31 +379,9 @@ public class Peer extends PeerSocketHandler {
         return helper.toString();
     }
 
+    @Deprecated
     public String toStringServices(long services) {
-        List<String> a = new LinkedList<>();
-        if ((services & VersionMessage.NODE_NETWORK) == VersionMessage.NODE_NETWORK) {
-            a.add("NETWORK");
-            services &= ~VersionMessage.NODE_NETWORK;
-        }
-        if ((services & VersionMessage.NODE_GETUTXOS) == VersionMessage.NODE_GETUTXOS) {
-            a.add("GETUTXOS");
-            services &= ~VersionMessage.NODE_GETUTXOS;
-        }
-        if ((services & VersionMessage.NODE_BLOOM) == VersionMessage.NODE_BLOOM) {
-            a.add("BLOOM");
-            services &= ~VersionMessage.NODE_BLOOM;
-        }
-        if ((services & VersionMessage.NODE_WITNESS) == VersionMessage.NODE_WITNESS) {
-            a.add("WITNESS");
-            services &= ~VersionMessage.NODE_WITNESS;
-        }
-        if ((services & VersionMessage.NODE_NETWORK_LIMITED) == VersionMessage.NODE_NETWORK_LIMITED) {
-            a.add("NETWORK_LIMITED");
-            services &= ~VersionMessage.NODE_NETWORK_LIMITED;
-        }
-        if (services != 0)
-            a.add("remaining: " + Long.toBinaryString(services));
-        return Joiner.on(", ").join(a);
+        return VersionMessage.toStringServices(services);
     }
 
     @Override
