@@ -92,7 +92,8 @@ public class HttpDiscovery implements PeerDiscovery {
             Request.Builder request = new Request.Builder();
             request.url(url.build());
             request.addHeader("User-Agent", VersionMessage.LIBRARY_SUBVER); // TODO Add main version.
-            log.info("Requesting seeds from {}", url);
+            log.info("Requesting {} peers from {}", services != 0 ? VersionMessage.toStringServices(services) :
+                    "all", url);
             Response response = client.newCall(request.build()).execute();
             if (!response.isSuccessful())
                 throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
@@ -105,7 +106,9 @@ public class HttpDiscovery implements PeerDiscovery {
                 zip.close(); // will close InputStream as well
             }
 
-            return protoToAddrs(proto);
+            final InetSocketAddress[] peers = protoToAddrs(proto);
+            log.info("Got {} peers from {}", peers.length, url);
+            return peers;
         } catch (PeerDiscoveryException e1) {
             throw e1;
         } catch (Exception e) {
