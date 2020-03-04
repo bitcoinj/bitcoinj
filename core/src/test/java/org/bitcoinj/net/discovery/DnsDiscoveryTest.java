@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.bitcoinj.params.MainNetParams;
@@ -33,7 +34,7 @@ public class DnsDiscoveryTest {
         DnsDiscovery dnsDiscovery = new DnsDiscovery(seeds, MainNetParams.get());
         assertTrue(dnsDiscovery.seeds.size() == 2);
         for (PeerDiscovery peerDiscovery : dnsDiscovery.seeds) {
-            assertTrue(peerDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS).length > 0);
+            assertTrue(peerDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS).size() > 0);
         }
     }
 
@@ -47,8 +48,8 @@ public class DnsDiscoveryTest {
     public void testGetPeersReturnsNotEmptyListOfSocketAddresses() throws PeerDiscoveryException {
         DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(),
                 "localhost");
-        InetSocketAddress[] inetSocketAddresses = dnsSeedDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS);
-        assertNotEquals(0, inetSocketAddresses.length);
+        List<InetSocketAddress> inetSocketAddresses = dnsSeedDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS);
+        assertNotEquals(0, inetSocketAddresses.size());
     }
 
     @Test(expected = PeerDiscoveryException.class)

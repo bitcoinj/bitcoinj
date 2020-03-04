@@ -41,14 +41,14 @@ import java.util.concurrent.TimeUnit;
  * Prints a list of IP addresses obtained from DNS.
  */
 public class PrintPeers {
-    private static InetSocketAddress[] dnsPeers;
+    private static List<InetSocketAddress> dnsPeers;
 
     private static void printElapsed(long start) {
         long now = System.currentTimeMillis();
         System.out.println(String.format("Took %.2f seconds", (now - start) / 1000.0));
     }
 
-    private static void printPeers(InetSocketAddress[] addresses) {
+    private static void printPeers(List<InetSocketAddress> addresses) {
         for (InetSocketAddress address : addresses) {
             String hostAddress = address.getAddress().getHostAddress();
             System.out.println(String.format("%s:%d", hostAddress, address.getPort()));

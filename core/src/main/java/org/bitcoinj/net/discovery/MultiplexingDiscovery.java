@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -104,46 +103,46 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     }
 
     @Override
-    public InetSocketAddress[] getPeers(final long services, final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public List<InetSocketAddress> getPeers(final long services, final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
         vThreadPool = createExecutor();
         try {
-            List<Callable<InetSocketAddress[]>> tasks = new ArrayList<>();
+            List<Callable<List<InetSocketAddress>>> tasks = new ArrayList<>();
             if (parallelQueries) {
                 for (final PeerDiscovery seed : seeds) {
-                    tasks.add(new Callable<InetSocketAddress[]>() {
+                    tasks.add(new Callable<List<InetSocketAddress>>() {
                         @Override
-                        public InetSocketAddress[] call() throws Exception {
+                        public List<InetSocketAddress> call() throws Exception {
                             return seed.getPeers(services, timeoutValue, timeoutUnit);
                         }
                     });
                 }
             } else {
-                tasks.add(new Callable<InetSocketAddress[]>() {
+                tasks.add(new Callable<List<InetSocketAddress>>() {
                     @Override
-                    public InetSocketAddress[] call() throws Exception {
+                    public List<InetSocketAddress> call() throws Exception {
                         List<InetSocketAddress> peers = new LinkedList<>();
                         for (final PeerDiscovery seed : seeds)
-                            peers.addAll(Arrays.asList(seed.getPeers(services, timeoutValue, timeoutUnit)));
-                        return peers.toArray(new InetSocketAddress[peers.size()]);
+                            peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
+                        return peers;
                     }
                 });
             }
-            final List<Future<InetSocketAddress[]>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);
-            ArrayList<InetSocketAddress> addrs = new ArrayList<>();
+            final List<Future<List<InetSocketAddress>>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);
+            List<InetSocketAddress> addrs = new ArrayList<>();
             for (int i = 0; i < futures.size(); i++) {
-                Future<InetSocketAddress[]> future = futures.get(i);
+                Future<List<InetSocketAddress>> future = futures.get(i);
                 if (future.isCancelled()) {
                     log.warn("Seed {}: timed out", parallelQueries ? seeds.get(i) : "any");
                     continue;  // Timed out.
                 }
-                final InetSocketAddress[] inetAddresses;
+                final List<InetSocketAddress> inetAddresses;
                 try {
                     inetAddresses = future.get();
                 } catch (ExecutionException e) {
                     log.warn("Seed {}: failed to look up: {}", parallelQueries ? seeds.get(i) : "any", e.getMessage());
                     continue;
                 }
-                Collections.addAll(addrs, inetAddresses);
+                addrs.addAll(inetAddresses);
             }
             if (addrs.size() == 0)
                 throw new PeerDiscoveryException("No peer discovery returned any results in "
@@ -151,7 +150,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             if (shufflePeers)
                 Collections.shuffle(addrs);
             vThreadPool.shutdownNow();
-            return addrs.toArray(new InetSocketAddress[addrs.size()]);
+            return addrs;
         } catch (InterruptedException e) {
             throw new PeerDiscoveryException(e);
         } finally {
