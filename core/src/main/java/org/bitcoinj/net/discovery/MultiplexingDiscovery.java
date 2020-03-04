@@ -63,13 +63,10 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             for (HttpDiscovery.Details httpSeed : httpSeeds)
                 discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
         }
-        // Also use DNS seeds if there is no specific service requirement
-        if (services == 0) {
-            String[] dnsSeeds = params.getDnsSeeds();
-            if (dnsSeeds != null)
-                for (String dnsSeed : dnsSeeds)
-                    discoveries.add(new DnsSeedDiscovery(params, dnsSeed));
-        }
+        String[] dnsSeeds = params.getDnsSeeds();
+        if (dnsSeeds != null)
+            for (String dnsSeed : dnsSeeds)
+                discoveries.add(new DnsSeedDiscovery(params, dnsSeed));
         return new MultiplexingDiscovery(params, discoveries);
     }
 
