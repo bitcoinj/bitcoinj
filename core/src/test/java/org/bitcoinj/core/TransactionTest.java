@@ -240,14 +240,14 @@ public class TransactionTest {
         assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
                 HEX.encode(txSig0.encodeToBitcoin()));
 
-        Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(key1).getProgram()).build();
-        assertEquals("1976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
-                HEX.encode(scriptCode.getProgram()));
+        Script witnessScript = ScriptBuilder.createP2PKHOutputScript(key1);
+        assertEquals("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
+                HEX.encode(witnessScript.getProgram()));
 
         assertEquals("c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670",
-                tx.hashForWitnessSignature(1, scriptCode, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
+                tx.hashForWitnessSignature(1, witnessScript, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
         TransactionSignature txSig1 = tx.calculateWitnessSignature(1, key1,
-                scriptCode, txIn1.getValue(),
+                witnessScript, txIn1.getValue(),
                 Transaction.SigHash.ALL, false);
         assertEquals("304402203609e17b84f6a7d30c80bfa610b5b4542f32a8a0d5447a12fb1366d7f01cc44a0220573a954c4518331561406f90300e8f3358f51928d43c212a8caed02de67eebee"
                         + "01",
@@ -316,15 +316,15 @@ public class TransactionTest {
         assertEquals("a9144733f37cf4db86fbc2efed2500b4f4e49f31202387",
                 HEX.encode(scriptPubKey.getProgram()));
 
-        Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(key).getProgram()).build();
-        assertEquals("1976a91479091972186c449eb1ded22b78e40d009bdf008988ac",
-                HEX.encode(scriptCode.getProgram()));
+        Script witnessScript = ScriptBuilder.createP2PKHOutputScript(key);
+        assertEquals("76a91479091972186c449eb1ded22b78e40d009bdf008988ac",
+                HEX.encode(witnessScript.getProgram()));
 
         assertEquals("64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6",
-                tx.hashForWitnessSignature(0, scriptCode, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
+                tx.hashForWitnessSignature(0, witnessScript, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
                         .toString());
         TransactionSignature txSig = tx.calculateWitnessSignature(0, key,
-                scriptCode, Coin.COIN.multiply(10),
+                witnessScript, Coin.COIN.multiply(10),
                 Transaction.SigHash.ALL, false);
         assertEquals("3044022047ac8e878352d3ebbde1c94ce3a10d057c24175747116f8288e5d794d12d482f0220217f36a485cae903c713331d877c1f64677e3622ad4010726870540656fe9dcb"
                         + "01",
@@ -352,6 +352,30 @@ public class TransactionTest {
                 + "92040000"; // nLockTime
         assertEquals(signedTxHex, HEX.encode(tx.bitcoinSerialize()));
         assertEquals(signedTxHex.length() / 2, tx.getMessageSize());
+    }
+
+    @Test
+    public void testWitnessSignatureP2SH_P2WSHSingleAnyoneCanPay() throws Exception {
+        // test vector P2SH-P2WSH from the final example at:
+        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wsh
+        String txHex = "01000000" // version
+                + "01" // num txIn
+                + "36641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e" + "01000000" + "00" + "ffffffff" // txIn
+                + "02" // num txOut
+                + "00e9a43500000000" + "1976a914" + "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26" + "88ac" // txOut
+                + "c0832f0500000000" + "1976a914" + "7480a33f950689af511e6e84c138dbbd3c3ee415" + "88ac" // txOut
+                + "00000000"; // nLockTime
+        Transaction tx = new Transaction(TESTNET, HEX.decode(txHex));
+
+        ECKey pubKey = ECKey.fromPublicOnly(HEX.decode(
+                "02d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b"));
+        Script script = new Script(HEX.decode(
+                "56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58c5d1f47de74683123987e967a8f42103a6d48b1131e94ba04d9737d61acdaa1322008af9602b3b14862c07a1789aac162102d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b56ae"));
+        Sha256Hash hash = tx.hashForWitnessSignature(0, script, Coin.valueOf(987654321L),
+                Transaction.SigHash.SINGLE, true);
+        TransactionSignature signature = TransactionSignature.decodeFromBitcoin(HEX.decode(
+                "30440220525406a1482936d5a21888260dc165497a90a15669636d8edca6b9fe490d309c022032af0c646a34a44d1f4576bf6a4a74b67940f8faa84c7df9abe12a01a11e2b4783"), true, true);
+        assertTrue(pubKey.verify(hash, signature));
     }
 
     private boolean correctlySpends(TransactionInput txIn, Script scriptPubKey, int inputIndex) {

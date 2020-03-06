@@ -1405,6 +1405,7 @@ public class Transaction extends ChildMessage {
             bos.write(hashSequence);
             bos.write(inputs.get(inputIndex).getOutpoint().getHash().getReversedBytes());
             uint32ToByteStreamLE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
+            bos.write(new VarInt(scriptCode.length).encode());
             bos.write(scriptCode);
             uint64ToByteStreamLE(BigInteger.valueOf(prevValue.getValue()), bos);
             uint32ToByteStreamLE(inputs.get(inputIndex).getSequenceNumber(), bos);
