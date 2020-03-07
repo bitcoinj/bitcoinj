@@ -1113,6 +1113,19 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
+     * Gracefully drops all connected peers.
+     */
+    public void dropAllPeers() {
+        lock.lock();
+        try {
+            for (Peer peer : peers)
+                peer.close();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * <p>Link the given wallet to this PeerGroup. This is used for three purposes:</p>
      *
      * <ol>
