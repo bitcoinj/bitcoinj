@@ -163,11 +163,12 @@ public class TransactionBroadcast {
                 try {
                     ListenableFuture future = peer.sendMessage(tx);
                     if (dropPeersAfterBroadcast) {
-                        // We drop the peer as soon as the transaction has been sent, because this peer will not send us
-                        // back useful broadcast confirmations.
+                        // We drop the peer shortly after the transaction has been sent, because this peer will not
+                        // send us back useful broadcast confirmations.
                         future.addListener(new Runnable() {
                             @Override
                             public void run() {
+                                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
                                 peer.close();
                             }
                         }, Threading.THREAD_POOL);
