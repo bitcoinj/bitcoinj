@@ -355,8 +355,16 @@ public class TransactionTest {
     }
     
     @Test
-    public void testWitnessSignatureP2SH_P2WPKH_Single() throws SignatureDecodeException {
-      String hex = "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000";
+    public void testWitnessSignatureP2SH_P2WSHSingleAnyoneCanPay() throws SignatureDecodeException {
+      // test vector P2SH-P2WSH from the final example at:
+      // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wsh
+      String hex = "01000000" // version
+                + "01" // num txIn
+                + "36641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e" + "01000000" + "00" + "ffffffff" // txIn
+                + "02" // num txOut
+                + "00e9a43500000000" + "1976a914" + "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26" + "88ac" // txOut
+                + "c0832f0500000000" + "1976a914" + "7480a33f950689af511e6e84c138dbbd3c3ee415" + "88ac" // txOut
+                + "00000000"; // nLockTime
       Transaction transaction = new Transaction(TESTNET, HEX.decode(hex));
 
       ECKey pubKey = ECKey.fromPublicOnly(HEX.decode("02d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b"));
