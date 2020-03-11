@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.7'
+    id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
 dependencies {
@@ -13,6 +13,7 @@ dependencies {
 }
 
 javafx {
+    version = '14'
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
