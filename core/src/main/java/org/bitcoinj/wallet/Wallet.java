@@ -1267,7 +1267,7 @@ public class Wallet extends BaseTaggableObject
                     }
                 } catch (ScriptException e) {
                     // Just means we didn't understand the output of this transaction: ignore it.
-                    log.warn("Could not parse tx output script: {}", e.toString());
+                    log.info("Could not parse tx output script: {}", e.toString());
                 }
             }
         } finally {
