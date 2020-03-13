@@ -844,8 +844,7 @@ public class Transaction extends ChildMessage {
                                 .append(spentBy.getIndex());
                     }
                 }
-                if (scriptType != null || !out.isAvailableForSpending())
-                    s.append('\n');
+                s.append('\n');
             } catch (Exception e) {
                 s.append("[exception: ").append(e.getMessage()).append("]\n");
             }
