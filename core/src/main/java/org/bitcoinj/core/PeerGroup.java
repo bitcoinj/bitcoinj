@@ -1843,9 +1843,9 @@ public class PeerGroup implements TransactionBroadcaster {
                     // Calculate the moving average.
                     samples[cursor++] = bytesInLastSecond;
                     if (cursor == samples.length) cursor = 0;
-                    long average = 0;
-                    for (long sample : samples) average += sample;
-                    average /= samples.length;
+                    long sampleSum = 0;
+                    for (long sample : samples) sampleSum += sample;
+                    final float average = (float) sampleSum / samples.length;
 
                     String statsString = String.format(Locale.US,
                             "%d blocks/sec, %d tx/sec, %d pre-filtered tx/sec, avg/last %.2f/%.2f kilobytes per sec, chain/common height %d/%d",
