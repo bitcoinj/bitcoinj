@@ -70,18 +70,18 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     private static final String CREATE_OPEN_OUTPUT_TABLE = "CREATE TABLE openoutputs (\n" +
             "    hash bytea NOT NULL,\n" +
-            "    index integer NOT NULL,\n" +
+            "    \"index\" integer NOT NULL,\n" +
             "    height integer NOT NULL,\n" +
             "    value bigint NOT NULL,\n" +
             "    scriptbytes bytea NOT NULL,\n" +
             "    toaddress character varying(74),\n" +
             "    addresstargetable smallint,\n" +
             "    coinbase boolean,\n" +
-            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,index)\n" +
+            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,\"index\")\n" +
             ")\n";
 
     // Some indexes to speed up inserts
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX      = "CREATE INDEX openoutputs_hash_index_num_height_toaddress_idx ON openoutputs USING btree (hash, index, height, toaddress)";
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX      = "CREATE INDEX openoutputs_hash_index_num_height_toaddress_idx ON openoutputs USING btree (hash, \"index\", height, toaddress)";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX          = "CREATE INDEX openoutputs_toaddress_idx ON openoutputs USING btree (toaddress)";
     private static final String CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX  = "CREATE INDEX openoutputs_addresstargetable_idx ON openoutputs USING btree (addresstargetable)";
     private static final String CREATE_OUTPUTS_HASH_INDEX               = "CREATE INDEX openoutputs_hash_idx ON openoutputs USING btree (hash)";
