@@ -77,7 +77,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             "    toaddress character varying(74),\n" +
             "    addresstargetable smallint,\n" +
             "    coinbase boolean,\n" +
-            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,index)\n" +
+            "    CONSTRAINT openoutputs_pk PRIMARY KEY (hash,\"index\")\n" +
             ")\n";
 
     // Some indexes to speed up inserts
