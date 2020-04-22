@@ -8,10 +8,10 @@ plugins {
 version = '0.16-SNAPSHOT'
 
 dependencies {
-    compile 'org.bouncycastle:bcprov-jdk15to18:1.65'
+    api 'org.bouncycastle:bcprov-jdk15to18:1.65'
     api 'com.google.guava:guava:29.0-android'
-    compile 'com.google.protobuf:protobuf-java:3.9.2'
-    implementation 'com.squareup.okhttp3:okhttp:3.12.8'
+    api 'com.google.protobuf:protobuf-java:3.9.2'
+    api 'com.squareup.okhttp3:okhttp:3.12.8'
     implementation 'org.slf4j:slf4j-api:1.7.30'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
