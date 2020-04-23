@@ -10,7 +10,7 @@ jobs:
         # windows-latest currently fails on some tests
         # TODO: Fix windows issues and add `windows-latest`
         os: [ubuntu-latest, macOS-latest]
-        java: [ '8', '11' ]
+        java: [ '8', '11', '14' ]
       fail-fast: false
     name: JAVA ${{ matrix.java }} OS ${{ matrix.os }}
     steps:
