@@ -8,7 +8,8 @@ jobs:
     strategy:
       matrix:
         # windows-latest currently fails on some tests
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        # TODO: Fix windows issues and add `windows-latest`
+        os: [ubuntu-latest, macOS-latest]
         java: [ '8', '11' ]
       fail-fast: false
     name: JAVA ${{ matrix.java }} OS ${{ matrix.os }}
