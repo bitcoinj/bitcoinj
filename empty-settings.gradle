@@ -1,0 +1,3 @@
+// Empty settings file. Used to run the `wrapper` task to upgrade Gradle on CI. See .travis.yml
+// and .gitlab-ci.yml
+
