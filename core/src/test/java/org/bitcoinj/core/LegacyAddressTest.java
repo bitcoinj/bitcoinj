@@ -189,6 +189,19 @@ public class LegacyAddressTest {
     }
 
     @Test
+    public void p2shAddressFromPrivateKey() {
+        final NetworkParameters networkParameters = MainNetParams.get();
+        final String privateKeyWIF = "L3E6dAmEwcRNbeUnzjd6YuhMm9fDxgzVmJHXAV1gtXm5e49Dctiv";
+
+        final ECKey key = DumpedPrivateKey.fromBase58(networkParameters, privateKeyWIF).getKey();
+        final Script script = ScriptBuilder.createP2SHOutputScript(key);
+
+        final LegacyAddress address = LegacyAddress.fromScriptHash(networkParameters, ScriptPattern.extractHashFromP2SH(script));
+
+        assertEquals("34cB1YRfPLfccGb3bjx5taWgNfC1s8WvpU", address.toString());
+    }
+
+    @Test
     public void p2shAddressCreationFromKeys() {
         // import some keys from this example: https://gist.github.com/gavinandresen/3966071
         ECKey key1 = DumpedPrivateKey.fromBase58(MAINNET, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();

@@ -479,6 +479,16 @@ public class ScriptBuilder {
     }
 
     /**
+     * Creates a scriptPubKey that sends to script calculated by the given key. Read
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
+     * kind of script.
+     */
+    public static Script createP2SHOutputScript(ECKey key) {
+        final Script redeemScript = new ScriptBuilder().smallNum(0).data(key.getPubKeyHash()).build();
+        return createP2SHOutputScript(redeemScript);
+    }
+
+    /**
      * Creates a scriptPubKey that sends to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
