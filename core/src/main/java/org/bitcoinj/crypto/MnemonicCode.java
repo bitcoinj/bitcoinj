@@ -17,12 +17,11 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -45,18 +44,15 @@ import static org.bitcoinj.core.Utils.HEX;
  */
 
 public class MnemonicCode {
+    /**
+     * UNIX time for when the BIP39 standard was finalised. This can be used as a default seed birthday.
+     */
+    public static final long BIP39_STANDARDISATION_TIME_SECS = 1381276800;
     private static final Logger log = LoggerFactory.getLogger(MnemonicCode.class);
-
-    private ArrayList<String> wordList;
-
     private static final String BIP39_ENGLISH_RESOURCE_NAME = "mnemonic/wordlist/english.txt";
     private static final String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
-
-    /** UNIX time for when the BIP39 standard was finalised. This can be used as a default seed birthday. */
-    public static long BIP39_STANDARDISATION_TIME_SECS = 1381276800;
-
+    private static final int WORD_LIST_SIZE = 2048;
     private static final int PBKDF2_ROUNDS = 2048;
-
     public static MnemonicCode INSTANCE;
 
     static {
@@ -64,57 +60,59 @@ public class MnemonicCode {
             INSTANCE = new MnemonicCode();
         } catch (FileNotFoundException e) {
             // We expect failure on Android. The developer has to set INSTANCE themselves.
-            if (!Utils.isAndroidRuntime())
+            if (!Utils.isAndroidRuntime()) {
                 log.error("Could not find word list", e);
+            }
         } catch (IOException e) {
             log.error("Failed to load word list", e);
         }
     }
 
-    /** Initialise from the included word list. Won't work on Android. */
+    private final List<String> wordList;
+
+    /**
+     * Initialise from the included word list. Won't work on Android.
+     */
     public MnemonicCode() throws IOException {
         this(openDefaultWords(), BIP39_ENGLISH_SHA256);
-    }
-
-    private static InputStream openDefaultWords() throws IOException {
-        InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
-        if (stream == null)
-            throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
-        return stream;
     }
 
     /**
      * Creates an MnemonicCode object, initializing with words read from the supplied input stream.  If a wordListDigest
      * is supplied the digest of the words will be checked.
      */
-    public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, StandardCharsets.UTF_8));
-        this.wordList = new ArrayList<>(2048);
-        MessageDigest md = Sha256Hash.newDigest();
-        String word;
-        while ((word = br.readLine()) != null) {
-            md.update(word.getBytes());
-            this.wordList.add(word);
-        }
-        br.close();
+    public MnemonicCode(InputStream wordStream, String wordListDigest) throws IOException {
+        final MessageDigest md = Sha256Hash.newDigest();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(wordStream, StandardCharsets.UTF_8))) {
+            this.wordList = new ArrayList<>(WORD_LIST_SIZE);
 
-        if (this.wordList.size() != 2048)
-            throw new IllegalArgumentException("input stream did not contain 2048 words");
+            String word;
+            while ((word = br.readLine()) != null) {
+                md.update(word.getBytes());
+                this.wordList.add(word);
+            }
+        }
+
+        if (this.wordList.size() != WORD_LIST_SIZE) {
+            throw new IllegalArgumentException("input stream did not contain " + WORD_LIST_SIZE + " words");
+        }
 
         // If a wordListDigest is supplied check to make sure it matches.
         if (wordListDigest != null) {
             byte[] digest = md.digest();
             String hexdigest = HEX.encode(digest);
-            if (!hexdigest.equals(wordListDigest))
-                throw new IllegalArgumentException("wordlist digest mismatch");
+            if (!hexdigest.equals(wordListDigest)) {
+                throw new IllegalArgumentException("wordList digest mismatch");
+            }
         }
     }
 
-    /**
-     * Gets the word list this code uses.
-     */
-    public List<String> getWordList() {
-        return wordList;
+    private static InputStream openDefaultWords() throws IOException {
+        InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
+        if (stream == null) {
+            throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
+        }
+        return stream;
     }
 
     /**
@@ -140,15 +138,34 @@ public class MnemonicCode {
         return seed;
     }
 
+    private static boolean[] bytesToBits(byte[] data) {
+        boolean[] bits = new boolean[data.length * 8];
+        for (int i = 0; i < data.length; ++i)
+            for (int j = 0; j < 8; ++j)
+                bits[(i * 8) + j] = (data[i] & (1 << (7 - j))) != 0;
+        return bits;
+    }
+
+    /**
+     * Gets the word list this code uses.
+     */
+    public List<String> getWordList() {
+        return wordList;
+    }
+
     /**
      * Convert mnemonic word list to original entropy value.
      */
-    public byte[] toEntropy(List<String> words) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException, MnemonicException.MnemonicChecksumException {
-        if (words.size() % 3 > 0)
+    public byte[] toEntropy(
+            List<String> words) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException,
+            MnemonicException.MnemonicChecksumException {
+        if (words.size() % 3 > 0) {
             throw new MnemonicException.MnemonicLengthException("Word list size must be multiple of three words.");
+        }
 
-        if (words.size() == 0)
+        if (words.isEmpty()) {
             throw new MnemonicException.MnemonicLengthException("Word list is empty.");
+        }
 
         // Look up all the words in the list and construct the
         // concatenation of the original entropy and the checksum.
@@ -159,14 +176,15 @@ public class MnemonicCode {
         for (String word : words) {
             // Find the words index in the wordlist.
             int ndx = Collections.binarySearch(this.wordList, word);
-            if (ndx < 0)
+            if (ndx < 0) {
                 throw new MnemonicException.MnemonicWordException(word);
+            }
 
             // Set the next 11 bits to the value of the index.
             for (int ii = 0; ii < 11; ++ii)
                 concatBits[(wordindex * 11) + ii] = (ndx & (1 << (10 - ii))) != 0;
             ++wordindex;
-        }        
+        }
 
         int checksumLengthBits = concatLenBits / 33;
         int entropyLengthBits = concatLenBits - checksumLengthBits;
@@ -175,8 +193,9 @@ public class MnemonicCode {
         byte[] entropy = new byte[entropyLengthBits / 8];
         for (int ii = 0; ii < entropy.length; ++ii)
             for (int jj = 0; jj < 8; ++jj)
-                if (concatBits[(ii * 8) + jj])
+                if (concatBits[(ii * 8) + jj]) {
                     entropy[ii] |= 1 << (7 - jj);
+                }
 
         // Take the digest of the entropy.
         byte[] hash = Sha256Hash.hash(entropy);
@@ -184,8 +203,9 @@ public class MnemonicCode {
 
         // Check all the checksum bits.
         for (int i = 0; i < checksumLengthBits; ++i)
-            if (concatBits[entropyLengthBits + i] != hashBits[i])
+            if (concatBits[entropyLengthBits + i] != hashBits[i]) {
                 throw new MnemonicException.MnemonicChecksumException();
+            }
 
         return entropy;
     }
@@ -194,22 +214,24 @@ public class MnemonicCode {
      * Convert entropy data to mnemonic word list.
      */
     public List<String> toMnemonic(byte[] entropy) throws MnemonicException.MnemonicLengthException {
-        if (entropy.length % 4 > 0)
+        if (entropy.length % 4 > 0) {
             throw new MnemonicException.MnemonicLengthException("Entropy length not multiple of 32 bits.");
+        }
 
-        if (entropy.length == 0)
+        if (entropy.length == 0) {
             throw new MnemonicException.MnemonicLengthException("Entropy is empty.");
+        }
 
         // We take initial entropy of ENT bits and compute its
         // checksum by taking first ENT / 32 bits of its SHA256 hash.
 
         byte[] hash = Sha256Hash.hash(entropy);
         boolean[] hashBits = bytesToBits(hash);
-        
+
         boolean[] entropyBits = bytesToBits(entropy);
         int checksumLengthBits = entropyBits.length / 32;
 
-        // We append these bits to the end of the initial entropy. 
+        // We append these bits to the end of the initial entropy.
         boolean[] concatBits = new boolean[entropyBits.length + checksumLengthBits];
         System.arraycopy(entropyBits, 0, concatBits, 0, entropyBits.length);
         System.arraycopy(hashBits, 0, concatBits, entropyBits.length, checksumLengthBits);
@@ -225,13 +247,14 @@ public class MnemonicCode {
             int index = 0;
             for (int j = 0; j < 11; ++j) {
                 index <<= 1;
-                if (concatBits[(i * 11) + j])
+                if (concatBits[(i * 11) + j]) {
                     index |= 0x1;
+                }
             }
             words.add(this.wordList.get(index));
         }
-            
-        return words;        
+
+        return words;
     }
 
     /**
@@ -239,13 +262,5 @@ public class MnemonicCode {
      */
     public void check(List<String> words) throws MnemonicException {
         toEntropy(words);
-    }
-
-    private static boolean[] bytesToBits(byte[] data) {
-        boolean[] bits = new boolean[data.length * 8];
-        for (int i = 0; i < data.length; ++i)
-            for (int j = 0; j < 8; ++j)
-                bits[(i * 8) + j] = (data[i] & (1 << (7 - j))) != 0;
-        return bits;
     }
 }
