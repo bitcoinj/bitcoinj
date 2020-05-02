@@ -17,9 +17,12 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,6 +57,14 @@ public class MnemonicCode {
     private static final String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
     private static final int WORD_LIST_SIZE = 2048;
     private static final int PBKDF2_ROUNDS = 2048;
+    private static final Normalizer.Form NORMALIZE_FORM = Normalizer.Form.NFKD;
+    private static final Function<String, String> NORMALIZE_FUNCTION = new Function<String, String>() {
+        @NullableDecl
+        @Override
+        public String apply(@NullableDecl String word) {
+            return normalizeIfNeeded(word);
+        }
+    };
     public static MnemonicCode INSTANCE;
 
     static {
@@ -120,22 +132,28 @@ public class MnemonicCode {
      */
     public static byte[] toSeed(List<String> words, String passphrase) {
         checkNotNull(passphrase, "A null passphrase is not allowed.");
+        final List<String> normalizedWords = Lists.transform(words, NORMALIZE_FUNCTION);
+        final String normalizedPassphrase = normalizeIfNeeded(passphrase);
 
         // To create binary seed from mnemonic, we use PBKDF2 function
-        // with mnemonic sentence (in UTF-8) used as a password and
-        // string "mnemonic" + passphrase (again in UTF-8) used as a
+        // with mnemonic sentence (in UTF-8 NFKD) used as a password and
+        // string "mnemonic" + passphrase (again in UTF-8 NFKD) used as a
         // salt. Iteration count is set to 4096 and HMAC-SHA512 is
         // used as a pseudo-random function. Desired length of the
         // derived key is 512 bits (= 64 bytes).
         //
-        String pass = Utils.SPACE_JOINER.join(words);
-        String salt = "mnemonic" + passphrase;
+        String pass = Utils.SPACE_JOINER.join(normalizedWords);
+        String salt = "mnemonic" + normalizedPassphrase;
 
         final Stopwatch watch = Stopwatch.createStarted();
         byte[] seed = PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
         watch.stop();
         log.info("PBKDF2 took {}", watch);
         return seed;
+    }
+
+    private static String normalizeIfNeeded(String input) {
+        return Normalizer.isNormalized(input, NORMALIZE_FORM) ? input : Normalizer.normalize(input, NORMALIZE_FORM);
     }
 
     private static boolean[] bytesToBits(byte[] data) {
