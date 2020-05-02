@@ -1,6 +1,6 @@
 /*
  * Copyright by the original author or authors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,10 +25,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-public class DRMWorkaround {
-    private static Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
+public final class DRMWorkaround {
+    private static final Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
 
     private static boolean done = false;
+
+    private DRMWorkaround() {
+    }
 
     public static void maybeDisableExportControls() {
         // This sorry story is documented in https://bugs.openjdk.java.net/browse/JDK-7024850
@@ -36,11 +39,14 @@ public class DRMWorkaround {
         // even though that shipped in 2014! That's dumb. So we disable the ridiculous US government mandated DRM
         // for AES-256 here, as Tor/BIP38 requires it.
 
-        if (done) return;
+        if (done) {
+            return;
+        }
         done = true;
 
-        if (Utils.isAndroidRuntime() || Utils.isOpenJDKRuntime())
+        if (Utils.isAndroidRuntime() || Utils.isOpenJDKRuntime()) {
             return;
+        }
         try {
             Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
             gate.setAccessible(true);
@@ -61,7 +67,8 @@ public class DRMWorkaround {
             defaultPolicy.setAccessible(true);
             defaultPolicy.set(null, coll);
         } catch (Exception e) {
-            log.warn("Failed to deactivate AES-256 barrier logic, Tor mode/BIP38 decryption may crash if this JVM requires it: " + e.getMessage());
+            log.warn("Failed to deactivate AES-256 barrier logic, Tor mode/BIP38 decryption may crash if this JVM requires it: {}",
+                    e.getMessage());
         }
     }
 }
