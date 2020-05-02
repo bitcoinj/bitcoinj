@@ -39,14 +39,11 @@ public final class DRMWorkaround {
         // even though that shipped in 2014! That's dumb. So we disable the ridiculous US government mandated DRM
         // for AES-256 here, as Tor/BIP38 requires it.
 
-        if (done) {
-            return;
-        }
+        if (done) return;
         done = true;
 
-        if (Utils.isAndroidRuntime() || Utils.isOpenJDKRuntime()) {
+        if (Utils.isAndroidRuntime() || Utils.isOpenJDKRuntime())
             return;
-        }
         try {
             Field gate = Class.forName("javax.crypto.JceSecurity").getDeclaredField("isRestricted");
             gate.setAccessible(true);
