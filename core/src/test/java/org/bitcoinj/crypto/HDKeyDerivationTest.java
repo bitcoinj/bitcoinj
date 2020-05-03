@@ -43,7 +43,7 @@ public class HDKeyDerivationTest {
 
     @Test
     public void testDeriveFromPrivateParent() {
-        DeterministicKey parent = new DeterministicKey(ImmutableList.<ChildNumber> of(), new byte[32], BigInteger.TEN,
+        DeterministicKey parent = new DeterministicKey(HDPath.M(), new byte[32], BigInteger.TEN,
                 null);
         assertFalse(parent.isPubKeyOnly());
         assertFalse(parent.isEncrypted());
@@ -74,7 +74,7 @@ public class HDKeyDerivationTest {
 
     @Test
     public void testDeriveFromPublicParent() {
-        DeterministicKey parent = new DeterministicKey(ImmutableList.<ChildNumber> of(), new byte[32], BigInteger.TEN,
+        DeterministicKey parent = new DeterministicKey(HDPath.M(), new byte[32], BigInteger.TEN,
                 null).dropPrivateBytes();
         assertTrue(parent.isPubKeyOnly());
         assertFalse(parent.isEncrypted());
@@ -103,7 +103,7 @@ public class HDKeyDerivationTest {
 
     @Test
     public void testDeriveFromEncryptedParent() {
-        DeterministicKey parent = new DeterministicKey(ImmutableList.<ChildNumber> of(), new byte[32], BigInteger.TEN,
+        DeterministicKey parent = new DeterministicKey(HDPath.M(), new byte[32], BigInteger.TEN,
                 null);
         parent = parent.encrypt(KEY_CRYPTER, AES_KEY, null);
         assertTrue(parent.isEncrypted());
