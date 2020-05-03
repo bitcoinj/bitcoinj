@@ -86,25 +86,35 @@ public class HDPathTest {
                 "M / 44H / 0H / 0H / 1 / 1",
                 ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
+                false,
 
                 "M/7H/3/3/1H/",
                 ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
+                false,
+
+                "m/7H/3/3/1H/",
+                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                        new ChildNumber(1, true)),
+                true,
 
                 "1 H / 2 H / 3 H /",
                 ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+                false,
 
                 "1 / 2 / 3 /",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
+                false
         };
 
-        for (int i = 0; i < tv.length; i += 2) {
+        for (int i = 0; i < tv.length; i += 3) {
             String strPath = (String) tv[i];
             List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i + 1];
+            boolean expectedHasPrivateKey = (Boolean) tv[i + 2];
 
-            List<ChildNumber> path = HDPath.parsePath(strPath);
-
+            HDPath path = HDPath.parsePath(strPath);
             Assert.assertEquals(path, expectedPath);
+            Assert.assertEquals(path.hasPrivateKey, expectedHasPrivateKey);
         }
     }
 }

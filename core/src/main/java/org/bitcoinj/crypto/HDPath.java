@@ -156,8 +156,14 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public static HDPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = new LinkedList<>(SEPARATOR_SPLITTER.splitToList(path));
-        if (!parsedNodes.isEmpty() && parsedNodes.get(0).equals(Character.toString(PREFIX_PUBLIC)))
-            parsedNodes.remove(0);
+        boolean hasPrivateKey = false;
+        if (!parsedNodes.isEmpty()) {
+            final String firstNode = parsedNodes.get(0);
+            if (firstNode.equals(Character.toString(PREFIX_PRIVATE)))
+                hasPrivateKey = true;
+            if (hasPrivateKey || firstNode.equals(Character.toString(PREFIX_PUBLIC)))
+                parsedNodes.remove(0);
+        }
         List<ChildNumber> nodes = new ArrayList<>(parsedNodes.size());
 
         for (String n : parsedNodes) {
@@ -168,7 +174,7 @@ public class HDPath extends AbstractList<ChildNumber> {
             nodes.add(new ChildNumber(nodeNumber, isHard));
         }
 
-        return new HDPath(nodes);
+        return new HDPath(hasPrivateKey, nodes);
     }
 
     /**
