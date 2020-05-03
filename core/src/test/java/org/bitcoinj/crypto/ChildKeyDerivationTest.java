@@ -86,7 +86,6 @@ public class ChildKeyDerivationTest {
             // Now add a few more addresses with very large indices
             DeterministicKey ekprv_1_IN = HDKeyDerivation.deriveChildKey(ekprv_1, HDW_CHAIN_INTERNAL);
             DeterministicKey ekprv_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4095);
-//            ExtendedHierarchicKey ekprv_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4294967295L);
 
             //////////////////////////////////////////////////////////////////////////
             // Repeat the above with PUBLIC key
@@ -113,7 +112,6 @@ public class ChildKeyDerivationTest {
             // Now add a few more addresses with very large indices
             DeterministicKey ekpub_1_IN = HDKeyDerivation.deriveChildKey(ekpub_1, HDW_CHAIN_INTERNAL);
             DeterministicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
-//            ExtendedHierarchicKey ekpub_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4294967295L);
 
             assertEquals(hexEncodePub(ekprv.dropPrivateBytes().dropParent()), hexEncodePub(ekpub));
             assertEquals(hexEncodePub(ekprv_0.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0));
@@ -127,7 +125,6 @@ public class ChildKeyDerivationTest {
             assertEquals(hexEncodePub(ekprv_0_EX_2.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0_EX_2));
             assertEquals(hexEncodePub(ekprv_1_IN.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_1_IN));
             assertEquals(hexEncodePub(ekprv_1_IN_4095.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_1_IN_4095));
-            //assertEquals(hexEncodePub(ekprv_1_IN_4bil.dropPrivateBytes()), hexEncodePub(ekpub_1_IN_4bil));
         }
     }
 
