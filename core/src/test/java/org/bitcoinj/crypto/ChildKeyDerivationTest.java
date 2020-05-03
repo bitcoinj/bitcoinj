@@ -64,56 +64,80 @@ public class ChildKeyDerivationTest {
             //////////////////////////////////////////////////////////////////////////
             // Start with an extended PRIVATE key
             DeterministicKey ekprv = HDKeyDerivation.createMasterPrivKeyFromBytes(priv, chain);
+            assertEquals("m", ekprv.getPath().toString());
 
             // Create two accounts
             DeterministicKey ekprv_0 = HDKeyDerivation.deriveChildKey(ekprv, 0);
+            assertEquals("m/0", ekprv_0.getPath().toString());
             DeterministicKey ekprv_1 = HDKeyDerivation.deriveChildKey(ekprv, 1);
+            assertEquals("m/1", ekprv_1.getPath().toString());
 
             // Create internal and external chain on Account 0
             DeterministicKey ekprv_0_EX = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_EXTERNAL);
+            assertEquals("m/0/0", ekprv_0_EX.getPath().toString());
             DeterministicKey ekprv_0_IN = HDKeyDerivation.deriveChildKey(ekprv_0, HDW_CHAIN_INTERNAL);
+            assertEquals("m/0/1", ekprv_0_IN.getPath().toString());
 
             // Create three addresses on external chain
             DeterministicKey ekprv_0_EX_0 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 0);
+            assertEquals("m/0/0/0", ekprv_0_EX_0.getPath().toString());
             DeterministicKey ekprv_0_EX_1 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 1);
+            assertEquals("m/0/0/1", ekprv_0_EX_1.getPath().toString());
             DeterministicKey ekprv_0_EX_2 = HDKeyDerivation.deriveChildKey(ekprv_0_EX, 2);
+            assertEquals("m/0/0/2", ekprv_0_EX_2.getPath().toString());
 
             // Create three addresses on internal chain
             DeterministicKey ekprv_0_IN_0 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 0);
+            assertEquals("m/0/1/0", ekprv_0_IN_0.getPath().toString());
             DeterministicKey ekprv_0_IN_1 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 1);
+            assertEquals("m/0/1/1", ekprv_0_IN_1.getPath().toString());
             DeterministicKey ekprv_0_IN_2 = HDKeyDerivation.deriveChildKey(ekprv_0_IN, 2);
+            assertEquals("m/0/1/2", ekprv_0_IN_2.getPath().toString());
 
             // Now add a few more addresses with very large indices
             DeterministicKey ekprv_1_IN = HDKeyDerivation.deriveChildKey(ekprv_1, HDW_CHAIN_INTERNAL);
+            assertEquals("m/1/1", ekprv_1_IN.getPath().toString());
             DeterministicKey ekprv_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4095);
-//            ExtendedHierarchicKey ekprv_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekprv_1_IN, 4294967295L);
+            assertEquals("m/1/1/4095", ekprv_1_IN_4095.getPath().toString());
 
             //////////////////////////////////////////////////////////////////////////
             // Repeat the above with PUBLIC key
             DeterministicKey ekpub = HDKeyDerivation.createMasterPubKeyFromBytes(HDUtils.toCompressed(pub), chain);
+            assertEquals("M", ekpub.getPath().toString());
 
             // Create two accounts
             DeterministicKey ekpub_0 = HDKeyDerivation.deriveChildKey(ekpub, 0);
+            assertEquals("M/0", ekpub_0.getPath().toString());
             DeterministicKey ekpub_1 = HDKeyDerivation.deriveChildKey(ekpub, 1);
+            assertEquals("M/1", ekpub_1.getPath().toString());
 
             // Create internal and external chain on Account 0
             DeterministicKey ekpub_0_EX = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_EXTERNAL);
+            assertEquals("M/0/0", ekpub_0_EX.getPath().toString());
             DeterministicKey ekpub_0_IN = HDKeyDerivation.deriveChildKey(ekpub_0, HDW_CHAIN_INTERNAL);
+            assertEquals("M/0/1", ekpub_0_IN.getPath().toString());
 
             // Create three addresses on external chain
             DeterministicKey ekpub_0_EX_0 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 0);
+            assertEquals("M/0/0/0", ekpub_0_EX_0.getPath().toString());
             DeterministicKey ekpub_0_EX_1 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 1);
+            assertEquals("M/0/0/1", ekpub_0_EX_1.getPath().toString());
             DeterministicKey ekpub_0_EX_2 = HDKeyDerivation.deriveChildKey(ekpub_0_EX, 2);
+            assertEquals("M/0/0/2", ekpub_0_EX_2.getPath().toString());
 
             // Create three addresses on internal chain
             DeterministicKey ekpub_0_IN_0 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 0);
+            assertEquals("M/0/1/0", ekpub_0_IN_0.getPath().toString());
             DeterministicKey ekpub_0_IN_1 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 1);
+            assertEquals("M/0/1/1", ekpub_0_IN_1.getPath().toString());
             DeterministicKey ekpub_0_IN_2 = HDKeyDerivation.deriveChildKey(ekpub_0_IN, 2);
+            assertEquals("M/0/1/2", ekpub_0_IN_2.getPath().toString());
 
             // Now add a few more addresses with very large indices
             DeterministicKey ekpub_1_IN = HDKeyDerivation.deriveChildKey(ekpub_1, HDW_CHAIN_INTERNAL);
+            assertEquals("M/1/1", ekpub_1_IN.getPath().toString());
             DeterministicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
-//            ExtendedHierarchicKey ekpub_1_IN_4bil = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4294967295L);
+            assertEquals("M/1/1/4095", ekpub_1_IN_4095.getPath().toString());
 
             assertEquals(hexEncodePub(ekprv.dropPrivateBytes().dropParent()), hexEncodePub(ekpub));
             assertEquals(hexEncodePub(ekprv_0.dropPrivateBytes().dropParent()), hexEncodePub(ekpub_0));
