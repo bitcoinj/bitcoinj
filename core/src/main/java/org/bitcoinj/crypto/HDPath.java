@@ -39,9 +39,9 @@ import java.util.List;
  * concisely create HDPath objects (especially when statically imported.)
  */
 public class HDPath extends AbstractList<ChildNumber> {
-    private static final char PREFIX_PRIVATE = 'm';
-    private static final char PREFIX_PUBLIC = 'M';
-    private static final char SEPARATOR = '/';
+    private static final String PREFIX_PRIVATE = "m";
+    private static final String PREFIX_PUBLIC = "M";
+    private static final String SEPARATOR = "/";
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
@@ -151,11 +151,14 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Where a letter "H" means hardened key. Spaces are ignored.
      */
     public static HDPath parsePath(@Nonnull String path) {
-        String[] parsedNodes = path.replace("M", "").split("/");
+        boolean hasPrivateKey = path.startsWith(PREFIX_PRIVATE);
+        String[] parsedNodes = path.replace(PREFIX_PUBLIC, "")
+                .replace(PREFIX_PRIVATE, "")
+                .split("/");
         List<ChildNumber> nodes = new ArrayList<>();
 
         for (String n : parsedNodes) {
-            n = n.replaceAll(" ", "");
+            n = n.replace(" ", "");
             if (n.length() == 0) continue;
             boolean isHard = n.endsWith("H");
             if (isHard) n = n.substring(0, n.length() - 1);
@@ -163,7 +166,7 @@ public class HDPath extends AbstractList<ChildNumber> {
             nodes.add(new ChildNumber(nodeNumber, isHard));
         }
 
-        return new HDPath(nodes);
+        return new HDPath(hasPrivateKey, nodes);
     }
 
     /**

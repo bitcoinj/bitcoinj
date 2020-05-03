@@ -23,6 +23,8 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author Michael Sean Gilligan
  */
@@ -31,7 +33,7 @@ public class HDPathTest {
     public void testPrimaryConstructor() throws Exception {
         HDPath path = new HDPath(true, Collections.<ChildNumber>emptyList());
         Assert.assertTrue("Has private key returns false incorrectly", path.hasPrivateKey);
-        Assert.assertEquals("Path not empty", path.size(), 0);
+        assertEquals("Path not empty", 0, path.size());
     }
 
     @Test
@@ -45,11 +47,11 @@ public class HDPathTest {
         HDPath path4 = basePath.extend(ChildNumber.ZERO_HARDENED, ChildNumber.ONE_HARDENED, ChildNumber.ZERO_HARDENED, ChildNumber.ONE);
         HDPath path5 = basePath.extend(ChildNumber.ZERO_HARDENED, ChildNumber.ONE_HARDENED, ChildNumber.ZERO_HARDENED, ChildNumber.ONE, ChildNumber.ZERO);
 
-        Assert.assertEquals("m/0H",  path1.toString());
-        Assert.assertEquals("m/0H/1H",  path2.toString());
-        Assert.assertEquals("m/0H/1H/0H",  path3.toString());
-        Assert.assertEquals("m/0H/1H/0H/1",  path4.toString());
-        Assert.assertEquals("m/0H/1H/0H/1/0",  path5.toString());
+        assertEquals("m/0H",  path1.toString());
+        assertEquals("m/0H/1H",  path2.toString());
+        assertEquals("m/0H/1H/0H",  path3.toString());
+        assertEquals("m/0H/1H/0H/1",  path4.toString());
+        assertEquals("m/0H/1H/0H/1/0",  path5.toString());
     }
 
     @Test
@@ -76,7 +78,7 @@ public class HDPathTest {
 
             String generatedStrPath = path.toString();
 
-            Assert.assertEquals(generatedStrPath, expectedStrPath);
+            assertEquals(generatedStrPath, expectedStrPath);
         }
     }
 
@@ -104,7 +106,16 @@ public class HDPathTest {
 
             List<ChildNumber> path = HDPath.parsePath(strPath);
 
-            Assert.assertEquals(path, expectedPath);
+            assertEquals(path, expectedPath);
         }
+    }
+
+    @Test
+    public void testParsePathForPrivateKey() {
+        final String pathAsString = "m/7H/3/3/1";
+
+        final HDPath parsedPath = HDPath.parsePath(pathAsString);
+
+        assertEquals(pathAsString, parsedPath.toString());
     }
 }
