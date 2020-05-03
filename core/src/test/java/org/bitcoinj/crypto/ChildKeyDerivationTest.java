@@ -37,6 +37,10 @@ public class ChildKeyDerivationTest {
     private static final int HDW_CHAIN_EXTERNAL = 0;
     private static final int HDW_CHAIN_INTERNAL = 1;
 
+    private static String hexEncodePub(DeterministicKey pubKey) {
+        return HEX.encode(pubKey.getPubKey());
+    }
+
     @Test
     public void testChildKeyDerivation() throws Exception {
         String[] ckdTestVectors = {
@@ -310,9 +314,5 @@ public class ChildKeyDerivationTest {
                           DeterministicKey.deserializeB58("xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U", MAINNET).getParentFingerprint(),
                           0);
 
-    }
-
-    private static String hexEncodePub(DeterministicKey pubKey) {
-        return HEX.encode(pubKey.getPubKey());
     }
 }
