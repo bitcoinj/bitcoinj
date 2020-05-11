@@ -196,9 +196,11 @@ public class LegacyAddressTest {
         final ECKey key = DumpedPrivateKey.fromBase58(networkParameters, privateKeyWIF).getKey();
         final Script script = ScriptBuilder.createP2SHOutputScript(key);
 
-        final LegacyAddress address = LegacyAddress.fromScriptHash(networkParameters, ScriptPattern.extractHashFromP2SH(script));
+        final LegacyAddress addressFromScriptHash = LegacyAddress.fromScriptHash(networkParameters, ScriptPattern.extractHashFromP2SH(script));
+        final LegacyAddress addressFromKey = LegacyAddress.fromKey(networkParameters, key, ScriptType.P2SH);
 
-        assertEquals("34cB1YRfPLfccGb3bjx5taWgNfC1s8WvpU", address.toString());
+        assertEquals("34cB1YRfPLfccGb3bjx5taWgNfC1s8WvpU", addressFromScriptHash.toString());
+        assertEquals("34cB1YRfPLfccGb3bjx5taWgNfC1s8WvpU", addressFromKey.toString());
     }
 
     @Test
