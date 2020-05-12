@@ -70,6 +70,20 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     /**
+     * <p>A utility method that calculates how much new Bitcoin would be created by the block at the given height.
+     * The inflation of Bitcoin is predictable and drops roughly every 4 years (210,000 blocks). At the dawn of
+     * the system it was 50 coins per block, in late 2012 it went to 25 coins per block, and so on. The size of
+     * a coinbase transaction is inflation plus fees.</p>
+     *
+     * <p>The half-life is controlled by {@link NetworkParameters#getSubsidyDecreaseBlockCount()}.</p>
+     *
+     * @param height the height of the block to calculate inflation for
+     */
+    public Coin getBlockInflation(int height) {
+        return Coin.FIFTY_COINS.shiftRight(height / getSubsidyDecreaseBlockCount());
+    }
+
+    /**
      * Checks if we are at a difficulty transition point.
      * @param previousHeight The height of the previous stored block
      * @return If this is a difficulty transition point

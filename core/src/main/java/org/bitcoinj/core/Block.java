@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.*;
 import org.slf4j.*;
 
@@ -206,18 +207,10 @@ public class Block extends Message {
         this.transactions.addAll(transactions);
     }
 
-
-    /**
-     * <p>A utility method that calculates how much new Bitcoin would be created by the block at the given height.
-     * The inflation of Bitcoin is predictable and drops roughly every 4 years (210,000 blocks). At the dawn of
-     * the system it was 50 coins per block, in late 2012 it went to 25 coins per block, and so on. The size of
-     * a coinbase transaction is inflation plus fees.</p>
-     *
-     * <p>The half-life is controlled by {@link NetworkParameters#getSubsidyDecreaseBlockCount()}.
-     * </p>
-     */
+    /** @deprecated Use {@link AbstractBitcoinNetParams#getBlockInflation(int)} */
+    @Deprecated
     public Coin getBlockInflation(int height) {
-        return FIFTY_COINS.shiftRight(height / params.getSubsidyDecreaseBlockCount());
+        return ((AbstractBitcoinNetParams) params).getBlockInflation(height);
     }
 
     /**
