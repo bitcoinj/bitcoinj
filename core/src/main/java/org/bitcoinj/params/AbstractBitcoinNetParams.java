@@ -56,6 +56,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     public AbstractBitcoinNetParams() {
         super();
+        interval = INTERVAL;
+        subsidyDecreaseBlockCount = 210000;
     }
 
     /**
