@@ -60,20 +60,20 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     /**
      * Checks if we are at a reward halving point.
-     * @param height The height of the previous stored block
+     * @param previousHeight The height of the previous stored block
      * @return If this is a reward halving point
      */
-    public final boolean isRewardHalvingPoint(final int height) {
-        return ((height + 1) % REWARD_HALVING_INTERVAL) == 0;
+    public final boolean isRewardHalvingPoint(final int previousHeight) {
+        return ((previousHeight + 1) % REWARD_HALVING_INTERVAL) == 0;
     }
 
     /**
      * Checks if we are at a difficulty transition point.
-     * @param height The height of the previous stored block
+     * @param previousHeight The height of the previous stored block
      * @return If this is a difficulty transition point
      */
-    public final boolean isDifficultyTransitionPoint(final int height) {
-        return ((height + 1) % this.getInterval()) == 0;
+    public final boolean isDifficultyTransitionPoint(final int previousHeight) {
+        return ((previousHeight + 1) % this.getInterval()) == 0;
     }
 
     @Override
