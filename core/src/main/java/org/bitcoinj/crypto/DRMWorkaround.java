@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class DRMWorkaround {
-    private static Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
+    private static final Logger log = LoggerFactory.getLogger(DRMWorkaround.class);
 
     private static boolean done = false;
 

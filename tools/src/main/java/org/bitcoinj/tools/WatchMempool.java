@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 
 public class WatchMempool {
-    private static Logger log = LoggerFactory.getLogger(WatchMempool.class);
+    private static final Logger log = LoggerFactory.getLogger(WatchMempool.class);
     private static final NetworkParameters PARAMS = MainNetParams.get();
     private static final ImmutableList<Transaction> NO_DEPS = ImmutableList.of();
     private static final Map<String, Integer> counters = new HashMap<String, Integer>();
