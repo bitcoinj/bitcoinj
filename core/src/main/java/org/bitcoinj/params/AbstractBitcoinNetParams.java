@@ -20,7 +20,6 @@ package org.bitcoinj.params;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
@@ -34,10 +33,9 @@ import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 import org.bitcoinj.core.BitcoinSerializer;
 
@@ -126,7 +124,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1),
                 "Didn't arrive at a transition point.");
         watch.stop();
-        if (watch.elapsed(TimeUnit.MILLISECONDS) > 50)
+        if (watch.elapsedMillis() > 50)
             log.info("Difficulty transition traversal took {}", watch);
 
         Block blockIntervalAgo = cursor.getHeader();

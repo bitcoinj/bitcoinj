@@ -21,7 +21,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.utils.*;
 import org.slf4j.*;
 
-import com.google.common.base.Stopwatch;
+import org.bitcoinj.utils.Stopwatch;
 
 import javax.annotation.*;
 import java.io.*;

@@ -18,7 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
-import com.google.common.base.*;
+import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import net.jcip.annotations.*;

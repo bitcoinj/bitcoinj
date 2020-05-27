@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.fusesource.leveldbjni.JniDBFactory.*;
 
-import com.google.common.base.Stopwatch;
+import org.bitcoinj.utils.Stopwatch;
 
 /**
  * <p>
@@ -352,17 +352,17 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
         if (methodCalls.containsKey(name)) {
             methodCalls.put(name, methodCalls.get(name) + 1);
             methodTotalTime.put(name,
-                    methodTotalTime.get(name) + methodStartTime.get(name).elapsed(TimeUnit.NANOSECONDS));
+                    methodTotalTime.get(name) + methodStartTime.get(name).elapsedNanos());
         } else {
             methodCalls.put(name, 1l);
-            methodTotalTime.put(name, methodStartTime.get(name).elapsed(TimeUnit.NANOSECONDS));
+            methodTotalTime.put(name, methodStartTime.get(name).elapsedNanos());
         }
     }
 
     // Debug method to display stats on runtime of each method
     // and cache hit rates etc..
     void dumpStats() {
-        long wallTimeNanos = totalStopwatch.elapsed(TimeUnit.NANOSECONDS);
+        long wallTimeNanos = totalStopwatch.elapsedNanos();
         long dbtime = 0;
         for (String name : methodCalls.keySet()) {
             long calls = methodCalls.get(name);

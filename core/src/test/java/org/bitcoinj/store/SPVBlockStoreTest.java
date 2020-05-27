@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNull;
 import java.io.File;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
@@ -35,10 +34,9 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.utils.Stopwatch;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.base.Stopwatch;
 
 public class SPVBlockStoreTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
@@ -144,7 +142,7 @@ public class SPVBlockStoreTest {
             store.setChainHead(b);
         }
         assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
-                watch.elapsed(TimeUnit.MILLISECONDS) < THRESHOLD_MS);
+                watch.elapsedMillis() < THRESHOLD_MS);
         store.close();
     }
 

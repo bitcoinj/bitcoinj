@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Stopwatch;
+import org.bitcoinj.utils.Stopwatch;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Protos;

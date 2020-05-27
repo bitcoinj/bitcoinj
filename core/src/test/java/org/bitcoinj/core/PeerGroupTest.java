@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.*;
@@ -540,7 +539,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // check things after disconnect
         watch.stop();
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
-        assertTrue(watch.elapsed(TimeUnit.MILLISECONDS) >= timeout); // should not disconnect before timeout
+        assertTrue(watch.elapsedMillis() >= timeout); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 

@@ -26,7 +26,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Stopwatch;
+import org.bitcoinj.utils.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
