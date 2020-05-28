@@ -24,10 +24,11 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Utility class that holds all the registered NetworkParameters types used for address auto discovery.
- * By default only MainNetParams and TestNet3Params are used. If you want to use RegTestParams or
- * UnitTestParams use the register and unregister the TestNet3Params as they don't have their own address
- * version/type code.
+ * Utility class that holds all the registered {@link NetworkParameters} types used for address auto discovery.
+ * By default only {@link MainNetParams} and {@link TestNet3Params} are used. If you want to use {@link RegTestParams}
+ * or {@link UnitTestParams} use {@code register} and then {@code unregister} the {@code TestNet3Params} as they don't
+ * have their own Base58 version/type code (although for {@link org.bitcoinj.core.SegwitAddress} the human readable
+ * parts for RegTest and TestNet are different.)
  */
 public class Networks {
     /** Registered networks */
@@ -37,10 +38,21 @@ public class Networks {
         return networks;
     }
 
+    /**
+     * Register a single network type by adding it to the {@code Set}.
+     *
+     * @param network Network to register/add.
+     */
     public static void register(NetworkParameters network) {
         register(Lists.newArrayList(network));
     }
 
+    /**
+     * Register a collection of additional network types by adding them
+     * to the {@code Set}.
+     *
+     * @param networks Networks to register/add.
+     */
     public static void register(Collection<? extends NetworkParameters> networks) {
         ImmutableSet.Builder<NetworkParameters> builder = ImmutableSet.builder();
         builder.addAll(Networks.networks);
@@ -48,6 +60,11 @@ public class Networks {
         Networks.networks = builder.build();
     }
 
+    /**
+     * Unregister a network type.
+     *
+     * @param network Network type to unregister/remove.
+     */
     public static void unregister(NetworkParameters network) {
         if (networks.contains(network)) {
             ImmutableSet.Builder<NetworkParameters> builder = ImmutableSet.builder();
