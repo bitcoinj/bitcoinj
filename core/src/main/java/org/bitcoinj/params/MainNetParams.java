@@ -22,7 +22,7 @@ import org.bitcoinj.net.discovery.*;
 
 import java.net.*;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Parameters for the main production network on which people trade goods and services.

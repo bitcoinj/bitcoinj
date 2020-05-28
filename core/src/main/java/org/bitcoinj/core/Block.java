@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
 import com.google.common.base.*;
-import com.google.common.collect.*;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.*;
 import org.slf4j.*;
@@ -884,10 +883,10 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
+    /** Returns an unmodifiable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : ImmutableList.copyOf(transactions);
+        return transactions == null ? null : Collections.unmodifiableList(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////

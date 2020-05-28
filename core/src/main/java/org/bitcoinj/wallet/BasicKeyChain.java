@@ -25,7 +25,6 @@ import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.crypto.params.KeyParameter;
 
@@ -84,7 +83,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 checkState(keyCrypter == null);   // We will refuse to encrypt an empty key chain.
                 final ECKey key = new ECKey();
                 importKeyLocked(key);
-                queueOnKeysAdded(ImmutableList.of(key));
+                queueOnKeysAdded(Collections.singletonList(key));
             }
             return hashToKeys.values().iterator().next();
         } finally {
@@ -105,7 +104,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     keys.add(new ECKey());
                 }
 
-                ImmutableList<ECKey> immutableKeys = ImmutableList.copyOf(keys);
+                List<ECKey> immutableKeys = Collections.unmodifiableList(keys);
                 importKeysLocked(immutableKeys);
                 queueOnKeysAdded(immutableKeys);
             }
@@ -133,7 +132,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     public int importKeys(ECKey... keys) {
-        return importKeys(ImmutableList.copyOf(keys));
+        return importKeys(Collections.unmodifiableList(Arrays.asList(keys)));
     }
 
     public int importKeys(List<? extends ECKey> keys) {
@@ -198,7 +197,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
             checkKeyEncryptionStateMatches(key);
             if (hasKey(key)) return;
             importKeyLocked(key);
-            queueOnKeysAdded(ImmutableList.of(key));
+            queueOnKeysAdded(Collections.singletonList(key));
         } finally {
             lock.unlock();
         }

@@ -18,10 +18,10 @@ package org.bitcoinj.net;
 
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.core.PeerGroup;
 
 import java.util.LinkedList;
+import java.util.List;
 
 // This code is unit tested by the PeerGroup tests.
 
@@ -55,7 +55,7 @@ public class FilterMerger {
         public boolean changed;
     }
 
-    public Result calculate(ImmutableList<PeerFilterProvider> providers) {
+    public Result calculate(List<PeerFilterProvider> providers) {
         LinkedList<PeerFilterProvider> begunProviders = new LinkedList<>();
         try {
             // All providers must be in a consistent, unchanging state because the filter is a merged one that's

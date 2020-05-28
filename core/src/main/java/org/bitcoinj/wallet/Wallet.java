@@ -551,7 +551,7 @@ public class Wallet extends BaseTaggableObject
     public List<TransactionSigner> getTransactionSigners() {
         lock.lock();
         try {
-            return ImmutableList.copyOf(signers);
+            return Collections.unmodifiableList(signers);
         } finally {
             lock.unlock();
         }

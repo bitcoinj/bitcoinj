@@ -27,7 +27,6 @@ import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.google.protobuf.ByteString;
@@ -1302,14 +1301,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Returns leaf keys issued by this chain (including lookahead zone)
      */
     public List<DeterministicKey> getLeafKeys() {
-        ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
+        List<DeterministicKey> keys = new ArrayList<>();
         for (ECKey key : getKeys(true, false)) {
             DeterministicKey dKey = (DeterministicKey) key;
             if (dKey.getPath().size() == getAccountPath().size() + 2) {
                 keys.add(dKey);
             }
         }
-        return keys.build();
+        return Collections.unmodifiableList(keys);
     }
 
     /*package*/ static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {

@@ -22,7 +22,6 @@ import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.script.ScriptBuilder;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
@@ -33,6 +32,7 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -67,7 +67,7 @@ public class PaymentProtocol {
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
             @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
-        return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
+        return createPaymentRequest(params, Collections.singletonList(createPayToAddressOutput(amount, toAddress)), memo,
                 paymentUrl, merchantData);
     }
 
@@ -297,7 +297,7 @@ public class PaymentProtocol {
             if (refundAmount == null)
                 throw new IllegalArgumentException("Specify refund amount if refund address is specified.");
             return createPaymentMessage(transactions,
-                    ImmutableList.of(createPayToAddressOutput(refundAmount, refundAddress)), memo, merchantData);
+                    Collections.singletonList(createPayToAddressOutput(refundAmount, refundAddress)), memo, merchantData);
         } else {
             return createPaymentMessage(transactions, null, memo, merchantData);
         }
