@@ -19,12 +19,16 @@ package org.bitcoinj.core;
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
+
+import java.math.BigDecimal;
 
 public class CoinTest {
 
@@ -80,6 +84,54 @@ public class CoinTest {
         } catch (IllegalArgumentException e) {}
     }
 
+
+    @Test
+    public void testBtcToSatoshi() {
+        assertEquals(Long.MIN_VALUE, btcToSatoshi(new BigDecimal("-92233720368.54775808")));
+        assertEquals(0L, btcToSatoshi(BigDecimal.ZERO));
+        assertEquals(COIN.value, btcToSatoshi(BigDecimal.ONE));
+        assertEquals(Long.MAX_VALUE, btcToSatoshi(new BigDecimal("92233720368.54775807")));
+    }
+
+    @Test(expected = ArithmeticException.class)
+    public void testBtcToSatoshi_tooSmall() {
+        btcToSatoshi(new BigDecimal("-92233720368.54775809")); // .00000001 less than minimum value
+    }
+
+    @Test(expected = ArithmeticException.class)
+    public void testBtcToSatoshi_tooBig() {
+        btcToSatoshi(new BigDecimal("92233720368.54775808")); // .00000001 more than maximum value
+    }
+
+    @Test(expected = ArithmeticException.class)
+    public void testBtcToSatoshi_tooPrecise1() {
+        btcToSatoshi(new BigDecimal("0.000000001")); // More than SMALLEST_UNIT_EXPONENT precision
+    }
+
+    @Test(expected = ArithmeticException.class)
+    public void testBtcToSatoshi_tooPrecise2() {
+        btcToSatoshi(new BigDecimal("92233720368.547758079")); // More than SMALLEST_UNIT_EXPONENT precision
+    }
+
+    @Test
+    public void testSatoshiToBtc() {
+        assertThat(new BigDecimal("-92233720368.54775808"),  Matchers.comparesEqualTo(satoshiToBtc(Long.MIN_VALUE)));
+        assertThat(new BigDecimal("-0.00000001"), Matchers.comparesEqualTo(satoshiToBtc(NEGATIVE_SATOSHI.value)));
+        assertThat(BigDecimal.ZERO, Matchers.comparesEqualTo(satoshiToBtc(0L)));
+        assertThat(new BigDecimal("0.00000001"), Matchers.comparesEqualTo(satoshiToBtc(SATOSHI.value)));
+        assertThat(BigDecimal.ONE,  Matchers.comparesEqualTo(satoshiToBtc(COIN.value)));
+        assertThat(new BigDecimal(50),  Matchers.comparesEqualTo(satoshiToBtc(FIFTY_COINS.value)));
+        assertThat(new BigDecimal("92233720368.54775807"),  Matchers.comparesEqualTo(satoshiToBtc(Long.MAX_VALUE)));
+    }
+
+    @Test
+    public void testOfBtc() {
+        assertEquals(Coin.valueOf(Long.MIN_VALUE), Coin.ofBtc(new BigDecimal("-92233720368.54775808")));
+        assertEquals(ZERO, Coin.ofBtc(BigDecimal.ZERO));
+        assertEquals(COIN, Coin.ofBtc(BigDecimal.ONE));
+        assertEquals(Coin.valueOf(Long.MAX_VALUE), Coin.ofBtc(new BigDecimal("92233720368.54775807")));
+    }
+
     @Test
     public void testOperators() {
         assertTrue(SATOSHI.isPositive());
@@ -118,6 +170,17 @@ public class CoinTest {
     @Test(expected = ArithmeticException.class)
     public void testSubtractionUnderflow() {
         Coin.valueOf(Long.MIN_VALUE).subtract(Coin.SATOSHI);
+    }
+
+    @Test
+    public void testToBtc() {
+        assertThat(new BigDecimal("-92233720368.54775808"),  Matchers.comparesEqualTo(Coin.valueOf(Long.MIN_VALUE).toBtc()));
+        assertThat(new BigDecimal("-0.00000001"), Matchers.comparesEqualTo(NEGATIVE_SATOSHI.toBtc()));
+        assertThat(BigDecimal.ZERO, Matchers.comparesEqualTo(ZERO.toBtc()));
+        assertThat(new BigDecimal("0.00000001"), Matchers.comparesEqualTo(SATOSHI.toBtc()));
+        assertThat(BigDecimal.ONE,  Matchers.comparesEqualTo(COIN.toBtc()));
+        assertThat(new BigDecimal(50),  Matchers.comparesEqualTo(FIFTY_COINS.toBtc()));
+        assertThat(new BigDecimal("92233720368.54775807"),  Matchers.comparesEqualTo(Coin.valueOf(Long.MAX_VALUE).toBtc()));
     }
 
     @Test
