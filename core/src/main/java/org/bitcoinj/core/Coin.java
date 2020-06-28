@@ -106,6 +106,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
 
     /**
      * Convert an amount expressed in the way humans are used to into satoshis.
+     *
+     * @param coins Number of bitcoins
+     * @param cents Number of bitcents (0.01 bitcoin)
+     * @return {@code Coin} object containing value in satoshis
      */
     public static Coin valueOf(final int coins, final int cents) {
         checkArgument(cents < 100);
@@ -116,10 +120,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * <p>Parses an amount expressed in the way humans are used to.</p>
-     * <p>This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     * "1.23E3", "1234.5E-5".</p>
-     *
+     * Parses an amount expressed in the way humans are used to.
+     * 
+     * @param str string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     *      * "1.23E3", "1234.5E-5".
+     * @return {@code Coin} object containing value in satoshis
      * @throws IllegalArgumentException
      *             if you try to specify fractional satoshis, or a value out of range.
      */
@@ -133,10 +138,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * <p>Parses an amount expressed in the way humans are used to. The amount is cut to satoshi precision.</p>
-     * <p>This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
-     * "1.23E3", "1234.5E-5".</p>
-     *
+     * Parses an amount expressed in the way humans are used to. The amount is cut to satoshi precision.
+     * 
+     * @param str string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
+     *      * "1.23E3", "1234.5E-5".
+     * @return {@code Coin} object containing value in satoshis
      * @throws IllegalArgumentException
      *             if you try to specify a value out of range.
      */
