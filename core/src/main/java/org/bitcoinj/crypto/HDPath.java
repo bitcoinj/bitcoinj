@@ -16,11 +16,14 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Splitter;
+
 import javax.annotation.Nonnull;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -42,6 +45,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
     private static final char PREFIX_PUBLIC = 'M';
     private static final char SEPARATOR = '/';
+    private static final Splitter SEPARATOR_SPLITTER = Splitter.on(SEPARATOR).trimResults();
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
@@ -151,14 +155,15 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Where a letter "H" means hardened key. Spaces are ignored.
      */
     public static HDPath parsePath(@Nonnull String path) {
-        String[] parsedNodes = path.replace("M", "").split("/");
-        List<ChildNumber> nodes = new ArrayList<>();
+        List<String> parsedNodes = new LinkedList<>(SEPARATOR_SPLITTER.splitToList(path));
+        if (!parsedNodes.isEmpty() && parsedNodes.get(0).equals(Character.toString(PREFIX_PUBLIC)))
+            parsedNodes.remove(0);
+        List<ChildNumber> nodes = new ArrayList<>(parsedNodes.size());
 
         for (String n : parsedNodes) {
-            n = n.replaceAll(" ", "");
-            if (n.length() == 0) continue;
+            if (n.isEmpty()) continue;
             boolean isHard = n.endsWith("H");
-            if (isHard) n = n.substring(0, n.length() - 1);
+            if (isHard) n = n.substring(0, n.length() - 1).trim();
             int nodeNumber = Integer.parseInt(n);
             nodes.add(new ChildNumber(nodeNumber, isHard));
         }
