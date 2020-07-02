@@ -929,8 +929,7 @@ public class Transaction extends ChildMessage {
             input.setScriptSig(ScriptBuilder.createInputScript(signature, sigKey));
             input.setWitness(null);
         } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-            Script scriptCode = new ScriptBuilder()
-                    .data(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(params, sigKey)).getProgram()).build();
+            Script scriptCode = ScriptBuilder.createP2PKHOutputScript(sigKey);
             TransactionSignature signature = calculateWitnessSignature(inputIndex, sigKey, scriptCode, input.getValue(),
                     sigHash, anyoneCanPay);
             input.setScriptSig(ScriptBuilder.createEmpty());
