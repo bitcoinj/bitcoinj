@@ -75,11 +75,11 @@ public class LegacyAddressTest {
     public void stringification() {
         // Test a testnet address.
         LegacyAddress a = LegacyAddress.fromPubKeyHash(TESTNET, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
+        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toBase58());
         assertEquals(ScriptType.P2PKH, a.getOutputScriptType());
 
         LegacyAddress b = LegacyAddress.fromPubKeyHash(MAINNET, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
-        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
+        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toBase58());
         assertEquals(ScriptType.P2PKH, b.getOutputScriptType());
     }
 
@@ -180,12 +180,12 @@ public class LegacyAddressTest {
         // Test that we can convert them from hashes
         byte[] hex = HEX.decode("2ac4b0b501117cc8119c5797b519538d4942e90e");
         LegacyAddress a = LegacyAddress.fromScriptHash(MAINNET, hex);
-        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toBase58());
         LegacyAddress b = LegacyAddress.fromScriptHash(TESTNET, HEX.decode("18a0e827269b5211eb51a4af1b2fa69333efa722"));
-        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
+        assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toBase58());
         LegacyAddress c = LegacyAddress.fromScriptHash(MAINNET,
                 ScriptPattern.extractHashFromP2SH(ScriptBuilder.createP2SHOutputScript(hex)));
-        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toBase58());
     }
 
     @Test
@@ -202,7 +202,7 @@ public class LegacyAddressTest {
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
         LegacyAddress address = LegacyAddress.fromScriptHash(MAINNET,
                 ScriptPattern.extractHashFromP2SH(p2shScript));
-        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
+        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toBase58());
     }
 
     @Test
@@ -257,7 +257,7 @@ public class LegacyAddressTest {
             LegacyAddress first = LegacyAddress.fromBase58(MAINNET, addr[0]);
             LegacyAddress second = LegacyAddress.fromBase58(MAINNET, addr[1]);
             assertTrue(first.compareTo(second) < 0);
-            assertTrue(first.toString().compareTo(second.toString()) < 0);
+            assertTrue(first.toBase58().compareTo(second.toBase58()) < 0);
         }
     }
 }
