@@ -93,6 +93,7 @@ public class PrefixedChecksummedBytesTest {
         PrefixedChecksummedBytes a = new PrefixedChecksummedBytesToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         PrefixedChecksummedBytes b = a.clone();
 
-        assertEquals(0, a.compareTo(b));
+        assertNotSame(a, b);
+        assertEquals(a, b);
     }
 }

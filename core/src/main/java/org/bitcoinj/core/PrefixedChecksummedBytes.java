@@ -25,7 +25,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
 
-import com.google.common.primitives.UnsignedBytes;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -41,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * keys exported using Bitcoin Core's dumpprivkey command.
  * </p>
  */
-public abstract class PrefixedChecksummedBytes implements Serializable, Cloneable, Comparable<PrefixedChecksummedBytes> {
+public abstract class PrefixedChecksummedBytes implements Serializable, Cloneable {
     protected final transient NetworkParameters params;
     protected final byte[] bytes;
 
@@ -78,15 +77,6 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
     @Override
     public PrefixedChecksummedBytes clone() throws CloneNotSupportedException {
         return (PrefixedChecksummedBytes) super.clone();
-    }
-
-    /**
-     * This implementation uses an optimized Google Guava method to compare {@code bytes}.
-     */
-    @Override
-    public int compareTo(PrefixedChecksummedBytes o) {
-        int result = this.params.getId().compareTo(o.params.getId());
-        return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
     }
 
     // Java serialization

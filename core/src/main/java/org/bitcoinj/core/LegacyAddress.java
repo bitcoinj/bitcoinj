@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script.ScriptType;
 
@@ -212,5 +213,21 @@ public class LegacyAddress extends Address {
     @Override
     public LegacyAddress clone() throws CloneNotSupportedException {
         return (LegacyAddress) super.clone();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param o other {@code Address} object
+     * @return comparison result
+     */
+    @Override
+    public int compareTo(Address o) {
+        int result = compareAddressPartial(o);
+        if (result != 0) return result;
+
+        // Compare version byte and finally the {@code bytes} field itself
+        result = Integer.compare(getVersion(), ((LegacyAddress) o).getVersion());
+        return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
     }
 }
