@@ -248,6 +248,16 @@ public class LegacyAddressTest {
     }
 
     @Test
+    public void comparisonNotEquals() {
+        // These addresses only differ by version byte
+        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "14wivxvNTv9THhewPotsooizZawaWbEKE2");
+        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "35djrWQp1pTqNsMNWuZUES5vi7EJ74m9Eh");
+
+        int result = a.compareTo(b);
+        assertTrue(result != 0);
+    }
+
+    @Test
     public void comparisonBytesVsString() throws Exception {
         BufferedReader dataSetReader = new BufferedReader(
                 new InputStreamReader(getClass().getResourceAsStream("LegacyAddressTestDataset.txt")));

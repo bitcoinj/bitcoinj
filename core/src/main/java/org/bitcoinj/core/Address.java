@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
 
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
@@ -31,7 +32,7 @@ import org.bitcoinj.script.Script.ScriptType;
  * form.
  * </p>
  */
-public abstract class Address extends PrefixedChecksummedBytes {
+public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
     public Address(NetworkParameters params, byte[] bytes) {
         super(params, bytes);
     }
@@ -101,4 +102,44 @@ public abstract class Address extends PrefixedChecksummedBytes {
      * @return type of output script
      */
     public abstract ScriptType getOutputScriptType();
+
+    /**
+     * Comparison field order for addresses is:
+     * <ol>
+     *     <li>{@link NetworkParameters#getId()}</li>
+     *     <li>Legacy vs. Segwit</li>
+     *     <li>(Legacy only) Version byte</li>
+     *     <li>remaining {@code bytes}</li>
+     * </ol>
+     * <p>
+     * Implementations may use {@code compareAddressPartial} for tests 1 and 2.
+     *
+     * @param o other {@code Address} object
+     * @return comparison result
+     */
+    @Override
+    abstract public int compareTo(Address o);
+
+    /**
+     * Comparator for the first two comparison fields in {@code Address} comparisons, see {@link Address#compareTo(Address)}.
+     * Used by {@link LegacyAddress#compareTo(Address)} and {@link SegwitAddress#compareTo(Address)}.
+     *
+     * @param o other {@code Address} object
+     * @return comparison result
+     */
+    protected int compareAddressPartial(Address o) {
+        // First compare netParams
+        int result = this.params.getId().compareTo(o.params.getId());
+        if (result != 0) return result;
+
+        // Then compare Legacy vs Segwit
+        if (this instanceof LegacyAddress && o instanceof SegwitAddress) {
+            return -1;  // Legacy addresses (starting with 1 or 3) come before Segwit addresses.
+        } else if (this instanceof SegwitAddress && o instanceof LegacyAddress) {
+            return 1;
+        } else {
+            // If both are the same type, then compareTo for that type will finish the comparison
+            return 0;
+        }
+    }
 }

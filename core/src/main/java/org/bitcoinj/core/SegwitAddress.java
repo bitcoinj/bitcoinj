@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 
 import javax.annotation.Nullable;
 
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
 
@@ -245,5 +246,19 @@ public class SegwitAddress extends Address {
             throw new AddressFormatException("Could not convert bits, invalid padding");
         }
         return out.toByteArray();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param o other {@code Address} object
+     * @return comparison result
+     */
+    @Override
+    public int compareTo(Address o) {
+        int result = compareAddressPartial(o);
+        if (result != 0) return result;
+        // Compare the bytes
+        return UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
     }
 }
