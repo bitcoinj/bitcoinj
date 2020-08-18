@@ -23,6 +23,7 @@ dependencies {
     testImplementation 'com.h2database:h2:1.3.176'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.9'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.2"
 }
 
 sourceCompatibility = 8
@@ -54,6 +55,7 @@ protobuf {
 }
 
 tasks.withType(Test) {
+    useJUnitPlatform()
     exclude 'org/bitcoinj/core/PeerTest*'
     exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
