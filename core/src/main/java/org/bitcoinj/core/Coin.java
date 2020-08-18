@@ -119,33 +119,43 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Convert a decimal amount of bitcoin into satoshis.
+     * Convert a decimal amount of BTC into satoshis.
      *
      * @param coins number of coins
      * @return number of satoshis
      */
-    public static long bitcoinToSatoshi(BigDecimal coins) {
+    public static long btcToSatoshi(BigDecimal coins) {
         return coins.movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
     }
 
     /**
-     * Convert an amount in satoshis to an amount in bitcoin.
+     * Convert an amount in satoshis to an amount in BTC.
      *
      * @param satoshis number of satoshis
-     * @return number of bitcoins
+     * @return number of bitcoins (in BTC)
      */
-    public static BigDecimal satoshiToBitcoin(long satoshis) {
+    public static BigDecimal satoshiToBtc(long satoshis) {
         return new BigDecimal(satoshis).movePointLeft(SMALLEST_UNIT_EXPONENT);
     }
 
     /**
-     * Convert a decimal amount of bitcoin into satoshis.
+     * Convert a decimal amount of BTC into satoshis.
      *
-     * @param coins number of coins
+     * @param coins number of coins (in BTC)
      * @return {@code Coin} object containing value in satoshis
      */
-    public static Coin ofBitcoin(BigDecimal coins) {
-        return  Coin.valueOf(bitcoinToSatoshi(coins));
+    public static Coin ofBtc(BigDecimal coins) {
+        return  Coin.valueOf(btcToSatoshi(coins));
+    }
+
+    /**
+     * Convert a long integer number of satoshis to a Coin
+     *
+     * @param satoshis number of satoshis
+     * @return {@code Coin} object containing value in satoshis
+     */
+    public static Coin ofSat(long satoshis) {
+        return  Coin.valueOf(satoshis);
     }
 
     /**
@@ -159,7 +169,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      */
     public static Coin parseCoin(final String str) {
         try {
-            long satoshis = bitcoinToSatoshi(new BigDecimal(str));
+            long satoshis = btcToSatoshi(new BigDecimal(str));
             return Coin.valueOf(satoshis);
         } catch (ArithmeticException e) {
             throw new IllegalArgumentException(e); // Repackage exception to honor method contract
@@ -306,12 +316,21 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Convert to number of bitcoin
+     * Convert to number of satoshis
      *
-     * @return decimal number of bitcoin
+     * @return decimal number of satoshis
      */
-    public BigDecimal toBitcoin() {
-        return satoshiToBitcoin(this.value);
+    public long toSat() {
+        return this.value;
+    }
+
+    /**
+     * Convert to number of bitcoin (in BTC)
+     *
+     * @return decimal number of bitcoin (in BTC)
+     */
+    public BigDecimal toBtc() {
+        return satoshiToBtc(this.value);
     }
 
     private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
