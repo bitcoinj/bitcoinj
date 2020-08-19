@@ -39,6 +39,7 @@ protobuf {
 test {
     exclude 'org/bitcoinj/core/PeerTest*'
     exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
+    exclude 'org/bitcoinj/core/*FullPrunedBlockChainTest*'
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     testLogging {
         events "failed"
