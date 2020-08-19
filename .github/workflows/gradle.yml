@@ -21,3 +21,11 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: Build with Gradle
         run: gradle build --stacktrace
+      - name: Upload Test Results and Reports
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: bitcoinj-core-test-results-jdk${{ matrix.java }}-${{ matrix.os }}
+          path: |
+            core/build/reports/tests/test/
+            core/build/test-results/test/
