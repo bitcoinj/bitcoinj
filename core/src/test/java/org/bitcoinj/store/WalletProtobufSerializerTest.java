@@ -60,6 +60,7 @@ import org.bitcoinj.wallet.WalletTransaction;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -78,7 +79,7 @@ import static org.junit.Assert.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class WalletProtobufSerializerTest {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static NetworkParameters UNITTEST;
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private ECKey myKey;
@@ -88,6 +89,12 @@ public class WalletProtobufSerializerTest {
 
     public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
     private long mScriptCreationTime;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Utils.resetMocking();
+        UNITTEST = UnitTestParams.get();
+    }
 
     @Before
     public void setUp() throws Exception {
