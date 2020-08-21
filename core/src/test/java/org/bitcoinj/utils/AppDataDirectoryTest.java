@@ -61,24 +61,23 @@ public class AppDataDirectoryTest {
 
     @Test(expected = RuntimeException.class)
     public void throwsIOExceptionIfPathNotFound() {
-        // The null character is non printable and an ASCII control character
-        // Forbidden on all OSs
+        // Force exceptions with illegal characters
         if (Utils.isWindows()) {
-            AppDataDirectory.get("/");
+            AppDataDirectory.get(":");  // Illegal character for Windows
         }
         if (Utils.isMac()) {
             // NUL character
-            AppDataDirectory.get("\0");
+            AppDataDirectory.get("\0"); // Illegal character for Mac
         }
         if (Utils.isLinux()) {
             // NUL character
-            AppDataDirectory.get("\0");
+            AppDataDirectory.get("\0"); // Illegal character for Linux
         }
     }
 
 
     private static String winPath(String appName) {
-        return WINAPPDATA + "\\." + appName.toLowerCase();
+        return WINAPPDATA + "\\" + appName.toLowerCase();
     }
 
     private static String macPath(String appName) {
