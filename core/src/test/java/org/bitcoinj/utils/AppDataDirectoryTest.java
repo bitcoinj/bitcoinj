@@ -34,7 +34,7 @@ public class AppDataDirectoryTest {
         final String appName = "bitcoinj";
         String path = AppDataDirectory.get(appName).toString();
         if (Utils.isWindows()) {
-            assertEquals("Path wrong on Mac", winPath(appName), path);
+            assertEquals("Path wrong on Windows", winPath(appName), path);
         } else if (Utils.isMac()) {
             assertEquals("Path wrong on Mac",  macPath(appName), path);
         } else if (Utils.isLinux()) {
@@ -49,7 +49,7 @@ public class AppDataDirectoryTest {
         final String appName = "Bitcoin";
         String path = AppDataDirectory.get(appName).toString();
         if (Utils.isWindows()) {
-            assertEquals("Path wrong on Mac", winPath(appName), path);
+            assertEquals("Path wrong on Windows", winPath(appName), path);
         } else if (Utils.isMac()) {
             assertEquals("Path wrong on Mac",  macPath(appName), path);
         } else if (Utils.isLinux()) {
