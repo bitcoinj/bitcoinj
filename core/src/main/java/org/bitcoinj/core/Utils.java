@@ -28,9 +28,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
@@ -63,8 +60,6 @@ public class Utils {
      * forces bitcoinj to try to allocate a huge piece of the memory resulting in OutOfMemoryError.
     */
     public static final int MAX_INITIAL_ARRAY_LENGTH = 20;
-
-    private static BlockingQueue<Boolean> mockSleepQueue;
 
     private static final Logger log = LoggerFactory.getLogger(Utils.class);
 
@@ -421,7 +416,6 @@ public class Utils {
      */
     public static void resetMocking() {
         mockTime = null;
-        mockSleepQueue = null;
     }
 
     /**
@@ -478,44 +472,6 @@ public class Utils {
     /** Sets the given bit in data to one, using little endian (not the same as Java native big endian) */
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
-    }
-
-    /** Sleep for a span of time, or mock sleep if enabled */
-    public static void sleep(long millis) {
-        if (mockSleepQueue == null) {
-            sleepUninterruptibly(millis, TimeUnit.MILLISECONDS);
-        } else {
-            try {
-                boolean isMultiPass = mockSleepQueue.take();
-                rollMockClockMillis(millis);
-                if (isMultiPass)
-                    mockSleepQueue.offer(true);
-            } catch (InterruptedException e) {
-                // Ignored.
-            }
-        }
-    }
-
-    /** Enable or disable mock sleep.  If enabled, set mock time to current time. */
-    public static void setMockSleep(boolean isEnable) {
-        if (isEnable) {
-            mockSleepQueue = new ArrayBlockingQueue<>(1);
-            mockTime = new Date(System.currentTimeMillis());
-        } else {
-            mockSleepQueue = null;
-        }
-    }
-
-    /** Let sleeping thread pass the synchronization point.  */
-    public static void passMockSleep() {
-        mockSleepQueue.offer(false);
-    }
-
-    /** Let the sleeping thread pass the synchronization point any number of times. */
-    public static void finishMockSleep() {
-        if (mockSleepQueue != null) {
-            mockSleepQueue.offer(true);
-        }
     }
 
     private enum Runtime {
