@@ -15,3 +15,5 @@ allprojects {
 
     group = 'org.bitcoinj'
 }
+
+/* Trivial, non-whitespace change. Delete me */
