@@ -3,6 +3,8 @@ import org.gradle.api.GradleScriptException
 
 // Minimum Gradle version for build
 def minGradleVersion = GradleVersion.version("4.4")
+// Minimum Gradle version for integration tests
+def minIntegTestGradleVersion = GradleVersion.version("4.6")
 // Minimum Gradle version for builds of JavaFX 11 module
 def minFxGradleVersion = GradleVersion.version("4.10")
 
@@ -33,4 +35,13 @@ if (GradleVersion.current().compareTo(minFxGradleVersion) > 0) {
     include 'wallettemplate'
     project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 }
+
+if (GradleVersion.current().compareTo(minIntegTestGradleVersion) >= 0) {
+    System.err.println "Including integtest because ${GradleVersion.current()}"
+    include 'integtest'
+    project(':integtest').name = 'bitcoinj-integtest'
+} else {
+    System.err.println "Skipping integtest, requires Gradle ${minIntegTestGradleVersion}+, currently running: ${GradleVersion.current()}"
+}
+
 
