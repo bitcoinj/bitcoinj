@@ -482,6 +482,9 @@ public class ScriptBuilder {
      * Creates a scriptPubKey that sends to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
+     *
+     * @param hash The hash of the redeem script
+     * @return an output script that sends to the redeem script
      */
     public static Script createP2SHOutputScript(byte[] hash) {
         checkArgument(hash.length == 20);
@@ -489,7 +492,10 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey for the given redeem script.
+     * Creates a scriptPubKey for a given redeem script.
+     *
+     * @param redeemScript The redeem script
+     * @return an output script that sends to the redeem script
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
@@ -513,8 +519,12 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a P2SH output script with given public keys and threshold. Given public keys will be placed in
-     * redeem script in the lexicographical sorting order.
+     * Creates a P2SH output script for n-of-m multisig with given public keys and threshold. Given public keys will
+     * be placed in redeem script in the lexicographical sorting order.
+     *
+     * @param threshold The threshold number of keys that must sign (n)
+     * @param pubkeys A list of m public keys
+     * @return The P2SH multisig output script
      */
     public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
         Script redeemScript = createRedeemScript(threshold, pubkeys);
@@ -522,8 +532,12 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates redeem script with given public keys and threshold. Given public keys will be placed in
+     * Creates an n-of-m multisig redeem script with given public keys and threshold. Given public keys will be placed in
      * redeem script in the lexicographical sorting order.
+     *
+     * @param threshold The threshold number of keys that must sign (n)
+     * @param pubkeys A list of m public keys
+     * @return The P2SH multisig redeem script
      */
     public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
         pubkeys = new ArrayList<>(pubkeys);
