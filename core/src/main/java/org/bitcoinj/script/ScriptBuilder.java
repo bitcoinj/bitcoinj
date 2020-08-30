@@ -29,7 +29,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script.ScriptType;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,7 +46,7 @@ import static org.bitcoinj.script.ScriptOpCodes.*;
  * protocol at a lower level.</p>
  */
 public class ScriptBuilder {
-    private List<ScriptChunk> chunks;
+    private final List<ScriptChunk> chunks;
 
     /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
