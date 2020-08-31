@@ -86,6 +86,12 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
         this.value = satoshis;
     }
 
+    /**
+     * Create a {@code Coin} from  a long integer number of satoshis.
+     *
+     * @param satoshis number of satoshis
+     * @return {@code Coin} object containing value in satoshis
+     */
     public static Coin valueOf(final long satoshis) {
         return new Coin(satoshis);
     }
@@ -104,7 +110,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Convert an amount expressed in the way humans are used to into satoshis.
+     * Create a {@code Coin} from an amount expressed in "the way humans are used to".
      *
      * @param coins Number of bitcoins
      * @param cents Number of bitcents (0.01 bitcoin)
@@ -139,7 +145,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Convert a decimal amount of BTC into satoshis.
+     * Create a {@code Coin} from a decimal amount of BTC.
      *
      * @param coins number of coins (in BTC)
      * @return {@code Coin} object containing value in satoshis
@@ -149,7 +155,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Convert a long integer number of satoshis to a Coin
+     * Create a {@code Coin} from  a long integer number of satoshis.
      *
      * @param satoshis number of satoshis
      * @return {@code Coin} object containing value in satoshis
@@ -159,7 +165,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Parses an amount expressed in the way humans are used to.
+     * Create a {@code Coin} by parsing a {@code String} amount expressed in "the way humans are used to".
      * 
      * @param str string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
      *      * "1.23E3", "1234.5E-5".
@@ -177,7 +183,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
-     * Parses an amount expressed in the way humans are used to. The amount is cut to satoshi precision.
+     * Create a {@code Coin} by parsing a {@code String} amount expressed in "the way humans are used to".
+     * The amount is cut to satoshi precision.
      * 
      * @param str string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
      *      * "1.23E3", "1234.5E-5".
