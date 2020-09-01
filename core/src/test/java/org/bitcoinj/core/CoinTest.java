@@ -116,7 +116,7 @@ public class CoinTest {
     }
 
     @Test(expected = ArithmeticException.class)
-    public void testSubstractionUnderflow() {
+    public void testSubtractionUnderflow() {
         Coin.valueOf(Long.MIN_VALUE).subtract(Coin.SATOSHI);
     }
 
