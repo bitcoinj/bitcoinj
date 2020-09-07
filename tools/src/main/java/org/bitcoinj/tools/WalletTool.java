@@ -683,7 +683,7 @@ public class WalletTool {
      * and returns the lock time in wire format.
      */
     private static long parseLockTimeStr(String lockTimeStr) throws ParseException {
-        if (lockTimeStr.indexOf("/") != -1) {
+        if (lockTimeStr.contains("/")) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd", Locale.US);
             Date date = format.parse(lockTimeStr);
             return date.getTime() / 1000;
