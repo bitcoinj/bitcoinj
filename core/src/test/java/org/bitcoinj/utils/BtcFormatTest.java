@@ -102,11 +102,11 @@ public class BtcFormatTest {
     @Test
     public void symbolCollisionTest() {
         Locale[] locales = BtcFormat.getAvailableLocales();
-        for (int i = 0; i < locales.length; ++i) {
-            String cs = ((DecimalFormat)NumberFormat.getCurrencyInstance(locales[i])).
-                        getDecimalFormatSymbols().getCurrencySymbol();
+        for (Locale locale : locales) {
+            String cs = ((DecimalFormat) NumberFormat.getCurrencyInstance(locale)).
+                    getDecimalFormatSymbols().getCurrencySymbol();
             if (cs.contains("฿")) {
-                BtcFormat bf = BtcFormat.getSymbolInstance(locales[i]);
+                BtcFormat bf = BtcFormat.getSymbolInstance(locale);
                 String coin = bf.format(COIN);
                 assertTrue(coin.contains("Ƀ"));
                 assertFalse(coin.contains("฿"));
@@ -116,27 +116,27 @@ public class BtcFormatTest {
                 String micro = bf.format(valueOf(100));
                 assertTrue(micro.contains("µɃ"));
                 assertFalse(micro.contains("฿"));
-                BtcFormat ff = BtcFormat.builder().scale(0).locale(locales[i]).pattern("¤#.#").build();
-                assertEquals("Ƀ", ((BtcFixedFormat)ff).symbol());
+                BtcFormat ff = BtcFormat.builder().scale(0).locale(locale).pattern("¤#.#").build();
+                assertEquals("Ƀ", ((BtcFixedFormat) ff).symbol());
                 assertEquals("Ƀ", ff.coinSymbol());
                 coin = ff.format(COIN);
                 assertTrue(coin.contains("Ƀ"));
                 assertFalse(coin.contains("฿"));
-                BtcFormat mlff = BtcFormat.builder().scale(3).locale(locales[i]).pattern("¤#.#").build();
-                assertEquals("₥Ƀ", ((BtcFixedFormat)mlff).symbol());
+                BtcFormat mlff = BtcFormat.builder().scale(3).locale(locale).pattern("¤#.#").build();
+                assertEquals("₥Ƀ", ((BtcFixedFormat) mlff).symbol());
                 assertEquals("Ƀ", mlff.coinSymbol());
                 milli = mlff.format(valueOf(10000));
                 assertTrue(milli.contains("₥Ƀ"));
                 assertFalse(milli.contains("฿"));
-                BtcFormat mcff = BtcFormat.builder().scale(6).locale(locales[i]).pattern("¤#.#").build();
-                assertEquals("µɃ", ((BtcFixedFormat)mcff).symbol());
+                BtcFormat mcff = BtcFormat.builder().scale(6).locale(locale).pattern("¤#.#").build();
+                assertEquals("µɃ", ((BtcFixedFormat) mcff).symbol());
                 assertEquals("Ƀ", mcff.coinSymbol());
                 micro = mcff.format(valueOf(100));
                 assertTrue(micro.contains("µɃ"));
                 assertFalse(micro.contains("฿"));
             }
             if (cs.contains("Ƀ")) {  // NB: We don't know of any such existing locale, but check anyway.
-                BtcFormat bf = BtcFormat.getInstance(locales[i]);
+                BtcFormat bf = BtcFormat.getInstance(locale);
                 String coin = bf.format(COIN);
                 assertTrue(coin.contains("฿"));
                 assertFalse(coin.contains("Ƀ"));

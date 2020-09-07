@@ -79,8 +79,8 @@ public class VersionTally {
             return null;
         }
         int count = 0;
-        for (int versionIdx = 0; versionIdx < versionWindow.length; versionIdx++) {
-            if (versionWindow[versionIdx] >= version) {
+        for (long l : versionWindow) {
+            if (l >= version) {
                 count++;
             }
         }

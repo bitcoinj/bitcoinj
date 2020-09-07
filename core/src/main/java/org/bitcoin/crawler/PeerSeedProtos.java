@@ -1087,8 +1087,8 @@ public final class PeerSeedProtos {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      for (int i = 0; i < seed_.size(); i++) {
-        output.writeMessage(1, seed_.get(i));
+      for (PeerSeedData peerSeedData : seed_) {
+        output.writeMessage(1, peerSeedData);
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         output.writeUInt64(2, timestamp_);
@@ -1105,9 +1105,9 @@ public final class PeerSeedProtos {
       if (size != -1) return size;
 
       size = 0;
-      for (int i = 0; i < seed_.size(); i++) {
+      for (PeerSeedData peerSeedData : seed_) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, seed_.get(i));
+                .computeMessageSize(1, peerSeedData);
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.CodedOutputStream
