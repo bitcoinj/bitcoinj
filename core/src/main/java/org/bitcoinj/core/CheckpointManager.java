@@ -155,9 +155,8 @@ public class CheckpointManager {
 
     private Sha256Hash readTextual(InputStream inputStream) throws IOException {
         Hasher hasher = Hashing.sha256().newHasher();
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII));
+        try (BufferedReader reader =
+                     new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
             String magic = reader.readLine();
             if (!TEXTUAL_MAGIC.equals(magic))
                 throw new IOException("unexpected magic: " + magic);
@@ -183,8 +182,6 @@ public class CheckpointManager {
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
                     Utils.dateTimeFormat(checkpoints.lastEntry().getKey() * 1000), hash);
             return Sha256Hash.wrap(hash.asBytes());
-        } finally {
-            if (reader != null) reader.close();
         }
     }
 

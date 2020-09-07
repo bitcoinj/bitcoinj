@@ -1711,12 +1711,8 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try {
-            FileInputStream stream = null;
-            try {
-                stream = new FileInputStream(file);
+            try (FileInputStream stream = new FileInputStream(file)) {
                 return loadFromFileStream(stream, walletExtensions);
-            } finally {
-                if (stream != null) stream.close();
             }
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not open file", e);

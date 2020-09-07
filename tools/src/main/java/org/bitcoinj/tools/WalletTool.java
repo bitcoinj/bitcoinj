@@ -333,14 +333,11 @@ public class WalletTool {
         if (action == ActionEnum.RAW_DUMP) {
             // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
             // useful mostly for investigating corrupted wallets.
-            FileInputStream stream = new FileInputStream(walletFile);
-            try {
+            try (FileInputStream stream = new FileInputStream(walletFile)) {
                 Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
                 proto = attemptHexConversion(proto);
                 System.out.println(proto.toString());
                 return;
-            } finally {
-                stream.close();
             }
         }
 
