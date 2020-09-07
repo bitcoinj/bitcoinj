@@ -40,9 +40,7 @@ public class BitcoinAddressValidator {
         // the example/prompt address hard to read.
         new TextFieldValidator(field, text -> text.isEmpty() || testAddr(text));
         // However we do want the buttons to be disabled when empty so we apply a different test there.
-        field.textProperty().addListener((observableValue, prev, current) -> {
-            toggleButtons(current);
-        });
+        field.textProperty().addListener((observableValue, prev, current) -> toggleButtons(current));
         toggleButtons(field.getText());
     }
 

@@ -71,9 +71,7 @@ public class GuiUtils {
 
     /** Show a GUI alert box for any unhandled exceptions that propagate out of this thread. */
     public static void handleCrashesOnThisThread() {
-        Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> {
-            GuiUtils.crashAlert(Throwables.getRootCause(exception));
-        });
+        Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> GuiUtils.crashAlert(Throwables.getRootCause(exception)));
     }
 
     public static void informationalAlert(String message, String details, Object... args) {
