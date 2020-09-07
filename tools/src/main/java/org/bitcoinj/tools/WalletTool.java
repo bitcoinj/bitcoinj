@@ -814,34 +814,25 @@ public class WalletTool {
                 break;
 
             case WALLET_TX:
-                wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-                    @Override
-                    public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                        // Runs in a peer thread.
-                        System.out.println(tx.getTxId());
-                        latch.countDown();  // Wake up main thread.
-                    }
+                wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
+                    // Runs in a peer thread.
+                    System.out.println(tx.getTxId());
+                    latch.countDown();  // Wake up main thread.
                 });
-                wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
-                    @Override
-                    public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                        // Runs in a peer thread.
-                        System.out.println(tx.getTxId());
-                        latch.countDown();  // Wake up main thread.
-                    }
+                wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> {
+                    // Runs in a peer thread.
+                    System.out.println(tx.getTxId());
+                    latch.countDown();  // Wake up main thread.
                 });
                 break;
 
             case BLOCK:
-                peerGroup.addBlocksDownloadedEventListener(new BlocksDownloadedEventListener() {
-                    @Override
-                    public void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
-                        // Check if we already ran. This can happen if a block being received triggers download of more
-                        // blocks, or if we receive another block whilst the peer group is shutting down.
-                        if (latch.getCount() == 0) return;
-                        System.out.println(block.getHashAsString());
-                        latch.countDown();
-                    }
+                peerGroup.addBlocksDownloadedEventListener((peer, block, filteredBlock, blocksLeft) -> {
+                    // Check if we already ran. This can happen if a block being received triggers download of more
+                    // blocks, or if we receive another block whilst the peer group is shutting down.
+                    if (latch.getCount() == 0) return;
+                    System.out.println(block.getHashAsString());
+                    latch.countDown();
                 });
                 break;
 

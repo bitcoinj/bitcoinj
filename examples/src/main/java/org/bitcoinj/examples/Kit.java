@@ -65,42 +65,21 @@ public class Kit {
         kit.startAsync();
         kit.awaitRunning();
 
-        kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                System.out.println("-----> coins resceived: " + tx.getTxId());
-                System.out.println("received: " + tx.getValue(wallet));
-            }
+        kit.wallet().addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
+            System.out.println("-----> coins resceived: " + tx.getTxId());
+            System.out.println("received: " + tx.getValue(wallet));
         });
 
-        kit.wallet().addCoinsSentEventListener(new WalletCoinsSentEventListener() {
-            @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                System.out.println("coins sent");
-            }
-        });
+        kit.wallet().addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> System.out.println("coins sent"));
 
-        kit.wallet().addKeyChainEventListener(new KeyChainEventListener() {
-            @Override
-            public void onKeysAdded(List<ECKey> keys) {
-                System.out.println("new key added");
-            }
-        });
+        kit.wallet().addKeyChainEventListener(keys -> System.out.println("new key added"));
 
-        kit.wallet().addScriptsChangeEventListener(new ScriptsChangeEventListener() {
-            @Override
-            public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-                System.out.println("new script added");
-            }
-        });
+        kit.wallet().addScriptsChangeEventListener((wallet, scripts, isAddingScripts) -> System.out.println("new script added"));
 
-        kit.wallet().addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                System.out.println("-----> confidence changed: " + tx.getTxId());
-                TransactionConfidence confidence = tx.getConfidence();
-                System.out.println("new block depth: " + confidence.getDepthInBlocks());
-            }
+        kit.wallet().addTransactionConfidenceEventListener((wallet, tx) -> {
+            System.out.println("-----> confidence changed: " + tx.getTxId());
+            TransactionConfidence confidence = tx.getConfidence();
+            System.out.println("new block depth: " + confidence.getDepthInBlocks());
         });
 
         // Ready to run. The kit syncs the blockchain and our wallet event listener gets notified when something happens.

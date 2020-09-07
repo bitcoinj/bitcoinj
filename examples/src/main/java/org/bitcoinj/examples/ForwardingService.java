@@ -91,35 +91,32 @@ public class ForwardingService {
         kit.awaitRunning();
 
         // We want to know when we receive money.
-        kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
-                //
-                // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-                Coin value = tx.getValueSentToMe(w);
-                System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
-                System.out.println("Transaction will be forwarded after it confirms.");
-                // Wait until it's made it into the block chain (may run immediately if it's already there).
-                //
-                // For this dummy app of course, we could just forward the unconfirmed transaction. If it were
-                // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
-                // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
-                // case of waiting for a block.
-                Futures.addCallback(tx.getConfidence().getDepthFuture(1), new FutureCallback<TransactionConfidence>() {
-                    @Override
-                    public void onSuccess(TransactionConfidence result) {
-                        System.out.println("Confirmation received.");
-                        forwardCoins(tx);
-                    }
+        kit.wallet().addCoinsReceivedEventListener((w, tx, prevBalance, newBalance) -> {
+            // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
+            //
+            // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
+            Coin value = tx.getValueSentToMe(w);
+            System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
+            System.out.println("Transaction will be forwarded after it confirms.");
+            // Wait until it's made it into the block chain (may run immediately if it's already there).
+            //
+            // For this dummy app of course, we could just forward the unconfirmed transaction. If it were
+            // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
+            // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
+            // case of waiting for a block.
+            Futures.addCallback(tx.getConfidence().getDepthFuture(1), new FutureCallback<TransactionConfidence>() {
+                @Override
+                public void onSuccess(TransactionConfidence result) {
+                    System.out.println("Confirmation received.");
+                    forwardCoins(tx);
+                }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        // This kind of future can't fail, just rethrow in case something weird happens.
-                        throw new RuntimeException(t);
-                    }
-                }, MoreExecutors.directExecutor());
-            }
+                @Override
+                public void onFailure(Throwable t) {
+                    // This kind of future can't fail, just rethrow in case something weird happens.
+                    throw new RuntimeException(t);
+                }
+            }, MoreExecutors.directExecutor());
         });
 
         Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
@@ -141,12 +138,9 @@ public class ForwardingService {
             // Register a callback that is invoked when the transaction has propagated across the network.
             // This shows a second style of registering ListenableFuture callbacks, it works when you don't
             // need access to the object the future returns.
-            sendResult.broadcastComplete.addListener(new Runnable() {
-                @Override
-                public void run() {
-                    // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
-                    System.out.println("Sent coins onwards! Transaction hash is " + sendResult.tx.getTxId());
-                }
+            sendResult.broadcastComplete.addListener(() -> {
+                // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
+                System.out.println("Sent coins onwards! Transaction hash is " + sendResult.tx.getTxId());
             }, MoreExecutors.directExecutor());
         } catch (KeyCrypterException | InsufficientMoneyException e) {
             // We don't use encrypted wallets in this example - can never happen.

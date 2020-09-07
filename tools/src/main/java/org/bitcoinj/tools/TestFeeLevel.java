@@ -87,18 +87,10 @@ public class TestFeeLevel {
         System.out.println("Size in bytes is " + request.tx.unsafeBitcoinSerialize().length);
         System.out.println("TX is " + request.tx);
         System.out.println("Waiting for " + kit.peerGroup().getMaxConnections() + " connected peers");
-        kit.peerGroup().addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                System.out.println(peerCount + " peers connected");
-            }
-        });
-        kit.peerGroup().addConnectedEventListener(new PeerConnectedEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                System.out.println(peerCount + " peers connected");
-            }
-        });
+        kit.peerGroup().addDisconnectedEventListener((peer, peerCount) -> System.out.println(peerCount +
+                " peers connected"));
+        kit.peerGroup().addConnectedEventListener((peer, peerCount) -> System.out.println(peerCount +
+                " peers connected"));
         kit.peerGroup().broadcastTransaction(request.tx).future().get();
         System.out.println("Send complete, waiting for confirmation");
         request.tx.getConfidence().getDepthFuture(1).get();

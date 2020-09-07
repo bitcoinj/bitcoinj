@@ -49,16 +49,13 @@ public class WatchMempool {
         PeerGroup peerGroup = new PeerGroup(PARAMS);
         peerGroup.setMaxConnections(32);
         peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS));
-        peerGroup.addOnTransactionBroadcastListener(new OnTransactionBroadcastListener() {
-            @Override
-            public void onTransaction(Peer peer, Transaction tx) {
-                Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
-                incrementCounter(TOTAL_KEY);
-                log.info("tx {} result {}", tx.getTxId(), result);
-                incrementCounter(result.name());
-                if (result == Result.NON_STANDARD)
-                    incrementCounter(Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx));
-            }
+        peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
+            Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
+            incrementCounter(TOTAL_KEY);
+            log.info("tx {} result {}", tx.getTxId(), result);
+            incrementCounter(result.name());
+            if (result == Result.NON_STANDARD)
+                incrementCounter(Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx));
         });
         peerGroup.start();
 

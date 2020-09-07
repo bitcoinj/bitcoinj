@@ -68,20 +68,14 @@ public class PeerMonitor {
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
-        peerGroup.addConnectedEventListener(new PeerConnectedEventListener() {
-            @Override
-            public void onPeerConnected(final Peer peer, int peerCount) {
-                refreshUI();
-                lookupReverseDNS(peer);
-            }
+        peerGroup.addConnectedEventListener((peer, peerCount) -> {
+            refreshUI();
+            lookupReverseDNS(peer);
         });
-        peerGroup.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(final Peer peer, int peerCount) {
-                refreshUI();
-                synchronized (reverseDnsLookups) {
-                    reverseDnsLookups.remove(peer);
-                }
+        peerGroup.addDisconnectedEventListener((peer, peerCount) -> {
+            refreshUI();
+            synchronized (reverseDnsLookups) {
+                reverseDnsLookups.remove(peer);
             }
         });
     }
@@ -102,12 +96,7 @@ public class PeerMonitor {
 
     private void refreshUI() {
         // Tell the Swing UI thread to redraw the peers table.
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                peerTableModel.updateFromPeerGroup();
-            }
-        });
+        SwingUtilities.invokeLater(() -> peerTableModel.updateFromPeerGroup());
     }
 
     private void setupGUI() {
@@ -126,12 +115,7 @@ public class PeerMonitor {
         JPanel panel = new JPanel();
         JLabel instructions = new JLabel("Number of peers to connect to: ");
         final SpinnerNumberModel spinnerModel = new SpinnerNumberModel(4, 0, 100, 1);
-        spinnerModel.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent changeEvent) {
-                peerGroup.setMaxConnections(spinnerModel.getNumber().intValue());
-            }
-        });
+        spinnerModel.addChangeListener(changeEvent -> peerGroup.setMaxConnections(spinnerModel.getNumber().intValue()));
         JSpinner numPeersSpinner = new JSpinner(spinnerModel);
         panel.add(instructions);
         panel.add(numPeersSpinner);
@@ -153,12 +137,7 @@ public class PeerMonitor {
         window.setVisible(true);
 
         // Refresh the UI every half second to get the latest ping times. The event handler runs in the UI thread.
-        new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                peerTableModel.updateFromPeerGroup();
-            }
-        }).start();
+        new Timer(1000, actionEvent -> peerTableModel.updateFromPeerGroup()).start();
     }
 
     private class PeerTableModel extends AbstractTableModel {

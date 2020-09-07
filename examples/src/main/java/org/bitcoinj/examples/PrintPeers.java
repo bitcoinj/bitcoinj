@@ -85,36 +85,30 @@ public class PrintPeers {
                     new PeerAddress(params, address), null);
             final SettableFuture<Void> future = SettableFuture.create();
             // Once the connection has completed version handshaking ...
-            peer.addConnectedEventListener(new PeerConnectedEventListener() {
-                @Override
-                public void onPeerConnected(Peer p, int peerCount) {
-                    // Check the chain height it claims to have.
-                    VersionMessage ver = peer.getPeerVersionMessage();
-                    long nodeHeight = ver.bestHeight;
-                    synchronized (lock) {
-                        long diff = bestHeight[0] - nodeHeight;
-                        if (diff > 0) {
-                            System.out.println("Node is behind by " + diff + " blocks: " + addr);
-                        } else if (diff == 0) {
-                            System.out.println("Node " + addr + " has " + nodeHeight + " blocks");
-                            bestHeight[0] = nodeHeight;
-                        } else if (diff < 0) {
-                            System.out.println("Node is ahead by " + Math.abs(diff) + " blocks: " + addr);
-                            bestHeight[0] = nodeHeight;
-                        }
+            peer.addConnectedEventListener((p, peerCount) -> {
+                // Check the chain height it claims to have.
+                VersionMessage ver = peer.getPeerVersionMessage();
+                long nodeHeight = ver.bestHeight;
+                synchronized (lock) {
+                    long diff = bestHeight[0] - nodeHeight;
+                    if (diff > 0) {
+                        System.out.println("Node is behind by " + diff + " blocks: " + addr);
+                    } else if (diff == 0) {
+                        System.out.println("Node " + addr + " has " + nodeHeight + " blocks");
+                        bestHeight[0] = nodeHeight;
+                    } else if (diff < 0) {
+                        System.out.println("Node is ahead by " + Math.abs(diff) + " blocks: " + addr);
+                        bestHeight[0] = nodeHeight;
                     }
-                    // Now finish the future and close the connection
-                    future.set(null);
-                    peer.close();
                 }
+                // Now finish the future and close the connection
+                future.set(null);
+                peer.close();
             });
-            peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-                @Override
-                public void onPeerDisconnected(Peer p, int peerCount) {
-                    if (!future.isDone())
-                        System.out.println("Failed to talk to " + addr);
-                    future.set(null);
-                }
+            peer.addDisconnectedEventListener((p, peerCount) -> {
+                if (!future.isDone())
+                    System.out.println("Failed to talk to " + addr);
+                future.set(null);
             });
             clientManager.openConnection(address, peer);
             futures.add(future);

@@ -50,13 +50,10 @@ public class DoubleSpend {
         Transaction tx2 = kit.wallet().createSend(LegacyAddress.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
         peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD,
-            new PreMessageReceivedEventListener() {
-                @Override
-                public Message onPreMessageReceived(Peer peer, Message m) {
+                (peer1, m) -> {
                     System.err.println("Got a message!" + m.getClass().getSimpleName() + ": " + m);
                     return m;
                 }
-            }
         );
         peer.sendMessage(tx1);
         peer.sendMessage(tx2);
