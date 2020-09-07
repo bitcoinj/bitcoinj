@@ -81,17 +81,14 @@ public class PeerMonitor {
     }
 
     private void lookupReverseDNS(final Peer peer) {
-        new Thread() {
-            @Override
-            public void run() {
-                // This can take a looooong time.
-                String reverseDns = peer.getAddress().getAddr().getCanonicalHostName();
-                synchronized (reverseDnsLookups) {
-                    reverseDnsLookups.put(peer, reverseDns);
-                }
-                refreshUI();
+        new Thread(() -> {
+            // This can take a looooong time.
+            String reverseDns = peer.getAddress().getAddr().getCanonicalHostName();
+            synchronized (reverseDnsLookups) {
+                reverseDnsLookups.put(peer, reverseDns);
             }
-        }.start();
+            refreshUI();
+        }).start();
     }
 
     private void refreshUI() {
