@@ -1349,9 +1349,7 @@ public class Wallet extends BaseTaggableObject
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             checkState(crypter != null, "Not encrypted");
             keyChainGroup.decrypt(crypter.deriveKey(password));
-        } catch (KeyCrypterException.InvalidCipherText e) {
-            throw new BadWalletEncryptionKeyException(e);
-        } catch (KeyCrypterException.PublicPrivateMismatch e) {
+        } catch (KeyCrypterException.InvalidCipherText | KeyCrypterException.PublicPrivateMismatch e) {
             throw new BadWalletEncryptionKeyException(e);
         } finally {
             keyChainGroupLock.unlock();
@@ -1370,9 +1368,7 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             keyChainGroup.decrypt(aesKey);
-        } catch (KeyCrypterException.InvalidCipherText e) {
-            throw new BadWalletEncryptionKeyException(e);
-        } catch (KeyCrypterException.PublicPrivateMismatch e) {
+        } catch (KeyCrypterException.InvalidCipherText | KeyCrypterException.PublicPrivateMismatch e) {
             throw new BadWalletEncryptionKeyException(e);
         } finally {
             keyChainGroupLock.unlock();
@@ -4378,9 +4374,7 @@ public class Wallet extends BaseTaggableObject
 
             // resolve missing sigs if any
             new MissingSigResolutionSigner(req.missingSigsMode).signInputs(proposal, maybeDecryptingKeyBag);
-        } catch (KeyCrypterException.InvalidCipherText e) {
-            throw new BadWalletEncryptionKeyException(e);
-        } catch (KeyCrypterException.PublicPrivateMismatch e) {
+        } catch (KeyCrypterException.InvalidCipherText | KeyCrypterException.PublicPrivateMismatch e) {
             throw new BadWalletEncryptionKeyException(e);
         } finally {
             lock.unlock();

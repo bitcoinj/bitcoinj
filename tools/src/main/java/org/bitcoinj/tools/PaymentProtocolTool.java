@@ -85,9 +85,7 @@ public class PaymentProtocolTool {
             }
             output.append(format("%n%n%s%n%s", session.getPaymentRequest(), session.getPaymentDetails()));
             System.out.println(output);
-        } catch (URISyntaxException e) {
-            System.err.println("Could not parse URI: " + e.getMessage());
-        } catch (BitcoinURIParseException e) {
+        } catch (URISyntaxException | BitcoinURIParseException e) {
             System.err.println("Could not parse URI: " + e.getMessage());
         } catch (PaymentProtocolException.PkiVerificationException e) {
             System.err.println(e.getMessage());
@@ -105,9 +103,7 @@ public class PaymentProtocolTool {
             e.printStackTrace();
         } catch (FileNotFoundException e) {
             System.err.println(e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
+        } catch (IOException | KeyStoreException e) {
             e.printStackTrace();
         }
     }

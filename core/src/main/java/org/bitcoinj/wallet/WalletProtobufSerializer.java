@@ -443,11 +443,7 @@ public class WalletProtobufSerializer {
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
             return readWallet(params, extensions, walletProto, forceReset);
-        } catch (IOException e) {
-            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
-        } catch (IllegalStateException e) {
-            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
-        } catch (IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
     }

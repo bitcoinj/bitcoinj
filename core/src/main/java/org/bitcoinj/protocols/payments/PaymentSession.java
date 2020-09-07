@@ -210,9 +210,7 @@ public class PaymentSession {
         if (verifyPki) {
             try {
                 pkiVerificationData = PaymentProtocol.verifyPaymentRequestPki(request, nonNullTrustStoreLoader.getKeyStore());
-            } catch (IOException x) {
-                throw new PaymentProtocolException(x);
-            } catch (KeyStoreException x) {
+            } catch (IOException | KeyStoreException x) {
                 throw new PaymentProtocolException(x);
             }
         } else {

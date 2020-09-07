@@ -265,9 +265,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
             this.params = params;
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        } catch (VerificationException e) {
+        } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }

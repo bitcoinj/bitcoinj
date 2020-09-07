@@ -56,9 +56,7 @@ public interface TrustStoreLoader {
                 }
             } catch (ClassNotFoundException e) {
                 // NOP. android.os.Build is not present, so we are not on Android. Fall through.
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e); // Should never happen.
-            } catch (IllegalAccessException e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new RuntimeException(e); // Should never happen.
             }
             if (keystorePath == null) {
@@ -84,9 +82,7 @@ public interface TrustStoreLoader {
                 KeyStore keystore = KeyStore.getInstance("AndroidCAStore");
                 keystore.load(null, null);
                 return keystore;
-            } catch (IOException x) {
-                throw new KeyStoreException(x);
-            } catch (GeneralSecurityException x) {
+            } catch (IOException | GeneralSecurityException x) {
                 throw new KeyStoreException(x);
             }
         }

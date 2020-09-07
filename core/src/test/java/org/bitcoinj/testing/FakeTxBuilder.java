@@ -275,9 +275,7 @@ public class FakeTxBuilder {
             blockStore.put(pair.storedBlock);
             blockStore.setChainHead(pair.storedBlock);
             return pair;
-        } catch (VerificationException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        } catch (BlockStoreException e) {
+        } catch (VerificationException | BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
