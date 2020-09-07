@@ -49,7 +49,7 @@ public class PeerMonitor {
     private PeerTableModel peerTableModel;
     private PeerTableRenderer peerTableRenderer;
 
-    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<Peer, String>();
+    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();

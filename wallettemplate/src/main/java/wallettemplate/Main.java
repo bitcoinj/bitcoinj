@@ -209,7 +209,7 @@ public class Main extends Application {
 
     public <T> OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
-        OverlayUI<T> pair = new OverlayUI<T>(node, controller);
+        OverlayUI<T> pair = new OverlayUI<>(node, controller);
         // Auto-magically set the overlayUI member, if it's there.
         try {
             controller.getClass().getField("overlayUI").set(controller, pair);
@@ -228,7 +228,7 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(location);
             Pane ui = loader.load();
             T controller = loader.getController();
-            OverlayUI<T> pair = new OverlayUI<T>(ui, controller);
+            OverlayUI<T> pair = new OverlayUI<>(ui, controller);
             // Auto-magically set the overlayUI member, if it's there.
             try {
                 if (controller != null)

@@ -69,7 +69,7 @@ public class PrintPeers {
         printDNS();
         System.out.println("=== Version/chain heights ===");
 
-        ArrayList<InetAddress> addrs = new ArrayList<InetAddress>();
+        ArrayList<InetAddress> addrs = new ArrayList<>();
         for (InetSocketAddress peer : dnsPeers) addrs.add(peer.getAddress());
         System.out.println("Scanning " + addrs.size() + " peers:");
 

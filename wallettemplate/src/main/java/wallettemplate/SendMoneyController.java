@@ -82,7 +82,7 @@ public class SendMoneyController {
             // their own money!
             req.allowUnconfirmed();
             sendResult = Main.bitcoin.wallet().sendCoins(req);
-            Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
+            Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
                     checkGuiThread();

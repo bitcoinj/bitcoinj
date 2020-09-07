@@ -132,7 +132,7 @@ public class BuildCheckpoints {
         }
 
         // Sorted map of block height to StoredBlock object.
-        final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<Integer, StoredBlock>();
+        final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<>();
 
         long now = new Date().getTime() / 1000;
         peerGroup.setFastCatchupTimeSecs(now);

@@ -190,8 +190,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
             chain.add(rollingBlock);
         }
         
-        WeakReference<UTXO> out = new WeakReference<UTXO>
-                                       (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
+        WeakReference<UTXO> out = new WeakReference<>
+                (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(null);
         
         Transaction t = new Transaction(PARAMS);
