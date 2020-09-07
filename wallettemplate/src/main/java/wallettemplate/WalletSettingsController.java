@@ -66,7 +66,7 @@ public class WalletSettingsController {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
                 // Delay execution of this until after we've finished initialising this screen.
-                Platform.runLater(() -> askForPasswordAndRetry());
+                Platform.runLater(this::askForPasswordAndRetry);
                 return;
             }
         } else {
