@@ -161,6 +161,13 @@ public class PeerGroup implements TransactionBroadcaster {
     private final CopyOnWriteArrayList<Wallet> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
 
+    // Give the client the option to disable HttpSeeds
+    private static boolean ignoreHttpSeeds;
+
+    public static void setIgnoreHttpSeeds(boolean ignoreHttpSeeds) {
+        PeerGroup.ignoreHttpSeeds = ignoreHttpSeeds;
+    }
+
     // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
     // peer can fetch them.
     private final PeerListener peerListener = new PeerListener();
@@ -962,7 +969,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             this.requiredServices = requiredServices;
             peerDiscoverers.clear();
-            addPeerDiscovery(MultiplexingDiscovery.forServices(params, requiredServices));
+            addPeerDiscovery(MultiplexingDiscovery.forServices(params, requiredServices, ignoreHttpSeeds));
         } finally {
             lock.unlock();
         }

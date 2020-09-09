@@ -55,10 +55,10 @@ public class MultiplexingDiscovery implements PeerDiscovery {
      * @param params Network to use.
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      */
-    public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
+    public static MultiplexingDiscovery forServices(NetworkParameters params, long services, boolean ignoreHttpSeeds) {
         List<PeerDiscovery> discoveries = Lists.newArrayList();
         HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
-        if (httpSeeds != null) {
+        if (!ignoreHttpSeeds && httpSeeds != null) {
             OkHttpClient httpClient = new OkHttpClient();
             for (HttpDiscovery.Details httpSeed : httpSeeds)
                 discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
