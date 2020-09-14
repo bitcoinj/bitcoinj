@@ -430,7 +430,7 @@ public class WalletAppKit extends AbstractIdleService {
         if (restoreFromSeed != null)
             kcg.fromSeed(restoreFromSeed, preferredOutputScriptType);
         else if (restoreFromKey != null)
-            kcg.addChain(DeterministicKeyChain.builder().spend(restoreFromKey).outputScriptType(preferredOutputScriptType).build());
+            kcg.fromKey(restoreFromKey, preferredOutputScriptType).build();
         else
             kcg.fromRandom(preferredOutputScriptType);
         if (walletFactory != null) {
