@@ -134,6 +134,39 @@ public class KeyChainGroup implements KeyBag {
         }
 
         /**
+         * <p>Add chain from a given account key.</p>
+         * <p>In the case of P2PKH, just a P2PKH chain is created and activated which is then the default chain for fresh
+         * addresses. It can be upgraded to P2WPKH later.</p>
+         * <p>In the case of P2WPKH, both a P2PKH and a P2WPKH chain are created and activated, the latter being the default
+         * chain. This behaviour will likely be changed with bitcoinj 0.16 such that only a P2WPKH chain is created and
+         * activated.</p>
+         * @param accountKey deterministic account key to derive all keys from
+         * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+         */
+        public Builder fromKey(DeterministicKey accountKey, Script.ScriptType outputScriptType) {
+            if (outputScriptType == Script.ScriptType.P2PKH) {
+                DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
+                        .outputScriptType(Script.ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                this.chains.clear();
+                this.chains.add(chain);
+            } else if (outputScriptType == Script.ScriptType.P2WPKH) {
+                DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().spend(accountKey)
+                        .outputScriptType(Script.ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().spend(accountKey)
+                        .outputScriptType(Script.ScriptType.P2WPKH)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+                this.chains.clear();
+                this.chains.add(fallbackChain);
+                this.chains.add(defaultChain);
+            } else {
+                throw new IllegalArgumentException(outputScriptType.toString());
+            }
+            return this;
+        }
+
+        /**
          * Add a single chain.
          * @param chain to add
          */
