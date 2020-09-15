@@ -3900,11 +3900,17 @@ public class Wallet extends BaseTaggableObject
     /** A SendResult is returned to you as part of sending coins to a recipient. */
     public static class SendResult {
         /** The Bitcoin transaction message that moves the money. */
-        public Transaction tx;
+        public final Transaction tx;
         /** A future that will complete once the tx message has been successfully broadcast to the network. This is just the result of calling broadcast.future() */
-        public ListenableFuture<Transaction> broadcastComplete;
+        public final ListenableFuture<Transaction> broadcastComplete;
         /** The broadcast object returned by the linked TransactionBroadcaster */
-        public TransactionBroadcast broadcast;
+        public final TransactionBroadcast broadcast;
+
+        public SendResult(Transaction tx, TransactionBroadcast broadcast) {
+            this.tx = tx;
+            this.broadcast = broadcast;
+            this.broadcastComplete = broadcast.future();
+        }
     }
 
     /**
@@ -4097,15 +4103,12 @@ public class Wallet extends BaseTaggableObject
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
         Transaction tx = sendCoinsOffline(request);
-        SendResult result = new SendResult();
-        result.tx = tx;
+        SendResult result = new SendResult(tx, broadcaster.broadcastTransaction(tx));
         // The tx has been committed to the pending pool by this point (via sendCoinsOffline -> commitTx), so it has
         // a txConfidenceListener registered. Once the tx is broadcast the peers will update the memory pool with the
         // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
         // txConfidenceListener which will in turn invoke the wallets event listener onTransactionConfidenceChanged
         // method.
-        result.broadcast = broadcaster.broadcastTransaction(tx);
-        result.broadcastComplete = result.broadcast.future();
         return result;
     }
 
