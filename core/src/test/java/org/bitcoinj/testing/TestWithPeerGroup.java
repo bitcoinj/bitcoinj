@@ -49,7 +49,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(10);
+    public Timeout globalTimeout = Timeout.seconds(15);
 
     @Override
     public void setUp() throws Exception {
