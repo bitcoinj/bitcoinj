@@ -162,6 +162,12 @@ public class TransactionBroadcast {
             for (final Peer peer : peers) {
                 try {
                     ListenableFuture future = peer.sendMessage(tx);
+                    // Peer drop after broadcast feature disabled until we better understand why this feature was
+                    // implemented.
+                    // If several txs are broadcasted in a short period of time, we may disconnect many peers
+                    // quickly, then making the connection to the bitcoin network unstable and have a risk a
+                    // tx is not broadcasted at all.
+                    dropPeersAfterBroadcast = false;
                     if (dropPeersAfterBroadcast) {
                         // We drop the peer shortly after the transaction has been sent, because this peer will not
                         // send us back useful broadcast confirmations.
