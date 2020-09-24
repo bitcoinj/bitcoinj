@@ -179,6 +179,14 @@ public class TransactionBroadcast {
                     log.error("Caught exception sending to {}", peer, e);
                 }
             }
+            // If we've been limited to talk to only one peer, we can't wait to hear back because the
+            // remote peer won't tell us about transactions we just announced to it for obvious reasons.
+            // So we just have to assume we're done, at that point. This happens when we're not given
+            // any peer discovery source and the user just calls connectTo() once.
+            if (minConnections == 1) {
+                peerGroup.removePreMessageReceivedEventListener(rejectionListener);
+                future.set(tx);
+            }
         }
     }
 
