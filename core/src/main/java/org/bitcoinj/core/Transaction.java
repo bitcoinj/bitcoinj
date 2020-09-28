@@ -1410,6 +1410,17 @@ public class Transaction extends ChildMessage {
         return Sha256Hash.twiceOf(bos.toByteArray());
     }
 
+    public byte[] bitcoinSerialize(boolean segwit) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        try {
+            bitcoinSerializeToStream(stream, segwit);
+        } catch (IOException e) {
+            // Cannot happen, we are serializing to a memory stream.
+        }
+        return stream.toByteArray();
+    }
+
+
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         boolean useSegwit = hasWitnesses()
