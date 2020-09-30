@@ -34,6 +34,7 @@ message PeerAddress {
   required bytes ip_address = 1;
   required uint32 port = 2;
   required uint64 services = 3;
+  optional string hostname = 99;
 }
 
 message EncryptedData {

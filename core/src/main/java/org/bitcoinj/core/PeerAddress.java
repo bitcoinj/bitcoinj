@@ -156,6 +156,18 @@ public class PeerAddress extends ChildMessage {
         this.services = BigInteger.ZERO;
     }
 
+    /**
+     * Construct a peer address from a memorized or hardcoded hostname.
+     */
+    public PeerAddress(NetworkParameters params, String hostname, int port, int protocolVersion, BigInteger services) {
+        super(params);
+        this.hostname = hostname;
+        this.port = port;
+        this.protocolVersion = protocolVersion;
+        this.services = services;
+        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+    }
+
     public static PeerAddress localhost(NetworkParameters params) {
         return new PeerAddress(params, InetAddress.getLoopbackAddress(), params.getPort());
     }
