@@ -799,11 +799,10 @@ public abstract class AbstractBlockChain {
         checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
         LinkedList<StoredBlock> results = new LinkedList<>();
         StoredBlock cursor = higher;
-        while (true) {
+        do {
             results.add(cursor);
             cursor = checkNotNull(cursor.getPrev(store), "Ran off the end of the chain");
-            if (cursor.equals(lower)) break;
-        }
+        } while (!cursor.equals(lower));
         return results;
     }
 
