@@ -408,7 +408,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     @Override
     public void addEventListener(KeyChainEventListener listener, Executor executor) {
-        listeners.add(new ListenerRegistration<>(listener, executor));
+        addEventListener(new ListenerRegistration<>(listener, executor));
+    }
+
+    public void addEventListener(ListenerRegistration<KeyChainEventListener> listener) {
+        listeners.add(listener);
     }
 
     @Override
@@ -475,6 +479,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     throw new KeyCrypterException("The key " + key.toString() + " cannot be successfully decrypted after encryption so aborting wallet encryption.");
                 encrypted.importKeyLocked(encryptedKey);
             }
+            for (ListenerRegistration<KeyChainEventListener> listener : listeners) {
+                encrypted.addEventListener(listener);
+            }
             return encrypted;
         } finally {
             lock.unlock();
@@ -499,6 +506,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
             BasicKeyChain decrypted = new BasicKeyChain();
             for (ECKey key : hashToKeys.values()) {
                 decrypted.importKeyLocked(key.decrypt(aesKey));
+            }
+            for (ListenerRegistration<KeyChainEventListener> listener : listeners) {
+                decrypted.addEventListener(listener);
             }
             return decrypted;
         } finally {
