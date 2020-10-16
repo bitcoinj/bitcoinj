@@ -20,40 +20,47 @@ public final class PeerSeedProtos {
 
     /**
      * <code>required string ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
      */
     boolean hasIpAddress();
     /**
      * <code>required string ip_address = 1;</code>
+     * @return The ipAddress.
      */
     java.lang.String getIpAddress();
     /**
      * <code>required string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
      */
     com.google.protobuf.ByteString
         getIpAddressBytes();
 
     /**
      * <code>required uint32 port = 2;</code>
+     * @return Whether the port field is set.
      */
     boolean hasPort();
     /**
      * <code>required uint32 port = 2;</code>
+     * @return The port.
      */
     int getPort();
 
     /**
      * <code>required uint32 services = 3;</code>
+     * @return Whether the services field is set.
      */
     boolean hasServices();
     /**
      * <code>required uint32 services = 3;</code>
+     * @return The services.
      */
     int getServices();
   }
   /**
    * Protobuf type {@code org.bitcoin.crawler.PeerSeedData}
    */
-  public  static final class PeerSeedData extends
+  public static final class PeerSeedData extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.bitcoin.crawler.PeerSeedData)
       PeerSeedDataOrBuilder {
@@ -150,13 +157,17 @@ public final class PeerSeedProtos {
     private volatile java.lang.Object ipAddress_;
     /**
      * <code>required string ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
      */
+    @java.lang.Override
     public boolean hasIpAddress() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required string ip_address = 1;</code>
+     * @return The ipAddress.
      */
+    @java.lang.Override
     public java.lang.String getIpAddress() {
       java.lang.Object ref = ipAddress_;
       if (ref instanceof java.lang.String) {
@@ -173,7 +184,9 @@ public final class PeerSeedProtos {
     }
     /**
      * <code>required string ip_address = 1;</code>
+     * @return The bytes for ipAddress.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getIpAddressBytes() {
       java.lang.Object ref = ipAddress_;
@@ -192,13 +205,17 @@ public final class PeerSeedProtos {
     private int port_;
     /**
      * <code>required uint32 port = 2;</code>
+     * @return Whether the port field is set.
      */
+    @java.lang.Override
     public boolean hasPort() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required uint32 port = 2;</code>
+     * @return The port.
      */
+    @java.lang.Override
     public int getPort() {
       return port_;
     }
@@ -207,13 +224,17 @@ public final class PeerSeedProtos {
     private int services_;
     /**
      * <code>required uint32 services = 3;</code>
+     * @return Whether the services field is set.
      */
+    @java.lang.Override
     public boolean hasServices() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>required uint32 services = 3;</code>
+     * @return The services.
      */
+    @java.lang.Override
     public int getServices() {
       return services_;
     }
@@ -607,12 +628,14 @@ public final class PeerSeedProtos {
       private java.lang.Object ipAddress_ = "";
       /**
        * <code>required string ip_address = 1;</code>
+       * @return Whether the ipAddress field is set.
        */
       public boolean hasIpAddress() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required string ip_address = 1;</code>
+       * @return The ipAddress.
        */
       public java.lang.String getIpAddress() {
         java.lang.Object ref = ipAddress_;
@@ -630,6 +653,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string ip_address = 1;</code>
+       * @return The bytes for ipAddress.
        */
       public com.google.protobuf.ByteString
           getIpAddressBytes() {
@@ -646,6 +670,8 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string ip_address = 1;</code>
+       * @param value The ipAddress to set.
+       * @return This builder for chaining.
        */
       public Builder setIpAddress(
           java.lang.String value) {
@@ -659,6 +685,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string ip_address = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearIpAddress() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -668,6 +695,8 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string ip_address = 1;</code>
+       * @param value The bytes for ipAddress to set.
+       * @return This builder for chaining.
        */
       public Builder setIpAddressBytes(
           com.google.protobuf.ByteString value) {
@@ -683,18 +712,24 @@ public final class PeerSeedProtos {
       private int port_ ;
       /**
        * <code>required uint32 port = 2;</code>
+       * @return Whether the port field is set.
        */
+      @java.lang.Override
       public boolean hasPort() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @return The port.
        */
+      @java.lang.Override
       public int getPort() {
         return port_;
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
        */
       public Builder setPort(int value) {
         bitField0_ |= 0x00000002;
@@ -704,6 +739,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPort() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -715,18 +751,24 @@ public final class PeerSeedProtos {
       private int services_ ;
       /**
        * <code>required uint32 services = 3;</code>
+       * @return Whether the services field is set.
        */
+      @java.lang.Override
       public boolean hasServices() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>required uint32 services = 3;</code>
+       * @return The services.
        */
+      @java.lang.Override
       public int getServices() {
         return services_;
       }
       /**
        * <code>required uint32 services = 3;</code>
+       * @param value The services to set.
+       * @return This builder for chaining.
        */
       public Builder setServices(int value) {
         bitField0_ |= 0x00000004;
@@ -736,6 +778,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required uint32 services = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearServices() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -830,6 +873,7 @@ public final class PeerSeedProtos {
      * </pre>
      *
      * <code>required uint64 timestamp = 2;</code>
+     * @return Whether the timestamp field is set.
      */
     boolean hasTimestamp();
     /**
@@ -838,19 +882,23 @@ public final class PeerSeedProtos {
      * </pre>
      *
      * <code>required uint64 timestamp = 2;</code>
+     * @return The timestamp.
      */
     long getTimestamp();
 
     /**
      * <code>required string net = 3;</code>
+     * @return Whether the net field is set.
      */
     boolean hasNet();
     /**
      * <code>required string net = 3;</code>
+     * @return The net.
      */
     java.lang.String getNet();
     /**
      * <code>required string net = 3;</code>
+     * @return The bytes for net.
      */
     com.google.protobuf.ByteString
         getNetBytes();
@@ -858,7 +906,7 @@ public final class PeerSeedProtos {
   /**
    * Protobuf type {@code org.bitcoin.crawler.PeerSeeds}
    */
-  public  static final class PeerSeeds extends
+  public static final class PeerSeeds extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.bitcoin.crawler.PeerSeeds)
       PeerSeedsOrBuilder {
@@ -964,12 +1012,14 @@ public final class PeerSeedProtos {
     /**
      * <code>repeated .org.bitcoin.crawler.PeerSeedData seed = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoin.crawler.PeerSeedProtos.PeerSeedData> getSeedList() {
       return seed_;
     }
     /**
      * <code>repeated .org.bitcoin.crawler.PeerSeedData seed = 1;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoin.crawler.PeerSeedProtos.PeerSeedDataOrBuilder> 
         getSeedOrBuilderList() {
       return seed_;
@@ -977,18 +1027,21 @@ public final class PeerSeedProtos {
     /**
      * <code>repeated .org.bitcoin.crawler.PeerSeedData seed = 1;</code>
      */
+    @java.lang.Override
     public int getSeedCount() {
       return seed_.size();
     }
     /**
      * <code>repeated .org.bitcoin.crawler.PeerSeedData seed = 1;</code>
      */
+    @java.lang.Override
     public org.bitcoin.crawler.PeerSeedProtos.PeerSeedData getSeed(int index) {
       return seed_.get(index);
     }
     /**
      * <code>repeated .org.bitcoin.crawler.PeerSeedData seed = 1;</code>
      */
+    @java.lang.Override
     public org.bitcoin.crawler.PeerSeedProtos.PeerSeedDataOrBuilder getSeedOrBuilder(
         int index) {
       return seed_.get(index);
@@ -1002,7 +1055,9 @@ public final class PeerSeedProtos {
      * </pre>
      *
      * <code>required uint64 timestamp = 2;</code>
+     * @return Whether the timestamp field is set.
      */
+    @java.lang.Override
     public boolean hasTimestamp() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -1012,7 +1067,9 @@ public final class PeerSeedProtos {
      * </pre>
      *
      * <code>required uint64 timestamp = 2;</code>
+     * @return The timestamp.
      */
+    @java.lang.Override
     public long getTimestamp() {
       return timestamp_;
     }
@@ -1021,13 +1078,17 @@ public final class PeerSeedProtos {
     private volatile java.lang.Object net_;
     /**
      * <code>required string net = 3;</code>
+     * @return Whether the net field is set.
      */
+    @java.lang.Override
     public boolean hasNet() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required string net = 3;</code>
+     * @return The net.
      */
+    @java.lang.Override
     public java.lang.String getNet() {
       java.lang.Object ref = net_;
       if (ref instanceof java.lang.String) {
@@ -1044,7 +1105,9 @@ public final class PeerSeedProtos {
     }
     /**
      * <code>required string net = 3;</code>
+     * @return The bytes for net.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNetBytes() {
       java.lang.Object ref = net_;
@@ -1087,8 +1150,8 @@ public final class PeerSeedProtos {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      for (PeerSeedData peerSeedData : seed_) {
-        output.writeMessage(1, peerSeedData);
+      for (int i = 0; i < seed_.size(); i++) {
+        output.writeMessage(1, seed_.get(i));
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         output.writeUInt64(2, timestamp_);
@@ -1105,9 +1168,9 @@ public final class PeerSeedProtos {
       if (size != -1) return size;
 
       size = 0;
-      for (PeerSeedData peerSeedData : seed_) {
+      for (int i = 0; i < seed_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-                .computeMessageSize(1, peerSeedData);
+          .computeMessageSize(1, seed_.get(i));
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1727,7 +1790,9 @@ public final class PeerSeedProtos {
        * </pre>
        *
        * <code>required uint64 timestamp = 2;</code>
+       * @return Whether the timestamp field is set.
        */
+      @java.lang.Override
       public boolean hasTimestamp() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -1737,7 +1802,9 @@ public final class PeerSeedProtos {
        * </pre>
        *
        * <code>required uint64 timestamp = 2;</code>
+       * @return The timestamp.
        */
+      @java.lang.Override
       public long getTimestamp() {
         return timestamp_;
       }
@@ -1747,6 +1814,8 @@ public final class PeerSeedProtos {
        * </pre>
        *
        * <code>required uint64 timestamp = 2;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
        */
       public Builder setTimestamp(long value) {
         bitField0_ |= 0x00000002;
@@ -1760,6 +1829,7 @@ public final class PeerSeedProtos {
        * </pre>
        *
        * <code>required uint64 timestamp = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearTimestamp() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1771,12 +1841,14 @@ public final class PeerSeedProtos {
       private java.lang.Object net_ = "";
       /**
        * <code>required string net = 3;</code>
+       * @return Whether the net field is set.
        */
       public boolean hasNet() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>required string net = 3;</code>
+       * @return The net.
        */
       public java.lang.String getNet() {
         java.lang.Object ref = net_;
@@ -1794,6 +1866,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string net = 3;</code>
+       * @return The bytes for net.
        */
       public com.google.protobuf.ByteString
           getNetBytes() {
@@ -1810,6 +1883,8 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string net = 3;</code>
+       * @param value The net to set.
+       * @return This builder for chaining.
        */
       public Builder setNet(
           java.lang.String value) {
@@ -1823,6 +1898,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string net = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearNet() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -1832,6 +1908,8 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required string net = 3;</code>
+       * @param value The bytes for net to set.
+       * @return This builder for chaining.
        */
       public Builder setNetBytes(
           com.google.protobuf.ByteString value) {
@@ -1902,35 +1980,41 @@ public final class PeerSeedProtos {
 
     /**
      * <code>required bytes peer_seeds = 1;</code>
+     * @return Whether the peerSeeds field is set.
      */
     boolean hasPeerSeeds();
     /**
      * <code>required bytes peer_seeds = 1;</code>
+     * @return The peerSeeds.
      */
     com.google.protobuf.ByteString getPeerSeeds();
 
     /**
      * <code>required bytes signature = 2;</code>
+     * @return Whether the signature field is set.
      */
     boolean hasSignature();
     /**
      * <code>required bytes signature = 2;</code>
+     * @return The signature.
      */
     com.google.protobuf.ByteString getSignature();
 
     /**
      * <code>required bytes pubkey = 3;</code>
+     * @return Whether the pubkey field is set.
      */
     boolean hasPubkey();
     /**
      * <code>required bytes pubkey = 3;</code>
+     * @return The pubkey.
      */
     com.google.protobuf.ByteString getPubkey();
   }
   /**
    * Protobuf type {@code org.bitcoin.crawler.SignedPeerSeeds}
    */
-  public  static final class SignedPeerSeeds extends
+  public static final class SignedPeerSeeds extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:org.bitcoin.crawler.SignedPeerSeeds)
       SignedPeerSeedsOrBuilder {
@@ -2028,13 +2112,17 @@ public final class PeerSeedProtos {
     private com.google.protobuf.ByteString peerSeeds_;
     /**
      * <code>required bytes peer_seeds = 1;</code>
+     * @return Whether the peerSeeds field is set.
      */
+    @java.lang.Override
     public boolean hasPeerSeeds() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required bytes peer_seeds = 1;</code>
+     * @return The peerSeeds.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getPeerSeeds() {
       return peerSeeds_;
     }
@@ -2043,13 +2131,17 @@ public final class PeerSeedProtos {
     private com.google.protobuf.ByteString signature_;
     /**
      * <code>required bytes signature = 2;</code>
+     * @return Whether the signature field is set.
      */
+    @java.lang.Override
     public boolean hasSignature() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required bytes signature = 2;</code>
+     * @return The signature.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getSignature() {
       return signature_;
     }
@@ -2058,13 +2150,17 @@ public final class PeerSeedProtos {
     private com.google.protobuf.ByteString pubkey_;
     /**
      * <code>required bytes pubkey = 3;</code>
+     * @return Whether the pubkey field is set.
      */
+    @java.lang.Override
     public boolean hasPubkey() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>required bytes pubkey = 3;</code>
+     * @return The pubkey.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getPubkey() {
       return pubkey_;
     }
@@ -2457,18 +2553,24 @@ public final class PeerSeedProtos {
       private com.google.protobuf.ByteString peerSeeds_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes peer_seeds = 1;</code>
+       * @return Whether the peerSeeds field is set.
        */
+      @java.lang.Override
       public boolean hasPeerSeeds() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required bytes peer_seeds = 1;</code>
+       * @return The peerSeeds.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getPeerSeeds() {
         return peerSeeds_;
       }
       /**
        * <code>required bytes peer_seeds = 1;</code>
+       * @param value The peerSeeds to set.
+       * @return This builder for chaining.
        */
       public Builder setPeerSeeds(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -2481,6 +2583,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required bytes peer_seeds = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPeerSeeds() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -2492,18 +2595,24 @@ public final class PeerSeedProtos {
       private com.google.protobuf.ByteString signature_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes signature = 2;</code>
+       * @return Whether the signature field is set.
        */
+      @java.lang.Override
       public boolean hasSignature() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required bytes signature = 2;</code>
+       * @return The signature.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getSignature() {
         return signature_;
       }
       /**
        * <code>required bytes signature = 2;</code>
+       * @param value The signature to set.
+       * @return This builder for chaining.
        */
       public Builder setSignature(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -2516,6 +2625,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required bytes signature = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSignature() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -2527,18 +2637,24 @@ public final class PeerSeedProtos {
       private com.google.protobuf.ByteString pubkey_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes pubkey = 3;</code>
+       * @return Whether the pubkey field is set.
        */
+      @java.lang.Override
       public boolean hasPubkey() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>required bytes pubkey = 3;</code>
+       * @return The pubkey.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getPubkey() {
         return pubkey_;
       }
       /**
        * <code>required bytes pubkey = 3;</code>
+       * @param value The pubkey to set.
+       * @return This builder for chaining.
        */
       public Builder setPubkey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -2551,6 +2667,7 @@ public final class PeerSeedProtos {
       }
       /**
        * <code>required bytes pubkey = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPubkey() {
         bitField0_ = (bitField0_ & ~0x00000004);

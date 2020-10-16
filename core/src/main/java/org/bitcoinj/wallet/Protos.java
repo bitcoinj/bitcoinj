@@ -20,35 +20,41 @@ public final class Protos {
 
     /**
      * <code>required bytes ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
      */
     boolean hasIpAddress();
     /**
      * <code>required bytes ip_address = 1;</code>
+     * @return The ipAddress.
      */
     com.google.protobuf.ByteString getIpAddress();
 
     /**
      * <code>required uint32 port = 2;</code>
+     * @return Whether the port field is set.
      */
     boolean hasPort();
     /**
      * <code>required uint32 port = 2;</code>
+     * @return The port.
      */
     int getPort();
 
     /**
      * <code>required uint64 services = 3;</code>
+     * @return Whether the services field is set.
      */
     boolean hasServices();
     /**
      * <code>required uint64 services = 3;</code>
+     * @return The services.
      */
     long getServices();
   }
   /**
    * Protobuf type {@code wallet.PeerAddress}
    */
-  public  static final class PeerAddress extends
+  public static final class PeerAddress extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.PeerAddress)
       PeerAddressOrBuilder {
@@ -144,13 +150,17 @@ public final class Protos {
     private com.google.protobuf.ByteString ipAddress_;
     /**
      * <code>required bytes ip_address = 1;</code>
+     * @return Whether the ipAddress field is set.
      */
+    @java.lang.Override
     public boolean hasIpAddress() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required bytes ip_address = 1;</code>
+     * @return The ipAddress.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getIpAddress() {
       return ipAddress_;
     }
@@ -159,13 +169,17 @@ public final class Protos {
     private int port_;
     /**
      * <code>required uint32 port = 2;</code>
+     * @return Whether the port field is set.
      */
+    @java.lang.Override
     public boolean hasPort() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required uint32 port = 2;</code>
+     * @return The port.
      */
+    @java.lang.Override
     public int getPort() {
       return port_;
     }
@@ -174,13 +188,17 @@ public final class Protos {
     private long services_;
     /**
      * <code>required uint64 services = 3;</code>
+     * @return Whether the services field is set.
      */
+    @java.lang.Override
     public boolean hasServices() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>required uint64 services = 3;</code>
+     * @return The services.
      */
+    @java.lang.Override
     public long getServices() {
       return services_;
     }
@@ -574,18 +592,24 @@ public final class Protos {
       private com.google.protobuf.ByteString ipAddress_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes ip_address = 1;</code>
+       * @return Whether the ipAddress field is set.
        */
+      @java.lang.Override
       public boolean hasIpAddress() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required bytes ip_address = 1;</code>
+       * @return The ipAddress.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getIpAddress() {
         return ipAddress_;
       }
       /**
        * <code>required bytes ip_address = 1;</code>
+       * @param value The ipAddress to set.
+       * @return This builder for chaining.
        */
       public Builder setIpAddress(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -598,6 +622,7 @@ public final class Protos {
       }
       /**
        * <code>required bytes ip_address = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearIpAddress() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -609,18 +634,24 @@ public final class Protos {
       private int port_ ;
       /**
        * <code>required uint32 port = 2;</code>
+       * @return Whether the port field is set.
        */
+      @java.lang.Override
       public boolean hasPort() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @return The port.
        */
+      @java.lang.Override
       public int getPort() {
         return port_;
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
        */
       public Builder setPort(int value) {
         bitField0_ |= 0x00000002;
@@ -630,6 +661,7 @@ public final class Protos {
       }
       /**
        * <code>required uint32 port = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPort() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -641,18 +673,24 @@ public final class Protos {
       private long services_ ;
       /**
        * <code>required uint64 services = 3;</code>
+       * @return Whether the services field is set.
        */
+      @java.lang.Override
       public boolean hasServices() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <code>required uint64 services = 3;</code>
+       * @return The services.
        */
+      @java.lang.Override
       public long getServices() {
         return services_;
       }
       /**
        * <code>required uint64 services = 3;</code>
+       * @param value The services to set.
+       * @return This builder for chaining.
        */
       public Builder setServices(long value) {
         bitField0_ |= 0x00000004;
@@ -662,6 +700,7 @@ public final class Protos {
       }
       /**
        * <code>required uint64 services = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearServices() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -732,6 +771,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes initialisation_vector = 1;</code>
+     * @return Whether the initialisationVector field is set.
      */
     boolean hasInitialisationVector();
     /**
@@ -740,6 +780,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes initialisation_vector = 1;</code>
+     * @return The initialisationVector.
      */
     com.google.protobuf.ByteString getInitialisationVector();
 
@@ -749,6 +790,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes encrypted_private_key = 2;</code>
+     * @return Whether the encryptedPrivateKey field is set.
      */
     boolean hasEncryptedPrivateKey();
     /**
@@ -757,13 +799,14 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes encrypted_private_key = 2;</code>
+     * @return The encryptedPrivateKey.
      */
     com.google.protobuf.ByteString getEncryptedPrivateKey();
   }
   /**
    * Protobuf type {@code wallet.EncryptedData}
    */
-  public  static final class EncryptedData extends
+  public static final class EncryptedData extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.EncryptedData)
       EncryptedDataOrBuilder {
@@ -859,7 +902,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes initialisation_vector = 1;</code>
+     * @return Whether the initialisationVector field is set.
      */
+    @java.lang.Override
     public boolean hasInitialisationVector() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -869,7 +914,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes initialisation_vector = 1;</code>
+     * @return The initialisationVector.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getInitialisationVector() {
       return initialisationVector_;
     }
@@ -882,7 +929,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes encrypted_private_key = 2;</code>
+     * @return Whether the encryptedPrivateKey field is set.
      */
+    @java.lang.Override
     public boolean hasEncryptedPrivateKey() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -892,7 +941,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes encrypted_private_key = 2;</code>
+     * @return The encryptedPrivateKey.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getEncryptedPrivateKey() {
       return encryptedPrivateKey_;
     }
@@ -1257,7 +1308,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes initialisation_vector = 1;</code>
+       * @return Whether the initialisationVector field is set.
        */
+      @java.lang.Override
       public boolean hasInitialisationVector() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -1267,7 +1320,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes initialisation_vector = 1;</code>
+       * @return The initialisationVector.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getInitialisationVector() {
         return initialisationVector_;
       }
@@ -1277,6 +1332,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes initialisation_vector = 1;</code>
+       * @param value The initialisationVector to set.
+       * @return This builder for chaining.
        */
       public Builder setInitialisationVector(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1293,6 +1350,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes initialisation_vector = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearInitialisationVector() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1308,7 +1366,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes encrypted_private_key = 2;</code>
+       * @return Whether the encryptedPrivateKey field is set.
        */
+      @java.lang.Override
       public boolean hasEncryptedPrivateKey() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -1318,7 +1378,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes encrypted_private_key = 2;</code>
+       * @return The encryptedPrivateKey.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getEncryptedPrivateKey() {
         return encryptedPrivateKey_;
       }
@@ -1328,6 +1390,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes encrypted_private_key = 2;</code>
+       * @param value The encryptedPrivateKey to set.
+       * @return This builder for chaining.
        */
       public Builder setEncryptedPrivateKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1344,6 +1408,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes encrypted_private_key = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearEncryptedPrivateKey() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1415,6 +1480,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes chain_code = 1;</code>
+     * @return Whether the chainCode field is set.
      */
     boolean hasChainCode();
     /**
@@ -1424,6 +1490,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes chain_code = 1;</code>
+     * @return The chainCode.
      */
     com.google.protobuf.ByteString getChainCode();
 
@@ -1434,6 +1501,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @return A list containing the path.
      */
     java.util.List<java.lang.Integer> getPathList();
     /**
@@ -1443,6 +1511,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @return The count of path.
      */
     int getPathCount();
     /**
@@ -1452,6 +1521,8 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @param index The index of the element to return.
+     * @return The path at the given index.
      */
     int getPath(int index);
 
@@ -1465,6 +1536,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 issued_subkeys = 3;</code>
+     * @return Whether the issuedSubkeys field is set.
      */
     boolean hasIssuedSubkeys();
     /**
@@ -1477,15 +1549,18 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 issued_subkeys = 3;</code>
+     * @return The issuedSubkeys.
      */
     int getIssuedSubkeys();
 
     /**
      * <code>optional uint32 lookahead_size = 4;</code>
+     * @return Whether the lookaheadSize field is set.
      */
     boolean hasLookaheadSize();
     /**
      * <code>optional uint32 lookahead_size = 4;</code>
+     * @return The lookaheadSize.
      */
     int getLookaheadSize();
 
@@ -1498,6 +1573,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
+     * @return Whether the isFollowing field is set.
      */
     boolean hasIsFollowing();
     /**
@@ -1509,6 +1585,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
+     * @return The isFollowing.
      */
     boolean getIsFollowing();
 
@@ -1519,6 +1596,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+     * @return Whether the sigsRequiredToSpend field is set.
      */
     boolean hasSigsRequiredToSpend();
     /**
@@ -1528,6 +1606,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+     * @return The sigsRequiredToSpend.
      */
     int getSigsRequiredToSpend();
   }
@@ -1539,7 +1618,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.DeterministicKey}
    */
-  public  static final class DeterministicKey extends
+  public static final class DeterministicKey extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.DeterministicKey)
       DeterministicKeyOrBuilder {
@@ -1676,7 +1755,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes chain_code = 1;</code>
+     * @return Whether the chainCode field is set.
      */
+    @java.lang.Override
     public boolean hasChainCode() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -1687,7 +1768,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes chain_code = 1;</code>
+     * @return The chainCode.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getChainCode() {
       return chainCode_;
     }
@@ -1701,7 +1784,9 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @return A list containing the path.
      */
+    @java.lang.Override
     public java.util.List<java.lang.Integer>
         getPathList() {
       return path_;
@@ -1713,6 +1798,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @return The count of path.
      */
     public int getPathCount() {
       return path_.size();
@@ -1724,6 +1810,8 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 path = 2;</code>
+     * @param index The index of the element to return.
+     * @return The path at the given index.
      */
     public int getPath(int index) {
       return path_.getInt(index);
@@ -1741,7 +1829,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 issued_subkeys = 3;</code>
+     * @return Whether the issuedSubkeys field is set.
      */
+    @java.lang.Override
     public boolean hasIssuedSubkeys() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -1755,7 +1845,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 issued_subkeys = 3;</code>
+     * @return The issuedSubkeys.
      */
+    @java.lang.Override
     public int getIssuedSubkeys() {
       return issuedSubkeys_;
     }
@@ -1764,13 +1856,17 @@ public final class Protos {
     private int lookaheadSize_;
     /**
      * <code>optional uint32 lookahead_size = 4;</code>
+     * @return Whether the lookaheadSize field is set.
      */
+    @java.lang.Override
     public boolean hasLookaheadSize() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>optional uint32 lookahead_size = 4;</code>
+     * @return The lookaheadSize.
      */
+    @java.lang.Override
     public int getLookaheadSize() {
       return lookaheadSize_;
     }
@@ -1786,7 +1882,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
+     * @return Whether the isFollowing field is set.
      */
+    @java.lang.Override
     public boolean hasIsFollowing() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -1799,7 +1897,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
+     * @return The isFollowing.
      */
+    @java.lang.Override
     public boolean getIsFollowing() {
       return isFollowing_;
     }
@@ -1813,7 +1913,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+     * @return Whether the sigsRequiredToSpend field is set.
      */
+    @java.lang.Override
     public boolean hasSigsRequiredToSpend() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -1824,7 +1926,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+     * @return The sigsRequiredToSpend.
      */
+    @java.lang.Override
     public int getSigsRequiredToSpend() {
       return sigsRequiredToSpend_;
     }
@@ -2299,7 +2403,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes chain_code = 1;</code>
+       * @return Whether the chainCode field is set.
        */
+      @java.lang.Override
       public boolean hasChainCode() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -2310,7 +2416,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes chain_code = 1;</code>
+       * @return The chainCode.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getChainCode() {
         return chainCode_;
       }
@@ -2321,6 +2429,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes chain_code = 1;</code>
+       * @param value The chainCode to set.
+       * @return This builder for chaining.
        */
       public Builder setChainCode(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -2338,6 +2448,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes chain_code = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearChainCode() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -2360,6 +2471,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @return A list containing the path.
        */
       public java.util.List<java.lang.Integer>
           getPathList() {
@@ -2373,6 +2485,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @return The count of path.
        */
       public int getPathCount() {
         return path_.size();
@@ -2384,6 +2497,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @param index The index of the element to return.
+       * @return The path at the given index.
        */
       public int getPath(int index) {
         return path_.getInt(index);
@@ -2395,6 +2510,9 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @param index The index to set the value at.
+       * @param value The path to set.
+       * @return This builder for chaining.
        */
       public Builder setPath(
           int index, int value) {
@@ -2410,6 +2528,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @param value The path to add.
+       * @return This builder for chaining.
        */
       public Builder addPath(int value) {
         ensurePathIsMutable();
@@ -2424,6 +2544,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @param values The path to add.
+       * @return This builder for chaining.
        */
       public Builder addAllPath(
           java.lang.Iterable<? extends java.lang.Integer> values) {
@@ -2440,6 +2562,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 path = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPath() {
         path_ = emptyIntList();
@@ -2459,7 +2582,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 issued_subkeys = 3;</code>
+       * @return Whether the issuedSubkeys field is set.
        */
+      @java.lang.Override
       public boolean hasIssuedSubkeys() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -2473,7 +2598,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 issued_subkeys = 3;</code>
+       * @return The issuedSubkeys.
        */
+      @java.lang.Override
       public int getIssuedSubkeys() {
         return issuedSubkeys_;
       }
@@ -2487,6 +2614,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 issued_subkeys = 3;</code>
+       * @param value The issuedSubkeys to set.
+       * @return This builder for chaining.
        */
       public Builder setIssuedSubkeys(int value) {
         bitField0_ |= 0x00000004;
@@ -2504,6 +2633,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 issued_subkeys = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearIssuedSubkeys() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -2515,18 +2645,24 @@ public final class Protos {
       private int lookaheadSize_ ;
       /**
        * <code>optional uint32 lookahead_size = 4;</code>
+       * @return Whether the lookaheadSize field is set.
        */
+      @java.lang.Override
       public boolean hasLookaheadSize() {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
        * <code>optional uint32 lookahead_size = 4;</code>
+       * @return The lookaheadSize.
        */
+      @java.lang.Override
       public int getLookaheadSize() {
         return lookaheadSize_;
       }
       /**
        * <code>optional uint32 lookahead_size = 4;</code>
+       * @param value The lookaheadSize to set.
+       * @return This builder for chaining.
        */
       public Builder setLookaheadSize(int value) {
         bitField0_ |= 0x00000008;
@@ -2536,6 +2672,7 @@ public final class Protos {
       }
       /**
        * <code>optional uint32 lookahead_size = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLookaheadSize() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -2554,7 +2691,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
+       * @return Whether the isFollowing field is set.
        */
+      @java.lang.Override
       public boolean hasIsFollowing() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -2567,7 +2706,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
+       * @return The isFollowing.
        */
+      @java.lang.Override
       public boolean getIsFollowing() {
         return isFollowing_;
       }
@@ -2580,6 +2721,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
+       * @param value The isFollowing to set.
+       * @return This builder for chaining.
        */
       public Builder setIsFollowing(boolean value) {
         bitField0_ |= 0x00000010;
@@ -2596,6 +2739,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
+       * @return This builder for chaining.
        */
       public Builder clearIsFollowing() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -2612,7 +2756,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+       * @return Whether the sigsRequiredToSpend field is set.
        */
+      @java.lang.Override
       public boolean hasSigsRequiredToSpend() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -2623,7 +2769,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+       * @return The sigsRequiredToSpend.
        */
+      @java.lang.Override
       public int getSigsRequiredToSpend() {
         return sigsRequiredToSpend_;
       }
@@ -2634,6 +2782,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+       * @param value The sigsRequiredToSpend to set.
+       * @return This builder for chaining.
        */
       public Builder setSigsRequiredToSpend(int value) {
         bitField0_ |= 0x00000020;
@@ -2648,6 +2798,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
+       * @return This builder for chaining.
        */
       public Builder clearSigsRequiredToSpend() {
         bitField0_ = (bitField0_ & ~0x00000020);
@@ -2714,10 +2865,12 @@ public final class Protos {
 
     /**
      * <code>required .wallet.Key.Type type = 1;</code>
+     * @return Whether the type field is set.
      */
     boolean hasType();
     /**
      * <code>required .wallet.Key.Type type = 1;</code>
+     * @return The type.
      */
     org.bitcoinj.wallet.Protos.Key.Type getType();
 
@@ -2728,6 +2881,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes secret_bytes = 2;</code>
+     * @return Whether the secretBytes field is set.
      */
     boolean hasSecretBytes();
     /**
@@ -2737,6 +2891,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes secret_bytes = 2;</code>
+     * @return The secretBytes.
      */
     com.google.protobuf.ByteString getSecretBytes();
 
@@ -2746,6 +2901,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+     * @return Whether the encryptedData field is set.
      */
     boolean hasEncryptedData();
     /**
@@ -2754,6 +2910,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+     * @return The encryptedData.
      */
     org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData();
     /**
@@ -2772,6 +2929,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes public_key = 3;</code>
+     * @return Whether the publicKey field is set.
      */
     boolean hasPublicKey();
     /**
@@ -2781,6 +2939,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes public_key = 3;</code>
+     * @return The publicKey.
      */
     com.google.protobuf.ByteString getPublicKey();
 
@@ -2790,6 +2949,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return Whether the label field is set.
      */
     boolean hasLabel();
     /**
@@ -2798,6 +2958,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return The label.
      */
     java.lang.String getLabel();
     /**
@@ -2806,6 +2967,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return The bytes for label.
      */
     com.google.protobuf.ByteString
         getLabelBytes();
@@ -2817,6 +2979,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 creation_timestamp = 5;</code>
+     * @return Whether the creationTimestamp field is set.
      */
     boolean hasCreationTimestamp();
     /**
@@ -2826,15 +2989,18 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 creation_timestamp = 5;</code>
+     * @return The creationTimestamp.
      */
     long getCreationTimestamp();
 
     /**
      * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+     * @return Whether the deterministicKey field is set.
      */
     boolean hasDeterministicKey();
     /**
      * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+     * @return The deterministicKey.
      */
     org.bitcoinj.wallet.Protos.DeterministicKey getDeterministicKey();
     /**
@@ -2849,6 +3015,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes deterministic_seed = 8;</code>
+     * @return Whether the deterministicSeed field is set.
      */
     boolean hasDeterministicSeed();
     /**
@@ -2858,6 +3025,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes deterministic_seed = 8;</code>
+     * @return The deterministicSeed.
      */
     com.google.protobuf.ByteString getDeterministicSeed();
 
@@ -2867,6 +3035,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+     * @return Whether the encryptedDeterministicSeed field is set.
      */
     boolean hasEncryptedDeterministicSeed();
     /**
@@ -2875,6 +3044,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+     * @return The encryptedDeterministicSeed.
      */
     org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed();
     /**
@@ -2892,6 +3062,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @return A list containing the accountPath.
      */
     java.util.List<java.lang.Integer> getAccountPathList();
     /**
@@ -2900,6 +3071,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @return The count of accountPath.
      */
     int getAccountPathCount();
     /**
@@ -2908,6 +3080,8 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @param index The index of the element to return.
+     * @return The accountPath at the given index.
      */
     int getAccountPath(int index);
 
@@ -2917,6 +3091,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     * @return Whether the outputScriptType field is set.
      */
     boolean hasOutputScriptType();
     /**
@@ -2925,6 +3100,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     * @return The outputScriptType.
      */
     org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType();
   }
@@ -2940,7 +3116,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.Key}
    */
-  public  static final class Key extends
+  public static final class Key extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Key)
       KeyOrBuilder {
@@ -3227,6 +3403,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -3234,6 +3412,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Type forNumber(int value) {
         switch (value) {
           case 1: return ORIGINAL;
@@ -3319,6 +3501,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -3326,6 +3510,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static OutputScriptType forNumber(int value) {
         switch (value) {
           case 1: return P2PKH;
@@ -3384,14 +3572,16 @@ public final class Protos {
     private int type_;
     /**
      * <code>required .wallet.Key.Type type = 1;</code>
+     * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .wallet.Key.Type type = 1;</code>
+     * @return The type.
      */
-    public org.bitcoinj.wallet.Protos.Key.Type getType() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.Key.Type getType() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Key.Type result = org.bitcoinj.wallet.Protos.Key.Type.valueOf(type_);
       return result == null ? org.bitcoinj.wallet.Protos.Key.Type.ORIGINAL : result;
@@ -3406,7 +3596,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes secret_bytes = 2;</code>
+     * @return Whether the secretBytes field is set.
      */
+    @java.lang.Override
     public boolean hasSecretBytes() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -3417,7 +3609,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes secret_bytes = 2;</code>
+     * @return The secretBytes.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getSecretBytes() {
       return secretBytes_;
     }
@@ -3430,7 +3624,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+     * @return Whether the encryptedData field is set.
      */
+    @java.lang.Override
     public boolean hasEncryptedData() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -3440,7 +3636,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+     * @return The encryptedData.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData() {
       return encryptedData_ == null ? org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance() : encryptedData_;
     }
@@ -3451,6 +3649,7 @@ public final class Protos {
      *
      * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDataOrBuilder() {
       return encryptedData_ == null ? org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance() : encryptedData_;
     }
@@ -3464,7 +3663,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes public_key = 3;</code>
+     * @return Whether the publicKey field is set.
      */
+    @java.lang.Override
     public boolean hasPublicKey() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -3475,7 +3676,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes public_key = 3;</code>
+     * @return The publicKey.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getPublicKey() {
       return publicKey_;
     }
@@ -3488,7 +3691,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return Whether the label field is set.
      */
+    @java.lang.Override
     public boolean hasLabel() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -3498,7 +3703,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return The label.
      */
+    @java.lang.Override
     public java.lang.String getLabel() {
       java.lang.Object ref = label_;
       if (ref instanceof java.lang.String) {
@@ -3519,7 +3726,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string label = 4;</code>
+     * @return The bytes for label.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getLabelBytes() {
       java.lang.Object ref = label_;
@@ -3543,7 +3752,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 creation_timestamp = 5;</code>
+     * @return Whether the creationTimestamp field is set.
      */
+    @java.lang.Override
     public boolean hasCreationTimestamp() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -3554,7 +3765,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 creation_timestamp = 5;</code>
+     * @return The creationTimestamp.
      */
+    @java.lang.Override
     public long getCreationTimestamp() {
       return creationTimestamp_;
     }
@@ -3563,19 +3776,24 @@ public final class Protos {
     private org.bitcoinj.wallet.Protos.DeterministicKey deterministicKey_;
     /**
      * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+     * @return Whether the deterministicKey field is set.
      */
+    @java.lang.Override
     public boolean hasDeterministicKey() {
       return ((bitField0_ & 0x00000040) != 0);
     }
     /**
      * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+     * @return The deterministicKey.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.DeterministicKey getDeterministicKey() {
       return deterministicKey_ == null ? org.bitcoinj.wallet.Protos.DeterministicKey.getDefaultInstance() : deterministicKey_;
     }
     /**
      * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.DeterministicKeyOrBuilder getDeterministicKeyOrBuilder() {
       return deterministicKey_ == null ? org.bitcoinj.wallet.Protos.DeterministicKey.getDefaultInstance() : deterministicKey_;
     }
@@ -3589,7 +3807,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes deterministic_seed = 8;</code>
+     * @return Whether the deterministicSeed field is set.
      */
+    @java.lang.Override
     public boolean hasDeterministicSeed() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -3600,7 +3820,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes deterministic_seed = 8;</code>
+     * @return The deterministicSeed.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getDeterministicSeed() {
       return deterministicSeed_;
     }
@@ -3613,7 +3835,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+     * @return Whether the encryptedDeterministicSeed field is set.
      */
+    @java.lang.Override
     public boolean hasEncryptedDeterministicSeed() {
       return ((bitField0_ & 0x00000100) != 0);
     }
@@ -3623,7 +3847,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+     * @return The encryptedDeterministicSeed.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed() {
       return encryptedDeterministicSeed_ == null ? org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance() : encryptedDeterministicSeed_;
     }
@@ -3634,6 +3860,7 @@ public final class Protos {
      *
      * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.EncryptedDataOrBuilder getEncryptedDeterministicSeedOrBuilder() {
       return encryptedDeterministicSeed_ == null ? org.bitcoinj.wallet.Protos.EncryptedData.getDefaultInstance() : encryptedDeterministicSeed_;
     }
@@ -3646,7 +3873,9 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @return A list containing the accountPath.
      */
+    @java.lang.Override
     public java.util.List<java.lang.Integer>
         getAccountPathList() {
       return accountPath_;
@@ -3657,6 +3886,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @return The count of accountPath.
      */
     public int getAccountPathCount() {
       return accountPath_.size();
@@ -3667,6 +3897,8 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated uint32 account_path = 10 [packed = true];</code>
+     * @param index The index of the element to return.
+     * @return The accountPath at the given index.
      */
     public int getAccountPath(int index) {
       return accountPath_.getInt(index);
@@ -3681,8 +3913,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     * @return Whether the outputScriptType field is set.
      */
-    public boolean hasOutputScriptType() {
+    @java.lang.Override public boolean hasOutputScriptType() {
       return ((bitField0_ & 0x00000200) != 0);
     }
     /**
@@ -3691,8 +3924,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+     * @return The outputScriptType.
      */
-    public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
       return result == null ? org.bitcoinj.wallet.Protos.Key.OutputScriptType.P2PKH : result;
@@ -4361,13 +4595,16 @@ public final class Protos {
       private int type_ = 1;
       /**
        * <code>required .wallet.Key.Type type = 1;</code>
+       * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required .wallet.Key.Type type = 1;</code>
+       * @return The type.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Key.Type getType() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Key.Type result = org.bitcoinj.wallet.Protos.Key.Type.valueOf(type_);
@@ -4375,6 +4612,8 @@ public final class Protos {
       }
       /**
        * <code>required .wallet.Key.Type type = 1;</code>
+       * @param value The type to set.
+       * @return This builder for chaining.
        */
       public Builder setType(org.bitcoinj.wallet.Protos.Key.Type value) {
         if (value == null) {
@@ -4387,6 +4626,7 @@ public final class Protos {
       }
       /**
        * <code>required .wallet.Key.Type type = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearType() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -4403,7 +4643,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes secret_bytes = 2;</code>
+       * @return Whether the secretBytes field is set.
        */
+      @java.lang.Override
       public boolean hasSecretBytes() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -4414,7 +4656,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes secret_bytes = 2;</code>
+       * @return The secretBytes.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getSecretBytes() {
         return secretBytes_;
       }
@@ -4425,6 +4669,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes secret_bytes = 2;</code>
+       * @param value The secretBytes to set.
+       * @return This builder for chaining.
        */
       public Builder setSecretBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -4442,6 +4688,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes secret_bytes = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSecretBytes() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -4459,6 +4706,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+       * @return Whether the encryptedData field is set.
        */
       public boolean hasEncryptedData() {
         return ((bitField0_ & 0x00000004) != 0);
@@ -4469,6 +4717,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.EncryptedData encrypted_data = 6;</code>
+       * @return The encryptedData.
        */
       public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedData() {
         if (encryptedDataBuilder_ == null) {
@@ -4612,7 +4861,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes public_key = 3;</code>
+       * @return Whether the publicKey field is set.
        */
+      @java.lang.Override
       public boolean hasPublicKey() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -4623,7 +4874,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes public_key = 3;</code>
+       * @return The publicKey.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getPublicKey() {
         return publicKey_;
       }
@@ -4634,6 +4887,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes public_key = 3;</code>
+       * @param value The publicKey to set.
+       * @return This builder for chaining.
        */
       public Builder setPublicKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -4651,6 +4906,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes public_key = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPublicKey() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -4666,6 +4922,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @return Whether the label field is set.
        */
       public boolean hasLabel() {
         return ((bitField0_ & 0x00000010) != 0);
@@ -4676,6 +4933,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @return The label.
        */
       public java.lang.String getLabel() {
         java.lang.Object ref = label_;
@@ -4697,6 +4955,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @return The bytes for label.
        */
       public com.google.protobuf.ByteString
           getLabelBytes() {
@@ -4717,6 +4976,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @param value The label to set.
+       * @return This builder for chaining.
        */
       public Builder setLabel(
           java.lang.String value) {
@@ -4734,6 +4995,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLabel() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -4747,6 +5009,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string label = 4;</code>
+       * @param value The bytes for label to set.
+       * @return This builder for chaining.
        */
       public Builder setLabelBytes(
           com.google.protobuf.ByteString value) {
@@ -4767,7 +5031,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 creation_timestamp = 5;</code>
+       * @return Whether the creationTimestamp field is set.
        */
+      @java.lang.Override
       public boolean hasCreationTimestamp() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -4778,7 +5044,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 creation_timestamp = 5;</code>
+       * @return The creationTimestamp.
        */
+      @java.lang.Override
       public long getCreationTimestamp() {
         return creationTimestamp_;
       }
@@ -4789,6 +5057,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 creation_timestamp = 5;</code>
+       * @param value The creationTimestamp to set.
+       * @return This builder for chaining.
        */
       public Builder setCreationTimestamp(long value) {
         bitField0_ |= 0x00000020;
@@ -4803,6 +5073,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 creation_timestamp = 5;</code>
+       * @return This builder for chaining.
        */
       public Builder clearCreationTimestamp() {
         bitField0_ = (bitField0_ & ~0x00000020);
@@ -4816,12 +5087,14 @@ public final class Protos {
           org.bitcoinj.wallet.Protos.DeterministicKey, org.bitcoinj.wallet.Protos.DeterministicKey.Builder, org.bitcoinj.wallet.Protos.DeterministicKeyOrBuilder> deterministicKeyBuilder_;
       /**
        * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+       * @return Whether the deterministicKey field is set.
        */
       public boolean hasDeterministicKey() {
         return ((bitField0_ & 0x00000040) != 0);
       }
       /**
        * <code>optional .wallet.DeterministicKey deterministic_key = 7;</code>
+       * @return The deterministicKey.
        */
       public org.bitcoinj.wallet.Protos.DeterministicKey getDeterministicKey() {
         if (deterministicKeyBuilder_ == null) {
@@ -4937,7 +5210,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes deterministic_seed = 8;</code>
+       * @return Whether the deterministicSeed field is set.
        */
+      @java.lang.Override
       public boolean hasDeterministicSeed() {
         return ((bitField0_ & 0x00000080) != 0);
       }
@@ -4948,7 +5223,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes deterministic_seed = 8;</code>
+       * @return The deterministicSeed.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getDeterministicSeed() {
         return deterministicSeed_;
       }
@@ -4959,6 +5236,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes deterministic_seed = 8;</code>
+       * @param value The deterministicSeed to set.
+       * @return This builder for chaining.
        */
       public Builder setDeterministicSeed(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -4976,6 +5255,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes deterministic_seed = 8;</code>
+       * @return This builder for chaining.
        */
       public Builder clearDeterministicSeed() {
         bitField0_ = (bitField0_ & ~0x00000080);
@@ -4993,6 +5273,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+       * @return Whether the encryptedDeterministicSeed field is set.
        */
       public boolean hasEncryptedDeterministicSeed() {
         return ((bitField0_ & 0x00000100) != 0);
@@ -5003,6 +5284,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.EncryptedData encrypted_deterministic_seed = 9;</code>
+       * @return The encryptedDeterministicSeed.
        */
       public org.bitcoinj.wallet.Protos.EncryptedData getEncryptedDeterministicSeed() {
         if (encryptedDeterministicSeedBuilder_ == null) {
@@ -5151,6 +5433,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @return A list containing the accountPath.
        */
       public java.util.List<java.lang.Integer>
           getAccountPathList() {
@@ -5163,6 +5446,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @return The count of accountPath.
        */
       public int getAccountPathCount() {
         return accountPath_.size();
@@ -5173,6 +5457,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @param index The index of the element to return.
+       * @return The accountPath at the given index.
        */
       public int getAccountPath(int index) {
         return accountPath_.getInt(index);
@@ -5183,6 +5469,9 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @param index The index to set the value at.
+       * @param value The accountPath to set.
+       * @return This builder for chaining.
        */
       public Builder setAccountPath(
           int index, int value) {
@@ -5197,6 +5486,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @param value The accountPath to add.
+       * @return This builder for chaining.
        */
       public Builder addAccountPath(int value) {
         ensureAccountPathIsMutable();
@@ -5210,6 +5501,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @param values The accountPath to add.
+       * @return This builder for chaining.
        */
       public Builder addAllAccountPath(
           java.lang.Iterable<? extends java.lang.Integer> values) {
@@ -5225,6 +5518,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated uint32 account_path = 10 [packed = true];</code>
+       * @return This builder for chaining.
        */
       public Builder clearAccountPath() {
         accountPath_ = emptyIntList();
@@ -5240,8 +5534,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       * @return Whether the outputScriptType field is set.
        */
-      public boolean hasOutputScriptType() {
+      @java.lang.Override public boolean hasOutputScriptType() {
         return ((bitField0_ & 0x00000400) != 0);
       }
       /**
@@ -5250,7 +5545,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       * @return The outputScriptType.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Key.OutputScriptType getOutputScriptType() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Key.OutputScriptType result = org.bitcoinj.wallet.Protos.Key.OutputScriptType.valueOf(outputScriptType_);
@@ -5262,6 +5559,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       * @param value The outputScriptType to set.
+       * @return This builder for chaining.
        */
       public Builder setOutputScriptType(org.bitcoinj.wallet.Protos.Key.OutputScriptType value) {
         if (value == null) {
@@ -5278,6 +5577,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Key.OutputScriptType output_script_type = 11;</code>
+       * @return This builder for chaining.
        */
       public Builder clearOutputScriptType() {
         bitField0_ = (bitField0_ & ~0x00000400);
@@ -5344,10 +5644,12 @@ public final class Protos {
 
     /**
      * <code>required bytes program = 1;</code>
+     * @return Whether the program field is set.
      */
     boolean hasProgram();
     /**
      * <code>required bytes program = 1;</code>
+     * @return The program.
      */
     com.google.protobuf.ByteString getProgram();
 
@@ -5358,6 +5660,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 creation_timestamp = 2;</code>
+     * @return Whether the creationTimestamp field is set.
      */
     boolean hasCreationTimestamp();
     /**
@@ -5367,13 +5670,14 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 creation_timestamp = 2;</code>
+     * @return The creationTimestamp.
      */
     long getCreationTimestamp();
   }
   /**
    * Protobuf type {@code wallet.Script}
    */
-  public  static final class Script extends
+  public static final class Script extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Script)
       ScriptOrBuilder {
@@ -5464,13 +5768,17 @@ public final class Protos {
     private com.google.protobuf.ByteString program_;
     /**
      * <code>required bytes program = 1;</code>
+     * @return Whether the program field is set.
      */
+    @java.lang.Override
     public boolean hasProgram() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required bytes program = 1;</code>
+     * @return The program.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getProgram() {
       return program_;
     }
@@ -5484,7 +5792,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 creation_timestamp = 2;</code>
+     * @return Whether the creationTimestamp field is set.
      */
+    @java.lang.Override
     public boolean hasCreationTimestamp() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -5495,7 +5805,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 creation_timestamp = 2;</code>
+     * @return The creationTimestamp.
      */
+    @java.lang.Override
     public long getCreationTimestamp() {
       return creationTimestamp_;
     }
@@ -5857,18 +6169,24 @@ public final class Protos {
       private com.google.protobuf.ByteString program_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes program = 1;</code>
+       * @return Whether the program field is set.
        */
+      @java.lang.Override
       public boolean hasProgram() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required bytes program = 1;</code>
+       * @return The program.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getProgram() {
         return program_;
       }
       /**
        * <code>required bytes program = 1;</code>
+       * @param value The program to set.
+       * @return This builder for chaining.
        */
       public Builder setProgram(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -5881,6 +6199,7 @@ public final class Protos {
       }
       /**
        * <code>required bytes program = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearProgram() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -5897,7 +6216,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 creation_timestamp = 2;</code>
+       * @return Whether the creationTimestamp field is set.
        */
+      @java.lang.Override
       public boolean hasCreationTimestamp() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -5908,7 +6229,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 creation_timestamp = 2;</code>
+       * @return The creationTimestamp.
        */
+      @java.lang.Override
       public long getCreationTimestamp() {
         return creationTimestamp_;
       }
@@ -5919,6 +6242,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 creation_timestamp = 2;</code>
+       * @param value The creationTimestamp to set.
+       * @return This builder for chaining.
        */
       public Builder setCreationTimestamp(long value) {
         bitField0_ |= 0x00000002;
@@ -5933,6 +6258,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 creation_timestamp = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearCreationTimestamp() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -5999,21 +6325,25 @@ public final class Protos {
 
     /**
      * <code>repeated bytes data = 1;</code>
+     * @return A list containing the data.
      */
     java.util.List<com.google.protobuf.ByteString> getDataList();
     /**
      * <code>repeated bytes data = 1;</code>
+     * @return The count of data.
      */
     int getDataCount();
     /**
      * <code>repeated bytes data = 1;</code>
+     * @param index The index of the element to return.
+     * @return The data at the given index.
      */
     com.google.protobuf.ByteString getData(int index);
   }
   /**
    * Protobuf type {@code wallet.ScriptWitness}
    */
-  public  static final class ScriptWitness extends
+  public static final class ScriptWitness extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ScriptWitness)
       ScriptWitnessOrBuilder {
@@ -6104,19 +6434,24 @@ public final class Protos {
     private java.util.List<com.google.protobuf.ByteString> data_;
     /**
      * <code>repeated bytes data = 1;</code>
+     * @return A list containing the data.
      */
+    @java.lang.Override
     public java.util.List<com.google.protobuf.ByteString>
         getDataList() {
       return data_;
     }
     /**
      * <code>repeated bytes data = 1;</code>
+     * @return The count of data.
      */
     public int getDataCount() {
       return data_.size();
     }
     /**
      * <code>repeated bytes data = 1;</code>
+     * @param index The index of the element to return.
+     * @return The data at the given index.
      */
     public com.google.protobuf.ByteString getData(int index) {
       return data_.get(index);
@@ -6453,6 +6788,7 @@ public final class Protos {
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @return A list containing the data.
        */
       public java.util.List<com.google.protobuf.ByteString>
           getDataList() {
@@ -6461,18 +6797,24 @@ public final class Protos {
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @return The count of data.
        */
       public int getDataCount() {
         return data_.size();
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @param index The index of the element to return.
+       * @return The data at the given index.
        */
       public com.google.protobuf.ByteString getData(int index) {
         return data_.get(index);
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @param index The index to set the value at.
+       * @param value The data to set.
+       * @return This builder for chaining.
        */
       public Builder setData(
           int index, com.google.protobuf.ByteString value) {
@@ -6486,6 +6828,8 @@ public final class Protos {
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @param value The data to add.
+       * @return This builder for chaining.
        */
       public Builder addData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -6498,6 +6842,8 @@ public final class Protos {
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @param values The data to add.
+       * @return This builder for chaining.
        */
       public Builder addAllData(
           java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
@@ -6509,6 +6855,7 @@ public final class Protos {
       }
       /**
        * <code>repeated bytes data = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearData() {
         data_ = java.util.Collections.emptyList();
@@ -6579,6 +6926,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes transaction_out_point_hash = 1;</code>
+     * @return Whether the transactionOutPointHash field is set.
      */
     boolean hasTransactionOutPointHash();
     /**
@@ -6587,6 +6935,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes transaction_out_point_hash = 1;</code>
+     * @return The transactionOutPointHash.
      */
     com.google.protobuf.ByteString getTransactionOutPointHash();
 
@@ -6596,6 +6945,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required uint32 transaction_out_point_index = 2;</code>
+     * @return Whether the transactionOutPointIndex field is set.
      */
     boolean hasTransactionOutPointIndex();
     /**
@@ -6604,6 +6954,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required uint32 transaction_out_point_index = 2;</code>
+     * @return The transactionOutPointIndex.
      */
     int getTransactionOutPointIndex();
 
@@ -6613,6 +6964,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 3;</code>
+     * @return Whether the scriptBytes field is set.
      */
     boolean hasScriptBytes();
     /**
@@ -6621,6 +6973,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 3;</code>
+     * @return The scriptBytes.
      */
     com.google.protobuf.ByteString getScriptBytes();
 
@@ -6630,6 +6983,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sequence = 4;</code>
+     * @return Whether the sequence field is set.
      */
     boolean hasSequence();
     /**
@@ -6638,6 +6992,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sequence = 4;</code>
+     * @return The sequence.
      */
     int getSequence();
 
@@ -6647,6 +7002,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 value = 5;</code>
+     * @return Whether the value field is set.
      */
     boolean hasValue();
     /**
@@ -6655,6 +7011,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 value = 5;</code>
+     * @return The value.
      */
     long getValue();
 
@@ -6664,6 +7021,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     * @return Whether the witness field is set.
      */
     boolean hasWitness();
     /**
@@ -6672,6 +7030,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     * @return The witness.
      */
     org.bitcoinj.wallet.Protos.ScriptWitness getWitness();
     /**
@@ -6686,7 +7045,7 @@ public final class Protos {
   /**
    * Protobuf type {@code wallet.TransactionInput}
    */
-  public  static final class TransactionInput extends
+  public static final class TransactionInput extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionInput)
       TransactionInputOrBuilder {
@@ -6810,7 +7169,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes transaction_out_point_hash = 1;</code>
+     * @return Whether the transactionOutPointHash field is set.
      */
+    @java.lang.Override
     public boolean hasTransactionOutPointHash() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -6820,7 +7181,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes transaction_out_point_hash = 1;</code>
+     * @return The transactionOutPointHash.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getTransactionOutPointHash() {
       return transactionOutPointHash_;
     }
@@ -6833,7 +7196,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required uint32 transaction_out_point_index = 2;</code>
+     * @return Whether the transactionOutPointIndex field is set.
      */
+    @java.lang.Override
     public boolean hasTransactionOutPointIndex() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -6843,7 +7208,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required uint32 transaction_out_point_index = 2;</code>
+     * @return The transactionOutPointIndex.
      */
+    @java.lang.Override
     public int getTransactionOutPointIndex() {
       return transactionOutPointIndex_;
     }
@@ -6856,7 +7223,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 3;</code>
+     * @return Whether the scriptBytes field is set.
      */
+    @java.lang.Override
     public boolean hasScriptBytes() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -6866,7 +7235,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 3;</code>
+     * @return The scriptBytes.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getScriptBytes() {
       return scriptBytes_;
     }
@@ -6879,7 +7250,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sequence = 4;</code>
+     * @return Whether the sequence field is set.
      */
+    @java.lang.Override
     public boolean hasSequence() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -6889,7 +7262,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 sequence = 4;</code>
+     * @return The sequence.
      */
+    @java.lang.Override
     public int getSequence() {
       return sequence_;
     }
@@ -6902,7 +7277,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 value = 5;</code>
+     * @return Whether the value field is set.
      */
+    @java.lang.Override
     public boolean hasValue() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -6912,7 +7289,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 value = 5;</code>
+     * @return The value.
      */
+    @java.lang.Override
     public long getValue() {
       return value_;
     }
@@ -6925,7 +7304,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     * @return Whether the witness field is set.
      */
+    @java.lang.Override
     public boolean hasWitness() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -6935,7 +7316,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ScriptWitness witness = 6;</code>
+     * @return The witness.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScriptWitness getWitness() {
       return witness_ == null ? org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance() : witness_;
     }
@@ -6946,6 +7329,7 @@ public final class Protos {
      *
      * <code>optional .wallet.ScriptWitness witness = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScriptWitnessOrBuilder getWitnessOrBuilder() {
       return witness_ == null ? org.bitcoinj.wallet.Protos.ScriptWitness.getDefaultInstance() : witness_;
     }
@@ -7427,7 +7811,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes transaction_out_point_hash = 1;</code>
+       * @return Whether the transactionOutPointHash field is set.
        */
+      @java.lang.Override
       public boolean hasTransactionOutPointHash() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -7437,7 +7823,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes transaction_out_point_hash = 1;</code>
+       * @return The transactionOutPointHash.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getTransactionOutPointHash() {
         return transactionOutPointHash_;
       }
@@ -7447,6 +7835,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes transaction_out_point_hash = 1;</code>
+       * @param value The transactionOutPointHash to set.
+       * @return This builder for chaining.
        */
       public Builder setTransactionOutPointHash(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -7463,6 +7853,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes transaction_out_point_hash = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearTransactionOutPointHash() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -7478,7 +7869,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required uint32 transaction_out_point_index = 2;</code>
+       * @return Whether the transactionOutPointIndex field is set.
        */
+      @java.lang.Override
       public boolean hasTransactionOutPointIndex() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -7488,7 +7881,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required uint32 transaction_out_point_index = 2;</code>
+       * @return The transactionOutPointIndex.
        */
+      @java.lang.Override
       public int getTransactionOutPointIndex() {
         return transactionOutPointIndex_;
       }
@@ -7498,6 +7893,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required uint32 transaction_out_point_index = 2;</code>
+       * @param value The transactionOutPointIndex to set.
+       * @return This builder for chaining.
        */
       public Builder setTransactionOutPointIndex(int value) {
         bitField0_ |= 0x00000002;
@@ -7511,6 +7908,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required uint32 transaction_out_point_index = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearTransactionOutPointIndex() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -7526,7 +7924,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 3;</code>
+       * @return Whether the scriptBytes field is set.
        */
+      @java.lang.Override
       public boolean hasScriptBytes() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -7536,7 +7936,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 3;</code>
+       * @return The scriptBytes.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getScriptBytes() {
         return scriptBytes_;
       }
@@ -7546,6 +7948,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 3;</code>
+       * @param value The scriptBytes to set.
+       * @return This builder for chaining.
        */
       public Builder setScriptBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -7562,6 +7966,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearScriptBytes() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -7577,7 +7982,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sequence = 4;</code>
+       * @return Whether the sequence field is set.
        */
+      @java.lang.Override
       public boolean hasSequence() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -7587,7 +7994,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sequence = 4;</code>
+       * @return The sequence.
        */
+      @java.lang.Override
       public int getSequence() {
         return sequence_;
       }
@@ -7597,6 +8006,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sequence = 4;</code>
+       * @param value The sequence to set.
+       * @return This builder for chaining.
        */
       public Builder setSequence(int value) {
         bitField0_ |= 0x00000008;
@@ -7610,6 +8021,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 sequence = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSequence() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -7625,7 +8037,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 value = 5;</code>
+       * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -7635,7 +8049,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 value = 5;</code>
+       * @return The value.
        */
+      @java.lang.Override
       public long getValue() {
         return value_;
       }
@@ -7645,6 +8061,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 value = 5;</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
        */
       public Builder setValue(long value) {
         bitField0_ |= 0x00000010;
@@ -7658,6 +8076,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 value = 5;</code>
+       * @return This builder for chaining.
        */
       public Builder clearValue() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -7675,6 +8094,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       * @return Whether the witness field is set.
        */
       public boolean hasWitness() {
         return ((bitField0_ & 0x00000020) != 0);
@@ -7685,6 +8105,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.ScriptWitness witness = 6;</code>
+       * @return The witness.
        */
       public org.bitcoinj.wallet.Protos.ScriptWitness getWitness() {
         if (witnessBuilder_ == null) {
@@ -7878,10 +8299,12 @@ public final class Protos {
 
     /**
      * <code>required int64 value = 1;</code>
+     * @return Whether the value field is set.
      */
     boolean hasValue();
     /**
      * <code>required int64 value = 1;</code>
+     * @return The value.
      */
     long getValue();
 
@@ -7891,6 +8314,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 2;</code>
+     * @return Whether the scriptBytes field is set.
      */
     boolean hasScriptBytes();
     /**
@@ -7899,6 +8323,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 2;</code>
+     * @return The scriptBytes.
      */
     com.google.protobuf.ByteString getScriptBytes();
 
@@ -7908,6 +8333,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes spent_by_transaction_hash = 3;</code>
+     * @return Whether the spentByTransactionHash field is set.
      */
     boolean hasSpentByTransactionHash();
     /**
@@ -7916,6 +8342,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes spent_by_transaction_hash = 3;</code>
+     * @return The spentByTransactionHash.
      */
     com.google.protobuf.ByteString getSpentByTransactionHash();
 
@@ -7925,6 +8352,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 spent_by_transaction_index = 4;</code>
+     * @return Whether the spentByTransactionIndex field is set.
      */
     boolean hasSpentByTransactionIndex();
     /**
@@ -7933,13 +8361,14 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 spent_by_transaction_index = 4;</code>
+     * @return The spentByTransactionIndex.
      */
     int getSpentByTransactionIndex();
   }
   /**
    * Protobuf type {@code wallet.TransactionOutput}
    */
-  public  static final class TransactionOutput extends
+  public static final class TransactionOutput extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionOutput)
       TransactionOutputOrBuilder {
@@ -8041,13 +8470,17 @@ public final class Protos {
     private long value_;
     /**
      * <code>required int64 value = 1;</code>
+     * @return Whether the value field is set.
      */
+    @java.lang.Override
     public boolean hasValue() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required int64 value = 1;</code>
+     * @return The value.
      */
+    @java.lang.Override
     public long getValue() {
       return value_;
     }
@@ -8060,7 +8493,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 2;</code>
+     * @return Whether the scriptBytes field is set.
      */
+    @java.lang.Override
     public boolean hasScriptBytes() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -8070,7 +8505,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes script_bytes = 2;</code>
+     * @return The scriptBytes.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getScriptBytes() {
       return scriptBytes_;
     }
@@ -8083,7 +8520,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes spent_by_transaction_hash = 3;</code>
+     * @return Whether the spentByTransactionHash field is set.
      */
+    @java.lang.Override
     public boolean hasSpentByTransactionHash() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -8093,7 +8532,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes spent_by_transaction_hash = 3;</code>
+     * @return The spentByTransactionHash.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getSpentByTransactionHash() {
       return spentByTransactionHash_;
     }
@@ -8106,7 +8547,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 spent_by_transaction_index = 4;</code>
+     * @return Whether the spentByTransactionIndex field is set.
      */
+    @java.lang.Override
     public boolean hasSpentByTransactionIndex() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -8116,7 +8559,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 spent_by_transaction_index = 4;</code>
+     * @return The spentByTransactionIndex.
      */
+    @java.lang.Override
     public int getSpentByTransactionIndex() {
       return spentByTransactionIndex_;
     }
@@ -8528,18 +8973,24 @@ public final class Protos {
       private long value_ ;
       /**
        * <code>required int64 value = 1;</code>
+       * @return Whether the value field is set.
        */
+      @java.lang.Override
       public boolean hasValue() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required int64 value = 1;</code>
+       * @return The value.
        */
+      @java.lang.Override
       public long getValue() {
         return value_;
       }
       /**
        * <code>required int64 value = 1;</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
        */
       public Builder setValue(long value) {
         bitField0_ |= 0x00000001;
@@ -8549,6 +9000,7 @@ public final class Protos {
       }
       /**
        * <code>required int64 value = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearValue() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -8564,7 +9016,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 2;</code>
+       * @return Whether the scriptBytes field is set.
        */
+      @java.lang.Override
       public boolean hasScriptBytes() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -8574,7 +9028,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 2;</code>
+       * @return The scriptBytes.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getScriptBytes() {
         return scriptBytes_;
       }
@@ -8584,6 +9040,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 2;</code>
+       * @param value The scriptBytes to set.
+       * @return This builder for chaining.
        */
       public Builder setScriptBytes(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -8600,6 +9058,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes script_bytes = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearScriptBytes() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -8615,7 +9074,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes spent_by_transaction_hash = 3;</code>
+       * @return Whether the spentByTransactionHash field is set.
        */
+      @java.lang.Override
       public boolean hasSpentByTransactionHash() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -8625,7 +9086,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes spent_by_transaction_hash = 3;</code>
+       * @return The spentByTransactionHash.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getSpentByTransactionHash() {
         return spentByTransactionHash_;
       }
@@ -8635,6 +9098,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes spent_by_transaction_hash = 3;</code>
+       * @param value The spentByTransactionHash to set.
+       * @return This builder for chaining.
        */
       public Builder setSpentByTransactionHash(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -8651,6 +9116,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes spent_by_transaction_hash = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSpentByTransactionHash() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -8666,7 +9132,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 spent_by_transaction_index = 4;</code>
+       * @return Whether the spentByTransactionIndex field is set.
        */
+      @java.lang.Override
       public boolean hasSpentByTransactionIndex() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -8676,7 +9144,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 spent_by_transaction_index = 4;</code>
+       * @return The spentByTransactionIndex.
        */
+      @java.lang.Override
       public int getSpentByTransactionIndex() {
         return spentByTransactionIndex_;
       }
@@ -8686,6 +9156,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 spent_by_transaction_index = 4;</code>
+       * @param value The spentByTransactionIndex to set.
+       * @return This builder for chaining.
        */
       public Builder setSpentByTransactionIndex(int value) {
         bitField0_ |= 0x00000008;
@@ -8699,6 +9171,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 spent_by_transaction_index = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSpentByTransactionIndex() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -8769,6 +9242,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+     * @return Whether the type field is set.
      */
     boolean hasType();
     /**
@@ -8777,6 +9251,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+     * @return The type.
      */
     org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType();
 
@@ -8786,6 +9261,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 appeared_at_height = 2;</code>
+     * @return Whether the appearedAtHeight field is set.
      */
     boolean hasAppearedAtHeight();
     /**
@@ -8794,6 +9270,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 appeared_at_height = 2;</code>
+     * @return The appearedAtHeight.
      */
     int getAppearedAtHeight();
 
@@ -8805,6 +9282,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes overriding_transaction = 3;</code>
+     * @return Whether the overridingTransaction field is set.
      */
     boolean hasOverridingTransaction();
     /**
@@ -8815,6 +9293,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes overriding_transaction = 3;</code>
+     * @return The overridingTransaction.
      */
     com.google.protobuf.ByteString getOverridingTransaction();
 
@@ -8825,6 +9304,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 depth = 4;</code>
+     * @return Whether the depth field is set.
      */
     boolean hasDepth();
     /**
@@ -8834,6 +9314,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 depth = 4;</code>
+     * @return The depth.
      */
     int getDepth();
 
@@ -8867,6 +9348,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 last_broadcasted_at = 8;</code>
+     * @return Whether the lastBroadcastedAt field is set.
      */
     boolean hasLastBroadcastedAt();
     /**
@@ -8875,15 +9357,18 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 last_broadcasted_at = 8;</code>
+     * @return The lastBroadcastedAt.
      */
     long getLastBroadcastedAt();
 
     /**
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+     * @return Whether the source field is set.
      */
     boolean hasSource();
     /**
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+     * @return The source.
      */
     org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource();
   }
@@ -8897,7 +9382,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.TransactionConfidence}
    */
-  public  static final class TransactionConfidence extends
+  public static final class TransactionConfidence extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.TransactionConfidence)
       TransactionConfidenceOrBuilder {
@@ -9142,6 +9627,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -9149,6 +9636,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Type forNumber(int value) {
         switch (value) {
           case 0: return UNKNOWN;
@@ -9272,6 +9763,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -9279,6 +9772,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Source forNumber(int value) {
         switch (value) {
           case 0: return SOURCE_UNKNOWN;
@@ -9342,8 +9839,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+     * @return Whether the type field is set.
      */
-    public boolean hasType() {
+    @java.lang.Override public boolean hasType() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
@@ -9352,8 +9850,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+     * @return The type.
      */
-    public org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.TransactionConfidence.Type result = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.valueOf(type_);
       return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Type.UNKNOWN : result;
@@ -9367,7 +9866,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 appeared_at_height = 2;</code>
+     * @return Whether the appearedAtHeight field is set.
      */
+    @java.lang.Override
     public boolean hasAppearedAtHeight() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -9377,7 +9878,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 appeared_at_height = 2;</code>
+     * @return The appearedAtHeight.
      */
+    @java.lang.Override
     public int getAppearedAtHeight() {
       return appearedAtHeight_;
     }
@@ -9392,7 +9895,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes overriding_transaction = 3;</code>
+     * @return Whether the overridingTransaction field is set.
      */
+    @java.lang.Override
     public boolean hasOverridingTransaction() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -9404,7 +9909,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes overriding_transaction = 3;</code>
+     * @return The overridingTransaction.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getOverridingTransaction() {
       return overridingTransaction_;
     }
@@ -9418,7 +9925,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 depth = 4;</code>
+     * @return Whether the depth field is set.
      */
+    @java.lang.Override
     public boolean hasDepth() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -9429,7 +9938,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 depth = 4;</code>
+     * @return The depth.
      */
+    @java.lang.Override
     public int getDepth() {
       return depth_;
     }
@@ -9439,12 +9950,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.PeerAddress> getBroadcastByList() {
       return broadcastBy_;
     }
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.PeerAddressOrBuilder> 
         getBroadcastByOrBuilderList() {
       return broadcastBy_;
@@ -9452,18 +9965,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
+    @java.lang.Override
     public int getBroadcastByCount() {
       return broadcastBy_.size();
     }
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.PeerAddress getBroadcastBy(int index) {
       return broadcastBy_.get(index);
     }
     /**
      * <code>repeated .wallet.PeerAddress broadcast_by = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.PeerAddressOrBuilder getBroadcastByOrBuilder(
         int index) {
       return broadcastBy_.get(index);
@@ -9477,7 +9993,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 last_broadcasted_at = 8;</code>
+     * @return Whether the lastBroadcastedAt field is set.
      */
+    @java.lang.Override
     public boolean hasLastBroadcastedAt() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -9487,7 +10005,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 last_broadcasted_at = 8;</code>
+     * @return The lastBroadcastedAt.
      */
+    @java.lang.Override
     public long getLastBroadcastedAt() {
       return lastBroadcastedAt_;
     }
@@ -9496,14 +10016,16 @@ public final class Protos {
     private int source_;
     /**
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+     * @return Whether the source field is set.
      */
-    public boolean hasSource() {
+    @java.lang.Override public boolean hasSource() {
       return ((bitField0_ & 0x00000020) != 0);
     }
     /**
      * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+     * @return The source.
      */
-    public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.TransactionConfidence.Source result = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(source_);
       return result == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.Source.SOURCE_UNKNOWN : result;
@@ -10027,8 +10549,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+       * @return Whether the type field is set.
        */
-      public boolean hasType() {
+      @java.lang.Override public boolean hasType() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
@@ -10037,7 +10560,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+       * @return The type.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionConfidence.Type getType() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.TransactionConfidence.Type result = org.bitcoinj.wallet.Protos.TransactionConfidence.Type.valueOf(type_);
@@ -10049,6 +10574,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+       * @param value The type to set.
+       * @return This builder for chaining.
        */
       public Builder setType(org.bitcoinj.wallet.Protos.TransactionConfidence.Type value) {
         if (value == null) {
@@ -10065,6 +10592,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence.Type type = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearType() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -10080,7 +10608,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 appeared_at_height = 2;</code>
+       * @return Whether the appearedAtHeight field is set.
        */
+      @java.lang.Override
       public boolean hasAppearedAtHeight() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -10090,7 +10620,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 appeared_at_height = 2;</code>
+       * @return The appearedAtHeight.
        */
+      @java.lang.Override
       public int getAppearedAtHeight() {
         return appearedAtHeight_;
       }
@@ -10100,6 +10632,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 appeared_at_height = 2;</code>
+       * @param value The appearedAtHeight to set.
+       * @return This builder for chaining.
        */
       public Builder setAppearedAtHeight(int value) {
         bitField0_ |= 0x00000002;
@@ -10113,6 +10647,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 appeared_at_height = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearAppearedAtHeight() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -10130,7 +10665,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes overriding_transaction = 3;</code>
+       * @return Whether the overridingTransaction field is set.
        */
+      @java.lang.Override
       public boolean hasOverridingTransaction() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -10142,7 +10679,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes overriding_transaction = 3;</code>
+       * @return The overridingTransaction.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getOverridingTransaction() {
         return overridingTransaction_;
       }
@@ -10154,6 +10693,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes overriding_transaction = 3;</code>
+       * @param value The overridingTransaction to set.
+       * @return This builder for chaining.
        */
       public Builder setOverridingTransaction(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -10172,6 +10713,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes overriding_transaction = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearOverridingTransaction() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -10188,7 +10730,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 depth = 4;</code>
+       * @return Whether the depth field is set.
        */
+      @java.lang.Override
       public boolean hasDepth() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -10199,7 +10743,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 depth = 4;</code>
+       * @return The depth.
        */
+      @java.lang.Override
       public int getDepth() {
         return depth_;
       }
@@ -10210,6 +10756,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 depth = 4;</code>
+       * @param value The depth to set.
+       * @return This builder for chaining.
        */
       public Builder setDepth(int value) {
         bitField0_ |= 0x00000008;
@@ -10224,6 +10772,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 depth = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearDepth() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -10479,7 +11028,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 last_broadcasted_at = 8;</code>
+       * @return Whether the lastBroadcastedAt field is set.
        */
+      @java.lang.Override
       public boolean hasLastBroadcastedAt() {
         return ((bitField0_ & 0x00000020) != 0);
       }
@@ -10489,7 +11040,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 last_broadcasted_at = 8;</code>
+       * @return The lastBroadcastedAt.
        */
+      @java.lang.Override
       public long getLastBroadcastedAt() {
         return lastBroadcastedAt_;
       }
@@ -10499,6 +11052,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 last_broadcasted_at = 8;</code>
+       * @param value The lastBroadcastedAt to set.
+       * @return This builder for chaining.
        */
       public Builder setLastBroadcastedAt(long value) {
         bitField0_ |= 0x00000020;
@@ -10512,6 +11067,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 last_broadcasted_at = 8;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLastBroadcastedAt() {
         bitField0_ = (bitField0_ & ~0x00000020);
@@ -10523,13 +11079,16 @@ public final class Protos {
       private int source_ = 0;
       /**
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+       * @return Whether the source field is set.
        */
-      public boolean hasSource() {
+      @java.lang.Override public boolean hasSource() {
         return ((bitField0_ & 0x00000040) != 0);
       }
       /**
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+       * @return The source.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.TransactionConfidence.Source getSource() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.TransactionConfidence.Source result = org.bitcoinj.wallet.Protos.TransactionConfidence.Source.valueOf(source_);
@@ -10537,6 +11096,8 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+       * @param value The source to set.
+       * @return This builder for chaining.
        */
       public Builder setSource(org.bitcoinj.wallet.Protos.TransactionConfidence.Source value) {
         if (value == null) {
@@ -10549,6 +11110,7 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.TransactionConfidence.Source source = 7;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSource() {
         bitField0_ = (bitField0_ & ~0x00000040);
@@ -10619,6 +11181,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int32 version = 1;</code>
+     * @return Whether the version field is set.
      */
     boolean hasVersion();
     /**
@@ -10627,15 +11190,18 @@ public final class Protos {
      * </pre>
      *
      * <code>required int32 version = 1;</code>
+     * @return The version.
      */
     int getVersion();
 
     /**
      * <code>required bytes hash = 2;</code>
+     * @return Whether the hash field is set.
      */
     boolean hasHash();
     /**
      * <code>required bytes hash = 2;</code>
+     * @return The hash.
      */
     com.google.protobuf.ByteString getHash();
 
@@ -10648,6 +11214,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+     * @return Whether the pool field is set.
      */
     boolean hasPool();
     /**
@@ -10659,6 +11226,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+     * @return The pool.
      */
     org.bitcoinj.wallet.Protos.Transaction.Pool getPool();
 
@@ -10668,6 +11236,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 lock_time = 4;</code>
+     * @return Whether the lockTime field is set.
      */
     boolean hasLockTime();
     /**
@@ -10676,6 +11245,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 lock_time = 4;</code>
+     * @return The lockTime.
      */
     int getLockTime();
 
@@ -10685,6 +11255,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 updated_at = 5;</code>
+     * @return Whether the updatedAt field is set.
      */
     boolean hasUpdatedAt();
     /**
@@ -10693,6 +11264,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 updated_at = 5;</code>
+     * @return The updatedAt.
      */
     long getUpdatedAt();
 
@@ -10751,6 +11323,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @return A list containing the blockHash.
      */
     java.util.List<com.google.protobuf.ByteString> getBlockHashList();
     /**
@@ -10760,6 +11333,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @return The count of blockHash.
      */
     int getBlockHashCount();
     /**
@@ -10769,19 +11343,25 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @param index The index of the element to return.
+     * @return The blockHash at the given index.
      */
     com.google.protobuf.ByteString getBlockHash(int index);
 
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @return A list containing the blockRelativityOffsets.
      */
     java.util.List<java.lang.Integer> getBlockRelativityOffsetsList();
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @return The count of blockRelativityOffsets.
      */
     int getBlockRelativityOffsetsCount();
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @param index The index of the element to return.
+     * @return The blockRelativityOffsets at the given index.
      */
     int getBlockRelativityOffsets(int index);
 
@@ -10791,6 +11371,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+     * @return Whether the confidence field is set.
      */
     boolean hasConfidence();
     /**
@@ -10799,6 +11380,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+     * @return The confidence.
      */
     org.bitcoinj.wallet.Protos.TransactionConfidence getConfidence();
     /**
@@ -10812,10 +11394,12 @@ public final class Protos {
 
     /**
      * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+     * @return Whether the purpose field is set.
      */
     boolean hasPurpose();
     /**
      * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+     * @return The purpose.
      */
     org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose();
 
@@ -10825,6 +11409,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+     * @return Whether the exchangeRate field is set.
      */
     boolean hasExchangeRate();
     /**
@@ -10833,6 +11418,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+     * @return The exchangeRate.
      */
     org.bitcoinj.wallet.Protos.ExchangeRate getExchangeRate();
     /**
@@ -10851,6 +11437,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return Whether the memo field is set.
      */
     boolean hasMemo();
     /**
@@ -10860,6 +11447,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return The memo.
      */
     java.lang.String getMemo();
     /**
@@ -10869,6 +11457,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return The bytes for memo.
      */
     com.google.protobuf.ByteString
         getMemoBytes();
@@ -10876,7 +11465,7 @@ public final class Protos {
   /**
    * Protobuf type {@code wallet.Transaction}
    */
-  public  static final class Transaction extends
+  public static final class Transaction extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Transaction)
       TransactionOrBuilder {
@@ -11217,6 +11806,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -11224,6 +11815,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Pool forNumber(int value) {
         switch (value) {
           case 4: return UNSPENT;
@@ -11395,6 +11990,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -11402,6 +11999,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Purpose forNumber(int value) {
         switch (value) {
           case 0: return UNKNOWN;
@@ -11469,7 +12070,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int32 version = 1;</code>
+     * @return Whether the version field is set.
      */
+    @java.lang.Override
     public boolean hasVersion() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -11479,7 +12082,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int32 version = 1;</code>
+     * @return The version.
      */
+    @java.lang.Override
     public int getVersion() {
       return version_;
     }
@@ -11488,13 +12093,17 @@ public final class Protos {
     private com.google.protobuf.ByteString hash_;
     /**
      * <code>required bytes hash = 2;</code>
+     * @return Whether the hash field is set.
      */
+    @java.lang.Override
     public boolean hasHash() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required bytes hash = 2;</code>
+     * @return The hash.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getHash() {
       return hash_;
     }
@@ -11510,8 +12119,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+     * @return Whether the pool field is set.
      */
-    public boolean hasPool() {
+    @java.lang.Override public boolean hasPool() {
       return ((bitField0_ & 0x00000004) != 0);
     }
     /**
@@ -11523,8 +12133,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+     * @return The pool.
      */
-    public org.bitcoinj.wallet.Protos.Transaction.Pool getPool() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.Transaction.Pool getPool() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Transaction.Pool result = org.bitcoinj.wallet.Protos.Transaction.Pool.valueOf(pool_);
       return result == null ? org.bitcoinj.wallet.Protos.Transaction.Pool.UNSPENT : result;
@@ -11538,7 +12149,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 lock_time = 4;</code>
+     * @return Whether the lockTime field is set.
      */
+    @java.lang.Override
     public boolean hasLockTime() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -11548,7 +12161,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 lock_time = 4;</code>
+     * @return The lockTime.
      */
+    @java.lang.Override
     public int getLockTime() {
       return lockTime_;
     }
@@ -11561,7 +12176,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 updated_at = 5;</code>
+     * @return Whether the updatedAt field is set.
      */
+    @java.lang.Override
     public boolean hasUpdatedAt() {
       return ((bitField0_ & 0x00000010) != 0);
     }
@@ -11571,7 +12188,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 updated_at = 5;</code>
+     * @return The updatedAt.
      */
+    @java.lang.Override
     public long getUpdatedAt() {
       return updatedAt_;
     }
@@ -11581,12 +12200,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.TransactionInput> getTransactionInputList() {
       return transactionInput_;
     }
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.TransactionInputOrBuilder> 
         getTransactionInputOrBuilderList() {
       return transactionInput_;
@@ -11594,18 +12215,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
+    @java.lang.Override
     public int getTransactionInputCount() {
       return transactionInput_.size();
     }
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionInput getTransactionInput(int index) {
       return transactionInput_.get(index);
     }
     /**
      * <code>repeated .wallet.TransactionInput transaction_input = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionInputOrBuilder getTransactionInputOrBuilder(
         int index) {
       return transactionInput_.get(index);
@@ -11616,12 +12240,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.TransactionOutput> getTransactionOutputList() {
       return transactionOutput_;
     }
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.TransactionOutputOrBuilder> 
         getTransactionOutputOrBuilderList() {
       return transactionOutput_;
@@ -11629,18 +12255,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
+    @java.lang.Override
     public int getTransactionOutputCount() {
       return transactionOutput_.size();
     }
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionOutput getTransactionOutput(int index) {
       return transactionOutput_.get(index);
     }
     /**
      * <code>repeated .wallet.TransactionOutput transaction_output = 7;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionOutputOrBuilder getTransactionOutputOrBuilder(
         int index) {
       return transactionOutput_.get(index);
@@ -11655,7 +12284,9 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @return A list containing the blockHash.
      */
+    @java.lang.Override
     public java.util.List<com.google.protobuf.ByteString>
         getBlockHashList() {
       return blockHash_;
@@ -11667,6 +12298,7 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @return The count of blockHash.
      */
     public int getBlockHashCount() {
       return blockHash_.size();
@@ -11678,6 +12310,8 @@ public final class Protos {
      * </pre>
      *
      * <code>repeated bytes block_hash = 8;</code>
+     * @param index The index of the element to return.
+     * @return The blockHash at the given index.
      */
     public com.google.protobuf.ByteString getBlockHash(int index) {
       return blockHash_.get(index);
@@ -11687,19 +12321,24 @@ public final class Protos {
     private com.google.protobuf.Internal.IntList blockRelativityOffsets_;
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @return A list containing the blockRelativityOffsets.
      */
+    @java.lang.Override
     public java.util.List<java.lang.Integer>
         getBlockRelativityOffsetsList() {
       return blockRelativityOffsets_;
     }
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @return The count of blockRelativityOffsets.
      */
     public int getBlockRelativityOffsetsCount() {
       return blockRelativityOffsets_.size();
     }
     /**
      * <code>repeated int32 block_relativity_offsets = 11;</code>
+     * @param index The index of the element to return.
+     * @return The blockRelativityOffsets at the given index.
      */
     public int getBlockRelativityOffsets(int index) {
       return blockRelativityOffsets_.getInt(index);
@@ -11713,7 +12352,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+     * @return Whether the confidence field is set.
      */
+    @java.lang.Override
     public boolean hasConfidence() {
       return ((bitField0_ & 0x00000020) != 0);
     }
@@ -11723,7 +12364,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+     * @return The confidence.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionConfidence getConfidence() {
       return confidence_ == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.getDefaultInstance() : confidence_;
     }
@@ -11734,6 +12377,7 @@ public final class Protos {
      *
      * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionConfidenceOrBuilder getConfidenceOrBuilder() {
       return confidence_ == null ? org.bitcoinj.wallet.Protos.TransactionConfidence.getDefaultInstance() : confidence_;
     }
@@ -11742,14 +12386,16 @@ public final class Protos {
     private int purpose_;
     /**
      * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+     * @return Whether the purpose field is set.
      */
-    public boolean hasPurpose() {
+    @java.lang.Override public boolean hasPurpose() {
       return ((bitField0_ & 0x00000040) != 0);
     }
     /**
      * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+     * @return The purpose.
      */
-    public org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Transaction.Purpose result = org.bitcoinj.wallet.Protos.Transaction.Purpose.valueOf(purpose_);
       return result == null ? org.bitcoinj.wallet.Protos.Transaction.Purpose.UNKNOWN : result;
@@ -11763,7 +12409,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+     * @return Whether the exchangeRate field is set.
      */
+    @java.lang.Override
     public boolean hasExchangeRate() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -11773,7 +12421,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+     * @return The exchangeRate.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ExchangeRate getExchangeRate() {
       return exchangeRate_ == null ? org.bitcoinj.wallet.Protos.ExchangeRate.getDefaultInstance() : exchangeRate_;
     }
@@ -11784,6 +12434,7 @@ public final class Protos {
      *
      * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ExchangeRateOrBuilder getExchangeRateOrBuilder() {
       return exchangeRate_ == null ? org.bitcoinj.wallet.Protos.ExchangeRate.getDefaultInstance() : exchangeRate_;
     }
@@ -11797,7 +12448,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return Whether the memo field is set.
      */
+    @java.lang.Override
     public boolean hasMemo() {
       return ((bitField0_ & 0x00000100) != 0);
     }
@@ -11808,7 +12461,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return The memo.
      */
+    @java.lang.Override
     public java.lang.String getMemo() {
       java.lang.Object ref = memo_;
       if (ref instanceof java.lang.String) {
@@ -11830,7 +12485,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string memo = 13;</code>
+     * @return The bytes for memo.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getMemoBytes() {
       java.lang.Object ref = memo_;
@@ -12622,7 +13279,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int32 version = 1;</code>
+       * @return Whether the version field is set.
        */
+      @java.lang.Override
       public boolean hasVersion() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -12632,7 +13291,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int32 version = 1;</code>
+       * @return The version.
        */
+      @java.lang.Override
       public int getVersion() {
         return version_;
       }
@@ -12642,6 +13303,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required int32 version = 1;</code>
+       * @param value The version to set.
+       * @return This builder for chaining.
        */
       public Builder setVersion(int value) {
         bitField0_ |= 0x00000001;
@@ -12655,6 +13318,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required int32 version = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearVersion() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -12666,18 +13330,24 @@ public final class Protos {
       private com.google.protobuf.ByteString hash_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes hash = 2;</code>
+       * @return Whether the hash field is set.
        */
+      @java.lang.Override
       public boolean hasHash() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required bytes hash = 2;</code>
+       * @return The hash.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getHash() {
         return hash_;
       }
       /**
        * <code>required bytes hash = 2;</code>
+       * @param value The hash to set.
+       * @return This builder for chaining.
        */
       public Builder setHash(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -12690,6 +13360,7 @@ public final class Protos {
       }
       /**
        * <code>required bytes hash = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearHash() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -12708,8 +13379,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+       * @return Whether the pool field is set.
        */
-      public boolean hasPool() {
+      @java.lang.Override public boolean hasPool() {
         return ((bitField0_ & 0x00000004) != 0);
       }
       /**
@@ -12721,7 +13393,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+       * @return The pool.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Transaction.Pool getPool() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Transaction.Pool result = org.bitcoinj.wallet.Protos.Transaction.Pool.valueOf(pool_);
@@ -12736,6 +13410,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+       * @param value The pool to set.
+       * @return This builder for chaining.
        */
       public Builder setPool(org.bitcoinj.wallet.Protos.Transaction.Pool value) {
         if (value == null) {
@@ -12755,6 +13431,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.Transaction.Pool pool = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearPool() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -12770,7 +13447,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 lock_time = 4;</code>
+       * @return Whether the lockTime field is set.
        */
+      @java.lang.Override
       public boolean hasLockTime() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -12780,7 +13459,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 lock_time = 4;</code>
+       * @return The lockTime.
        */
+      @java.lang.Override
       public int getLockTime() {
         return lockTime_;
       }
@@ -12790,6 +13471,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 lock_time = 4;</code>
+       * @param value The lockTime to set.
+       * @return This builder for chaining.
        */
       public Builder setLockTime(int value) {
         bitField0_ |= 0x00000008;
@@ -12803,6 +13486,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 lock_time = 4;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLockTime() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -12818,7 +13502,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 updated_at = 5;</code>
+       * @return Whether the updatedAt field is set.
        */
+      @java.lang.Override
       public boolean hasUpdatedAt() {
         return ((bitField0_ & 0x00000010) != 0);
       }
@@ -12828,7 +13514,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 updated_at = 5;</code>
+       * @return The updatedAt.
        */
+      @java.lang.Override
       public long getUpdatedAt() {
         return updatedAt_;
       }
@@ -12838,6 +13526,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 updated_at = 5;</code>
+       * @param value The updatedAt to set.
+       * @return This builder for chaining.
        */
       public Builder setUpdatedAt(long value) {
         bitField0_ |= 0x00000010;
@@ -12851,6 +13541,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 updated_at = 5;</code>
+       * @return This builder for chaining.
        */
       public Builder clearUpdatedAt() {
         bitField0_ = (bitField0_ & ~0x00000010);
@@ -13353,6 +14044,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @return A list containing the blockHash.
        */
       public java.util.List<com.google.protobuf.ByteString>
           getBlockHashList() {
@@ -13366,6 +14058,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @return The count of blockHash.
        */
       public int getBlockHashCount() {
         return blockHash_.size();
@@ -13377,6 +14070,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @param index The index of the element to return.
+       * @return The blockHash at the given index.
        */
       public com.google.protobuf.ByteString getBlockHash(int index) {
         return blockHash_.get(index);
@@ -13388,6 +14083,9 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @param index The index to set the value at.
+       * @param value The blockHash to set.
+       * @return This builder for chaining.
        */
       public Builder setBlockHash(
           int index, com.google.protobuf.ByteString value) {
@@ -13406,6 +14104,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @param value The blockHash to add.
+       * @return This builder for chaining.
        */
       public Builder addBlockHash(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -13423,6 +14123,8 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @param values The blockHash to add.
+       * @return This builder for chaining.
        */
       public Builder addAllBlockHash(
           java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
@@ -13439,6 +14141,7 @@ public final class Protos {
        * </pre>
        *
        * <code>repeated bytes block_hash = 8;</code>
+       * @return This builder for chaining.
        */
       public Builder clearBlockHash() {
         blockHash_ = java.util.Collections.emptyList();
@@ -13456,6 +14159,7 @@ public final class Protos {
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @return A list containing the blockRelativityOffsets.
        */
       public java.util.List<java.lang.Integer>
           getBlockRelativityOffsetsList() {
@@ -13464,18 +14168,24 @@ public final class Protos {
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @return The count of blockRelativityOffsets.
        */
       public int getBlockRelativityOffsetsCount() {
         return blockRelativityOffsets_.size();
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @param index The index of the element to return.
+       * @return The blockRelativityOffsets at the given index.
        */
       public int getBlockRelativityOffsets(int index) {
         return blockRelativityOffsets_.getInt(index);
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @param index The index to set the value at.
+       * @param value The blockRelativityOffsets to set.
+       * @return This builder for chaining.
        */
       public Builder setBlockRelativityOffsets(
           int index, int value) {
@@ -13486,6 +14196,8 @@ public final class Protos {
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @param value The blockRelativityOffsets to add.
+       * @return This builder for chaining.
        */
       public Builder addBlockRelativityOffsets(int value) {
         ensureBlockRelativityOffsetsIsMutable();
@@ -13495,6 +14207,8 @@ public final class Protos {
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @param values The blockRelativityOffsets to add.
+       * @return This builder for chaining.
        */
       public Builder addAllBlockRelativityOffsets(
           java.lang.Iterable<? extends java.lang.Integer> values) {
@@ -13506,6 +14220,7 @@ public final class Protos {
       }
       /**
        * <code>repeated int32 block_relativity_offsets = 11;</code>
+       * @return This builder for chaining.
        */
       public Builder clearBlockRelativityOffsets() {
         blockRelativityOffsets_ = emptyIntList();
@@ -13523,6 +14238,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+       * @return Whether the confidence field is set.
        */
       public boolean hasConfidence() {
         return ((bitField0_ & 0x00000200) != 0);
@@ -13533,6 +14249,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.TransactionConfidence confidence = 9;</code>
+       * @return The confidence.
        */
       public org.bitcoinj.wallet.Protos.TransactionConfidence getConfidence() {
         if (confidenceBuilder_ == null) {
@@ -13671,13 +14388,16 @@ public final class Protos {
       private int purpose_ = 0;
       /**
        * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+       * @return Whether the purpose field is set.
        */
-      public boolean hasPurpose() {
+      @java.lang.Override public boolean hasPurpose() {
         return ((bitField0_ & 0x00000400) != 0);
       }
       /**
        * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+       * @return The purpose.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Transaction.Purpose getPurpose() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Transaction.Purpose result = org.bitcoinj.wallet.Protos.Transaction.Purpose.valueOf(purpose_);
@@ -13685,6 +14405,8 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+       * @param value The purpose to set.
+       * @return This builder for chaining.
        */
       public Builder setPurpose(org.bitcoinj.wallet.Protos.Transaction.Purpose value) {
         if (value == null) {
@@ -13697,6 +14419,7 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.Transaction.Purpose purpose = 10 [default = UNKNOWN];</code>
+       * @return This builder for chaining.
        */
       public Builder clearPurpose() {
         bitField0_ = (bitField0_ & ~0x00000400);
@@ -13714,6 +14437,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+       * @return Whether the exchangeRate field is set.
        */
       public boolean hasExchangeRate() {
         return ((bitField0_ & 0x00000800) != 0);
@@ -13724,6 +14448,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional .wallet.ExchangeRate exchange_rate = 12;</code>
+       * @return The exchangeRate.
        */
       public org.bitcoinj.wallet.Protos.ExchangeRate getExchangeRate() {
         if (exchangeRateBuilder_ == null) {
@@ -13867,6 +14592,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @return Whether the memo field is set.
        */
       public boolean hasMemo() {
         return ((bitField0_ & 0x00001000) != 0);
@@ -13878,6 +14604,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @return The memo.
        */
       public java.lang.String getMemo() {
         java.lang.Object ref = memo_;
@@ -13900,6 +14627,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @return The bytes for memo.
        */
       public com.google.protobuf.ByteString
           getMemoBytes() {
@@ -13921,6 +14649,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @param value The memo to set.
+       * @return This builder for chaining.
        */
       public Builder setMemo(
           java.lang.String value) {
@@ -13939,6 +14669,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @return This builder for chaining.
        */
       public Builder clearMemo() {
         bitField0_ = (bitField0_ & ~0x00001000);
@@ -13953,6 +14684,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string memo = 13;</code>
+       * @param value The bytes for memo to set.
+       * @return This builder for chaining.
        */
       public Builder setMemoBytes(
           com.google.protobuf.ByteString value) {
@@ -14027,6 +14760,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes salt = 1;</code>
+     * @return Whether the salt field is set.
      */
     boolean hasSalt();
     /**
@@ -14035,6 +14769,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes salt = 1;</code>
+     * @return The salt.
      */
     com.google.protobuf.ByteString getSalt();
 
@@ -14044,6 +14779,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 n = 2 [default = 16384];</code>
+     * @return Whether the n field is set.
      */
     boolean hasN();
     /**
@@ -14052,6 +14788,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 n = 2 [default = 16384];</code>
+     * @return The n.
      */
     long getN();
 
@@ -14061,6 +14798,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 r = 3 [default = 8];</code>
+     * @return Whether the r field is set.
      */
     boolean hasR();
     /**
@@ -14069,6 +14807,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 r = 3 [default = 8];</code>
+     * @return The r.
      */
     int getR();
 
@@ -14078,6 +14817,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 p = 4 [default = 1];</code>
+     * @return Whether the p field is set.
      */
     boolean hasP();
     /**
@@ -14086,6 +14826,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 p = 4 [default = 1];</code>
+     * @return The p.
      */
     int getP();
   }
@@ -14100,7 +14841,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.ScryptParameters}
    */
-  public  static final class ScryptParameters extends
+  public static final class ScryptParameters extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ScryptParameters)
       ScryptParametersOrBuilder {
@@ -14208,7 +14949,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes salt = 1;</code>
+     * @return Whether the salt field is set.
      */
+    @java.lang.Override
     public boolean hasSalt() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -14218,7 +14961,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bytes salt = 1;</code>
+     * @return The salt.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getSalt() {
       return salt_;
     }
@@ -14231,7 +14976,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 n = 2 [default = 16384];</code>
+     * @return Whether the n field is set.
      */
+    @java.lang.Override
     public boolean hasN() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -14241,7 +14988,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int64 n = 2 [default = 16384];</code>
+     * @return The n.
      */
+    @java.lang.Override
     public long getN() {
       return n_;
     }
@@ -14254,7 +15003,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 r = 3 [default = 8];</code>
+     * @return Whether the r field is set.
      */
+    @java.lang.Override
     public boolean hasR() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -14264,7 +15015,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 r = 3 [default = 8];</code>
+     * @return The r.
      */
+    @java.lang.Override
     public int getR() {
       return r_;
     }
@@ -14277,7 +15030,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 p = 4 [default = 1];</code>
+     * @return Whether the p field is set.
      */
+    @java.lang.Override
     public boolean hasP() {
       return ((bitField0_ & 0x00000008) != 0);
     }
@@ -14287,7 +15042,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 p = 4 [default = 1];</code>
+     * @return The p.
      */
+    @java.lang.Override
     public int getP() {
       return p_;
     }
@@ -14704,7 +15461,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes salt = 1;</code>
+       * @return Whether the salt field is set.
        */
+      @java.lang.Override
       public boolean hasSalt() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -14714,7 +15473,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes salt = 1;</code>
+       * @return The salt.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getSalt() {
         return salt_;
       }
@@ -14724,6 +15485,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes salt = 1;</code>
+       * @param value The salt to set.
+       * @return This builder for chaining.
        */
       public Builder setSalt(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -14740,6 +15503,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bytes salt = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearSalt() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -14755,7 +15519,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 n = 2 [default = 16384];</code>
+       * @return Whether the n field is set.
        */
+      @java.lang.Override
       public boolean hasN() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -14765,7 +15531,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 n = 2 [default = 16384];</code>
+       * @return The n.
        */
+      @java.lang.Override
       public long getN() {
         return n_;
       }
@@ -14775,6 +15543,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 n = 2 [default = 16384];</code>
+       * @param value The n to set.
+       * @return This builder for chaining.
        */
       public Builder setN(long value) {
         bitField0_ |= 0x00000002;
@@ -14788,6 +15558,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int64 n = 2 [default = 16384];</code>
+       * @return This builder for chaining.
        */
       public Builder clearN() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -14803,7 +15574,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 r = 3 [default = 8];</code>
+       * @return Whether the r field is set.
        */
+      @java.lang.Override
       public boolean hasR() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -14813,7 +15586,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 r = 3 [default = 8];</code>
+       * @return The r.
        */
+      @java.lang.Override
       public int getR() {
         return r_;
       }
@@ -14823,6 +15598,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 r = 3 [default = 8];</code>
+       * @param value The r to set.
+       * @return This builder for chaining.
        */
       public Builder setR(int value) {
         bitField0_ |= 0x00000004;
@@ -14836,6 +15613,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 r = 3 [default = 8];</code>
+       * @return This builder for chaining.
        */
       public Builder clearR() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -14851,7 +15629,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 p = 4 [default = 1];</code>
+       * @return Whether the p field is set.
        */
+      @java.lang.Override
       public boolean hasP() {
         return ((bitField0_ & 0x00000008) != 0);
       }
@@ -14861,7 +15641,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 p = 4 [default = 1];</code>
+       * @return The p.
        */
+      @java.lang.Override
       public int getP() {
         return p_;
       }
@@ -14871,6 +15653,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 p = 4 [default = 1];</code>
+       * @param value The p to set.
+       * @return This builder for chaining.
        */
       public Builder setP(int value) {
         bitField0_ |= 0x00000008;
@@ -14884,6 +15668,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 p = 4 [default = 1];</code>
+       * @return This builder for chaining.
        */
       public Builder clearP() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -14954,6 +15739,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return Whether the id field is set.
      */
     boolean hasId();
     /**
@@ -14962,6 +15748,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return The id.
      */
     java.lang.String getId();
     /**
@@ -14970,16 +15757,19 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return The bytes for id.
      */
     com.google.protobuf.ByteString
         getIdBytes();
 
     /**
      * <code>required bytes data = 2;</code>
+     * @return Whether the data field is set.
      */
     boolean hasData();
     /**
      * <code>required bytes data = 2;</code>
+     * @return The data.
      */
     com.google.protobuf.ByteString getData();
 
@@ -14991,6 +15781,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bool mandatory = 3;</code>
+     * @return Whether the mandatory field is set.
      */
     boolean hasMandatory();
     /**
@@ -15001,6 +15792,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required bool mandatory = 3;</code>
+     * @return The mandatory.
      */
     boolean getMandatory();
   }
@@ -15011,7 +15803,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.Extension}
    */
-  public  static final class Extension extends
+  public static final class Extension extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Extension)
       ExtensionOrBuilder {
@@ -15113,7 +15905,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return Whether the id field is set.
      */
+    @java.lang.Override
     public boolean hasId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -15123,7 +15917,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return The id.
      */
+    @java.lang.Override
     public java.lang.String getId() {
       java.lang.Object ref = id_;
       if (ref instanceof java.lang.String) {
@@ -15144,7 +15940,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string id = 1;</code>
+     * @return The bytes for id.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getIdBytes() {
       java.lang.Object ref = id_;
@@ -15163,13 +15961,17 @@ public final class Protos {
     private com.google.protobuf.ByteString data_;
     /**
      * <code>required bytes data = 2;</code>
+     * @return Whether the data field is set.
      */
+    @java.lang.Override
     public boolean hasData() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required bytes data = 2;</code>
+     * @return The data.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getData() {
       return data_;
     }
@@ -15184,7 +15986,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bool mandatory = 3;</code>
+     * @return Whether the mandatory field is set.
      */
+    @java.lang.Override
     public boolean hasMandatory() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -15196,7 +16000,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required bool mandatory = 3;</code>
+     * @return The mandatory.
      */
+    @java.lang.Override
     public boolean getMandatory() {
       return mandatory_;
     }
@@ -15599,6 +16405,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @return Whether the id field is set.
        */
       public boolean hasId() {
         return ((bitField0_ & 0x00000001) != 0);
@@ -15609,6 +16416,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @return The id.
        */
       public java.lang.String getId() {
         java.lang.Object ref = id_;
@@ -15630,6 +16438,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @return The bytes for id.
        */
       public com.google.protobuf.ByteString
           getIdBytes() {
@@ -15650,6 +16459,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @param value The id to set.
+       * @return This builder for chaining.
        */
       public Builder setId(
           java.lang.String value) {
@@ -15667,6 +16478,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearId() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -15680,6 +16492,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string id = 1;</code>
+       * @param value The bytes for id to set.
+       * @return This builder for chaining.
        */
       public Builder setIdBytes(
           com.google.protobuf.ByteString value) {
@@ -15695,18 +16509,24 @@ public final class Protos {
       private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes data = 2;</code>
+       * @return Whether the data field is set.
        */
+      @java.lang.Override
       public boolean hasData() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @return The data.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getData() {
         return data_;
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @param value The data to set.
+       * @return This builder for chaining.
        */
       public Builder setData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -15719,6 +16539,7 @@ public final class Protos {
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearData() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -15736,7 +16557,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bool mandatory = 3;</code>
+       * @return Whether the mandatory field is set.
        */
+      @java.lang.Override
       public boolean hasMandatory() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -15748,7 +16571,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required bool mandatory = 3;</code>
+       * @return The mandatory.
        */
+      @java.lang.Override
       public boolean getMandatory() {
         return mandatory_;
       }
@@ -15760,6 +16585,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required bool mandatory = 3;</code>
+       * @param value The mandatory to set.
+       * @return This builder for chaining.
        */
       public Builder setMandatory(boolean value) {
         bitField0_ |= 0x00000004;
@@ -15775,6 +16602,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required bool mandatory = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearMandatory() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -15841,24 +16669,29 @@ public final class Protos {
 
     /**
      * <code>required string tag = 1;</code>
+     * @return Whether the tag field is set.
      */
     boolean hasTag();
     /**
      * <code>required string tag = 1;</code>
+     * @return The tag.
      */
     java.lang.String getTag();
     /**
      * <code>required string tag = 1;</code>
+     * @return The bytes for tag.
      */
     com.google.protobuf.ByteString
         getTagBytes();
 
     /**
      * <code>required bytes data = 2;</code>
+     * @return Whether the data field is set.
      */
     boolean hasData();
     /**
      * <code>required bytes data = 2;</code>
+     * @return The data.
      */
     com.google.protobuf.ByteString getData();
   }
@@ -15872,7 +16705,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.Tag}
    */
-  public  static final class Tag extends
+  public static final class Tag extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Tag)
       TagOrBuilder {
@@ -15965,13 +16798,17 @@ public final class Protos {
     private volatile java.lang.Object tag_;
     /**
      * <code>required string tag = 1;</code>
+     * @return Whether the tag field is set.
      */
+    @java.lang.Override
     public boolean hasTag() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required string tag = 1;</code>
+     * @return The tag.
      */
+    @java.lang.Override
     public java.lang.String getTag() {
       java.lang.Object ref = tag_;
       if (ref instanceof java.lang.String) {
@@ -15988,7 +16825,9 @@ public final class Protos {
     }
     /**
      * <code>required string tag = 1;</code>
+     * @return The bytes for tag.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getTagBytes() {
       java.lang.Object ref = tag_;
@@ -16007,13 +16846,17 @@ public final class Protos {
     private com.google.protobuf.ByteString data_;
     /**
      * <code>required bytes data = 2;</code>
+     * @return Whether the data field is set.
      */
+    @java.lang.Override
     public boolean hasData() {
       return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required bytes data = 2;</code>
+     * @return The data.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getData() {
       return data_;
     }
@@ -16382,12 +17225,14 @@ public final class Protos {
       private java.lang.Object tag_ = "";
       /**
        * <code>required string tag = 1;</code>
+       * @return Whether the tag field is set.
        */
       public boolean hasTag() {
         return ((bitField0_ & 0x00000001) != 0);
       }
       /**
        * <code>required string tag = 1;</code>
+       * @return The tag.
        */
       public java.lang.String getTag() {
         java.lang.Object ref = tag_;
@@ -16405,6 +17250,7 @@ public final class Protos {
       }
       /**
        * <code>required string tag = 1;</code>
+       * @return The bytes for tag.
        */
       public com.google.protobuf.ByteString
           getTagBytes() {
@@ -16421,6 +17267,8 @@ public final class Protos {
       }
       /**
        * <code>required string tag = 1;</code>
+       * @param value The tag to set.
+       * @return This builder for chaining.
        */
       public Builder setTag(
           java.lang.String value) {
@@ -16434,6 +17282,7 @@ public final class Protos {
       }
       /**
        * <code>required string tag = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearTag() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -16443,6 +17292,8 @@ public final class Protos {
       }
       /**
        * <code>required string tag = 1;</code>
+       * @param value The bytes for tag to set.
+       * @return This builder for chaining.
        */
       public Builder setTagBytes(
           com.google.protobuf.ByteString value) {
@@ -16458,18 +17309,24 @@ public final class Protos {
       private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <code>required bytes data = 2;</code>
+       * @return Whether the data field is set.
        */
+      @java.lang.Override
       public boolean hasData() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @return The data.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getData() {
         return data_;
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @param value The data to set.
+       * @return This builder for chaining.
        */
       public Builder setData(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -16482,6 +17339,7 @@ public final class Protos {
       }
       /**
        * <code>required bytes data = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearData() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -16552,6 +17410,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return Whether the networkIdentifier field is set.
      */
     boolean hasNetworkIdentifier();
     /**
@@ -16560,6 +17419,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return The networkIdentifier.
      */
     java.lang.String getNetworkIdentifier();
     /**
@@ -16568,6 +17428,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return The bytes for networkIdentifier.
      */
     com.google.protobuf.ByteString
         getNetworkIdentifierBytes();
@@ -16578,6 +17439,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes last_seen_block_hash = 2;</code>
+     * @return Whether the lastSeenBlockHash field is set.
      */
     boolean hasLastSeenBlockHash();
     /**
@@ -16586,6 +17448,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes last_seen_block_hash = 2;</code>
+     * @return The lastSeenBlockHash.
      */
     com.google.protobuf.ByteString getLastSeenBlockHash();
 
@@ -16595,6 +17458,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 last_seen_block_height = 12;</code>
+     * @return Whether the lastSeenBlockHeight field is set.
      */
     boolean hasLastSeenBlockHeight();
     /**
@@ -16603,15 +17467,18 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 last_seen_block_height = 12;</code>
+     * @return The lastSeenBlockHeight.
      */
     int getLastSeenBlockHeight();
 
     /**
      * <code>optional int64 last_seen_block_time_secs = 14;</code>
+     * @return Whether the lastSeenBlockTimeSecs field is set.
      */
     boolean hasLastSeenBlockTimeSecs();
     /**
      * <code>optional int64 last_seen_block_time_secs = 14;</code>
+     * @return The lastSeenBlockTimeSecs.
      */
     long getLastSeenBlockTimeSecs();
 
@@ -16689,19 +17556,23 @@ public final class Protos {
 
     /**
      * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+     * @return Whether the encryptionType field is set.
      */
     boolean hasEncryptionType();
     /**
      * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+     * @return The encryptionType.
      */
     org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType();
 
     /**
      * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+     * @return Whether the encryptionParameters field is set.
      */
     boolean hasEncryptionParameters();
     /**
      * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+     * @return The encryptionParameters.
      */
     org.bitcoinj.wallet.Protos.ScryptParameters getEncryptionParameters();
     /**
@@ -16717,6 +17588,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 version = 7 [default = 1];</code>
+     * @return Whether the version field is set.
      */
     boolean hasVersion();
     /**
@@ -16727,6 +17599,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 version = 7 [default = 1];</code>
+     * @return The version.
      */
     int getVersion();
 
@@ -16760,6 +17633,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return Whether the description field is set.
      */
     boolean hasDescription();
     /**
@@ -16768,6 +17642,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return The description.
      */
     java.lang.String getDescription();
     /**
@@ -16776,6 +17651,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return The bytes for description.
      */
     com.google.protobuf.ByteString
         getDescriptionBytes();
@@ -16788,6 +17664,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint64 key_rotation_time = 13;</code>
+     * @return Whether the keyRotationTime field is set.
      */
     boolean hasKeyRotationTime();
     /**
@@ -16798,6 +17675,7 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint64 key_rotation_time = 13;</code>
+     * @return The keyRotationTime.
      */
     long getKeyRotationTime();
 
@@ -16832,7 +17710,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.Wallet}
    */
-  public  static final class Wallet extends
+  public static final class Wallet extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.Wallet)
       WalletOrBuilder {
@@ -17093,6 +17971,8 @@ public final class Protos {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -17100,6 +17980,10 @@ public final class Protos {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static EncryptionType forNumber(int value) {
         switch (value) {
           case 1: return UNENCRYPTED;
@@ -17162,7 +18046,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return Whether the networkIdentifier field is set.
      */
+    @java.lang.Override
     public boolean hasNetworkIdentifier() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -17172,7 +18058,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return The networkIdentifier.
      */
+    @java.lang.Override
     public java.lang.String getNetworkIdentifier() {
       java.lang.Object ref = networkIdentifier_;
       if (ref instanceof java.lang.String) {
@@ -17193,7 +18081,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string network_identifier = 1;</code>
+     * @return The bytes for networkIdentifier.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getNetworkIdentifierBytes() {
       java.lang.Object ref = networkIdentifier_;
@@ -17216,7 +18106,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes last_seen_block_hash = 2;</code>
+     * @return Whether the lastSeenBlockHash field is set.
      */
+    @java.lang.Override
     public boolean hasLastSeenBlockHash() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -17226,7 +18118,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional bytes last_seen_block_hash = 2;</code>
+     * @return The lastSeenBlockHash.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString getLastSeenBlockHash() {
       return lastSeenBlockHash_;
     }
@@ -17239,7 +18133,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 last_seen_block_height = 12;</code>
+     * @return Whether the lastSeenBlockHeight field is set.
      */
+    @java.lang.Override
     public boolean hasLastSeenBlockHeight() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -17249,7 +18145,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint32 last_seen_block_height = 12;</code>
+     * @return The lastSeenBlockHeight.
      */
+    @java.lang.Override
     public int getLastSeenBlockHeight() {
       return lastSeenBlockHeight_;
     }
@@ -17258,13 +18156,17 @@ public final class Protos {
     private long lastSeenBlockTimeSecs_;
     /**
      * <code>optional int64 last_seen_block_time_secs = 14;</code>
+     * @return Whether the lastSeenBlockTimeSecs field is set.
      */
+    @java.lang.Override
     public boolean hasLastSeenBlockTimeSecs() {
       return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <code>optional int64 last_seen_block_time_secs = 14;</code>
+     * @return The lastSeenBlockTimeSecs.
      */
+    @java.lang.Override
     public long getLastSeenBlockTimeSecs() {
       return lastSeenBlockTimeSecs_;
     }
@@ -17274,12 +18176,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.Key> getKeyList() {
       return key_;
     }
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.KeyOrBuilder> 
         getKeyOrBuilderList() {
       return key_;
@@ -17287,18 +18191,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
+    @java.lang.Override
     public int getKeyCount() {
       return key_.size();
     }
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Key getKey(int index) {
       return key_.get(index);
     }
     /**
      * <code>repeated .wallet.Key key = 3;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.KeyOrBuilder getKeyOrBuilder(
         int index) {
       return key_.get(index);
@@ -17309,12 +18216,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.Transaction> getTransactionList() {
       return transaction_;
     }
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.TransactionOrBuilder> 
         getTransactionOrBuilderList() {
       return transaction_;
@@ -17322,18 +18231,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
+    @java.lang.Override
     public int getTransactionCount() {
       return transaction_.size();
     }
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Transaction getTransaction(int index) {
       return transaction_.get(index);
     }
     /**
      * <code>repeated .wallet.Transaction transaction = 4;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TransactionOrBuilder getTransactionOrBuilder(
         int index) {
       return transaction_.get(index);
@@ -17344,12 +18256,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.Script> getWatchedScriptList() {
       return watchedScript_;
     }
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.ScriptOrBuilder> 
         getWatchedScriptOrBuilderList() {
       return watchedScript_;
@@ -17357,18 +18271,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
+    @java.lang.Override
     public int getWatchedScriptCount() {
       return watchedScript_.size();
     }
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Script getWatchedScript(int index) {
       return watchedScript_.get(index);
     }
     /**
      * <code>repeated .wallet.Script watched_script = 15;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScriptOrBuilder getWatchedScriptOrBuilder(
         int index) {
       return watchedScript_.get(index);
@@ -17378,14 +18295,16 @@ public final class Protos {
     private int encryptionType_;
     /**
      * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+     * @return Whether the encryptionType field is set.
      */
-    public boolean hasEncryptionType() {
+    @java.lang.Override public boolean hasEncryptionType() {
       return ((bitField0_ & 0x00000010) != 0);
     }
     /**
      * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+     * @return The encryptionType.
      */
-    public org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType() {
+    @java.lang.Override public org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType() {
       @SuppressWarnings("deprecation")
       org.bitcoinj.wallet.Protos.Wallet.EncryptionType result = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.valueOf(encryptionType_);
       return result == null ? org.bitcoinj.wallet.Protos.Wallet.EncryptionType.UNENCRYPTED : result;
@@ -17395,19 +18314,24 @@ public final class Protos {
     private org.bitcoinj.wallet.Protos.ScryptParameters encryptionParameters_;
     /**
      * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+     * @return Whether the encryptionParameters field is set.
      */
+    @java.lang.Override
     public boolean hasEncryptionParameters() {
       return ((bitField0_ & 0x00000020) != 0);
     }
     /**
      * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+     * @return The encryptionParameters.
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScryptParameters getEncryptionParameters() {
       return encryptionParameters_ == null ? org.bitcoinj.wallet.Protos.ScryptParameters.getDefaultInstance() : encryptionParameters_;
     }
     /**
      * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ScryptParametersOrBuilder getEncryptionParametersOrBuilder() {
       return encryptionParameters_ == null ? org.bitcoinj.wallet.Protos.ScryptParameters.getDefaultInstance() : encryptionParameters_;
     }
@@ -17422,7 +18346,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 version = 7 [default = 1];</code>
+     * @return Whether the version field is set.
      */
+    @java.lang.Override
     public boolean hasVersion() {
       return ((bitField0_ & 0x00000040) != 0);
     }
@@ -17434,7 +18360,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional int32 version = 7 [default = 1];</code>
+     * @return The version.
      */
+    @java.lang.Override
     public int getVersion() {
       return version_;
     }
@@ -17444,12 +18372,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.Extension> getExtensionList() {
       return extension_;
     }
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.ExtensionOrBuilder> 
         getExtensionOrBuilderList() {
       return extension_;
@@ -17457,18 +18387,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
+    @java.lang.Override
     public int getExtensionCount() {
       return extension_.size();
     }
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Extension getExtension(int index) {
       return extension_.get(index);
     }
     /**
      * <code>repeated .wallet.Extension extension = 10;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.ExtensionOrBuilder getExtensionOrBuilder(
         int index) {
       return extension_.get(index);
@@ -17482,7 +18415,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return Whether the description field is set.
      */
+    @java.lang.Override
     public boolean hasDescription() {
       return ((bitField0_ & 0x00000080) != 0);
     }
@@ -17492,7 +18427,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return The description.
      */
+    @java.lang.Override
     public java.lang.String getDescription() {
       java.lang.Object ref = description_;
       if (ref instanceof java.lang.String) {
@@ -17513,7 +18450,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional string description = 11;</code>
+     * @return The bytes for description.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getDescriptionBytes() {
       java.lang.Object ref = description_;
@@ -17538,7 +18477,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint64 key_rotation_time = 13;</code>
+     * @return Whether the keyRotationTime field is set.
      */
+    @java.lang.Override
     public boolean hasKeyRotationTime() {
       return ((bitField0_ & 0x00000100) != 0);
     }
@@ -17550,7 +18491,9 @@ public final class Protos {
      * </pre>
      *
      * <code>optional uint64 key_rotation_time = 13;</code>
+     * @return The keyRotationTime.
      */
+    @java.lang.Override
     public long getKeyRotationTime() {
       return keyRotationTime_;
     }
@@ -17560,12 +18503,14 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Tag tags = 16;</code>
      */
+    @java.lang.Override
     public java.util.List<org.bitcoinj.wallet.Protos.Tag> getTagsList() {
       return tags_;
     }
     /**
      * <code>repeated .wallet.Tag tags = 16;</code>
      */
+    @java.lang.Override
     public java.util.List<? extends org.bitcoinj.wallet.Protos.TagOrBuilder> 
         getTagsOrBuilderList() {
       return tags_;
@@ -17573,18 +18518,21 @@ public final class Protos {
     /**
      * <code>repeated .wallet.Tag tags = 16;</code>
      */
+    @java.lang.Override
     public int getTagsCount() {
       return tags_.size();
     }
     /**
      * <code>repeated .wallet.Tag tags = 16;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.Tag getTags(int index) {
       return tags_.get(index);
     }
     /**
      * <code>repeated .wallet.Tag tags = 16;</code>
      */
+    @java.lang.Override
     public org.bitcoinj.wallet.Protos.TagOrBuilder getTagsOrBuilder(
         int index) {
       return tags_.get(index);
@@ -18475,6 +19423,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @return Whether the networkIdentifier field is set.
        */
       public boolean hasNetworkIdentifier() {
         return ((bitField0_ & 0x00000001) != 0);
@@ -18485,6 +19434,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @return The networkIdentifier.
        */
       public java.lang.String getNetworkIdentifier() {
         java.lang.Object ref = networkIdentifier_;
@@ -18506,6 +19456,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @return The bytes for networkIdentifier.
        */
       public com.google.protobuf.ByteString
           getNetworkIdentifierBytes() {
@@ -18526,6 +19477,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @param value The networkIdentifier to set.
+       * @return This builder for chaining.
        */
       public Builder setNetworkIdentifier(
           java.lang.String value) {
@@ -18543,6 +19496,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearNetworkIdentifier() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -18556,6 +19510,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string network_identifier = 1;</code>
+       * @param value The bytes for networkIdentifier to set.
+       * @return This builder for chaining.
        */
       public Builder setNetworkIdentifierBytes(
           com.google.protobuf.ByteString value) {
@@ -18575,7 +19531,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes last_seen_block_hash = 2;</code>
+       * @return Whether the lastSeenBlockHash field is set.
        */
+      @java.lang.Override
       public boolean hasLastSeenBlockHash() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -18585,7 +19543,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes last_seen_block_hash = 2;</code>
+       * @return The lastSeenBlockHash.
        */
+      @java.lang.Override
       public com.google.protobuf.ByteString getLastSeenBlockHash() {
         return lastSeenBlockHash_;
       }
@@ -18595,6 +19555,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes last_seen_block_hash = 2;</code>
+       * @param value The lastSeenBlockHash to set.
+       * @return This builder for chaining.
        */
       public Builder setLastSeenBlockHash(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -18611,6 +19573,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional bytes last_seen_block_hash = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLastSeenBlockHash() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -18626,7 +19589,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 last_seen_block_height = 12;</code>
+       * @return Whether the lastSeenBlockHeight field is set.
        */
+      @java.lang.Override
       public boolean hasLastSeenBlockHeight() {
         return ((bitField0_ & 0x00000004) != 0);
       }
@@ -18636,7 +19601,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 last_seen_block_height = 12;</code>
+       * @return The lastSeenBlockHeight.
        */
+      @java.lang.Override
       public int getLastSeenBlockHeight() {
         return lastSeenBlockHeight_;
       }
@@ -18646,6 +19613,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 last_seen_block_height = 12;</code>
+       * @param value The lastSeenBlockHeight to set.
+       * @return This builder for chaining.
        */
       public Builder setLastSeenBlockHeight(int value) {
         bitField0_ |= 0x00000004;
@@ -18659,6 +19628,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint32 last_seen_block_height = 12;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLastSeenBlockHeight() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -18670,18 +19640,24 @@ public final class Protos {
       private long lastSeenBlockTimeSecs_ ;
       /**
        * <code>optional int64 last_seen_block_time_secs = 14;</code>
+       * @return Whether the lastSeenBlockTimeSecs field is set.
        */
+      @java.lang.Override
       public boolean hasLastSeenBlockTimeSecs() {
         return ((bitField0_ & 0x00000008) != 0);
       }
       /**
        * <code>optional int64 last_seen_block_time_secs = 14;</code>
+       * @return The lastSeenBlockTimeSecs.
        */
+      @java.lang.Override
       public long getLastSeenBlockTimeSecs() {
         return lastSeenBlockTimeSecs_;
       }
       /**
        * <code>optional int64 last_seen_block_time_secs = 14;</code>
+       * @param value The lastSeenBlockTimeSecs to set.
+       * @return This builder for chaining.
        */
       public Builder setLastSeenBlockTimeSecs(long value) {
         bitField0_ |= 0x00000008;
@@ -18691,6 +19667,7 @@ public final class Protos {
       }
       /**
        * <code>optional int64 last_seen_block_time_secs = 14;</code>
+       * @return This builder for chaining.
        */
       public Builder clearLastSeenBlockTimeSecs() {
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -19422,13 +20399,16 @@ public final class Protos {
       private int encryptionType_ = 1;
       /**
        * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+       * @return Whether the encryptionType field is set.
        */
-      public boolean hasEncryptionType() {
+      @java.lang.Override public boolean hasEncryptionType() {
         return ((bitField0_ & 0x00000080) != 0);
       }
       /**
        * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+       * @return The encryptionType.
        */
+      @java.lang.Override
       public org.bitcoinj.wallet.Protos.Wallet.EncryptionType getEncryptionType() {
         @SuppressWarnings("deprecation")
         org.bitcoinj.wallet.Protos.Wallet.EncryptionType result = org.bitcoinj.wallet.Protos.Wallet.EncryptionType.valueOf(encryptionType_);
@@ -19436,6 +20416,8 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+       * @param value The encryptionType to set.
+       * @return This builder for chaining.
        */
       public Builder setEncryptionType(org.bitcoinj.wallet.Protos.Wallet.EncryptionType value) {
         if (value == null) {
@@ -19448,6 +20430,7 @@ public final class Protos {
       }
       /**
        * <code>optional .wallet.Wallet.EncryptionType encryption_type = 5 [default = UNENCRYPTED];</code>
+       * @return This builder for chaining.
        */
       public Builder clearEncryptionType() {
         bitField0_ = (bitField0_ & ~0x00000080);
@@ -19461,12 +20444,14 @@ public final class Protos {
           org.bitcoinj.wallet.Protos.ScryptParameters, org.bitcoinj.wallet.Protos.ScryptParameters.Builder, org.bitcoinj.wallet.Protos.ScryptParametersOrBuilder> encryptionParametersBuilder_;
       /**
        * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+       * @return Whether the encryptionParameters field is set.
        */
       public boolean hasEncryptionParameters() {
         return ((bitField0_ & 0x00000100) != 0);
       }
       /**
        * <code>optional .wallet.ScryptParameters encryption_parameters = 6;</code>
+       * @return The encryptionParameters.
        */
       public org.bitcoinj.wallet.Protos.ScryptParameters getEncryptionParameters() {
         if (encryptionParametersBuilder_ == null) {
@@ -19583,7 +20568,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 version = 7 [default = 1];</code>
+       * @return Whether the version field is set.
        */
+      @java.lang.Override
       public boolean hasVersion() {
         return ((bitField0_ & 0x00000200) != 0);
       }
@@ -19595,7 +20582,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 version = 7 [default = 1];</code>
+       * @return The version.
        */
+      @java.lang.Override
       public int getVersion() {
         return version_;
       }
@@ -19607,6 +20596,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 version = 7 [default = 1];</code>
+       * @param value The version to set.
+       * @return This builder for chaining.
        */
       public Builder setVersion(int value) {
         bitField0_ |= 0x00000200;
@@ -19622,6 +20613,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional int32 version = 7 [default = 1];</code>
+       * @return This builder for chaining.
        */
       public Builder clearVersion() {
         bitField0_ = (bitField0_ & ~0x00000200);
@@ -19877,6 +20869,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @return Whether the description field is set.
        */
       public boolean hasDescription() {
         return ((bitField0_ & 0x00000800) != 0);
@@ -19887,6 +20880,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @return The description.
        */
       public java.lang.String getDescription() {
         java.lang.Object ref = description_;
@@ -19908,6 +20902,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @return The bytes for description.
        */
       public com.google.protobuf.ByteString
           getDescriptionBytes() {
@@ -19928,6 +20923,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @param value The description to set.
+       * @return This builder for chaining.
        */
       public Builder setDescription(
           java.lang.String value) {
@@ -19945,6 +20942,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @return This builder for chaining.
        */
       public Builder clearDescription() {
         bitField0_ = (bitField0_ & ~0x00000800);
@@ -19958,6 +20956,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional string description = 11;</code>
+       * @param value The bytes for description to set.
+       * @return This builder for chaining.
        */
       public Builder setDescriptionBytes(
           com.google.protobuf.ByteString value) {
@@ -19979,7 +20979,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint64 key_rotation_time = 13;</code>
+       * @return Whether the keyRotationTime field is set.
        */
+      @java.lang.Override
       public boolean hasKeyRotationTime() {
         return ((bitField0_ & 0x00001000) != 0);
       }
@@ -19991,7 +20993,9 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint64 key_rotation_time = 13;</code>
+       * @return The keyRotationTime.
        */
+      @java.lang.Override
       public long getKeyRotationTime() {
         return keyRotationTime_;
       }
@@ -20003,6 +21007,8 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint64 key_rotation_time = 13;</code>
+       * @param value The keyRotationTime to set.
+       * @return This builder for chaining.
        */
       public Builder setKeyRotationTime(long value) {
         bitField0_ |= 0x00001000;
@@ -20018,6 +21024,7 @@ public final class Protos {
        * </pre>
        *
        * <code>optional uint64 key_rotation_time = 13;</code>
+       * @return This builder for chaining.
        */
       public Builder clearKeyRotationTime() {
         bitField0_ = (bitField0_ & ~0x00001000);
@@ -20328,6 +21335,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 coin_value = 1;</code>
+     * @return Whether the coinValue field is set.
      */
     boolean hasCoinValue();
     /**
@@ -20336,6 +21344,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 coin_value = 1;</code>
+     * @return The coinValue.
      */
     long getCoinValue();
 
@@ -20345,6 +21354,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 fiat_value = 2;</code>
+     * @return Whether the fiatValue field is set.
      */
     boolean hasFiatValue();
     /**
@@ -20353,6 +21363,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 fiat_value = 2;</code>
+     * @return The fiatValue.
      */
     long getFiatValue();
 
@@ -20362,6 +21373,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return Whether the fiatCurrencyCode field is set.
      */
     boolean hasFiatCurrencyCode();
     /**
@@ -20370,6 +21382,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return The fiatCurrencyCode.
      */
     java.lang.String getFiatCurrencyCode();
     /**
@@ -20378,6 +21391,7 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return The bytes for fiatCurrencyCode.
      */
     com.google.protobuf.ByteString
         getFiatCurrencyCodeBytes();
@@ -20389,7 +21403,7 @@ public final class Protos {
    *
    * Protobuf type {@code wallet.ExchangeRate}
    */
-  public  static final class ExchangeRate extends
+  public static final class ExchangeRate extends
       com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:wallet.ExchangeRate)
       ExchangeRateOrBuilder {
@@ -20490,7 +21504,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 coin_value = 1;</code>
+     * @return Whether the coinValue field is set.
      */
+    @java.lang.Override
     public boolean hasCoinValue() {
       return ((bitField0_ & 0x00000001) != 0);
     }
@@ -20500,7 +21516,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 coin_value = 1;</code>
+     * @return The coinValue.
      */
+    @java.lang.Override
     public long getCoinValue() {
       return coinValue_;
     }
@@ -20513,7 +21531,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 fiat_value = 2;</code>
+     * @return Whether the fiatValue field is set.
      */
+    @java.lang.Override
     public boolean hasFiatValue() {
       return ((bitField0_ & 0x00000002) != 0);
     }
@@ -20523,7 +21543,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required int64 fiat_value = 2;</code>
+     * @return The fiatValue.
      */
+    @java.lang.Override
     public long getFiatValue() {
       return fiatValue_;
     }
@@ -20536,7 +21558,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return Whether the fiatCurrencyCode field is set.
      */
+    @java.lang.Override
     public boolean hasFiatCurrencyCode() {
       return ((bitField0_ & 0x00000004) != 0);
     }
@@ -20546,7 +21570,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return The fiatCurrencyCode.
      */
+    @java.lang.Override
     public java.lang.String getFiatCurrencyCode() {
       java.lang.Object ref = fiatCurrencyCode_;
       if (ref instanceof java.lang.String) {
@@ -20567,7 +21593,9 @@ public final class Protos {
      * </pre>
      *
      * <code>required string fiat_currency_code = 3;</code>
+     * @return The bytes for fiatCurrencyCode.
      */
+    @java.lang.Override
     public com.google.protobuf.ByteString
         getFiatCurrencyCodeBytes() {
       java.lang.Object ref = fiatCurrencyCode_;
@@ -20981,7 +22009,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 coin_value = 1;</code>
+       * @return Whether the coinValue field is set.
        */
+      @java.lang.Override
       public boolean hasCoinValue() {
         return ((bitField0_ & 0x00000001) != 0);
       }
@@ -20991,7 +22021,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 coin_value = 1;</code>
+       * @return The coinValue.
        */
+      @java.lang.Override
       public long getCoinValue() {
         return coinValue_;
       }
@@ -21001,6 +22033,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 coin_value = 1;</code>
+       * @param value The coinValue to set.
+       * @return This builder for chaining.
        */
       public Builder setCoinValue(long value) {
         bitField0_ |= 0x00000001;
@@ -21014,6 +22048,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 coin_value = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearCoinValue() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -21029,7 +22064,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 fiat_value = 2;</code>
+       * @return Whether the fiatValue field is set.
        */
+      @java.lang.Override
       public boolean hasFiatValue() {
         return ((bitField0_ & 0x00000002) != 0);
       }
@@ -21039,7 +22076,9 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 fiat_value = 2;</code>
+       * @return The fiatValue.
        */
+      @java.lang.Override
       public long getFiatValue() {
         return fiatValue_;
       }
@@ -21049,6 +22088,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 fiat_value = 2;</code>
+       * @param value The fiatValue to set.
+       * @return This builder for chaining.
        */
       public Builder setFiatValue(long value) {
         bitField0_ |= 0x00000002;
@@ -21062,6 +22103,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required int64 fiat_value = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearFiatValue() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -21077,6 +22119,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @return Whether the fiatCurrencyCode field is set.
        */
       public boolean hasFiatCurrencyCode() {
         return ((bitField0_ & 0x00000004) != 0);
@@ -21087,6 +22130,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @return The fiatCurrencyCode.
        */
       public java.lang.String getFiatCurrencyCode() {
         java.lang.Object ref = fiatCurrencyCode_;
@@ -21108,6 +22152,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @return The bytes for fiatCurrencyCode.
        */
       public com.google.protobuf.ByteString
           getFiatCurrencyCodeBytes() {
@@ -21128,6 +22173,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @param value The fiatCurrencyCode to set.
+       * @return This builder for chaining.
        */
       public Builder setFiatCurrencyCode(
           java.lang.String value) {
@@ -21145,6 +22192,7 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearFiatCurrencyCode() {
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -21158,6 +22206,8 @@ public final class Protos {
        * </pre>
        *
        * <code>required string fiat_currency_code = 3;</code>
+       * @param value The bytes for fiatCurrencyCode to set.
+       * @return This builder for chaining.
        */
       public Builder setFiatCurrencyCodeBytes(
           com.google.protobuf.ByteString value) {
