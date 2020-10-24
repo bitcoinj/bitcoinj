@@ -108,7 +108,7 @@ public class ForwardingService {
                 @Override
                 public void onSuccess(TransactionConfidence result) {
                     System.out.println("Confirmation received.");
-                    forwardCoins(tx);
+                    forwardCoins();
                 }
 
                 @Override
@@ -128,7 +128,7 @@ public class ForwardingService {
         } catch (InterruptedException ignored) {}
     }
 
-    private static void forwardCoins(Transaction tx) {
+    private static void forwardCoins() {
         try {
             // Now send the coins onwards.
             SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
