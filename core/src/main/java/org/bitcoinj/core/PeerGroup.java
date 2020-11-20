@@ -1834,7 +1834,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         // If we take more stalls than this, we assume we're on some kind of terminally slow network and the
         // stall threshold just isn't set properly. We give up on stall disconnects after that.
-        private int maxStalls = 3;
+        private int maxStalls = 10;
 
         // How many seconds the peer has until we start measuring its speed.
         private int warmupSeconds = -1;
