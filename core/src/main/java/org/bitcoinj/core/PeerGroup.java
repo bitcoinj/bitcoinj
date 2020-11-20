@@ -1916,6 +1916,18 @@ public class PeerGroup implements TransactionBroadcaster {
                             bytesInLastSecond / 1024.0, chainHeight, mostCommonChainHeight);
                     String thresholdString = String.format(Locale.US, "(threshold <%.2f KB/sec for %d seconds)",
                             minSpeedBytesPerSec / 1024.0, samples.length);
+                    double txnsPercentage = (double) txnsInLastSecond / (double) origTxnsInLastSecond;
+                    if (txnsInLastSecond > 1000 && txnsPercentage > 0.99) {
+                        // If bitcoin-core is sending more than 99% of the txs, disconnect the peer.
+                        Peer peer = getDownloadPeer();
+                        log.warn(String.format(Locale.US,
+                                "%d tx/sec is too high compared to %d pre-filtered tx/sec, disconnecting %s.",
+                                txnsInLastSecond, origTxnsInLastSecond, peer, maxStalls));
+                        peer.close();
+                        // Reset the sample buffer and give the next peer time to get going.
+                        samples = null;
+                        warmupSeconds = period;
+                    }
                     if (maxStalls <= 0) {
                         log.info(statsString + ", stall disabled " + thresholdString);
                     } else if (warmupSeconds > 0) {
