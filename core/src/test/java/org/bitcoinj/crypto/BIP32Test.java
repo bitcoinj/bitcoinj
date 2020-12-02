@@ -128,6 +128,25 @@ public class BIP32Test {
                                     "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y"
                             )
                    )
+            ),
+            new HDWTestVector(
+                    "3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678",
+                    "xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv",
+                    "xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa",
+                    Arrays.asList(
+                            new HDWTestVector.DerivedTestCase(
+                                    "Test4 m/0H",
+                                    new ChildNumber[]{new ChildNumber(0, true)},
+                                    "xprv9vB7xEWwNp9kh1wQRfCCQMnZUEG21LpbR9NPCNN1dwhiZkjjeGRnaALmPXCX7SgjFTiCTT6bXes17boXtjq3xLpcDjzEuGLQBM5ohqkao9G",
+                                    "xpub69AUMk3qDBi3uW1sXgjCmVjJ2G6WQoYSnNHyzkmdCHEhSZ4tBok37xfFEqHd2AddP56Tqp4o56AePAgCjYdvpW2PU2jbUPFKsav5ut6Ch1m"
+                            ),
+                            new HDWTestVector.DerivedTestCase(
+                                    "Test4 m/0H/1H",
+                                    new ChildNumber[]{new ChildNumber(0, true), new ChildNumber(1, true)},
+                                    "xprv9xJocDuwtYCMNAo3Zw76WENQeAS6WGXQ55RCy7tDJ8oALr4FWkuVoHJeHVAcAqiZLE7Je3vZJHxspZdFHfnBEjHqU5hG1Jaj32dVoS6XLT1",
+                                    "xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt"
+                            )
+                    )
             )
     };
 
@@ -144,6 +163,11 @@ public class BIP32Test {
     @Test
     public void testVector3() throws Exception {
         testVector(2);
+    }
+
+    @Test
+    public void testVector4() throws Exception {
+        testVector(3);
     }
 
     private void testVector(int testCase) {
