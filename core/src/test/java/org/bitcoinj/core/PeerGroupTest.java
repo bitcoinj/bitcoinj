@@ -617,7 +617,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void testBloomOnP2PK() throws Exception {
-        // Cover bug 513. When a relevant transaction with a P2PK output is found, the Bloom filter should be
+        // Cover GitHub bug #879. When a relevant transaction with a P2PK output is found, the Bloom filter should be
         // recalculated to include that transaction hash but not re-broadcast as the remote nodes should have followed
         // the same procedure. However a new node that's connected should get the fresh filter.
         peerGroup.start();
