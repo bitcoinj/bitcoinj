@@ -218,11 +218,11 @@ public class PeerGroup implements TransactionBroadcaster {
 //                            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
 //                        else
 //                            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-//                        return;
                         // Original bitcoinj code is commented out.
                         // This is a fix to https://github.com/bitcoinj/bitcoinj/issues/2070
                         // Maybe it fixes https://github.com/bisq-network/bisq/issues/4870
                         recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+                        return;
                     }
                 }
             }
