@@ -4896,7 +4896,7 @@ public class Wallet extends BaseTaggableObject
         Script script = out.getScriptPubKey();
         boolean isScriptTypeSupported = ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script)
                 || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script);
-        return (isScriptTypeSupported && myUnspents.contains(out)) || watchedScripts.contains(script);
+        return (isScriptTypeSupported && out.isMine(this)) || watchedScripts.contains(script);
     }
 
     /**
