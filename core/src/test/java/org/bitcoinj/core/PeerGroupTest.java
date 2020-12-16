@@ -616,7 +616,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2001, disconnectedPeers.take().getAddress().getPort());
     }
 
-    @Ignore
     @Test
     public void testBloomOnP2PK() throws Exception {
         // Cover bug 513. When a relevant transaction with a P2PK output is found, the Bloom filter should be

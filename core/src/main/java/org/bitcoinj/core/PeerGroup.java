@@ -214,14 +214,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 Script scriptPubKey = output.getScriptPubKey();
                 if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2WPKH(scriptPubKey)) {
                     if (output.isMine(wallet)) {
-//                        if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
-//                            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-//                        else
-//                            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-                        // Original bitcoinj code is commented out.
-                        // This is a fix to https://github.com/bitcoinj/bitcoinj/issues/2070
-                        // Maybe it fixes https://github.com/bisq-network/bisq/issues/4870
-                        recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+                        if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
+                            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+                        else
+                            recalculateFastCatchupAndFilter(FilterRecalculateMode.DONT_SEND);
                         return;
                     }
                 }
