@@ -13,9 +13,9 @@ Usage: wallet-tool --flags action-name
                        Will complain and require --force if the wallet already exists.
                        If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.
                        If --watchkey is present, it creates a watching wallet using the specified base58 xpub.
-                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for.
-                       If --output-script-type is present, use that for deriving addresses.
+                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for
                        the wallet. See the set-creation-time action for the meaning of these flags.
+                       If --output-script-type is present, use that for deriving addresses.
   marry                Makes the wallet married with other parties, requiring multisig to spend funds.
                        External public keys for other signing parties must be specified with --xpubkeys (comma separated).
   add-key              Adds a new key to the wallet.
