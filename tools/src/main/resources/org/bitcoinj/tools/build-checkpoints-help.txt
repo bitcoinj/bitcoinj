@@ -1,8 +1,0 @@
-BuildCheckpoints: create checkpoint files to use with CheckpointManager
-
-Usage: build-checkpoints --flags
-
->>> OPTIONS
-  --net=XXX            Which network to connect to, defaults to MAIN, can also be TEST or REGTEST.
-  --peer=1.2.3.4       IP address/domain name for connection instead of localhost.
-  --days=<int>         How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.

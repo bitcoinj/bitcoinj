@@ -28,9 +28,7 @@ import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import com.google.common.io.Resources;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
+import picocli.CommandLine;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -46,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -55,26 +54,29 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period
  * to a file which is then signed with your key.
  */
-public class BuildCheckpoints {
+@CommandLine.Command(name = "build-checkpoints", usageHelpAutoWidth = true, sortOptions = false, description = "Create checkpoint files to use with CheckpointManager.")
+public class BuildCheckpoints implements Callable<Integer> {
+    @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
+    private NetworkEnum net = NetworkEnum.MAIN;
+    @CommandLine.Option(names = "--peer", description = "IP address/domain name for connection instead of localhost.")
+    private String peer = null;
+    @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
+    private int days = 7;
+    @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
+    private boolean help;
+
     private static NetworkParameters params;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.initWithSilentBitcoinJ();
+        int exitCode = new CommandLine(new BuildCheckpoints()).execute(args);
+        System.exit(exitCode);
+    }
 
-        OptionParser parser = new OptionParser();
-        parser.accepts("help");
-        OptionSpec<NetworkEnum> netFlag = parser.accepts("net").withRequiredArg().ofType(NetworkEnum.class).defaultsTo(NetworkEnum.MAIN);
-        parser.accepts("peer").withRequiredArg();
-        OptionSpec<Integer> daysFlag = parser.accepts("days").withRequiredArg().ofType(Integer.class).defaultsTo(7);
-        OptionSet options = parser.parse(args);
-
-        if (options.has("help")) {
-            System.out.println(Resources.toString(BuildCheckpoints.class.getResource("build-checkpoints-help.txt"), StandardCharsets.UTF_8));
-            return;
-        }
-
+    @Override
+    public Integer call() throws Exception {
         final String suffix;
-        switch (netFlag.value(options)) {
+        switch (net) {
             case MAIN:
             case PROD:
                 params = MainNetParams.get();
@@ -102,16 +104,14 @@ public class BuildCheckpoints {
 
         // DNS discovery can be used for some networks
         boolean networkHasDnsSeeds = params.getDnsSeeds() != null;
-        if (options.has("peer")) {
+        if (peer != null) {
             // use peer provided in argument
-            String peerFlag = (String) options.valueOf("peer");
             try {
-                ipAddress = InetAddress.getByName(peerFlag);
+                ipAddress = InetAddress.getByName(peer);
                 startPeerGroup(peerGroup, ipAddress);
             } catch (UnknownHostException e) {
-                System.err.println("Could not understand peer domain name/IP address: " + peerFlag + ": " + e.getMessage());
-                System.exit(1);
-                return;
+                System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
+                return 1;
             }
         } else if (networkHasDnsSeeds) {
             // for PROD and TEST use a peer group discovered with dns
@@ -137,7 +137,7 @@ public class BuildCheckpoints {
         long now = new Date().getTime() / 1000;
         peerGroup.setFastCatchupTimeSecs(now);
 
-        final long timeAgo = now - (86400 * options.valueOf(daysFlag));
+        final long timeAgo = now - (86400 * days);
         System.out.println("Checkpointing up to " + Utils.dateTimeFormat(timeAgo * 1000));
 
         chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
@@ -166,6 +166,8 @@ public class BuildCheckpoints {
         // Sanity check the created files.
         sanityCheck(plainFile, checkpoints.size());
         sanityCheck(textFile, checkpoints.size());
+
+        return 0;
     }
 
     private static void writeBinaryCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file) throws Exception {
