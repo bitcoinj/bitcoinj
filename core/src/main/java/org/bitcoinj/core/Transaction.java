@@ -924,6 +924,14 @@ public class Transaction extends ChildMessage {
     }
 
     /**
+     * Serializes the transaction into the Bitcoin network format and encodes it as hex string.
+     * @return raw transaction in hex format
+     */
+    public String toHexString() {
+        return Utils.HEX.encode(unsafeBitcoinSerialize());
+    }
+
+    /**
      * Removes all the inputs from this transaction.
      * Note that this also invalidates the length attribute
      */

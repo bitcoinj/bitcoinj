@@ -2476,9 +2476,9 @@ public class Wallet extends BaseTaggableObject
                     // so the exact nature of the mutation can be examined.
                     log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
-                    log.warn("{}: {}", tx.getTxId(), Utils.HEX.encode(tx.unsafeBitcoinSerialize()));
+                    log.warn("{}: {}", tx.getTxId(), tx.toHexString());
                     Transaction other = output.getSpentBy().getParentTransaction();
-                    log.warn("{}: {}", other.getTxId(), Utils.HEX.encode(other.unsafeBitcoinSerialize()));
+                    log.warn("{}: {}", other.getTxId(), other.toHexString());
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
