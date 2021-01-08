@@ -677,6 +677,7 @@ public class WalletTool implements Callable<Integer> {
             }
             t = req.tx;   // Not strictly required today.
             System.out.println(t.getTxId());
+            System.out.println(t.toHexString());
             if (offline) {
                 wallet.commitTx(t);
                 return;
