@@ -149,23 +149,35 @@ public class BuildCheckpoints {
             }
         });
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Shutdown requested!");
+                end(checkpoints, suffix, peerGroup, store);
+            }
+        });
         peerGroup.downloadBlockChain();
+        end(checkpoints, suffix, peerGroup, store);
+    }
 
+    private static void end(TreeMap<Integer, StoredBlock> checkpoints, String suffix, PeerGroup peerGroup, BlockStore store) {
         checkState(checkpoints.size() > 0);
 
         final File plainFile = new File("checkpoints" + suffix);
         final File textFile = new File("checkpoints" + suffix + ".txt");
 
-        // Write checkpoint data out.
-        writeBinaryCheckpoints(checkpoints, plainFile);
-        writeTextualCheckpoints(checkpoints, textFile);
+        try {
+            // Write checkpoint data out.
+            writeBinaryCheckpoints(checkpoints, plainFile);
+            writeTextualCheckpoints(checkpoints, textFile);
 
-        peerGroup.stop();
-        store.close();
+            peerGroup.stop();
+            store.close();
 
-        // Sanity check the created files.
-        sanityCheck(plainFile, checkpoints.size());
-        sanityCheck(textFile, checkpoints.size());
+            // Sanity check the created files.
+            sanityCheck(plainFile, checkpoints.size());
+            sanityCheck(textFile, checkpoints.size());
+        } catch (Exception ignore) {}
     }
 
     private static void writeBinaryCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file) throws Exception {
