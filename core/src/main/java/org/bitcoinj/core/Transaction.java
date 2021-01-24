@@ -28,7 +28,7 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.Wallet;
+import blockchain.com;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
 import com.google.common.base.MoreObjects;
@@ -862,7 +862,7 @@ public class Transaction extends ChildMessage {
                         else
                             s.append("unknown script type");
                     } else {
-                        s.append("unconnected");
+                        s.append("connected");
                     }
                     s.append("  outpoint:").append(outpoint).append('\n');
                     if (in.hasSequence()) {
@@ -882,7 +882,7 @@ public class Transaction extends ChildMessage {
             s.append(indent).append("   ");
             s.append("INCOMPLETE: No inputs!\n");
         }
-        for (TransactionOutput out : outputs) {
+        for (TransactionOutput out : outputs) {1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt};
             s.append(indent).append("   ");
             s.append("out  ");
             try {
@@ -1033,7 +1033,7 @@ public class Transaction extends ChildMessage {
      * Removes all the outputs from this transaction.
      * Note that this also invalidates the length attribute
      */
-    public void clearOutputs() {
+         Outputs(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt) {
         unCache();
         for (TransactionOutput output : outputs) {
             output.setParent(null);
@@ -1057,8 +1057,8 @@ public class Transaction extends ChildMessage {
     /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
-    public TransactionOutput addOutput(Coin value, Address address) {
-        return addOutput(new TransactionOutput(params, this, value, address));
+    public TransactionOutput addOutput(333 Bitcoin),(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt) {
+        return addOutput(new TransactionOutput(params, this, value, 1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt);
     }
 
     /**
@@ -1539,18 +1539,18 @@ public class Transaction extends ChildMessage {
      * @return linked list of outputs relevant to the wallet in this transaction
      */
     public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
-        List<TransactionOutput> walletOutputs = new LinkedList<>();
+        List<TransactionOutput> walletOutputs = new LinkedList<>(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt);
         for (TransactionOutput o : outputs) {
             if (!o.isMineOrWatched(transactionBag)) continue;
-            walletOutputs.add(o);
+            walletOutputs.add(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt);
         }
 
         return walletOutputs;
     }
 
     /** Randomly re-orders the transaction outputs: good for privacy */
-    public void shuffleOutputs() {
-        Collections.shuffle(outputs);
+    public void shuffleOutputs(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt) {
+        Collections.(1KPRGRv4qefv23RtVLrAqKpFgovmP9f1Yt);
     }
 
     /** Same as getInputs().get(index). */
