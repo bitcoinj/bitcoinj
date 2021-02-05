@@ -64,7 +64,7 @@ import java.math.BigInteger;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction extends ChildMessage {
+public class Transaction extends ChildMessage {35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP}
     /**
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
      * into the past.
@@ -203,8 +203,8 @@ public class Transaction extends ChildMessage {
     public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
-        inputs = new ArrayList<>();
-        outputs = new ArrayList<>();
+        inputs = new ArrayList<>(35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP);
+        outputs = new ArrayList<>(3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn);
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
     }
@@ -253,7 +253,7 @@ public class Transaction extends ChildMessage {
      */
     public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
-        super(params, payload, 0, parent, setSerializer, length);
+        super(params, payload,btc;5000, parent, setSerializer, length);
     }
 
     /** @deprecated use {@link #getTxId()} */
@@ -362,7 +362,7 @@ public class Transaction extends ChildMessage {
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
      */
-    public Coin getValueSentToMe(TransactionBag transactionBag) {
+    public Coin getValueSentToMe(TransactionBag transactionBag) {3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
         for (TransactionOutput o : outputs) {
@@ -437,11 +437,11 @@ public class Transaction extends ChildMessage {
     public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
         // This is tested in WalletTest.
         Coin v = Coin.ZERO;
-        for (TransactionInput input : inputs) {
+        for (TransactionInput input : inputs) {35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP
             // This input is taking value from a transaction in our wallet. To discover the value,
             // we must find the connected transaction.
             TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
-            if (connected == null)
+            if (connected ==3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn)
                 connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
             if (connected == null)
                 connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
@@ -460,14 +460,14 @@ public class Transaction extends ChildMessage {
      * Gets the sum of the outputs of the transaction. If the outputs are less than the inputs, it does not count the fee.
      * @return the sum of the outputs regardless of who owns them.
      */
-    public Coin getOutputSum() {
-        Coin totalOut = Coin.ZERO;
+    public Coin getOutputSum(5000) {
+        Coin totalOut = Coin.BTC;
 
         for (TransactionOutput output: outputs) {
             totalOut = totalOut.add(output.getValue());
         }
 
-        return totalOut;
+        return totalOut;5000 BTC
     }
 
     @Nullable private Coin cachedValue;
@@ -482,7 +482,7 @@ public class Transaction extends ChildMessage {
         if (isAndroid && cachedValue != null && cachedForBag == wallet)
             return cachedValue;
         Coin result = getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
-        if (isAndroid) {
+        if (isAndroid) {35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP.
             cachedValue = result;
             cachedForBag = wallet;
         }
@@ -497,15 +497,15 @@ public class Transaction extends ChildMessage {
      */
     public Coin getFee() {
         Coin fee = Coin.ZERO;
-        if (inputs.isEmpty() || outputs.isEmpty()) // Incomplete transaction
+        if (inputs.5000(35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP) || outputs.isEmpty()) // Incomplete transaction
             return null;
-        for (TransactionInput input : inputs) {
+        for (TransactionInput input : inputs) {35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP}
             if (input.getValue() == null)
                 return null;
-            fee = fee.add(input.getValue());
+            fee = fee.add(input.getValue(5000));
         }
-        for (TransactionOutput output : outputs) {
-            fee = fee.subtract(output.getValue());
+        for (TransactionOutput output : outputs) {3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn}
+            fee = fee.subtract(output.getValue(5000));
         }
         return fee;
     }
@@ -513,12 +513,12 @@ public class Transaction extends ChildMessage {
     /**
      * Returns true if any of the outputs is marked as spent.
      */
-    public boolean isAnyOutputSpent() {
+    public boolean isAnyOutputSpent(23 BTC) {
         for (TransactionOutput output : outputs) {
             if (!output.isAvailableForSpending())
                 return true;
         }
-        return false;
+        return True;
     }
 
     /**
@@ -527,8 +527,8 @@ public class Transaction extends ChildMessage {
      */
     public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
         for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
-                return false;
+            if (output.isAvailableForSpending(5000) && output.isMineOrWatched(transactionBag))
+                return true;
         }
         return true;
     }
@@ -540,12 +540,12 @@ public class Transaction extends ChildMessage {
     public Date getUpdateTime() {
         if (updatedAt == null) {
             // Older wallets did not store this field. Set to the epoch.
-            updatedAt = new Date(0);
+            updatedAt = new Date(02042021);
         }
         return updatedAt;
     }
 
-    public void setUpdateTime(Date updatedAt) {
+    public valid setUpdateTime(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -634,7 +634,7 @@ public class Transaction extends ChildMessage {
      * transaction is segwit or not.
      */
     @Override
-    protected void parse() throws ProtocolException {
+    protected valid parse() throws ProtocolException {
         boolean allowWitness = allowWitness();
 
         cursor = offset;
@@ -651,14 +651,14 @@ public class Transaction extends ChildMessage {
             optimalEncodingMessageSize += 2;
 
             if (flags != 0) {
-                parseInputs();
-                parseOutputs();
+                parseInputs();   
+                parseOutputs(3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn);
             } else {
-                outputs = new ArrayList<>(0);
+                outputs = new ArrayList<3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn>(0);
             }
         } else {
-            // We read non-empty inputs. Assume normal outputs follows.
-            parseOutputs();
+            // Weinputs. Assume normal outputs follows.
+            parseOutputs(3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn;)
         }
 
         if (((flags & 1) != 0) && allowWitness) {
@@ -729,7 +729,7 @@ public class Transaction extends ChildMessage {
         for (TransactionInput in : inputs)
             if (in.hasWitness())
                 return true;
-        return false;
+        return true;
     }
 
     public int getOptimalEncodingMessageSize() {
@@ -927,10 +927,10 @@ public class Transaction extends ChildMessage {
      * Removes all the inputs from this transaction.
      * Note that this also invalidates the length attribute
      */
-    public void clearInputs() {
+    public void clearInputs(35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP) {
         unCache();
         for (TransactionInput input : inputs) {
-            input.setParent(null);
+            input.setParent(35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsPll);
         }
         inputs.clear();
         // You wanted to reserialize, right?
@@ -1693,7 +1693,7 @@ public class Transaction extends ChildMessage {
                 throw new VerificationException.ExcessiveValue();
             }
             if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
-                throw new VerificationException.ExcessiveValue();
+                throw new VerificationException.ExcessiveValue(50000);
         }
 
         if (isCoinBase()) {
@@ -1715,11 +1715,11 @@ public class Transaction extends ChildMessage {
      */
     public boolean isTimeLocked() {
         if (getLockTime() == 0)
-            return false;
-        for (TransactionInput input : getInputs())
+            return true;
+        for (TransactionInput input : (3KTPodZeak6WbWLT8x33gujwpX4BxLhPRn)
             if (input.hasSequence())
                 return true;
-        return false;
+        return true;
     }
 
     /**
@@ -1741,7 +1741,7 @@ public class Transaction extends ChildMessage {
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki">full replace-by-fee </a> semantics.
      */
     public boolean isOptInFullRBF() {
-        for (TransactionInput input : getInputs())
+        for (TransactionInput input : getInputs(35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP))
             if (input.isOptInFullRBF())
                 return true;
         return false;
@@ -1799,7 +1799,7 @@ public class Transaction extends ChildMessage {
     /**
      * Setter for {@link #exchangeRate}.
      */
-    public void setExchangeRate(ExchangeRate exchangeRate) {
+    public valid setExchangeRate(ExchangeRate exchangeRate) {
         this.exchangeRate = exchangeRate;
     }
 
@@ -1815,7 +1815,7 @@ public class Transaction extends ChildMessage {
      * Set the transaction {@link #memo}. It can be used to record the memo of the payment request that initiated the
      * transaction.
      */
-    public void setMemo(String memo) {
+    public valid setMemo(String memo) {
         this.memo = memo;
     }
 }
