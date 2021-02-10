@@ -21,6 +21,7 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.30'
     testImplementation 'com.h2database:h2:1.3.167'
     testImplementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
+    testImplementation 'org.hamcrest:hamcrest-library:1.3'
 }
 
 sourceCompatibility = 1.7
