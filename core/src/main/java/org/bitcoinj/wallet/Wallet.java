@@ -4384,13 +4384,16 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size. */
+    /**
+     * Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size.
+     * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.
+     */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
             boolean ensureMinRequiredFee) {
+        if (ensureMinRequiredFee && feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+            feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection);
         Coin fee = feePerKb.multiply(vsize).divide(1000);
-        if (ensureMinRequiredFee && fee.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-            fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
         TransactionOutput output = tx.getOutput(0);
         output.setValue(output.getValue().subtract(fee));
         return !output.isDust();
