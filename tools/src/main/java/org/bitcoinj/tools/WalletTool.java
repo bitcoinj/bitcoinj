@@ -254,7 +254,6 @@ public class WalletTool {
         parser.accepts("peers").withRequiredArg();
         xpubkeysFlag = parser.accepts("xpubkeys").withRequiredArg();
         OptionSpec<String> outputFlag = parser.accepts("output").withRequiredArg();
-        parser.accepts("value").withRequiredArg();
         OptionSpec<String> feePerKbOption = parser.accepts("fee-per-kb").withRequiredArg();
         OptionSpec<String> feeSatPerByteOption = parser.accepts("fee-sat-per-byte").withRequiredArg();
         unixtimeFlag = parser.accepts("unixtime").withRequiredArg().ofType(Long.class);
