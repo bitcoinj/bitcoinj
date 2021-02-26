@@ -73,6 +73,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
+        checkArgument(this.depth < 256);
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
     }
 
@@ -96,6 +97,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = checkNotNull(hdPath);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
+        checkArgument(this.depth < 256);
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
     }
 
