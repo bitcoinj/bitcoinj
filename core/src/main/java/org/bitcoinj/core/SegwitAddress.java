@@ -37,7 +37,8 @@ import org.bitcoinj.script.Script;
  * bits into groups of 5).</li>
  * </ul>
  *
- * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
+ * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki">BIP350</a> and
+ * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
  *
  * <p>However, you don't need to care about the internals. Use {@link #fromBech32(NetworkParameters, String)},
  * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)} to construct a native
@@ -105,7 +106,7 @@ public class SegwitAddress extends Address {
     }
 
     /**
-     * Returns the witness version in decoded form. Only version 0 is in use right now.
+     * Returns the witness version in decoded form. Only versions 0 and 1 are in use right now.
      * 
      * @return witness version, between 0 and 16
      */
@@ -168,14 +169,23 @@ public class SegwitAddress extends Address {
         if (params == null) {
             for (NetworkParameters p : Networks.get()) {
                 if (bechData.hrp.equals(p.getSegwitAddressHrp()))
-                    return new SegwitAddress(p, bechData.data);
+                    return fromBechData(p, bechData);
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
-                return new SegwitAddress(params, bechData.data);
+                return fromBechData(params, bechData);
             throw new AddressFormatException.WrongNetwork(bechData.hrp);
         }
+    }
+
+    private static SegwitAddress fromBechData(NetworkParameters params, Bech32.Bech32Data bechData) {
+        final SegwitAddress address = new SegwitAddress(params, bechData.data);
+        final int witnessVersion = address.getWitnessVersion();
+        if ((witnessVersion == 0 && bechData.encoding != Bech32.Encoding.BECH32) ||
+                (witnessVersion != 0 && bechData.encoding != Bech32.Encoding.BECH32M))
+            throw new AddressFormatException.UnexpectedWitnessVersion("Unexpected witness version: " + witnessVersion);
+        return address;
     }
 
     /**
@@ -213,7 +223,10 @@ public class SegwitAddress extends Address {
      * @return textual form encoded in bech32
      */
     public String toBech32() {
-        return Bech32.encode(params.getSegwitAddressHrp(), bytes);
+        if (getWitnessVersion() == 0)
+            return Bech32.encode(Bech32.Encoding.BECH32, params.getSegwitAddressHrp(), bytes);
+        else
+            return Bech32.encode(Bech32.Encoding.BECH32M, params.getSegwitAddressHrp(), bytes);
     }
 
     /**
