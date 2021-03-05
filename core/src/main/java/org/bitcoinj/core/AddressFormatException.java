@@ -74,6 +74,20 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
+     * This exception is thrown by {@link SegwitAddress} when you try to decode data and the witness version doesn't
+     * match the Bech32 encoding as per BIP350. You shouldn't allow the user to proceed in this case.
+     */
+    public static class UnexpectedWitnessVersion extends AddressFormatException {
+        public UnexpectedWitnessVersion() {
+            super("Unexpected witness version");
+        }
+
+        public UnexpectedWitnessVersion(String message) {
+            super(message);
+        }
+    }
+
+    /**
      * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
      * address or private key with an invalid prefix (version header or human-readable part). You shouldn't allow the
      * user to proceed in this case.
