@@ -472,8 +472,6 @@ public class Peer extends PeerSocketHandler {
             processAddressMessage((AddressMessage) m);
         } else if (m instanceof HeadersMessage) {
             processHeaders((HeadersMessage) m);
-        } else if (m instanceof AlertMessage) {
-            processAlert((AlertMessage) m);
         } else if (m instanceof VersionMessage) {
             processVersionMessage((VersionMessage) m);
         } else if (m instanceof VersionAck) {
@@ -611,22 +609,6 @@ public class Peer extends PeerSocketHandler {
                     break;
                 }
             }
-        }
-    }
-
-    protected void processAlert(AlertMessage m) {
-        try {
-            if (log.isDebugEnabled()) {
-                if (m.isSignatureValid())
-                    log.debug("Received alert from peer {}: {}", this, m.getStatusBar());
-                else
-                    log.debug("Received alert with invalid signature from peer {}: {}", this, m.getStatusBar());
-            }
-        } catch (Throwable t) {
-            // Signature checking can FAIL on Android platforms before Gingerbread apparently due to bugs in their
-            // BigInteger implementations! See https://github.com/bitcoinj/bitcoinj/issues/526 for discussion. As
-            // alerts are just optional and not that useful, we just swallow the error here.
-            log.error("Failed to check signature: bug in platform libraries?", t);
         }
     }
 

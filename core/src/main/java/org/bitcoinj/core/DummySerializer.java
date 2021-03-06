@@ -69,11 +69,6 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public Message makeAlertMessage(byte[] payloadBytes) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
-    }
-
-    @Override
     public Block makeBlock(byte[] payloadBytes, int offset, int length) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
