@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -40,9 +39,6 @@ public abstract class Message {
     public static final int MAX_SIZE = 0x02000000; // 32MB
 
     public static final int UNKNOWN_LENGTH = Integer.MIN_VALUE;
-
-    // Useful to ensure serialize/deserialize are consistent with each other.
-    private static final boolean SELF_CHECK = false;
 
     // The offset is how many bytes into the provided byte array this message payload starts at.
     protected int offset;
@@ -101,24 +97,8 @@ public abstract class Message {
             checkState(false, "Length field has not been set in constructor for %s after parse.",
                        getClass().getSimpleName());
         
-        if (SELF_CHECK) {
-            selfCheck(payload, offset);
-        }
-        
         if (!serializer.isParseRetainMode())
             this.payload = null;
-    }
-
-    private void selfCheck(byte[] payload, int offset) {
-        if (!(this instanceof VersionMessage)) {
-            byte[] payloadBytes = new byte[cursor - offset];
-            System.arraycopy(payload, offset, payloadBytes, 0, cursor - offset);
-            byte[] reserialized = bitcoinSerialize();
-            if (!Arrays.equals(reserialized, payloadBytes))
-                throw new RuntimeException("Serialization is wrong: \n" +
-                        Utils.HEX.encode(reserialized) + " vs \n" +
-                        Utils.HEX.encode(payloadBytes));
-        }
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
