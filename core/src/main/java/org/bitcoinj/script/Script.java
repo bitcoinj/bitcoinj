@@ -1548,6 +1548,21 @@ public class Script {
             boolean validSig = pubkey.verify(sigHash, signature);
             if (!validSig)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature");
+        } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
+            if (chunks.size() != 2)
+                throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Invalid size: " + chunks.size());
+            TransactionSignature signature;
+            try {
+                signature = TransactionSignature.decodeFromBitcoin(chunks.get(0).data, true, true);
+            } catch (SignatureDecodeException x) {
+                throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
+            }
+            ECKey pubkey = ECKey.fromPublicOnly(chunks.get(1).data);
+            Sha256Hash sigHash = txContainingThis.hashForSignature(scriptSigIndex, scriptPubKey,
+                    signature.sigHashMode(), false);
+            boolean validSig = pubkey.verify(sigHash, signature);
+            if (!validSig)
+                throw new ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature");
         } else {
             correctlySpends(txContainingThis, scriptSigIndex, scriptPubKey, verifyFlags);
         }
