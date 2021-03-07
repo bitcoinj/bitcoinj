@@ -424,8 +424,10 @@ public class ScriptTest {
                 }
             }
 
-            if (valid)
+            if (valid) {
+                System.out.println(test);
                 fail();
+            }
         }
     }
 
