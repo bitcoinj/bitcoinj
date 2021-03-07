@@ -298,7 +298,7 @@ public class ScriptTest {
                 Script scriptPubKey = parseScriptString(test.get(1).asText());
                 Transaction txCredit = buildCreditingTransaction(scriptPubKey);
                 Transaction txSpend = buildSpendingTransaction(txCredit, scriptSig);
-                scriptSig.correctlySpends(txSpend, 0, scriptPubKey, verifyFlags);
+                scriptSig.correctlySpends(txSpend, 0, null, null, scriptPubKey, verifyFlags);
                 if (!expectedError.equals(ScriptError.SCRIPT_ERR_OK))
                     fail(test + " is expected to fail");
             } catch (ScriptException e) {
@@ -375,8 +375,8 @@ public class ScriptTest {
                     if (input.getOutpoint().getIndex() == 0xffffffffL)
                         input.getOutpoint().setIndex(-1);
                     assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
-                            verifyFlags);
+                    input.getScriptSig().correctlySpends(transaction, i, null, null,
+                            scriptPubKeys.get(input.getOutpoint()), verifyFlags);
                 }
             } catch (Exception e) {
                 System.err.println(test);
@@ -428,8 +428,8 @@ public class ScriptTest {
                 TransactionInput input = transaction.getInputs().get(i);
                 assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                 try {
-                    input.getScriptSig().correctlySpends(transaction, i, scriptPubKeys.get(input.getOutpoint()),
-                            verifyFlags);
+                    input.getScriptSig().correctlySpends(transaction, i, null, null,
+                            scriptPubKeys.get(input.getOutpoint()), verifyFlags);
                 } catch (VerificationException e) {
                     valid = false;
                 }

@@ -2772,7 +2772,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(CENT, request2.tx.getOutput(0).getValue());
         // Make sure it was properly signed
         request2.tx.getInput(0).getScriptSig().correctlySpends(
-                request2.tx, 0, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
@@ -3216,7 +3216,7 @@ public class WalletTest extends TestWithWallet {
                 assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
                 input.getScriptSig().correctlySpends(
-                        req.tx, i, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                        req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));
