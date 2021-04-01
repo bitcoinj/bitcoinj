@@ -17,8 +17,6 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -107,7 +105,9 @@ public class BlockChain extends AbstractBlockChain {
         lock.lock();
         try {
             int currentHeight = getBestChainHeight();
-            checkArgument(height >= 0 && height <= currentHeight, "Bad height: %s", height);
+            if(height < 0 || height > currentHeight){
+                throw new IllegalArgumentException(String.format("Bad height: %s", height));
+            }
             if (height == currentHeight)
                 return; // nothing to do
 
