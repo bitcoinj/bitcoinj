@@ -17,21 +17,21 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Sha256Hash.*;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Sha256Hash.hashTwice;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -100,7 +100,6 @@ public class Block extends Message {
     private long nonce;
 
     // If null, it means this object holds only the headers.
-    @VisibleForTesting
     @Nullable List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
@@ -311,7 +310,7 @@ public class Block extends Message {
     public byte[] bitcoinSerialize() {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
-            Preconditions.checkNotNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
+            Objects.requireNonNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
             if (length == payload.length) {
                 return payload;
             } else {
@@ -470,8 +469,8 @@ public class Block extends Message {
         s.append(" block: \n");
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
-        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null);
+        String bips = ", " + (isBIP34() ? "BIP34" : null) + (isBIP66() ? "BIP66" : null) +
+                (isBIP65() ? "BIP65" : null);
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
@@ -574,10 +573,11 @@ public class Block extends Message {
         }
     }
 
-    @VisibleForTesting
     void checkWitnessRoot() throws VerificationException {
         Transaction coinbase = transactions.get(0);
-        checkState(coinbase.isCoinBase());
+        if(!coinbase.isCoinBase()){
+            throw new IllegalArgumentException("Coinbase transaction invalid");
+        }
         Sha256Hash witnessCommitment = coinbase.findWitnessCommitment();
         if (witnessCommitment != null) {
             byte[] witnessReserved = null;
@@ -887,7 +887,7 @@ public class Block extends Message {
     /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : ImmutableList.copyOf(transactions);
+        return transactions == null ? null : Collections.unmodifiableList(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -900,7 +900,6 @@ public class Block extends Message {
      * 
      * @param height block height, if known, or -1 otherwise.
      */
-    @VisibleForTesting
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<>();
@@ -935,7 +934,6 @@ public class Block extends Message {
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
-    @VisibleForTesting
     public Block createNextBlock(Address to, long version, long time, int blockHeight) {
         return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
     }
@@ -993,22 +991,18 @@ public class Block extends Message {
         return b;
     }
 
-    @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
-    @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
-    @VisibleForTesting
     public Block createNextBlock(@Nullable Address to) {
         return createNextBlock(to, FIFTY_COINS);
     }
 
-    @VisibleForTesting
     public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
                                Utils.currentTimeSeconds(), pubKey, coinbaseValue, height);
@@ -1018,18 +1012,15 @@ public class Block extends Message {
      * Create a block sending 50BTC as a coinbase transaction to the public key specified.
      * This method is intended for test use only.
      */
-    @VisibleForTesting
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
                                Utils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
     }
 
-    @VisibleForTesting
     boolean isHeaderBytesValid() {
         return headerBytesValid;
     }
 
-    @VisibleForTesting
     boolean isTransactionBytesValid() {
         return transactionBytesValid;
     }
