@@ -21,8 +21,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
 
-import com.google.common.base.MoreObjects;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -30,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.*;
 
 /**
@@ -131,11 +128,10 @@ public class BloomFilter extends Message {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("data length", data.length);
-        helper.add("hashFuncs", hashFuncs);
-        helper.add("nFlags", getUpdateFlag());
-        return helper.toString();
+        return getClass().getSimpleName()+"["
+                +"data length= "+data.length+", "
+                +"hashFuncs= "+hashFuncs +", "
+                +"nFlags=" +getUpdateFlag() +"]";
     }
 
     @Override
@@ -268,9 +264,9 @@ public class BloomFilter extends Message {
      */
     public synchronized void merge(BloomFilter filter) {
         if (!this.matchesAll() && !filter.matchesAll()) {
-            checkArgument(filter.data.length == this.data.length &&
-                          filter.hashFuncs == this.hashFuncs &&
-                          filter.nTweak == this.nTweak);
+            if(filter.data.length != this.data.length && filter.hashFuncs != this.hashFuncs && filter.nTweak != this.nTweak){
+                throw new IllegalArgumentException();
+            }
             for (int i = 0; i < data.length; i++)
                 this.data[i] |= filter.data[i];
         } else {
