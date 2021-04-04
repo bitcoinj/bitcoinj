@@ -22,7 +22,7 @@ import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
-import org.bitcoinj.utils.*;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.slf4j.Logger;
@@ -30,14 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A FullPrunedBlockChain works in conjunction with a {@link FullPrunedBlockStore} to verify all the rules of the
@@ -213,7 +207,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     @Override
     protected TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
-        checkState(lock.isHeldByCurrentThread());
+        if(!lock.isHeldByCurrentThread()) {
+            throw new IllegalStateException();
+        }
         if (block.getTransactions() == null)
             throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
         if (!params.passesCheckpoint(height, block.getHash()))
@@ -346,7 +342,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     @Override
     protected synchronized TransactionOutputChanges connectTransactions(StoredBlock newBlock)
             throws VerificationException, BlockStoreException, PrunedException {
-        checkState(lock.isHeldByCurrentThread());
+        if(!lock.isHeldByCurrentThread()){
+            throw new IllegalStateException();
+        }
         if (!params.passesCheckpoint(newBlock.getHeight(), newBlock.getHeader().getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + newBlock.getHeight());
 
@@ -488,7 +486,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      */
     @Override
     protected void disconnectTransactions(StoredBlock oldBlock) throws PrunedException, BlockStoreException {
-        checkState(lock.isHeldByCurrentThread());
+        if(!lock.isHeldByCurrentThread()){
+            throw new IllegalStateException();
+        }
         blockStore.beginDatabaseBatchWrite();
         try {
             StoredUndoableBlock undoBlock = blockStore.getUndoBlock(oldBlock.getHeader().getHash());
@@ -506,7 +506,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
     @Override
     protected void doSetChainHead(StoredBlock chainHead) throws BlockStoreException {
-        checkState(lock.isHeldByCurrentThread());
+        if(!lock.isHeldByCurrentThread()){
+            throw new IllegalStateException();
+        }
         blockStore.setVerifiedChainHead(chainHead);
         blockStore.commitDatabaseBatchWrite();
     }
@@ -518,7 +520,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
     @Override
     protected StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException {
-        checkState(lock.isHeldByCurrentThread());
+        if(!lock.isHeldByCurrentThread()){
+            throw new IllegalStateException();
+        }
         return blockStore.getOnceUndoableStoredBlock(hash);
     }
 }

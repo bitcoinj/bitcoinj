@@ -82,7 +82,9 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {
-        Preconditions.checkArgument(keyBytes.length == 32, "Private keys must be 32 bytes");
+        if(keyBytes.length != 32){
+            throw new IllegalArgumentException("Private keys must be 32 bytes");
+        }
         if (!compressed) {
             return keyBytes;
         } else {
