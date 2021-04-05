@@ -17,8 +17,7 @@
 package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * Thrown to indicate that you don't have enough money available to perform the requested operation.
@@ -38,6 +37,6 @@ public class InsufficientMoneyException extends Exception {
 
     public InsufficientMoneyException(Coin missing, String message) {
         super(message);
-        this.missing = checkNotNull(missing);
+        this.missing = Objects.requireNonNull(missing);
     }
 }

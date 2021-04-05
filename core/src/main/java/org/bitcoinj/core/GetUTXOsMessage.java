@@ -16,10 +16,10 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,11 +46,11 @@ public class GetUTXOsMessage extends Message {
     public static final long SERVICE_FLAGS_REQUIRED = 3;
 
     private boolean includeMempool;
-    private ImmutableList<TransactionOutPoint> outPoints;
+    private List<TransactionOutPoint> outPoints;
 
     public GetUTXOsMessage(NetworkParameters params, List<TransactionOutPoint> outPoints, boolean includeMempool) {
         super(params);
-        this.outPoints = ImmutableList.copyOf(outPoints);
+        this.outPoints = Collections.unmodifiableList(outPoints);
         this.includeMempool = includeMempool;
     }
 
@@ -62,13 +62,13 @@ public class GetUTXOsMessage extends Message {
     protected void parse() throws ProtocolException {
         includeMempool = readBytes(1)[0] == 1;
         long numOutpoints = readVarInt();
-        ImmutableList.Builder<TransactionOutPoint> list = ImmutableList.builder();
+        List<TransactionOutPoint> list = new LinkedList<>();
         for (int i = 0; i < numOutpoints; i++) {
             TransactionOutPoint outPoint = new TransactionOutPoint(params, payload, cursor);
             list.add(outPoint);
             cursor += outPoint.getMessageSize();
         }
-        outPoints = list.build();
+        outPoints = Collections.unmodifiableList(list);
         length = cursor;
     }
 
@@ -76,7 +76,7 @@ public class GetUTXOsMessage extends Message {
         return includeMempool;
     }
 
-    public ImmutableList<TransactionOutPoint> getOutPoints() {
+    public List<TransactionOutPoint> getOutPoints() {
         return outPoints;
     }
 
