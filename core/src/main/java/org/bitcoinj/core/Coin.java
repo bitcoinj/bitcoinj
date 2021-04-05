@@ -16,13 +16,11 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.utils.LongMath;
 import org.bitcoinj.utils.MonetaryFormat;
-import com.google.common.math.LongMath;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
@@ -117,11 +115,10 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * @return {@code Coin} object containing value in satoshis
      */
     public static Coin valueOf(final int coins, final int cents) {
-        checkArgument(cents < 100);
-        checkArgument(cents >= 0);
-        checkArgument(coins >= 0);
-        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
-        return coin;
+        if(cents > 100 || cents < 0 || coins < 0){
+            throw new IllegalArgumentException();
+        }
+        return COIN.multiply(coins).add(CENT.multiply(cents));
     }
 
     /**
@@ -202,7 +199,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin add(final Coin value) {
-        return new Coin(LongMath.checkedAdd(this.value, value.value));
+        return new Coin(LongMath.add(this.value, value.value));
     }
 
     /** Alias for add */
@@ -211,7 +208,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        return new Coin(LongMath.checkedSubtract(this.value, value.value));
+        return new Coin(LongMath.subtract(this.value, value.value));
     }
 
     /** Alias for subtract */
@@ -220,7 +217,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin multiply(final long factor) {
-        return new Coin(LongMath.checkedMultiply(this.value, factor));
+        return new Coin(LongMath.multiply(this.value, factor));
     }
 
     /** Alias for multiply */
