@@ -26,8 +26,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * <p>A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.</p>
@@ -69,7 +67,7 @@ public class PeerAddress extends ChildMessage {
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port, int protocolVersion, BigInteger services) {
         super(params);
-        this.addr = checkNotNull(addr);
+        this.addr = Objects.requireNonNull(addr);
         this.port = port;
         setSerializer(serializer.withProtocolVersion(protocolVersion));
         this.services = services;

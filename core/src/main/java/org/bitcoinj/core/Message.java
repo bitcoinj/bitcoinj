@@ -20,11 +20,12 @@ package org.bitcoinj.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -90,9 +91,7 @@ public abstract class Message {
         parse();
 
         if (this.length == UNKNOWN_LENGTH)
-            checkState(false, "Length field has not been set in constructor for %s after parse.",
-                       getClass().getSimpleName());
-        
+            throw new IllegalStateException(String.format("Length field has not been set in constructor for %s after parse.", getClass().getSimpleName()));
         if (!serializer.isParseRetainMode())
             this.payload = null;
     }
@@ -272,7 +271,7 @@ public abstract class Message {
      */
     public final int getMessageSize() {
         if (length == UNKNOWN_LENGTH)
-            checkState(false, "Length field has not been set in %s.", getClass().getSimpleName());
+            throw new IllegalStateException(String.format("Length field has not been set in %s.", getClass().getSimpleName()));
         return length;
     }
 
