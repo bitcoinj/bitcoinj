@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -492,7 +493,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
-        ListenableFuture<Long> future = peer.ping();
+        CompletableFuture<Long> future = peer.ping();
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
@@ -586,7 +587,7 @@ public class PeerTest extends TestWithNetworkConnections {
         pingAndWait(writeTarget);
         assertEquals(t1, onTx[0]);
         // We want its dependencies so ask for them.
-        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        CompletableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
         assertFalse(futures.isDone());
         // It will recursively ask for the dependencies of t1: t2, t3, t7, t8.
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -663,7 +664,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, t1);
         pingAndWait(writeTarget);
         // We want its dependencies so ask for them.
-        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        CompletableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
         assertFalse(futures.isDone());
         // level 1
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -871,8 +872,8 @@ public class PeerTest extends TestWithNetworkConnections {
         TransactionOutPoint op1 = new TransactionOutPoint(UNITTEST, 1, Sha256Hash.of("foo".getBytes()));
         TransactionOutPoint op2 = new TransactionOutPoint(UNITTEST, 2, Sha256Hash.of("bar".getBytes()));
 
-        ListenableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
-        ListenableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
+        CompletableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
+        CompletableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
 
         GetUTXOsMessage msg1 = (GetUTXOsMessage) outbound(writeTarget);
         GetUTXOsMessage msg2 = (GetUTXOsMessage) outbound(writeTarget);
