@@ -17,6 +17,8 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
@@ -31,6 +33,8 @@ import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.CoinSelection;
+import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 
@@ -95,6 +99,7 @@ import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
@@ -152,6 +157,7 @@ public class WalletTool implements Callable<Integer> {
             "                         --payment-request=http://merchant.com/pay.php?123%n" +
             "                       Other options include:%n" +
             "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
+            "                         --select-addr or --select-output to select specific outputs%n" +
             "                         --locktime=1234  sets the lock time to block 1234%n" +
             "                         --locktime=2013/01/01  sets the lock time to 1st Jan 2013%n" +
             "                         --allow-unconfirmed will let you create spends of pending non-change outputs.%n" +
@@ -206,6 +212,10 @@ public class WalletTool implements Callable<Integer> {
     private String peersStr;
     @CommandLine.Option(names = "--xpubkeys", description = "Specifies external public keys.")
     private String xpubKeysStr;
+    @CommandLine.Option(names = "--select-addr", description = "When sending, only pick coins from this address.")
+    private String selectAddrStr;
+    @CommandLine.Option(names = "--select-output", description = "When sending, only pick coins from this output.")
+    private String selectOutputStr;
     @CommandLine.Option(names = "--output", description = "Creates an output with the specified amount, separated by a colon. The special amount ALL is used to use the entire balance.")
     private List<String> outputsStr;
     @CommandLine.Option(names = "--fee-per-vkb", description = "Sets the network fee in Bitcoin per kilobyte when sending, e.g. --fee-per-vkb=0.0005")
@@ -454,7 +464,62 @@ public class WalletTool implements Callable<Integer> {
                         feePerVkb = parseCoin(feePerVkbStr);
                     if (feeSatPerVbyteStr != null)
                         feePerVkb = Coin.valueOf(Long.parseLong(feeSatPerVbyteStr) * 1000);
-                    send(outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
+                    if (selectAddrStr != null && selectOutputStr != null) {
+                        System.err.println("--select-addr and --select-output cannot be used together.");
+                        return 1;
+                    }
+                    CoinSelector coinSelector = null;
+                    if (selectAddrStr != null) {
+                        Address selectAddr = null;
+                        try {
+                            selectAddr = Address.fromString(params, selectAddrStr);
+                        } catch (AddressFormatException x) {
+                            System.err.println("Could not parse given address, or wrong network: " + selectAddrStr);
+                            return 1;
+                        }
+                        final Address validSelectAddr = selectAddr;
+                        coinSelector = new CoinSelector() {
+                            @Override
+                            public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
+                                Coin valueGathered = Coin.ZERO;
+                                List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
+                                for (TransactionOutput candidate : candidates) {
+                                    try {
+                                        Address candidateAddr = candidate.getScriptPubKey().getToAddress(params);
+                                        if (validSelectAddr.equals(candidateAddr)) {
+                                            gathered.add(candidate);
+                                            valueGathered = valueGathered.add(candidate.getValue());
+                                        }
+                                    } catch (ScriptException x) {
+                                        // swallow
+                                    }
+                                }
+                                return new CoinSelection(valueGathered, gathered);
+                            }
+                        };
+                    }
+                    if (selectOutputStr != null) {
+                        String[] parts = selectOutputStr.split(":", 2);
+                        Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
+                        int selectIndex = Integer.parseInt(parts[1]);
+                        coinSelector = new CoinSelector() {
+                            @Override
+                            public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
+                                Coin valueGathered = Coin.ZERO;
+                                List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
+                                for (TransactionOutput candidate : candidates) {
+                                    int candicateIndex = candidate.getIndex();
+                                    final Sha256Hash candidateTransactionHash = candidate.getParentTransactionHash();
+                                    if (selectIndex == candicateIndex && selectTransactionHash.equals(candidateTransactionHash)) {
+                                        gathered.add(candidate);
+                                        valueGathered = valueGathered.add(candidate.getValue());
+                                    }
+                                }
+                                return new CoinSelection(valueGathered, gathered);
+                            }
+                        };
+                    }
+                    send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
                 } else if (paymentRequestLocationStr != null) {
                     sendPaymentRequest(paymentRequestLocationStr, !noPki);
                 } else {
@@ -622,14 +687,17 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void send(List<String> outputs, Coin feePerVkb, String lockTimeStr, boolean allowUnconfirmed) throws VerificationException {
+    private void send(CoinSelector coinSelector, List<String> outputs, Coin feePerVkb, String lockTimeStr,
+                      boolean allowUnconfirmed)
+            throws VerificationException {
+        Coin balance = coinSelector != null ? wallet.getBalance(coinSelector) : wallet.getBalance(allowUnconfirmed ?
+                BalanceType.ESTIMATED : BalanceType.AVAILABLE);
         // Convert the input strings to outputs.
         Transaction t = new Transaction(params);
         for (String spec : outputs) {
             try {
                 OutputSpec outputSpec = new OutputSpec(spec);
-                Coin value = outputSpec.value != null ? outputSpec.value :
-                        wallet.getBalance(allowUnconfirmed ? BalanceType.ESTIMATED : BalanceType.AVAILABLE);
+                Coin value = outputSpec.value != null ? outputSpec.value : balance;
                 if (outputSpec.isAddress())
                     t.addOutput(value, outputSpec.addr);
                 else
@@ -649,7 +717,11 @@ public class WalletTool implements Callable<Integer> {
             }
         }
         SendRequest req = SendRequest.forTx(t);
-        if (t.getOutputs().size() == 1 && t.getOutput(0).getValue().equals(wallet.getBalance())) {
+        if (coinSelector != null) {
+            req.coinSelector = coinSelector;
+            req.recipientsPayFees = true;
+        }
+        if (t.getOutputs().size() == 1 && t.getOutput(0).getValue().equals(balance)) {
             log.info("Emptying out wallet, recipient may get less than what you expect");
             req.emptyWallet = true;
         }
@@ -701,7 +773,7 @@ public class WalletTool implements Callable<Integer> {
         } catch (BlockStoreException | ExecutionException | InterruptedException | KeyCrypterException e) {
             throw new RuntimeException(e);
         } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
+            System.err.println("Insufficient funds: have " + balance.toFriendlyString());
         }
     }
 
