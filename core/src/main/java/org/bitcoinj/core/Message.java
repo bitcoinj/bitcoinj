@@ -89,7 +89,7 @@ public abstract class Message {
 
         parse();
 
-        if (this.length == UNKNOWN_LENGTH)
+        if (this.length == UNKNOWN_LENGTH && !(this instanceof UnknownMessage))
             checkState(false, "Length field has not been set in constructor for %s after parse.",
                        getClass().getSimpleName());
         
