@@ -31,6 +31,6 @@ public class UnknownMessage extends EmptyMessage {
 
     @Override
     public String toString() {
-        return "Unknown message [" + name + "]: " + (payload == null ? "" : Utils.HEX.encode(payload));
+        return "Unknown message [" + name + "]" + (payload == null ? "" : ": " + Utils.HEX.encode(payload));
     }
 }
