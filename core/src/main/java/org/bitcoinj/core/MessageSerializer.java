@@ -65,7 +65,13 @@ public abstract class MessageSerializer {
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
+    public abstract AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
+
+    /**
+     * Make an address message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    public abstract AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a block from the payload, using an offset of zero and the payload

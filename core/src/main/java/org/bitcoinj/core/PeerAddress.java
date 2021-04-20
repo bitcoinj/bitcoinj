@@ -21,6 +21,8 @@ package org.bitcoinj.core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -31,13 +33,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * <p>A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.</p>
+ *
+ * <p>This class abuses the protocol version contained in its serializer. It can only contain 0 (format within
+ * {@link VersionMessage}), 1 ({@link AddressV1Message}) or 2 ({@link AddressV2Message}).</p>
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PeerAddress extends ChildMessage {
-
-    static final int MESSAGE_SIZE = 30;
-
     private InetAddress addr;
     private String hostname; // Used for .onion addresses
     private int port;
@@ -65,14 +67,21 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         setSerializer(serializer);
         this.services = services;
-        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        this.time = Utils.currentTimeSeconds();
+    }
+
+    /**
+     * Constructs a peer address from the given IP address, port and services. Version number is default for the given parameters.
+     */
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services) {
+        this(params, addr, port, services, params.getDefaultSerializer().withProtocolVersion(0));
     }
 
     /**
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, BigInteger.ZERO, params.getDefaultSerializer());
+        this(params, addr, port, BigInteger.ZERO);
     }
 
     /**
@@ -99,6 +108,7 @@ public class PeerAddress extends ChildMessage {
         this.hostname = hostname;
         this.port = port;
         this.services = BigInteger.ZERO;
+        this.time = Utils.currentTimeSeconds();
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
@@ -107,54 +117,110 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (isSerializeTime()) {
-            //TODO this appears to be dynamic because the client only ever sends out it's own address
-            //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
-            //the address refers to this client.
-            int secs = (int) (Utils.currentTimeSeconds());
-            Utils.uint32ToByteStreamLE(secs, stream);
+        int protocolVersion = serializer.getProtocolVersion();
+        if (protocolVersion < 0 || protocolVersion > 2)
+            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
+
+        if (protocolVersion >= 1) {
+            Utils.uint32ToByteStreamLE(time, stream);
         }
-        Utils.uint64ToByteStreamLE(services, stream);  // nServices.
-        // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by hand.
-        byte[] ipBytes = addr.getAddress();
-        if (ipBytes.length == 4) {
-            byte[] v6addr = new byte[16];
-            System.arraycopy(ipBytes, 0, v6addr, 12, 4);
-            v6addr[10] = (byte) 0xFF;
-            v6addr[11] = (byte) 0xFF;
-            ipBytes = v6addr;
+        if (protocolVersion == 2) {
+            stream.write(new VarInt(services.longValue()).encode());
+            if (addr != null) {
+                if (addr instanceof Inet4Address) {
+                    stream.write(0x01);
+                    stream.write(new VarInt(4).encode());
+                    stream.write(addr.getAddress());
+                } else if (addr instanceof Inet6Address) {
+                    stream.write(0x02);
+                    stream.write(new VarInt(16).encode());
+                    stream.write(addr.getAddress());
+                } else {
+                    throw new IllegalStateException();
+                }
+            } else {
+                throw new IllegalStateException();
+            }
+        } else {
+            Utils.uint64ToByteStreamLE(services, stream);  // nServices.
+            if (addr != null) {
+                // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
+                // hand.
+                byte[] ipBytes = addr.getAddress();
+                if (ipBytes.length == 4) {
+                    byte[] v6addr = new byte[16];
+                    System.arraycopy(ipBytes, 0, v6addr, 12, 4);
+                    v6addr[10] = (byte) 0xFF;
+                    v6addr[11] = (byte) 0xFF;
+                    ipBytes = v6addr;
+                }
+                stream.write(ipBytes);
+            } else {
+                throw new IllegalStateException();
+            }
         }
-        stream.write(ipBytes);
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
         Utils.uint16ToByteStreamBE(port, stream);
     }
 
-    private boolean isSerializeTime() {
-        return serializer.getProtocolVersion() >= 31402 && !(parent instanceof VersionMessage);
-    }
-
     @Override
     protected void parse() throws ProtocolException {
-        // Format of a serialized address:
-        //   uint32 timestamp
-        //   uint64 services   (flags determining what the node can do)
-        //   16 bytes ip address
-        //   2 bytes port num
-        if (isSerializeTime())
+        int protocolVersion = serializer.getProtocolVersion();
+        if (protocolVersion < 0 || protocolVersion > 2)
+            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
+
+        length = 0;
+        if (protocolVersion >= 1) {
             time = readUint32();
-        else
+            length += 4;
+        } else {
             time = -1;
-        services = readUint64();
-        byte[] addrBytes = readBytes(16);
-        try {
-            addr = InetAddress.getByAddress(addrBytes);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+        }
+        if (protocolVersion == 2) {
+            VarInt servicesVarInt = readVarInt();
+            length += servicesVarInt.getSizeInBytes();
+            services = BigInteger.valueOf(servicesVarInt.longValue());
+            int networkId = readByte();
+            length += 1;
+            byte[] addrBytes = readByteArray();
+            int addrLen = addrBytes.length;
+            length += VarInt.sizeOf(addrLen) + addrLen;
+            if (networkId == 0x01) {
+                // IPv4
+                if (addrLen != 4)
+                    throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
+                addr = getByAddress(addrBytes);
+                hostname = null;
+            } else if (networkId == 0x02) {
+                // IPv6
+                if (addrLen != 16)
+                    throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
+                addr = getByAddress(addrBytes);
+                hostname = null;
+            } else {
+                // ignore unknown network IDs
+                addr = null;
+                hostname = null;
+            }
+        } else {
+            services = readUint64();
+            length += 8;
+            byte[] addrBytes = readBytes(16);
+            length += 16;
+            addr = getByAddress(addrBytes);
+            hostname = null;
         }
         port = Utils.readUint16BE(payload, cursor);
         cursor += 2;
-        // The 4 byte difference is the uint32 timestamp that was introduced in version 31402 
-        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        length += 2;
+    }
+
+    private static InetAddress getByAddress(byte[] addrBytes) {
+        try {
+            return InetAddress.getByAddress(addrBytes);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
 
     public String getHostname() {
