@@ -449,7 +449,7 @@ public class WalletProtobufSerializer {
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
             return readWallet(params, extensions, walletProto, forceReset);
-        } catch (IOException | IllegalStateException | IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
     }
@@ -822,7 +822,7 @@ public class WalletProtobufSerializer {
             if (ip != null) {
                 address = new PeerAddress(params, ip, port, services, params.getDefaultSerializer());
             } else {
-                address = new PeerAddress(params, hostname, port, params.getDefaultSerializer().getProtocolVersion(), services);
+                address = new PeerAddress(params, hostname, port, services);
             }
             confidence.markBroadcastBy(address);
         }

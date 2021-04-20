@@ -17,44 +17,42 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.OnionCatAddressChecker;
-import org.bitcoinj.net.OnionCatConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.</p>
- * 
+ *
+ * <p>This class abuses the protocol version contained in its serializer. It can only contain 0 (format within
+ * {@link VersionMessage}), 1 ({@link AddressV1Message}) or 2 ({@link AddressV2Message}).</p>
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PeerAddress extends ChildMessage {
-    private static final Logger log = LoggerFactory.getLogger(PeerAddress.class);
-    
-    static final int MESSAGE_SIZE = 30;
 
     //addr and hostname are alternatives and should not be used together.
     private InetAddress addr;
-    private String hostname;
-
+    private String hostname; // Used for .onion addresses
     private int port;
     private BigInteger services;
     private long time;
 
     /**
      * Construct a peer address from a serialized payload.
-     * @param params NetworkParameters object.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
+     *
+     * @param params     NetworkParameters object.
+     * @param payload    Bitcoin protocol formatted byte array containing message content.
+     * @param offset     The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
@@ -71,14 +69,21 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         setSerializer(serializer);
         this.services = services;
-        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        this.time = Utils.currentTimeSeconds();
+    }
+
+    /**
+     * Constructs a peer address from the given IP address, port and services. Version number is default for the given parameters.
+     */
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services) {
+        this(params, addr, port, services, params.getDefaultSerializer().withProtocolVersion(0));
     }
 
     /**
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, BigInteger.ZERO, params.getDefaultSerializer());
+        this(params, addr, port, BigInteger.ZERO);
     }
 
     /**
@@ -98,6 +103,14 @@ public class PeerAddress extends ChildMessage {
     }
 
     /**
+     * Constructs a peer address from a stringified hostname+port+services.
+     */
+    public PeerAddress(NetworkParameters params, String hostname, int port, BigInteger services) {
+        this(params, hostname, port);
+        this.services = services;
+    }
+
+    /**
      * Constructs a peer address from a stringified hostname+port.
      */
     public PeerAddress(NetworkParameters params, String hostname, int port) {
@@ -105,18 +118,7 @@ public class PeerAddress extends ChildMessage {
         this.hostname = hostname;
         this.port = port;
         this.services = BigInteger.ZERO;
-    }
-
-    /**
-     * Construct a peer address from a memorized or hardcoded hostname.
-     */
-    public PeerAddress(NetworkParameters params, String hostname, int port, int protocolVersion, BigInteger services) {
-        super(params);
-        this.hostname = hostname;
-        this.port = port;
-        setSerializer(serializer.withProtocolVersion(protocolVersion));
-        this.services = services;
-        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        this.time = Utils.currentTimeSeconds();
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
@@ -125,72 +127,110 @@ public class PeerAddress extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (isSerializeTime()) {
-            //TODO this appears to be dynamic because the client only ever sends out it's own address
-            //so assumes itself to be up.  For a fuller implementation this needs to be dynamic only if
-            //the address refers to this client.
-            int secs = (int) (Utils.currentTimeSeconds());
-            Utils.uint32ToByteStreamLE(secs, stream);
-        }
-        Utils.uint64ToByteStreamLE(services, stream);  // nServices.
+        int protocolVersion = serializer.getProtocolVersion();
+        if (protocolVersion < 0 || protocolVersion > 2)
+            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
-        byte[] ipBytes;
-        if (hostname!=null) {
-            if (hostname.endsWith(".onion")) {
-                ipBytes = OnionCatConverter.onionHostToIPV6Bytes(hostname);
+        if (protocolVersion >= 1) {
+            Utils.uint32ToByteStreamLE(time, stream);
+        }
+        if (protocolVersion == 2) {
+            stream.write(new VarInt(services.longValue()).encode());
+            if (addr != null) {
+                if (addr instanceof Inet4Address) {
+                    stream.write(0x01);
+                    stream.write(new VarInt(4).encode());
+                    stream.write(addr.getAddress());
+                } else if (addr instanceof Inet6Address) {
+                    stream.write(0x02);
+                    stream.write(new VarInt(16).encode());
+                    stream.write(addr.getAddress());
+                } else {
+                    throw new IllegalStateException();
+                }
             } else {
-                ipBytes = new byte[16];
-            }
-        } else if( addr != null ) {
-            // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by hand.
-            ipBytes = addr.getAddress();
-            if (ipBytes.length == 4) {
-                byte[] v6addr = new byte[16];
-                System.arraycopy(ipBytes, 0, v6addr, 12, 4);
-                v6addr[10] = (byte) 0xFF;
-                v6addr[11] = (byte) 0xFF;
-                ipBytes = v6addr;
+                throw new IllegalStateException();
             }
         } else {
-            throw new IllegalStateException("Either hostname or addr should be not null");
+            Utils.uint64ToByteStreamLE(services, stream);  // nServices.
+            if (addr != null) {
+                // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
+                // hand.
+                byte[] ipBytes = addr.getAddress();
+                if (ipBytes.length == 4) {
+                    byte[] v6addr = new byte[16];
+                    System.arraycopy(ipBytes, 0, v6addr, 12, 4);
+                    v6addr[10] = (byte) 0xFF;
+                    v6addr[11] = (byte) 0xFF;
+                    ipBytes = v6addr;
+                }
+                stream.write(ipBytes);
+            } else {
+                throw new IllegalStateException();
+            }
         }
-        stream.write(ipBytes);
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
         Utils.uint16ToByteStreamBE(port, stream);
     }
 
-    private boolean isSerializeTime() {
-        return serializer.getProtocolVersion() >= 31402 && !(parent instanceof VersionMessage);
-    }
-
     @Override
     protected void parse() throws ProtocolException {
-        // Format of a serialized address:
-        //   uint32 timestamp
-        //   uint64 services   (flags determining what the node can do)
-        //   16 bytes ip address
-        //   2 bytes port num
-        if (isSerializeTime())
+        int protocolVersion = serializer.getProtocolVersion();
+        if (protocolVersion < 0 || protocolVersion > 2)
+            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
+
+        length = 0;
+        if (protocolVersion >= 1) {
             time = readUint32();
-        else
-            time = -1;
-        services = readUint64();
-        byte[] addrBytes = readBytes(16);
-        InetAddress inetAddress;
-        try {
-            inetAddress = InetAddress.getByAddress(addrBytes);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
-        if(OnionCatAddressChecker.isOnionCatTor(inetAddress)) {
-            hostname = OnionCatConverter.IPV6BytesToOnionHost(inetAddress.getAddress());
+            length += 4;
         } else {
-            addr = inetAddress;
+            time = -1;
+        }
+        if (protocolVersion == 2) {
+            VarInt servicesVarInt = readVarInt();
+            length += servicesVarInt.getSizeInBytes();
+            services = BigInteger.valueOf(servicesVarInt.longValue());
+            int networkId = readByte();
+            length += 1;
+            byte[] addrBytes = readByteArray();
+            int addrLen = addrBytes.length;
+            length += VarInt.sizeOf(addrLen) + addrLen;
+            if (networkId == 0x01) {
+                // IPv4
+                if (addrLen != 4)
+                    throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
+                addr = getByAddress(addrBytes);
+                hostname = null;
+            } else if (networkId == 0x02) {
+                // IPv6
+                if (addrLen != 16)
+                    throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
+                addr = getByAddress(addrBytes);
+                hostname = null;
+            } else {
+                // ignore unknown network IDs
+                addr = null;
+                hostname = null;
+            }
+        } else {
+            services = readUint64();
+            length += 8;
+            byte[] addrBytes = readBytes(16);
+            length += 16;
+            addr = getByAddress(addrBytes);
+            hostname = null;
         }
         port = Utils.readUint16BE(payload, cursor);
         cursor += 2;
-        // The 4 byte difference is the uint32 timestamp that was introduced in version 31402
-        length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+        length += 2;
+    }
+
+    private static InetAddress getByAddress(byte[] addrBytes) {
+        try {
+            return InetAddress.getByAddress(addrBytes);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
     }
 
     public String getHostname() {
@@ -222,7 +262,7 @@ public class PeerAddress extends ChildMessage {
         if (hostname != null) {
             return "[" + hostname + "]:" + port;
         }
-        if(addr != null ) {
+        if (addr != null) {
             return "[" + addr.getHostAddress() + "]:" + port;
         }
         return "[]";
@@ -250,11 +290,10 @@ public class PeerAddress extends ChildMessage {
         if (port != that.port) return false;
         // Don't compare the time field
         // if (time != that.time) return false;
-        if (addr != null ? !addr.equals(that.addr) : that.addr != null) return false;
-        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
+        if (!Objects.equals(addr, that.addr)) return false;
+        return Objects.equals(hostname, that.hostname);
         // Don't compare the services field
         // return !(services != null ? !services.equals(that.services) : that.services != null);
-        return true;
     }
 
     @Override

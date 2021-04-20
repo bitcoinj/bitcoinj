@@ -59,13 +59,15 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(Block.class, "block");
         names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
-        names.put(AddressMessage.class, "addr");
+        names.put(AddressV1Message.class, "addr");
+        names.put(AddressV2Message.class, "addrv2");
         names.put(Ping.class, "ping");
         names.put(Pong.class, "pong");
         names.put(VersionAck.class, "verack");
         names.put(GetBlocksMessage.class, "getblocks");
         names.put(GetHeadersMessage.class, "getheaders");
         names.put(GetAddrMessage.class, "getaddr");
+        names.put(SendAddrV2Message.class, "sendaddrv2");
         names.put(HeadersMessage.class, "headers");
         names.put(BloomFilter.class, "filterload");
         names.put(FilteredBlock.class, "merkleblock");
@@ -231,8 +233,12 @@ public class BitcoinSerializer extends MessageSerializer {
             return new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
             return makeTransaction(payloadBytes, 0, length, hash);
+        } else if (command.equals("sendaddrv2")) {
+            return new SendAddrV2Message(params);
         } else if (command.equals("addr")) {
-            return makeAddressMessage(payloadBytes, length);
+            return makeAddressV1Message(payloadBytes, length);
+        } else if (command.equals("addrv2")) {
+            return makeAddressV2Message(payloadBytes, length);
         } else if (command.equals("ping")) {
             return new Ping(params, payloadBytes);
         } else if (command.equals("pong")) {
@@ -272,8 +278,17 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public AddressMessage makeAddressMessage(byte[] payloadBytes, int length) throws ProtocolException {
-        return new AddressMessage(params, payloadBytes, this, length);
+    public AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws ProtocolException {
+        return new AddressV1Message(params, payloadBytes, this, length);
+    }
+
+    /**
+     * Make an address message from the payload. Extension point for alternative
+     * serialization format support.
+     */
+    @Override
+    public AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws ProtocolException {
+        return new AddressV2Message(params, payloadBytes, this, length);
     }
 
     /**

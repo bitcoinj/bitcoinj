@@ -455,7 +455,7 @@ public class Peer extends PeerSocketHandler {
         }
 
         // No further communication is possible until version handshake is complete.
-        if (!(m instanceof VersionMessage || m instanceof VersionAck
+        if (!(m instanceof VersionMessage || m instanceof VersionAck || m instanceof SendAddrV2Message
                 || (versionHandshakeFuture.isDone() && !versionHandshakeFuture.isCancelled())))
             throw new ProtocolException(
                     "Received " + m.getClass().getSimpleName() + " before version handshake is complete.");
@@ -557,6 +557,8 @@ public class Peer extends PeerSocketHandler {
             // In this case, it's a protocol violation.
             throw new ProtocolException("Peer reports invalid best height: " + peerVersionMessage.bestHeight);
         // Now it's our turn ...
+        // Send a sendaddrv2 message, indicating that we prefer to receive addrv2 messages.
+        sendMessage(new SendAddrV2Message(params));
         // Send an ACK message stating we accept the peers protocol version.
         sendMessage(new VersionAck());
         if (log.isDebugEnabled())
