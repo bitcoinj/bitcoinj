@@ -77,7 +77,7 @@ public class AddressMessage extends Message {
         addresses = new ArrayList<>((int) numAddresses);
         int protocolVersion = serializer.getProtocolVersion();
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, payload, cursor, protocolVersion, this, serializer);
+            PeerAddress addr = new PeerAddress(params, payload, cursor, this, serializer);
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }

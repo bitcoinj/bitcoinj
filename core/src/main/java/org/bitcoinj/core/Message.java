@@ -65,23 +65,18 @@ public abstract class Message {
         this.serializer = params.getDefaultSerializer();
     }
 
-    protected Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
-        this(params, payload, offset, protocolVersion, params.getDefaultSerializer(), UNKNOWN_LENGTH);
-    }
-
     /**
      * 
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param protocolVersion Bitcoin protocol version.
      * @param serializer the serializer to use for this message.
      * @param length The length of message payload if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    protected Message(NetworkParameters params, byte[] payload, int offset, int protocolVersion, MessageSerializer serializer, int length) throws ProtocolException {
-        this.serializer = serializer.withProtocolVersion(protocolVersion);
+    protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
+        this.serializer = serializer;
         this.params = params;
         this.payload = payload;
         this.cursor = this.offset = offset;
@@ -98,12 +93,7 @@ public abstract class Message {
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        this(params, payload, offset, params.getDefaultSerializer().getProtocolVersion(),
-             params.getDefaultSerializer(), UNKNOWN_LENGTH);
-    }
-
-    protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
-        this(params, payload, offset, serializer.getProtocolVersion(), serializer, length);
+        this(params, payload, offset, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.

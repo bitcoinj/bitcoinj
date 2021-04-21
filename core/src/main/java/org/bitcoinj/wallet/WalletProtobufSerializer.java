@@ -449,11 +449,7 @@ public class WalletProtobufSerializer {
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
             return readWallet(params, extensions, walletProto, forceReset);
-        } catch (IOException e) {
-            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
-        } catch (IllegalStateException e) {
-            throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
-        } catch (IllegalArgumentException e) {
+        } catch (IOException | IllegalStateException | IllegalArgumentException e) {
             throw new UnreadableWalletException("Could not parse input stream to protobuf", e);
         }
     }
@@ -820,14 +816,13 @@ public class WalletProtobufSerializer {
                 }
             }
             int port = proto.getPort();
-            int protocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
             BigInteger services = BigInteger.valueOf(proto.getServices());
             String hostname = proto.hasHostname() ? proto.getHostname() : "";
             PeerAddress address;
             if (ip != null) {
-                address = new PeerAddress(params, ip, port, protocolVersion, services);
+                address = new PeerAddress(params, ip, port, services, params.getDefaultSerializer());
             } else {
-                address = new PeerAddress(params, hostname, port, protocolVersion, services);
+                address = new PeerAddress(params, hostname, port, params.getDefaultSerializer().getProtocolVersion(), services);
             }
             confidence.markBroadcastBy(address);
         }

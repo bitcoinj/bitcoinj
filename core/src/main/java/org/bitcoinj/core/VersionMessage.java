@@ -112,9 +112,9 @@ public class VersionMessage extends Message {
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
-        receivingAddr = new PeerAddress(params, localhost, params.getPort(), clientVersion, BigInteger.ZERO);
+        receivingAddr = new PeerAddress(params, localhost, params.getPort(), BigInteger.ZERO, serializer);
         receivingAddr.setParent(this);
-        fromAddr = new PeerAddress(params, localhost, params.getPort(), clientVersion, BigInteger.ZERO);
+        fromAddr = new PeerAddress(params, localhost, params.getPort(), BigInteger.ZERO, serializer);
         fromAddr.setParent(this);
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
@@ -129,10 +129,10 @@ public class VersionMessage extends Message {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = readUint64().longValue();
-        receivingAddr = new PeerAddress(params, payload, cursor, 0, this, serializer);
+        receivingAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
         cursor += receivingAddr.getMessageSize();
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(params, payload, cursor, 0, this, serializer);
+            fromAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
             cursor += fromAddr.getMessageSize();
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
