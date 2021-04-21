@@ -46,32 +46,24 @@ public class PeerAddress extends ChildMessage {
 
     /**
      * Construct a peer address from a serialized payload.
-     */
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion) throws ProtocolException {
-        super(params, payload, offset, protocolVersion);
-    }
-
-    /**
-     * Construct a peer address from a serialized payload.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param offset The location of the first payload byte within the array.
-     * @param protocolVersion Bitcoin protocol version.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset, int protocolVersion, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, protocolVersion, parent, serializer, UNKNOWN_LENGTH);
+    public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, offset, parent, serializer, UNKNOWN_LENGTH);
     }
 
     /**
      * Construct a peer address from a memorized or hardcoded address.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, int protocolVersion, BigInteger services) {
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services, MessageSerializer serializer) {
         super(params);
         this.addr = checkNotNull(addr);
         this.port = port;
-        setSerializer(serializer.withProtocolVersion(protocolVersion));
+        setSerializer(serializer);
         this.services = services;
         length = isSerializeTime() ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
@@ -80,8 +72,7 @@ public class PeerAddress extends ChildMessage {
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT),
-                BigInteger.ZERO);
+        this(params, addr, port, BigInteger.ZERO, params.getDefaultSerializer());
     }
 
     /**

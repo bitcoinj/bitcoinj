@@ -34,7 +34,8 @@ public class PeerAddressTest {
     public void parse_ancientProtocolVersion() throws Exception {
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
-        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, 0);
+        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, null,
+                MAINNET.getDefaultSerializer().withProtocolVersion(0));
         assertEquals(26, pa.length);
         assertEquals(VersionMessage.NODE_NETWORK, pa.getServices().longValue());
         assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
@@ -43,7 +44,8 @@ public class PeerAddressTest {
 
     @Test
     public void bitcoinSerialize_ancientProtocolVersion() throws Exception {
-        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, 0, BigInteger.ZERO);
+        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, BigInteger.ZERO,
+                MAINNET.getDefaultSerializer().withProtocolVersion(0));
         assertEquals(26, pa.length);        
         assertEquals("000000000000000000000000000000000000ffff7f000001208d", Utils.HEX.encode(pa.bitcoinSerialize()));
     }
@@ -51,11 +53,10 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_currentProtocolVersion() throws Exception {
         long time = Utils.currentTimeSeconds();
-        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234,
-                NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), BigInteger.ZERO);
+        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
+                MAINNET.getDefaultSerializer());
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0,
-                NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion());
+        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, MAINNET.getDefaultSerializer());
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -64,9 +65,11 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv4_ancientProtocolVersion() throws Exception {
-        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, 0, BigInteger.ZERO);
+        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
+                MAINNET.getDefaultSerializer().withProtocolVersion(0));
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, 0);
+        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null,
+                MAINNET.getDefaultSerializer().withProtocolVersion(0));
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -77,10 +80,9 @@ public class PeerAddressTest {
     public void roundtrip_ipv6_currentProtocolVersion() throws Exception {
         long time = Utils.currentTimeSeconds();
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
-                NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), BigInteger.ZERO);
+                BigInteger.ZERO, MAINNET.getDefaultSerializer());
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0,
-                NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion());
+        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, MAINNET.getDefaultSerializer());
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -89,10 +91,11 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv6_ancientProtocolVersion() throws Exception {
-        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234, 0,
-                BigInteger.ZERO);
+        PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
+                BigInteger.ZERO, MAINNET.getDefaultSerializer().withProtocolVersion(0));
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, 0);
+        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null,
+                MAINNET.getDefaultSerializer().withProtocolVersion(0));
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
