@@ -244,8 +244,9 @@ public class PeerMonitor {
                 case CHAIN_HEIGHT:
                     return peer.getBestHeight();
                 case PING_TIME:
+                    return peer.getPingTime();
                 case LAST_PING_TIME:
-                    return col == PING_TIME ? peer.getPingTime() : peer.getLastPingTime();
+                    return peer.getLastPingTime();
 
                 default: throw new RuntimeException();
             }
