@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class AddressMessage extends Message {
 
-    private static final long MAX_ADDRESSES = 1024;
+    private static final long MAX_ADDRESSES = 1000;
     private List<PeerAddress> addresses;
 
     /**
