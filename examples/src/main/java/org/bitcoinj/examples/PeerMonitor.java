@@ -130,7 +130,7 @@ public class PeerMonitor {
         JScrollPane scrollPane = new JScrollPane(peerTable);
         window.getContentPane().add(scrollPane, BorderLayout.CENTER);
         window.pack();
-        window.setSize(720, 480);
+        window.setSize(1280, 768);
         window.setVisible(true);
 
         // Refresh the UI every half second to get the latest ping times. The event handler runs in the UI thread.
