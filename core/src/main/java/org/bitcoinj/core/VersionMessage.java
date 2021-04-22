@@ -166,22 +166,20 @@ public class VersionMessage extends Message {
         Utils.uint32ToByteStreamLE(time, buf);
         Utils.uint32ToByteStreamLE(time >> 32, buf);
         receivingAddr.bitcoinSerializeToStream(buf);
-        if (clientVersion >= 106) {
-            fromAddr.bitcoinSerializeToStream(buf);
-            // Next up is the "local host nonce", this is to detect the case of connecting
-            // back to yourself. We don't care about this as we won't be accepting inbound
-            // connections.
-            Utils.uint32ToByteStreamLE(0, buf);
-            Utils.uint32ToByteStreamLE(0, buf);
-            // Now comes subVer.
-            byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
-            buf.write(new VarInt(subVerBytes.length).encode());
-            buf.write(subVerBytes);
-            // Size of known block chain.
-            Utils.uint32ToByteStreamLE(bestHeight, buf);
-            if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-                buf.write(relayTxesBeforeFilter ? 1 : 0);
-            }
+        fromAddr.bitcoinSerializeToStream(buf);
+        // Next up is the "local host nonce", this is to detect the case of connecting
+        // back to yourself. We don't care about this as we won't be accepting inbound
+        // connections.
+        Utils.uint32ToByteStreamLE(0, buf);
+        Utils.uint32ToByteStreamLE(0, buf);
+        // Now comes subVer.
+        byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
+        buf.write(new VarInt(subVerBytes.length).encode());
+        buf.write(subVerBytes);
+        // Size of known block chain.
+        Utils.uint32ToByteStreamLE(bestHeight, buf);
+        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
+            buf.write(relayTxesBeforeFilter ? 1 : 0);
         }
     }
 
