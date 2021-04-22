@@ -670,27 +670,31 @@ public class Transaction extends ChildMessage {
     }
 
     private void parseInputs() {
-        int numInputs = readVarInt().intValue();
-        optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
+        VarInt numInputsVarInt = readVarInt();
+        optimalEncodingMessageSize += numInputsVarInt.getSizeInBytes();
+        int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
-            int scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH).intValue();
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
+            VarInt scriptLenVarInt = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
+            int scriptLen = scriptLenVarInt.intValue();
+            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + scriptLenVarInt.getSizeInBytes() + scriptLen + 4;
             cursor += scriptLen + 4;
         }
     }
 
     private void parseOutputs() {
-        int numOutputs = readVarInt().intValue();
-        optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
+        VarInt numOutputsVarInt = readVarInt();
+        optimalEncodingMessageSize += numOutputsVarInt.getSizeInBytes();
+        int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            int scriptLen = readVarInt(8).intValue();
-            optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
+            VarInt scriptLenVarInt = readVarInt(8);
+            int scriptLen = scriptLenVarInt.intValue();
+            optimalEncodingMessageSize += 8 + scriptLenVarInt.getSizeInBytes() + scriptLen;
             cursor += scriptLen;
         }
     }
@@ -698,13 +702,15 @@ public class Transaction extends ChildMessage {
     private void parseWitnesses() {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
-            int pushCount = readVarInt().intValue();
-            optimalEncodingMessageSize += VarInt.sizeOf(pushCount);
+            VarInt pushCountVarInt = readVarInt();
+            int pushCount = pushCountVarInt.intValue();
+            optimalEncodingMessageSize += pushCountVarInt.getSizeInBytes();
             TransactionWitness witness = new TransactionWitness(pushCount);
             getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
-                int pushSize = readVarInt().intValue();
-                optimalEncodingMessageSize += VarInt.sizeOf(pushSize) + pushSize;
+                VarInt pushSizeVarInt = readVarInt();
+                int pushSize = pushSizeVarInt.intValue();
+                optimalEncodingMessageSize += pushSizeVarInt.getSizeInBytes() + pushSize;
                 byte[] push = readBytes(pushSize);
                 witness.setPush(y, push);
             }
