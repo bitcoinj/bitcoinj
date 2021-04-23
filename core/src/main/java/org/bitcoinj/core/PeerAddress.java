@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.io.BaseEncoding;
+import org.bouncycastle.jcajce.provider.digest.SHA3;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -25,6 +28,9 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,6 +52,9 @@ public class PeerAddress extends ChildMessage {
     private int port;
     private BigInteger services;
     private long time;
+
+    private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
+    private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
 
     /**
      * Construct a peer address from a serialized payload.
@@ -148,6 +157,28 @@ public class PeerAddress extends ChildMessage {
                 } else {
                     throw new IllegalStateException();
                 }
+            } else if (addr == null && hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
+                byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
+                if (onionAddress.length == 10) {
+                    // TORv2
+                    stream.write(0x03);
+                    stream.write(new VarInt(10).encode());
+                    stream.write(onionAddress);
+                } else if (onionAddress.length == 32 + 2 + 1) {
+                    // TORv3
+                    stream.write(0x04);
+                    stream.write(new VarInt(32).encode());
+                    byte[] pubkey = Arrays.copyOfRange(onionAddress, 0, 32);
+                    byte[] checksum = Arrays.copyOfRange(onionAddress, 32, 34);
+                    byte torVersion = onionAddress[34];
+                    if (torVersion != 0x03)
+                        throw new IllegalStateException("version");
+                    if (!Arrays.equals(checksum, onionChecksum(pubkey, torVersion)))
+                        throw new IllegalStateException("checksum");
+                    stream.write(pubkey);
+                } else {
+                    throw new IllegalStateException();
+                }
             } else {
                 throw new IllegalStateException();
             }
@@ -165,6 +196,15 @@ public class PeerAddress extends ChildMessage {
                     ipBytes = v6addr;
                 }
                 stream.write(ipBytes);
+            } else if (hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
+                byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
+                if (onionAddress.length == 10) {
+                    // TORv2
+                    stream.write(ONIONCAT_PREFIX);
+                    stream.write(onionAddress);
+                } else {
+                    throw new IllegalStateException();
+                }
             } else {
                 throw new IllegalStateException();
             }
@@ -207,6 +247,23 @@ public class PeerAddress extends ChildMessage {
                     throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
                 addr = getByAddress(addrBytes);
                 hostname = null;
+            } else if (networkId == 0x03) {
+                // TORv2
+                if (addrLen != 10)
+                    throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
+                hostname = BASE32.encode(addrBytes) + ".onion";
+                addr = null;
+            } else if (networkId == 0x04) {
+                // TORv3
+                if (addrLen != 32)
+                    throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
+                byte torVersion = 0x03;
+                byte[] onionAddress = new byte[35];
+                System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
+                System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
+                onionAddress[34] = torVersion;
+                hostname = BASE32.encode(onionAddress) + ".onion";
+                addr = null;
             } else {
                 // ignore unknown network IDs
                 addr = null;
@@ -217,8 +274,13 @@ public class PeerAddress extends ChildMessage {
             length += 8;
             byte[] addrBytes = readBytes(16);
             length += 16;
-            addr = getByAddress(addrBytes);
-            hostname = null;
+            if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
+                byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
+                hostname = BASE32.encode(onionAddress) + ".onion";
+            } else {
+                addr = getByAddress(addrBytes);
+                hostname = null;
+            }
         }
         port = Utils.readUint16BE(payload, cursor);
         cursor += 2;
@@ -231,6 +293,16 @@ public class PeerAddress extends ChildMessage {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    private byte[] onionChecksum(byte[] pubkey, byte version) {
+        if (pubkey.length != 32)
+            throw new IllegalArgumentException();
+        SHA3.Digest256 digest256 = new SHA3.Digest256();
+        digest256.update(".onion checksum".getBytes(StandardCharsets.US_ASCII));
+        digest256.update(pubkey);
+        digest256.update(version);
+        return Arrays.copyOf(digest256.digest(), 2);
     }
 
     public String getHostname() {

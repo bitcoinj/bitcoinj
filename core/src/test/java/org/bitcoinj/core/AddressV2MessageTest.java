@@ -31,9 +31,9 @@ import static org.junit.Assert.assertTrue;
 public class AddressV2MessageTest {
 
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
-    // mostly copied from src/test/netbase_tests.cpp#stream_addrv2_hex
+    // mostly copied from src/test/netbase_tests.cpp#stream_addrv2_hex and src/test/net_tests.cpp
     private static final String MESSAGE_HEX =
-            "03" // number of entries
+            "05" // number of entries
 
                     + "61bc6649" // time, Fri Jan  9 02:54:25 UTC 2009
                     + "00" // service flags, COMPACTSIZE(NODE_NONE)
@@ -54,14 +54,28 @@ public class AddressV2MessageTest {
                     + "02" // network id, IPv6
                     + "10" // address length, COMPACTSIZE(16)
                     + "00000000000000000000000000000001" // address
-                    + "f1f2"; // port
+                    + "f1f2" // port
+
+                    + "00000000" // time
+                    + "00" // service flags, COMPACTSIZE(NODE_NONE)
+                    + "03" // network id, TORv2
+                    + "0a" // address length, COMPACTSIZE(10)
+                    + "f1f2f3f4f5f6f7f8f9fa" // address
+                    + "0000" // port
+
+                    + "00000000" // time
+                    + "00" // service flags, COMPACTSIZE(NODE_NONE)
+                    + "04" // network id, TORv3
+                    + "20"// address length, COMPACTSIZE(32)
+                    + "53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88" // address
+                    + "0000"; // port
 
     @Test
     public void roundtrip() {
         AddressMessage message = new AddressV2Message(UNITTEST, HEX.decode(MESSAGE_HEX));
 
         List<PeerAddress> addresses = message.getAddresses();
-        assertEquals(3, addresses.size());
+        assertEquals(5, addresses.size());
         PeerAddress a0 = addresses.get(0);
         assertEquals("2009-01-09T02:54:25Z", Utils.dateTimeFormat(a0.getTime() * 1000));
         assertEquals(0, a0.getServices().intValue());
@@ -84,6 +98,18 @@ public class AddressV2MessageTest {
         assertEquals("0:0:0:0:0:0:0:1", a2.getAddr().getHostAddress());
         assertNull(a2.getHostname());
         assertEquals(0xf1f2, a2.getPort());
+        PeerAddress a3 = addresses.get(3);
+        assertEquals("1970-01-01T00:00:00Z", Utils.dateTimeFormat(a3.getTime() * 1000));
+        assertEquals(0, a3.getServices().intValue());
+        assertNull(a3.getAddr());
+        assertEquals("6hzph5hv6337r6p2.onion", a3.getHostname());
+        assertEquals(0, a3.getPort());
+        PeerAddress a4 = addresses.get(4);
+        assertEquals("1970-01-01T00:00:00Z", Utils.dateTimeFormat(a4.getTime() * 1000));
+        assertEquals(0, a4.getServices().intValue());
+        assertNull(a4.getAddr());
+        assertEquals("kpgvmscirrdqpekbqjsvw5teanhatztpp2gl6eee4zkowvwfxwenqaid.onion", a4.getHostname());
+        assertEquals(0, a4.getPort());
 
         assertEquals(MESSAGE_HEX, HEX.encode(message.bitcoinSerialize()));
     }
