@@ -608,27 +608,27 @@ public class Transaction extends ChildMessage {
         long scriptLen;
 
         varint = new VarInt(buf, cursor);
-        long txInCount = varint.value;
+        long txInCount = varint.longValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txInCount; i++) {
             // 36 = length of previous_outpoint
             cursor += 36;
             varint = new VarInt(buf, cursor);
-            scriptLen = varint.value;
+            scriptLen = varint.longValue();
             // 4 = length of sequence field (unint32)
             cursor += scriptLen + 4 + varint.getOriginalSizeInBytes();
         }
 
         varint = new VarInt(buf, cursor);
-        long txOutCount = varint.value;
+        long txOutCount = varint.longValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txOutCount; i++) {
             // 8 = length of tx value field (uint64)
             cursor += 8;
             varint = new VarInt(buf, cursor);
-            scriptLen = varint.value;
+            scriptLen = varint.longValue();
             cursor += scriptLen + varint.getOriginalSizeInBytes();
         }
         // 4 = length of lock_time field (uint32)

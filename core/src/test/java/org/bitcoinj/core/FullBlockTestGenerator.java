@@ -1230,7 +1230,7 @@ public class FullBlockTestGenerator {
             Utils.uint32ToByteArrayLE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
             Utils.uint32ToByteArrayLE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
             stream.write(varIntBytes);
-            checkState(new VarInt(varIntBytes, 0).value == b64Original.block.getTransactions().size());
+            checkState(new VarInt(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
             for (Transaction transaction : b64Original.block.getTransactions())
                 transaction.bitcoinSerialize(stream);
