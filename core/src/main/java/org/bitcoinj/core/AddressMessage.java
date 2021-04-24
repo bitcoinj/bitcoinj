@@ -70,7 +70,7 @@ public class AddressMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        long numAddresses = readVarInt();
+        long numAddresses = readVarInt().longValue();
         // Guard against ultra large messages that will crash us.
         if (numAddresses > MAX_ADDRESSES)
             throw new ProtocolException("Address message too large.");

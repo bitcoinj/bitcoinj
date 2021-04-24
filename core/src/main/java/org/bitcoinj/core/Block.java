@@ -236,7 +236,7 @@ public class Block extends Message {
             return;
         }
 
-        int numTransactions = (int) readVarInt();
+        int numTransactions = readVarInt().intValue();
         optimalEncodingMessageSize += VarInt.sizeOf(numTransactions);
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {

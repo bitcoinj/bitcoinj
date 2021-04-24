@@ -73,7 +73,7 @@ public abstract class ListMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        arrayLen = readVarInt();
+        arrayLen = readVarInt().longValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
         length = (int) (cursor - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));

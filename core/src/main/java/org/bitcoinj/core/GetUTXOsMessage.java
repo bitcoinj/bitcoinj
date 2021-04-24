@@ -61,7 +61,7 @@ public class GetUTXOsMessage extends Message {
     @Override
     protected void parse() throws ProtocolException {
         includeMempool = readBytes(1)[0] == 1;
-        long numOutpoints = readVarInt();
+        long numOutpoints = readVarInt().longValue();
         ImmutableList.Builder<TransactionOutPoint> list = ImmutableList.builder();
         for (int i = 0; i < numOutpoints; i++) {
             TransactionOutPoint outPoint = new TransactionOutPoint(params, payload, cursor);
