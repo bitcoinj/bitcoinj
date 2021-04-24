@@ -28,7 +28,7 @@ public class VarIntTest {
         VarInt a = new VarInt(10); // with widening conversion
         assertEquals(1, a.getSizeInBytes());
         assertEquals(1, a.encode().length);
-        assertEquals(10, new VarInt(a.encode(), 0).value);
+        assertEquals(10, new VarInt(a.encode(), 0).intValue());
     }
 
     @Test
@@ -36,7 +36,7 @@ public class VarIntTest {
         VarInt a = new VarInt(64000); // with widening conversion
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
-        assertEquals(64000, new VarInt(a.encode(), 0).value);
+        assertEquals(64000, new VarInt(a.encode(), 0).intValue());
     }
 
     @Test
@@ -44,7 +44,7 @@ public class VarIntTest {
         VarInt a = new VarInt(0xFFFFL);
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
-        assertEquals(0xFFFFL, new VarInt(a.encode(), 0).value);
+        assertEquals(0xFFFFL, new VarInt(a.encode(), 0).intValue());
     }
 
     @Test
@@ -53,7 +53,7 @@ public class VarIntTest {
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xAABBCCDDL, 0xFFFFFFFFL & new VarInt(bytes, 0).value);
+        assertEquals(0xAABBCCDDL, new VarInt(bytes, 0).longValue());
     }
 
     @Test
@@ -62,7 +62,7 @@ public class VarIntTest {
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xFFFFFFFFL, 0xFFFFFFFFL & new VarInt(bytes, 0).value);
+        assertEquals(0xFFFFFFFFL, new VarInt(bytes, 0).longValue());
     }
 
     @Test
@@ -71,7 +71,7 @@ public class VarIntTest {
         assertEquals(9, a.getSizeInBytes());
         assertEquals(9, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xCAFEBABEDEADBEEFL, new VarInt(bytes, 0).value);
+        assertEquals(0xCAFEBABEDEADBEEFL, new VarInt(bytes, 0).longValue());
     }
 
     @Test
