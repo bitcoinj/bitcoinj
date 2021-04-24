@@ -683,26 +683,26 @@ public class Transaction extends ChildMessage {
     }
 
     private void parseInputs() {
-        long numInputs = readVarInt();
+        long numInputs = readVarInt().longValue();
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
-            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
+            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH).longValue();
             optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
             cursor += scriptLen + 4;
         }
     }
 
     private void parseOutputs() {
-        long numOutputs = readVarInt();
+        long numOutputs = readVarInt().longValue();
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            long scriptLen = readVarInt(8);
+            long scriptLen = readVarInt(8).longValue();
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }
@@ -711,12 +711,12 @@ public class Transaction extends ChildMessage {
     private void parseWitnesses() {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
-            long pushCount = readVarInt();
+            long pushCount = readVarInt().longValue();
             TransactionWitness witness = new TransactionWitness((int) pushCount);
             getInput(i).setWitness(witness);
             optimalEncodingMessageSize += VarInt.sizeOf(pushCount);
             for (int y = 0; y < pushCount; y++) {
-                long pushSize = readVarInt();
+                long pushSize = readVarInt().longValue();
                 optimalEncodingMessageSize += VarInt.sizeOf(pushSize) + pushSize;
                 byte[] push = readBytes((int) pushSize);
                 witness.setPush(y, push);

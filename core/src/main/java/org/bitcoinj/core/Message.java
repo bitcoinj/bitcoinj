@@ -291,15 +291,15 @@ public abstract class Message {
         return new BigInteger(Utils.reverseBytes(readBytes(8)));
     }
 
-    protected long readVarInt() throws ProtocolException {
+    protected VarInt readVarInt() throws ProtocolException {
         return readVarInt(0);
     }
 
-    protected long readVarInt(int offset) throws ProtocolException {
+    protected VarInt readVarInt(int offset) throws ProtocolException {
         try {
             VarInt varint = new VarInt(payload, cursor + offset);
             cursor += offset + varint.getOriginalSizeInBytes();
-            return varint.longValue();
+            return varint;
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new ProtocolException(e);
         }
@@ -329,12 +329,12 @@ public abstract class Message {
     }
 
     protected byte[] readByteArray() throws ProtocolException {
-        long len = readVarInt();
+        long len = readVarInt().longValue();
         return readBytes((int)len);
     }
 
     protected String readStr() throws ProtocolException {
-        long length = readVarInt();
+        long length = readVarInt().longValue();
         return length == 0 ? "" : new String(readBytes((int) length), StandardCharsets.UTF_8); // optimization for empty strings
     }
 

@@ -106,11 +106,11 @@ public class UTXOsMessage extends Message {
         // hitsBitmap indicates which of the queried outputs were found in the UTXO set.
         height = readUint32();
         chainHead = readHash();
-        int numBytes = (int) readVarInt();
+        int numBytes = readVarInt().intValue();
         if (numBytes < 0 || numBytes > InventoryMessage.MAX_INVENTORY_ITEMS / 8)
             throw new ProtocolException("hitsBitmap out of range: " + numBytes);
         hits = readBytes(numBytes);
-        int numOuts = (int) readVarInt();
+        int numOuts = readVarInt().intValue();
         if (numOuts < 0 || numOuts > InventoryMessage.MAX_INVENTORY_ITEMS)
             throw new ProtocolException("numOuts out of range: " + numOuts);
         outputs = new ArrayList<>(numOuts);
