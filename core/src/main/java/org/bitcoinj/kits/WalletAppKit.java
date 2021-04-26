@@ -241,7 +241,7 @@ public class WalletAppKit extends AbstractIdleService {
      * initialized/started.</p>
      */
     protected List<WalletExtension> provideWalletExtensions() throws Exception {
-        return ImmutableList.of();
+        return Collections.emptyList();
     }
 
     /**

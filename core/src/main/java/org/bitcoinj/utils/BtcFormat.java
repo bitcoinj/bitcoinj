@@ -20,8 +20,10 @@ import org.bitcoinj.utils.BtcAutoFormat.Style;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.*;
 
 import org.bitcoinj.core.Coin;
+
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
-import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Strings;
@@ -1236,11 +1238,11 @@ public abstract class BtcFormat extends Format {
      *  NumberFormat object to the value of the given integer.
      *  @return The minimum and maximum fractional places settings that the
      *          formatter had before this change, as an ImmutableList. */
-    private static ImmutableList<Integer> setFormatterDigits(DecimalFormat formatter, int min, int max) {
-        ImmutableList<Integer> ante = ImmutableList.of(
+    private static List<Integer> setFormatterDigits(DecimalFormat formatter, int min, int max) {
+        List<Integer> ante = Collections.unmodifiableList(Arrays.asList(
             formatter.getMinimumFractionDigits(),
             formatter.getMaximumFractionDigits()
-        );
+        ));
         formatter.setMinimumFractionDigits(min);
         formatter.setMaximumFractionDigits(max);
         return ante;

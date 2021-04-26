@@ -32,7 +32,6 @@ import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -379,7 +378,7 @@ public class Transaction extends ChildMessage {
      */
     @Nullable
     public Map<Sha256Hash, Integer> getAppearsInHashes() {
-        return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
+        return appearsInHashes != null ? Collections.unmodifiableMap(appearsInHashes) : null;
     }
 
     /**

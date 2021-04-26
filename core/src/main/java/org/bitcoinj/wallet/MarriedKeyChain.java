@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 
@@ -32,6 +31,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -151,25 +151,26 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     @Override
     public Script freshOutputScript(KeyPurpose purpose) {
         DeterministicKey followedKey = getKey(purpose);
-        ImmutableList.Builder<ECKey> keys = ImmutableList.<ECKey>builder().add(followedKey);
+        List<ECKey> keys = new ArrayList<>();
+        keys.add(followedKey);
         for (DeterministicKeyChain keyChain : followingKeyChains) {
             DeterministicKey followingKey = keyChain.getKey(purpose);
             checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
             keys.add(followingKey);
         }
-        List<ECKey> marriedKeys = keys.build();
+        List<ECKey> marriedKeys = Collections.unmodifiableList(keys);
         Script redeemScript = ScriptBuilder.createRedeemScript(sigsRequiredToSpend, marriedKeys);
         return ScriptBuilder.createP2SHOutputScript(redeemScript);
     }
 
     private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey) {
-        ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
+        List<ECKey> keys = new ArrayList<>();
         for (DeterministicKeyChain keyChain : followingKeyChains) {
             keyChain.maybeLookAhead();
             keys.add(keyChain.getKeyByPath(followedKey.getPath()));
         }
         keys.add(followedKey);
-        return keys.build();
+        return Collections.unmodifiableList(keys);
     }
 
     /** Get the redeem data for a key in this married chain */
