@@ -70,7 +70,8 @@ public class AddressMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        long numAddresses = readVarInt().longValue();
+        VarInt numAddressesVarInt = readVarInt();
+        int numAddresses = numAddressesVarInt.intValue();
         // Guard against ultra large messages that will crash us.
         if (numAddresses > MAX_ADDRESSES)
             throw new ProtocolException("Address message too large.");
@@ -81,7 +82,7 @@ public class AddressMessage extends Message {
             addresses.add(addr);
             cursor += addr.getMessageSize();
         }
-        length = new VarInt(addresses.size()).getSizeInBytes();
+        length = numAddressesVarInt.getSizeInBytes();
         // The 4 byte difference is the uint32 timestamp that was introduced in version 31402
         length += addresses.size() * (protocolVersion > 31402 ? PeerAddress.MESSAGE_SIZE : PeerAddress.MESSAGE_SIZE - 4);
     }
