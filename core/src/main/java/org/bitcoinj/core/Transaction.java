@@ -598,30 +598,30 @@ public class Transaction extends ChildMessage {
         int cursor = offset + 4;
 
         int i;
-        long scriptLen;
+        int scriptLen;
 
         varint = new VarInt(buf, cursor);
-        long txInCount = varint.longValue();
+        int txInCount = varint.intValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txInCount; i++) {
             // 36 = length of previous_outpoint
             cursor += 36;
             varint = new VarInt(buf, cursor);
-            scriptLen = varint.longValue();
+            scriptLen = varint.intValue();
             // 4 = length of sequence field (unint32)
             cursor += scriptLen + 4 + varint.getOriginalSizeInBytes();
         }
 
         varint = new VarInt(buf, cursor);
-        long txOutCount = varint.longValue();
+        int txOutCount = varint.intValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txOutCount; i++) {
             // 8 = length of tx value field (uint64)
             cursor += 8;
             varint = new VarInt(buf, cursor);
-            scriptLen = varint.longValue();
+            scriptLen = varint.intValue();
             cursor += scriptLen + varint.getOriginalSizeInBytes();
         }
         // 4 = length of lock_time field (uint32)
@@ -683,26 +683,26 @@ public class Transaction extends ChildMessage {
     }
 
     private void parseInputs() {
-        long numInputs = readVarInt().longValue();
+        int numInputs = readVarInt().intValue();
         optimalEncodingMessageSize += VarInt.sizeOf(numInputs);
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
             inputs.add(input);
-            long scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH).longValue();
+            int scriptLen = readVarInt(TransactionOutPoint.MESSAGE_LENGTH).intValue();
             optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + VarInt.sizeOf(scriptLen) + scriptLen + 4;
             cursor += scriptLen + 4;
         }
     }
 
     private void parseOutputs() {
-        long numOutputs = readVarInt().longValue();
+        int numOutputs = readVarInt().intValue();
         optimalEncodingMessageSize += VarInt.sizeOf(numOutputs);
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
             outputs.add(output);
-            long scriptLen = readVarInt(8).longValue();
+            int scriptLen = readVarInt(8).intValue();
             optimalEncodingMessageSize += 8 + VarInt.sizeOf(scriptLen) + scriptLen;
             cursor += scriptLen;
         }
@@ -711,14 +711,14 @@ public class Transaction extends ChildMessage {
     private void parseWitnesses() {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
-            long pushCount = readVarInt().longValue();
-            TransactionWitness witness = new TransactionWitness((int) pushCount);
-            getInput(i).setWitness(witness);
+            int pushCount = readVarInt().intValue();
             optimalEncodingMessageSize += VarInt.sizeOf(pushCount);
+            TransactionWitness witness = new TransactionWitness(pushCount);
+            getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
-                long pushSize = readVarInt().longValue();
+                int pushSize = readVarInt().intValue();
                 optimalEncodingMessageSize += VarInt.sizeOf(pushSize) + pushSize;
-                byte[] push = readBytes((int) pushSize);
+                byte[] push = readBytes(pushSize);
                 witness.setPush(y, push);
             }
         }

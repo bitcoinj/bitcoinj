@@ -329,13 +329,13 @@ public abstract class Message {
     }
 
     protected byte[] readByteArray() throws ProtocolException {
-        long len = readVarInt().longValue();
-        return readBytes((int)len);
+        final int length = readVarInt().intValue();
+        return readBytes(length);
     }
 
     protected String readStr() throws ProtocolException {
-        long length = readVarInt().longValue();
-        return length == 0 ? "" : new String(readBytes((int) length), StandardCharsets.UTF_8); // optimization for empty strings
+        int length = readVarInt().intValue();
+        return length == 0 ? "" : new String(readBytes(length), StandardCharsets.UTF_8); // optimization for empty strings
     }
 
     protected Sha256Hash readHash() throws ProtocolException {
