@@ -18,6 +18,7 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.core.AddressMessage;
+import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
@@ -146,6 +147,7 @@ public class PeerMonitor {
         TableColumnModel columnModel = peerTable.getColumnModel();
         columnModel.getColumn(PeerTableModel.IP_ADDRESS).setPreferredWidth(300);
         columnModel.getColumn(PeerTableModel.USER_AGENT).setPreferredWidth(150);
+        columnModel.getColumn(PeerTableModel.FEE_FILTER).setPreferredWidth(150);
         columnModel.getColumn(PeerTableModel.ADDRESSES).setPreferredWidth(400);
 
         JScrollPane scrollPane = new JScrollPane(peerTable);
@@ -163,9 +165,10 @@ public class PeerMonitor {
         public static final int PROTOCOL_VERSION = 1;
         public static final int USER_AGENT = 2;
         public static final int CHAIN_HEIGHT = 3;
-        public static final int PING_TIME = 4;
-        public static final int LAST_PING_TIME = 5;
-        public static final int ADDRESSES = 6;
+        public static final int FEE_FILTER = 4;
+        public static final int PING_TIME = 5;
+        public static final int LAST_PING_TIME = 6;
+        public static final int ADDRESSES = 7;
 
         public List<Peer> connectedPeers = new ArrayList<>();
         public List<Peer> pendingPeers = new ArrayList<>();
@@ -188,6 +191,7 @@ public class PeerMonitor {
                 case PROTOCOL_VERSION: return "Protocol version";
                 case USER_AGENT: return "User Agent";
                 case CHAIN_HEIGHT: return "Chain height";
+                case FEE_FILTER: return "Fee filter (per kB)";
                 case PING_TIME: return "Average ping";
                 case LAST_PING_TIME: return "Last ping";
                 case ADDRESSES: return "Peer addresses";
@@ -197,7 +201,7 @@ public class PeerMonitor {
 
         @Override
         public int getColumnCount() {
-            return 7;
+            return 8;
         }
 
         @Override
@@ -242,6 +246,9 @@ public class PeerMonitor {
                     return peer.getPeerVersionMessage().subVer;
                 case CHAIN_HEIGHT:
                     return peer.getBestHeight();
+                case FEE_FILTER:
+                    Coin feeFilter = peer.getFeeFilter();
+                    return feeFilter != null ? feeFilter.toFriendlyString() : "";
                 case PING_TIME:
                     return peer.getPingTime();
                 case LAST_PING_TIME:
