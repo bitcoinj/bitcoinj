@@ -160,6 +160,7 @@ public class Peer extends PeerSocketHandler {
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
     private volatile VersionMessage vPeerVersionMessage;
+    private volatile Coin vFeeFilter;
 
     // A settable future which completes (with this) when the connection is open
     private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
@@ -495,6 +496,8 @@ public class Peer extends PeerSocketHandler {
             log.error("{} {}: Received {}", this, getPeerVersionMessage().subVer, m);
         } else if (m instanceof SendHeadersMessage) {
             // We ignore this message, because we don't announce new blocks.
+        } else if (m instanceof FeeFilterMessage) {
+            processFeeFilter((FeeFilterMessage) m);
         } else {
             log.warn("{}: Received unhandled message: {}", this, m);
         }
@@ -1606,6 +1609,11 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
+    private void processFeeFilter(FeeFilterMessage m) {
+        log.info("{}: Announced fee filter: {}/kB", this, m.getFeeRate().toFriendlyString());
+        vFeeFilter = m.getFeeRate();
+    }
+
     /**
      * Returns the difference between our best chain height and the peers, which can either be positive if we are
      * behind the peer, or negative if the peer is ahead of us.
@@ -1645,6 +1653,11 @@ public class Peer extends PeerSocketHandler {
     /** Returns version data announced by the remote peer. */
     public VersionMessage getPeerVersionMessage() {
         return vPeerVersionMessage;
+    }
+
+    /** Returns the fee filter announced by the remote peer, interpreted as satoshis per kB. */
+    public Coin getFeeFilter() {
+        return vFeeFilter;
     }
 
     /** Returns version data we announce to our remote peers. */

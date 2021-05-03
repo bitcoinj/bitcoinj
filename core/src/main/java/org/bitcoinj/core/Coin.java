@@ -116,6 +116,16 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     /**
+     * Create a {@code Coin} from a long integer number of satoshis.
+     *
+     * @param satoshis number of satoshis
+     * @return {@code Coin} object containing value in satoshis
+     */
+    public static Coin ofSat(long satoshis) {
+        return Coin.valueOf(satoshis);
+    }
+
+    /**
      * <p>Parses an amount expressed in the way humans are used to.</p>
      * <p>This takes string in a format understood by {@link BigDecimal#BigDecimal(String)}, for example "0", "1", "0.10",
      * "1.23E3", "1234.5E-5".</p>

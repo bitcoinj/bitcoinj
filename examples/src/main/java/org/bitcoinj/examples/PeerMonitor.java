@@ -17,21 +17,20 @@
 
 package org.bitcoinj.examples;
 
+import com.google.common.collect.Lists;
+import org.bitcoinj.core.*;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
-import com.google.common.collect.Lists;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,7 +48,8 @@ public class PeerMonitor {
     private PeerTableModel peerTableModel;
     private PeerTableRenderer peerTableRenderer;
 
-    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<Peer, String>();
+    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
+    private final HashMap<Peer, AddressMessage> addressMessages = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -144,7 +144,11 @@ public class PeerMonitor {
         peerTable.setDefaultRenderer(String.class, peerTableRenderer);
         peerTable.setDefaultRenderer(Integer.class, peerTableRenderer);
         peerTable.setDefaultRenderer(Long.class, peerTableRenderer);
-        peerTable.getColumnModel().getColumn(0).setPreferredWidth(300);
+        TableColumnModel columnModel = peerTable.getColumnModel();
+        columnModel.getColumn(PeerTableModel.IP_ADDRESS).setPreferredWidth(300);
+        columnModel.getColumn(PeerTableModel.USER_AGENT).setPreferredWidth(150);
+        columnModel.getColumn(PeerTableModel.FEE_FILTER).setPreferredWidth(150);
+        columnModel.getColumn(PeerTableModel.ADDRESSES).setPreferredWidth(400);
 
         JScrollPane scrollPane = new JScrollPane(peerTable);
         window.getContentPane().add(scrollPane, BorderLayout.CENTER);
@@ -166,8 +170,10 @@ public class PeerMonitor {
         public static final int PROTOCOL_VERSION = 1;
         public static final int USER_AGENT = 2;
         public static final int CHAIN_HEIGHT = 3;
-        public static final int PING_TIME = 4;
-        public static final int LAST_PING_TIME = 5;
+        public static final int FEE_FILTER = 4;
+        public static final int PING_TIME = 5;
+        public static final int LAST_PING_TIME = 6;
+        public static final int ADDRESSES = 7;
 
         public List<Peer> connectedPeers = Lists.newArrayList();
         public List<Peer> pendingPeers = Lists.newArrayList();
@@ -190,15 +196,17 @@ public class PeerMonitor {
                 case PROTOCOL_VERSION: return "Protocol version";
                 case USER_AGENT: return "User Agent";
                 case CHAIN_HEIGHT: return "Chain height";
+                case FEE_FILTER: return "Fee filter (per kB)";
                 case PING_TIME: return "Average ping";
                 case LAST_PING_TIME: return "Last ping";
+                case ADDRESSES: return "Peer addresses";
                 default: throw new RuntimeException();
             }
         }
 
         @Override
         public int getColumnCount() {
-            return 6;
+            return 8;
         }
 
         @Override
@@ -243,10 +251,15 @@ public class PeerMonitor {
                     return peer.getPeerVersionMessage().subVer;
                 case CHAIN_HEIGHT:
                     return peer.getBestHeight();
+                case FEE_FILTER:
+                    Coin feeFilter = peer.getFeeFilter();
+                    return feeFilter != null ? feeFilter.toFriendlyString() : "";
                 case PING_TIME:
                     return peer.getPingTime();
                 case LAST_PING_TIME:
                     return peer.getLastPingTime();
+                case ADDRESSES:
+                    return getAddressesForPeer(peer);
 
                 default: throw new RuntimeException();
             }
@@ -261,6 +274,13 @@ public class PeerMonitor {
                 return s;
             else
                 return peer.getAddress().getAddr().getHostAddress();
+        }
+
+        private String getAddressesForPeer(Peer peer) {
+            synchronized (addressMessages) {
+                AddressMessage addressMessage = addressMessages.get(peer);
+                return addressMessage != null ? addressMessage.toString() : "";
+            }
         }
     }
 
