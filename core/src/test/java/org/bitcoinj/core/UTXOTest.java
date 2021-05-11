@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2019 Tim Strasser
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +20,59 @@ package org.bitcoinj.core;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 
 import org.bitcoinj.script.ScriptBuilder;
+import org.junit.Before;
 import org.junit.Test;
 
 public class UTXOTest {
 
-    @Test
-    public void testJavaSerialization() throws Exception {
+    private UTXO utxo;
+    private UTXO utxoCopy;
+
+    @Before
+    public void setUp() throws IOException, ClassNotFoundException {
         ECKey key = new ECKey();
-        UTXO utxo = new UTXO(Sha256Hash.of(new byte[]{1,2,3}), 1, Coin.COIN, 10, true, ScriptBuilder.createP2PKOutputScript(key));
+        utxo = new UTXO(Sha256Hash.of(new byte[]{1,2,3}), 1, Coin.COIN, 10, true, ScriptBuilder.createP2PKOutputScript(key));
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         new ObjectOutputStream(os).writeObject(utxo);
-        UTXO utxoCopy = (UTXO) new ObjectInputStream(
+        utxoCopy = (UTXO) new ObjectInputStream(
                 new ByteArrayInputStream(os.toByteArray())).readObject();
+    }
+
+    @Test
+    public void testUTXOCopy() {
         assertEquals(utxo, utxoCopy);
+    }
+
+    @Test
+    public void testGetValue() {
         assertEquals(utxo.getValue(), utxoCopy.getValue());
-        assertEquals(utxo.getHeight(), utxoCopy.getHeight());
-        assertEquals(utxo.isCoinbase(), utxoCopy.isCoinbase());
+    }
+
+    @Test
+    public void testGetScript() {
         assertEquals(utxo.getScript(), utxoCopy.getScript());
+    }
+
+    @Test
+    public void testGetHash() {
+        assertEquals(utxo.getHash(), utxoCopy.getHash());
+    }
+
+    @Test
+    public void testGetIndex() {
+        assertEquals(utxo.getIndex(), utxoCopy.getIndex());
+    }
+
+    @Test
+    public void testGetHeight() {
+        assertEquals(utxo.getHeight(), utxoCopy.getHeight());
+    }
+
+    @Test
+    public void testIsCoinbase() {
+        assertEquals(utxo.isCoinbase(), utxoCopy.isCoinbase());
     }
 }
