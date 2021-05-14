@@ -44,12 +44,25 @@ public class LazyECPoint {
     @Nullable
     private ECPoint point;
 
+    /**
+     * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
+     * public key is delayed too, e.g. until a getter is called.
+     *
+     * @param curve a curve the point is on
+     * @param bits  public key bytes
+     */
     public LazyECPoint(ECCurve curve, byte[] bits) {
         this.curve = curve;
         this.bits = bits;
         this.compressed = ECKey.isPubKeyCompressed(bits);
     }
 
+    /**
+     * Construct a LazyECPoint from an already decoded point.
+     *
+     * @param point      the wrapped point
+     * @param compressed true if the represented public key is compressed
+     */
     public LazyECPoint(ECPoint point, boolean compressed) {
         this.point = checkNotNull(point).normalize();
         this.compressed = compressed;
