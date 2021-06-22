@@ -18,7 +18,7 @@ package org.bitcoinj.core;
 
 /**
  * <p>Represents the {@code sendaddrv2} P2P protocol message, which indicates that a node can understand and prefers
- * to receive {@code addrv2] messages instead of {@code addr} messages.</p>
+ * to receive {@code addrv2} messages instead of {@code addr} messages.</p>
  *
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki">BIP155</a> for details.</p>
  *
