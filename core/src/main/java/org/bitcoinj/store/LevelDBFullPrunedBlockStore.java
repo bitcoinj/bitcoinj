@@ -741,7 +741,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                 return null;
             }
             ByteArrayInputStream bis = new ByteArrayInputStream(inbytes);
-            UTXO txout = new UTXO(bis);
+            UTXO txout = UTXO.fromStream(bis);
 
             if (instrument)
                 endMethod("getTransactionOutput");

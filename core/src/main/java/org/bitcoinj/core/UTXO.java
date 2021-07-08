@@ -85,10 +85,6 @@ public class UTXO {
         this.address = address;
     }
 
-    public UTXO(InputStream in) throws IOException {
-        deserializeFromStream(in);
-    }
-
     /** The value which this Transaction output holds. */
     public Coin getValue() {
         return value;
@@ -153,32 +149,34 @@ public class UTXO {
         bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
     }
 
-    public void deserializeFromStream(InputStream in) throws IOException {
+    public static UTXO fromStream(InputStream in) throws IOException {
         byte[] valueBytes = new byte[8];
         if (in.read(valueBytes, 0, 8) != 8)
             throw new EOFException();
-        value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
+        Coin value = Coin.valueOf(Utils.readInt64(valueBytes, 0));
 
         int scriptBytesLength = (int) Utils.readUint32FromStream(in);
         byte[] scriptBytes = new byte[scriptBytesLength];
         if (in.read(scriptBytes) != scriptBytesLength)
             throw new EOFException();
-        script = new Script(scriptBytes);
+        Script script = new Script(scriptBytes);
 
         byte[] hashBytes = new byte[32];
         if (in.read(hashBytes) != 32)
             throw new EOFException();
-        hash = Sha256Hash.wrap(hashBytes);
+        Sha256Hash hash = Sha256Hash.wrap(hashBytes);
 
         byte[] indexBytes = new byte[4];
         if (in.read(indexBytes) != 4)
             throw new EOFException();
-        index = Utils.readUint32(indexBytes, 0);
+        long index = Utils.readUint32(indexBytes, 0);
 
-        height = (int) Utils.readUint32FromStream(in);
+        int height = (int) Utils.readUint32FromStream(in);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
-        coinbase = coinbaseByte[0] == 1;
+        boolean coinbase = coinbaseByte[0] == 1;
+
+        return new UTXO(hash, index, value, height, coinbase, script);
     }
 }
