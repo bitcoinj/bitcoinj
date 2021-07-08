@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Matt Corallo.
+ * Copyright 2021 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +31,7 @@ import java.util.Locale;
  * It avoids having to store the entire parentTransaction just to get the hash and index.
  * Useful when working with free standing outputs.
  */
-public class UTXO implements Serializable {
-
-    private static final long serialVersionUID = 4736241649298988166L;
-
+public class UTXO {
     private Coin value;
     private Script script;
     private Sha256Hash hash;
@@ -183,13 +181,4 @@ public class UTXO implements Serializable {
         in.read(coinbaseByte);
         coinbase = coinbaseByte[0] == 1;
     }
-    
-    
-    private void writeObject(ObjectOutputStream o) throws IOException {
-        serializeToStream(o);
-    }
-          
-    private void readObject(ObjectInputStream o) throws IOException, ClassNotFoundException {
-        deserializeFromStream(o);
-    }        
 }
