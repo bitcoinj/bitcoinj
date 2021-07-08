@@ -24,6 +24,8 @@ import java.io.*;
 import java.math.*;
 import java.util.Locale;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
 /**
@@ -75,9 +77,9 @@ public class UTXO {
                 boolean coinbase,
                 Script script,
                 String address) {
-        this.hash = hash;
+        this.hash = checkNotNull(hash);
         this.index = index;
-        this.value = value;
+        this.value = checkNotNull(value);
         this.height = height;
         this.script = script;
         this.coinbase = coinbase;
@@ -126,7 +128,7 @@ public class UTXO {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getIndex(), getHash());
+        return Objects.hashCode(getIndex(), getHash(), getValue());
     }
 
     @Override
@@ -134,7 +136,7 @@ public class UTXO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UTXO other = (UTXO) o;
-        return getIndex() == other.getIndex() && getHash().equals(other.getHash());
+        return getIndex() == other.getIndex() && getHash().equals(other.getHash()) && getValue().equals(((UTXO) o).getValue());
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
