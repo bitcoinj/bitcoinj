@@ -35,7 +35,7 @@ public class UTXOTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         utxo.serializeToStream(os);
         InputStream is = new ByteArrayInputStream(os.toByteArray());
-        UTXO utxoCopy = new UTXO(is);
+        UTXO utxoCopy = UTXO.fromStream(is);
         assertEquals(utxo, utxoCopy);
         assertEquals(utxo.getValue(), utxoCopy.getValue());
         assertEquals(utxo.getHeight(), utxoCopy.getHeight());
