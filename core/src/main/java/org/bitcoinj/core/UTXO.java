@@ -32,13 +32,13 @@ import java.util.Locale;
  * Useful when working with free standing outputs.
  */
 public class UTXO {
-    private Coin value;
-    private Script script;
-    private Sha256Hash hash;
-    private long index;
-    private int height;
-    private boolean coinbase;
-    private String address;
+    private final Coin value;
+    private final Script script;
+    private final Sha256Hash hash;
+    private final long index;
+    private final int height;
+    private final boolean coinbase;
+    private final String address;
 
     /**
      * Creates a stored transaction output.
@@ -55,13 +55,7 @@ public class UTXO {
                 int height,
                 boolean coinbase,
                 Script script) {
-        this.hash = hash;
-        this.index = index;
-        this.value = value;
-        this.height = height;
-        this.script = script;
-        this.coinbase = coinbase;
-        this.address = "";
+        this(hash, index, value, height, coinbase, script, "");
     }
 
     /**
@@ -81,7 +75,12 @@ public class UTXO {
                 boolean coinbase,
                 Script script,
                 String address) {
-        this(hash, index, value, height, coinbase, script);
+        this.hash = hash;
+        this.index = index;
+        this.value = value;
+        this.height = height;
+        this.script = script;
+        this.coinbase = coinbase;
         this.address = address;
     }
 
