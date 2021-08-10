@@ -157,9 +157,6 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 byte[] bytes = new byte[4];
                 currentFileStream.read(bytes, 0, 4);
                 long size = Utils.readUint32BE(Utils.reverseBytes(bytes), 0);
-                // We allow larger than MAX_BLOCK_SIZE because test code uses this as well.
-                if (size > Block.MAX_BLOCK_SIZE*2 || size <= 0)
-                    continue;
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
