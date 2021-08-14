@@ -18,7 +18,10 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build with Gradle
-        run: gradle build --stacktrace
+        uses: gradle/gradle-build-action@v1
+        with:
+          gradle-version: 6.9
+          arguments: build --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v2
         if: always()
