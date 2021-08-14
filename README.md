@@ -1,4 +1,7 @@
-[![Build Status](https://travis-ci.org/bitcoinj/bitcoinj.png?branch=master)](https://travis-ci.org/bitcoinj/bitcoinj)   [![Coverage Status](https://coveralls.io/repos/bitcoinj/bitcoinj/badge.png?branch=master)](https://coveralls.io/r/bitcoinj/bitcoinj?branch=master) 
+[![Github Build Status](https://github.com/bitcoinj/bitcoinj/workflows/Java%20CI/badge.svg)](https://github.com/bitcoinj/bitcoinj/actions)
+[![Travis Build Status](https://travis-ci.org/bitcoinj/bitcoinj.png?branch=master)](https://travis-ci.org/bitcoinj/bitcoinj)
+[![GitLab Build Status](https://gitlab.com/bitcoinj/bitcoinj/badges/master/pipeline.svg)](https://gitlab.com/bitcoinj/bitcoinj/pipelines)
+[![Coverage Status](https://coveralls.io/repos/bitcoinj/bitcoinj/badge.png?branch=master)](https://coveralls.io/r/bitcoinj/bitcoinj?branch=master)
 
 [![Visit our IRC channel](https://kiwiirc.com/buttons/irc.freenode.net/bitcoinj.png)](https://kiwiirc.com/client/irc.freenode.net/bitcoinj)
 
@@ -8,11 +11,13 @@ The bitcoinj library is a Java implementation of the Bitcoin protocol, which all
 
 ### Technologies
 
-* Java 7+ and Gradle 3.4+ for the `core` module
-* Java 8+ and Gradle 3.4+ for `tools` and `examples`
-* Java 11+ and Gradle 4.10+ for the JavaFX-based `wallettemplate`
+* Java 7+ and Gradle 4.4+ for the `core` module
+* Java 8+ and Gradle 4.4 - Gradle 6.9 for `tools` and `examples`
+* Java 11+ and Gradle 4.10 - Gradle 6.9 for the JavaFX-based `wallettemplate`
 * [Gradle](https://gradle.org/) - for building the project
 * [Google Protocol Buffers](https://github.com/google/protobuf) - for use with serialization and hardware communications
+
+Note: Building with Gradle 7 is currently unsupported. See Issue #2112 and Issue #2119.
 
 ### Getting started
 
@@ -36,6 +41,38 @@ gradle clean assemble
 #### Building from an IDE
 
 Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Gradle integration built-in and has a free Community Edition. Simply use `File | New | Project from Existing Sources` and locate the `build.gradle` in the root of the cloned project source tree.
+
+### Building and Using the Wallet Tool
+
+The **bitcoinj** `tools` subproject includes a command-line Wallet Tool (`wallet-tool`) that can be used to create and manage **bitcoinj**-based wallets (both the HD keychain and SPV blockchain state.) Using `wallet-tool` on Bitcoin's test net is a great way to learn about Bitcoin and **bitcoinj**.
+
+To build an executable shell script that runs the command-line Wallet Tool, use:
+```
+gradle bitcoinj-tools:installDist
+```
+
+You can now run the `wallet-tool` without parameters to get help on its operation:
+```
+./tools/build/install/wallet-tool/bin/wallet-tool
+```
+
+To create a test net wallet file in `~/bitcoinj/bitcoinj-test.wallet`, you would use:
+```
+mkdir ~/bitcoinj
+./tools/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet create
+```
+
+To sync the newly created wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
+```
+./tools/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet sync
+```
+
+To dump the state of the wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
+```
+./tools/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet dump
+```
+
+Note: These instructions are for macOS/Linux, for Windows use the `tools/build/install/wallet-tool/bin/wallet-tool.bat` batch file with the equivalent Windows command-line commands and options.
 
 ### Example applications
 
