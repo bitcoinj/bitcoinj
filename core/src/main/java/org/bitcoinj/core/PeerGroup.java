@@ -1883,7 +1883,9 @@ public class PeerGroup implements TransactionBroadcaster {
                             log.warn(String.format(Locale.US,
                                     "Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s, %d stalls left",
                                     average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer, maxStalls));
-                            peer.close();
+                            if (peer != null) {
+                                peer.close();
+                            }
                             // Reset the sample buffer and give the next peer time to get going.
                             samples = null;
                             warmupSeconds = period;
