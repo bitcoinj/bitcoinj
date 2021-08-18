@@ -229,7 +229,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
                     | (entry[3] & 0xFF) >> 3;
             int bit = (entry[3] & 0x07);
             int orBit = (0x1 << bit);
-            byte newEntry = (byte) ((int) cache[arrayIndex] | orBit);
+            byte newEntry = (byte) (cache[arrayIndex] | orBit);
             cache[arrayIndex] = newEntry;
         }
 
@@ -428,9 +428,10 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
 
         List<UTXO> results = new LinkedList<>();
         for (ECKey key : keys) {
-            ByteBuffer bb = ByteBuffer.allocate(21);
+            byte[] pubKeyHash = key.getPubKeyHash();
+            ByteBuffer bb = ByteBuffer.allocate(1 + pubKeyHash.length);
             bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-            bb.put(key.getPubKeyHash());
+            bb.put(pubKeyHash);
 
             ReadOptions ro = new ReadOptions();
             Snapshot sn = db.getSnapshot();
@@ -442,7 +443,7 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             for (iterator.seek(bb.array()); iterator.hasNext(); iterator.next()) {
                 ByteBuffer bbKey = ByteBuffer.wrap(iterator.peekNext().getKey());
                 bbKey.get(); // remove the address_hashindex byte.
-                byte[] addressKey = new byte[20];
+                byte[] addressKey = new byte[pubKeyHash.length];
                 bbKey.get(addressKey);
                 if (!Arrays.equals(addressKey, key.getPubKeyHash())) {
                     break;
@@ -790,16 +791,17 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
             return;
         } else {
             try {
-                a = LegacyAddress.fromBase58(params, out.getAddress());
+                a = Address.fromString(params, out.getAddress());
             } catch (AddressFormatException e) {
                 if (instrument)
                     endMethod("addUnspentTransactionOutput");
                 return;
             }
         }
-        ByteBuffer bb = ByteBuffer.allocate(57);
+        byte[] addressBytes = a.getHash();
+        ByteBuffer bb = ByteBuffer.allocate(37 + addressBytes.length);
         bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-        bb.put(a.getHash());
+        bb.put(addressBytes);
         bb.put(out.getHash().getBytes());
         bb.putInt((int) out.getIndex());
         byte[] value = new byte[0];
@@ -876,26 +878,26 @@ public class LevelDBFullPrunedBlockStore implements FullPrunedBlockStore {
 
         // TODO storing as byte[] hash to save space. But think should just
         // store as String of address. Might be faster. Need to test.
-        ByteBuffer bb = ByteBuffer.allocate(57);
         Address a;
-        byte[] hashBytes = null;
+        byte[] addressBytes = null;
         try {
             String address = out.getAddress();
             if (address == null || address.equals("")) {
                 Script sc = out.getScript();
                 a = sc.getToAddress(params);
-                hashBytes = a.getHash();
+                addressBytes = a.getHash();
             } else {
-                a = LegacyAddress.fromBase58(params, out.getAddress());
-                hashBytes = a.getHash();
+                a = Address.fromString(params, out.getAddress());
+                addressBytes = a.getHash();
             }
         } catch (AddressFormatException | ScriptException e) {
             if (instrument)
                 endMethod("removeUnspentTransactionOutput");
             return;
         }
+        ByteBuffer bb = ByteBuffer.allocate(37 + addressBytes.length);
         bb.put((byte) KeyType.ADDRESS_HASHINDEX.ordinal());
-        bb.put(hashBytes);
+        bb.put(addressBytes);
         bb.put(out.getHash().getBytes());
         bb.putInt((int) out.getIndex());
         batchDelete(bb.array());
