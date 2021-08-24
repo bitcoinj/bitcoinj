@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dependency-verification version='1'>
+  <trust-requirement pgp='GROUP' checksum='NONE' />
+  <ignored-keys />
+  <trusted-keys>
+    <trusted-key id='52e6585e0102b84d' group='cglib' />
+    <trusted-key id='9cd8549acf9bd0ce' group='com.fasterxml.jackson.core' />
+    <trusted-key id='379ce192d401ab61' group='com.github.javaparser' />
+    <trusted-key id='59a252fb1199d873' group='com.google.code.findbugs' />
+    <trusted-key id='9a259c7ee636c5ed' group='com.google.errorprone' />
+    <trusted-key id='5d67bffcba1f9a39' group='com.google.gradle' />
+    <trusted-key id='abe9f3126bb741c1' group='com.google.guava' />
+    <trusted-key id='c51e6cbc7ff46f0b' group='com.google.guava' />
+    <trusted-key id='f6d4a1d411e9d1ae' group='com.google.guava' />
+    <trusted-key id='29579f18fa8fd93b' group='com.google.j2objc' />
+    <trusted-key id='5d67bffcba1f9a39' group='com.google.protobuf' />
+    <trusted-key id='b57bd58ef6d0a713' group='com.google.protobuf' />
+    <trusted-key id='f6ce9695c9318406' group='com.google.zxing' />
+    <trusted-key id='8671a8df71296252' group='com.squareup.okhttp3' />
+    <trusted-key id='8671a8df71296252' group='com.squareup.okio' />
+    <trusted-key id='1861c322c56014b2' group='commons-lang' />
+    <trusted-key id='0f64f95cef5f0629' group='de.jensd' />
+    <trusted-key id='5bcee695141e6086' group='javax.enterprise' />
+    <trusted-key id='efe8086f9e93774e' group='junit' />
+    <trusted-key id='96fb9db219f3338d' group='kr.motd.maven' />
+    <trusted-key id='0da8a5ec02d11ead' group='net.sf.jopt-simple' />
+    <trusted-key id='4a1bac7f1e3b89b3' group='nl.jqno.equalsverifier' />
+    <trusted-key id='c7bf26d0bb617866' group='org.apache.maven' />
+    <trusted-key id='b341ddb020fcb6ab' group='org.bouncycastle' />
+    <trusted-key id='b16698a4adf4d638' group='org.checkerframework' />
+    <trusted-key id='6525fd70cc303655' group='org.codehaus.mojo' />
+    <trusted-key id='873a8e86b4372146' group='org.codehaus.mojo' />
+    <trusted-key id='2e2010f8a7ff4a41' group='org.codehaus.plexus' />
+    <trusted-key id='c7bf26d0bb617866' group='org.codehaus.plexus' />
+    <trusted-key id='7c7d8456294423ba' group='org.easymock' />
+    <trusted-key id='01d734ee5ee9c3f8' group='org.eclipse.sisu' />
+    <trusted-key id='9ff25980f5ba7e4f' group='org.fusesource.leveldbjni' />
+    <trusted-key id='a6adfc93ef34893e' group='org.hamcrest' />
+    <trusted-key id='10066a9707090cf9' group='org.javassist' />
+    <trusted-key id='7c7d8456294423ba' group='org.objenesis' />
+    <trusted-key id='6a9fbe152d4c64d1' group='org.openjfx' />
+    <trusted-key id='2c7b12f2a511e325' group='org.slf4j' />
+    <trusted-key id='52e6585e0102b84d' group='org.sonatype.sisu' />
+  </trusted-keys>
+  <dependencies>
+    <dependency group='aopalliance' module='aopalliance' version='1.0'>
+      <sha512>3F44A932D8C00CFEEE2EB057BCD7C301A2D029063E0A916E1E20B3AEC4877D19D67A2FD8AAF58FA2D5A00133D1602128A7F50912FFB6CABC7B0FDC7FBDA3F8A1</sha512>
+    </dependency>
+    <dependency group='com.h2database' module='h2' version='1.3.167'>
+      <sha512>AE4E4DC6EE3CA31E49B0F0837535708142190E19385595BD50FCA0878DCACF322C3D9BCAD559229B06B7E497207E9687BAC5331B946BE02FB8DD8D1BCCA01347</sha512>
+    </dependency>
+    <dependency group='javax.annotation' module='jsr250-api' version='1.0'>
+      <sha512>8B5DD24460E42763F3645205BE4B4F80691E217D36BEE5FC5B5DF6EBC8782ED0F641FB9E2FE918A2D0EEDE32556656F6B61FE65D2CBEC5086E61EF3D91E4D871</sha512>
+    </dependency>
+    <dependency group='javax.inject' module='javax.inject' version='1'>
+      <sha512>E126B7CCF3E42FD1984A0BEEF1004A7269A337C202E59E04E8E2AF714280D2F2D8D2BA5E6F59481B8DCD34AAF35C966A688D0B48EC7E96F102C274DC0D3B381E</sha512>
+    </dependency>
+    <dependency group='net.jcip' module='jcip-annotations' version='1.0'>
+      <sha512>CB312B3F571D91EF183C119D878F50464FFD97F853B7311CBA386463F295E8B7B3A5A89ED4269A045CACD5AA7CB4C803D4882854A0FDDEFA9BBC28C72AA6C786</sha512>
+    </dependency>
+    <dependency group='org.javamodularity' module='moduleplugin' version='1.4.0'>
+      <sha512>B0C8900A54D786F79CB7C830561616C64CB25280EA1860CBE7F01625E11A550A325C270B44D108B0EA9B85DB38C71CF882B07FDA281E2C0D6BB14E8C0730C7CE</sha512>
+    </dependency>
+    <dependency group='org.openjfx' module='javafx-plugin' version='0.0.7'>
+      <sha512>C41A518B359CCA68A6CDCDF8DD757A74244D6ADE12DB91B59BA5EAE4AF840396FC32B90945D3CBD830EECED4B2502180BEC4A3CC3FD761CDB5FB1A2FA9660330</sha512>
+    </dependency>
+  </dependencies>
+</dependency-verification>

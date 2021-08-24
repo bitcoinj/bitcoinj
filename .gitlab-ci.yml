@@ -7,9 +7,9 @@ before_script:
   - apt-get update
   - apt-get -y upgrade
   - apt-get -y install openjdk-11-jdk gradle
-  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace
+  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace -PchecksumFailOn=never
 
 build:
   script:
     - java -version
-    - ./gradlew build --stacktrace
+    - ./gradlew build --stacktrace -PchecksumFailOn=build_finish -PchecksumPrint
