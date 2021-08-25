@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.core.TransactionConfidence.*;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.*;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.wallet.*;
@@ -36,7 +37,7 @@ import static org.junit.Assert.*;
 @RunWith(value = Parameterized.class)
 public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
-    private static final BitcoinSerializer SERIALIZER = new BitcoinSerializer(UNITTEST, true);
+    private static BitcoinSerializer SERIALIZER = new BitcoinSerializer(UNITTEST, true);
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
@@ -46,6 +47,13 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
 
     public FilteredBlockAndPartialMerkleTreeTests(ClientType clientType) {
         super(clientType);
+    }
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Utils.resetMocking();
+        UNITTEST = UnitTestParams.get();
+        SERIALIZER = new BitcoinSerializer(UNITTEST, true);
     }
 
     @Before

@@ -50,7 +50,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
-    protected static final NetworkParameters UNITTEST = UnitTestParams.get();
+    protected static /* final */ NetworkParameters UNITTEST = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
