@@ -1,15 +1,10 @@
-image: ubuntu:bionic
-
-variables:
-  GRADLE_VERSION: "4.10.3"
+image: debian:bullseye-slim
 
 before_script:
   - apt-get update
   - apt-get -y upgrade
   - apt-get -y install openjdk-11-jdk gradle
-  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace
 
 build:
   script:
-    - java -version
-    - ./gradlew build --stacktrace
+    - gradle build --stacktrace
