@@ -35,6 +35,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -3734,5 +3735,72 @@ public class WalletTest extends TestWithWallet {
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
         assertEquals(wallet.freshReceiveAddress(Script.ScriptType.P2PKH),
                 clone.freshReceiveAddress(Script.ScriptType.P2PKH));
+    }
+
+    @Test
+    public void oneTxTwoWallets() {
+        Wallet wallet1 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
+        Address address1 = wallet1.freshReceiveAddress(Script.ScriptType.P2PKH);
+        Address address2 = wallet2.freshReceiveAddress(Script.ScriptType.P2PKH);
+
+        // Both wallet1 and wallet2 receive coins in the same tx
+        Transaction tx0 = createFakeTx(UNITTEST);
+        Transaction tx1 = new Transaction(UNITTEST);
+        tx1.addInput(tx0.getOutput(0));
+        tx1.addOutput(COIN, address1); // to wallet1
+        tx1.addOutput(COIN, address2); // to wallet2
+        tx1.addOutput(COIN, OTHER_ADDRESS);
+        wallet1.receivePending(tx1, null);
+        wallet2.receivePending(tx1, null);
+
+        // Confirm transactions in both wallets
+        StoredBlock block = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, tx1).storedBlock;
+        wallet1.notifyTransactionIsInBlock(tx1.getTxId(), block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
+        wallet2.notifyTransactionIsInBlock(tx1.getTxId(), block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
+
+        assertEquals(COIN, wallet1.getTotalReceived());
+        assertEquals(COIN, wallet2.getTotalReceived());
+
+        // Spend two outputs from the same tx from two different wallets
+        SendRequest sendReq = SendRequest.to(OTHER_ADDRESS, valueOf(2, 0));
+        sendReq.tx.addInput(tx1.getOutput(0));
+        sendReq.tx.addInput(tx1.getOutput(1));
+
+        // Wallet1 sign input 0
+        TransactionInput inputW1 = sendReq.tx.getInput(0);
+        ECKey sigKey1 = inputW1.getOutpoint().getConnectedKey(wallet1);
+        Script scriptCode1 = ScriptBuilder.createP2PKHOutputScript(sigKey1);
+        TransactionSignature txSig1 = sendReq.tx.calculateWitnessSignature(0, sigKey1, scriptCode1,
+                inputW1.getValue(), Transaction.SigHash.ALL, false);
+        inputW1.setScriptSig(ScriptBuilder.createEmpty());
+        inputW1.setWitness(TransactionWitness.redeemP2WPKH(txSig1, sigKey1));
+
+        // Wallet2 sign input 1
+        TransactionInput inputW2 = sendReq.tx.getInput(1);
+        ECKey sigKey2 = inputW2.getOutpoint().getConnectedKey(wallet2);
+        Script scriptCode2 = ScriptBuilder.createP2PKHOutputScript(sigKey2);
+        TransactionSignature txSig2 = sendReq.tx.calculateWitnessSignature(0, sigKey2, scriptCode2,
+                inputW2.getValue(), Transaction.SigHash.ALL, false);
+        inputW2.setScriptSig(ScriptBuilder.createEmpty());
+        inputW2.setWitness(TransactionWitness.redeemP2WPKH(txSig2, sigKey2));
+
+        wallet1.commitTx(sendReq.tx);
+        wallet2.commitTx(sendReq.tx);
+        assertEquals(ZERO, wallet1.getBalance());
+        assertEquals(ZERO, wallet2.getBalance());
+
+        assertTrue(wallet1.isConsistent());
+        assertTrue(wallet2.isConsistent());
+
+        Transaction txW1 = wallet1.getTransaction(tx1.getTxId());
+        Transaction txW2 = wallet2.getTransaction(tx1.getTxId());
+
+        assertEquals(txW1, tx1);
+        assertNotSame(txW1, tx1);
+        assertEquals(txW2, tx1);
+        assertNotSame(txW2, tx1);
+        assertEquals(txW1, txW2);
+        assertNotSame(txW1, txW2);
     }
 }
