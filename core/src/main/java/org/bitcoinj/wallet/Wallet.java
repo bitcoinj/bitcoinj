@@ -4338,7 +4338,7 @@ public class Wallet extends BaseTaggableObject
             checkState(inputs.size() > 0);
             checkState(outputs.size() > 0);
 
-            KeyBag maybeDecryptingKeyBag = new DecryptingKeyBag(this, req.aesKey);
+            KeyBag maybeDecryptingKeyBag = req.keyBag == null ? new DecryptingKeyBag(this, req.aesKey) : req.keyBag;
 
             int numInputs = tx.getInputs().size();
             for (int i = 0; i < numInputs; i++) {

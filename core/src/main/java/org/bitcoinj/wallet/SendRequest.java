@@ -84,6 +84,8 @@ public class SendRequest {
      * definition, a virtual kilobyte is defined as 1000 virtual bytes, not 1024.</p>
      */
     public Coin feePerKb = Context.get().getFeePerKb();
+    
+    public KeyBag keyBag;
 
     public void setFeePerVkb(Coin feePerVkb) {
         this.feePerKb = feePerVkb;
