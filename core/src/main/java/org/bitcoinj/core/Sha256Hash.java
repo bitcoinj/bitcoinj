@@ -32,8 +32,10 @@ import java.util.Arrays;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be used as keys in a
- * map. It also checks that the length is correct and provides a bit more type safety.
+ * A {@code Sha256Hash} wraps a {@code byte[]} so that {@link #equals} and {@link #hashCode} work correctly, allowing it to be used as a key in a
+ * map. It also checks that the {@code length} is correct (equal to {@link #LENGTH}) and provides a bit more type safety.
+ * <p>
+ * Given that {@code Sha256Hash} instances can be created using {@link #wrapReversed(byte[])} or {@link #twiceOf(byte[])} or by wrapping raw bytes, there is no guarantee that if two {@code Sha256Hash} instances are found equal (via {@link #equals(Object)}) that their preimages would be the same (even in the absence of a hash collision.)
  */
 public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     public static final int LENGTH = 32; // bytes
