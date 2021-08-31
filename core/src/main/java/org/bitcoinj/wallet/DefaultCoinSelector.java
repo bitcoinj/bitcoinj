@@ -51,7 +51,7 @@ public class DefaultCoinSelector implements CoinSelector {
         // bit over (excessive value will be change).
         long total = 0;
         for (TransactionOutput output : sortedOutputs) {
-            if (total >= target.value) break;
+            if (total > 0 && total >= target.value) break;
             // Only pick chain-included transactions, or transactions that are ours and pending.
             if (!shouldSelect(output.getParentTransaction())) continue;
             selected.add(output);
