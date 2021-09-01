@@ -54,10 +54,17 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
 
-    public AbstractBitcoinNetParams() {
-        super();
+    {
         interval = INTERVAL;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
+    }
+
+    public AbstractBitcoinNetParams(BigInteger maxTarget, long difficultyTarget, long genesisTime, long genesisNonce) {
+        super(maxTarget, difficultyTarget, genesisTime, genesisNonce);
+    }
+
+    public AbstractBitcoinNetParams(BigInteger maxTarget, long difficultyTarget) {
+        super(maxTarget, difficultyTarget);
     }
 
     /**

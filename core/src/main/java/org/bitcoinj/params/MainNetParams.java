@@ -17,13 +17,13 @@
 
 package org.bitcoinj.params;
 
+import java.math.BigInteger;
 import java.net.URI;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.net.discovery.HttpDiscovery;
-
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -34,18 +34,17 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
+    private static final long DIFFICULTY_TARGET = 0x1d00ffffL;
+    private static final BigInteger MAX_TARGET = Utils.decodeCompactBits(DIFFICULTY_TARGET);
+    private static final long GENESIS_TIME = 1231006505L;
+    private static final long GENESIS_NONCE = 2083236893;
 
     public MainNetParams() {
-        super();
+        super(MAX_TARGET, DIFFICULTY_TARGET, GENESIS_TIME, GENESIS_NONCE);
         id = ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
 
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(1231006505L);
-        genesisBlock.setNonce(2083236893);
-        
         port = 8333;
         packetMagic = 0xf9beb4d9L;
         dumpedPrivateKeyHeader = 128;

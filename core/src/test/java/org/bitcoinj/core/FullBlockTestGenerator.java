@@ -906,10 +906,9 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out14 = spendableOutputs.poll();
 
         // A valid block created exactly like b44 to make sure the creation itself works
-        Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS, b43.block.getDifficultyTarget(), b43.block.getTimeSeconds() + 1);
         byte[] outScriptBytes = ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
-            b44.setDifficultyTarget(b43.block.getDifficultyTarget());
             b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);
 
             Transaction t = new Transaction(params);
@@ -922,7 +921,6 @@ public class FullBlockTestGenerator {
             b44.addTransaction(t);
 
             b44.setPrevBlockHash(b43.getHash());
-            b44.setTime(b43.block.getTimeSeconds() + 1);
         }
         b44.solve();
         blocks.add(new BlockAndValidity(b44, true, false, b44.getHash(), chainHeadHeight + 15, "b44"));
@@ -930,9 +928,8 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out15 = spendableOutputs.poll();
 
         // A block with a non-coinbase as the first tx
-        Block b45 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b45 = new Block(params, Block.BLOCK_VERSION_GENESIS, b44.getDifficultyTarget(), b44.getTimeSeconds() + 1);
         {
-            b45.setDifficultyTarget(b44.getDifficultyTarget());
             //b45.addCoinbaseTransaction(pubKey, coinbaseValue);
 
             Transaction t = new Transaction(params);
@@ -950,20 +947,17 @@ public class FullBlockTestGenerator {
             b45.addTransaction(t, false);
 
             b45.setPrevBlockHash(b44.getHash());
-            b45.setTime(b44.getTimeSeconds() + 1);
         }
         b45.solve();
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
 
         // A block with no txn
-        Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS, b44.getDifficultyTarget(), b44.getTimeSeconds() + 1);
         {
             b46.transactions = new ArrayList<>();
-            b46.setDifficultyTarget(b44.getDifficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
             b46.setPrevBlockHash(b44.getHash());
-            b46.setTime(b44.getTimeSeconds() + 1);
         }
         b46.solve();
         blocks.add(new BlockAndValidity(b46, false, true, b44.getHash(), chainHeadHeight + 15, "b46"));

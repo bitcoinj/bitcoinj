@@ -18,7 +18,6 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Utils;
 
 import java.math.BigInteger;
 
@@ -30,20 +29,16 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public static final int UNITNET_MAJORITY_WINDOW = 8;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 6;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
+    public static final BigInteger MAX_TARGET = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public UnitTestParams() {
-        super();
+        super(MAX_TARGET, Block.EASIEST_DIFFICULTY_TARGET);
         id = ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
-        maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 
-        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        genesisBlock.setTime(Utils.currentTimeSeconds());
-        genesisBlock.solve();
-        
         port = 18333;
         packetMagic = 0x0b110907;
         dumpedPrivateKeyHeader = 239;

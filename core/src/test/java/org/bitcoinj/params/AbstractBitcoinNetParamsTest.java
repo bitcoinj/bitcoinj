@@ -16,7 +16,9 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Utils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -24,12 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AbstractBitcoinNetParamsTest {
-    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams() {
-        @Override
-        public String getPaymentProtocolId() {
-            return null;
-        }
-    };
+    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParamsSubClass();
 
     @Test
     public void isDifficultyTransitionPoint() {
@@ -57,5 +54,17 @@ public class AbstractBitcoinNetParamsTest {
         assertEquals(Coin.FIFTY_COINS, BITCOIN_PARAMS.getBlockInflation(209999));
         assertEquals(Coin.FIFTY_COINS.div(2), BITCOIN_PARAMS.getBlockInflation(210000));
         assertEquals(Coin.FIFTY_COINS.div(2), BITCOIN_PARAMS.getBlockInflation(210001));
+    }
+
+    static class AbstractBitcoinNetParamsSubClass extends AbstractBitcoinNetParams {
+
+        AbstractBitcoinNetParamsSubClass() {
+            super(UnitTestParams.MAX_TARGET, Block.EASIEST_DIFFICULTY_TARGET);
+        }
+
+        @Override
+        public String getPaymentProtocolId() {
+            return null;
+        }
     }
 }

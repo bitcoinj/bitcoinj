@@ -28,23 +28,21 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class RegTestParams extends AbstractBitcoinNetParams {
     private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    private static final long DIFFICULTY_TARGET = 0x207fFFFFL;
+    private static final long GENESIS_TIME = 1296688602L;
+    private static final long GENESIS_NONCE = 2;
 
     public RegTestParams() {
-        super();
+        super(MAX_TARGET, DIFFICULTY_TARGET, GENESIS_TIME, GENESIS_NONCE);
         id = ID_REGTEST;
         
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = MAX_TARGET;
         // Difficulty adjustments are disabled for regtest.
         // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
         // changes.
         interval = Integer.MAX_VALUE;
         subsidyDecreaseBlockCount = 150;
 
-        genesisBlock.setDifficultyTarget(0x207fFFFFL);
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setNonce(2);
-        
         port = 18444;
         packetMagic = 0xfabfb5daL;
         dumpedPrivateKeyHeader = 239;

@@ -186,17 +186,15 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
+        // We're going to make this block so easy 50% of solutions will pass, and check it gets rejected for having a
+        // bad difficulty target. Unfortunately the encoding mechanism means we cannot make one that accepts all
+        // solutions.
+        Block bad = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS, Block.EASIEST_DIFFICULTY_TARGET, 1279242649);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
         bad.setNonce(140548933);
-        bad.setTime(1279242649);
         bad.setPrevBlockHash(b2.getHash());
-        // We're going to make this block so easy 50% of solutions will pass, and check it gets rejected for having a
-        // bad difficulty target. Unfortunately the encoding mechanism means we cannot make one that accepts all
-        // solutions.
-        bad.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         try {
             testNetChain.add(bad);
             // The difficulty target above should be rejected on the grounds of being easier than the networks
@@ -397,11 +395,9 @@ public class BlockChainTest {
 
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
-        Block b2 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
+        Block b2 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS, 0x1d00ffff, 1296688946L);
         b2.setMerkleRoot(Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"));
         b2.setNonce(875942400L);
-        b2.setTime(1296688946L);
-        b2.setDifficultyTarget(0x1d00ffff);
         b2.setPrevBlockHash(Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"));
         assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
         b2.verifyHeader();
@@ -409,11 +405,9 @@ public class BlockChainTest {
     }
 
     private static Block getBlock1() throws Exception {
-        Block b1 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
+        Block b1 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS, 0x1d00ffff, 1296688928);
         b1.setMerkleRoot(Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
         b1.setNonce(1924588547);
-        b1.setTime(1296688928);
-        b1.setDifficultyTarget(0x1d00ffff);
         b1.setPrevBlockHash(Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
         assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());
         b1.verifyHeader();

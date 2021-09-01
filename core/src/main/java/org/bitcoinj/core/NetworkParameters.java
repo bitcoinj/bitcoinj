@@ -98,8 +98,22 @@ public abstract class NetworkParameters {
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected volatile transient MessageSerializer defaultSerializer = null;
 
-    protected NetworkParameters() {
-        genesisBlock = Block.createGenesis(this);
+    private NetworkParameters(BigInteger maxTarget, long difficultyTarget,  long genesisTime) {
+        this.maxTarget = maxTarget;
+        genesisBlock = Block.createGenesis(this, difficultyTarget, genesisTime);
+    }
+
+    protected NetworkParameters(BigInteger maxTarget, long difficultyTarget, long genesisTime, long genesisNonce) {
+        this(maxTarget, difficultyTarget, genesisTime);
+        genesisBlock.setNonce(genesisNonce);
+    }
+
+    /**
+     * This constructor is for NetworkParameters for unit testing
+     */
+    protected NetworkParameters(BigInteger maxTarget, long difficultyTarget) {
+        this(maxTarget, difficultyTarget, Utils.currentTimeSeconds());
+        genesisBlock.solve();
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.

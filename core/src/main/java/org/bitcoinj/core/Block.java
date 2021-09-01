@@ -115,12 +115,12 @@ public class Block extends Message {
     protected int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params, long setVersion) {
+    Block(NetworkParameters params, long setVersion, long difficultyTarget, long time) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
-        difficultyTarget = 0x1d07fff8L;
-        time = Utils.currentTimeSeconds();
+        this.difficultyTarget = difficultyTarget;
+        this.time = time;
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;
@@ -253,8 +253,8 @@ public class Block extends Message {
         length = cursor - offset;
     }
 
-    static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
+    static Block createGenesis(NetworkParameters n, long difficultyTarget, long genesisTime) {
+        Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS, difficultyTarget, genesisTime);
         Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
         genesisBlock.addTransaction(t);
         return genesisBlock;
@@ -471,9 +471,7 @@ public class Block extends Message {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(params, version);
-        block.difficultyTarget = difficultyTarget;
-        block.time = time;
+        Block block = new Block(params, version, this.difficultyTarget, this.time);
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
@@ -888,7 +886,10 @@ public class Block extends Message {
         return difficultyTarget;
     }
 
-    /** Sets the difficulty target in compact form. */
+    /**
+     * Sets the difficulty target in compact form.
+     * @param compactForm difficulty target
+     */
     @VisibleForTesting
     public void setDifficultyTarget(long compactForm) {
         unCacheHeader();
@@ -979,8 +980,7 @@ public class Block extends Message {
                           @Nullable TransactionOutPoint prevOut, final long time,
                           final byte[] pubKey, final Coin coinbaseValue,
                           final int height) {
-        Block b = new Block(params, version);
-        b.setDifficultyTarget(difficultyTarget);
+        Block b = new Block(params, version, difficultyTarget, time);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
@@ -1008,8 +1008,6 @@ public class Block extends Message {
         // Don't let timestamp go backwards
         if (getTimeSeconds() >= time)
             b.setTime(getTimeSeconds() + 1);
-        else
-            b.setTime(time);
         b.solve();
         try {
             b.verifyHeader();
