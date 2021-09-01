@@ -331,12 +331,12 @@ public class PeerAddress extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
-        return other.addr.equals(addr) && other.port == port && other.time == time && other.services.equals(services);
+        return other.addr.equals(addr) && other.port == port && other.services.equals(services);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(addr, port, time, services);
+        return Objects.hash(addr, port, services);
     }
     
     public InetSocketAddress toSocketAddress() {
