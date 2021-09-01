@@ -10,7 +10,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         java: [ '8', '11']
         distribution: ['temurin']
-        gradle: ['6.9']
+        gradle: ['7.2']
       fail-fast: false
     name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
     steps:
