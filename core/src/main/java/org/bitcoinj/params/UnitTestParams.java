@@ -29,17 +29,14 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public static final int UNITNET_MAJORITY_WINDOW = 8;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 6;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
+    public static final BigInteger MAX_TARGET = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public UnitTestParams() {
-        super();
+        super(MAX_TARGET, Block.EASIEST_DIFFICULTY_TARGET);
         id = ID_UNITTESTNET;
         packetMagic = 0x0b110907;
         addressHeader = 111;
         p2shHeader = 196;
-        maxTarget = new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
-        genesisBlock.setTime(Utils.currentTimeSeconds());
-        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        genesisBlock.solve();
         port = 18333;
         interval = 10;
         dumpedPrivateKeyHeader = 239;

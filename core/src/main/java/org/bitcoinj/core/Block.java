@@ -115,24 +115,15 @@ public class Block extends Message {
     protected int optimalEncodingMessageSize;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params, long setVersion) {
+    Block(NetworkParameters params, long setVersion, long difficultyTarget, long time) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
-        difficultyTarget = 0x1d07fff8L;
-        time = Utils.currentTimeSeconds();
+        this.difficultyTarget = difficultyTarget;
+        this.time = time;
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;
-    }
-
-    /**
-     * Constructs a block object from the Bitcoin wire format.
-     * @deprecated Use {@link BitcoinSerializer#makeBlock(byte[])} instead.
-     */
-    @Deprecated
-    public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0, params.getDefaultSerializer(), payloadBytes.length);
     }
 
     /**
@@ -444,21 +435,14 @@ public class Block extends Message {
 
     /** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
-        Block block = new Block(params, BLOCK_VERSION_GENESIS);
-        copyBitcoinHeaderTo(block);
-        return block;
-    }
-
-    /** Copy the block without transactions into the provided empty block. */
-    protected final void copyBitcoinHeaderTo(final Block block) {
+        Block block = new Block(params, BLOCK_VERSION_GENESIS, this.difficultyTarget, this.time);
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
         block.version = version;
-        block.time = time;
-        block.difficultyTarget = difficultyTarget;
         block.transactions = null;
         block.hash = getHash();
+        return block;
     }
 
     /**
@@ -823,6 +807,7 @@ public class Block extends Message {
         return prevBlockHash;
     }
 
+    @VisibleForTesting
     void setPrevBlockHash(Sha256Hash prevBlockHash) {
         unCacheHeader();
         this.prevBlockHash = prevBlockHash;
@@ -844,6 +829,7 @@ public class Block extends Message {
         return new Date(getTimeSeconds()*1000);
     }
 
+    @VisibleForTesting
     public void setTime(long time) {
         unCacheHeader();
         this.time = time;
@@ -863,7 +849,11 @@ public class Block extends Message {
         return difficultyTarget;
     }
 
-    /** Sets the difficulty target in compact form. */
+    /**
+     * Sets the difficulty target in compact form.
+     * @param compactForm difficulty target
+     */
+    @VisibleForTesting
     public void setDifficultyTarget(long compactForm) {
         unCacheHeader();
         this.difficultyTarget = compactForm;
@@ -879,6 +869,7 @@ public class Block extends Message {
     }
 
     /** Sets the nonce and clears any cached data. */
+    @VisibleForTesting
     public void setNonce(long nonce) {
         unCacheHeader();
         this.nonce = nonce;
@@ -951,8 +942,7 @@ public class Block extends Message {
                           @Nullable TransactionOutPoint prevOut, final long time,
                           final byte[] pubKey, final Coin coinbaseValue,
                           final int height) {
-        Block b = new Block(params, version);
-        b.setDifficultyTarget(difficultyTarget);
+        Block b = new Block(params, version, difficultyTarget, time);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
@@ -980,8 +970,6 @@ public class Block extends Message {
         // Don't let timestamp go backwards
         if (getTimeSeconds() >= time)
             b.setTime(getTimeSeconds() + 1);
-        else
-            b.setTime(time);
         b.solve();
         try {
             b.verifyHeader();

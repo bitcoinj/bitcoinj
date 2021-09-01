@@ -102,12 +102,31 @@ public abstract class NetworkParameters {
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected volatile transient MessageSerializer defaultSerializer = null;
 
-    protected NetworkParameters() {
-        genesisBlock = createGenesis(this);
+    private NetworkParameters(BigInteger maxTarget, long difficultyTarget,  long genesisTime) {
+        this.maxTarget = maxTarget;
+        genesisBlock = createGenesis(this, difficultyTarget, genesisTime);
     }
 
-    private static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS);
+    protected NetworkParameters(BigInteger maxTarget, long difficultyTarget, long genesisTime, long genesisNonce) {
+        this(maxTarget, difficultyTarget, genesisTime);
+        genesisBlock.setNonce(genesisNonce);
+    }
+
+    /**
+     * This constructor is for NetworkParameters for unit testing
+     */
+    protected NetworkParameters(BigInteger maxTarget, long difficultyTarget) {
+        this(maxTarget, difficultyTarget, Utils.currentTimeSeconds());
+        genesisBlock.solve();
+    }
+
+    private static Block createGenesis(NetworkParameters n, long difficultyTarget, long genesisTime) {
+        Block genesisBlock = new Block(n, Block.BLOCK_VERSION_GENESIS, difficultyTarget, genesisTime);
+        genesisBlock.addTransaction(createGenesisTransaction(n));
+        return genesisBlock;
+    }
+
+    private static Transaction createGenesisTransaction(NetworkParameters n) {
         Transaction t = new Transaction(n);
         try {
             // A script containing the difficulty bits and the following message:
@@ -125,8 +144,7 @@ public abstract class NetworkParameters {
             // Cannot happen.
             throw new RuntimeException(e);
         }
-        genesisBlock.addTransaction(t);
-        return genesisBlock;
+        return t;
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.

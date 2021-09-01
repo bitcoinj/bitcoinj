@@ -28,18 +28,19 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class RegTestParams extends AbstractBitcoinNetParams {
     private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    private static final long DIFFICULTY_TARGET = 0x1d07fff8L;
+    private static final long GENESIS_TIME = 1296688602L;
+    private static final long GENESIS_NONCE = 384568319;
 
     public RegTestParams() {
-        super();
+        super(MAX_TARGET, DIFFICULTY_TARGET, GENESIS_TIME, GENESIS_NONCE);
+        id = ID_REGTEST;
         packetMagic = 0xfabfb5daL;
         addressHeader = 111;
         p2shHeader = 196;
         targetTimespan = TARGET_TIMESPAN;
         dumpedPrivateKeyHeader = 239;
         segwitAddressHrp = "bcrt";
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d07fff8L);
-        genesisBlock.setNonce(384568319);
         spendableCoinbaseDepth = 100;
         String genesisHash = genesisBlock.getHashAsString();
         checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
@@ -54,10 +55,8 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
         // changes.
         interval = Integer.MAX_VALUE;
-        maxTarget = MAX_TARGET;
         subsidyDecreaseBlockCount = 150;
         port = 18444;
-        id = ID_REGTEST;
 
         majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;

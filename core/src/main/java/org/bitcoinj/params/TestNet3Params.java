@@ -41,21 +41,21 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
+    private static final long DIFFICULTY_TARGET = 0x1d00ffffL;
+    private static final BigInteger MAX_TARGET = Utils.decodeCompactBits(DIFFICULTY_TARGET);
+    private static final long GENESIS_TIME = 1296688602L;
+    private static final long GENESIS_NONCE = 414098458;
 
     public TestNet3Params() {
-        super();
+        super(MAX_TARGET, DIFFICULTY_TARGET, GENESIS_TIME, GENESIS_NONCE);
         id = ID_TESTNET;
         packetMagic = 0x0b110907;
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
         port = 18333;
         addressHeader = 111;
         p2shHeader = 196;
         dumpedPrivateKeyHeader = 239;
         segwitAddressHrp = "tb";
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setNonce(414098458);
         spendableCoinbaseDepth = 100;
         String genesisHash = genesisBlock.getHashAsString();
         checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
