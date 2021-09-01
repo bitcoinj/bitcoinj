@@ -445,12 +445,6 @@ public class Block extends Message {
     /** Returns a copy of the block, but without any transactions. */
     public Block cloneAsHeader() {
         Block block = new Block(params, BLOCK_VERSION_GENESIS);
-        copyBitcoinHeaderTo(block);
-        return block;
-    }
-
-    /** Copy the block without transactions into the provided empty block. */
-    protected final void copyBitcoinHeaderTo(final Block block) {
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
@@ -459,6 +453,7 @@ public class Block extends Message {
         block.difficultyTarget = difficultyTarget;
         block.transactions = null;
         block.hash = getHash();
+        return block;
     }
 
     /**
