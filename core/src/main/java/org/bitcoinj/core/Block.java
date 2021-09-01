@@ -928,7 +928,7 @@ public class Block extends Message {
         adjustLength(transactions.size(), coinbase.length);
     }
 
-    static final byte[] EMPTY_BYTES = new byte[32];
+    private static final byte[] EMPTY_BYTES = new byte[32];
 
     // It's pretty weak to have this around at runtime: fix later.
     private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
