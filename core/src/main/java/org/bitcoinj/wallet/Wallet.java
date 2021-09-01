@@ -1893,6 +1893,7 @@ public class Wallet extends BaseTaggableObject
                 // two wallets depend on the same transaction.
                 Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
                 cloneTx.setPurpose(tx.getPurpose());
+                cloneTx.setUpdateTime(tx.getUpdateTime());
 
                 riskDropped.put(cloneTx.getTxId(), cloneTx);
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
@@ -1911,6 +1912,7 @@ public class Wallet extends BaseTaggableObject
             // two wallets depend on the same transaction.
             Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
             cloneTx.setPurpose(tx.getPurpose());
+            cloneTx.setUpdateTime(tx.getUpdateTime());
 
             // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
             // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
