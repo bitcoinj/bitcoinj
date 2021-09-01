@@ -3770,5 +3770,15 @@ public class WalletTest extends TestWithWallet {
 
         assertTrue(wallet1.isConsistent());
         assertTrue(wallet2.isConsistent());
+
+        Transaction txW1 = wallet1.getTransaction(tx1.getTxId());
+        Transaction txW2 = wallet2.getTransaction(tx1.getTxId());
+
+        assertEquals(txW1, tx1);
+        assertNotSame(txW1, tx1);
+        assertEquals(txW2, tx1);
+        assertNotSame(txW2, tx1);
+        assertEquals(txW1, txW2);
+        assertNotSame(txW1, txW2);
     }
 }
