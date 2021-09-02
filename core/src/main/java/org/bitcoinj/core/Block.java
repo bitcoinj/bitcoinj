@@ -264,6 +264,12 @@ public class Block extends Message {
 
     static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
+        Transaction t = createGenesisTransaction(n);
+        genesisBlock.addTransaction(t);
+        return genesisBlock;
+    }
+
+    private static Transaction createGenesisTransaction(NetworkParameters n) {
         Transaction t = new Transaction(n);
         try {
             // A script containing the difficulty bits and the following message:
@@ -277,12 +283,11 @@ public class Block extends Message {
                     ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
             scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
             t.addOutput(new TransactionOutput(n, t, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
-        } catch (Exception e) {
+        } catch (IOException e) {
             // Cannot happen.
             throw new RuntimeException(e);
         }
-        genesisBlock.addTransaction(t);
-        return genesisBlock;
+        return t;
     }
 
     public int getOptimalEncodingMessageSize() {
