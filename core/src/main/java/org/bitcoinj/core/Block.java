@@ -127,15 +127,6 @@ public class Block extends Message {
     }
 
     /**
-     * Constructs a block object from the Bitcoin wire format.
-     * @deprecated Use {@link BitcoinSerializer#makeBlock(byte[])} instead.
-     */
-    @Deprecated
-    public Block(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0, params.getDefaultSerializer(), payloadBytes.length);
-    }
-
-    /**
      * Construct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
      * @param payloadBytes the payload to extract the block from.
