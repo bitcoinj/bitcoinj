@@ -22,28 +22,29 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
 /**
- * <p>
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
- * </p>
- * 
  * <p>
  * Use {@link #fromString(NetworkParameters, String)} to conveniently construct any kind of address from its textual
  * form.
- * </p>
  */
 public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
-    public Address(NetworkParameters params, byte[] bytes) {
+
+    /**
+     * Construct an address from its binary form.
+     *
+     * @param params the network this address is valid for
+     * @param bytes the binary address data
+     */
+    protected Address(NetworkParameters params, byte[] bytes) {
         super(params, bytes);
     }
 
     /**
      * Construct an address from its textual form.
      * 
-     * @param params
-     *            the expected network this address is valid for, or null if the network should be derived from the
-     *            textual form
-     * @param str
-     *            the textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL" or
+     * @param params the expected network this address is valid for, or null if the network should be derived from the
+     *               textual form
+     * @param str the textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL" or
      *            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
      * @return constructed address
      * @throws AddressFormatException
