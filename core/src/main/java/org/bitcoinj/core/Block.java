@@ -466,17 +466,19 @@ public class Block extends Message {
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
     }
 
-    /** Returns a copy of the block, but without any transactions. */
+    /**
+     * Returns a copy of the block, but without any transactions.
+     * @return new, header-only {@code Block}
+     */
     public Block cloneAsHeader() {
-        Block block = new Block(params, BLOCK_VERSION_GENESIS);
+        Block block = new Block(params, version);
+        block.difficultyTarget = difficultyTarget;
+        block.time = time;
         block.nonce = nonce;
         block.prevBlockHash = prevBlockHash;
         block.merkleRoot = getMerkleRoot();
-        block.version = version;
-        block.time = time;
-        block.difficultyTarget = difficultyTarget;
-        block.transactions = null;
         block.hash = getHash();
+        block.transactions = null;
         return block;
     }
 
