@@ -73,7 +73,6 @@ public class BlockTest {
         block700000.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
     }
     
-    @SuppressWarnings("deprecation")
     @Test
     public void testDate() throws Exception {
         assertEquals("2016-02-13T22:59:39Z", Utils.dateTimeFormat(block700000.getTime()));
