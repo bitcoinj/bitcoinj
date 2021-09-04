@@ -45,10 +45,16 @@ public class Secp256k1Context {
         context = contextRef;
     }
 
+    /**
+     * @return true if enabled
+     */
     public static boolean isEnabled() {
         return enabled;
     }
 
+    /**
+     * @return context reference
+     */
     public static long getContext() {
         if (!enabled)
             return -1; // sanity check
