@@ -41,9 +41,9 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         interval = Integer.MAX_VALUE;
         subsidyDecreaseBlockCount = 150;
 
-        genesisBlock.setDifficultyTarget(0x1d07fff8L);
+        genesisBlock.setDifficultyTarget(0x207fFFFFL);
         genesisBlock.setTime(1296688602L);
-        genesisBlock.setNonce(384568319);
+        genesisBlock.setNonce(2);
         
         port = 18444;
         packetMagic = 0xfabfb5daL;
@@ -62,7 +62,7 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         majorityWindow = MainNetParams.MAINNET_MAJORITY_WINDOW;
 
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
+        checkState(genesisHash.equals("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
 
         dnsSeeds = null;
         addrSeeds = null;
@@ -71,22 +71,6 @@ public class RegTestParams extends AbstractBitcoinNetParams {
     @Override
     public boolean allowEmptyPeerChain() {
         return true;
-    }
-
-    private static Block genesis;
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (RegTestParams.class) {
-            if (genesis == null) {
-                genesis = super.getGenesisBlock();
-                genesis.setNonce(2);
-                genesis.setDifficultyTarget(0x207fFFFFL);
-                genesis.setTime(1296688602L);
-                checkState(genesis.getHashAsString().toLowerCase().equals("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-            }
-            return genesis;
-        }
     }
 
     private static RegTestParams instance;
