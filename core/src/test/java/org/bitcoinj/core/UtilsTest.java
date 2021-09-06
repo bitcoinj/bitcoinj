@@ -40,6 +40,12 @@ public class UtilsTest {
         assertEquals(new BigInteger("c0de000000", 16), Utils.decodeCompactBits(0x0600c0de));
         assertEquals(0x05123456L, Utils.encodeCompactBits(new BigInteger("1234560000", 16)));
         assertEquals(0x0600c0deL, Utils.encodeCompactBits(new BigInteger("c0de000000", 16)));
+        // UnitTest difficulty
+        assertEquals(new BigInteger("7fffff0000000000000000000000000000000000000000000000000000000000", 16), Utils.decodeCompactBits(0x207fFFFFL));
+        assertEquals(0x207fFFFFL, Utils.encodeCompactBits(new BigInteger("7fffff0000000000000000000000000000000000000000000000000000000000", 16)));
+        // MainNet starting difficulty
+        assertEquals(new BigInteger("00000000FFFF0000000000000000000000000000000000000000000000000000", 16), Utils.decodeCompactBits(0x1d00ffffL));
+        assertEquals(0x1d00ffffL, Utils.encodeCompactBits(new BigInteger("00000000FFFF0000000000000000000000000000000000000000000000000000", 16)));
     }
 
     @Test
