@@ -37,7 +37,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
     private static final long GENESIS_TIME = 1231006505;
     private static final long GENESIS_NONCE = 2083236893;
-    public static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
     public MainNetParams() {
         super();
@@ -45,11 +45,6 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = Utils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
-
-        genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
-        genesisBlock.setTime(GENESIS_TIME);
-        genesisBlock.setNonce(GENESIS_NONCE);
-        checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
 
         port = 8333;
         packetMagic = 0xf9beb4d9L;
@@ -147,6 +142,20 @@ public class MainNetParams extends AbstractBitcoinNetParams {
             instance = new MainNetParams();
         }
         return instance;
+    }
+
+    @Override
+    public Block getGenesisBlock() {
+        synchronized (GENESIS_HASH) {
+            if (genesisBlock == null) {
+                genesisBlock = Block.createGenesis(this);
+                genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+                genesisBlock.setTime(GENESIS_TIME);
+                genesisBlock.setNonce(GENESIS_NONCE);
+                checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+            }
+        }
+        return genesisBlock;
     }
 
     @Override

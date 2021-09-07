@@ -54,6 +54,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
 
+    /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
+    protected Block genesisBlock;
+
     public AbstractBitcoinNetParams() {
         super();
         interval = INTERVAL;

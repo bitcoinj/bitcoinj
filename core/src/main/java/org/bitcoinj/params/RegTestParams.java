@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class RegTestParams extends AbstractBitcoinNetParams {
     private static final long GENESIS_TIME = 1296688602;
     private static final long GENESIS_NONCE = 2;
-    public static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
+    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
 
     public RegTestParams() {
         super();
@@ -42,11 +42,6 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         // changes.
         interval = Integer.MAX_VALUE;
         subsidyDecreaseBlockCount = 150;
-
-        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        genesisBlock.setTime(GENESIS_TIME);
-        genesisBlock.setNonce(GENESIS_NONCE);
-        checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
 
         port = 18444;
         packetMagic = 0xfabfb5daL;
@@ -79,6 +74,20 @@ public class RegTestParams extends AbstractBitcoinNetParams {
             instance = new RegTestParams();
         }
         return instance;
+    }
+
+    @Override
+    public Block getGenesisBlock() {
+        synchronized (GENESIS_HASH) {
+            if (genesisBlock == null) {
+                genesisBlock = Block.createGenesis(this);
+                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+                genesisBlock.setTime(GENESIS_TIME);
+                genesisBlock.setNonce(GENESIS_NONCE);
+                checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+            }
+        }
+        return genesisBlock;
     }
 
     @Override
