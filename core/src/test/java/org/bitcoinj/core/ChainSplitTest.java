@@ -526,7 +526,7 @@ public class ChainSplitTest {
 
         // Receive some money to the wallet.
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, coinsTo);
-        final Block b1 = FakeTxBuilder.makeSolvedTestBlock(UNITTEST.genesisBlock, t1);
+        final Block b1 = FakeTxBuilder.makeSolvedTestBlock(UNITTEST.getGenesisBlock(), t1);
         chain.add(b1);
 
         // Send a couple of payments one after the other (so the second depends on the change output of the first).
