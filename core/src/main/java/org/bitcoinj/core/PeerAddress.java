@@ -55,6 +55,7 @@ public class PeerAddress extends ChildMessage {
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
+    static final int MESSAGE_SIZE = 30;
 
     /**
      * Construct a peer address from a serialized payload.
@@ -109,6 +110,33 @@ public class PeerAddress extends ChildMessage {
      */
     public PeerAddress(NetworkParameters params, InetSocketAddress addr) {
         this(params, addr.getAddress(), addr.getPort());
+    }
+
+    /**
+     * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
+     * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
+     * Protocol version is the default for Bitcoin.
+     */
+    public PeerAddress(InetSocketAddress addr) {
+        InetAddress inetAddress = addr.getAddress();
+        if(inetAddress != null) {
+            this.addr = inetAddress;
+        } else {
+            this.hostname = checkNotNull(addr.getHostString());
+        }
+        this.port = addr.getPort();
+        this.services = BigInteger.ZERO;
+        length = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion() > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
+    }
+
+    /**
+     * Constructs a peer address from a stringified hostname+port.
+     * Protocol version is the default for Bitcoin.
+     */
+    public PeerAddress(String hostname, int port) {
+        this.hostname = hostname;
+        this.port = port;
+        this.services = BigInteger.ZERO;
     }
 
     /**
