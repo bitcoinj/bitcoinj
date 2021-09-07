@@ -256,7 +256,7 @@ public class Block extends Message {
         length = cursor - offset;
     }
 
-    static Block createGenesis(NetworkParameters n) {
+    public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
         Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
         genesisBlock.addTransaction(t);

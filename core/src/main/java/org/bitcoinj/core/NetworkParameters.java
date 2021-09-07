@@ -60,7 +60,6 @@ public abstract class NetworkParameters {
 
     // TODO: Seed nodes should be here as well.
 
-    protected final Block genesisBlock;
     protected BigInteger maxTarget;
     protected int port;
     protected long packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
@@ -99,7 +98,6 @@ public abstract class NetworkParameters {
     protected volatile transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
-        genesisBlock = Block.createGenesis(this);
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
@@ -233,9 +231,7 @@ public abstract class NetworkParameters {
      * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
      * bailout for banks"</i>.</p>
      */
-    public Block getGenesisBlock() {
-        return genesisBlock;
-    }
+    public abstract Block getGenesisBlock();
 
     /** Default TCP port on which to connect to nodes. */
     public int getPort() {

@@ -38,10 +38,6 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 
-        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-        genesisBlock.setTime(Utils.currentTimeSeconds());
-        genesisBlock.solve();
-        
         port = 18333;
         packetMagic = 0x0b110907;
         dumpedPrivateKeyHeader = 239;
@@ -68,6 +64,19 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
             instance = new UnitTestParams();
         }
         return instance;
+    }
+
+    @Override
+    public Block getGenesisBlock() {
+        synchronized (this) {
+            if (genesisBlock == null) {
+                genesisBlock = Block.createGenesis(this);
+                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+                genesisBlock.setTime(Utils.currentTimeSeconds());
+                genesisBlock.solve();
+            }
+        }
+        return genesisBlock;
     }
 
     @Override
