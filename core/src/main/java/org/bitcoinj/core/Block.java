@@ -75,6 +75,9 @@ public class Block extends Message {
      */
     public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
 
+    /** Standard maximum value for difficultyTarget (nBits) (Bitcoin MainNet and TestNet) */
+    public static final long STANDARD_MAX_DIFFICULTY_TARGET = 0x1d00ffffL;
+
     /** A value for difficultyTarget (nBits) that allows (slightly less than) half of all possible hash solutions. Used in unit testing. */
     public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
 
