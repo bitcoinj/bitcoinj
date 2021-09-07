@@ -24,6 +24,7 @@ import java.util.Date;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
@@ -41,6 +42,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
+    public static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
 
     public TestNet3Params() {
         super();
@@ -52,7 +54,8 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         genesisBlock.setDifficultyTarget(0x1d00ffffL);
         genesisBlock.setTime(1296688602L);
         genesisBlock.setNonce(414098458);
-        
+        checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+
         port = 18333;
         packetMagic = 0x0b110907;
         dumpedPrivateKeyHeader = 239;
@@ -68,9 +71,6 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = TESTNET_MAJORITY_WINDOW;
-
-        String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
 
         dnsSeeds = new String[] {
                 "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
