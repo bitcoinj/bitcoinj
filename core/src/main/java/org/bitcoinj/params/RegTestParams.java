@@ -18,6 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Sha256Hash;
 
 import java.math.BigInteger;
 
@@ -28,6 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class RegTestParams extends AbstractBitcoinNetParams {
     private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    public static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
 
     public RegTestParams() {
         super();
@@ -44,7 +46,8 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         genesisBlock.setDifficultyTarget(0x207fFFFFL);
         genesisBlock.setTime(1296688602L);
         genesisBlock.setNonce(2);
-        
+        checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+
         port = 18444;
         packetMagic = 0xfabfb5daL;
         dumpedPrivateKeyHeader = 239;
@@ -60,9 +63,6 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = MainNetParams.MAINNET_MAJORITY_WINDOW;
-
-        String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
 
         dnsSeeds = null;
         addrSeeds = null;
