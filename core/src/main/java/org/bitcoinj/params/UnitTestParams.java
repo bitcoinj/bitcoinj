@@ -20,8 +20,6 @@ package org.bitcoinj.params;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
 
-import java.math.BigInteger;
-
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link Block#solve()} by setting difficulty to the easiest possible.
@@ -36,7 +34,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         id = ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
-        maxTarget = new BigInteger("007fffff0000000000000000000000000000000000000000000000000000000000", 16);  // equivalent to EASIEST_DIFFICULTY_TARGET
+        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 

@@ -19,8 +19,7 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Sha256Hash;
-
-import java.math.BigInteger;
+import org.bitcoinj.core.Utils;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,7 +27,8 @@ import static com.google.common.base.Preconditions.checkState;
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
 public class RegTestParams extends AbstractBitcoinNetParams {
-    private static final BigInteger MAX_TARGET = new BigInteger("7fffff0000000000000000000000000000000000000000000000000000000000", 16); // equivalent to EASIEST_DIFFICULTY_TARGET
+    private static final long GENESIS_TIME = 1296688602;
+    private static final long GENESIS_NONCE = 2;
     public static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
 
     public RegTestParams() {
@@ -36,16 +36,16 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         id = ID_REGTEST;
         
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = MAX_TARGET;
+        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         // Difficulty adjustments are disabled for regtest.
         // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
         // changes.
         interval = Integer.MAX_VALUE;
         subsidyDecreaseBlockCount = 150;
 
-        genesisBlock.setDifficultyTarget(0x207fFFFFL);
-        genesisBlock.setTime(1296688602L);
-        genesisBlock.setNonce(2);
+        genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        genesisBlock.setTime(GENESIS_TIME);
+        genesisBlock.setNonce(GENESIS_NONCE);
         checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
 
         port = 18444;
