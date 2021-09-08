@@ -55,6 +55,7 @@ public class PeerAddress extends ChildMessage {
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
+    private static final byte[] ONIONCAT_PREFIX_V2 = Utils.HEX.decode("fd87d87eeb44");
     static final int MESSAGE_SIZE = 30;
 
     /**
@@ -64,7 +65,7 @@ public class PeerAddress extends ChildMessage {
      * @param payload    Bitcoin protocol formatted byte array containing message content.
      * @param offset     The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
-     * @throws ProtocolException
+     * @throws ProtocolException if address format is incorrect
      */
     public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
         super(params, payload, offset, parent, serializer, UNKNOWN_LENGTH);
@@ -109,7 +110,16 @@ public class PeerAddress extends ChildMessage {
      * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
      */
     public PeerAddress(NetworkParameters params, InetSocketAddress addr) {
-        this(params, addr.getAddress(), addr.getPort());
+        super(params);
+        InetAddress inetAddress = addr.getAddress();
+        if (inetAddress != null) {
+            this.addr = inetAddress;
+        } else {
+            this.hostname = checkNotNull(addr.getHostString());
+        }
+        this.port = addr.getPort();
+        this.services = BigInteger.ZERO;
+        length = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion() > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
     /**
@@ -119,7 +129,7 @@ public class PeerAddress extends ChildMessage {
      */
     public PeerAddress(InetSocketAddress addr) {
         InetAddress inetAddress = addr.getAddress();
-        if(inetAddress != null) {
+        if (inetAddress != null) {
             this.addr = inetAddress;
         } else {
             this.hostname = checkNotNull(addr.getHostString());
@@ -185,7 +195,7 @@ public class PeerAddress extends ChildMessage {
                 } else {
                     throw new IllegalStateException();
                 }
-            } else if (addr == null && hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
+            } else if (hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
                 byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
                 if (onionAddress.length == 10) {
                     // TORv2
@@ -230,6 +240,29 @@ public class PeerAddress extends ChildMessage {
                     // TORv2
                     stream.write(ONIONCAT_PREFIX);
                     stream.write(onionAddress);
+                } else if (onionAddress.length == 32 + 2 + 1) {
+                    /*
+                    TORv3 onion address
+
+                    The onion address of a hidden service includes its identity public key, a
+                    version field and a basic checksum. All this information is then base32
+                    encoded as shown below:
+
+                    onion_address = base32(PUBKEY | CHECKSUM | VERSION) + ".onion"
+                    CHECKSUM = H(".onion checksum" | PUBKEY | VERSION)[:2]
+
+                    where:
+                    - PUBKEY is the 32 bytes ed25519 master pubkey of the hidden service.
+                    - VERSION is a one byte version field (default value '\x03')
+                        - ".onion checksum" is a constant string
+                        - CHECKSUM is truncated to two bytes before inserting it in onion_address
+
+                    The ONIONCAT_PREFIX_V2 is set to be able to associate the address accessed from the stream with the
+                    correct protocol version.
+                    TODO: No idea why exactly ONIONCAT_PREFIX was used to detect v1 addresses.
+                    */
+                    stream.write(ONIONCAT_PREFIX_V2);
+                    stream.write(Arrays.copyOfRange(onionAddress, 0, 32));
                 } else {
                     throw new IllegalStateException();
                 }
@@ -285,12 +318,7 @@ public class PeerAddress extends ChildMessage {
                 // TORv3
                 if (addrLen != 32)
                     throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
-                byte torVersion = 0x03;
-                byte[] onionAddress = new byte[35];
-                System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
-                System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
-                onionAddress[34] = torVersion;
-                hostname = BASE32.encode(onionAddress) + ".onion";
+                setTorVersion3AddressAsHostname(addrBytes);
                 addr = null;
             } else {
                 // ignore unknown network IDs
@@ -300,19 +328,41 @@ public class PeerAddress extends ChildMessage {
         } else {
             services = readUint64();
             length += 8;
-            byte[] addrBytes = readBytes(16);
-            length += 16;
-            if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
-                byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
-                hostname = BASE32.encode(onionAddress) + ".onion";
+            byte[] addrBytesPrefix = readBytes(6);
+            length += 6;
+            if (Arrays.equals(ONIONCAT_PREFIX, addrBytesPrefix)) {
+                byte[] addrBytes = readBytes(10);
+                length += 10;
+                hostname = BASE32.encode(addrBytes) + ".onion";
+            } else if (Arrays.equals(ONIONCAT_PREFIX_V2, addrBytesPrefix)) {
+                byte[] addrBytes = readBytes(32);
+                length += 32;
+
+                setTorVersion3AddressAsHostname(addrBytes);
             } else {
-                addr = getByAddress(addrBytes);
+                byte[] addrBytes = readBytes(10);
+                length += 10;
+
+                byte[] address = new byte[addrBytesPrefix.length + addrBytes.length];
+                System.arraycopy(addrBytesPrefix, 0, address, 0, addrBytesPrefix.length);
+                System.arraycopy(addrBytes, 0, address, addrBytesPrefix.length, addrBytes.length);
+                addr = getByAddress(address);
                 hostname = null;
             }
         }
         port = Utils.readUint16BE(payload, cursor);
         cursor += 2;
         length += 2;
+    }
+
+    private void setTorVersion3AddressAsHostname(byte[] addrBytes) {
+        byte torVersion = 0x03;
+        byte[] onionAddress = new byte[32 + 2 + 1];
+        System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
+        System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
+        onionAddress[34] = torVersion;
+
+        hostname = BASE32.encode(onionAddress) + ".onion";
     }
 
     private static InetAddress getByAddress(byte[] addrBytes) {
@@ -376,9 +426,9 @@ public class PeerAddress extends ChildMessage {
 
         if (port != that.port) return false;
         if (time != that.time) return false;
-        if (addr != null ? !addr.equals(that.addr) : that.addr != null) return false;
-        if (hostname != null ? !hostname.equals(that.hostname) : that.hostname != null) return false;
-        return !(services != null ? !services.equals(that.services) : that.services != null);
+        if (!Objects.equals(addr, that.addr)) return false;
+        if (!Objects.equals(hostname, that.hostname)) return false;
+        return Objects.equals(services, that.services);
     }
 
     public boolean equalsIgnoringMetadata(Object o) {
