@@ -22,13 +22,13 @@ To get started, it is best to have the latest JDK and Gradle installed. The HEAD
 
 #### Building from the command line
 
-Official builds are currently using with JDK 8, even though the `core` module is compatible with JDK 7 and later.
+Official builds are currently using JDK 11. Our GitHub Actions build and test with JDK 11 and JDK 17.
 
-To perform a full build (*including* JavaDocs and unit/integration *tests*) use JDK 8+
+To perform a full build (*including* JavaDocs and unit/integration *tests*) use JDK 11+.
 ```
 gradle clean build
 ```
-If you are running JDK 11 or later and Gradle 4.10 or later, the build will automatically include the JavaFX-based `wallettemplate` module. The outputs are under the `build` directory.
+If you are using Gradle 4.10 or later, the build will automatically include the JavaFX-based `wallettemplate` module. The outputs are under the `build` directory.
 
 To perform a full build *without* unit/integration *tests* use:
 ```

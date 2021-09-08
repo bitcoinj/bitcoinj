@@ -17,9 +17,13 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 1.11
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '11'])
+}
 
 mainClassName = 'wallettemplate.Main'

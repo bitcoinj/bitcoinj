@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 plugins {
     id 'java-library'
     id 'com.google.protobuf'
@@ -25,11 +27,15 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.8
+sourceCompatibility = 8
+targetCompatibility = 8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '8'])
+}
 
 protobuf {
     protoc {

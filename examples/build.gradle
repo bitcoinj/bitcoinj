@@ -10,7 +10,11 @@ dependencies {
     implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
 }
 
-sourceCompatibility = 1.8
+sourceCompatibility = 8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '8'])
+}
