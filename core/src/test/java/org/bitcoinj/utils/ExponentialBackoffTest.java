@@ -31,7 +31,7 @@ public class ExponentialBackoffTest {
 
     @Before
     public void setUp() {
-        Utils.setMockClock(Utils.currentTimeSeconds());
+        Utils.setMockClock();
         params = new ExponentialBackoff.Params();
         backoff = new ExponentialBackoff(params);
     }

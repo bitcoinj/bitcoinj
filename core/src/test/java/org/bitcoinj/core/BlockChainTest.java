@@ -158,7 +158,7 @@ public class BlockChainTest {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
         Block prev = UNITTEST.getGenesisBlock();
-        Utils.setMockClock(Utils.currentTimeSeconds());
+        Utils.setMockClock();
         for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), height);
             assertTrue(chain.add(newBlock));
