@@ -237,5 +237,6 @@ public class UtilsTest {
     public void testRollMockClock() {
         Utils.setMockClock(25200);
         assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), Utils.rollMockClock(8));
+        Utils.resetMocking();
     }
 }
