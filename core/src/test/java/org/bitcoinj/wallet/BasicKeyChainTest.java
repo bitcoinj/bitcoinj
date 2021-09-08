@@ -63,8 +63,8 @@ public class BasicKeyChainTest {
 
     @Test
     public void importKeys() {
+        Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
-        Utils.setMockClock(now);
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
