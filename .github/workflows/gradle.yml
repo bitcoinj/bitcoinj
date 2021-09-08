@@ -11,6 +11,12 @@ jobs:
         java: [ '8', '11']
         distribution: ['temurin']
         gradle: ['7.2']
+        include:
+  # Special case to test Zulu JDK 17-ea (17-ea not available on Temurin yet)
+          - os: ubuntu-latest
+            java: '17-ea'
+            distribution: 'zulu'
+            gradle: '7.2'
       fail-fast: false
     name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
     steps:
