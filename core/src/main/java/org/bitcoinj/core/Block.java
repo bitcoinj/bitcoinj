@@ -117,7 +117,8 @@ public class Block extends Message {
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
     protected int optimalEncodingMessageSize;
 
-    /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
+    /** Special case constructor, used for unit tests. */
+    @VisibleForTesting
     Block(NetworkParameters params, long setVersion) {
         super(params);
         // Set up a few basic things. We are not complete after this though.
@@ -138,6 +139,7 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
+    @Deprecated
     public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer, int length)
             throws ProtocolException {
         super(params, payloadBytes, 0, serializer, length);
@@ -171,6 +173,7 @@ public class Block extends Message {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
+    @Deprecated
     public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer, int length)
             throws ProtocolException {
         // TODO: Keep the parent
@@ -190,6 +193,13 @@ public class Block extends Message {
      */
     public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
+        this(params, version, prevBlockHash, merkleRoot, time, difficultyTarget, nonce, transactions, null);
+    }
+
+    // private for now, but maybe we'll make public later - full non-deserializing constructor
+    // this one can copy a hash to avoid recomputing
+    private Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+                 long difficultyTarget, long nonce, List<Transaction> transactions, Sha256Hash hash) {
         super(params);
         this.version = version;
         this.prevBlockHash = prevBlockHash;
@@ -197,8 +207,22 @@ public class Block extends Message {
         this.time = time;
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
-        this.transactions = new LinkedList<>();
-        this.transactions.addAll(transactions);
+        this.hash = hash;
+        if (transactions != null) {
+            this.transactions = new LinkedList<>();
+            this.transactions.addAll(transactions);
+        }
+    }
+
+    // non-deserializing constructor for Genesis blocks
+    private Block(NetworkParameters params, long version, long time, long difficultyTarget, long nonce, List<Transaction> transactions) {
+        this(params, version, Sha256Hash.ZERO_HASH, null, time, difficultyTarget, nonce, transactions);
+    }
+
+    // non-deserializing constructor for UnitTest Genesis blocks
+    private Block(NetworkParameters params, long version, long time, long difficultyTarget, List<Transaction> transactions) {
+        this(params, version, time, difficultyTarget, 0, transactions);
+        this.solve();
     }
 
     /** @deprecated Use {@link AbstractBitcoinNetParams#getBlockInflation(int)} */
@@ -256,11 +280,15 @@ public class Block extends Message {
         length = cursor - offset;
     }
 
-    public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
+    public static Block createGenesis(NetworkParameters n, long time, long difficultyTarget, long nonce) {
         Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
-        genesisBlock.addTransaction(t);
-        return genesisBlock;
+        return new Block(n, BLOCK_VERSION_GENESIS, time, difficultyTarget, nonce, Collections.singletonList(t));
+    }
+
+    @VisibleForTesting
+    public static Block createGenesisUnitTest(NetworkParameters n) {
+        Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
+        return new Block(n, BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), Block.EASIEST_DIFFICULTY_TARGET, Collections.singletonList(t));
     }
 
     private static Transaction createGenesisTransaction(NetworkParameters n, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
@@ -474,15 +502,8 @@ public class Block extends Message {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(params, version);
-        block.difficultyTarget = difficultyTarget;
-        block.time = time;
-        block.nonce = nonce;
-        block.prevBlockHash = prevBlockHash;
-        block.merkleRoot = getMerkleRoot();
-        block.hash = getHash();
-        block.transactions = null;
-        return block;
+        // Will pass pre-computed hash if it exists, otherwise passes null and hash computation will be done in clone if needed
+        return new Block(params, version, prevBlockHash, getMerkleRoot(), time, difficultyTarget, nonce, null, hash);
     }
 
     /**

@@ -70,10 +70,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public Block getGenesisBlock() {
         synchronized (this) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(this);
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Utils.currentTimeSeconds());
-                genesisBlock.solve();
+                genesisBlock = Block.createGenesisUnitTest(this);
             }
         }
         return genesisBlock;
