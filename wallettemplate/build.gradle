@@ -2,13 +2,15 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'org.openjfx.javafxplugin'           version '0.0.8'
+    id 'org.beryx.jlink'                    version '2.17.7'
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.4.0'
+    implementation 'org.slf4j:slf4j-api:1.7.30'
     implementation 'org.slf4j:slf4j-jdk14:1.7.30'
 }
 
@@ -17,9 +19,30 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 1.11
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = 'wallettemplate.Main'
+mainClassName = "$moduleName/wallettemplate.Main"
+
+jlink {
+    addExtraDependencies("javafx")
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    launcher {
+        name = 'WalletTemplate'
+        jvmArgs = []
+    }
+    mergedModule {
+        requires 'java.logging'
+        requires 'java.desktop'
+
+        requires 'javafx.graphics'
+        requires 'javafx.controls'
+    }
+    jpackage {
+        // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for
+        // where the plugin's jpackage task finds the path to the jpackage tool by default
+        skipInstaller = false
+    }
+}
