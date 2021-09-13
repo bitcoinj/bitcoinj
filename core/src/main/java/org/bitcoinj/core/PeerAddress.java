@@ -54,8 +54,17 @@ public class PeerAddress extends ChildMessage {
     private long time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
+    /*
+        This variable contains the IPv6 prefix, this is fd87d87eeb43 for OnionCat addresses.
+        These addresses are identified by the first few bytes, that are always the same (fd87d87eeb43)
+        and the rest is the v2 onion domain name, that is the domain public key hash.
+     */
     private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
-    private static final byte[] ONIONCAT_PREFIX_V2 = Utils.HEX.decode("fd87d87eeb44");
+    /*
+        We need to provide a prefix of the same length also for Tor v3 onioncat addresses to make it work.
+        TODO: Find out why we actually need to do this.
+     */
+    private static final byte[] TOR_V3_PREFIX = Utils.HEX.decode("00000000");
     static final int MESSAGE_SIZE = 30;
 
     /**
@@ -118,7 +127,9 @@ public class PeerAddress extends ChildMessage {
             this.hostname = checkNotNull(addr.getHostString());
         }
         this.port = addr.getPort();
+        setSerializer(params.getDefaultSerializer().withProtocolVersion(0));
         this.services = BigInteger.ZERO;
+        this.time = Utils.currentTimeSeconds();
         length = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion() > 31402 ? MESSAGE_SIZE : MESSAGE_SIZE - 4;
     }
 
@@ -256,12 +267,8 @@ public class PeerAddress extends ChildMessage {
                     - VERSION is a one byte version field (default value '\x03')
                         - ".onion checksum" is a constant string
                         - CHECKSUM is truncated to two bytes before inserting it in onion_address
-
-                    The ONIONCAT_PREFIX_V2 is set to be able to associate the address accessed from the stream with the
-                    correct protocol version.
-                    TODO: No idea why exactly ONIONCAT_PREFIX was used to detect v1 addresses.
                     */
-                    stream.write(ONIONCAT_PREFIX_V2);
+                    stream.write(TOR_V3_PREFIX);
                     stream.write(Arrays.copyOfRange(onionAddress, 0, 32));
                 } else {
                     throw new IllegalStateException();
@@ -334,11 +341,6 @@ public class PeerAddress extends ChildMessage {
                 byte[] addrBytes = readBytes(10);
                 length += 10;
                 hostname = BASE32.encode(addrBytes) + ".onion";
-            } else if (Arrays.equals(ONIONCAT_PREFIX_V2, addrBytesPrefix)) {
-                byte[] addrBytes = readBytes(32);
-                length += 32;
-
-                setTorVersion3AddressAsHostname(addrBytes);
             } else {
                 byte[] addrBytes = readBytes(10);
                 length += 10;
