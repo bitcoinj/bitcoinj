@@ -19,7 +19,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
+import app.supernaut.fx.FxmlLoaderFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

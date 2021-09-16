@@ -21,8 +21,8 @@ import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.WalletFxApp;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
-import org.consensusj.supernautfx.SupernautFxLauncher;
+import app.supernaut.fx.FxmlLoaderFactory;
+import app.supernaut.fx.FxLauncher;
 
 import javax.inject.Singleton;
 
@@ -39,7 +39,7 @@ public class WalletTemplateApp extends WalletFxApp {
     private static final String mainCssResName = "wallet.css";
 
     public static void main(String[] args) {
-        SupernautFxLauncher.superLaunch(WalletTemplateApp.class, args);
+        FxLauncher.byName("micronaut").launch(args, WalletTemplateApp.class);
     }
 
     WalletTemplateApp(FxmlLoaderFactory loaderFactory) {
@@ -72,7 +72,7 @@ public class WalletTemplateApp extends WalletFxApp {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage)  {
         super.start(primaryStage);
     }
 

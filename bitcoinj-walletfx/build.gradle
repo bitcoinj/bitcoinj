@@ -7,14 +7,14 @@ plugins {
 }
 
 repositories {
-    maven { url 'https://dl.bintray.com/consensusj/maven' }
+    maven { url 'https://gitlab.com/api/v4/projects/26584840/packages/maven' }  // SupernautFX
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
 
-    implementation 'org.consensusj.supernaut:supernautfx:0.0.4'
-    implementation "io.micronaut:micronaut-inject-java:1.2.0"
+    implementation 'app.supernaut:app.supernaut.fx:0.2.0'
+    implementation "io.micronaut:micronaut-inject-java:2.5.13"
 
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
@@ -25,13 +25,13 @@ dependencies {
     
     implementation "javax.inject:javax.inject:1"
     
-    annotationProcessor "io.micronaut:micronaut-inject-java:1.2.0"
+    annotationProcessor "io.micronaut:micronaut-inject-java:2.5.13"
 }
 
 version = '0.16-SNAPSHOT'
 
 javafx {
-    version = 11
+    version = '17.0.0.1'
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
 }
 

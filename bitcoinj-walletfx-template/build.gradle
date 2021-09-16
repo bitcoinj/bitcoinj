@@ -9,7 +9,7 @@ plugins {
 }
 
 repositories {
-    maven { url 'https://dl.bintray.com/consensusj/maven' }
+    maven { url 'https://gitlab.com/api/v4/projects/26584840/packages/maven' }  // SupernautFX
 }
 
 dependencies {
@@ -18,10 +18,13 @@ dependencies {
     }
     implementation project(':bitcoinj-core')
 
-    implementation('org.consensusj.supernaut:supernautfx:0.0.4') {
+    implementation('app.supernaut:app.supernaut.fx:0.2.0') {
         exclude group: 'org.openjfx'
     }
-    implementation "io.micronaut:micronaut-inject-java:1.2.0"
+    implementation('app.supernaut:app.supernaut.fx.micronaut:0.2.0') {
+        exclude group: 'org.openjfx'
+    }
+    implementation "io.micronaut:micronaut-inject-java:2.5.13"
 
     implementation 'com.google.guava:guava:27.1-android'
     implementation 'de.jensd:fontawesomefx:8.0.0'
@@ -38,7 +41,7 @@ dependencies {
 version = '0.16-SNAPSHOT'
 
 javafx {
-    version = 11
+    version = '17.0.0.1'
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml' ]
 }
 
@@ -56,7 +59,7 @@ def appName = 'WalletTemplate'
 
 jlink {
     addExtraDependencies("javafx")
-    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages', '--add-modules', 'app.supernaut.fx.micronaut']
     launcher {
         name = appName
         jvmArgs = []

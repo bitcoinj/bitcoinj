@@ -27,7 +27,7 @@ import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.walletfx.utils.BitcoinUIModel;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
+import app.supernaut.fx.FxmlLoaderFactory;
 import org.bitcoinj.walletfx.controls.NotificationBarPane;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 

@@ -33,8 +33,8 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
-import org.consensusj.supernautfx.FxmlLoaderFactory;
-import org.consensusj.supernautfx.SupernautFxApp;
+import app.supernaut.fx.FxmlLoaderFactory;
+import app.supernaut.fx.FxForegroundApp;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 
@@ -49,7 +49,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 /**
  *  Interface for a Java FX Wallet Application
  */
-public abstract class WalletFxApp implements SupernautFxApp {
+public abstract class WalletFxApp implements FxForegroundApp.FxApplicationCompat {
     private final Script.ScriptType preferredOutputScriptType;
     public static WalletFxApp instance;
     private final FxmlLoaderFactory loaderFactory;
@@ -125,7 +125,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
                 + networkParameters.getPaymentProtocolId();
     }
 
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         try {
             this.primaryStage = primaryStage;
             primaryStage.setTitle(getAppName());
@@ -166,7 +166,7 @@ public abstract class WalletFxApp implements SupernautFxApp {
             bitcoin.startAsync();
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
