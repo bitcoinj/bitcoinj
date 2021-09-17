@@ -65,7 +65,7 @@ import java.util.regex.Pattern;
  *   <li>access to character information that allows for vertical
  *       alignment of tabular columns of formatted values.</ol>
  *
- * <h3>Basic Usage</h3>
+ * <h2>Basic Usage</h2>
  *
  * <p>Basic usage is very simple:</p>
  *
@@ -87,13 +87,13 @@ import java.util.regex.Pattern;
  * Coin all = f.parseObject("M฿ 21");             <strong>// All the money in the world</strong>
  * </pre></blockquote>
  *
- * <h3>Auto-Denomination versus Fixed-Denomination</h3>
+ * <h2>Auto-Denomination versus Fixed-Denomination</h2>
  *
  * <p>There are two provided concrete classes, one that automatically denominates values to
  * be formatted, {@link BtcAutoFormat}, and another that formats any value in units of a
  * fixed, specified denomination, {@link BtcFixedFormat}.</p>
  *
- * <h4>Automatic Denomination</h4>
+ * <h3>Automatic Denomination</h3>
  *
  * <p>Automatic denomination means that the formatter adjusts the denominational units in which a
  * formatted number is expressed based on the monetary value that number represents.  An
@@ -111,7 +111,7 @@ import java.util.regex.Pattern;
  * locale, a value of one bitcoin might be formatted as {@code ฿1.00} where a value
  * exceeding that by one satoshi would be {@code µ฿1,000,000.01}</p>
  *
- * <h4>Fixed Denomination</h4>
+ * <h3>Fixed Denomination</h3>
  * 
  * <p>Fixed denomination means that the same denomination of units is used for every value that is
  * formatted or parsed by a given formatter instance.  A fixed-denomination formatter is
@@ -122,7 +122,7 @@ import java.util.regex.Pattern;
  * {@code 1.0000 BTC}, or one bitcoin, in millibitcoins, one shifts the decimal point
  * three places, that is, to {@code 1000.0 mBTC}.</p>
  *
- * <h3>Construction</h3>
+ * <h2>Construction</h2>
  *
  * <p>There are two ways to obtain an instance of this class:</p>
  *
@@ -136,7 +136,7 @@ import java.util.regex.Pattern;
  * access to some features not available through the factory methods,
  * such as using custom formatting patterns and currency symbols.</p>
  *
- * <h4>Factory Methods</h4>
+ * <h3>Factory Methods</h3>
  *
  * <p>Although formatting and parsing is performed by one of the concrete
  * subclasses, you can obtain formatters using the various static factory
@@ -233,7 +233,7 @@ import java.util.regex.Pattern;
  * fractional quantity of satoshis, and these defaults can be overridden by arguments to the
  * {@code format()} method.  See below for examples.</p>
  *
- * <h4>The {@link Builder} Class</h4>
+ * <h3>The {@link Builder} Class</h3>
  *
  * <p>A new {@link BtcFormat.Builder} instance is returned by the {@link #builder()} method.  Such
  * an object has methods that set the configuration parameters of a {@link BtcFormat}
@@ -264,7 +264,7 @@ import java.util.regex.Pattern;
  *
  * <p>See the documentation of the {@link BtcFormat.Builder} class for details.</p>
  *
- * <h3>Formatting</h3>
+ * <h2>Formatting</h2>
  *
  * <p>You format a Bitcoin monetary value by passing it to the {@link BtcFormat#format(Object)}
  * method.  This argument can be either a {@link Coin}-type object or a
@@ -350,7 +350,7 @@ import java.util.regex.Pattern;
  * BtcFormat(4).code(); <strong>// unnamed denomination has no code; raises exception</strong>
  * </pre></blockquote>
  *
- * <h4>Formatting for Tabular Columns</h4>
+ * <h3>Formatting for Tabular Columns</h3>
  *
  * <p>When displaying tables of monetary values, you can lessen the
  * risk of human misreading-error by vertically aligning the decimal
@@ -396,7 +396,7 @@ import java.util.regex.Pattern;
  * then see the documentation for the {@link NumberFormat} class
  * for an explanation of how to do that.</p>
  *
- * <h3>Parsing</h3>
+ * <h2>Parsing</h2>
  *
  * <p>The {@link #parse(String)} method accepts a {@link String} argument, and returns a
  * {@link Coin}-type value.  The difference in parsing behavior between instances of {@link
@@ -443,9 +443,9 @@ import java.util.regex.Pattern;
  * raise a {@code ParseException}, as will any other detected
  * parsing error.</p>
  *
- *  <h3>Limitations</h3>
+ *  <h2>Limitations</h2>
  *
- *  <h4>Parsing</h4>
+ *  <h3>Parsing</h3>
  *
  * <p>Parsing is performed by an underlying {@link NumberFormat} object. While this
  * delivers the benefit of recognizing locale-specific patterns, some have criticized other
@@ -455,13 +455,13 @@ import java.util.regex.Pattern;
  * input from end-users, then you should consider whether you would benefit from any of the
  * work-arounds mentioned in that article.</p>
  *
- * <h4>Exotic Locales</h4>
+ * <h3>Exotic Locales</h3>
  *
  * <p>This class is not well-tested in locales that use non-ascii
  * character sets, especially those where writing proceeds from
  * right-to-left.  Helpful feedback in that regard is appreciated.</p>
  *
- * <h3>Thread-Safety</h3>
+ * <h2>Thread-Safety</h2>
  *
  * <p>Instances of this class are immutable.</p>
  *
