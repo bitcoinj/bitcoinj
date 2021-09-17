@@ -56,9 +56,45 @@ public class HttpDiscovery implements PeerDiscovery {
         }
     }
 
+    public interface HttpDiscoveryClient {
+        InputStream getPeers(URI uri, long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException;
+    }
+
+    private static class OkHttpDiscoveryClient implements HttpDiscoveryClient {
+        private final OkHttpClient client;
+
+        public OkHttpDiscoveryClient() {
+            this(new OkHttpClient());
+        }
+
+        public OkHttpDiscoveryClient(OkHttpClient okHttpClient) {
+            client = okHttpClient;
+        }
+
+        public InputStream getPeers(URI uri, long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+            HttpUrl.Builder url = HttpUrl.get(uri).newBuilder();
+            if (services != 0)
+                url.addQueryParameter("srvmask", Long.toString(services));
+            Request.Builder request = new Request.Builder();
+            request.url(url.build());
+            request.addHeader("User-Agent", VersionMessage.LIBRARY_SUBVER); // TODO Add main version.
+            log.info("Requesting {} peers from {}", services != 0 ? VersionMessage.toStringServices(services) :
+                    "all", url);
+            Response response = null;
+            try {
+                response = client.newCall(request.build()).execute();
+            } catch (IOException e) {
+                throw new PeerDiscoveryException(e);
+            }
+            if (!response.isSuccessful())
+                throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
+            return response.body().byteStream();
+        }
+    }
+
     private final Details details;
     private final NetworkParameters params;
-    private final OkHttpClient client;
+    private final HttpDiscoveryClient client;
 
     /**
      * Constructs a discovery object that will read data from the given HTTP[S] URI and, if a public key is provided,
@@ -73,31 +109,32 @@ public class HttpDiscovery implements PeerDiscovery {
      * will check the signature using that key.
      */
     public HttpDiscovery(NetworkParameters params, Details details) {
-        this(params, details, new OkHttpClient());
+        this(params, details, new OkHttpDiscoveryClient());
     }
 
-    public HttpDiscovery(NetworkParameters params, Details details,  OkHttpClient client) {
+    public HttpDiscovery(NetworkParameters params, Details details,  HttpDiscoveryClient httpDiscoveryClient) {
         checkArgument(details.uri.getScheme().startsWith("http"));
         this.details = details;
         this.params = params;
-        this.client = client;
+        this.client = httpDiscoveryClient;
+    }
+
+    @Deprecated
+    public HttpDiscovery(NetworkParameters params, Details details,  OkHttpClient okHttpClient) {
+        checkArgument(details.uri.getScheme().startsWith("http"));
+        this.details = details;
+        this.params = params;
+        this.client = new OkHttpDiscoveryClient(okHttpClient);
+    }
+
+    public static HttpDiscoveryClient newDefaultClient() {
+        return new OkHttpDiscoveryClient();
     }
 
     @Override
     public List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         try {
-            HttpUrl.Builder url = HttpUrl.get(details.uri).newBuilder();
-            if (services != 0)
-                url.addQueryParameter("srvmask", Long.toString(services));
-            Request.Builder request = new Request.Builder();
-            request.url(url.build());
-            request.addHeader("User-Agent", VersionMessage.LIBRARY_SUBVER); // TODO Add main version.
-            log.info("Requesting {} peers from {}", services != 0 ? VersionMessage.toStringServices(services) :
-                    "all", url);
-            Response response = client.newCall(request.build()).execute();
-            if (!response.isSuccessful())
-                throw new PeerDiscoveryException("HTTP request failed: " + response.code() + " " + response.message());
-            InputStream stream = response.body().byteStream();
+            InputStream stream = client.getPeers(details.uri, services, timeoutValue, timeoutUnit);
             GZIPInputStream zip = new GZIPInputStream(stream);
             PeerSeedProtos.SignedPeerSeeds proto;
             try {
@@ -107,11 +144,9 @@ public class HttpDiscovery implements PeerDiscovery {
             }
 
             final List<InetSocketAddress> peers = protoToAddrs(proto);
-            log.info("Got {} peers from {}", peers.size(), url);
+            log.info("Got {} peers from {}", peers.size(), details.uri);
             return peers;
-        } catch (PeerDiscoveryException e1) {
-            throw e1;
-        } catch (Exception e) {
+        } catch (IOException | SignatureDecodeException | SignatureException e) {
             throw new PeerDiscoveryException(e);
         }
     }
