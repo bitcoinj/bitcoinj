@@ -32,9 +32,9 @@ import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
-import wallettemplate.utils.BitcoinUIModel;
-import wallettemplate.utils.easing.EasingMode;
-import wallettemplate.utils.easing.ElasticInterpolator;
+import org.bitcoinj.walletfx.utils.BitcoinUIModel;
+import org.bitcoinj.walletfx.utils.easing.EasingMode;
+import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
 import static wallettemplate.Main.bitcoin;
 

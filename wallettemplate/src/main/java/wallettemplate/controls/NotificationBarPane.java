@@ -32,9 +32,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.util.Duration;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.easing.EasingMode;
-import wallettemplate.utils.easing.ElasticInterpolator;
+import org.bitcoinj.walletfx.utils.GuiUtils;
+import org.bitcoinj.walletfx.utils.easing.EasingMode;
+import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
 import javax.annotation.Nullable;
 

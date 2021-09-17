@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.utils;
+package org.bitcoinj.walletfx.utils;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

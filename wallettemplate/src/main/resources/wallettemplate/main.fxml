@@ -49,7 +49,7 @@
         </ColorAdjust>
       </effect>
       <image>
-        <Image url="@bitcoin_logo_plain.png" />
+        <Image url="@../org/bitcoinj/walletfx/images/bitcoin_logo_plain.png" />
       </image>
     </ImageView>
     <ClickableBitcoinAddress fx:id="addressControl" layoutY="45.0" prefHeight="21.0" prefWidth="391.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="195.0" />

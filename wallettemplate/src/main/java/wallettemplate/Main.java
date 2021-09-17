@@ -36,15 +36,15 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import wallettemplate.controls.NotificationBarPane;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.TextFieldValidator;
+import org.bitcoinj.walletfx.utils.GuiUtils;
+import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static wallettemplate.utils.GuiUtils.*;
+import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 public class Main extends Application {
     public static NetworkParameters params = TestNet3Params.get();
