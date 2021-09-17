@@ -1,26 +1,27 @@
-image: ubuntu:bionic
+image: ubuntu:focal
 
 variables:
   GRADLE_VERSION: "4.10.3"
-  JDK14_FILENAME: "openjdk-14-jpackage+1-33_linux-x64_bin.tar.gz"
-  JDK14_URL: "https://download.java.net/java/early_access/jpackage/1/$JDK14_FILENAME"
-  BADASS_JLINK_JPACKAGE_HOME: "$CI_PROJECT_DIR/jdk-14"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  UBUNTU_CODENAME: "focal"
+  JDK_PACKAGE: "adoptopenjdk-16-hotspot"
 
 before_script:
   - echo $BADASS_JLINK_JPACKAGE_HOME
   - echo $GRADLE_OPTS
   - apt-get update
   - apt-get -y upgrade
-  - apt-get -y install openjdk-11-jdk gradle curl rpm fakeroot
-  - curl --silent --show-error -O $JDK14_URL
-  - tar xf $JDK14_FILENAME
-  - $BADASS_JLINK_JPACKAGE_HOME/bin/jpackage --version
+  - DEBIAN_FRONTEND=noninteractive apt-get -y install wget apt-transport-https gnupg curl binutils rpm fakeroot gradle
+  - wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
+  - echo "deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb $UBUNTU_CODENAME main" | tee /etc/apt/sources.list.d/adoptopenjdk.list
+  - apt-get update
+  - apt-get -y install $JDK_PACKAGE
   - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace
 
 build:
   script:
     - java -version
+    - jpackage --version
     - ./gradlew build bitcoinj-walletfx-template:jpackage --stacktrace
   artifacts:
     paths:
