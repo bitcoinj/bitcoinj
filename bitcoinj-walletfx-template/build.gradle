@@ -1,11 +1,11 @@
 plugins {
     id 'java'
-    id 'maven'
+    id 'maven-publish'
     id 'eclipse'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.8'
-    id 'org.beryx.jlink' version '2.14.1'
-    id 'org.javamodularity.moduleplugin'    version "1.5.0"
+    id 'org.javamodularity.moduleplugin'    version "1.8.10"
+    id 'org.openjfx.javafxplugin'           version '0.0.10'
+    id 'org.beryx.jlink'                    version '2.24.2'
 }
 
 repositories {
@@ -30,8 +30,8 @@ dependencies {
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.4.0'
 
-    implementation 'org.slf4j:slf4j-api:1.7.28'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.28'
+    implementation 'org.slf4j:slf4j-api:2.0.0-alpha5'
+    runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.0-alpha5'
 
     implementation "javax.inject:javax.inject:1"
 
@@ -53,30 +53,68 @@ sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-mainClassName = "$moduleName/wallettemplate.WalletTemplateApp"
+application {
+    mainModule = 'wallettemplate'
+    mainClass  = 'wallettemplate.WalletTemplateApp'
+}
 
 def appName = 'WalletTemplate'
 
+ext.os = org.gradle.internal.os.OperatingSystem.current()
+
 jlink {
     addExtraDependencies("javafx")
-    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages', '--add-modules', 'app.supernaut.fx.micronaut']
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages', '--add-modules', 'app.supernaut.fx.micronaut,org.slf4j.jul']
     launcher {
         name = appName
         jvmArgs = []
     }
     mergedModule {
-        requires 'java.logging'
-        requires 'javafx.graphics'
-        requires 'javafx.controls'
-        
-        forceMerge 'org.slf4j'
+        additive = true
+
+        requires 'org.slf4j'
     }
     jpackage {
         // See https://badass-jlink-plugin.beryx.org/releases/latest/#_jpackage for
         // where the plugin's jpackage task finds the path to the jpackage tool by default
         // (Currently you need to manually install a OpenJDK 14 Early Access Build including jpackage)
-        jpackageHome = System.getenv('BADASS_JLINK_JPACKAGE_HOME')
         skipInstaller = false
-        identifier = appName
+
+        // Massage version string to be compatible with jpackage installers
+        // for the current OS platform
+        def appVersionForJpackage = normalizeAppVersion(version)
+
+        imageOptions = ["--verbose", "--app-version", appVersionForJpackage]
+        installerOptions = ["--app-version", appVersionForJpackage]
+
+        if (os.macOsX) {
+            //imageOptions += [ '--resource-dir', "${projectDir}/src/macos/resource-dir" ]
+            imageOptions += [ '--mac-package-identifier', 'app.omnimarketcap' ]
+        } else if (os.windows) {
+            installerOptions += ['--win-dir-chooser', '--win-menu', '--win-shortcut']
+        }
+
+    }
+}
+
+/**
+ * Massage the version string based upon the current OS to be valid
+ * for the installer platforms for that OS. rpmbuild, MSI, and potentially
+ * others have restrictions on valid version strings.
+ *
+ * @param appVersion A typical Gradle version string
+ * @return a version string that should work for the current platform
+ */
+String normalizeAppVersion(final String appVersion) {
+    if (os.linux) {
+        // Replace '-' with '.' for rpmbuild
+        return appVersion.replace('-', '.')
+    } else if (os.windows) {
+        // This is a hack attempt to assure the version conforms to MSI productVersion string rules
+        // See https://docs.microsoft.com/en-us/windows/win32/msi/productversion
+        // For now, we'll just remove '-SNAPSHOT' if present.
+        return appVersion.replaceAll('-SNAPSHOT$', '')
+    } else {
+        return "1.0"
     }
 }

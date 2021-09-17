@@ -1,17 +1,17 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'com.google.protobuf'
-    id 'maven'
+    id 'maven-publish'
     id 'eclipse'
 }
 
 version = '0.16-SNAPSHOT'
 
 dependencies {
-    compile 'org.bouncycastle:bcprov-jdk15on:1.60'
-    implementation 'com.google.guava:guava:27.1-android'
-    compile 'com.google.protobuf:protobuf-java:3.7.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
+    api 'org.bouncycastle:bcprov-jdk15on:1.60'
+    api 'com.google.guava:guava:27.1-android'
+    api 'com.google.protobuf:protobuf-java:3.13.0'
+    api 'com.squareup.okhttp3:okhttp:3.12.3'
     implementation 'org.slf4j:slf4j-api:1.7.28'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
@@ -31,7 +31,7 @@ javadoc.options.encoding = 'UTF-8'
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.6.1'
+        artifact = 'com.google.protobuf:protoc:3.13.0'
     }
     generatedFilesBaseDir = new File(projectDir, '/src') // workaround for '$projectDir/src'
 }

@@ -49,7 +49,7 @@ module org.bitcoinj.walletfx {
     requires org.bouncycastle.provider;
     requires com.google.common;
 
-    requires protobuf.java;
+    requires com.google.protobuf;
     requires com.google.zxing;
     requires fontawesomefx;         // Filename-based automatic module name
 

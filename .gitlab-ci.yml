@@ -16,7 +16,6 @@ before_script:
   - echo "deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb $UBUNTU_CODENAME main" | tee /etc/apt/sources.list.d/adoptopenjdk.list
   - apt-get update
   - apt-get -y install $JDK_PACKAGE
-  - gradle wrapper --gradle-version=$GRADLE_VERSION --stacktrace
 
 build:
   script:

@@ -39,14 +39,13 @@ module wallettemplate {
 
     //requires jsr305;  // This is only needed for IntelliJ because IntelliJ doesn't know about the patch-module command apparently
     requires org.slf4j;
-    requires org.slf4j.jul;
 
     requires org.bitcoinj.core;     // Automatic module
 
     requires org.bouncycastle.provider;
     requires com.google.common;
 
-    requires protobuf.java;
+    requires com.google.protobuf;
     requires com.google.zxing;
     requires fontawesomefx;         // Filename-based automatic module name
     

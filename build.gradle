@@ -1,16 +1,28 @@
+import org.gradle.util.GradleVersion
+
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
+    // If using Gradle 7, use the compatible protobuf plugin, else use the one that works with oldest supported Gradle
+    boolean isGradle7 = GradleVersion.current().compareTo(GradleVersion.version("7.0")) >= 0
+    def gradleProtobufVersion = isGradle7 ? "0.8.11" : "0.8.10"
+    if (isGradle7) {
+        System.err.println "Warning: Using com.google.protobuf:protobuf-gradle-plugin:${gradleProtobufVersion} because ${GradleVersion.current()}"
+    }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.6'
+        classpath "com.google.protobuf:protobuf-gradle-plugin:${gradleProtobufVersion}"
     }
 }
 
 allprojects {
     repositories {
-        jcenter()
+        mavenCentral()
+        maven {
+            url 'https://repo.maven.apache.org/maven2'
+            name 'Maven Central'
+        }
     }
 
     group = 'org.bitcoinj'
