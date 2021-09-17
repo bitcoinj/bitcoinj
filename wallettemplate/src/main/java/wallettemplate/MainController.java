@@ -33,6 +33,7 @@ import javafx.util.Duration;
 import wallettemplate.controls.ClickableBitcoinAddress;
 import wallettemplate.controls.NotificationBarPane;
 import org.bitcoinj.walletfx.utils.BitcoinUIModel;
+import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
@@ -98,6 +99,14 @@ public class MainController {
     public void settingsClicked(ActionEvent event) {
         Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
         screen.controller.initialize(null);
+    }
+
+    public void primaryClicked(ActionEvent event) {
+        GuiUtils.informationalAlert("Unused button #1", "You can hook this up in your app");
+    }
+
+    public void secondaryClicked(ActionEvent event) {
+        GuiUtils.informationalAlert("Unused button #2", "You can hook this up in your app");
     }
 
     public void restoreFromSeedAnimation() {

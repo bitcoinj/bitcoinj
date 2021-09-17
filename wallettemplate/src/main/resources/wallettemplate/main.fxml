@@ -36,8 +36,8 @@
     </HBox>
     <HBox fx:id="controlsBox" alignment="TOP_LEFT" fillHeight="true" layoutX="14.0" layoutY="347.0" minHeight="16.0" prefHeight="36.0" prefWidth="243.0" spacing="10.0" translateY="60.0" visible="true" AnchorPane.bottomAnchor="17.0">
       <children>
-        <Button defaultButton="true" mnemonicParsing="false" styleClass="fat-button" text="Primary" />
-        <Button cancelButton="true" mnemonicParsing="false" styleClass="fat-button" text="Secondary" />
+        <Button onAction="#primaryClicked" defaultButton="true" mnemonicParsing="false" styleClass="fat-button" text="Primary" />
+        <Button onAction="#secondaryClicked" cancelButton="true" mnemonicParsing="false" styleClass="fat-button" text="Secondary" />
       </children>
     </HBox>
     <ImageView fitHeight="243.0" fitWidth="243.0" opacity="0.28" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="-36.0" AnchorPane.rightAnchor="-34.0">
