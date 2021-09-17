@@ -22,7 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
-import wallettemplate.utils.TextFieldValidator;
+import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
 /**
  * Given a text field, some network params and optionally some nodes, will make the text field an angry red colour

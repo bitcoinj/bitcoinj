@@ -31,11 +31,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import org.bouncycastle.crypto.params.KeyParameter;
 import wallettemplate.controls.BitcoinAddressValidator;
-import wallettemplate.utils.TextFieldValidator;
-import wallettemplate.utils.WTUtils;
+import org.bitcoinj.walletfx.utils.TextFieldValidator;
+import org.bitcoinj.walletfx.utils.WTUtils;
 
 import static com.google.common.base.Preconditions.checkState;
-import static wallettemplate.utils.GuiUtils.*;
+import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;
 

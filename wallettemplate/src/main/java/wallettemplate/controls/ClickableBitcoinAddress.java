@@ -43,8 +43,8 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
 import wallettemplate.Main;
-import wallettemplate.utils.GuiUtils;
-import wallettemplate.utils.QRCodeImages;
+import org.bitcoinj.walletfx.utils.GuiUtils;
+import org.bitcoinj.walletfx.utils.QRCodeImages;
 
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;

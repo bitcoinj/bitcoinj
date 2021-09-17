@@ -28,12 +28,11 @@ import org.bouncycastle.crypto.params.*;
 
 import com.google.protobuf.ByteString;
 
-import wallettemplate.utils.*;
-
 import java.time.Duration;
 import java.util.concurrent.*;
 
-import static wallettemplate.utils.GuiUtils.*;
+import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
+import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 public class WalletSetPasswordController {
     private static final Logger log = LoggerFactory.getLogger(WalletSetPasswordController.class);
