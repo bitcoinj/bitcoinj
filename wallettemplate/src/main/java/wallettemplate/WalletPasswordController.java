@@ -54,7 +54,7 @@ public class WalletPasswordController {
     @FXML GridPane widgetGrid;
     @FXML Label explanationLabel;
 
-    public Main.OverlayUI overlayUI;
+    public MainController.OverlayUI overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 

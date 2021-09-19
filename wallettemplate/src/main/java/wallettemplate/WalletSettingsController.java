@@ -55,7 +55,7 @@ public class WalletSettingsController {
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
-    public Main.OverlayUI overlayUI;
+    public MainController.OverlayUI overlayUI;
 
     private KeyParameter aesKey;
 
@@ -132,12 +132,12 @@ public class WalletSettingsController {
     }
 
     private void askForPasswordAndRetry() {
-        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
+        MainController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
-            Main.OverlayUI<WalletSettingsController> screen = Main.instance.overlayUI("wallet_settings.fxml");
+            MainController.OverlayUI<WalletSettingsController> screen = MainController.instance.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
         });
     }
@@ -166,7 +166,7 @@ public class WalletSettingsController {
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
         overlayUI.done();
-        Main.instance.controller.restoreFromSeedAnimation();
+        MainController.instance.restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
@@ -184,7 +184,7 @@ public class WalletSettingsController {
 
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
-            Main.instance.overlayUI("wallet_set_password.fxml");
+            MainController.instance.overlayUI("wallet_set_password.fxml");
         } else {
             Main.bitcoin.wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");

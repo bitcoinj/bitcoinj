@@ -47,7 +47,7 @@ public class SendMoneyController {
     public TextField amountEdit;
     public Label btcLabel;
 
-    public Main.OverlayUI overlayUI;
+    public MainController.OverlayUI overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
@@ -114,14 +114,14 @@ public class SendMoneyController {
     }
 
     private void askForPasswordAndRetry() {
-        Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
+        MainController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            Main.OverlayUI<SendMoneyController> screen = Main.instance.overlayUI("send_money.fxml");
+            MainController.OverlayUI<SendMoneyController> screen = MainController.instance.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);

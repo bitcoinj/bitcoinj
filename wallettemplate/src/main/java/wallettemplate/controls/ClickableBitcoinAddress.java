@@ -48,6 +48,7 @@ import org.bitcoinj.walletfx.utils.QRCodeImages;
 
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
+import wallettemplate.MainController;
 
 import static javafx.beans.binding.Bindings.convert;
 
@@ -143,7 +144,7 @@ public class ClickableBitcoinAddress extends AnchorPane {
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
-        final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
+        final MainController.OverlayUI<ClickableBitcoinAddress> overlay = MainController.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
 
