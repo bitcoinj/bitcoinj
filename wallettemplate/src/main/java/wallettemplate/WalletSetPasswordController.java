@@ -43,7 +43,7 @@ public class WalletSetPasswordController {
     public Button closeButton;
     public Label explanationLabel;
 
-    public Main.OverlayUI overlayUI;
+    public MainController.OverlayUI overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder()
