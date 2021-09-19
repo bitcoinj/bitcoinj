@@ -28,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.walletfx.overlay.OverlayWindowController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -47,7 +48,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 import static org.bitcoinj.walletfx.utils.WTUtils.didThrow;
 import static org.bitcoinj.walletfx.utils.WTUtils.unchecked;
 
-public class WalletSettingsController {
+public class WalletSettingsController implements OverlayWindowController<WalletSettingsController> {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
     @FXML Button passwordButton;
@@ -55,9 +56,14 @@ public class WalletSettingsController {
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
-    public MainController.OverlayUI overlayUI;
+    private MainController.OverlayUI<? extends OverlayWindowController<WalletSettingsController>> overlayUI;
 
     private KeyParameter aesKey;
+
+    @Override
+    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<WalletSettingsController>> ui) {
+        overlayUI = ui;
+    }
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {

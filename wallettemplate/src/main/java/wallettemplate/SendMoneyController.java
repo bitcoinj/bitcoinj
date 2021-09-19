@@ -29,6 +29,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import org.bitcoinj.walletfx.overlay.OverlayWindowController;
 import org.bouncycastle.crypto.params.KeyParameter;
 import wallettemplate.controls.BitcoinAddressValidator;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
@@ -39,7 +40,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;
 
-public class SendMoneyController {
+public class SendMoneyController implements OverlayWindowController<SendMoneyController> {
     public Button sendBtn;
     public Button cancelBtn;
     public TextField address;
@@ -47,10 +48,15 @@ public class SendMoneyController {
     public TextField amountEdit;
     public Label btcLabel;
 
-    public MainController.OverlayUI overlayUI;
+    private MainController.OverlayUI<? extends OverlayWindowController<SendMoneyController>> overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
+
+    @Override
+    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<SendMoneyController>> ui) {
+        overlayUI = ui;
+    }
 
     // Called by FXMLLoader
     public void initialize() {

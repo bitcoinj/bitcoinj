@@ -42,6 +42,7 @@ import javafx.scene.layout.Pane;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
+import org.bitcoinj.walletfx.overlay.OverlayWindowController;
 import wallettemplate.Main;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.QRCodeImages;
@@ -57,7 +58,7 @@ import static javafx.beans.binding.Bindings.convert;
  * address looks like a blue hyperlink. Next to it there are two icons, one that copies to the clipboard and another
  * that shows a QRcode.
  */
-public class ClickableBitcoinAddress extends AnchorPane {
+public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindowController<ClickableBitcoinAddress> {
     @FXML protected Label addressLabel;
     @FXML protected ContextMenu addressMenu;
     @FXML protected Label copyWidget;
@@ -65,6 +66,10 @@ public class ClickableBitcoinAddress extends AnchorPane {
 
     protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
+
+    @Override
+    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<ClickableBitcoinAddress>> ui) {
+    }
 
     public ClickableBitcoinAddress() {
         try {
