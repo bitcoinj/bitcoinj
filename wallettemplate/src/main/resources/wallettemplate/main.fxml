@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
-<?import wallettemplate.controls.*?>
+<?import org.bitcoinj.walletfx.controls.*?>
 
 <AnchorPane maxHeight="Infinity" maxWidth="Infinity" minHeight="200.0" minWidth="300.0" prefHeight="451.0" prefWidth="800.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.MainController">
   <children>

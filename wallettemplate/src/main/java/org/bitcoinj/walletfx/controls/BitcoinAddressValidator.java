@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.controls;
+package org.bitcoinj.walletfx.controls;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;

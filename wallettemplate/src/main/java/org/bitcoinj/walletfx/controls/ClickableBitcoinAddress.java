@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package wallettemplate.controls;
+package org.bitcoinj.walletfx.controls;
 
 import java.awt.Desktop;
 import java.io.IOException;
