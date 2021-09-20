@@ -56,12 +56,14 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     @FXML GridPane widgetGrid;
     @FXML Label explanationLabel;
 
+    private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
     @Override
-    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
+    public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
+        rootController = overlayableStackPaneController;
         overlayUI = ui;
     }
 

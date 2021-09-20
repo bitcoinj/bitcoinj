@@ -45,6 +45,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     public Button closeButton;
     public Label explanationLabel;
 
+    private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
@@ -56,7 +57,8 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
             .build();
 
     @Override
-    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> ui) {
+    public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> ui) {
+        rootController = overlayableStackPaneController;
         overlayUI = ui;
     }
 

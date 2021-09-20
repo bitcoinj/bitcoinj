@@ -20,7 +20,8 @@ package org.bitcoinj.walletfx.overlay;
  */
 public interface OverlayController<T> {
     /**
+     * @param rootController The root controller (containing the StackPane)
      * @param ui The overlay UI (node, controller pair)
      */
-    void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<T>> ui);
+    void initOverlay(OverlayableStackPaneController rootController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<T>> ui);
 }

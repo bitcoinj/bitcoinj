@@ -57,12 +57,14 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
+    private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
 
     private KeyParameter aesKey;
 
     @Override
-    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
+    public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
+        rootController = overlayableStackPaneController;
         overlayUI = ui;
     }
 
@@ -139,12 +141,12 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     private void askForPasswordAndRetry() {
-        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
+        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = rootController.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
-            OverlayableStackPaneController.OverlayUI<WalletSettingsController> screen = MainController.instance.overlayUI("wallet_settings.fxml");
+            OverlayableStackPaneController.OverlayUI<WalletSettingsController> screen = rootController.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
         });
     }
@@ -191,7 +193,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
     public void passwordButtonClicked(ActionEvent event) {
         if (aesKey == null) {
-            MainController.instance.overlayUI("wallet_set_password.fxml");
+            rootController.overlayUI("wallet_set_password.fxml");
         } else {
             Main.bitcoin.wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");

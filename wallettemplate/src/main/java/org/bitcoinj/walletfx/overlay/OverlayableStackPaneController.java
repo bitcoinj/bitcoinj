@@ -55,7 +55,7 @@ public abstract class OverlayableStackPaneController {
     public <T extends OverlayController<T>> OverlayUI<T> overlayUI(Node node, T controller) {
         checkGuiThread();
         OverlayUI<T> pair = new OverlayUI<>(node, controller);
-        controller.setOverlayUI(pair);
+        controller.initOverlay(this, pair);
         pair.show();
         return pair;
     }
@@ -65,12 +65,12 @@ public abstract class OverlayableStackPaneController {
         try {
             checkGuiThread();
             // Load the UI from disk.
-            URL location = GuiUtils.getResource(name);
+            URL location = GuiUtils.getResource(this.getClass(), name);
             FXMLLoader loader = new FXMLLoader(location);
-            Pane ui = loader.load();
+            Pane overlayNode = loader.load();
             T controller = loader.getController();
-            OverlayUI<T> pair = new OverlayUI<>(ui, controller);
-            controller.setOverlayUI(pair);
+            OverlayUI<T> pair = new OverlayUI<>(overlayNode, controller);
+            controller.initOverlay(this, pair);
             pair.show();
             return pair;
         } catch (IOException e) {

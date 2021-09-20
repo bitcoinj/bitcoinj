@@ -49,7 +49,7 @@ import static wallettemplate.Main.bitcoin;
  * after. This class handles all the updates and event handling for the main UI.
  */
 public class MainController extends OverlayableStackPaneController {
-    public static MainController instance;
+    static MainController instance;
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
@@ -64,6 +64,10 @@ public class MainController extends OverlayableStackPaneController {
     // Called by FXMLLoader.
     public void initialize() {
         instance = this;
+        // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
+        // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
+        addressControl.initOverlay(this, null);
+        addressControl.setAppName(Main.APP_NAME);
         addressControl.setOpacity(0.0);
     }
 

@@ -49,10 +49,10 @@ public class Main extends Application {
     private static final String WALLET_FILE_NAME = APP_NAME.replaceAll("[^a-zA-Z0-9.-]", "_") + "-"
             + params.getPaymentProtocolId();
 
-    public static WalletAppKit bitcoin;
-    public static Main instance;
+    static WalletAppKit bitcoin;
+    static Main instance;
 
-    public MainController controller;
+    private MainController controller;
 
     @Override
     public void start(Stage mainWindow) throws Exception {
