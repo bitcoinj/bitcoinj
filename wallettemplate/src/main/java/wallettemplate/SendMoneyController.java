@@ -29,7 +29,8 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import org.bitcoinj.walletfx.overlay.OverlayWindowController;
+import org.bitcoinj.walletfx.overlay.OverlayController;
+import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bouncycastle.crypto.params.KeyParameter;
 import wallettemplate.controls.BitcoinAddressValidator;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
@@ -40,7 +41,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;
 
-public class SendMoneyController implements OverlayWindowController<SendMoneyController> {
+public class SendMoneyController implements OverlayController<SendMoneyController> {
     public Button sendBtn;
     public Button cancelBtn;
     public TextField address;
@@ -48,13 +49,13 @@ public class SendMoneyController implements OverlayWindowController<SendMoneyCon
     public TextField amountEdit;
     public Label btcLabel;
 
-    private MainController.OverlayUI<? extends OverlayWindowController<SendMoneyController>> overlayUI;
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
     @Override
-    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<SendMoneyController>> ui) {
+    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> ui) {
         overlayUI = ui;
     }
 
@@ -120,14 +121,14 @@ public class SendMoneyController implements OverlayWindowController<SendMoneyCon
     }
 
     private void askForPasswordAndRetry() {
-        MainController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
+        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            MainController.OverlayUI<SendMoneyController> screen = MainController.instance.overlayUI("send_money.fxml");
+            OverlayableStackPaneController.OverlayUI<SendMoneyController> screen = MainController.instance.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);

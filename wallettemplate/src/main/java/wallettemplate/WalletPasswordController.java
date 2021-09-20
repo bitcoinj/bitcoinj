@@ -30,7 +30,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import org.bitcoinj.walletfx.overlay.OverlayWindowController;
+import org.bitcoinj.walletfx.overlay.OverlayController;
+import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -45,7 +46,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.*;
  * User interface for entering a password on demand, e.g. to send money. Also used when encrypting a wallet. Shows a
  * progress meter as we scrypt the password.
  */
-public class WalletPasswordController implements OverlayWindowController<WalletPasswordController> {
+public class WalletPasswordController implements OverlayController<WalletPasswordController> {
     private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
 
     @FXML HBox buttonsBox;
@@ -55,12 +56,12 @@ public class WalletPasswordController implements OverlayWindowController<WalletP
     @FXML GridPane widgetGrid;
     @FXML Label explanationLabel;
 
-    private MainController.OverlayUI<? extends OverlayWindowController<WalletPasswordController>> overlayUI;
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
     @Override
-    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<WalletPasswordController>> ui) {
+    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
         overlayUI = ui;
     }
 

@@ -15,14 +15,12 @@
  */
 package org.bitcoinj.walletfx.overlay;
 
-import wallettemplate.MainController;
-
 /**
  * Interface for controllers displayed via OverlayWindow.OverlayUI
  */
-public interface OverlayWindowController<T> {
+public interface OverlayController<T> {
     /**
      * @param ui The overlay UI (node, controller pair)
      */
-    void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<T>> ui);
+    void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<T>> ui);
 }

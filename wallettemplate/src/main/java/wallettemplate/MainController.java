@@ -19,12 +19,9 @@ package wallettemplate;
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.utils.MonetaryFormat;
@@ -36,7 +33,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
-import org.bitcoinj.walletfx.overlay.OverlayWindowController;
+import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import wallettemplate.controls.ClickableBitcoinAddress;
@@ -45,18 +42,13 @@ import org.bitcoinj.walletfx.utils.BitcoinUIModel;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.net.URL;
-
-import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 import static wallettemplate.Main.bitcoin;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
-public class MainController {
+public class MainController extends OverlayableStackPaneController {
     public static MainController instance;
     public HBox controlsBox;
     public Label balance;
@@ -67,10 +59,7 @@ public class MainController {
     private NotificationBarPane.Item syncItem;
     private static final MonetaryFormat MONETARY_FORMAT = MonetaryFormat.BTC.noCode();
 
-    private Pane mainUI;
-    private StackPane uiStack;
     private NotificationBarPane notificationBar;
-    private final Node stopClickPane = new Pane();
 
     // Called by FXMLLoader.
     public void initialize() {
@@ -85,7 +74,6 @@ public class MainController {
         // ordering of the construction and connection matters here, otherwise we get (harmless) CSS error
         // spew to the logs.
         notificationBar = new NotificationBarPane(mainUI);
-        uiStack = new StackPane();
         Scene scene = new Scene(uiStack);
         TextFieldValidator.configureScene(scene);
         // Add CSS that we need. cssResourceName will be loaded from the same package as this class.
@@ -170,80 +158,4 @@ public class MainController {
         return model.getDownloadProgressTracker();
     }
 
-    public class OverlayUI<T extends OverlayWindowController<T>> {
-        public Node ui;
-        public T controller;
-
-        public OverlayUI(Node ui, T controller) {
-            this.ui = ui;
-            this.controller = controller;
-        }
-
-        public void show() {
-            checkGuiThread();
-            if (currentOverlay == null) {
-                uiStack.getChildren().add(stopClickPane);
-                uiStack.getChildren().add(ui);
-                blurOut(mainUI);
-                //darken(mainUI);
-                fadeIn(ui);
-                zoomIn(ui);
-            } else {
-                // Do a quick transition between the current overlay and the next.
-                // Bug here: we don't pay attention to changes in outsideClickDismisses.
-                explodeOut(currentOverlay.ui);
-                fadeOutAndRemove(uiStack, currentOverlay.ui);
-                uiStack.getChildren().add(ui);
-                ui.setOpacity(0.0);
-                fadeIn(ui, 100);
-                zoomIn(ui, 100);
-            }
-            currentOverlay = this;
-        }
-
-        public void outsideClickDismisses() {
-            stopClickPane.setOnMouseClicked((ev) -> done());
-        }
-
-        public void done() {
-            checkGuiThread();
-            if (ui == null) return;  // In the middle of being dismissed and got an extra click.
-            explodeOut(ui);
-            fadeOutAndRemove(uiStack, ui, stopClickPane);
-            blurIn(mainUI);
-            //undark(mainUI);
-            this.ui = null;
-            this.controller = null;
-            currentOverlay = null;
-        }
-    }
-
-    @Nullable
-    private OverlayUI<? extends OverlayWindowController<?>> currentOverlay;
-
-    public <T extends OverlayWindowController<T>> OverlayUI<T> overlayUI(Node node, T controller) {
-        checkGuiThread();
-        OverlayUI<T> pair = new OverlayUI<>(node, controller);
-        controller.setOverlayUI(pair);
-        pair.show();
-        return pair;
-    }
-
-    /** Loads the FXML file with the given name, blurs out the main UI and puts this one on top. */
-    public <T extends OverlayWindowController<T>> OverlayUI<T> overlayUI(String name) {
-        try {
-            checkGuiThread();
-            // Load the UI from disk.
-            URL location = GuiUtils.getResource(name);
-            FXMLLoader loader = new FXMLLoader(location);
-            Pane ui = loader.load();
-            T controller = loader.getController();
-            OverlayUI<T> pair = new OverlayUI<>(ui, controller);
-            controller.setOverlayUI(pair);
-            pair.show();
-            return pair;
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Can't happen.
-        }
-    }
 }

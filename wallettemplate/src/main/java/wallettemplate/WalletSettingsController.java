@@ -28,7 +28,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
-import org.bitcoinj.walletfx.overlay.OverlayWindowController;
+import org.bitcoinj.walletfx.overlay.OverlayController;
+import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -48,7 +49,7 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 import static org.bitcoinj.walletfx.utils.WTUtils.didThrow;
 import static org.bitcoinj.walletfx.utils.WTUtils.unchecked;
 
-public class WalletSettingsController implements OverlayWindowController<WalletSettingsController> {
+public class WalletSettingsController implements OverlayController<WalletSettingsController> {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
     @FXML Button passwordButton;
@@ -56,12 +57,12 @@ public class WalletSettingsController implements OverlayWindowController<WalletS
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
-    private MainController.OverlayUI<? extends OverlayWindowController<WalletSettingsController>> overlayUI;
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
 
     private KeyParameter aesKey;
 
     @Override
-    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<WalletSettingsController>> ui) {
+    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
         overlayUI = ui;
     }
 
@@ -138,12 +139,12 @@ public class WalletSettingsController implements OverlayWindowController<WalletS
     }
 
     private void askForPasswordAndRetry() {
-        MainController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
+        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
             checkGuiThread();
-            MainController.OverlayUI<WalletSettingsController> screen = MainController.instance.overlayUI("wallet_settings.fxml");
+            OverlayableStackPaneController.OverlayUI<WalletSettingsController> screen = MainController.instance.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
         });
     }

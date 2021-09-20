@@ -42,7 +42,8 @@ import javafx.scene.layout.Pane;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
-import org.bitcoinj.walletfx.overlay.OverlayWindowController;
+import org.bitcoinj.walletfx.overlay.OverlayController;
+import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import wallettemplate.Main;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.QRCodeImages;
@@ -58,7 +59,7 @@ import static javafx.beans.binding.Bindings.convert;
  * address looks like a blue hyperlink. Next to it there are two icons, one that copies to the clipboard and another
  * that shows a QRcode.
  */
-public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindowController<ClickableBitcoinAddress> {
+public class ClickableBitcoinAddress extends AnchorPane implements OverlayController<ClickableBitcoinAddress> {
     @FXML protected Label addressLabel;
     @FXML protected ContextMenu addressMenu;
     @FXML protected Label copyWidget;
@@ -68,7 +69,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindow
     private final StringExpression addressStr;
 
     @Override
-    public void setOverlayUI(MainController.OverlayUI<? extends OverlayWindowController<ClickableBitcoinAddress>> ui) {
+    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<ClickableBitcoinAddress>> ui) {
     }
 
     public ClickableBitcoinAddress() {
@@ -149,7 +150,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayWindow
         // non-centered on the screen. Finally fade/blur it in.
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
-        final MainController.OverlayUI<ClickableBitcoinAddress> overlay = MainController.instance.overlayUI(pane, this);
+        final OverlayableStackPaneController.OverlayUI<ClickableBitcoinAddress> overlay = MainController.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
     }
 
