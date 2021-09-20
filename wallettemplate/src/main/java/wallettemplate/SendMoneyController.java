@@ -49,13 +49,15 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     public TextField amountEdit;
     public Label btcLabel;
 
+    private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> overlayUI;
 
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
     @Override
-    public void setOverlayUI(OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> ui) {
+    public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> ui) {
+        rootController = overlayableStackPaneController;
         overlayUI = ui;
     }
 
@@ -121,14 +123,14 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     private void askForPasswordAndRetry() {
-        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = MainController.instance.overlayUI("wallet_password.fxml");
+        OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = rootController.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
-            OverlayableStackPaneController.OverlayUI<SendMoneyController> screen = MainController.instance.overlayUI("send_money.fxml");
+            OverlayableStackPaneController.OverlayUI<SendMoneyController> screen = rootController.overlayUI("send_money.fxml");
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);
