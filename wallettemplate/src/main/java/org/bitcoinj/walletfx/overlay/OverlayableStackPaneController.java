@@ -46,7 +46,7 @@ public abstract class OverlayableStackPaneController {
     /**
      * The {@link Pane} containing the bottom-most view, that can be overlaid with other views.
      */
-    protected Pane mainUI;
+    protected Pane mainPane;
     private final Node stopClickPane = new Pane();
     @Nullable
     private OverlayUI<? extends OverlayController<?>> currentOverlay;
@@ -92,7 +92,7 @@ public abstract class OverlayableStackPaneController {
             if (currentOverlay == null) {
                 uiStack.getChildren().add(stopClickPane);
                 uiStack.getChildren().add(ui);
-                blurOut(mainUI);
+                blurOut(mainPane);
                 //darken(mainUI);
                 fadeIn(ui);
                 zoomIn(ui);
@@ -118,8 +118,8 @@ public abstract class OverlayableStackPaneController {
             if (ui == null) return;  // In the middle of being dismissed and got an extra click.
             explodeOut(ui);
             fadeOutAndRemove(uiStack, ui, stopClickPane);
-            blurIn(mainUI);
-            //undark(mainUI);
+            blurIn(mainPane);
+            //undark(mainPane);
             this.ui = null;
             this.controller = null;
             currentOverlay = null;

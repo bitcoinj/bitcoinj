@@ -18,6 +18,7 @@ package wallettemplate;
 
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.Service;
@@ -28,6 +29,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
@@ -57,6 +60,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     @FXML TextArea wordsArea;
     @FXML Button restoreButton;
 
+    private WalletApplication app;
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
 
@@ -70,7 +74,9 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
+        app = WalletApplication.instance();
+        Wallet wallet = app.walletAppKit().wallet();
+        DeterministicSeed seed = wallet.getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
@@ -80,7 +86,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(Main.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(checkNotNull(wallet.getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -156,9 +162,10 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     public void restoreClicked(ActionEvent event) {
+        WalletAppKit walletAppKit = app.walletAppKit();
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
-        if (Main.bitcoin.wallet().getBalance().value > 0) {
+        if (walletAppKit.wallet().getBalance().value > 0) {
             informationalAlert("Wallet is not empty",
                     "You must empty this wallet out before attempting to restore an older one, as mixing wallets " +
                             "together can lead to invalidated backups.");
@@ -175,19 +182,19 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
         overlayUI.done();
-        MainController.instance.restoreFromSeedAnimation();
+        app.mainWindowController().restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
         // Shut down bitcoinj and restart it with the new seed.
-        Main.bitcoin.addListener(new Service.Listener() {
+        walletAppKit.addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
-                Main.instance.setupWalletKit(seed);
-                Main.bitcoin.startAsync();
+                app.setupWalletKit(seed);
+                walletAppKit.startAsync();
             }
         }, Platform::runLater);
-        Main.bitcoin.stopAsync();
+        walletAppKit.stopAsync();
     }
 
 
@@ -195,7 +202,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         if (aesKey == null) {
             rootController.overlayUI("wallet_set_password.fxml");
         } else {
-            Main.bitcoin.wallet().decrypt(aesKey);
+            app.walletAppKit().wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
             passwordButton.setText("Set password");
             aesKey = null;
