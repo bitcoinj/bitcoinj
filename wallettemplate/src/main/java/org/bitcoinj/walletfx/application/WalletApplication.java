@@ -18,6 +18,7 @@ package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import org.bitcoinj.core.NetworkParameters;
@@ -82,33 +83,37 @@ public abstract class WalletApplication implements AppDelegate {
         return controller;
     }
 
+    protected abstract MainWindowController loadController() throws IOException;
+
     @Override
-    public void start(Stage mainWindow) throws Exception {
+    public void start(Stage primaryStage) throws Exception {
         try {
-            realStart(mainWindow);
+            startImpl(primaryStage);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
             throw e;
         }
     }
 
-    abstract protected MainWindowController loadController() throws IOException;
-
-    private void realStart(Stage mainWindow) throws IOException {
+    private void startImpl(Stage primaryStage) throws IOException {
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
+
+        // Make log output concise.
+        BriefLogFormatter.init();
 
         if (Utils.isMac()) {
             // We could match the Mac Aqua style here, except that (a) Modena doesn't look that bad, and (b)
             // the date picker widget is kinda broken in AquaFx and I can't be bothered fixing it.
             // AquaFx.style();
         }
-
         controller = loadController();
-        mainWindow.setScene(controller.scene());
+        primaryStage.setScene(controller.scene());
+        startWalletAppKit(primaryStage);
+        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> walletAppKit().peerGroup().getDownloadPeer().close());
+    }
 
-        // Make log output concise.
-        BriefLogFormatter.init();
+    protected void startWalletAppKit(Stage primaryStage) throws IOException {
         // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
@@ -123,7 +128,7 @@ public abstract class WalletApplication implements AppDelegate {
             return;
         }
 
-        mainWindow.show();
+        primaryStage.show();
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
 
@@ -134,8 +139,6 @@ public abstract class WalletApplication implements AppDelegate {
             }
         }, Platform::runLater);
         walletAppKit.startAsync();
-
-        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> walletAppKit().peerGroup().getDownloadPeer().close());
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
