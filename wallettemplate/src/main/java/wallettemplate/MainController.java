@@ -33,7 +33,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
-import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
+import org.bitcoinj.walletfx.application.WalletApplication;
+import org.bitcoinj.walletfx.application.MainWindowController;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.controls.ClickableBitcoinAddress;
@@ -42,18 +43,17 @@ import org.bitcoinj.walletfx.utils.BitcoinUIModel;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
-import static wallettemplate.Main.bitcoin;
-
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
-public class MainController extends OverlayableStackPaneController {
-    static MainController instance;
+public class MainController extends MainWindowController {
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
     public ClickableBitcoinAddress addressControl;
+
+    private WalletApplication app;
 
     private final BitcoinUIModel model = new BitcoinUIModel();
     private NotificationBarPane.Item syncItem;
@@ -63,32 +63,33 @@ public class MainController extends OverlayableStackPaneController {
 
     // Called by FXMLLoader.
     public void initialize() {
-        instance = this;
+        app = WalletApplication.instance();
         // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
         // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
         addressControl.initOverlay(this, null);
-        addressControl.setAppName(Main.APP_NAME);
+        addressControl.setAppName(app.applicationName());
         addressControl.setOpacity(0.0);
+        scene = new Scene(uiStack);
+        TextFieldValidator.configureScene(scene);
     }
 
-    Scene controllerStart(Pane mainUI, String cssResourceName) {
-        this.mainUI = mainUI;
+    @Override
+    public void controllerStart(Pane mainUI, String cssResourceName) {
+        this.mainPane = mainUI;
         // Configure the window with a StackPane so we can overlay things on top of the main UI, and a
         // NotificationBarPane so we can slide messages and progress bars in from the bottom. Note that
         // ordering of the construction and connection matters here, otherwise we get (harmless) CSS error
         // spew to the logs.
         notificationBar = new NotificationBarPane(mainUI);
-        Scene scene = new Scene(uiStack);
-        TextFieldValidator.configureScene(scene);
         // Add CSS that we need. cssResourceName will be loaded from the same package as this class.
         scene.getStylesheets().add(getClass().getResource(cssResourceName).toString());
         uiStack.getChildren().add(notificationBar);
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
-        return scene;
+        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> app.walletAppKit().peerGroup().getDownloadPeer().close());
     }
-
+    
+    @Override
     public void onBitcoinSetup() {
-        model.setWallet(bitcoin.wallet());
+        model.setWallet(app.walletAppKit().wallet());
         addressControl.addressProperty().bind(model.addressProperty());
         balance.textProperty().bind(createBalanceStringBinding(model.balanceProperty()));
         // Don't let the user click send money when the wallet is empty.
@@ -106,6 +107,19 @@ public class MainController extends OverlayableStackPaneController {
                 showBitcoinSyncMessage();
             }
         });
+    }
+
+    @Override
+    public void restoreFromSeedAnimation() {
+        // Buttons slide out ...
+        TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
+        leave.setByY(80.0);
+        leave.play();
+    }
+
+    @Override
+    public DownloadProgressTracker progressBarUpdater() {
+        return model.getDownloadProgressTracker();
     }
 
     private static String formatCoin(Coin coin) {
@@ -138,14 +152,7 @@ public class MainController extends OverlayableStackPaneController {
         GuiUtils.informationalAlert("Unused button #2", "You can hook this up in your app");
     }
 
-    public void restoreFromSeedAnimation() {
-        // Buttons slide out ...
-        TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
-        leave.setByY(80.0);
-        leave.play();
-    }
-
-    public void readyToGoAnimation() {
+    private void readyToGoAnimation() {
         // Buttons slide in and clickable address appears simultaneously.
         TranslateTransition arrive = new TranslateTransition(Duration.millis(1200), controlsBox);
         arrive.setInterpolator(new ElasticInterpolator(EasingMode.EASE_OUT, 1, 2));
@@ -157,9 +164,4 @@ public class MainController extends OverlayableStackPaneController {
         group.setCycleCount(1);
         group.play();
     }
-
-    public DownloadProgressTracker progressBarUpdater() {
-        return model.getDownloadProgressTracker();
-    }
-
 }

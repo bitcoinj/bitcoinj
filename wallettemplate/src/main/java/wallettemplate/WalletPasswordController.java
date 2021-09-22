@@ -30,6 +30,8 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
@@ -56,6 +58,8 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     @FXML GridPane widgetGrid;
     @FXML Label explanationLabel;
 
+    private WalletApplication app;
+
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
@@ -68,6 +72,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     }
 
     public void initialize() {
+        app = WalletApplication.instance();
         progressMeter.setOpacity(0);
         Platform.runLater(pass1::requestFocus);
     }
@@ -79,13 +84,14 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
             return;
         }
 
-        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        final Wallet wallet = app.walletAppKit().wallet();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) wallet.getKeyCrypter();
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
             protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
-                if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
+                if (wallet.checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
                 } else {
                     log.warn("User entered incorrect password");
@@ -122,11 +128,11 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     // Writes the given time to the wallet as a tag so we can find it again in this class.
     public static void setTargetTime(Duration targetTime) {
         ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-        Main.bitcoin.wallet().setTag(TAG, bytes);
+        WalletApplication.instance().walletAppKit().wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
     public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+        return Duration.ofMillis(Longs.fromByteArray(WalletApplication.instance().walletAppKit().wallet().getTag(TAG).toByteArray()));
     }
 }
