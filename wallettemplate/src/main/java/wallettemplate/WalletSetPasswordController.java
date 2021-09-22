@@ -46,6 +46,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     public Button closeButton;
     public Label explanationLabel;
 
+    private WalletApplication app;
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
@@ -64,6 +65,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     }
 
     public void initialize() {
+        app = WalletApplication.instance();
         progressMeter.setOpacity(0);
     }
 
@@ -118,7 +120,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                WalletApplication.bitcoin.wallet().encrypt(scrypt, aesKey);
+                app.walletAppKit().wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");

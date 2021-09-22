@@ -42,12 +42,12 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
  * Base class for JavaFX Wallet Applications
  */
 public abstract class WalletApplication implements AppDelegate {
-    public static WalletAppKit bitcoin;
-    public static WalletApplication instance;
-    public final String applicationName;
-    public final NetworkParameters params;
-    public final Script.ScriptType preferredOutputScriptType;
-    protected final String walletFileName;
+    private static WalletApplication instance;
+    private WalletAppKit walletAppKit;
+    private final String applicationName;
+    private final NetworkParameters params;
+    private final Script.ScriptType preferredOutputScriptType;
+    private final String walletFileName;
     private MainWindowController controller;
 
     public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
@@ -56,6 +56,26 @@ public abstract class WalletApplication implements AppDelegate {
         this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + params.getPaymentProtocolId();
         this.params = params;
         this.preferredOutputScriptType = preferredOutputScriptType;
+    }
+
+    public static WalletApplication instance() {
+        return instance;
+    }
+
+    public WalletAppKit walletAppKit() {
+        return walletAppKit;
+    }
+
+    public String applicationName() {
+        return applicationName;
+    }
+
+    public NetworkParameters params() {
+        return params;
+    }
+
+    public Script.ScriptType preferredOutputScriptType() {
+        return preferredOutputScriptType;
     }
 
     @Override
@@ -93,7 +113,7 @@ public abstract class WalletApplication implements AppDelegate {
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         setupWalletKit(null);
 
-        if (bitcoin.isChainFileLocked()) {
+        if (walletAppKit.isChainFileLocked()) {
             informationalAlert("Already running", "This application is already running and cannot be started twice.");
             Platform.exit();
             return;
@@ -103,21 +123,21 @@ public abstract class WalletApplication implements AppDelegate {
 
         WalletSetPasswordController.estimateKeyDerivationTimeMsec();
 
-        bitcoin.addListener(new Service.Listener() {
+        walletAppKit.addListener(new Service.Listener() {
             @Override
             public void failed(Service.State from, Throwable failure) {
                 GuiUtils.crashAlert(failure);
             }
         }, Platform::runLater);
-        bitcoin.startAsync();
+        walletAppKit.startAsync();
 
-        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
+        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> walletAppKit().peerGroup().getDownloadPeer().close());
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
-        bitcoin = new WalletAppKit(params, preferredOutputScriptType, null, appDataDirectory, walletFileName) {
+        walletAppKit = new WalletAppKit(params, preferredOutputScriptType, null, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
@@ -126,19 +146,19 @@ public abstract class WalletApplication implements AppDelegate {
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
         if (params == RegTestParams.get()) {
-            bitcoin.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
+            walletAppKit.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         }
-        bitcoin.setDownloadListener(controller.progressBarUpdater())
+        walletAppKit.setDownloadListener(controller.progressBarUpdater())
                 .setBlockingStartup(false)
                 .setUserAgent(applicationName, "1.0");
         if (seed != null)
-            bitcoin.restoreWalletFromSeed(seed);
+            walletAppKit.restoreWalletFromSeed(seed);
     }
 
     @Override
     public void stop() throws Exception {
-        bitcoin.stopAsync();
-        bitcoin.awaitTerminated();
+        walletAppKit.stopAsync();
+        walletAppKit.awaitTerminated();
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
     }

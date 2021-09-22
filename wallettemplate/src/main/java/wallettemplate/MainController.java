@@ -43,8 +43,6 @@ import org.bitcoinj.walletfx.utils.BitcoinUIModel;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
-import static org.bitcoinj.walletfx.application.WalletApplication.bitcoin;
-
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
@@ -60,15 +58,17 @@ public class MainController extends MainWindowController {
     private NotificationBarPane.Item syncItem;
     private static final MonetaryFormat MONETARY_FORMAT = MonetaryFormat.BTC.noCode();
 
+    private WalletApplication app;
     private NotificationBarPane notificationBar;
 
     // Called by FXMLLoader.
     public void initialize() {
         instance = this;
+        app = WalletApplication.instance();
         // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
         // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
         addressControl.initOverlay(this, null);
-        addressControl.setAppName(WalletApplication.instance.applicationName);
+        addressControl.setAppName(app.applicationName());
         addressControl.setOpacity(0.0);
     }
 
@@ -85,12 +85,12 @@ public class MainController extends MainWindowController {
         // Add CSS that we need. cssResourceName will be loaded from the same package as this class.
         scene.getStylesheets().add(getClass().getResource(cssResourceName).toString());
         uiStack.getChildren().add(notificationBar);
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
+        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> app.walletAppKit().peerGroup().getDownloadPeer().close());
     }
 
     @Override
     public void onBitcoinSetup() {
-        model.setWallet(bitcoin.wallet());
+        model.setWallet(app.walletAppKit().wallet());
         addressControl.addressProperty().bind(model.addressProperty());
         balance.textProperty().bind(createBalanceStringBinding(model.balanceProperty()));
         // Don't let the user click send money when the wallet is empty.
