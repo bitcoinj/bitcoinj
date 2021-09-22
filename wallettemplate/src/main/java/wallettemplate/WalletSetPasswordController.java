@@ -117,7 +117,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                Main.bitcoin.wallet().encrypt(scrypt, aesKey);
+                WalletTemplate.bitcoin.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");

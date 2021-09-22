@@ -42,7 +42,7 @@ import org.bitcoinj.walletfx.utils.BitcoinUIModel;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
-import static wallettemplate.Main.bitcoin;
+import static wallettemplate.WalletTemplate.bitcoin;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
@@ -67,7 +67,7 @@ public class MainController extends OverlayableStackPaneController {
         // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
         // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
         addressControl.initOverlay(this, null);
-        addressControl.setAppName(Main.APP_NAME);
+        addressControl.setAppName(WalletTemplate.instance.applicationName);
         addressControl.setOpacity(0.0);
     }
 

@@ -63,13 +63,13 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
 
     // Called by FXMLLoader
     public void initialize() {
-        Coin balance = Main.bitcoin.wallet().getBalance();
+        Coin balance = WalletTemplate.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(Main.params, address, sendBtn);
+        new BitcoinAddressValidator(WalletTemplate.instance.params, address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
-        address.setPromptText(Address.fromKey(Main.params, new ECKey(), Main.PREFERRED_OUTPUT_SCRIPT_TYPE).toString());
+        address.setPromptText(Address.fromKey(WalletTemplate.instance.params, new ECKey(), WalletTemplate.instance.preferredOutputScriptType).toString());
     }
 
     public void cancel(ActionEvent event) {
@@ -80,9 +80,9 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(Main.params, address.getText());
+            Address destination = Address.fromString(WalletTemplate.instance.params, address.getText());
             SendRequest req;
-            if (amount.equals(Main.bitcoin.wallet().getBalance()))
+            if (amount.equals(WalletTemplate.bitcoin.wallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);
@@ -90,7 +90,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             // Don't make the user wait for confirmations for now, as the intention is they're sending it
             // their own money!
             req.allowUnconfirmed();
-            sendResult = Main.bitcoin.wallet().sendCoins(req);
+            sendResult = WalletTemplate.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
