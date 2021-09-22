@@ -30,7 +30,6 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.walletfx.utils.GuiUtils;
-import wallettemplate.MainController;
 import wallettemplate.WalletSetPasswordController;
 
 import javax.annotation.Nullable;
@@ -49,7 +48,7 @@ public abstract class WalletApplication implements AppDelegate {
     public final NetworkParameters params;
     public final Script.ScriptType preferredOutputScriptType;
     protected final String walletFileName;
-    private MainController controller;
+    private MainWindowController controller;
 
     public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
         instance = this;
@@ -69,7 +68,7 @@ public abstract class WalletApplication implements AppDelegate {
         }
     }
 
-    abstract protected MainController loadController() throws IOException;
+    abstract protected MainWindowController loadController() throws IOException;
 
     private void realStart(Stage mainWindow) throws IOException {
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.

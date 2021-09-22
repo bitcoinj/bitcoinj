@@ -33,8 +33,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
+import org.bitcoinj.walletfx.application.MainWindowController;
 import org.bitcoinj.walletfx.application.WalletApplication;
-import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.controls.ClickableBitcoinAddress;
@@ -49,7 +49,7 @@ import static org.bitcoinj.walletfx.application.WalletApplication.bitcoin;
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
-public class MainController extends OverlayableStackPaneController {
+public class MainController extends MainWindowController {
     static MainController instance;
     public HBox controlsBox;
     public Label balance;
@@ -60,7 +60,6 @@ public class MainController extends OverlayableStackPaneController {
     private NotificationBarPane.Item syncItem;
     private static final MonetaryFormat MONETARY_FORMAT = MonetaryFormat.BTC.noCode();
 
-    private Scene scene;
     private NotificationBarPane notificationBar;
 
     // Called by FXMLLoader.
@@ -73,10 +72,7 @@ public class MainController extends OverlayableStackPaneController {
         addressControl.setOpacity(0.0);
     }
 
-    public Scene scene() {
-        return scene;
-    }
-
+    @Override
     public void controllerStart(Pane mainUI, String cssResourceName) {
         this.mainUI = mainUI;
         // Configure the window with a StackPane so we can overlay things on top of the main UI, and a
@@ -92,6 +88,7 @@ public class MainController extends OverlayableStackPaneController {
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
 
+    @Override
     public void onBitcoinSetup() {
         model.setWallet(bitcoin.wallet());
         addressControl.addressProperty().bind(model.addressProperty());
@@ -143,6 +140,7 @@ public class MainController extends OverlayableStackPaneController {
         GuiUtils.informationalAlert("Unused button #2", "You can hook this up in your app");
     }
 
+    @Override
     public void restoreFromSeedAnimation() {
         // Buttons slide out ...
         TranslateTransition leave = new TranslateTransition(Duration.millis(1200), controlsBox);
@@ -163,6 +161,7 @@ public class MainController extends OverlayableStackPaneController {
         group.play();
     }
 
+    @Override
     public DownloadProgressTracker progressBarUpdater() {
         return model.getDownloadProgressTracker();
     }
