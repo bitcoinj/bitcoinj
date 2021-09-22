@@ -78,6 +78,10 @@ public abstract class WalletApplication implements AppDelegate {
         return preferredOutputScriptType;
     }
 
+    public MainWindowController mainWindowController() {
+        return controller;
+    }
+
     @Override
     public void start(Stage mainWindow) throws Exception {
         try {

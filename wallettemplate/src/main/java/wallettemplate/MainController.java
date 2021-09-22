@@ -48,7 +48,6 @@ import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
  * after. This class handles all the updates and event handling for the main UI.
  */
 public class MainController extends MainWindowController {
-    static MainController instance;
     public HBox controlsBox;
     public Label balance;
     public Button sendMoneyOutBtn;
@@ -63,7 +62,6 @@ public class MainController extends MainWindowController {
 
     // Called by FXMLLoader.
     public void initialize() {
-        instance = this;
         app = WalletApplication.instance();
         // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
         // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
