@@ -28,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable KeyParameter aesKey) {
-        DeterministicSeed seed = WalletTemplate.bitcoin.wallet().getKeyChainSeed();
+        DeterministicSeed seed = WalletApplication.bitcoin.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
                 log.info("Wallet is encrypted, requesting password first.");
@@ -80,7 +81,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(WalletTemplate.bitcoin.wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(checkNotNull(WalletApplication.bitcoin.wallet().getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -158,7 +159,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     public void restoreClicked(ActionEvent event) {
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
-        if (WalletTemplate.bitcoin.wallet().getBalance().value > 0) {
+        if (WalletApplication.bitcoin.wallet().getBalance().value > 0) {
             informationalAlert("Wallet is not empty",
                     "You must empty this wallet out before attempting to restore an older one, as mixing wallets " +
                             "together can lead to invalidated backups.");
@@ -180,14 +181,14 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
         // Shut down bitcoinj and restart it with the new seed.
-        WalletTemplate.bitcoin.addListener(new Service.Listener() {
+        WalletApplication.bitcoin.addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
-                WalletTemplate.instance.setupWalletKit(seed);
-                WalletTemplate.bitcoin.startAsync();
+                WalletApplication.instance.setupWalletKit(seed);
+                WalletApplication.bitcoin.startAsync();
             }
         }, Platform::runLater);
-        WalletTemplate.bitcoin.stopAsync();
+        WalletApplication.bitcoin.stopAsync();
     }
 
 
@@ -195,7 +196,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         if (aesKey == null) {
             rootController.overlayUI("wallet_set_password.fxml");
         } else {
-            WalletTemplate.bitcoin.wallet().decrypt(aesKey);
+            WalletApplication.bitcoin.wallet().decrypt(aesKey);
             informationalAlert("Wallet decrypted", "A password will no longer be required to send money or edit settings.");
             passwordButton.setText("Set password");
             aesKey = null;

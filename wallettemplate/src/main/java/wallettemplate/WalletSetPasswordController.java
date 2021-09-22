@@ -23,6 +23,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.wallet.*;
+import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.*;
@@ -117,7 +118,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
-                WalletTemplate.bitcoin.wallet().encrypt(scrypt, aesKey);
+                WalletApplication.bitcoin.wallet().encrypt(scrypt, aesKey);
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");

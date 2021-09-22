@@ -29,6 +29,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -63,13 +64,13 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
 
     // Called by FXMLLoader
     public void initialize() {
-        Coin balance = WalletTemplate.bitcoin.wallet().getBalance();
+        Coin balance = WalletApplication.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(WalletTemplate.instance.params, address, sendBtn);
+        new BitcoinAddressValidator(WalletApplication.instance.params, address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
-        address.setPromptText(Address.fromKey(WalletTemplate.instance.params, new ECKey(), WalletTemplate.instance.preferredOutputScriptType).toString());
+        address.setPromptText(Address.fromKey(WalletApplication.instance.params, new ECKey(), WalletApplication.instance.preferredOutputScriptType).toString());
     }
 
     public void cancel(ActionEvent event) {
@@ -80,9 +81,9 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(WalletTemplate.instance.params, address.getText());
+            Address destination = Address.fromString(WalletApplication.instance.params, address.getText());
             SendRequest req;
-            if (amount.equals(WalletTemplate.bitcoin.wallet().getBalance()))
+            if (amount.equals(WalletApplication.bitcoin.wallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);
@@ -90,7 +91,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             // Don't make the user wait for confirmations for now, as the intention is they're sending it
             // their own money!
             req.allowUnconfirmed();
-            sendResult = WalletTemplate.bitcoin.wallet().sendCoins(req);
+            sendResult = WalletApplication.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
