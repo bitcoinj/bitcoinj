@@ -32,11 +32,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * <p>An implementation of {@link AbstractPeerDataEventListener} that listens to chain download events and tracks progress
+ * <p>An implementation of {@link BlockchainDownloadEventListener} that listens to chain download events and tracks progress
  * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
  * progress method to update a GUI instead.</p>
  */
-public class DownloadProgressTracker extends AbstractPeerDataEventListener {
+public class DownloadProgressTracker implements BlockchainDownloadEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
