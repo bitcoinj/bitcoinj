@@ -18,7 +18,6 @@ package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import org.bitcoinj.core.NetworkParameters;
@@ -130,7 +129,7 @@ public abstract class WalletApplication implements AppDelegate {
 
         primaryStage.show();
 
-        WalletSetPasswordController.estimateKeyDerivationTimeMsec();
+        WalletSetPasswordController.initEstimatedKeyDerivationTime();
 
         walletAppKit.addListener(new Service.Listener() {
             @Override
