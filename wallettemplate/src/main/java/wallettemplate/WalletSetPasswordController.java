@@ -69,26 +69,35 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
         progressMeter.setOpacity(0);
     }
 
-    public static Duration estimatedKeyDerivationTime = null;
+    private static Duration estimatedKeyDerivationTime = null;
 
-    public static CompletableFuture<Duration> estimateKeyDerivationTimeMsec() {
-        // This is run in the background after startup. If we haven't recorded it before, do a key derivation to see
-        // how long it takes. This helps us produce better progress feedback, as on Windows we don't currently have a
-        // native Scrypt impl and the Java version is ~3 times slower, plus it depends a lot on CPU speed.
-        CompletableFuture<Duration> future = new CompletableFuture<>();
-        new Thread(() -> {
-            log.info("Doing background test key derivation");
-            KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
-            long start = System.currentTimeMillis();
-            scrypt.deriveKey("test password");
-            long msec = System.currentTimeMillis() - start;
-            log.info("Background test key derivation took {}msec", msec);
-            Platform.runLater(() -> {
-                estimatedKeyDerivationTime = Duration.ofMillis(msec);
-                future.complete(estimatedKeyDerivationTime);
-            });
-        }).start();
-        return future;
+    /**
+     * Initialize the {@code estimatedKeyDerivationTime} static field if not already initialized
+     * <p>
+     * This is run in the background after startup. If we haven't recorded it before, do a key derivation to see
+     * how long it takes. This helps us produce better progress feedback, as on Windows we don't currently have a
+     * native Scrypt impl and the Java version is ~3 times slower, plus it depends a lot on CPU speed.
+     */
+    public static void initEstimatedKeyDerivationTime() {
+        if (estimatedKeyDerivationTime == null) {
+            CompletableFuture
+                .supplyAsync(WalletSetPasswordController::estimateKeyDerivationTime)
+                .thenAccept(duration -> estimatedKeyDerivationTime = duration);
+        }
+    }
+    
+    /**
+     * Estimate key derivation time with no side effects
+     * @return duration in milliseconds
+     */
+    private static Duration estimateKeyDerivationTime() {
+        log.info("Doing background test key derivation");
+        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
+        long start = System.currentTimeMillis();
+        scrypt.deriveKey("test password");
+        long msec = System.currentTimeMillis() - start;
+        log.info("Background test key derivation took {}msec", msec);
+        return Duration.ofMillis(msec);
     }
 
     @FXML
