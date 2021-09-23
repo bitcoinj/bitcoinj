@@ -63,6 +63,8 @@ public class MainController extends MainWindowController {
     // Called by FXMLLoader.
     public void initialize() {
         app = WalletApplication.instance();
+        scene = new Scene(uiStack);
+        TextFieldValidator.configureScene(scene);
         // Special case of initOverlay that passes null as the 2nd parameter because ClickableBitcoinAddress is loaded by FXML
         // TODO: Extract QRCode Pane to separate reusable class that is a more standard OverlayController instance
         addressControl.initOverlay(this, null);
@@ -78,8 +80,6 @@ public class MainController extends MainWindowController {
         // ordering of the construction and connection matters here, otherwise we get (harmless) CSS error
         // spew to the logs.
         notificationBar = new NotificationBarPane(mainUI);
-        scene = new Scene(uiStack);
-        TextFieldValidator.configureScene(scene);
         // Add CSS that we need. cssResourceName will be loaded from the same package as this class.
         scene.getStylesheets().add(getClass().getResource(cssResourceName).toString());
         uiStack.getChildren().add(notificationBar);
