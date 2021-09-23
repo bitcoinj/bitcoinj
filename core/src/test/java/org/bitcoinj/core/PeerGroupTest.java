@@ -312,7 +312,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
 
         // Expect a zero hash getblocks on p1. This is how the process starts.
-        peerGroup.startBlockChainDownload(new AbstractPeerDataEventListener() {});
+        peerGroup.startBlockChainDownload(new DownloadProgressTracker());
         peerGroup.startBlockChainDownloadFromPeer(peerGroup.getConnectedPeers().iterator().next());
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(p1);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());

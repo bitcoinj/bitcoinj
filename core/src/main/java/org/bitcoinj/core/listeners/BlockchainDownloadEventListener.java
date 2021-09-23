@@ -1,5 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +17,9 @@
 
 package org.bitcoinj.core.listeners;
 
-import org.bitcoinj.core.*;
-
 /**
- * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
- * they can pre-filter messages before they are processed by a {@link Peer} or {@link PeerGroup}, and they can
- * provide transactions to remote peers when they ask for them.</p>
- * @deprecated use {@link BlockchainDownloadEventListener}
+ * Event Listener for blockchain download. Replaces deprecated {@link PeerDataEventListener} because most (all?)
+ * implementations of {@code PeerDataEventListener} were only using {@link BlocksDownloadedEventListener} and {@link ChainDownloadStartedEventListener} anyway.
  */
-@Deprecated
-public interface PeerDataEventListener extends BlocksDownloadedEventListener, ChainDownloadStartedEventListener,
-        GetDataEventListener, PreMessageReceivedEventListener {
+public interface BlockchainDownloadEventListener extends BlocksDownloadedEventListener, ChainDownloadStartedEventListener {
 }

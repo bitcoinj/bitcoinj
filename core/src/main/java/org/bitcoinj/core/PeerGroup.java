@@ -117,7 +117,7 @@ public class PeerGroup implements TransactionBroadcaster {
     // The peer that has been selected for the purposes of downloading announced data.
     @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
-    @Nullable @GuardedBy("lock") private PeerDataEventListener downloadListener;
+    @Nullable @GuardedBy("lock") private BlockchainDownloadEventListener downloadListener;
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> peersBlocksDownloadedEventListeners
         = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>> peersChainDownloadStartedEventListeners
@@ -1421,7 +1421,7 @@ public class PeerGroup implements TransactionBroadcaster {
      *
      * @param listener a listener for chain download events, may not be null
      */
-    public void startBlockChainDownload(PeerDataEventListener listener) {
+    public void startBlockChainDownload(BlockchainDownloadEventListener listener) {
         lock.lock();
         try {
             if (downloadPeer != null) {
@@ -1443,11 +1443,9 @@ public class PeerGroup implements TransactionBroadcaster {
      * download). Handling registration/deregistration on peer death/add is
      * outside the scope of these methods.
      */
-    private static void addDataEventListenerToPeer(Executor executor, Peer peer, PeerDataEventListener downloadListener) {
+    private static void addDataEventListenerToPeer(Executor executor, Peer peer, BlockchainDownloadEventListener downloadListener) {
         peer.addBlocksDownloadedEventListener(executor, downloadListener);
         peer.addChainDownloadStartedEventListener(executor, downloadListener);
-        peer.addGetDataEventListener(executor, downloadListener);
-        peer.addPreMessageReceivedEventListener(executor, downloadListener);
     }
 
     /**
@@ -1455,11 +1453,9 @@ public class PeerGroup implements TransactionBroadcaster {
      * blockchain download). Handling registration/deregistration on peer death/add is
      * outside the scope of these methods.
      */
-    private static void removeDataEventListenerFromPeer(Peer peer, PeerDataEventListener listener) {
+    private static void removeDataEventListenerFromPeer(Peer peer, BlockchainDownloadEventListener listener) {
         peer.removeBlocksDownloadedEventListener(listener);
         peer.removeChainDownloadStartedEventListener(listener);
-        peer.removeGetDataEventListener(listener);
-        peer.removePreMessageReceivedEventListener(listener);
     }
 
     /**
