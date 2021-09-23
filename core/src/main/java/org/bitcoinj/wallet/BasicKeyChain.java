@@ -320,9 +320,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
             // which the leaf keys chain to an encrypted parent and rederive their private keys on the fly. In that
             // case the caller in DeterministicKeyChain will take care of setting the type.
             EncryptedData data = item.getEncryptedData();
-            proto.getEncryptedDataBuilder()
+            proto.setEncryptedData(proto.getEncryptedData().toBuilder()
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
-                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector));
+                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
             checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
             proto.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);

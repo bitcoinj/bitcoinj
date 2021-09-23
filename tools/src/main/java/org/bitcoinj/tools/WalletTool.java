@@ -495,15 +495,19 @@ public class WalletTool implements Callable<Integer> {
         // less "raw" but we will just abort on any errors.
         try {
             Protos.Wallet.Builder builder = proto.toBuilder();
-            for (Protos.Transaction.Builder tx : builder.getTransactionBuilderList()) {
-                tx.setHash(bytesToHex(tx.getHash()));
-                for (int i = 0; i < tx.getBlockHashCount(); i++)
-                    tx.setBlockHash(i, bytesToHex(tx.getBlockHash(i)));
-                for (Protos.TransactionInput.Builder input : tx.getTransactionInputBuilderList())
-                    input.setTransactionOutPointHash(bytesToHex(input.getTransactionOutPointHash()));
-                for (Protos.TransactionOutput.Builder output : tx.getTransactionOutputBuilderList()) {
-                    if (output.hasSpentByTransactionHash())
-                        output.setSpentByTransactionHash(bytesToHex(output.getSpentByTransactionHash()));
+            for (Protos.Transaction tx : builder.getTransactionList()) {
+                Protos.Transaction.Builder txBuilder = tx.toBuilder();
+                txBuilder.setHash(bytesToHex(txBuilder.getHash()));
+                for (int i = 0; i < txBuilder.getBlockHashCount(); i++)
+                    txBuilder.setBlockHash(i, bytesToHex(txBuilder.getBlockHash(i)));
+                for (Protos.TransactionInput input : txBuilder.getTransactionInputList()) {
+                    Protos.TransactionInput.Builder inputBuilder = input.toBuilder();
+                    inputBuilder.setTransactionOutPointHash(bytesToHex(inputBuilder.getTransactionOutPointHash()));
+                }
+                for (Protos.TransactionOutput output : txBuilder.getTransactionOutputList()) {
+                    Protos.TransactionOutput.Builder outputBuilder = output.toBuilder();
+                    if (outputBuilder.hasSpentByTransactionHash())
+                        outputBuilder.setSpentByTransactionHash(bytesToHex(outputBuilder.getSpentByTransactionHash()));
                 }
                 // TODO: keys, ip addresses etc.
             }
