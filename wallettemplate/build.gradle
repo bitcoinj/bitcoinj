@@ -17,9 +17,9 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-compileJava.sourceCompatibility = 1.11
+compileJava.sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
-compileTestJava.sourceCompatibility = 1.11
+compileTestJava.sourceCompatibility = 11
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
