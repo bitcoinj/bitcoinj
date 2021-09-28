@@ -10,8 +10,9 @@ dependencies {
     implementation 'org.slf4j:slf4j-jdk14:1.7.32'
 }
 
-sourceCompatibility = 1.8
+compileJava.sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
+compileTestJava.sourceCompatibility = 1.8
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
