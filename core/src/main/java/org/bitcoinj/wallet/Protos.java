@@ -80,7 +80,7 @@ public final class Protos {
      * @param value The ipAddress to set.
      */
     private void setIpAddress(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       ipAddress_ = value;
     }
@@ -533,7 +533,7 @@ public final class Protos {
      * @param value The initialisationVector to set.
      */
     private void setInitialisationVector(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       initialisationVector_ = value;
     }
@@ -584,7 +584,7 @@ public final class Protos {
      * @param value The encryptedPrivateKey to set.
      */
     private void setEncryptedPrivateKey(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       encryptedPrivateKey_ = value;
     }
@@ -1076,7 +1076,7 @@ public final class Protos {
      * @param value The chainCode to set.
      */
     private void setChainCode(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       chainCode_ = value;
     }
@@ -2538,7 +2538,7 @@ public final class Protos {
      * @param value The secretBytes to set.
      */
     private void setSecretBytes(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       secretBytes_ = value;
     }
@@ -2659,7 +2659,7 @@ public final class Protos {
      * @param value The publicKey to set.
      */
     private void setPublicKey(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000008;
       publicKey_ = value;
     }
@@ -2725,7 +2725,7 @@ public final class Protos {
      */
     private void setLabel(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000010;
       label_ = value;
     }
@@ -2892,7 +2892,7 @@ public final class Protos {
      * @param value The deterministicSeed to set.
      */
     private void setDeterministicSeed(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000080;
       deterministicSeed_ = value;
     }
@@ -4070,7 +4070,7 @@ public final class Protos {
      * @param value The program to set.
      */
     private void setProgram(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       program_ = value;
     }
@@ -4476,7 +4476,7 @@ public final class Protos {
      */
     private void setData(
         int index, com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureDataIsMutable();
       data_.set(index, value);
     }
@@ -4485,7 +4485,7 @@ public final class Protos {
      * @param value The data to add.
      */
     private void addData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureDataIsMutable();
       data_.add(value);
     }
@@ -4910,7 +4910,7 @@ public final class Protos {
      * @param value The transactionOutPointHash to set.
      */
     private void setTransactionOutPointHash(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       transactionOutPointHash_ = value;
     }
@@ -5011,7 +5011,7 @@ public final class Protos {
      * @param value The scriptBytes to set.
      */
     private void setScriptBytes(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       scriptBytes_ = value;
     }
@@ -5857,7 +5857,7 @@ public final class Protos {
      * @param value The scriptBytes to set.
      */
     private void setScriptBytes(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       scriptBytes_ = value;
     }
@@ -5908,7 +5908,7 @@ public final class Protos {
      * @param value The spentByTransactionHash to set.
      */
     private void setSpentByTransactionHash(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       spentByTransactionHash_ = value;
     }
@@ -6923,7 +6923,7 @@ public final class Protos {
      * @param value The overridingTransaction to set.
      */
     private void setOverridingTransaction(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       overridingTransaction_ = value;
     }
@@ -8474,7 +8474,7 @@ public final class Protos {
      * @param value The hash to set.
      */
     private void setHash(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       hash_ = value;
     }
@@ -8899,7 +8899,7 @@ public final class Protos {
      */
     private void setBlockHash(
         int index, com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureBlockHashIsMutable();
       blockHash_.set(index, value);
     }
@@ -8913,7 +8913,7 @@ public final class Protos {
      * @param value The blockHash to add.
      */
     private void addBlockHash(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureBlockHashIsMutable();
       blockHash_.add(value);
     }
@@ -9234,7 +9234,7 @@ public final class Protos {
      */
     private void setMemo(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000100;
       memo_ = value;
     }
@@ -10491,7 +10491,7 @@ public final class Protos {
      * @param value The salt to set.
      */
     private void setSalt(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       salt_ = value;
     }
@@ -11182,7 +11182,7 @@ public final class Protos {
      */
     private void setId(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       id_ = value;
     }
@@ -11234,7 +11234,7 @@ public final class Protos {
      * @param value The data to set.
      */
     private void setData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       data_ = value;
     }
@@ -11745,7 +11745,7 @@ public final class Protos {
      */
     private void setTag(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       tag_ = value;
     }
@@ -11789,7 +11789,7 @@ public final class Protos {
      * @param value The data to set.
      */
     private void setData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       data_ = value;
     }
@@ -12506,7 +12506,7 @@ public final class Protos {
      */
     private void setNetworkIdentifier(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       networkIdentifier_ = value;
     }
@@ -12570,7 +12570,7 @@ public final class Protos {
      * @param value The lastSeenBlockHash to set.
      */
     private void setLastSeenBlockHash(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       lastSeenBlockHash_ = value;
     }
@@ -13234,7 +13234,7 @@ public final class Protos {
      */
     private void setDescription(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000080;
       description_ = value;
     }
@@ -14864,7 +14864,7 @@ public final class Protos {
      */
     private void setFiatCurrencyCode(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       fiatCurrencyCode_ = value;
     }

@@ -151,7 +151,7 @@ public final class Protos {
      * @param value The script to set.
      */
     private void setScript(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       script_ = value;
     }
@@ -688,7 +688,7 @@ public final class Protos {
      */
     private void setNetwork(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       network_ = value;
     }
@@ -1004,7 +1004,7 @@ public final class Protos {
      */
     private void setMemo(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000008;
       memo_ = value;
     }
@@ -1082,7 +1082,7 @@ public final class Protos {
      */
     private void setPaymentUrl(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000010;
       paymentUrl_ = value;
     }
@@ -1146,7 +1146,7 @@ public final class Protos {
      * @param value The merchantData to set.
      */
     private void setMerchantData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000020;
       merchantData_ = value;
     }
@@ -2092,7 +2092,7 @@ public final class Protos {
      */
     private void setPkiType(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       pkiType_ = value;
     }
@@ -2156,7 +2156,7 @@ public final class Protos {
      * @param value The pkiData to set.
      */
     private void setPkiData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       pkiData_ = value;
     }
@@ -2207,7 +2207,7 @@ public final class Protos {
      * @param value The serializedPaymentDetails to set.
      */
     private void setSerializedPaymentDetails(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000008;
       serializedPaymentDetails_ = value;
     }
@@ -2258,7 +2258,7 @@ public final class Protos {
      * @param value The signature to set.
      */
     private void setSignature(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000010;
       signature_ = value;
     }
@@ -2826,7 +2826,7 @@ public final class Protos {
      */
     private void setCertificate(
         int index, com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureCertificateIsMutable();
       certificate_.set(index, value);
     }
@@ -2839,7 +2839,7 @@ public final class Protos {
      * @param value The certificate to add.
      */
     private void addCertificate(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureCertificateIsMutable();
       certificate_.add(value);
     }
@@ -3291,7 +3291,7 @@ public final class Protos {
      * @param value The merchantData to set.
      */
     private void setMerchantData(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       merchantData_ = value;
     }
@@ -3365,7 +3365,7 @@ public final class Protos {
      */
     private void setTransactions(
         int index, com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureTransactionsIsMutable();
       transactions_.set(index, value);
     }
@@ -3378,7 +3378,7 @@ public final class Protos {
      * @param value The transactions to add.
      */
     private void addTransactions(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   ensureTransactionsIsMutable();
       transactions_.add(value);
     }
@@ -3594,7 +3594,7 @@ public final class Protos {
      */
     private void setMemo(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       memo_ = value;
     }
@@ -4359,7 +4359,7 @@ public final class Protos {
      */
     private void setMemo(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       memo_ = value;
     }

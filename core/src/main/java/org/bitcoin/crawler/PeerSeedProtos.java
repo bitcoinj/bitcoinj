@@ -96,7 +96,7 @@ public final class PeerSeedProtos {
      */
     private void setIpAddress(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       ipAddress_ = value;
     }
@@ -733,7 +733,7 @@ public final class PeerSeedProtos {
      */
     private void setNet(
         java.lang.String value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       net_ = value;
     }
@@ -1215,7 +1215,7 @@ public final class PeerSeedProtos {
      * @param value The peerSeeds to set.
      */
     private void setPeerSeeds(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000001;
       peerSeeds_ = value;
     }
@@ -1250,7 +1250,7 @@ public final class PeerSeedProtos {
      * @param value The signature to set.
      */
     private void setSignature(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000002;
       signature_ = value;
     }
@@ -1285,7 +1285,7 @@ public final class PeerSeedProtos {
      * @param value The pubkey to set.
      */
     private void setPubkey(com.google.protobuf.ByteString value) {
-      value.getClass();
+      java.lang.Class<?> valueClass = value.getClass();
   bitField0_ |= 0x00000004;
       pubkey_ = value;
     }
