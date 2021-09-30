@@ -19,9 +19,9 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.wallet.DefaultRiskAnalysis;
-import org.bitcoinj.wallet.KeyBag;
-import org.bitcoinj.wallet.RedeemData;
+import org.bitcoinj.core.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.RedeemData;
 
 import com.google.common.base.Joiner;
 

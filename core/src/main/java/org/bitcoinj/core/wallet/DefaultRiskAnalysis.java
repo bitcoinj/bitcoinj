@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
-import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.NetworkParameters;
@@ -47,13 +46,13 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     protected final Transaction tx;
     protected final List<Transaction> dependencies;
-    @Nullable protected final Wallet wallet;
+    @Nullable protected final WalletIF wallet;
 
     private Transaction nonStandard;
     protected Transaction nonFinal;
     protected boolean analyzed;
 
-    private DefaultRiskAnalysis(Wallet wallet, Transaction tx, List<Transaction> dependencies) {
+    private DefaultRiskAnalysis(WalletIF wallet, Transaction tx, List<Transaction> dependencies) {
         this.tx = tx;
         this.dependencies = dependencies;
         this.wallet = wallet;
@@ -248,7 +247,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     public static class Analyzer implements RiskAnalysis.Analyzer {
         @Override
-        public DefaultRiskAnalysis create(Wallet wallet, Transaction tx, List<Transaction> dependencies) {
+        public DefaultRiskAnalysis create(WalletIF wallet, Transaction tx, List<Transaction> dependencies) {
             return new DefaultRiskAnalysis(wallet, tx, dependencies);
         }
     }

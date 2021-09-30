@@ -20,17 +20,17 @@ package org.bitcoinj.signers;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.wallet.KeyBag;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.KeyBag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This transaction signer resolves missing signatures in accordance with the given {@link Wallet.MissingSigsMode}.
+ * This transaction signer resolves missing signatures in accordance with the given {@link WalletIF.MissingSigsMode}.
  * If missingSigsMode is USE_OP_ZERO this signer does nothing assuming missing signatures are already presented in
  * scriptSigs as OP_0.
  * In MissingSigsMode.THROW mode this signer will throw an exception. It would be MissingSignatureException
@@ -39,13 +39,13 @@ import org.slf4j.LoggerFactory;
 public class MissingSigResolutionSigner implements TransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(MissingSigResolutionSigner.class);
 
-    private final Wallet.MissingSigsMode missingSigsMode;
+    private final WalletIF.MissingSigsMode missingSigsMode;
 
     public MissingSigResolutionSigner() {
-        this(Wallet.MissingSigsMode.USE_DUMMY_SIG);
+        this(WalletIF.MissingSigsMode.USE_DUMMY_SIG);
     }
 
-    public MissingSigResolutionSigner(Wallet.MissingSigsMode missingSigsMode) {
+    public MissingSigResolutionSigner(WalletIF.MissingSigsMode missingSigsMode) {
         this.missingSigsMode = missingSigsMode;
     }
 
@@ -56,7 +56,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
 
     @Override
     public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
-        if (missingSigsMode == Wallet.MissingSigsMode.USE_OP_ZERO)
+        if (missingSigsMode == WalletIF.MissingSigsMode.USE_OP_ZERO)
             return true;
 
         int numInputs = propTx.partialTx.getInputs().size();
@@ -76,27 +76,27 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                 for (int j = 1; j < inputScript.getChunks().size() - sigSuffixCount; j++) {
                     ScriptChunk scriptChunk = inputScript.getChunks().get(j);
                     if (scriptChunk.equalsOpCode(0)) {
-                        if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
+                        if (missingSigsMode == WalletIF.MissingSigsMode.THROW) {
                             throw new MissingSignatureException();
-                        } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
+                        } else if (missingSigsMode == WalletIF.MissingSigsMode.USE_DUMMY_SIG) {
                             txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, j - 1));
                         }
                     }
                 }
             } else if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)) {
                 if (inputScript.getChunks().get(0).equalsOpCode(0)) {
-                    if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
+                    if (missingSigsMode == WalletIF.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
-                    } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
+                    } else if (missingSigsMode == WalletIF.MissingSigsMode.USE_DUMMY_SIG) {
                         txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }
                 }
             } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                 if (txIn.getWitness() == null || txIn.getWitness().equals(TransactionWitness.EMPTY)
                         || txIn.getWitness().getPush(0).length == 0) {
-                    if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
+                    if (missingSigsMode == WalletIF.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
-                    } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
+                    } else if (missingSigsMode == WalletIF.MissingSigsMode.USE_DUMMY_SIG) {
                         ECKey key = keyBag.findKeyFromPubKeyHash(
                                 ScriptPattern.extractHashFromP2WH(scriptPubKey), Script.ScriptType.P2WPKH);
                         txIn.setWitness(TransactionWitness.redeemP2WPKH(TransactionSignature.dummy(), key));

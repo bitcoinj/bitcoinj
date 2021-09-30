@@ -16,8 +16,8 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.listeners.WalletCoinsSentEventListener;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
 
@@ -30,5 +30,5 @@ public class NativeWalletCoinsSentEventListener implements WalletCoinsSentEventL
     public long ptr;
 
     @Override
-    public native void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
+    public native void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 }

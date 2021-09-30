@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
@@ -28,8 +29,7 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction.Pool;
+import org.bitcoinj.core.wallet.WalletTransaction.Pool;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
@@ -1178,7 +1178,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link WalletIF} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1198,7 +1198,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link WalletIF} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1364,7 +1364,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link WalletIF} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a Witness output
      * the scriptCode should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for. (See BIP143: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)</p>

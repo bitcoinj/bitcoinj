@@ -20,10 +20,11 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.wallet.KeyChain;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.listeners.KeyChainEventListener;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;

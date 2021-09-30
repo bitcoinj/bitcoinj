@@ -18,11 +18,12 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
 
@@ -46,7 +47,7 @@ public class RefreshWallet {
 
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public synchronized void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public synchronized void onCoinsReceived(WalletIF w, Transaction tx, Coin prevBalance, Coin newBalance) {
                 System.out.println("\nReceived tx " + tx.getTxId());
                 System.out.println(tx.toString());
             }

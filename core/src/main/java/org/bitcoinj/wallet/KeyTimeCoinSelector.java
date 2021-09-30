@@ -18,6 +18,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.CoinSelection;
+import org.bitcoinj.core.wallet.CoinSelector;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;

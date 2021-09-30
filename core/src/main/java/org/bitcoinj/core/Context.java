@@ -17,7 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.slf4j.*;
 
 import static com.google.common.base.Preconditions.*;

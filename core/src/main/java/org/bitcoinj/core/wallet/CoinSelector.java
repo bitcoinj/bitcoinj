@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.TransactionOutput;

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet.listeners;
+package org.bitcoinj.listeners;
 
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.WalletIF;
 
 /**
  * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
@@ -41,5 +41,5 @@ public interface WalletChangeEventListener {
      * this rather than onTransactionConfidenceChanged() + onReorganize() because you only get one callback per block
      * rather than one per transaction per block. Note that this is <b>not</b> called when a key is added. </p>
      */
-    void onWalletChanged(Wallet wallet);
+    void onWalletChanged(WalletIF wallet);
 }

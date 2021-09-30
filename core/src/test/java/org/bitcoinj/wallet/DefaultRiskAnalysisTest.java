@@ -19,11 +19,13 @@ package org.bitcoinj.wallet;
 
 import com.google.common.collect.*;
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.core.wallet.RiskAnalysis;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.wallet.DefaultRiskAnalysis.*;
+import org.bitcoinj.core.wallet.DefaultRiskAnalysis.*;
 import org.junit.*;
 
 import java.util.*;

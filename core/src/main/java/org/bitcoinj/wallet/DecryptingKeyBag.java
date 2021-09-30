@@ -17,6 +17,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.RedeemData;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.crypto.params.KeyParameter;
 

@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
@@ -25,7 +26,6 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
@@ -99,7 +99,7 @@ public class Peer extends PeerSocketHandler {
     // message. This method can go wrong if the peer re-orgs onto a shorter (but harder) chain, however, this is rare.
     private final AtomicInteger blocksAnnounced = new AtomicInteger();
     // Each wallet added to the peer will be notified of downloaded transaction data.
-    private final CopyOnWriteArrayList<Wallet> wallets;
+    private final CopyOnWriteArrayList<WalletIF> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
     @GuardedBy("lock") private long fastCatchupTimeSecs;
     // Whether we are currently downloading headers only or block bodies. Starts at true. If the fast catchup time is
@@ -748,7 +748,7 @@ public class Peer extends PeerSocketHandler {
                 return;
             }
             // It's a broadcast transaction. Tell all wallets about this tx so they can check if it's relevant or not.
-            for (final Wallet wallet : wallets) {
+            for (final WalletIF wallet : wallets) {
                 try {
                     if (wallet.isPendingTransactionRelevant(tx)) {
                         if (vDownloadTxDependencyDepth > 0) {
@@ -1096,7 +1096,7 @@ public class Peer extends PeerSocketHandler {
 
     private boolean checkForFilterExhaustion(FilteredBlock m) {
         boolean exhausted = false;
-        for (Wallet wallet : wallets) {
+        for (WalletIF wallet : wallets) {
             exhausted |= wallet.checkForFilterExhaustion(m);
         }
         return exhausted;
@@ -1345,15 +1345,15 @@ public class Peer extends PeerSocketHandler {
 
     /**
      * Links the given wallet to this peer. If you have multiple peers, you should use a {@link PeerGroup} to manage
-     * them and use the {@link PeerGroup#addWallet(Wallet)} method instead of registering the wallet with each peer
+     * them and use the {@link PeerGroup#addWallet(WalletIF)} method instead of registering the wallet with each peer
      * independently, otherwise the wallet will receive duplicate notifications.
      */
-    public void addWallet(Wallet wallet) {
+    public void addWallet(WalletIF wallet) {
         wallets.add(wallet);
     }
 
-    /** Unlinks the given wallet from peer. See {@link Peer#addWallet(Wallet)}. */
-    public void removeWallet(Wallet wallet) {
+    /** Unlinks the given wallet from peer. See {@link Peer#addWallet(WalletIF)}. */
+    public void removeWallet(WalletIF wallet) {
         wallets.remove(wallet);
     }
 
@@ -1681,7 +1681,7 @@ public class Peer extends PeerSocketHandler {
      * vDownloadData property is true, a {@link MemoryPoolMessage} is sent as well to trigger downloading of any
      * pending transactions that may be relevant.</p>
      *
-     * <p>The Peer does not automatically request filters from any wallets added using {@link Peer#addWallet(Wallet)}.
+     * <p>The Peer does not automatically request filters from any wallets added using {@link Peer#addWallet(WalletIF)}.
      * This is to allow callers to avoid redundantly recalculating the same filter repeatedly when using multiple peers
      * and multiple wallets together.</p>
      *
@@ -1699,7 +1699,7 @@ public class Peer extends PeerSocketHandler {
      * remote peer and if requested, a {@link MemoryPoolMessage} is sent as well to trigger downloading of any
      * pending transactions that may be relevant.</p>
      *
-     * <p>The Peer does not automatically request filters from any wallets added using {@link Peer#addWallet(Wallet)}.
+     * <p>The Peer does not automatically request filters from any wallets added using {@link Peer#addWallet(WalletIF)}.
      * This is to allow callers to avoid redundantly recalculating the same filter repeatedly when using multiple peers
      * and multiple wallets together.</p>
      *

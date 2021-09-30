@@ -17,28 +17,16 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.core.*;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
-import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionWitness;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.wallet.DefaultCoinSelector;
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.KeyChain;
+import org.bitcoinj.core.wallet.RiskAnalysis;
+import org.bitcoinj.core.wallet.SendRequest;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.core.wallet.WalletTransaction;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -52,18 +40,18 @@ import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.utils.Fiat;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet.BalanceType;
-import org.bitcoinj.wallet.WalletTransaction.Pool;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.core.wallet.WalletTransaction.Pool;
+import org.bitcoinj.listeners.KeyChainEventListener;
+import org.bitcoinj.listeners.WalletChangeEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletCoinsSentEventListener;
 import org.easymock.EasyMock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.bitcoinj.wallet.KeyChain.KeyPurpose;
+import org.bitcoinj.core.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.junit.After;
 import org.junit.Before;
@@ -244,7 +232,7 @@ public class WalletTest extends TestWithWallet {
             }
 
             @Override
-            public RiskAnalysis create(Wallet wallet, Transaction tx, List<Transaction> dependencies) {
+            public RiskAnalysis create(WalletIF wallet, Transaction tx, List<Transaction> dependencies) {
                 return new TestRiskAnalysis(tx == riskyTx);
             }
         }
@@ -458,7 +446,7 @@ public class WalletTest extends TestWithWallet {
         final LinkedList<Transaction> txns = new LinkedList<>();
         wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });
@@ -603,7 +591,7 @@ public class WalletTest extends TestWithWallet {
         final LinkedList<Transaction> confTxns = new LinkedList<>();
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 bigints[0] = prevBalance;
                 bigints[1] = newBalance;
                 txn[0] = tx;
@@ -612,7 +600,7 @@ public class WalletTest extends TestWithWallet {
 
         wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 bigints[2] = prevBalance;
                 bigints[3] = newBalance;
                 txn[1] = tx;
@@ -621,7 +609,7 @@ public class WalletTest extends TestWithWallet {
 
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 confTxns.add(tx);
             }
         });
@@ -883,7 +871,7 @@ public class WalletTest extends TestWithWallet {
         final int[] eventWalletChanged = new int[1];
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() ==
                         TransactionConfidence.ConfidenceType.DEAD) {
                     eventDead[0] = tx;
@@ -894,7 +882,7 @@ public class WalletTest extends TestWithWallet {
 
         wallet.addChangeEventListener(new WalletChangeEventListener() {
             @Override
-            public void onWalletChanged(Wallet wallet) {
+            public void onWalletChanged(WalletIF wallet) {
                 eventWalletChanged[0]++;
             }
         });
@@ -1301,7 +1289,7 @@ public class WalletTest extends TestWithWallet {
         final int[] walletChanged = new int[1];
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 // Check we got the expected transaction.
                 assertEquals(tx, t1);
                 // Check that it's considered to be pending inclusion in the block chain.
@@ -1315,7 +1303,7 @@ public class WalletTest extends TestWithWallet {
 
         wallet.addChangeEventListener(new WalletChangeEventListener() {
             @Override
-            public void onWalletChanged(Wallet wallet) {
+            public void onWalletChanged(WalletIF wallet) {
                 walletChanged[0]++;
             }
         });
@@ -1371,7 +1359,7 @@ public class WalletTest extends TestWithWallet {
         final Coin[] bigints = new Coin[2];
         wallet.addCoinsSentEventListener(new WalletCoinsSentEventListener() {
             @Override
-            public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txn[0] = tx;
                 bigints[0] = prevBalance;
                 bigints[1] = newBalance;
@@ -1420,14 +1408,14 @@ public class WalletTest extends TestWithWallet {
         final Transaction[] called = new Transaction[2];
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 called[0] = tx;
             }
         });
 
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() ==
                         TransactionConfidence.ConfidenceType.DEAD) {
                     called[0] = tx;
@@ -2808,7 +2796,7 @@ public class WalletTest extends TestWithWallet {
         // Check that if a wallet listener throws an exception, the others still run.
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 log.info("onCoinsReceived 1");
                 throw new RuntimeException("barf");
             }
@@ -2816,7 +2804,7 @@ public class WalletTest extends TestWithWallet {
         final AtomicInteger flag = new AtomicInteger();
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 log.info("onCoinsReceived 2");
                 flag.incrementAndGet();
             }
@@ -3121,12 +3109,12 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void completeTxPartiallySignedWithDummySigs() throws Exception {
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
-        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_DUMMY_SIG, dummySig);
+        completeTxPartiallySigned(WalletIF.MissingSigsMode.USE_DUMMY_SIG, dummySig);
     }
 
     @Test
     public void completeTxPartiallySignedWithEmptySig() throws Exception {
-        completeTxPartiallySigned(Wallet.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
+        completeTxPartiallySigned(WalletIF.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
     }
 
     @Test (expected = ECKey.MissingPrivateKeyException.class)
@@ -3146,17 +3134,17 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void completeTxPartiallySignedMarriedWithDummySigs() throws Exception {
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_DUMMY_SIG, dummySig);
+        completeTxPartiallySignedMarried(WalletIF.MissingSigsMode.USE_DUMMY_SIG, dummySig);
     }
 
     @Test
     public void completeTxPartiallySignedMarriedWithEmptySig() throws Exception {
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
+        completeTxPartiallySignedMarried(WalletIF.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
     }
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
     public void completeTxPartiallySignedMarriedThrows() throws Exception {
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, EMPTY_SIG);
+        completeTxPartiallySignedMarried(WalletIF.MissingSigsMode.THROW, EMPTY_SIG);
     }
 
     @Test (expected = TransactionSigner.MissingSignatureException.class)
@@ -3230,7 +3218,7 @@ public class WalletTest extends TestWithWallet {
         final AtomicBoolean bool = new AtomicBoolean();
         wallet.setRiskAnalyzer(new RiskAnalysis.Analyzer() {
             @Override
-            public RiskAnalysis create(Wallet wallet, Transaction wtx, List<Transaction> dependencies) {
+            public RiskAnalysis create(WalletIF wallet, Transaction wtx, List<Transaction> dependencies) {
                 RiskAnalysis.Result result = RiskAnalysis.Result.OK;
                 if (wtx.getTxId().equals(tx.getTxId()))
                     result = RiskAnalysis.Result.NON_STANDARD;
@@ -3504,7 +3492,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
 
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
-        req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
+        req.missingSigsMode = WalletIF.MissingSigsMode.USE_DUMMY_SIG;
         wallet.completeTx(req);
     }
 

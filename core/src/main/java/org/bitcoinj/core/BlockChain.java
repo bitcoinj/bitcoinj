@@ -19,12 +19,11 @@ package org.bitcoinj.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,21 +41,21 @@ public class BlockChain extends AbstractBlockChain {
     protected final BlockStore blockStore;
 
     /**
-     * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * <p>Constructs a BlockChain connected to the given wallet and store. To obtain a {@link WalletIF} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(File, WalletExtension...)}</p>
+     * {@link org.bitcoinj.wallet.Wallet#loadFromFile(File, org.bitcoinj.wallet.WalletExtension...)}</p>
      *
      * <p>For the store, you should use {@link SPVBlockStore} or you could also try a
      * {@link MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
-    public BlockChain(Context context, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
+    public BlockChain(Context context, WalletIF wallet, BlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<WalletIF>(), blockStore);
         addWallet(wallet);
     }
 
-    /** See {@link #BlockChain(Context, Wallet, BlockStore)}} */
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+    /** See {@link #BlockChain(Context, WalletIF, BlockStore)}} */
+    public BlockChain(NetworkParameters params, WalletIF wallet, BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);
     }
 
@@ -65,24 +64,24 @@ public class BlockChain extends AbstractBlockChain {
      * and receiving coins but rather, just want to explore the network data structures.
      */
     public BlockChain(Context context, BlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
+        this(context, new ArrayList<WalletIF>(), blockStore);
     }
 
     /** See {@link #BlockChain(Context, BlockStore)} */
     public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, new ArrayList<WalletIF>(), blockStore);
     }
 
     /**
      * Constructs a BlockChain connected to the given list of listeners and a store.
      */
-    public BlockChain(Context params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
+    public BlockChain(Context params, List<? extends WalletIF> wallets, BlockStore blockStore) throws BlockStoreException {
         super(params, wallets, blockStore);
         this.blockStore = blockStore;
     }
 
     /** See {@link #BlockChain(Context, List, BlockStore)} */
-    public BlockChain(NetworkParameters params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
+    public BlockChain(NetworkParameters params, List<? extends WalletIF> wallets, BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallets, blockStore);
     }
 

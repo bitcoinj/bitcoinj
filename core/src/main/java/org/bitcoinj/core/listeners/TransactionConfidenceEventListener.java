@@ -17,7 +17,7 @@
 package org.bitcoinj.core.listeners;
 
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.WalletIF;
 
 /**
  * <p>Implementors are called when confidence of a transaction changes.</p>
@@ -34,7 +34,7 @@ public interface TransactionConfidenceEventListener {
      * <ol>
      *     <li>You are sharing keys between wallets and accidentally create/broadcast a double spend.</li>
      *     <li>Somebody is attacking the network and reversing transactions, ie, the user is a victim of fraud.</li>
-     *     <li>A bug: for example you create a transaction, broadcast it but fail to commit it. The {@link Wallet}
+     *     <li>A bug: for example you create a transaction, broadcast it but fail to commit it. The {@link WalletIF}
      *     will then re-use the same outputs when creating the next spend.</li>
      * </ol><p>
      *
@@ -45,5 +45,5 @@ public interface TransactionConfidenceEventListener {
      * received (because the depth has changed). <b>If you want to update a UI view from the contents of the wallet
      * it is more efficient to use onWalletChanged instead.</b></p>
      */
-    void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
+    void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx);
 }

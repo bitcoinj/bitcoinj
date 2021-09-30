@@ -20,9 +20,9 @@ package org.bitcoinj.core;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.CoinSelector;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.CoinSelector;
 
 import javax.annotation.*;
 import java.util.*;
@@ -91,7 +91,7 @@ public class TransactionConfidence {
         /**
          * If PENDING, then the transaction is unconfirmed and should be included shortly, as long as it is being
          * announced and is considered valid by the network. A pending transaction will be announced if the containing
-         * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(Wallet)}.
+         * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(WalletIF)}.
          * You can estimate how likely the transaction is to be included by connecting to a bunch of nodes then measuring
          * how many announce it, using {@link TransactionConfidence#numBroadcastPeers()}.
          * Or if you saw it from a trusted peer, you can assume it's valid and will get mined sooner or later as well.
@@ -159,7 +159,7 @@ public class TransactionConfidence {
 
     /**
      * <p>A confidence listener is informed when the level of {@link TransactionConfidence} is updated by something, like
-     * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
+     * for example a {@link WalletIF}. You can add listeners to update your user interface or manage your order tracking
      * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
      * For example, this can happen if somebody is doing a double-spend attack against you. Whilst it's unlikely, your
      * code should be able to handle that in order to be correct.</p>
@@ -269,7 +269,7 @@ public class TransactionConfidence {
     }
 
     /**
-     * Called by other objects in the system, like a {@link Wallet}, when new information about the confidence of a 
+     * Called by other objects in the system, like a {@link WalletIF}, when new information about the confidence of a
      * transaction becomes available.
      */
     public synchronized void setConfidenceType(ConfidenceType confidenceType) {

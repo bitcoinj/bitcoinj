@@ -23,16 +23,16 @@ import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.net.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.listeners.KeyChainEventListener;
+import org.bitcoinj.listeners.ScriptsChangeEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletCoinsSentEventListener;
 import org.slf4j.*;
 
 import javax.annotation.*;
@@ -153,7 +153,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
     @GuardedBy("lock") private long fastCatchupTimeSecs;
-    private final CopyOnWriteArrayList<Wallet> wallets;
+    private final CopyOnWriteArrayList<WalletIF> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
 
     // This event listener is added to every peer. It's here so when we announce transactions via an "inv", every
@@ -162,7 +162,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private int minBroadcastConnections = 0;
     private final ScriptsChangeEventListener walletScriptsEventListener = new ScriptsChangeEventListener() {
-        @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+        @Override public void onScriptsChanged(WalletIF wallet, List<Script> scripts, boolean isAddingScripts) {
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
         }
     };
@@ -175,19 +175,19 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = new WalletCoinsReceivedEventListener() {
         @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+        public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             onCoinsReceivedOrSent(wallet, tx);
         }
     };
 
     private final WalletCoinsSentEventListener walletCoinsSentEventListener = new WalletCoinsSentEventListener() {
         @Override
-        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+        public void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             onCoinsReceivedOrSent(wallet, tx);
         }
     };
 
-    private void onCoinsReceivedOrSent(Wallet wallet, Transaction tx) {
+    private void onCoinsReceivedOrSent(WalletIF wallet, Transaction tx) {
         // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
         // if we have received a transaction that includes a relevant P2PK or P2WPKH output.
         //
@@ -561,7 +561,7 @@ public class PeerGroup implements TransactionBroadcaster {
             while (it.hasNext()) {
                 InventoryItem item = it.next();
                 // Check the wallets.
-                for (Wallet w : wallets) {
+                for (WalletIF w : wallets) {
                     Transaction tx = w.getTransaction(item.hash);
                     if (tx == null) continue;
                     transactions.add(tx);
@@ -1144,9 +1144,9 @@ public class PeerGroup implements TransactionBroadcaster {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      *
      * <p>The Wallet will have an event listener registered on it, so to avoid leaks remember to use
-     * {@link PeerGroup#removeWallet(Wallet)} on it if you wish to keep the Wallet but lose the PeerGroup.</p>
+     * {@link PeerGroup#removeWallet(WalletIF)} on it if you wish to keep the Wallet but lose the PeerGroup.</p>
      */
-    public void addWallet(Wallet wallet) {
+    public void addWallet(WalletIF wallet) {
         lock.lock();
         try {
             checkNotNull(wallet);
@@ -1168,7 +1168,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * <p>Link the given PeerFilterProvider to this PeerGroup. DO NOT use this for Wallets, use
-     * {@link PeerGroup#addWallet(Wallet)} instead.</p>
+     * {@link PeerGroup#addWallet(WalletIF)} instead.</p>
      *
      * <p>Note that this should be done before chain download commences because if you add a listener with keys earlier
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
@@ -1223,7 +1223,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
      */
-    public void removeWallet(Wallet wallet) {
+    public void removeWallet(WalletIF wallet) {
         wallets.remove(checkNotNull(wallet));
         peerFilterProviders.remove(wallet);
         wallet.removeCoinsReceivedEventListener(walletCoinsReceivedEventListener);
@@ -1524,7 +1524,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (bloomFilterMerger.getLastFilter() != null) peer.setBloomFilter(bloomFilterMerger.getLastFilter());
             peer.setDownloadData(false);
             // TODO: The peer should calculate the fast catchup time from the added wallets here.
-            for (Wallet wallet : wallets)
+            for (WalletIF wallet : wallets)
                 peer.addWallet(wallet);
             if (downloadPeer == null && newSize > maxConnections / 2) {
                 Peer newDownloadPeer = selectDownloadPeer(peers);
@@ -1656,7 +1656,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Returns the current fast catchup time. The contents of blocks before this time won't be downloaded as they
-     * cannot contain any interesting transactions. If you use {@link PeerGroup#addWallet(Wallet)} this just returns
+     * cannot contain any interesting transactions. If you use {@link PeerGroup#addWallet(WalletIF)} this just returns
      * the min of the wallets earliest key times.
      * @return a time in seconds since the epoch
      */
@@ -1720,7 +1720,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         peer.removeBlocksDownloadedEventListener(peerListener);
         peer.removeGetDataEventListener(peerListener);
-        for (Wallet wallet : wallets) {
+        for (WalletIF wallet : wallets) {
             peer.removeWallet(wallet);
         }
 
@@ -2110,7 +2110,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 // it already knows and will ignore this. If it's a transaction we received from
                 // somebody else via a side channel and are now broadcasting, this will put it into the
                 // wallet now we know it's valid.
-                for (Wallet wallet : wallets) {
+                for (WalletIF wallet : wallets) {
                     // Assumption here is there are no dependencies of the created transaction.
                     //
                     // We may end up with two threads trying to do this in parallel - the wallet will

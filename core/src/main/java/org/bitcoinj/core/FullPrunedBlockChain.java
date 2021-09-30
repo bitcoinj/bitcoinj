@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
@@ -24,8 +25,6 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,21 +59,21 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     private boolean runScripts = true;
 
     /**
-     * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * Constructs a block chain connected to the given wallet and store. To obtain a {@link WalletIF} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(File, WalletExtension...)}
+     * {@link org.bitcoinj.wallet.Wallet#loadFromFile(File, org.bitcoinj.wallet.WalletExtension...)}
      */
-    public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
+    public FullPrunedBlockChain(Context context, WalletIF wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(context, new ArrayList<WalletIF>(), blockStore);
         addWallet(wallet);
     }
 
     /**
-     * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
+     * Constructs a block chain connected to the given wallet and store. To obtain a {@link WalletIF} you can construct
      * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(File, WalletExtension...)}
+     * {@link org.bitcoinj.wallet.Wallet#loadFromFile(File, org.bitcoinj.wallet.WalletExtension...)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(NetworkParameters params, WalletIF wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallet, blockStore);
     }
 
@@ -82,11 +81,11 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * Constructs a block chain connected to the given store.
      */
     public FullPrunedBlockChain(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
+        this(context, new ArrayList<WalletIF>(), blockStore);
     }
 
     /**
-     * See {@link #FullPrunedBlockChain(Context, Wallet, FullPrunedBlockStore)}
+     * See {@link #FullPrunedBlockChain(Context, WalletIF, FullPrunedBlockStore)}
      */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), blockStore);
@@ -95,7 +94,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(Context context, List<WalletIF> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(context, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now
@@ -105,7 +104,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
+    public FullPrunedBlockChain(NetworkParameters params, List<WalletIF> listeners,
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), listeners, blockStore);
     }

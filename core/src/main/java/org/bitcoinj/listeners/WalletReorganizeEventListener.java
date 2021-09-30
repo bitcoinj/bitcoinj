@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet.listeners;
+package org.bitcoinj.listeners;
 
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.WalletIF;
 
 /**
  * <p>Implementors are called when the wallet is reorganized.</p>
@@ -33,5 +33,5 @@ public interface WalletReorganizeEventListener {
      *
      * <p>It is safe to use methods of wallet whilst inside this callback.</p>
      */
-    void onReorganize(Wallet wallet);
+    void onReorganize(WalletIF wallet);
 }

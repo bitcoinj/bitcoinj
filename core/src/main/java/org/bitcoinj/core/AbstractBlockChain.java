@@ -20,10 +20,10 @@ package org.bitcoinj.core;
 import com.google.common.base.*;
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
 
 import javax.annotation.*;
@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.*;
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
  * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
  *
- * <p>It can be connected to a {@link Wallet}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
+ * <p>It can be connected to a {@link WalletIF}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
  * notifications of re-organizations.</p>
  *
  * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
@@ -143,7 +143,7 @@ public abstract class AbstractBlockChain {
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
-    public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
+    public AbstractBlockChain(NetworkParameters params, List<? extends WalletIF> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this(Context.getOrCreate(params), wallets, blockStore);
     }
@@ -155,7 +155,7 @@ public abstract class AbstractBlockChain {
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
-    public AbstractBlockChain(Context context, List<? extends Wallet> wallets,
+    public AbstractBlockChain(Context context, List<? extends WalletIF> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
@@ -180,7 +180,7 @@ public abstract class AbstractBlockChain {
      * wallets is not well tested!
      * @param wallet wallet to add
      */
-    public final void addWallet(Wallet wallet) {
+    public final void addWallet(WalletIF wallet) {
         addNewBestBlockListener(Threading.SAME_THREAD, wallet);
         addReorganizeListener(Threading.SAME_THREAD, wallet);
         addTransactionReceivedListener(Threading.SAME_THREAD, wallet);
@@ -208,7 +208,7 @@ public abstract class AbstractBlockChain {
      * Remove a wallet from the chain.
      * @param wallet wallet to remove
      */
-    public void removeWallet(Wallet wallet) {
+    public void removeWallet(WalletIF wallet) {
         removeNewBestBlockListener(wallet);
         removeReorganizeListener(wallet);
         removeTransactionReceivedListener(wallet);

@@ -16,6 +16,8 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.core.wallet.KeyChain;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;

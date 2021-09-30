@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
 import org.bitcoinj.core.Transaction;
 
@@ -40,6 +40,6 @@ public interface RiskAnalysis {
     Result analyze();
 
     interface Analyzer {
-        RiskAnalysis create(Wallet wallet, Transaction tx, List<Transaction> dependencies);
+        RiskAnalysis create(WalletIF wallet, Transaction tx, List<Transaction> dependencies);
     }
 }

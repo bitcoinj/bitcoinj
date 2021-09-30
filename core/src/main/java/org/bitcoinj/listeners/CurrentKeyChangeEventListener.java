@@ -1,6 +1,6 @@
 /*
  * Copyright by the original author or authors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet.listeners;
+package org.bitcoinj.listeners;
 
-import org.bitcoinj.core.ECKey;
-
-import java.util.List;
-
-public class AbstractKeyChainEventListener implements KeyChainEventListener {
-    @Override
-    public void onKeysAdded(List<ECKey> keys) {
-    }
+public interface CurrentKeyChangeEventListener {
+    /**
+     * Called by {@link org.bitcoinj.wallet.KeyChainGroup} whenever a current key and/or address changes.
+     */
+    void onCurrentKeyChanged();
 }

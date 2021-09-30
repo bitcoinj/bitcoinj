@@ -17,8 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.RedeemData;
 import org.bitcoinj.script.*;
-import org.bitcoinj.wallet.*;
 
 import javax.annotation.*;
 import java.io.*;

@@ -17,6 +17,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.CoinSelection;
+import org.bitcoinj.core.wallet.CoinSelector;
 
 import java.util.HashSet;
 import java.util.Iterator;

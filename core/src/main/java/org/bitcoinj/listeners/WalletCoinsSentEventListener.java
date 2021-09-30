@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet.listeners;
+package org.bitcoinj.listeners;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.WalletIF;
 
 /**
  * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
@@ -42,5 +42,5 @@ public interface WalletCoinsSentEventListener {
      * @param prevBalance  The wallets balance before this transaction was seen.
      * @param newBalance   The wallets balance after this transaction was seen. This is the 'estimated' balance.
      */
-    void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance);
+    void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance);
 }

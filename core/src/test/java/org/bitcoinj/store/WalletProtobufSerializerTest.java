@@ -34,6 +34,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
@@ -44,7 +45,7 @@ import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicKeyChain;
-import org.bitcoinj.wallet.KeyChain;
+import org.bitcoinj.core.wallet.KeyChain;
 import org.bitcoinj.wallet.KeyChainGroup;
 
 import com.google.common.io.ByteStreams;
@@ -56,9 +57,9 @@ import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
-import org.bitcoinj.wallet.WalletTransaction;
-import org.bitcoinj.wallet.WalletTransaction.Pool;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.core.wallet.WalletTransaction;
+import org.bitcoinj.core.wallet.WalletTransaction.Pool;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -263,7 +264,7 @@ public class WalletProtobufSerializerTest {
         final ArrayList<Transaction> txns = new ArrayList<>(2);
         myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });

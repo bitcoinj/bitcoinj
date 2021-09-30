@@ -17,7 +17,7 @@
 package org.bitcoinj.jni;
 
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
-import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.core.Transaction;
 
 /**
@@ -29,5 +29,5 @@ public class NativeTransactionConfidenceEventListener implements TransactionConf
     public long ptr;
 
     @Override
-    public native void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
+    public native void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx);
 }

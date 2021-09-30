@@ -25,8 +25,7 @@ import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 

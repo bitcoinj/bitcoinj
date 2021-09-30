@@ -22,53 +22,34 @@ import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
+import org.bitcoinj.core.*;
 import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Base58;
-import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.Message;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerFilterProvider;
-import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionBag;
-import org.bitcoinj.core.TransactionBroadcast;
-import org.bitcoinj.core.TransactionBroadcaster;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.UTXO;
-import org.bitcoinj.core.UTXOProvider;
-import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.TransactionConfidence.*;
+import org.bitcoinj.core.wallet.CoinSelection;
+import org.bitcoinj.core.wallet.CoinSelector;
+import org.bitcoinj.core.wallet.DefaultCoinSelector;
+import org.bitcoinj.core.wallet.DefaultRiskAnalysis;
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.KeyChain;
+import org.bitcoinj.core.wallet.RedeemData;
+import org.bitcoinj.core.wallet.RiskAnalysis;
+import org.bitcoinj.core.wallet.SendRequest;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.core.wallet.WalletTransaction;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.signers.*;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Protos.Wallet.*;
-import org.bitcoinj.wallet.WalletTransaction.*;
-import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
+import org.bitcoinj.core.wallet.WalletTransaction.*;
+import org.bitcoinj.listeners.CurrentKeyChangeEventListener;
+import org.bitcoinj.listeners.KeyChainEventListener;
+import org.bitcoinj.listeners.ScriptsChangeEventListener;
+import org.bitcoinj.listeners.WalletChangeEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.listeners.WalletReorganizeEventListener;
 import org.slf4j.*;
 import org.bouncycastle.crypto.params.*;
 
@@ -121,8 +102,7 @@ import static com.google.common.base.Preconditions.*;
  * {@link Wallet#autosaveToFile(File, long, TimeUnit, WalletFiles.Listener)}
  * for more information about this.</p>
  */
-public class Wallet extends BaseTaggableObject
-    implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider, KeyBag, TransactionBag, ReorganizeListener {
+public class Wallet extends BaseTaggableObject implements WalletIF {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately to allow fast querying of current receive address
     // even if the wallet itself is busy e.g. saving or processing a big reorg. Useful for reducing UI latency.
@@ -501,6 +481,7 @@ public class Wallet extends BaseTaggableObject
         acceptRiskyTransactions = false;
     }
 
+    @Override
     public NetworkParameters getNetworkParameters() {
         return params;
     }
@@ -650,6 +631,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns address for a {@link #freshKey(KeyChain.KeyPurpose)}
      */
+    @Override
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         Address address;
         keyChainGroupLock.lock();
@@ -1868,6 +1850,7 @@ public class Wallet extends BaseTaggableObject
      * arbitrary transactions. Note that transactions added in this way will still be relayed to peers and appear in
      * transaction lists like any other pending transaction (even when not relevant).</p>
      */
+    @Override
     public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies, boolean overrideIsRelevant) throws VerificationException {
         // Can run in a peer thread. This method will only be called if a prior call to isPendingTransactionRelevant
         // returned true, so we already know by this point that it sends coins to or from our wallet, or is a double
@@ -1960,6 +1943,7 @@ public class Wallet extends BaseTaggableObject
      * called to decide whether the wallet cares about the transaction - if it does, then this method expects the
      * transaction and any dependencies it has which are still in the memory pool.</p>
      */
+    @Override
     public void receivePending(Transaction tx, @Nullable List<Transaction> dependencies) throws VerificationException {
         receivePending(tx, dependencies, false);
     }
@@ -1970,6 +1954,7 @@ public class Wallet extends BaseTaggableObject
      * risky it is. If this method returns true then {@link Wallet#receivePending(Transaction, List)}
      * will soon be called with the transactions dependencies as well.
      */
+    @Override
     public boolean isPendingTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
@@ -2886,26 +2871,17 @@ public class Wallet extends BaseTaggableObject
         return ListenerRegistration.removeFromList(listener, changeListeners);
     }
 
-    /**
-     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
-     * was never added.
-     */
+    @Override
     public boolean removeCoinsReceivedEventListener(WalletCoinsReceivedEventListener listener) {
         return ListenerRegistration.removeFromList(listener, coinsReceivedListeners);
     }
 
-    /**
-     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
-     * was never added.
-     */
+    @Override
     public boolean removeCoinsSentEventListener(WalletCoinsSentEventListener listener) {
         return ListenerRegistration.removeFromList(listener, coinsSentListeners);
     }
 
-    /**
-     * Removes the given event listener object. Returns true if the listener was removed, false if that listener
-     * was never added.
-     */
+    @Override
     public boolean removeKeyChainEventListener(KeyChainEventListener listener) {
         return keyChainGroup.removeEventListener(listener);
     }
@@ -2930,6 +2906,7 @@ public class Wallet extends BaseTaggableObject
      * Removes the given event listener object. Returns true if the listener was removed, false if that listener
      * was never added.
      */
+    @Override
     public boolean removeScriptsChangeEventListener(ScriptsChangeEventListener listener) {
         return ListenerRegistration.removeFromList(listener, scriptsChangeListeners);
     }
@@ -3158,6 +3135,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns a transaction object given its hash, if it exists in this wallet, or null otherwise.
      */
+    @Override
     @Nullable
     public Transaction getTransaction(Sha256Hash hash) {
         lock.lock();
@@ -3562,6 +3540,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Returns the hash of the last seen best-chain block, or null if the wallet is too old to store this data. */
+    @Override
     @Nullable
     public Sha256Hash getLastBlockSeenHash() {
         lock.lock();
@@ -3606,6 +3585,7 @@ public class Wallet extends BaseTaggableObject
      * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
      * time then this method returns zero.
      */
+    @Override
     public long getLastBlockSeenTimeSecs() {
         lock.lock();
         try {
@@ -3622,6 +3602,7 @@ public class Wallet extends BaseTaggableObject
      * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
      * time then this method returns null.
      */
+    @Override
     @Nullable
     public Date getLastBlockSeenTime() {
         final long secs = getLastBlockSeenTimeSecs();
@@ -3635,6 +3616,7 @@ public class Wallet extends BaseTaggableObject
      * Returns the height of the last seen best-chain block. Can be 0 if a wallet is brand new or -1 if the wallet
      * is old and doesn't have that data.
      */
+    @Override
     public int getLastBlockSeenHeight() {
         lock.lock();
         try {
@@ -3928,24 +3910,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Enumerates possible resolutions for missing signatures.
-     */
-    public enum MissingSigsMode {
-        /** Input script will have OP_0 instead of missing signatures */
-        USE_OP_ZERO,
-        /**
-         * Missing signatures will be replaced by dummy sigs. This is useful when you'd like to know the fee for
-         * a transaction without knowing the user's password, as fee depends on size.
-         */
-        USE_DUMMY_SIG,
-        /**
-         * If signature is missing, {@link TransactionSigner.MissingSignatureException}
-         * will be thrown for P2SH and {@link ECKey.MissingPrivateKeyException} for other tx types.
-         */
-        THROW
-    }
-
-    /**
      * <p>Statelessly creates a transaction that sends the given value to address. The change is sent to
      * {@link Wallet#currentChangeAddress()}, so you must have added at least one key.</p>
      *
@@ -4128,7 +4092,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Satisfies the given {@link SendRequest} using the default transaction broadcaster configured either via
-     * {@link PeerGroup#addWallet(Wallet)} or directly with {@link #setTransactionBroadcaster(TransactionBroadcaster)}.
+     * {@link PeerGroup#addWallet(WalletIF)} or directly with {@link #setTransactionBroadcaster(TransactionBroadcaster)}.
      *
      * @param request the SendRequest that describes what to do, get one using static methods on SendRequest itself.
      * @return An object containing the transaction that was created, and a future for the broadcast of it.
@@ -4945,6 +4909,7 @@ public class Wallet extends BaseTaggableObject
      * the Bloom filter used to request them may be exhausted, that is, not have sufficient keys in the deterministic
      * sequence within it to reliably find relevant transactions.
      */
+    @Override
     public boolean checkForFilterExhaustion(FilteredBlock block) {
         keyChainGroupLock.lock();
         try {
@@ -5239,7 +5204,7 @@ public class Wallet extends BaseTaggableObject
      * to broadcast transactions itself.</p>
      *
      * <p>You don't normally need to call this. A {@link PeerGroup} will automatically set itself as the wallets
-     * broadcaster when you use {@link PeerGroup#addWallet(Wallet)}. A wallet can use the broadcaster when you ask
+     * broadcaster when you use {@link PeerGroup#addWallet(WalletIF)}. A wallet can use the broadcaster when you ask
      * it to send money, but in future also at other times to implement various features that may require asynchronous
      * re-organisation of the wallet contents on the block chain. For instance, in future the wallet may choose to
      * optimise itself to reduce fees or improve privacy.</p>

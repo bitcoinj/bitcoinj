@@ -26,12 +26,15 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.wallet.KeyBag;
+import org.bitcoinj.core.wallet.KeyChain;
+import org.bitcoinj.core.wallet.RedeemData;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
-import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.listeners.CurrentKeyChangeEventListener;
+import org.bitcoinj.listeners.KeyChainEventListener;
 import org.slf4j.*;
 import org.bouncycastle.crypto.params.*;
 

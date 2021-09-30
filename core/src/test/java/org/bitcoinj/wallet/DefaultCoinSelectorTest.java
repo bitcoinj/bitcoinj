@@ -17,6 +17,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.CoinSelection;
+import org.bitcoinj.core.wallet.DefaultCoinSelector;
 import org.bitcoinj.params.*;
 import org.bitcoinj.testing.*;
 import org.junit.*;

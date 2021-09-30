@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,8 +28,8 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.KeyChain.KeyPurpose;
-import org.bitcoinj.wallet.Wallet.MissingSigsMode;
+import org.bitcoinj.core.wallet.KeyChain.KeyPurpose;
+import org.bitcoinj.core.wallet.WalletIF.MissingSigsMode;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import com.google.common.base.MoreObjects;
@@ -52,14 +52,14 @@ public class SendRequest {
      *
      * <p>If there are already inputs to the transaction, make sure their out point has a connected output,
      * otherwise their value will be added to fee.  Also ensure they are either signed or are spendable by a wallet
-     * key, otherwise the behavior of {@link Wallet#completeTx(SendRequest)} is undefined (likely
+     * key, otherwise the behavior of {@code Wallet#completeTx(SendRequest)} is undefined (likely
      * RuntimeException).</p>
      */
     public Transaction tx;
 
     /**
      * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
-     * (its value is ignored and set to {@link Wallet#getBalance()} - the fees required
+     * (its value is ignored and set to {@code Wallet#getBalance()} - the fees required
      * for the transaction). Any additional outputs are removed.
      */
     public boolean emptyWallet = false;
@@ -138,7 +138,7 @@ public class SendRequest {
      * throw an exception on missing signature ({@link MissingSigsMode#THROW}).
      * @see MissingSigsMode
      */
-    public MissingSigsMode missingSigsMode = MissingSigsMode.THROW;
+    public MissingSigsMode missingSigsMode = WalletIF.MissingSigsMode.THROW;
 
     /**
      * If not null, this exchange rate is recorded with the transaction during completion.
@@ -158,7 +158,7 @@ public class SendRequest {
     public boolean recipientsPayFees = false;
 
     // Tracks if this has been passed to wallet.completeTx already: just a safety check.
-    boolean completed;
+    public boolean completed;
 
     private SendRequest() {}
 
@@ -215,7 +215,7 @@ public class SendRequest {
      * completed, so you should directly proceed to signing and broadcasting/committing the transaction. CPFP is
      * currently only supported by a few miners, so use with care.
      */
-    public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise) {
+    public static SendRequest childPaysForParent(WalletIF wallet, Transaction parentTransaction, Coin feeRaise) {
         TransactionOutput outputToSpend = null;
         for (final TransactionOutput output : parentTransaction.getOutputs()) {
             if (output.isMine(wallet) && output.isAvailableForSpending()

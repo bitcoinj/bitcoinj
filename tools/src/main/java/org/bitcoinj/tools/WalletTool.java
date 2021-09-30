@@ -17,8 +17,8 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.*;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
@@ -33,8 +33,8 @@ import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.wallet.CoinSelection;
-import org.bitcoinj.wallet.CoinSelector;
+import org.bitcoinj.core.wallet.CoinSelection;
+import org.bitcoinj.core.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 
@@ -47,43 +47,18 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
-import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.AddressFormatException;
-import org.bitcoinj.core.Base58;
-import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.CheckpointManager;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
-import org.bitcoinj.core.DumpedPrivateKey;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FilteredBlock;
-import org.bitcoinj.core.FullPrunedBlockChain;
-import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.bitcoinj.wallet.Wallet.BalanceType;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
+import org.bitcoinj.listeners.WalletChangeEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletCoinsSentEventListener;
+import org.bitcoinj.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -1306,22 +1281,22 @@ public class WalletTool implements Callable<Integer> {
         }
 
         @Override
-        public void onWalletChanged(Wallet wallet) {
+        public void onWalletChanged(WalletIF wallet) {
             onChange(latch);
         }
 
         @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+        public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             onChange(latch);
         }
 
         @Override
-        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+        public void onCoinsSent(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
             onChange(latch);
         }
 
         @Override
-        public void onReorganize(Wallet wallet) {
+        public void onReorganize(WalletIF wallet) {
             onChange(latch);
         }
     }

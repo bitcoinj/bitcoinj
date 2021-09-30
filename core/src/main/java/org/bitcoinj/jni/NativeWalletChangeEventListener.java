@@ -16,8 +16,8 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.listeners.WalletChangeEventListener;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in
@@ -28,5 +28,5 @@ public class NativeWalletChangeEventListener implements WalletChangeEventListene
     public long ptr;
 
     @Override
-    public native void onWalletChanged(Wallet wallet);
+    public native void onWalletChanged(WalletIF wallet);
 }

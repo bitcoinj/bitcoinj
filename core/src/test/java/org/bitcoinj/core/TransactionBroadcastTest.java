@@ -19,9 +19,10 @@ package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.*;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.*;
 import org.junit.runner.*;
@@ -202,7 +203,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         final Transaction[] transactions = new Transaction[1];
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 transactions[0] = tx;
             }
         });

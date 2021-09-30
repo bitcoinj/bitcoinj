@@ -24,13 +24,14 @@ import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.wallet.KeyChain;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
+import org.bitcoinj.listeners.AbstractKeyChainEventListener;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;

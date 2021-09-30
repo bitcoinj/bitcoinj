@@ -19,6 +19,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.core.wallet.WalletTransaction;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -26,10 +28,9 @@ import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
+import org.bitcoinj.listeners.WalletChangeEventListener;
+import org.bitcoinj.listeners.WalletCoinsReceivedEventListener;
+import org.bitcoinj.listeners.WalletReorganizeEventListener;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -79,14 +80,14 @@ public class ChainSplitTest {
         final AtomicInteger walletChanged = new AtomicInteger();
         wallet.addReorganizeEventListener(new WalletReorganizeEventListener() {
             @Override
-            public void onReorganize(Wallet wallet) {
+            public void onReorganize(WalletIF wallet) {
                 reorgHappened.set(true);
             }
         });
         wallet.addChangeEventListener(new WalletChangeEventListener() {
 
             @Override
-            public void onWalletChanged(Wallet wallet) {
+            public void onWalletChanged(WalletIF wallet) {
                 walletChanged.incrementAndGet();
             }
         });
@@ -302,7 +303,7 @@ public class ChainSplitTest {
         final boolean[] eventCalled = new boolean[1];
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD)
                     eventCalled[0] = true;
             }
@@ -342,7 +343,7 @@ public class ChainSplitTest {
         final Transaction[] eventReplacement = new Transaction[1];
         wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
             @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
+            public void onTransactionConfidenceChanged(WalletIF wallet, Transaction tx) {
                 if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD) {
                     eventDead[0] = tx;
                     eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
@@ -404,7 +405,7 @@ public class ChainSplitTest {
         final ArrayList<Transaction> txns = new ArrayList<>(3);
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });
@@ -561,7 +562,7 @@ public class ChainSplitTest {
         final ArrayList<Transaction> txns = new ArrayList<>(3);
         wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, new WalletCoinsReceivedEventListener() {
             @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+            public void onCoinsReceived(WalletIF wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
                 txns.add(tx);
             }
         });

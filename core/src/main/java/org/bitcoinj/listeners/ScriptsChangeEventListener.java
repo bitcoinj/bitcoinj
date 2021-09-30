@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet.listeners;
+package org.bitcoinj.listeners;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.wallet.KeyChain;
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.script.Script;
 
 import java.util.List;
 
-public interface KeyChainEventListener {
+/**
+ * <p>Implementors are called when the contents of the wallet changes, for instance due to receiving/sending money
+ * or a block chain re-organize.</p>
+ */
+public interface ScriptsChangeEventListener {
     /**
-     * Called whenever a new key is added to the key chain, whether that be via an explicit addition or due to some
-     * other automatic derivation. See the documentation for your {@link KeyChain} implementation for details on what
-     * can trigger this event.
+     * Called whenever a new watched script is added to the wallet.
+     *
+     * @param isAddingScripts will be true if added scripts, false if removed scripts.
      */
-    void onKeysAdded(List<ECKey> keys);
+    void onScriptsChanged(WalletIF wallet, List<Script> scripts, boolean isAddingScripts);
 }

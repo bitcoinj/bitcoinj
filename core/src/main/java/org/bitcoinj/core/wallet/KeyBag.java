@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;

@@ -18,7 +18,7 @@ package wallettemplate;
 
 import javafx.scene.layout.HBox;
 import org.bitcoinj.core.*;
-import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.core.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import com.google.common.util.concurrent.FutureCallback;

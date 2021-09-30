@@ -16,9 +16,9 @@
 
 package org.bitcoinj.jni;
 
+import org.bitcoinj.core.wallet.WalletIF;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.ScriptsChangeEventListener;
+import org.bitcoinj.listeners.ScriptsChangeEventListener;
 
 import java.util.List;
 
@@ -31,5 +31,5 @@ public class NativeScriptsChangeEventListener implements ScriptsChangeEventListe
     public long ptr;
 
     @Override
-    public native void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts);
+    public native void onScriptsChanged(WalletIF wallet, List<Script> scripts, boolean isAddingScripts);
 }

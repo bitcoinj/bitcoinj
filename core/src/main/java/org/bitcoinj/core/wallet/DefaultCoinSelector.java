@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.core.wallet;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
@@ -62,7 +62,7 @@ public class DefaultCoinSelector implements CoinSelector {
         return new CoinSelection(Coin.valueOf(total), selected);
     }
 
-    @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
+    @VisibleForTesting public static void sortOutputs(ArrayList<TransactionOutput> outputs) {
         Collections.sort(outputs, new Comparator<TransactionOutput>() {
             @Override
             public int compare(TransactionOutput a, TransactionOutput b) {

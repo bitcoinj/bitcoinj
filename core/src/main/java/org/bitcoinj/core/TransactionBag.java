@@ -19,14 +19,14 @@ package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.core.wallet.WalletIF;
+import org.bitcoinj.core.wallet.WalletTransaction;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction;
 
 import java.util.Map;
 
 /**
- * This interface is used to abstract the {@link Wallet} and the {@link Transaction}
+ * This interface is used to abstract the {@link WalletIF} and the {@link Transaction}
  */
 public interface TransactionBag {
     /**
