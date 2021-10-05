@@ -80,3 +80,18 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'bitcoinj-core'
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                description = 'A Java Bitcoin library'
+            }
+        }
+    }
+}
