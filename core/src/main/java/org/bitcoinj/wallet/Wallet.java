@@ -1162,7 +1162,7 @@ public class Wallet extends BaseTaggableObject
             return isPubKeyHashMine(address.getHash(), scriptType);
         else if (scriptType == ScriptType.P2SH)
             return isPayToScriptHashMine(address.getHash());
-        else if (scriptType == ScriptType.P2WSH)
+        else if (scriptType == ScriptType.P2WSH || scriptType == ScriptType.P2TR)
             return false;
         else
             throw new IllegalArgumentException(address.toString());

@@ -197,6 +197,32 @@ public class ScriptPattern {
     }
 
     /**
+     * Returns true if this script is of the form {@code OP_1 <pubkey>}. This is a P2TR scriptPubKey. This
+     * script type was introduced with taproot.
+     */
+    public static boolean isP2TR(Script script) {
+        List<ScriptChunk> chunks = script.chunks;
+        if (chunks.size() != 2)
+            return false;
+        if (!chunks.get(0).equalsOpCode(OP_1))
+            return false;
+        byte[] chunk1data = chunks.get(1).data;
+        if (chunk1data == null)
+            return false;
+        if (chunk1data.length != SegwitAddress.WITNESS_PROGRAM_LENGTH_TR)
+            return false;
+        return true;
+    }
+
+    /**
+     * Extract the taproot output key from a P2TR scriptPubKey. It's important that the script is in the correct
+     * form, so you will want to guard calls to this method with {@link #isP2TR(Script)}.
+     */
+    public static byte[] extractOutputKeyFromP2TR(Script script) {
+        return script.chunks.get(1).data;
+    }
+
+    /**
      * Returns whether this script matches the format used for m-of-n multisig outputs:
      * {@code [m] [keys...] [n] CHECKMULTISIG}
      */

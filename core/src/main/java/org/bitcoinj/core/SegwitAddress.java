@@ -47,6 +47,7 @@ import org.bitcoinj.script.Script;
 public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
     public static final int WITNESS_PROGRAM_LENGTH_SH = 32;
+    public static final int WITNESS_PROGRAM_LENGTH_TR = 32;
     public static final int WITNESS_PROGRAM_MIN_LENGTH = 2;
     public static final int WITNESS_PROGRAM_MAX_LENGTH = 40;
 
@@ -59,7 +60,7 @@ public class SegwitAddress extends Address {
      * @param witnessVersion
      *            version number between 0 and 16
      * @param witnessProgram
-     *            hash of pubkey or script (for version 0)
+     *            hash of pubkey, pubkey or script (depending on version)
      */
     private SegwitAddress(NetworkParameters params, int witnessVersion, byte[] witnessProgram)
             throws AddressFormatException {
@@ -138,13 +139,20 @@ public class SegwitAddress extends Address {
     @Override
     public Script.ScriptType getOutputScriptType() {
         int version = getWitnessVersion();
-        checkState(version == 0);
-        int programLength = getWitnessProgram().length;
-        if (programLength == WITNESS_PROGRAM_LENGTH_PKH)
-            return Script.ScriptType.P2WPKH;
-        if (programLength == WITNESS_PROGRAM_LENGTH_SH)
-            return Script.ScriptType.P2WSH;
-        throw new IllegalStateException("Cannot happen.");
+        if (version == 0) {
+            int programLength = getWitnessProgram().length;
+            if (programLength == WITNESS_PROGRAM_LENGTH_PKH)
+                return Script.ScriptType.P2WPKH;
+            if (programLength == WITNESS_PROGRAM_LENGTH_SH)
+                return Script.ScriptType.P2WSH;
+            throw new IllegalStateException(); // cannot happen
+        } else if (version == 1) {
+            int programLength = getWitnessProgram().length;
+            if (programLength == WITNESS_PROGRAM_LENGTH_TR)
+                return Script.ScriptType.P2TR;
+            throw new IllegalStateException(); // cannot happen
+        }
+        throw new IllegalStateException("cannot handle: " + version);
     }
 
     @Override
@@ -200,6 +208,23 @@ public class SegwitAddress extends Address {
      */
     public static SegwitAddress fromHash(NetworkParameters params, byte[] hash) {
         return new SegwitAddress(params, 0, hash);
+    }
+
+    /**
+     * Construct a {@link SegwitAddress} that represents the given program, which is either a pubkey, a pubkey hash
+     * or a script hash – depending on the script version. The resulting address will be either a P2WPKH, a P2WSH or
+     * a P2TR type of address.
+     *
+     * @param params
+     *            network this address is valid for
+     * @param witnessVersion
+     *            version number between 0 and 16
+     * @param witnessProgram
+     *            version dependent witness program
+     * @return constructed address
+     */
+    public static SegwitAddress fromProgram(NetworkParameters params, int witnessVersion, byte[] witnessProgram) {
+        return new SegwitAddress(params, witnessVersion, witnessProgram);
     }
 
     /**

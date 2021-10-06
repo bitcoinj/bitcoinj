@@ -462,6 +462,9 @@ public class ScriptTest {
         Script p2wshScript = ScriptBuilder.createP2WSHOutputScript(new byte[32]);
         scriptAddress = SegwitAddress.fromHash(TESTNET, ScriptPattern.extractHashFromP2WH(p2wshScript));
         assertEquals(scriptAddress, p2wshScript.getToAddress(TESTNET));
+        // P2TR
+        toAddress = SegwitAddress.fromProgram(TESTNET, 1, new byte[32]);
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
     }
 
     @Test(expected = ScriptException.class)
