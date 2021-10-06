@@ -449,12 +449,19 @@ public class ScriptTest {
         Address toAddress = LegacyAddress.fromKey(TESTNET, toKey);
         assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(TESTNET, true));
         // pay to pubkey hash
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET, true));
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
         Address scriptAddress = LegacyAddress.fromScriptHash(TESTNET,
                 ScriptPattern.extractHashFromP2SH(p2shScript));
-        assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET, true));
+        assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET));
+        // P2WPKH
+        toAddress = SegwitAddress.fromKey(TESTNET, toKey);
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
+        // P2WSH
+        Script p2wshScript = ScriptBuilder.createP2WSHOutputScript(new byte[32]);
+        scriptAddress = SegwitAddress.fromHash(TESTNET, ScriptPattern.extractHashFromP2WH(p2wshScript));
+        assertEquals(scriptAddress, p2wshScript.getToAddress(TESTNET));
     }
 
     @Test(expected = ScriptException.class)
