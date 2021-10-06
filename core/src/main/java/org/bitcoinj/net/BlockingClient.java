@@ -116,7 +116,7 @@ public class BlockingClient implements MessageWriteTarget {
                 return;
             dbuf.put(readBuff, 0, read);
             // "flip" the buffer - setting the limit to the current position and setting position to 0
-            dbuf.flip();
+            ((Buffer) dbuf).flip();
             // Use connection.receiveBytes's return value as a double-check that it stopped reading at the right
             // location
             int bytesConsumed = connection.receiveBytes(dbuf);

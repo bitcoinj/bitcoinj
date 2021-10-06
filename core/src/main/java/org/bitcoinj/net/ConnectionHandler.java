@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
@@ -233,7 +234,7 @@ class ConnectionHandler implements MessageWriteTarget {
                     return;
                 }
                 // "flip" the buffer - setting the limit to the current position and setting position to 0
-                handler.readBuff.flip();
+                ((Buffer) handler.readBuff).flip();
                 // Use connection.receiveBytes's return value as a check that it stopped reading at the right location
                 int bytesConsumed = checkNotNull(handler.connection).receiveBytes(handler.readBuff);
                 checkState(handler.readBuff.position() == bytesConsumed);

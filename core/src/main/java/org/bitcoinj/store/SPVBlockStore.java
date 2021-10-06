@@ -191,7 +191,7 @@ public class SPVBlockStore implements BlockStore {
                 // Wrapped around.
                 cursor = FILE_PROLOGUE_BYTES;
             }
-            buffer.position(cursor);
+            ((Buffer) buffer).position(cursor);
             Sha256Hash hash = block.getHeader().getHash();
             notFoundCache.remove(hash);
             buffer.put(hash.getBytes());
@@ -228,7 +228,7 @@ public class SPVBlockStore implements BlockStore {
                     cursor = fileLength - RECORD_SIZE;
                 }
                 // Cursor is now at the start of the next record to check, so read the hash and compare it.
-                buffer.position(cursor);
+                ((Buffer) buffer).position(cursor);
                 buffer.get(scratch);
                 if (Arrays.equals(scratch, targetHashBytes)) {
                     // Found the target.
@@ -256,7 +256,7 @@ public class SPVBlockStore implements BlockStore {
         try {
             if (lastChainHead == null) {
                 byte[] headHash = new byte[32];
-                buffer.position(8);
+                ((Buffer) buffer).position(8);
                 buffer.get(headHash);
                 Sha256Hash hash = Sha256Hash.wrap(headHash);
                 StoredBlock block = get(hash);
@@ -277,7 +277,7 @@ public class SPVBlockStore implements BlockStore {
         try {
             lastChainHead = chainHead;
             byte[] headHash = chainHead.getHeader().getHash().getBytes();
-            buffer.position(8);
+            ((Buffer) buffer).position(8);
             buffer.put(headHash);
         } finally { lock.unlock(); }
     }
@@ -333,13 +333,13 @@ public class SPVBlockStore implements BlockStore {
             blockCache.clear();
             notFoundCache.clear();
             // Clear file content
-            buffer.position(0);
+            ((Buffer) buffer).position(0);
             long fileLength = randomAccessFile.length();
             for (int i = 0; i < fileLength; i++) {
                 buffer.put((byte)0);
             }
             // Initialize store again
-            buffer.position(0);
+            ((Buffer) buffer).position(0);
             initNewStore(params);
         } finally { lock.unlock(); }
     }

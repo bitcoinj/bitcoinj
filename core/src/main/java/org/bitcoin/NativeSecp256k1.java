@@ -17,6 +17,7 @@
 
 package org.bitcoin;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -63,7 +64,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(data);
         byteBuff.put(signature);
         byteBuff.put(pub);
@@ -93,7 +94,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(data);
         byteBuff.put(sec);
 
@@ -130,7 +131,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(seckey);
 
         r.lock();
@@ -158,7 +159,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(seckey);
 
         byte[][] retByteArray;
@@ -223,7 +224,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(privkey);
         byteBuff.put(tweak);
 
@@ -264,7 +265,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(privkey);
         byteBuff.put(tweak);
 
@@ -305,7 +306,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(pubkey);
         byteBuff.put(tweak);
 
@@ -346,7 +347,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(pubkey);
         byteBuff.put(tweak);
 
@@ -387,7 +388,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(seckey);
         byteBuff.put(pubkey);
 
@@ -424,7 +425,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(seed);
 
         w.lock();
@@ -450,7 +451,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        ((Buffer) byteBuff).rewind();
         byteBuff.put(data);
         byteBuff.put(sec);
 

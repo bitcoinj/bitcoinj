@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
@@ -159,7 +160,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
                     // If we went through the whole buffer without a full message, we need to use the largeReadBuffer
                     if (firstMessage && buff.limit() == buff.capacity()) {
                         // ...so reposition the buffer to 0 and read the next message header
-                        buff.position(0);
+                        ((Buffer) buff).position(0);
                         try {
                             serializer.seekPastMagicBytes(buff);
                             header = serializer.deserializeHeader(buff);
@@ -178,7 +179,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
                     } else {
                         // Reposition the buffer to its original position, which saves us from skipping messages by
                         // seeking past part of the magic bytes before all of them are in the buffer
-                        buff.position(preSerializePosition);
+                        ((Buffer) buff).position(preSerializePosition);
                     }
                     return buff.position();
                 }

@@ -35,6 +35,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -138,7 +139,7 @@ public class CheckpointManager {
                 if (dis.read(buffer.array(), 0, size) < size)
                     throw new IOException("Incomplete read whilst loading checkpoints.");
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
-                buffer.position(0);
+                ((Buffer) buffer).position(0);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
             Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
@@ -172,9 +173,9 @@ public class CheckpointManager {
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
-                buffer.position(0);
+                ((Buffer) buffer).position(0);
                 buffer.put(bytes);
-                buffer.position(0);
+                ((Buffer) buffer).position(0);
                 StoredBlock block = StoredBlock.deserializeCompact(params, buffer);
                 checkpoints.put(block.getHeader().getTimeSeconds(), block);
             }
