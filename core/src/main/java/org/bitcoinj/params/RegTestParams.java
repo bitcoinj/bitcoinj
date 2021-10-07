@@ -77,20 +77,6 @@ public class RegTestParams extends AbstractBitcoinNetParams {
     }
 
     @Override
-    public Block getGenesisBlock() {
-        synchronized (GENESIS_HASH) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(this);
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(GENESIS_TIME);
-                genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
-            }
-        }
-        return genesisBlock;
-    }
-
-    @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_REGTEST;
     }

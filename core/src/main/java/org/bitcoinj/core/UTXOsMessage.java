@@ -16,8 +16,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.discovery.HttpDiscovery;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;

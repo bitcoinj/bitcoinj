@@ -26,9 +26,7 @@ import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 
 import com.google.common.base.MoreObjects;
@@ -65,35 +63,6 @@ import java.math.BigInteger;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class Transaction extends ChildMessage {
-    /**
-     * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
-     * into the past.
-     */
-    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = new Comparator<Transaction>() {
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-            final long time1 = tx1.getUpdateTime().getTime();
-            final long time2 = tx2.getUpdateTime().getTime();
-            final int updateTimeComparison = -(Long.compare(time1, time2));
-            //If time1==time2, compare by tx hash to make comparator consistent with equals
-            return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
-        }
-    };
-    /** A comparator that can be used to sort transactions by their chain height. */
-    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-            final TransactionConfidence confidence1 = tx1.getConfidence();
-            final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence1.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-            final TransactionConfidence confidence2 = tx2.getConfidence();
-            final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-            final int heightComparison = -(Integer.compare(height1, height2));
-            //If height1==height2, compare by tx hash to make comparator consistent with equals
-            return heightComparison != 0 ? heightComparison : tx1.getTxId().compareTo(tx2.getTxId());
-        }
-    };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
     /**
@@ -380,51 +349,6 @@ public class Transaction extends ChildMessage {
     @Nullable
     public Map<Sha256Hash, Integer> getAppearsInHashes() {
         return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
-    }
-
-    /**
-     * Convenience wrapper around getConfidence().getConfidenceType()
-     * @return true if this transaction hasn't been seen in any block yet.
-     */
-    public boolean isPending() {
-        return getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.PENDING;
-    }
-
-    /**
-     * <p>Puts the given block in the internal set of blocks in which this transaction appears. This is
-     * used by the wallet to ensure transactions that appear on side chains are recorded properly even though the
-     * block stores do not save the transaction data at all.</p>
-     *
-     * <p>If there is a re-org this will be called once for each block that was previously seen, to update which block
-     * is the best chain. The best chain block is guaranteed to be called last. So this must be idempotent.</p>
-     *
-     * <p>Sets updatedAt to be the earliest valid block time where this tx was seen.</p>
-     *
-     * @param block     The {@link StoredBlock} in which the transaction has appeared.
-     * @param bestChain whether to set the updatedAt timestamp from the block header (only if not already set)
-     * @param relativityOffset A number that disambiguates the order of transactions within a block.
-     */
-    public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
-        long blockTime = block.getHeader().getTimeSeconds() * 1000;
-        if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
-            updatedAt = new Date(blockTime);
-        }
-
-        addBlockAppearance(block.getHeader().getHash(), relativityOffset);
-
-        if (bestChain) {
-            TransactionConfidence transactionConfidence = getConfidence();
-            // This sets type to BUILDING and depth to one.
-            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
-        }
-    }
-
-    public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {
-        if (appearsInHashes == null) {
-            // TODO: This could be a lot more memory efficient as we'll typically only store one element.
-            appearsInHashes = new TreeMap<>();
-        }
-        appearsInHashes.put(blockHash, relativityOffset);
     }
 
     /**
@@ -770,19 +694,6 @@ public class Transaction extends ChildMessage {
      */
     public boolean isCoinBase() {
         return inputs.size() == 1 && inputs.get(0).isCoinBase();
-    }
-
-    /**
-     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required coinbase depth, or a non-coinbase tx.
-     */
-    public boolean isMature() {
-        if (!isCoinBase())
-            return true;
-
-        if (getConfidence().getConfidenceType() != ConfidenceType.BUILDING)
-            return false;
-
-        return getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
     }
 
     @Override
@@ -1575,36 +1486,6 @@ public class Transaction extends ChildMessage {
     /** Same as getOutputs().get(index) */
     public TransactionOutput getOutput(long index) {
         return outputs.get((int)index);
-    }
-
-    /**
-     * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
-     * referenced by the implicit {@link Context}.
-     */
-    public TransactionConfidence getConfidence() {
-        return getConfidence(Context.get());
-    }
-
-    /**
-     * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
-     * referenced by the given {@link Context}.
-     */
-    public TransactionConfidence getConfidence(Context context) {
-        return getConfidence(context.getConfidenceTable());
-    }
-
-    /**
-     * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
-     */
-    public TransactionConfidence getConfidence(TxConfidenceTable table) {
-        if (confidence == null)
-            confidence = table.getOrCreate(getTxId()) ;
-        return confidence;
-    }
-
-    /** Check if the transaction has a known confidence */
-    public boolean hasConfidence() {
-        return getConfidence().getConfidenceType() != TransactionConfidence.ConfidenceType.UNKNOWN;
     }
 
     @Override

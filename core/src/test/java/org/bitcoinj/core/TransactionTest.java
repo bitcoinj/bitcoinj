@@ -116,22 +116,6 @@ public class TransactionTest {
     }
 
     @Test
-    public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
-        int TEST_LOCK_TIME = 20;
-        Date now = Calendar.getInstance().getTime();
-
-        BlockChain mockBlockChain = createMock(BlockChain.class);
-        EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
-
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
-        tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
-
-        replay(mockBlockChain);
-
-        assertEquals(tx.estimateLockTime(mockBlockChain), now);
-    }
-
-    @Test
     public void testOptimalEncodingMessageSize() {
         Transaction tx = new Transaction(UNITTEST);
 

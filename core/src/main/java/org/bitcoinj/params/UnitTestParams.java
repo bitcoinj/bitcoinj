@@ -67,19 +67,6 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     }
 
     @Override
-    public Block getGenesisBlock() {
-        synchronized (this) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(this);
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Utils.currentTimeSeconds());
-                genesisBlock.solve();
-            }
-        }
-        return genesisBlock;
-    }
-
-    @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_UNIT_TESTS;
     }

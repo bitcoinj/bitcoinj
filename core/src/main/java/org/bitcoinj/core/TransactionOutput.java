@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.script.*;
-import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
 
 import javax.annotation.*;
@@ -374,23 +373,6 @@ public class TransactionOutput extends ChildMessage {
     @Nullable
     public Sha256Hash getParentTransactionHash() {
         return parent == null ? null : ((Transaction) parent).getTxId();
-    }
-
-    /**
-     * Returns the depth in blocks of the parent tx.
-     *
-     * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
-     * then -1.</p>
-     * @return The tx depth or -1.
-     */
-    public int getParentTransactionDepthInBlocks() {
-        if (getParentTransaction() != null) {
-            TransactionConfidence confidence = getParentTransaction().getConfidence();
-            if (confidence.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
-                return confidence.getDepthInBlocks();
-            }
-        }
-        return -1;
     }
 
     /**

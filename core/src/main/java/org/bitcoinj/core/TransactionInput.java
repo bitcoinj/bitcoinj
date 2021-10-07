@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
@@ -501,17 +500,6 @@ public class TransactionInput extends ChildMessage {
     /** Returns a copy of the input detached from its containing transaction, if need be. */
     public TransactionInput duplicateDetached() {
         return new TransactionInput(params, null, bitcoinSerialize(), 0);
-    }
-
-    /**
-     * <p>Returns either RuleViolation.NONE if the input is standard, or which rule makes it non-standard if so.
-     * The "IsStandard" rules control whether the default Bitcoin Core client blocks relay of a tx / refuses to mine it,
-     * however, non-standard transactions can still be included in blocks and will be accepted as valid if so.</p>
-     *
-     * <p>This method simply calls {@code DefaultRiskAnalysis.isInputStandard(this)}.</p>
-     */
-    public DefaultRiskAnalysis.RuleViolation isStandard() {
-        return DefaultRiskAnalysis.isInputStandard(this);
     }
 
     @Override

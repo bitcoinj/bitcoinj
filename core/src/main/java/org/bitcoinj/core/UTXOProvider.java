@@ -16,8 +16,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.store.FullPrunedBlockStore;
-
 import java.util.List;
 
 /**

@@ -17,11 +17,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 
 import org.bitcoinj.utils.MonetaryFormat;
 
@@ -30,7 +27,6 @@ import java.math.*;
 import java.util.*;
 
 import static org.bitcoinj.core.Coin.*;
-import org.bitcoinj.utils.VersionTally;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -93,8 +89,6 @@ public abstract class NetworkParameters {
     
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
-    protected HttpDiscovery.Details[] httpSeeds = {};
-    protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected volatile transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters() {
@@ -178,60 +172,14 @@ public abstract class NetworkParameters {
         return spendableCoinbaseDepth;
     }
 
-    /**
-     * Throws an exception if the block's difficulty is not correct.
-     *
-     * @throws VerificationException if the block's difficulty is not correct.
-     */
-    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, Block next, final BlockStore blockStore) throws VerificationException, BlockStoreException;
-
-    /**
-     * Returns true if the block height is either not a checkpoint, or is a checkpoint and the hash matches.
-     */
-    public boolean passesCheckpoint(int height, Sha256Hash hash) {
-        Sha256Hash checkpointHash = checkpoints.get(height);
-        return checkpointHash == null || checkpointHash.equals(hash);
-    }
-
-    /**
-     * Returns true if the given height has a recorded checkpoint.
-     */
-    public boolean isCheckpoint(int height) {
-        Sha256Hash checkpointHash = checkpoints.get(height);
-        return checkpointHash != null;
-    }
-
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
-    }
-
-    /** Returns DNS names that when resolved, give IP addresses of active peers. */
-    public String[] getDnsSeeds() {
-        return dnsSeeds;
     }
 
     /** Returns IP address of active peers. */
     public int[] getAddrSeeds() {
         return addrSeeds;
     }
-
-    /** Returns discovery objects for seeds implementing the Cartographer protocol. See {@link HttpDiscovery} for more info. */
-    public HttpDiscovery.Details[] getHttpSeeds() {
-        return httpSeeds;
-    }
-
-    /**
-     * <p>Genesis block for this chain.</p>
-     *
-     * <p>The first block in every chain is a well known constant shared between all Bitcoin implementations. For a
-     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
-     * prevBlockHash pointers in the block headers.</p>
-     *
-     * <p>The genesis blocks for both test and main networks contain the timestamp of when they were created,
-     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
-     * bailout for banks"</i>.</p>
-     */
-    public abstract Block getGenesisBlock();
 
     /** Default TCP port on which to connect to nodes. */
     public int getPort() {
@@ -393,54 +341,6 @@ public abstract class NetworkParameters {
      */
     public int getMajorityWindow() {
         return majorityWindow;
-    }
-
-    /**
-     * The flags indicating which block validation tests should be applied to
-     * the given block. Enables support for alternative blockchains which enable
-     * tests based on different criteria.
-     * 
-     * @param block block to determine flags for.
-     * @param height height of the block, if known, null otherwise. Returned
-     * tests should be a safe subset if block height is unknown.
-     */
-    public EnumSet<Block.VerifyFlag> getBlockVerificationFlags(final Block block,
-            final VersionTally tally, final Integer height) {
-        final EnumSet<Block.VerifyFlag> flags = EnumSet.noneOf(Block.VerifyFlag.class);
-
-        if (block.isBIP34()) {
-            final Integer count = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP34);
-            if (null != count && count >= getMajorityEnforceBlockUpgrade()) {
-                flags.add(Block.VerifyFlag.HEIGHT_IN_COINBASE);
-            }
-        }
-        return flags;
-    }
-
-    /**
-     * The flags indicating which script validation tests should be applied to
-     * the given transaction. Enables support for alternative blockchains which enable
-     * tests based on different criteria.
-     *
-     * @param block block the transaction belongs to.
-     * @param transaction to determine flags for.
-     * @param height height of the block, if known, null otherwise. Returned
-     * tests should be a safe subset if block height is unknown.
-     */
-    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
-            final Transaction transaction, final VersionTally tally, final Integer height) {
-        final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
-        if (block.getTimeSeconds() >= NetworkParameters.BIP16_ENFORCE_TIME)
-            verifyFlags.add(Script.VerifyFlag.P2SH);
-
-        // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
-        // blocks, when 75% of the network has upgraded:
-        if (block.getVersion() >= Block.BLOCK_VERSION_BIP65 &&
-            tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
-            verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
-        }
-
-        return verifyFlags;
     }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);
