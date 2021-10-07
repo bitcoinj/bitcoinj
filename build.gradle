@@ -21,4 +21,5 @@ allprojects {
     }
 
     group = 'org.bitcoinj'
+    version = bitcoinjVersion
 }
