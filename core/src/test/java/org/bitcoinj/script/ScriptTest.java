@@ -61,10 +61,10 @@ public class ScriptTest {
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 
-    @Before
-    public void setUp() throws Exception {
-        Context context = new Context(TESTNET);
-    }
+    //@Before
+    //public void setUp() throws Exception {
+    //    Context context = new Context(TESTNET);
+    //}
 
     @Test
     public void testScriptSig() throws Exception {

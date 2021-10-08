@@ -16,14 +16,10 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
-import org.bitcoinj.wallet.SendRequest;
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,29 +36,6 @@ public class TransactionOutputTest extends TestWithWallet {
     @After
     public void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    @Test
-    public void testMultiSigOutputToString() throws Exception {
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN);
-        ECKey myKey = new ECKey();
-        this.wallet.importKey(myKey);
-
-        // Simulate another signatory
-        ECKey otherKey = new ECKey();
-
-        // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(UNITTEST);
-        ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
-        multiSigTransaction.addOutput(Coin.COIN, scriptPubKey);
-
-        SendRequest req = SendRequest.forTx(multiSigTransaction);
-        this.wallet.completeTx(req);
-        TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
-
-        assertThat(multiSigTransactionOutput.toString(), CoreMatchers.containsString("CHECKMULTISIG"));
     }
 
     @Test

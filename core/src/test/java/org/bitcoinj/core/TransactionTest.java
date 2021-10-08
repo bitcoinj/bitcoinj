@@ -50,7 +50,6 @@ public class TransactionTest {
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(UNITTEST);
         tx = FakeTxBuilder.createFakeTx(UNITTEST);
     }
 
@@ -136,20 +135,6 @@ public class TransactionTest {
         int sumOfAllMsgSizes = 0;
         for (Message m: list) { sumOfAllMsgSizes += m.getMessageSize() + 1; }
         return sumOfAllMsgSizes;
-    }
-
-    @Test
-    public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(UNITTEST);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertEquals(tx.isMature(), false);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertEquals(tx.isMature(), false);
-
-        tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertEquals(tx.isMature(), false);
     }
 
     @Test
@@ -373,30 +358,6 @@ public class TransactionTest {
     }
 
     @Test
-    public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
-        TransactionInput input = tx.getInput(0);
-        input.setSequenceNumber(42);
-
-        int TEST_LOCK_TIME = 20;
-        tx.setLockTime(TEST_LOCK_TIME);
-
-        Calendar cal = Calendar.getInstance();
-        cal.set(2085, 10, 4, 17, 53, 21);
-        cal.set(Calendar.MILLISECOND, 0);
-
-        BlockChain mockBlockChain = createMock(BlockChain.class);
-        EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
-
-        replay(mockBlockChain);
-
-        String str = tx.toString(mockBlockChain, null);
-
-        assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
-        assertEquals(str.contains("estimated to be reached at"), true);
-    }
-
-    @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         TransactionInput ti = new TransactionInput(UNITTEST, tx, new byte[0]) {
@@ -414,34 +375,6 @@ public class TransactionTest {
     public void testToStringWhenThereAreZeroInputs() {
         Transaction tx = new Transaction(UNITTEST);
         assertEquals(tx.toString().contains("No inputs!"), true);
-    }
-
-    @Test
-    public void testTheTXByHeightComparator() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST);
-        tx1.getConfidence().setAppearedAtChainHeight(1);
-
-        Transaction tx2 = FakeTxBuilder.createFakeTx(UNITTEST);
-        tx2.getConfidence().setAppearedAtChainHeight(2);
-
-        Transaction tx3 = FakeTxBuilder.createFakeTx(UNITTEST);
-        tx3.getConfidence().setAppearedAtChainHeight(3);
-
-        SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
-        set.add(tx2);
-        set.add(tx1);
-        set.add(tx3);
-
-        Iterator<Transaction> iterator = set.iterator();
-
-        assertEquals(tx1.equals(tx2), false);
-        assertEquals(tx1.equals(tx3), false);
-        assertEquals(tx1.equals(tx1), true);
-
-        assertEquals(iterator.next().equals(tx3), true);
-        assertEquals(iterator.next().equals(tx2), true);
-        assertEquals(iterator.next().equals(tx1), true);
-        assertEquals(iterator.hasNext(), false);
     }
 
     @Test(expected = ScriptException.class)
@@ -504,40 +437,6 @@ public class TransactionTest {
 
         tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         assertTrue(tx.isOptInFullRBF());
-    }
-
-    /**
-     * Ensure that hashForSignature() doesn't modify a transaction's data, which could wreak multithreading havoc.
-     */
-    @Test
-    public void testHashForSignatureThreadSafety() {
-        Block genesis = UNITTEST.getGenesisBlock();
-        Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(UNITTEST, new ECKey()),
-                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
-
-        final Transaction tx = block1.getTransactions().get(1);
-        final Sha256Hash txHash = tx.getTxId();
-        final String txNormalizedHash = tx.hashForSignature(
-                0,
-                new byte[0],
-                Transaction.SigHash.ALL.byteValue())
-                .toString();
-
-        for (int i = 0; i < 100; i++) {
-            // ensure the transaction object itself was not modified; if it was, the hash will change
-            assertEquals(txHash, tx.getTxId());
-            new Thread(){
-                public void run() {
-                    assertEquals(
-                            txNormalizedHash,
-                            tx.hashForSignature(
-                                    0,
-                                    new byte[0],
-                                    Transaction.SigHash.ALL.byteValue())
-                                    .toString());
-                }
-            };
-        }
     }
 
     @Test

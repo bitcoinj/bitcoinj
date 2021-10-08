@@ -25,8 +25,6 @@ import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptOpCodes;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,20 +50,10 @@ public class BlockTest {
 
     @Before
     public void setUp() throws Exception {
-        new Context(TESTNET);
         // One with some of transactions in, so a good test of the merkle tree hashing.
         block700000Bytes = ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"));
         block700000 = TESTNET.getDefaultSerializer().makeBlock(block700000Bytes);
         assertEquals("000000000000406178b12a4dea3b27e13b3c4fe4510994fd667d7c1e6a3f4dc1", block700000.getHashAsString());
-    }
-
-    @Test
-    public void testWork() throws Exception {
-        BigInteger work = TESTNET.getGenesisBlock().getWork();
-        double log2Work = Math.log(work.longValue()) / Math.log(2);
-        // This number is printed by Bitcoin Core at startup as the calculated value of chainWork on testnet:
-        // UpdateTip: new best=000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943 height=0 version=0x00000001 log2_work=32.000022 tx=1 date='2011-02-02 23:16:42' ...
-        assertEquals(32.000022, log2Work, 0.0000001);
     }
 
     @Test
@@ -137,38 +125,6 @@ public class BlockTest {
         // NB: This tests the bitcoin serialization protocol.
         assertArrayEquals(block700000Bytes, block700000.bitcoinSerialize());
     }
-    
-    @Test
-    public void testUpdateLength() {
-        Block block = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS);
-        assertEquals(block.bitcoinSerialize().length, block.length);
-        final int origBlockLen = block.length;
-        Transaction tx = new Transaction(UNITTEST);
-        // this is broken until the transaction has > 1 input + output (which is required anyway...)
-        //assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length == 8);
-        byte[] outputScript = new byte[10];
-        Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
-        tx.addOutput(new TransactionOutput(UNITTEST, null, Coin.SATOSHI, outputScript));
-        tx.addInput(new TransactionInput(UNITTEST, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(UNITTEST, 0, Sha256Hash.of(new byte[] { 1 }))));
-        int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
-        assertEquals(tx.unsafeBitcoinSerialize().length, tx.length);
-        assertEquals(origTxLength, tx.length);
-        block.addTransaction(tx);
-        assertEquals(block.unsafeBitcoinSerialize().length, block.length);
-        assertEquals(origBlockLen + tx.length, block.length);
-        block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte) ScriptOpCodes.OP_FALSE, (byte) ScriptOpCodes.OP_FALSE});
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength + 1);
-        block.getTransactions().get(1).getInputs().get(0).clearScriptBytes();
-        assertEquals(block.length, block.unsafeBitcoinSerialize().length);
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength - 1);
-        block.getTransactions().get(1).addInput(new TransactionInput(UNITTEST, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(UNITTEST, 0, Sha256Hash.of(new byte[] { 1 }))));
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
-    }
 
     @Test
     public void testCoinbaseHeightTestnet() throws Exception {
@@ -194,46 +150,6 @@ public class BlockTest {
         // Check block.
         assertEquals("000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03", block.getHashAsString());
         block.verify(32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
-    }
-
-    @Test
-    public void testReceiveCoinbaseTransaction() throws Exception {
-        // Block 169482 (hash 0000000000000756935f1ee9d5987857b604046f846d3df56d024cdb5f368665)
-        // contains coinbase transactions that are mining pool shares.
-        // The private key MINERS_KEY is used to check transactions are received by a wallet correctly.
-
-        // The address for this private key is 1GqtGtn4fctXuKxsVzRPSLmYWN1YioLi9y.
-        final String MINING_PRIVATE_KEY = "5JDxPrBRghF1EvSBjDigywqfmAjpHPmTJxYtQTYJxJRHLLQA4mG";
-
-        final long BLOCK_NONCE = 3973947400L;
-        final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
-        Block block169482 = MAINNET.getDefaultSerializer().makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block169482.dat")));
-
-        // Check block.
-        assertNotNull(block169482);
-        block169482.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
-        assertEquals(BLOCK_NONCE, block169482.getNonce());
-
-        StoredBlock storedBlock = new StoredBlock(block169482, BigInteger.ONE, 169482); // Nonsense work - not used in test.
-
-        // Create a wallet contain the miner's key that receives a spend from a coinbase.
-        ECKey miningKey = DumpedPrivateKey.fromBase58(MAINNET, MINING_PRIVATE_KEY).getKey();
-        assertNotNull(miningKey);
-        Context context = new Context(MAINNET);
-        Wallet wallet = Wallet.createDeterministic(context, Script.ScriptType.P2PKH);
-        wallet.importKey(miningKey);
-
-        // Initial balance should be zero by construction.
-        assertEquals(Coin.ZERO, wallet.getBalance());
-
-        // Give the wallet the first transaction in the block - this is the coinbase tx.
-        List<Transaction> transactions = block169482.getTransactions();
-        assertNotNull(transactions);
-        wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN, 0);
-
-        // Coinbase transaction should have been received successfully but be unavailable to spend (too young).
-        assertEquals(BALANCE_AFTER_BLOCK, wallet.getBalance(BalanceType.ESTIMATED));
-        assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.AVAILABLE));
     }
 
     @Test
@@ -280,11 +196,6 @@ public class BlockTest {
 
     @Test
     public void isBIPs() throws Exception {
-        final Block genesis = MAINNET.getGenesisBlock();
-        assertFalse(genesis.isBIP34());
-        assertFalse(genesis.isBIP66());
-        assertFalse(genesis.isBIP65());
-
         // 227835/00000000000001aa077d7aa84c532a4d69bdbff519609d1da0835261b7a74eb6: last version 1 block
         final Block block227835 = MAINNET.getDefaultSerializer()
                 .makeBlock(ByteStreams.toByteArray(getClass().getResourceAsStream("block227835.dat")));
