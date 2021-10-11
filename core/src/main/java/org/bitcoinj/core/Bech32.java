@@ -143,6 +143,12 @@ public class Bech32 {
         return sb.toString();
     }
 
+    /** @deprecated use {@link #encode(Encoding, String, byte[])} */
+    @Deprecated
+    public static String encode(String hrp, byte[] values) {
+        return encode(Encoding.BECH32, hrp, values);
+    }
+
     /** Decode a Bech32 string. */
     public static Bech32Data decode(final String str) throws AddressFormatException {
         boolean lower = false, upper = false;
