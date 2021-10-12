@@ -234,7 +234,7 @@ public class TransactionOutput {
         // 294 satoshis at the default rate of 3000 sat/kB.
         long size = this.serialize().length;
         final Script script = getScriptPubKey();
-        if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script))
+        if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script) || ScriptPattern.isSentToMultisig(script))
             size += 32 + 4 + 1 + 107 + 4; // 148
         else if (ScriptPattern.isP2WH(script))
             size += 32 + 4 + 1 + (107 / 4) + 4; // 68
