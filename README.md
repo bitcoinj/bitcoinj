@@ -56,6 +56,8 @@ You can now run the `wallet-tool` without parameters to get help on its operatio
 To create a test net wallet file in `~/bitcoinj/bitcoinj-test.wallet`, you would use:
 ```
 mkdir ~/bitcoinj
+```
+```
 ./tools/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet create
 ```
 
