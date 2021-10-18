@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Holds the seed bytes for the BIP32 deterministic wallet algorithm, inside a
- * {@link DeterministicKeyChain}. The purpose of this wrapper is to simplify the encryption
+ * #$DeterministicKeyChain. The purpose of this wrapper is to simplify the encryption
  * code.
  */
 public class DeterministicSeed implements EncryptableItem {

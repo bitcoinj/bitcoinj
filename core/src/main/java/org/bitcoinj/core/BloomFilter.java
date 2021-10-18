@@ -17,21 +17,14 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.script.ScriptPattern;
-
 import com.google.common.base.MoreObjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Math.*;
 
 /**
  * <p>A Bloom filter is a probabilistic data structure which can be sent to another client so that it can avoid
@@ -71,62 +64,6 @@ public class BloomFilter extends Message {
      */
     public BloomFilter(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
         super(params, payloadBytes, 0);
-    }
-    
-    /**
-     * Constructs a filter with the given parameters which is updated on P2PK outputs only.
-     */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
-        this(elements, falsePositiveRate, randomNonce, BloomUpdate.UPDATE_P2PUBKEY_ONLY);
-    }
-    
-    /**
-     * <p>Constructs a new Bloom Filter which will provide approximately the given false positive rate when the given
-     * number of elements have been inserted. If the filter would otherwise be larger than the maximum allowed size,
-     * it will be automatically downsized to the maximum size.</p>
-     * 
-     * <p>To check the theoretical false positive rate of a given filter, use
-     * {@link BloomFilter#getFalsePositiveRate(int)}.</p>
-     * 
-     * <p>The anonymity of which coins are yours to any peer which you send a BloomFilter to is controlled by the
-     * false positive rate. For reference, as of block 187,000, the total number of addresses used in the chain was
-     * roughly 4.5 million. Thus, if you use a false positive rate of 0.001 (0.1%), there will be, on average, 4,500
-     * distinct public keys/addresses which will be thought to be yours by nodes which have your bloom filter, but
-     * which are not actually yours. Keep in mind that a remote node can do a pretty good job estimating the order of
-     * magnitude of the false positive rate of a given filter you provide it when considering the anonymity of a given
-     * filter.</p>
-     * 
-     * <p>In order for filtered block download to function efficiently, the number of matched transactions in any given
-     * block should be less than (with some headroom) the maximum size of the MemoryPool used by the Peer
-     * doing the downloading (default is {@link TxConfidenceTable#MAX_SIZE}). See the comment in processBlock(FilteredBlock)
-     * for more information on this restriction.</p>
-     * 
-     * <p>randomNonce is a tweak for the hash function used to prevent some theoretical DoS attacks.
-     * It should be a random value, however secureness of the random value is of no great consequence.</p>
-     * 
-     * <p>updateFlag is used to control filter behaviour on the server (remote node) side when it encounters a hit.
-     * See {@link BloomFilter.BloomUpdate} for a brief description of each mode. The purpose
-     * of this flag is to reduce network round-tripping and avoid over-dirtying the filter for the most common
-     * wallet configurations.</p>
-     */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce, BloomUpdate updateFlag) {
-        // The following formulas were stolen from Wikipedia's page on Bloom Filters (with the addition of min(..., MAX_...))
-        //                        Size required for a given number of elements and false-positive rate
-        int size = (int)(-1  / (pow(log(2), 2)) * elements * log(falsePositiveRate));
-        size = max(1, min(size, (int) MAX_FILTER_SIZE * 8) / 8);
-        data = new byte[size];
-        // Optimal number of hash functions for a given filter size and element count.
-        hashFuncs = (int)(data.length * 8 / (double)elements * log(2));
-        hashFuncs = max(1, min(hashFuncs, MAX_HASH_FUNCS));
-        this.nTweak = randomNonce;
-        this.nFlags = (byte)(0xff & updateFlag.ordinal());
-    }
-    
-    /**
-     * Returns the theoretical false positive rate of this filter if were to contain the given number of elements.
-     */
-    public double getFalsePositiveRate(int elements) {
-        return pow(1 - pow(E, -1.0 * (hashFuncs * elements) / (data.length * 8)), hashFuncs);
     }
 
     @Override
@@ -252,17 +189,6 @@ public class BloomFilter extends Message {
     }
 
     /**
-     * Sets this filter to match all objects. A Bloom filter which matches everything may seem pointless, however,
-     * it is useful in order to reduce steady state bandwidth usage when you want full blocks. Instead of receiving
-     * all transaction data twice, you will receive the vast majority of all transactions just once, at broadcast time.
-     * Solved blocks will then be send just as Merkle trees of tx hashes, meaning a constant 32 bytes of data for each
-     * transaction instead of 100-300 bytes as per usual.
-     */
-    public synchronized void setMatchAll() {
-        data = new byte[] {(byte) 0xff};
-    }
-
-    /**
      * Copies filter into this. Filter must have the same size, hash function count and nTweak or an
      * IllegalArgumentException will be thrown.
      */
@@ -279,7 +205,7 @@ public class BloomFilter extends Message {
     }
 
     /**
-     * Returns true if this filter will match anything. See {@link BloomFilter#setMatchAll()}
+     * Returns true if this filter will match anything. See #$BloomFilter#setMatchAll()
      * for when this can be a useful thing to do.
      */
     public synchronized boolean matchesAll() {
@@ -304,63 +230,6 @@ public class BloomFilter extends Message {
             throw new IllegalStateException("Unknown flag combination");
     }
 
-    /**
-     * Creates a new FilteredBlock from the given Block, using this filter to select transactions. Matches can cause the
-     * filter to be updated with the matched element, this ensures that when a filter is applied to a block, spends of
-     * matched transactions are also matched. However it means this filter can be mutated by the operation. The returned
-     * filtered block already has the matched transactions associated with it.
-     */
-    public synchronized FilteredBlock applyAndUpdate(Block block) {
-        List<Transaction> txns = block.getTransactions();
-        List<Sha256Hash> txHashes = new ArrayList<>(txns.size());
-        List<Transaction> matched = new ArrayList<>();
-        byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];
-        for (int i = 0; i < txns.size(); i++) {
-            Transaction tx = txns.get(i);
-            txHashes.add(tx.getTxId());
-            if (applyAndUpdate(tx)) {
-                Utils.setBitLE(bits, i);
-                matched.add(tx);
-            }
-        }
-        PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(block.getParams(), bits, txHashes);
-        FilteredBlock filteredBlock = new FilteredBlock(block.getParams(), block.cloneAsHeader(), pmt);
-        for (Transaction transaction : matched)
-            filteredBlock.provideTransaction(transaction);
-        return filteredBlock;
-    }
-
-    public synchronized boolean applyAndUpdate(Transaction tx) {
-        if (contains(tx.getTxId().getBytes()))
-            return true;
-        boolean found = false;
-        BloomUpdate flag = getUpdateFlag();
-        for (TransactionOutput output : tx.getOutputs()) {
-            Script script = output.getScriptPubKey();
-            for (ScriptChunk chunk : script.getChunks()) {
-                if (!chunk.isPushData())
-                    continue;
-                if (contains(chunk.data)) {
-                    boolean isSendingToPubKeys = ScriptPattern.isP2PK(script) || ScriptPattern.isSentToMultisig(script);
-                    if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
-                        insert(output.getOutPointFor());
-                    found = true;
-                }
-            }
-        }
-        if (found) return true;
-        for (TransactionInput input : tx.getInputs()) {
-            if (contains(input.getOutpoint().unsafeBitcoinSerialize())) {
-                return true;
-            }
-            for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
-                if (chunk.isPushData() && contains(chunk.data))
-                    return true;
-            }
-        }
-        return false;
-    }
-    
     @Override
     public synchronized boolean equals(Object o) {
         if (this == o) return true;

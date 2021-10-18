@@ -18,13 +18,11 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.params.*;
-import org.bitcoinj.script.*;
-
-import org.bitcoinj.utils.MonetaryFormat;
 
 import javax.annotation.*;
 import java.math.*;
 import java.util.*;
+import org.bitcoinj.utils.MonetaryFormat;
 
 import static org.bitcoinj.core.Coin.*;
 
@@ -122,8 +120,6 @@ public abstract class NetworkParameters {
         return id;
     }
 
-    public abstract String getPaymentProtocolId();
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -152,33 +148,8 @@ public abstract class NetworkParameters {
         }
     }
 
-    /** Returns the network parameters for the given string paymentProtocolID or NULL if not recognized. */
-    @Nullable
-    public static NetworkParameters fromPmtProtocolID(String pmtProtocolId) {
-        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
-            return MainNetParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
-            return TestNet3Params.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
-            return UnitTestParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
-            return null;
-        }
-    }
-
-    public int getSpendableCoinbaseDepth() {
-        return spendableCoinbaseDepth;
-    }
-
     public int getSubsidyDecreaseBlockCount() {
         return subsidyDecreaseBlockCount;
-    }
-
-    /** Returns IP address of active peers. */
-    public int[] getAddrSeeds() {
-        return addrSeeds;
     }
 
     /** Default TCP port on which to connect to nodes. */
@@ -217,30 +188,9 @@ public abstract class NetworkParameters {
         return segwitAddressHrp;
     }
 
-    /**
-     * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
-     * significantly different from this value, the network difficulty formula will produce a different value. Both
-     * test and main Bitcoin networks use 2 weeks (1209600 seconds).
-     */
-    public int getTargetTimespan() {
-        return targetTimespan;
-    }
-
-    /**
-     * If we are running in testnet-in-a-box mode, we allow connections to nodes with 0 non-genesis blocks.
-     */
-    public boolean allowEmptyPeerChain() {
-        return true;
-    }
-
     /** How many blocks pass between difficulty adjustment periods. Bitcoin standardises this to be 2016. */
     public int getInterval() {
         return interval;
-    }
-
-    /** Maximum target represents the easiest allowable proof of work. */
-    public BigInteger getMaxTarget() {
-        return maxTarget;
     }
 
     /** Returns the 4 byte header for BIP32 wallet P2PKH - public key part. */
@@ -316,32 +266,6 @@ public abstract class NetworkParameters {
      * Construct and return a custom serializer.
      */
     public abstract BitcoinSerializer getSerializer(boolean parseRetain);
-
-    /**
-     * The number of blocks in the last {@link #getMajorityWindow()} blocks
-     * at which to trigger a notice to the user to upgrade their client, where
-     * the client does not understand those blocks.
-     */
-    public int getMajorityEnforceBlockUpgrade() {
-        return majorityEnforceBlockUpgrade;
-    }
-
-    /**
-     * The number of blocks in the last {@link #getMajorityWindow()} blocks
-     * at which to enforce the requirement that all new blocks are of the
-     * newer type (i.e. outdated blocks are rejected).
-     */
-    public int getMajorityRejectBlockOutdated() {
-        return majorityRejectBlockOutdated;
-    }
-
-    /**
-     * The sampling window from which the version numbers of blocks are taken
-     * in order to determine if a new block version is now the majority.
-     */
-    public int getMajorityWindow() {
-        return majorityWindow;
-    }
 
     public abstract int getProtocolVersionNum(final ProtocolVersion version);
 

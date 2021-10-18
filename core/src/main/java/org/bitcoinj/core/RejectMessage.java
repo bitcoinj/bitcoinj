@@ -77,15 +77,6 @@ public class RejectMessage extends Message {
         super(params, payload, 0);
     }
 
-    /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
-    public RejectMessage(NetworkParameters params, RejectCode code, Sha256Hash hash, String message, String reason) throws ProtocolException {
-        super(params);
-        this.code = code;
-        this.messageHash = hash;
-        this.message = message;
-        this.reason = reason;
-    }
-
     @Override
     protected void parse() throws ProtocolException {
         message = readStr();

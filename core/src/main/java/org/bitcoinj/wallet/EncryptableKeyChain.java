@@ -51,7 +51,7 @@ public interface EncryptableKeyChain extends KeyChain {
     /**
      * Decrypt the key chain with the given AES key and whatever {@link KeyCrypter} is already set. Note that if you
      * just want to spend money from an encrypted wallet, don't decrypt the whole thing first. Instead, set the
-     * {@link SendRequest#aesKey} field before asking the wallet to build the send.
+     * #$SendRequest#aesKey field before asking the wallet to build the send.
      *
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to
      *               create from a password)

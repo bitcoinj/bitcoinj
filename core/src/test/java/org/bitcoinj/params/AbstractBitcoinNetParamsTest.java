@@ -24,12 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AbstractBitcoinNetParamsTest {
-    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams() {
-        @Override
-        public String getPaymentProtocolId() {
-            return null;
-        }
-    };
+    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams() {};
 
     @Test
     public void isDifficultyTransitionPoint() {

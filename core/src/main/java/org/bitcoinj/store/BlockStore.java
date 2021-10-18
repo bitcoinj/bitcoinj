@@ -46,8 +46,8 @@ public interface BlockStore {
 
     /**
      * Returns the {@link StoredBlock} that represents the top of the chain of greatest total work. Note that this
-     * can be arbitrarily expensive, you probably should use {@link BlockChain#getChainHead()}
-     * or perhaps {@link BlockChain#getBestChainHeight()} which will run in constant time and
+     * can be arbitrarily expensive, you probably should use #$BlockChain#getChainHead()
+     * or perhaps #$BlockChain#getBestChainHeight() which will run in constant time and
      * not take any heavyweight locks.
      */
     StoredBlock getChainHead() throws BlockStoreException;

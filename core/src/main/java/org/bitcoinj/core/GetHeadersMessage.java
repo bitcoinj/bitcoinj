@@ -25,10 +25,6 @@ package org.bitcoinj.core;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetHeadersMessage extends GetBlocksMessage {
-    public GetHeadersMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
-        super(params, locator, stopHash);
-    }
-
     public GetHeadersMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
         super(params, payload);
     }

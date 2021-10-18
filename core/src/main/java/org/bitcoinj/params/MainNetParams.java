@@ -117,9 +117,4 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         }
         return instance;
     }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_MAINNET;
-    }
 }

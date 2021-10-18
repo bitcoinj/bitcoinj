@@ -36,7 +36,7 @@ import java.util.Objects;
  * append to or change the subVer for your own software so other implementations can identify it, and you can look at
  * the subVer field received from other nodes to see what they are running.</p>
  *
- * <p>After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
+ * <p>After creating yourself a VersionMessage, you can pass it to #$PeerGroup#setVersionMessage(VersionMessage)}
  * to ensure it will be used for each new connection.</p>
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
@@ -269,7 +269,7 @@ public class VersionMessage extends Message {
 
     /**
      * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#PONG} or higher.
-     * If it is then {@link Peer#ping()} is usable.
+     * If it is then #$Peer#ping()} is usable.
      */
     public boolean isPingPongSupported() {
         return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);

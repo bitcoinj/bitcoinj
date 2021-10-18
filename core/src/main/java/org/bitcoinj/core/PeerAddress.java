@@ -119,10 +119,6 @@ public class PeerAddress extends ChildMessage {
         this.time = Utils.currentTimeSeconds();
     }
 
-    public static PeerAddress localhost(NetworkParameters params) {
-        return new PeerAddress(params, InetAddress.getLoopbackAddress(), params.getPort());
-    }
-
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         int protocolVersion = serializer.getProtocolVersion();
@@ -302,10 +298,6 @@ public class PeerAddress extends ChildMessage {
         return addr;
     }
 
-    public InetSocketAddress getSocketAddress() {
-        return new InetSocketAddress(getAddr(), getPort());
-    }
-
     public int getPort() {
         return port;
     }
@@ -337,14 +329,5 @@ public class PeerAddress extends ChildMessage {
     @Override
     public int hashCode() {
         return Objects.hash(addr, port, services);
-    }
-    
-    public InetSocketAddress toSocketAddress() {
-        // Reconstruct the InetSocketAddress properly
-        if (hostname != null) {
-            return InetSocketAddress.createUnresolved(hostname, port);
-        } else {
-            return new InetSocketAddress(addr, port);
-        }
     }
 }

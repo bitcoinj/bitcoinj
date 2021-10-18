@@ -1139,7 +1139,7 @@ public class ECKey implements EncryptableItem {
      * bitcoins controlled by the private key) you can use this method to check when you *encrypt* a wallet that
      * it can definitely be decrypted successfully.</p>
      *
-     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.</p>
+     * <p>See #$Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) for example usage.</p>
      *
      * @return true if the encrypted key can be decrypted back to the original key successfully.
      */

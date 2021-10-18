@@ -53,10 +53,6 @@ public class InventoryMessage extends ListMessage {
         super(params);
     }
 
-    public void addBlock(Block block) {
-        addItem(new InventoryItem(InventoryItem.Type.BLOCK, block.getHash()));
-    }
-
     public void addTransaction(Transaction tx) {
         addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId()));
     }

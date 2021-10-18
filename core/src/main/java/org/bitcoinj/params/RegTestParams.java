@@ -63,21 +63,11 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         addrSeeds = null;
     }
 
-    @Override
-    public boolean allowEmptyPeerChain() {
-        return true;
-    }
-
     private static RegTestParams instance;
     public static synchronized RegTestParams get() {
         if (instance == null) {
             instance = new RegTestParams();
         }
         return instance;
-    }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_REGTEST;
     }
 }

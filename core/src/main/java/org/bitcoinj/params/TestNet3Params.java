@@ -69,9 +69,4 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         }
         return instance;
     }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_TESTNET;
-    }
 }

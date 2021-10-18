@@ -33,22 +33,22 @@ import static com.google.common.base.Preconditions.*;
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
  * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
  *
- * <p>It can be connected to a {@link Wallet}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
+ * <p>It can be connected to a #$Wallet, and also #$TransactionReceivedInBlockListeners that can receive transactions and
  * notifications of re-organizations.</p>
  *
  * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
  * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
  * reading the getting started guide, but briefly, fully validating block chains need fully validating stores. In
- * the lightweight SPV mode, a {@link SPVBlockStore} is the right choice.</p>
+ * the lightweight SPV mode, a #$SPVBlockStore is the right choice.</p>
  *
  * <p>This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
  * also provides callback hooks which can be used to do full verification.</p>
  *
- * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
+ * <p>There are two subclasses of AbstractBlockChain that are useful: #$BlockChain, which is the simplest
  * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
- * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
- * {@link H2FullPrunedBlockStore} implements full verification, which is equivalent to
+ * not verify the contents of blocks, just their headers. A #$FullPrunedBlockChain paired with a
+ * #$H2FullPrunedBlockStore implements full verification, which is equivalent to
  * Bitcoin Core. To learn more about the alternative security models, please consult the articles on the
  * website.</p>
  *
@@ -118,19 +118,8 @@ public abstract class AbstractBlockChain {
     // were downloading the block chain.
     private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<>();
 
-    /** False positive estimation uses a double exponential moving average. */
-    public static final double FP_ESTIMATOR_ALPHA = 0.0001;
-    /** False positive estimation uses a double exponential moving average. */
-    public static final double FP_ESTIMATOR_BETA = 0.01;
-
-    private double falsePositiveRate;
-    private double falsePositiveTrend;
-    private double previousFalsePositiveRate;
-
     /**
      * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
-     * @param context context for this network
-     * @param wallets list of listeners (wallets)
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
@@ -141,14 +130,6 @@ public abstract class AbstractBlockChain {
 
         // TODO(andozw): decide if we need to init params.
         this.params = MainNetParams.get();
-    }
-    
-    /**
-     * Returns the {@link BlockStore} the chain was constructed with. You can use this to iterate over the chain.
-     * @return the {@code BlockStore} the chain was constructed with
-     */
-    public BlockStore getBlockStore() {
-        return blockStore;
     }
     
     /**
@@ -179,14 +160,6 @@ public abstract class AbstractBlockChain {
             throws BlockStoreException, VerificationException;
 
     /**
-     * Rollback the block store to a given height. This is currently only supported by {@link BlockChain} instances.
-     *
-     * @param height height to roll back to
-     * @throws BlockStoreException if the operation fails or is unsupported.
-     */
-    protected abstract void rollbackBlockStore(int height) throws BlockStoreException;
-
-    /**
      * Called before setting chain head in memory.
      * Should write the new head to block store and then commit any database transactions
      * that were started by disconnectTransactions/connectTransactions.
@@ -194,15 +167,6 @@ public abstract class AbstractBlockChain {
      * @throws BlockStoreException if a failure occurs while storing a block
      */
     protected abstract void doSetChainHead(StoredBlock chainHead) throws BlockStoreException;
-    
-    /**
-     * Called if we (possibly) previously called disconnectTransaction/connectTransactions,
-     * but will not be calling preSetChainHead as a block failed verification.
-     * Can be used to abort database transactions that were started by
-     * disconnectTransactions/connectTransactions.
-     * @throws BlockStoreException if a failure occurs while storing a block
-     */
-    protected abstract void notSettingChainHead() throws BlockStoreException;
     
     /**
      * For a standard BlockChain, this should return blockStore.get(hash),
@@ -213,65 +177,6 @@ public abstract class AbstractBlockChain {
      */
     protected abstract StoredBlock getStoredBlockInCurrentScope(Sha256Hash hash) throws BlockStoreException;
 
-    /**
-     * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
-     * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
-     * If the block can be connected to the chain, returns true.
-     * Accessing block's transactions in another thread while this method runs may result in undefined behavior.
-     * @param block block to add
-     * @return true if block can be connected, false if block is valid but can't be connected
-     * @throws VerificationException block is invalid or contains invalid transactions
-     * @throws PrunedException a reorg that is too-long for our stored block data has occurred
-     */
-    public boolean add(Block block) throws VerificationException, PrunedException {
-        try {
-            return add(block, true, null, null);
-        } catch (BlockStoreException e) {
-            // TODO: Figure out a better way to propagate this exception to the user.
-            throw new RuntimeException(e);
-        } catch (VerificationException e) {
-            try {
-                notSettingChainHead();
-            } catch (BlockStoreException e1) {
-                throw new RuntimeException(e1);
-            }
-            throw new VerificationException("Could not verify block:\n" +
-                    block.toString(), e);
-        }
-    }
-    
-    /**
-     * Processes a received block and tries to add it to the chain. If there's something wrong with the block an
-     * exception is thrown. If the block is OK but cannot be connected to the chain at this time, returns false.
-     * If the block can be connected to the chain, returns true.
-     * @param block received block
-     * @return true if block can be connected, false if block is valid but can't be connected
-     * @throws VerificationException if invalid block
-     * @throws PrunedException a reorg that is too-long for our stored block data has occurred
-     */
-    public boolean add(FilteredBlock block) throws VerificationException, PrunedException {
-        try {
-            // The block has a list of hashes of transactions that matched the Bloom filter, and a list of associated
-            // Transaction objects. There may be fewer Transaction objects than hashes, this is expected. It can happen
-            // in the case where we were already around to witness the initial broadcast, so we downloaded the
-            // transaction and sent it to the wallet before this point (the wallet may have thrown it away if it was
-            // a false positive, as expected in any Bloom filtering scheme). The filteredTxn list here will usually
-            // only be full of data when we are catching up to the head of the chain and thus haven't witnessed any
-            // of the transactions.
-            return add(block.getBlockHeader(), true, block.getTransactionHashes(), block.getAssociatedTransactions());
-        } catch (BlockStoreException e) {
-            // TODO: Figure out a better way to propagate this exception to the user.
-            throw new RuntimeException(e);
-        } catch (VerificationException e) {
-            try {
-                notSettingChainHead();
-            } catch (BlockStoreException e1) {
-                throw new RuntimeException(e1);
-            }
-            throw new VerificationException("Could not verify block " + block.getHash().toString() + "\n" +
-                    block.toString(), e);
-        }
-    }
     
     /**
      * Whether or not we are maintaining a set of unspent outputs and are verifying all transactions.
@@ -298,7 +203,7 @@ public abstract class AbstractBlockChain {
      * If an error is encountered in a transaction, no changes should be made to the underlying BlockStore.
      * Only called if(shouldVerifyTransactions())
      * @param newBlock block to load
-     * @throws PrunedException if newBlock does not exist as a {@link StoredUndoableBlock} in the block store.
+     * @throws PrunedException if newBlock does not exist as a #$StoredUndoableBlock in the block store.
      * @throws VerificationException if an attempt was made to spend an already-spent output, or if a transaction incorrectly solved an output script.
      * @throws BlockStoreException if the block store had an underlying error or newBlock does not exist in the block store at all.
      * @return The full set of all changes made to the set of open transaction outputs.
@@ -334,7 +239,6 @@ public abstract class AbstractBlockChain {
             final StoredBlock storedPrev;
 
             // TODO(andozw): revisit.
-
             final int height;
             final EnumSet<Block.VerifyFlag> flags;
 
@@ -376,23 +280,6 @@ public abstract class AbstractBlockChain {
                     tryConnectingOrphans();
                 return true;
             }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns the hashes of the currently stored orphan blocks and then deletes them from this objects storage.
-     * Used by Peer when a filter exhaustion event has occurred and thus any orphan blocks that have been downloaded
-     * might be inaccurate/incomplete.
-     * @return hashes of deleted blocks
-     */
-    public Set<Sha256Hash> drainOrphanBlocks() {
-        lock.lock();
-        try {
-            Set<Sha256Hash> hashes = new HashSet<>(orphanBlocks.keySet());
-            orphanBlocks.clear();
-            return hashes;
         } finally {
             lock.unlock();
         }
@@ -512,7 +399,7 @@ public abstract class AbstractBlockChain {
      * Disconnect each transaction in the block (after reading it from the block store)
      * Only called if(shouldVerifyTransactions())
      * @param block block to disconnect
-     * @throws PrunedException if block does not exist as a {@link StoredUndoableBlock} in the block store.
+     * @throws PrunedException if block does not exist as a #$StoredUndoableBlock in the block store.
      * @throws BlockStoreException if the block store had an underlying error or block does not exist in the block store at all.
      */
     protected abstract void disconnectTransactions(StoredBlock block) throws PrunedException, BlockStoreException;
@@ -638,13 +525,6 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * @return the height of the best known chain, convenience for {@code getChainHead().getHeight()}.
-     */
-    public final int getBestChainHeight() {
-        return getChainHead().getHeight();
-    }
-
-    /**
      * Indicates whether new Block was on the best chain or not
      */
     public enum NewBlockType {
@@ -715,46 +595,6 @@ public abstract class AbstractBlockChain {
     }
 
     /**
-     * An orphan block is one that does not connect to the chain anywhere (ie we can't find its parent, therefore
-     * it's an orphan). Typically, this occurs when we are downloading the chain and didn't reach the head yet, and/or
-     * if a block is solved whilst we are downloading. It's possible that we see a small amount of orphan blocks which
-     * chain together, this method tries walking backwards through the known orphan blocks to find the bottom-most.
-     *
-     * @param from hash of block to walk backwards from
-     * @return from or one of froms parents, or null if "from" does not identify an orphan block
-     */
-    @Nullable
-    public Block getOrphanRoot(Sha256Hash from) {
-        lock.lock();
-        try {
-            OrphanBlock cursor = orphanBlocks.get(from);
-            if (cursor == null)
-                return null;
-            OrphanBlock tmp;
-            while ((tmp = orphanBlocks.get(cursor.block.getPrevBlockHash())) != null) {
-                cursor = tmp;
-            }
-            return cursor.block;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
-     * Returns true if the given block is currently in the orphan blocks list.
-     * @param block block to check
-     * @return true if block is an orphan
-     */
-    public boolean isOrphan(Sha256Hash block) {
-        lock.lock();
-        try {
-            return orphanBlocks.containsKey(block);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    /**
      * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
      * block. This is useful for turning transaction lock times into human readable times. Note that a height in
      * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
@@ -769,68 +609,5 @@ public abstract class AbstractBlockChain {
             long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
             return new Date(estimated);
         }
-    }
-
-
-    /**
-     * The false positive rate is the average over all blockchain transactions of:
-     *
-     * - 1.0 if the transaction was false-positive (was irrelevant to all listeners)
-     * - 0.0 if the transaction was relevant or filtered out
-     *
-     * @return the false positive rate
-     */
-    public double getFalsePositiveRate() {
-        return falsePositiveRate;
-    }
-
-    /**
-     * We completed handling of a filtered block. Update false-positive estimate based
-     * on the total number of transactions in the original block.
-     *
-     * count includes filtered transactions, transactions that were passed in and were relevant
-     * and transactions that were false positives (i.e. includes all transactions in the block).
-     * @param count total number of transactions in original block
-     */
-    protected void trackFilteredTransactions(int count) {
-        // Track non-false-positives in batch.  Each non-false-positive counts as
-        // 0.0 towards the estimate.
-        //
-        // This is slightly off because we are applying false positive tracking before non-FP tracking,
-        // which counts FP as if they came at the beginning of the block.  Assuming uniform FP
-        // spread in a block, this will somewhat underestimate the FP rate (5% for 1000 tx block).
-        double alphaDecay = Math.pow(1 - FP_ESTIMATOR_ALPHA, count);
-
-        // new_rate = alpha_decay * new_rate
-        falsePositiveRate = alphaDecay * falsePositiveRate;
-
-        double betaDecay = Math.pow(1 - FP_ESTIMATOR_BETA, count);
-
-        // trend = beta * (new_rate - old_rate) + beta_decay * trend
-        falsePositiveTrend =
-                FP_ESTIMATOR_BETA * count * (falsePositiveRate - previousFalsePositiveRate) +
-                betaDecay * falsePositiveTrend;
-
-        // new_rate += alpha_decay * trend
-        falsePositiveRate += alphaDecay * falsePositiveTrend;
-
-        // Stash new_rate in old_rate
-        previousFalsePositiveRate = falsePositiveRate;
-    }
-
-    /* Irrelevant transactions were received.  Update false-positive estimate. */
-    void trackFalsePositives(int count) {
-        // Track false positives in batch by adding alpha to the false positive estimate once per count.
-        // Each false positive counts as 1.0 towards the estimate.
-        falsePositiveRate += FP_ESTIMATOR_ALPHA * count;
-        if (count > 0 && log.isDebugEnabled())
-            log.debug("{} false positives, current rate = {} trend = {}", count, falsePositiveRate, falsePositiveTrend);
-    }
-
-    /** Resets estimates of false positives. Used when the filter is sent to the peer. */
-    public void resetFalsePositiveEstimate() {
-        falsePositiveRate = 0;
-        falsePositiveTrend = 0;
-        previousFalsePositiveRate = 0;
     }
 }

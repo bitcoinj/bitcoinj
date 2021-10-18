@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
@@ -110,18 +109,6 @@ public class Transaction extends ChildMessage {
     // These are in memory helpers only. They contain the transaction hashes without and with witness.
     private Sha256Hash cachedTxId;
     private Sha256Hash cachedWTxId;
-
-    // Data about how confirmed this tx is. Serialized, may be null.
-    @Nullable private TransactionConfidence confidence;
-
-    // Records a map of which blocks the transaction has appeared in (keys) to an index within that block (values).
-    // The "index" is not a real index, instead the values are only meaningful relative to each other. For example,
-    // consider two transactions that appear in the same block, t1 and t2, where t2 spends an output of t1. Both
-    // will have the same block hash as a key in their appearsInHashes, but the counter would be 1 and 2 respectively
-    // regardless of where they actually appeared in the block.
-    //
-    // If this transaction is not stored in the wallet, appearsInHashes is null.
-    private Map<Sha256Hash, Integer> appearsInHashes;
 
     // Transactions can be encoded in a way that will use more bytes than is optimal
     // (due to VarInts having multiple encodings)
@@ -339,16 +326,6 @@ public class Transaction extends ChildMessage {
             v = v.add(o.getValue());
         }
         return v;
-    }
-
-    /**
-     * Returns a map of block [hashes] which contain the transaction mapped to relativity counters, or null if this
-     * transaction doesn't have that data because it's not stored in the wallet or because it has never appeared in a
-     * block.
-     */
-    @Nullable
-    public Map<Sha256Hash, Integer> getAppearsInHashes() {
-        return appearsInHashes != null ? ImmutableMap.copyOf(appearsInHashes) : null;
     }
 
     /**
@@ -865,7 +842,7 @@ public class Transaction extends ChildMessage {
     /**
      * Adds an input to this transaction that imports value from the given output. Note that this input is <i>not</i>
      * complete and after every input is added with {@link #addInput(TransactionInput)} and every output is added with
-     * {@link #addOutput(TransactionOutput)}, a {@link TransactionSigner} must be used to finalize the transaction and finish the inputs
+     * {@link #addOutput(TransactionOutput)}, a #$TransactionSigner must be used to finalize the transaction and finish the inputs
      * off. Otherwise it won't be accepted by the network.
      * @return the newly created input.
      */
@@ -1089,7 +1066,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular #$Wallet class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1109,7 +1086,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular #$Wallet class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1275,7 +1252,7 @@ public class Transaction extends ChildMessage {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular #$Wallet class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a Witness output
      * the scriptCode should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for. (See BIP143: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)</p>
@@ -1654,17 +1631,6 @@ public class Transaction extends ChildMessage {
     public boolean isFinal(int height, long blockTimeSeconds) {
         long time = getLockTime();
         return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
-    }
-
-    /**
-     * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
-     * the current head block if it was specified as a block time.
-     */
-    public Date estimateLockTime(AbstractBlockChain chain) {
-        if (lockTime < LOCKTIME_THRESHOLD)
-            return chain.estimateBlockTime((int)getLockTime());
-        else
-            return new Date(getLockTime()*1000);
     }
 
     /**

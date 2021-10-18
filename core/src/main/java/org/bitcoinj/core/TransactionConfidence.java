@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.*;
 /**
  * <p>A TransactionConfidence object tracks data you can use to make a confidence decision about a transaction.
  * It also contains some pre-canned rules for common scenarios: if you aren't really sure what level of confidence
- * you need, these should prove useful. You can get a confidence object using {@link Transaction#getConfidence()}.
+ * you need, these should prove useful. You can get a confidence object using #$Transaction#getConfidence().
  * They cannot be constructed directly.</p>
  *
  * <p>Confidence in a transaction can come in multiple ways:</p>
@@ -90,7 +90,7 @@ public class TransactionConfidence {
         /**
          * If PENDING, then the transaction is unconfirmed and should be included shortly, as long as it is being
          * announced and is considered valid by the network. A pending transaction will be announced if the containing
-         * wallet has been attached to a live {@link PeerGroup} using {@link PeerGroup#addWallet(Wallet)}.
+         * wallet has been attached to a live #$PeerGroup} using #$PeerGroup#addWallet(Wallet)}.
          * You can estimate how likely the transaction is to be included by connecting to a bunch of nodes then measuring
          * how many announce it, using {@link TransactionConfidence#numBroadcastPeers()}.
          * Or if you saw it from a trusted peer, you can assume it's valid and will get mined sooner or later as well.
@@ -158,7 +158,7 @@ public class TransactionConfidence {
 
     /**
      * <p>A confidence listener is informed when the level of {@link TransactionConfidence} is updated by something, like
-     * for example a {@link Wallet}. You can add listeners to update your user interface or manage your order tracking
+     * for example a #$Wallet. You can add listeners to update your user interface or manage your order tracking
      * system when confidence levels pass a certain threshold. <b>Note that confidence can go down as well as up.</b>
      * For example, this can happen if somebody is doing a double-spend attack against you. Whilst it's unlikely, your
      * code should be able to handle that in order to be correct.</p>
@@ -216,20 +216,6 @@ public class TransactionConfidence {
         pinnedConfidenceObjects.add(this);
     }
 
-    /**
-     * <p>Adds an event listener that will be run when this confidence object is updated. The listener will be locked and
-     * is likely to be invoked on a peer thread.</p>
-     *
-     * <p>Note that this is NOT called when every block arrives. Instead it is called when the transaction
-     * transitions between confidence states, ie, from not being seen in the chain to being seen (not necessarily in
-     * the best chain). If you want to know when the transaction gets buried under another block, implement
-     * {@link org.bitcoinj.core.listeners.NewBestBlockListener} and related listeners, attach them to a
-     * {@link BlockChain} and then use the getters on the confidence object to determine the new depth.</p>
-     */
-    public void addEventListener(Listener listener) {
-        addEventListener(Threading.USER_THREAD, listener);
-    }
-
     public boolean removeEventListener(Listener listener) {
         checkNotNull(listener);
         boolean removed = ListenerRegistration.removeFromList(listener, listeners);
@@ -268,7 +254,7 @@ public class TransactionConfidence {
     }
 
     /**
-     * Called by other objects in the system, like a {@link Wallet}, when new information about the confidence of a 
+     * Called by other objects in the system, like a #$Wallet, when new information about the confidence of a 
      * transaction becomes available.
      */
     public synchronized void setConfidenceType(ConfidenceType confidenceType) {
@@ -286,7 +272,7 @@ public class TransactionConfidence {
 
 
     /**
-     * Called by a {@link Peer} when a transaction is pending and announced by a peer. The more peers announce the
+     * Called by a #$Peer} when a transaction is pending and announced by a peer. The more peers announce the
      * transaction, the more peers have validated it (assuming your internet connection is not being intercepted).
      * If confidence is currently unknown, sets it to {@link ConfidenceType#PENDING}. Does not run listeners.
      *
@@ -313,7 +299,7 @@ public class TransactionConfidence {
     }
 
     /**
-     * Returns a snapshot of {@link PeerAddress}es that announced the transaction.
+     * Returns a snapshot of #$PeerAddress}es that announced the transaction.
      */
     public Set<PeerAddress> getBroadcastBy() {
         Set<PeerAddress> broadcastBySet = new HashSet<>();

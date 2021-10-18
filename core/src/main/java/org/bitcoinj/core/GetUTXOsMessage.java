@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -35,7 +34,7 @@ import java.util.Objects;
  * <p>Note that this message does not let you query the UTXO set by address, script or any other criteria. The
  * reason is that Bitcoin nodes don't calculate the necessary database indexes to answer such queries, to save
  * space and time. If you want to look up unspent outputs by address, you can either query a block explorer site,
- * or you can use the {@link FullPrunedBlockChain} class to build the required indexes yourself. Bear in that it will
+ * or you can use the #$FullPrunedBlockChain class to build the required indexes yourself. Bear in that it will
  * be quite slow and disk intensive to do that!</p>
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
@@ -47,12 +46,6 @@ public class GetUTXOsMessage extends Message {
 
     private boolean includeMempool;
     private ImmutableList<TransactionOutPoint> outPoints;
-
-    public GetUTXOsMessage(NetworkParameters params, List<TransactionOutPoint> outPoints, boolean includeMempool) {
-        super(params);
-        this.outPoints = ImmutableList.copyOf(outPoints);
-        this.includeMempool = includeMempool;
-    }
 
     public GetUTXOsMessage(NetworkParameters params, byte[] payloadBytes) {
         super(params, payloadBytes, 0);
@@ -70,10 +63,6 @@ public class GetUTXOsMessage extends Message {
         }
         outPoints = list.build();
         length = cursor;
-    }
-
-    public boolean getIncludeMempool() {
-        return includeMempool;
     }
 
     public ImmutableList<TransactionOutPoint> getOutPoints() {

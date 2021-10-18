@@ -31,7 +31,7 @@ public interface CoinSelector {
     /**
      * Creates a CoinSelection that tries to meet the target amount of value. The candidates list is given to
      * this call and can be edited freely. See the docs for CoinSelection to learn more, or look a the implementation
-     * of {@link DefaultCoinSelector}.
+     * of #$DefaultCoinSelector.
      */
     CoinSelection select(Coin target, List<TransactionOutput> candidates);
 }
