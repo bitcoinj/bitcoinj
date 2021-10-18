@@ -17,12 +17,10 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.testing.*;
-import org.easymock.*;
 import org.junit.*;
 
 import java.io.IOException;
@@ -32,7 +30,6 @@ import java.util.*;
 import static org.bitcoinj.core.Utils.HEX;
 
 import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
-import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
 /**

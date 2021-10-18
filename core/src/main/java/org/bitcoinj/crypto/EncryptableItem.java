@@ -16,8 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.wallet.Protos;
-
 import javax.annotation.Nullable;
 
 /**
@@ -36,9 +34,6 @@ public interface EncryptableItem {
     /** Returns the initialization vector and encrypted secret bytes, or null if not encrypted. */
     @Nullable
     EncryptedData getEncryptedData();
-
-    /** Returns an enum constant describing what algorithm was used to encrypt the key or UNENCRYPTED. */
-    Protos.Wallet.EncryptionType getEncryptionType();
 
     /** Returns the time in seconds since the UNIX epoch at which this encryptable item was first created/derived. */
     long getCreationTimeSeconds();

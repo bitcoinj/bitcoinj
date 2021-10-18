@@ -172,11 +172,6 @@ public class DeterministicSeed implements EncryptableItem {
         return encryptedMnemonicCode;
     }
 
-    @Override
-    public Protos.Wallet.EncryptionType getEncryptionType() {
-        return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
-    }
-
     @Nullable
     public EncryptedData getEncryptedSeedData() {
         return encryptedSeed;

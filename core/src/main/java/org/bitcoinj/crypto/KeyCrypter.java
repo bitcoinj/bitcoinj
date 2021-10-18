@@ -16,7 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import java.io.Serializable;
@@ -35,12 +34,6 @@ import java.io.Serializable;
  * to determine whether any given KeyCrypter can understand the type of encrypted data you have.</p>
  */
 public interface KeyCrypter extends Serializable {
-
-    /**
-     * Return the EncryptionType enum value which denotes the type of encryption/ decryption that this KeyCrypter
-     * can understand.
-     */
-    EncryptionType getUnderstoodEncryptionType();
 
     /**
      * Create a KeyParameter (which typically contains an AES key)

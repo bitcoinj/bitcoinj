@@ -20,7 +20,6 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.*;
 import org.junit.*;
-import org.bouncycastle.crypto.params.*;
 
 import static org.bitcoinj.core.Utils.*;
 import static org.junit.Assert.*;
@@ -161,36 +160,6 @@ public class ChildKeyDerivationTest {
         HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
         assertArrayEquals(key2.keyBytes, key3.keyBytes);
         assertArrayEquals(key2.chainCode, key3.chainCode);
-    }
-
-    @Test
-    public void encryptedDerivation() throws Exception {
-        // Check that encrypting a parent key in the hierarchy and then deriving from it yields a DeterministicKey
-        // with no private key component, and that the private key bytes are derived on demand.
-        KeyCrypter scrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
-        KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
-
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
-        DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey, null);
-        DeterministicKey decryptedKey1 = encryptedKey1.decrypt(aesKey);
-        assertEquals(key1, decryptedKey1);
-
-        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO);
-        DeterministicKey derivedKey2 = HDKeyDerivation.deriveChildKey(encryptedKey1, ChildNumber.ZERO);
-        assertTrue(derivedKey2.isEncrypted());   // parent is encrypted.
-        DeterministicKey decryptedKey2 = derivedKey2.decrypt(aesKey);
-        assertFalse(decryptedKey2.isEncrypted());
-        assertEquals(key2, decryptedKey2);
-
-        Sha256Hash hash = Sha256Hash.of("the mainstream media won't cover it. why is that?".getBytes());
-        try {
-            derivedKey2.sign(hash);
-            fail();
-        } catch (ECKey.KeyIsEncryptedException e) {
-            // Ignored.
-        }
-        ECKey.ECDSASignature signature = derivedKey2.sign(hash, aesKey);
-        assertTrue(derivedKey2.verify(hash, signature));
     }
 
     @Test

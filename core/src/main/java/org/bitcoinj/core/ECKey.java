@@ -28,7 +28,6 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
-import org.bitcoinj.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.*;
@@ -1166,12 +1165,6 @@ public class ECKey implements EncryptableItem {
     @Override
     public boolean isEncrypted() {
         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
-    }
-
-    @Nullable
-    @Override
-    public Protos.Wallet.EncryptionType getEncryptionType() {
-        return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
     }
 
     /**
