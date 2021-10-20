@@ -20,9 +20,6 @@ package org.bitcoinj.core;
 import javax.annotation.Nullable;
 
 import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.WalletTransaction;
-
-import java.util.Map;
 
 /**
  * This interface is used to abstract the #$Wallet and the {@link Transaction}
@@ -44,7 +41,4 @@ public interface TransactionBag {
 
     /** Returns true if this wallet knows the script corresponding to the given hash. */
     boolean isPayToScriptHashMine(byte[] payToScriptHash);
-
-    /** Returns transactions from a specific pool. */
-    Map<Sha256Hash, Transaction> getTransactionPool(WalletTransaction.Pool pool);
 }

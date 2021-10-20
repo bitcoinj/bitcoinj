@@ -26,10 +26,8 @@ import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.WalletTransaction.Pool;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -300,97 +298,6 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Gets the sum of the inputs, regardless of who owns them.
-     */
-    public Coin getInputSum() {
-        Coin inputTotal = Coin.ZERO;
-
-        for (TransactionInput input: inputs) {
-            Coin inputValue = input.getValue();
-            if (inputValue != null) {
-                inputTotal = inputTotal.add(inputValue);
-            }
-        }
-
-        return inputTotal;
-    }
-
-    /**
-     * Calculates the sum of the outputs that are sending coins to a key in the wallet.
-     */
-    public Coin getValueSentToMe(TransactionBag transactionBag) {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            v = v.add(o.getValue());
-        }
-        return v;
-    }
-
-    /**
-     * Calculates the sum of the inputs that are spending coins with keys in the wallet. This requires the
-     * transactions sending coins to those keys to be in the wallet. This method will not attempt to download the
-     * blocks containing the input transactions if the key is in the wallet but the transactions are not.
-     *
-     * @return sum of the inputs that are spending coins with keys in the wallet
-     */
-    public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionInput input : inputs) {
-            // This input is taking value from a transaction in our wallet. To discover the value,
-            // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
-            if (connected == null)
-                continue;
-            // The connected output may be the change to the sender of a previous input sent to this wallet. In this
-            // case we ignore it.
-            if (!connected.isMineOrWatched(wallet))
-                continue;
-            v = v.add(connected.getValue());
-        }
-        return v;
-    }
-
-    /**
-     * Gets the sum of the outputs of the transaction. If the outputs are less than the inputs, it does not count the fee.
-     * @return the sum of the outputs regardless of who owns them.
-     */
-    public Coin getOutputSum() {
-        Coin totalOut = Coin.ZERO;
-
-        for (TransactionOutput output: outputs) {
-            totalOut = totalOut.add(output.getValue());
-        }
-
-        return totalOut;
-    }
-
-    @Nullable private Coin cachedValue;
-    @Nullable private TransactionBag cachedForBag;
-
-    /**
-     * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
-     */
-    public Coin getValue(TransactionBag wallet) throws ScriptException {
-        // FIXME: TEMP PERF HACK FOR ANDROID - this crap can go away once we have a real payments API.
-        boolean isAndroid = Utils.isAndroidRuntime();
-        if (isAndroid && cachedValue != null && cachedForBag == wallet)
-            return cachedValue;
-        Coin result = getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
-        if (isAndroid) {
-            cachedValue = result;
-            cachedForBag = wallet;
-        }
-        return result;
-    }
-
-    /**
      * The transaction fee is the difference of the value of all inputs and the value of all outputs. Currently, the fee
      * can only be determined for transactions created by us.
      *
@@ -409,45 +316,6 @@ public class Transaction extends ChildMessage {
             fee = fee.subtract(output.getValue());
         }
         return fee;
-    }
-
-    /**
-     * Returns true if any of the outputs is marked as spent.
-     */
-    public boolean isAnyOutputSpent() {
-        for (TransactionOutput output : outputs) {
-            if (!output.isAvailableForSpending())
-                return true;
-        }
-        return false;
-    }
-
-    /**
-     * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
-     * otherwise.
-     */
-    public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
-        for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
-                return false;
-        }
-        return true;
-    }
-
-    /**
-     * Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
-     * or the epoch if that information isn't available.
-     */
-    public Date getUpdateTime() {
-        if (updatedAt == null) {
-            // Older wallets did not store this field. Set to the epoch.
-            updatedAt = new Date(0);
-        }
-        return updatedAt;
-    }
-
-    public void setUpdateTime(Date updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     /**

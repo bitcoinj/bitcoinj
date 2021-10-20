@@ -52,7 +52,7 @@ public class DeterministicSeed implements EncryptableItem {
     @Nullable private final EncryptedData encryptedSeed;
     private long creationTimeSeconds;
 
-    public DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, long creationTimeSeconds) throws UnreadableWalletException {
+    public DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, long creationTimeSeconds) {
         this(decodeMnemonicCode(mnemonicString), seed, passphrase, creationTimeSeconds);
     }
 
