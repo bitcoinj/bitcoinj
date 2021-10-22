@@ -47,7 +47,8 @@ public class Kit {
         // - TestNet3Params
         // - RegTestParams
         // While developing your application you probably want to use the Regtest mode and run your local bitcoin network. Run bitcoind with the -regtest flag
-        // To test you app with a real network you can use the testnet. The testnet is an alternative bitcoin network that follows the same rules as main network. Coins are worth nothing and you can get coins for example from http://faucet.xeno-genesis.com/
+        // To test you app with a real network you can use the testnet. The testnet is an alternative bitcoin network that follows the same rules as main network.
+        // Coins are worth nothing and you can get coins from a faucet.
         // 
         // For more information have a look at: https://bitcoinj.github.io/testing and https://bitcoin.org/en/developer-examples#testing-applications
         NetworkParameters params = TestNet3Params.get();
