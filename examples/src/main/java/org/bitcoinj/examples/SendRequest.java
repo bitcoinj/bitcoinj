@@ -57,7 +57,7 @@ public class SendRequest {
         // Have a look at the code of the SendRequest class to see what's happening and what other options you have: https://bitcoinj.github.io/javadoc/0.11/com/google/bitcoin/core/Wallet.SendRequest.html
         // 
         // Please note that this might raise a InsufficientMoneyException if your wallet has not enough coins to spend.
-        // When using the testnet you can use a faucet (like the http://faucet.xeno-genesis.com/) to get testnet coins.
+        // When using the testnet you can use a faucet to get testnet coins.
         // In this example we catch the InsufficientMoneyException and register a BalanceFuture callback that runs once the wallet has enough balance.
         try {
             Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
