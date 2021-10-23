@@ -1,5 +1,5 @@
 $ git log --format='%aN' | sort -u
-
+guanlong huang
 Aaron Voisine
 Adam Mackler
 Alexander Lolis
