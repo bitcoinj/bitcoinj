@@ -20,5 +20,5 @@ allprojects {
         mavenCentral()
     }
 
-    group = 'org.bitcoinj'
+    group = 'com.squareup.cash'
 }
