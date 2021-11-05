@@ -796,7 +796,8 @@ public class Script {
                     opcode == OP_INVERT || opcode == OP_AND || opcode == OP_OR || opcode == OP_XOR ||
                     opcode == OP_2MUL || opcode == OP_2DIV || opcode == OP_MUL || opcode == OP_DIV ||
                     opcode == OP_MOD || opcode == OP_LSHIFT || opcode == OP_RSHIFT)
-                throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Script included a disabled Script Op.");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE,
+                        "Script included disabled Script Op " + ScriptOpCodes.getOpCodeName(opcode));
 
             if (shouldExecute && OP_0 <= opcode && opcode <= OP_PUSHDATA4) {
                 // Check minimal push
