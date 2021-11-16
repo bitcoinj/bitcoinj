@@ -18,6 +18,7 @@
 
 package org.bitcoinj.core;
 
+import com.samourai.wallet.schnorr.Point;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 
@@ -460,7 +461,7 @@ public class ECKey implements EncryptableItem {
         return pubKeyHash;
     }
 
-    public byte[] tweakPubKey() throws IOException {
+    public byte[] getTweakedPublicKey() throws IOException {
         byte[] pubkey = getPubKey();
         String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
@@ -474,6 +475,24 @@ public class ECKey implements EncryptableItem {
         ECKey tweakedKey = ECKey.fromPublicOnly(point, true);
         String tweakedPubKeyNoPrefix = Hex.toHexString(tweakedKey.getPubKey()).substring(2);
         return Hex.decode(tweakedPubKeyNoPrefix);
+    }
+
+    public byte[] getTweakedPrivateKey() throws IOException {
+        BigInteger privKey;
+        Point privPoint = Point.mul(Point.getG(), getPrivKey());
+        if(Point.hasEvenY(privPoint))
+            privKey = getPrivKey();
+        else
+            privKey = Point.getn().subtract(getPrivKey());
+        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
+        byte[] tag = Sha256Hash.hash("TapTweak".getBytes());
+        bos.write(tag);
+        bos.write(tag);
+        bos.write(privPoint.toBytes());
+        byte[] tweak = Sha256Hash.hash(bos.toByteArray());
+        ECKey tweakKey = ECKey.fromPrivate(tweak);
+        ECKey tweakedPrivKey = ECKey.fromPrivate((privKey.add(tweakKey.getPrivKey())).mod(Point.getn()));
+        return tweakedPrivKey.getPrivKeyBytes();
     }
 
     /**

@@ -243,12 +243,13 @@ public class BloomFilter extends Message {
 
     /** Inserts the given key and equivalent hashed form (for the address). */
     public synchronized void insert(ECKey key) {
-        byte[] pubkey = key.getPubKey();
-        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
         insert(key.getPubKey());
         insert(key.getPubKeyHash());
-        insert(witnessProgram);
+        try {
+            insert(key.getTweakedPublicKey()); // taproot witness program
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /** Inserts the given transaction outpoint. */

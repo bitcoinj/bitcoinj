@@ -31,6 +31,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -181,10 +182,13 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
-        byte[] pubkey = key.getPubKey();
-        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
-        hashToKeys.put(ByteString.copyFrom(witnessProgram), key);
+        byte[] witnessProgram = new byte[0];
+        try {
+            witnessProgram = key.getTweakedPublicKey();
+            hashToKeys.put(ByteString.copyFrom(witnessProgram), key);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         checkState(previousKey == null);
     }
 

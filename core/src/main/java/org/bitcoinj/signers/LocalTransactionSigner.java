@@ -138,14 +138,12 @@ public class LocalTransactionSigner implements TransactionSigner {
                     Sha256Hash hash = tx.hashForTaprootWitnessSignature(i, Transaction.SigHash.ALL, false);
                     byte[] schnorrSig = null;
                     try {
-                        schnorrSig = Schnorr.sign(hash.getBytes(), key.getPrivKeyBytes(), new SecureRandom().generateSeed(32));
+                        schnorrSig = Schnorr.sign(hash.getBytes(), key.getTweakedPrivateKey(), new SecureRandom().generateSeed(32));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                     txIn.setScriptSig(ScriptBuilder.createEmpty());
                     txIn.setWitness(TransactionWitness.redeemP2TR(schnorrSig, Transaction.SigHash.ALL, false));
-                    System.out.println("WITNESS");
-                    System.out.println(txIn.getWitness().toString());
                 } else {
                     throw new IllegalStateException(script.toString());
                 }

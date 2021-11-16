@@ -30,6 +30,7 @@ import org.bitcoinj.script.Script.ScriptType;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -491,9 +492,12 @@ public class ScriptBuilder {
      */
     public static Script createP2TROutputScript(ECKey key) {
         checkArgument(key.isCompressed());
-        byte[] pubkey = key.getPubKey();
-        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+        byte[] witnessProgram = new byte[0];
+        try {
+            witnessProgram = key.getTweakedPublicKey();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return createP2TROutputScript(witnessProgram);
     }
 

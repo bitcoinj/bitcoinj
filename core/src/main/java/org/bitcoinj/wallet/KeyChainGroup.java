@@ -32,6 +32,7 @@ import org.slf4j.*;
 import org.bouncycastle.crypto.params.*;
 
 import javax.annotation.*;
+import java.io.IOException;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -359,9 +360,12 @@ public class KeyChainGroup implements KeyBag {
             return current;
         } else if(outputScriptType == ScriptType.P2TR) {
             ECKey key = currentKey(purpose);
-            byte[] pubkey = key.getPubKey();
-            String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-            byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+            byte[] witnessProgram = new byte[0];
+            try {
+                witnessProgram = key.getTweakedPublicKey();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return SegwitAddress.fromProgram(params, 1, witnessProgram);
         } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
             return Address.fromKey(params, currentKey(purpose), outputScriptType);
@@ -435,9 +439,12 @@ public class KeyChainGroup implements KeyBag {
             return freshAddress;
         } else if(outputScriptType == ScriptType.P2TR) {
             ECKey key = freshKey(purpose);
-            byte[] pubkey = key.getPubKey();
-            String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-            byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+            byte[] witnessProgram = new byte[0];
+            try {
+                witnessProgram = key.getTweakedPublicKey();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return SegwitAddress.fromProgram(params, 1, witnessProgram);
         } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
             return Address.fromKey(params, freshKey(purpose), outputScriptType);

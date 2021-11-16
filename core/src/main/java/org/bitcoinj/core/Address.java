@@ -24,6 +24,8 @@ import org.bitcoinj.script.Script.ScriptType;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.encoders.Hex;
 
+import java.io.IOException;
+
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
@@ -89,10 +91,12 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
         else if (outputScriptType == Script.ScriptType.P2WPKH)
             return SegwitAddress.fromKey(params, key);
         else if (outputScriptType == Script.ScriptType.P2TR) {
-            byte[] pubkey = key.getPubKey();
-            String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
-            byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
-            return SegwitAddress.fromProgram(params, 1, witnessProgram);
+            try {
+                byte[] witnessProgram = key.getTweakedPublicKey();
+                return SegwitAddress.fromProgram(params, 1, witnessProgram);
+            } catch (IOException e) {
+                return null;
+            }
         } else
             throw new IllegalArgumentException(outputScriptType.toString());
     }

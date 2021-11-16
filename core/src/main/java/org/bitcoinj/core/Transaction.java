@@ -1550,7 +1550,6 @@ public class Transaction extends ChildMessage {
             if(!anyoneCanPay) {
                 uint32ToByteStreamLE(inputIndex, bos);
             }
-            System.out.println(Hex.toHexString(bos.toByteArray()));
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
