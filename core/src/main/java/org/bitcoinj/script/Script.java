@@ -606,7 +606,12 @@ public class Script {
             // scriptSig is empty
             // witness: <sig> <pubKey>
             int compressedPubKeySize = 33;
-            return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize);
+            int publicKeyLength = pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize;
+            return VarInt.sizeOf(2) // number of witness pushes
+                    + VarInt.sizeOf(SIG_SIZE) // size of signature push
+                    + SIG_SIZE // signature push
+                    + VarInt.sizeOf(publicKeyLength) // size of pubKey push
+                    + publicKeyLength; // pubKey push
         } else {
             throw new IllegalStateException("Unsupported script type");
         }
