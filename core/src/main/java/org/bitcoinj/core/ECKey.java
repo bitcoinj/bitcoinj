@@ -30,6 +30,7 @@ import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.*;
@@ -457,6 +458,22 @@ public class ECKey implements EncryptableItem {
         if (pubKeyHash == null)
             pubKeyHash = Utils.sha256hash160(this.pub.getEncoded());
         return pubKeyHash;
+    }
+
+    public byte[] tweakPubKey() throws IOException {
+        byte[] pubkey = getPubKey();
+        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
+        byte[] tag = Sha256Hash.hash("TapTweak".getBytes());
+        bos.write(tag);
+        bos.write(tag);
+        bos.write(Hex.decode(pubKeyNoPrefix));
+        byte[] tweak = Sha256Hash.hash(bos.toByteArray());
+        ECKey tweakKey = ECKey.fromPrivate(tweak);
+        ECPoint point = getPubKeyPoint().add(tweakKey.getPubKeyPoint());
+        ECKey tweakedKey = ECKey.fromPublicOnly(point, true);
+        String tweakedPubKeyNoPrefix = Hex.toHexString(tweakedKey.getPubKey()).substring(2);
+        return Hex.decode(tweakedPubKeyNoPrefix);
     }
 
     /**

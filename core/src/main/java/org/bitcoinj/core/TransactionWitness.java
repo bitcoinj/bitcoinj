@@ -16,6 +16,7 @@ package org.bitcoinj.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -24,11 +25,37 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Preconditions;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = new TransactionWitness(0);
+
+    /**
+     * Creates the stack pushes necessary to redeem a P2WPKH output. If given signature is null, an empty push will be
+     * used as a placeholder.
+     */
+    public static TransactionWitness redeemP2TR(byte[] schnorrSig, Transaction.SigHash mode, boolean anyoneCanPay) {
+        TransactionWitness witness = new TransactionWitness(1);
+        witness.setPush(0, witness.encodeSchnorrToBitcoin(schnorrSig, mode, anyoneCanPay)); // signature
+        return witness;
+    }
+
+    private byte[] encodeSchnorrToBitcoin(byte[] schnorrSig, Transaction.SigHash mode, boolean anyoneCanPay) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(schnorrSig.length);
+        bos.write(schnorrSig, 0, schnorrSig.length);
+        bos.write(calcSigHashValue(mode, anyoneCanPay));
+        return bos.toByteArray();
+    }
+
+    public static int calcSigHashValue(Transaction.SigHash mode, boolean anyoneCanPay) {
+        Preconditions.checkArgument(Transaction.SigHash.ALL == mode || Transaction.SigHash.NONE == mode || Transaction.SigHash.SINGLE == mode || Transaction.SigHash.UNSET == mode); // enforce compatibility since this code was made before the SigHash enum was updated
+        int sighashFlags = mode.value;
+        if (anyoneCanPay)
+            sighashFlags |= Transaction.SigHash.ANYONECANPAY.value;
+        return sighashFlags;
+    }
 
     /**
      * Creates the stack pushes necessary to redeem a P2WPKH output. If given signature is null, an empty push will be

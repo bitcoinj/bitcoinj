@@ -20,8 +20,7 @@ import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.script.Script;
@@ -30,6 +29,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.walletfx.utils.GuiUtils;
+import org.bouncycastle.util.encoders.Hex;
 import wallettemplate.WalletSetPasswordController;
 
 import javax.annotation.Nullable;
@@ -147,6 +147,8 @@ public abstract class WalletApplication implements AppDelegate {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
+                wallet().setAcceptRiskyTransactions(true);
+                System.out.println(wallet().getRecentTransactions(0, false).get(0).toHexString());
             }
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen

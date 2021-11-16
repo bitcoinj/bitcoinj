@@ -207,7 +207,11 @@ public class SegwitAddress extends Address {
      * @return constructed address
      */
     public static SegwitAddress fromHash(NetworkParameters params, byte[] hash) {
-        return new SegwitAddress(params, 0, hash);
+        return fromHash(params, hash, 0);
+    }
+
+    public static SegwitAddress fromHash(NetworkParameters params, byte[] hash, int version) {
+        return new SegwitAddress(params, version, hash);
     }
 
     /**
@@ -238,8 +242,12 @@ public class SegwitAddress extends Address {
      * @return constructed address
      */
     public static SegwitAddress fromKey(NetworkParameters params, ECKey key) {
+        return fromKey(params, key, 0);
+    }
+
+    public static SegwitAddress fromKey(NetworkParameters params, ECKey key, int version) {
         checkArgument(key.isCompressed(), "only compressed keys allowed");
-        return fromHash(params, key.getPubKeyHash());
+        return fromHash(params, key.getPubKeyHash(), version);
     }
 
     /**

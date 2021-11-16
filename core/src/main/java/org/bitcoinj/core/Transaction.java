@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import com.samourai.wallet.schnorr.Point;
+import com.samourai.wallet.schnorr.Schnorr;
+import com.samourai.wallet.schnorr.Util;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -34,12 +37,14 @@ import org.bitcoinj.wallet.WalletTransaction.Pool;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
@@ -1360,6 +1365,14 @@ public class Transaction extends ChildMessage {
         return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
     }
 
+    public synchronized Sha256Hash hashForTaprootWitnessSignature(
+            int inputIndex,
+            SigHash type,
+            boolean anyoneCanPay) {
+        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
+        return hashForTaprootWitnessSignature(inputIndex, (byte) sigHash);
+    }
+
     /**
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
@@ -1453,6 +1466,96 @@ public class Transaction extends ChildMessage {
         }
 
         return Sha256Hash.twiceOf(bos.toByteArray());
+    }
+
+    public synchronized Sha256Hash hashForTaprootWitnessSignature(
+            int inputIndex,
+            byte sigHashType){
+        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
+        try {
+            byte[] hashPrevouts = new byte[32];
+            byte[] hashSequence = new byte[32];
+            byte[] hashScriptPubKeys = new byte[32];
+            byte[] hashAmounts = new byte[32];
+            byte[] hashOutputs = new byte[32];
+            int basicSigHashType = sigHashType & 0x1f;
+            boolean anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
+            boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
+
+            if (!anyoneCanPay) {
+                ByteArrayOutputStream bosHashPrevouts = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashScriptPubKeys = new UnsafeByteArrayOutputStream(256);
+                for (TransactionInput input : this.inputs) {
+                    bosHashPrevouts.write(input.getOutpoint().getHash().getReversedBytes());
+                    uint32ToByteStreamLE(input.getOutpoint().getIndex(), bosHashPrevouts);
+                    TransactionOutput connectedOutput = input.getConnectedOutput();
+                    bosHashScriptPubKeys.write(new VarInt(connectedOutput.getScriptBytes().length).encode());
+                    bosHashScriptPubKeys.write(connectedOutput.getScriptBytes());
+                }
+                hashScriptPubKeys = Sha256Hash.hash(bosHashScriptPubKeys.toByteArray());
+                hashPrevouts = Sha256Hash.hash(bosHashPrevouts.toByteArray());
+            }
+
+            if (!anyoneCanPay && signAll) {
+                ByteArrayOutputStream bosSequence = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosAmounts = new UnsafeByteArrayOutputStream(256);
+
+                for (TransactionInput input : this.inputs) {
+                    uint32ToByteStreamLE(input.getSequenceNumber(), bosSequence);
+                    uint64ToByteStreamLE(BigInteger.valueOf(input.getValue().getValue()), bosAmounts);
+                }
+
+                hashAmounts = Sha256Hash.hash(bosAmounts.toByteArray());
+                hashSequence = Sha256Hash.hash(bosSequence.toByteArray());
+            }
+
+            if (signAll) {
+                ByteArrayOutputStream bosHashOutputs = new UnsafeByteArrayOutputStream(256);
+                for (TransactionOutput output : this.outputs) {
+                    uint64ToByteStreamLE(
+                            BigInteger.valueOf(output.getValue().getValue()),
+                            bosHashOutputs
+                    );
+                    bosHashOutputs.write(new VarInt(output.getScriptBytes().length).encode());
+                    bosHashOutputs.write(output.getScriptBytes());
+                }
+                hashOutputs = Sha256Hash.hash(bosHashOutputs.toByteArray());
+            } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
+                ByteArrayOutputStream bosHashOutputs = new UnsafeByteArrayOutputStream(256);
+                uint64ToByteStreamLE(
+                        BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
+                        bosHashOutputs
+                );
+                bosHashOutputs.write(new VarInt(this.outputs.get(inputIndex).getScriptBytes().length).encode());
+                bosHashOutputs.write(this.outputs.get(inputIndex).getScriptBytes());
+                hashOutputs = Sha256Hash.hash(bosHashOutputs.toByteArray());
+            }
+            byte[] tag = Sha256Hash.hash("TapSighash".getBytes());
+            bos.write(tag);
+            bos.write(tag);
+            bos.write(0);
+            bos.write(0xff & sigHashType);
+            uint32ToByteStreamLE(version, bos);
+            uint32ToByteStreamLE(this.lockTime, bos);
+            if(!anyoneCanPay) {
+                bos.write(hashPrevouts);
+                bos.write(hashAmounts);
+                bos.write(hashScriptPubKeys);
+                bos.write(hashSequence);
+            }
+            if(basicSigHashType != SigHash.NONE.value && basicSigHashType != SigHash.SINGLE.value) {
+                bos.write(hashOutputs);
+            }
+            bos.write(0);
+            if(!anyoneCanPay) {
+                uint32ToByteStreamLE(inputIndex, bos);
+            }
+            System.out.println(Hex.toHexString(bos.toByteArray()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+
+        return Sha256Hash.of(bos.toByteArray());
     }
 
     @Override

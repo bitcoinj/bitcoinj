@@ -20,18 +20,14 @@ package org.bitcoinj.wallet;
 import com.google.common.collect.*;
 import com.google.protobuf.*;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.*;
 import org.bouncycastle.crypto.params.*;
 
@@ -124,6 +120,16 @@ public class KeyChainGroup implements KeyBag {
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(Script.ScriptType.P2WPKH)
                         .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+                this.chains.clear();
+                this.chains.add(fallbackChain);
+                this.chains.add(defaultChain);
+            } else if (outputScriptType == Script.ScriptType.P2TR) {
+                DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
+                        .outputScriptType(Script.ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
+                        .outputScriptType(Script.ScriptType.P2TR)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2TR)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -351,6 +357,12 @@ public class KeyChainGroup implements KeyBag {
                 currentAddresses.put(purpose, current);
             }
             return current;
+        } else if(outputScriptType == ScriptType.P2TR) {
+            ECKey key = currentKey(purpose);
+            byte[] pubkey = key.getPubKey();
+            String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+            byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+            return SegwitAddress.fromProgram(params, 1, witnessProgram);
         } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
             return Address.fromKey(params, currentKey(purpose), outputScriptType);
         } else {
@@ -421,6 +433,12 @@ public class KeyChainGroup implements KeyBag {
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
+        } else if(outputScriptType == ScriptType.P2TR) {
+            ECKey key = freshKey(purpose);
+            byte[] pubkey = key.getPubKey();
+            String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+            byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+            return SegwitAddress.fromProgram(params, 1, witnessProgram);
         } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
             return Address.fromKey(params, freshKey(purpose), outputScriptType);
         } else {

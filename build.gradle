@@ -2,6 +2,8 @@ import org.gradle.util.GradleVersion
 
 buildscript {
     repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
         mavenCentral()
     }
     // If using Gradle 7, use the compatible protobuf plugin, else use the one that works with oldest supported Gradle
@@ -17,6 +19,8 @@ buildscript {
 
 allprojects {
     repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
         mavenCentral()
     }
 

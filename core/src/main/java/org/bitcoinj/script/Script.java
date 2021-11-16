@@ -607,6 +607,10 @@ public class Script {
             // witness: <sig> <pubKey>
             int compressedPubKeySize = 33;
             return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize);
+        } else if(ScriptPattern.isP2TR(this)) {
+            // scriptSig is empty
+            // witness: <sig>
+            return 65;
         } else {
             throw new IllegalStateException("Unsupported script type");
         }

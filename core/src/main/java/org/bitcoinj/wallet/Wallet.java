@@ -1158,11 +1158,11 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean isAddressMine(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
-        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
+        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH || scriptType == ScriptType.P2TR)
             return isPubKeyHashMine(address.getHash(), scriptType);
         else if (scriptType == ScriptType.P2SH)
             return isPayToScriptHashMine(address.getHash());
-        else if (scriptType == ScriptType.P2WSH || scriptType == ScriptType.P2TR)
+        else if (scriptType == ScriptType.P2WSH)
             return false;
         else
             throw new IllegalArgumentException(address.toString());
@@ -1195,7 +1195,7 @@ public class Wallet extends BaseTaggableObject
      */
     public ECKey findKeyFromAddress(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
-        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
+        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH || scriptType == ScriptType.P2TR)
             return findKeyFromPubKeyHash(address.getHash(), scriptType);
         else
             return null;
@@ -4470,6 +4470,10 @@ public class Wallet extends BaseTaggableObject
         } else if (ScriptPattern.isP2WPKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script),
                     Script.ScriptType.P2WPKH);
+            return key != null && (key.isEncrypted() || key.hasPrivKey()) && key.isCompressed();
+        } else if (ScriptPattern.isP2TR(script)) {
+            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractOutputKeyFromP2TR(script),
+                    Script.ScriptType.P2TR);
             return key != null && (key.isEncrypted() || key.hasPrivKey()) && key.isCompressed();
         } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {

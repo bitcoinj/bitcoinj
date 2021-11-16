@@ -28,12 +28,15 @@ import java.util.Locale;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.crypto.LazyECPoint;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import com.google.common.base.MoreObjects;
@@ -41,6 +44,16 @@ import com.google.common.base.MoreObjects;
 public class SegwitAddressTest {
     private static final MainNetParams MAINNET = MainNetParams.get();
     private static final TestNet3Params TESTNET = TestNet3Params.get();
+
+    @Test
+    public void p2tr_test() {
+        ECKey key = ECKey.fromPrivate(Hex.decode("e6075ae177834de90e007bef0307965f8a5b796b064cd86b6ac943c7ab8f5fca"));
+        byte[] pubkey = key.getPubKey();
+        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+        SegwitAddress segwitAddress = SegwitAddress.fromProgram(MAINNET, 1, witnessProgram);
+        System.out.println("Address:: " + segwitAddress.toBech32());
+    }
 
     @Test
     public void equalsContract() {

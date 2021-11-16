@@ -27,6 +27,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script.ScriptType;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -475,6 +476,25 @@ public class ScriptBuilder {
     public static Script createP2WPKHOutputScript(ECKey key) {
         checkArgument(key.isCompressed());
         return createP2WPKHOutputScript(key.getPubKeyHash());
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that sends to the given public key hash.
+     */
+    public static Script createP2TROutputScript(byte[] hash) {
+        checkArgument(hash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_TR);
+        return new ScriptBuilder().smallNum(1).data(hash).build();
+    }
+
+    /**
+     * Creates a segwit scriptPubKey that sends to the given public key.
+     */
+    public static Script createP2TROutputScript(ECKey key) {
+        checkArgument(key.isCompressed());
+        byte[] pubkey = key.getPubKey();
+        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+        return createP2TROutputScript(witnessProgram);
     }
 
     /**

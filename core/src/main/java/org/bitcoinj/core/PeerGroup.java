@@ -212,7 +212,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // and shouldn't, we should just recalculate and cache the new filter for next time.
         for (TransactionOutput output : tx.getOutputs()) {
             Script scriptPubKey = output.getScriptPubKey();
-            if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2WPKH(scriptPubKey)) {
+            if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2WPKH(scriptPubKey) || ScriptPattern.isP2TR(scriptPubKey)) {
                 if (output.isMine(wallet)) {
                     if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING)
                         recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);

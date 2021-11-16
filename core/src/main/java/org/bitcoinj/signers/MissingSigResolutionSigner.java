@@ -103,7 +103,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                     }
                 }
             } else {
-                throw new IllegalStateException("cannot handle: " + scriptPubKey);
+                //throw new IllegalStateException("cannot handle: " + scriptPubKey);
             }
         }
         return true;

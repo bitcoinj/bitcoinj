@@ -28,6 +28,7 @@ import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -180,6 +181,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
+        byte[] pubkey = key.getPubKey();
+        String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
+        byte[] witnessProgram = Hex.decode(pubKeyNoPrefix);
+        hashToKeys.put(ByteString.copyFrom(witnessProgram), key);
         checkState(previousKey == null);
     }
 

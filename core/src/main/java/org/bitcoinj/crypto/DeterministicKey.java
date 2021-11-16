@@ -484,7 +484,7 @@ public class DeterministicKey extends ECKey {
         ByteBuffer ser = ByteBuffer.allocate(78);
         if (outputScriptType == Script.ScriptType.P2PKH)
             ser.putInt(pub ? params.getBip32HeaderP2PKHpub() : params.getBip32HeaderP2PKHpriv());
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+        else if (outputScriptType == Script.ScriptType.P2WPKH || outputScriptType == Script.ScriptType.P2TR)
             ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
         else
             throw new IllegalStateException(outputScriptType.toString());

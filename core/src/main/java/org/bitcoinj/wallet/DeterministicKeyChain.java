@@ -118,6 +118,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public static final HDPath ACCOUNT_ZERO_PATH = HDPath.M(ChildNumber.ZERO_HARDENED);
     // m / 1'
     public static final HDPath ACCOUNT_ONE_PATH = HDPath.M(ChildNumber.ONE_HARDENED);
+    // m / 2'
+    public static final HDPath ACCOUNT_TWO_PATH = HDPath.M(ChildNumber.TWO_HARDENED);
     // m / 44' / 0' / 0'
     public static final HDPath BIP44_ACCOUNT_ZERO_PATH = HDPath.M(new ChildNumber(44, true))
                         .extend(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
@@ -154,7 +156,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // We simplify by wrapping a basic key chain and that way we get some functionality like key lookup and event
     // listeners "for free". All keys in the key tree appear here, even if they aren't meant to be used for receiving
     // money.
-    private final BasicKeyChain basicKeyChain;
+    protected final BasicKeyChain basicKeyChain;
 
     // If set this chain is following another chain in a married KeyChainGroup
     private boolean isFollowing;
@@ -361,7 +363,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
             Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
         checkArgument(outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH
-                || outputScriptType == Script.ScriptType.P2WPKH, "Only P2PKH or P2WPKH allowed.");
+                || outputScriptType == Script.ScriptType.P2WPKH || outputScriptType == Script.ScriptType.P2TR, "Only P2PKH, P2WPKH, or P2TR allowed.");
         this.outputScriptType = outputScriptType != null ? outputScriptType : Script.ScriptType.P2PKH;
         this.accountPath = HDPath.M(accountPath);
         this.seed = seed;
@@ -1357,6 +1359,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * @see org.bitcoinj.wallet.MarriedKeyChain
      */
     public boolean isMarried() {
+        return false;
+    }
+
+    public boolean isTaproot() {
         return false;
     }
 

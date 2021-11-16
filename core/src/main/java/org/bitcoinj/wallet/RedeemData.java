@@ -58,7 +58,7 @@ public class RedeemData {
      */
     public static RedeemData of(ECKey key, Script redeemScript) {
         checkArgument(ScriptPattern.isP2PKH(redeemScript)
-                || ScriptPattern.isP2WPKH(redeemScript) || ScriptPattern.isP2PK(redeemScript));
+                || ScriptPattern.isP2WPKH(redeemScript) || ScriptPattern.isP2PK(redeemScript) || ScriptPattern.isP2TR(redeemScript));
         return key != null ? new RedeemData(Collections.singletonList(key), redeemScript) : null;
     }
 

@@ -32,6 +32,8 @@ public interface KeyChainGroupStructure {
                 return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
             else if (outputScriptType == Script.ScriptType.P2WPKH)
                 return DeterministicKeyChain.ACCOUNT_ONE_PATH;
+            else if (outputScriptType == Script.ScriptType.P2TR)
+                return DeterministicKeyChain.ACCOUNT_TWO_PATH;
             else
                 throw new IllegalArgumentException(outputScriptType.toString());
         }
