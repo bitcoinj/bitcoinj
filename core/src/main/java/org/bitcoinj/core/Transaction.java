@@ -34,12 +34,14 @@ import org.bitcoinj.wallet.WalletTransaction.Pool;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.math.IntMath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.io.*;
+import java.math.RoundingMode;
 import java.util.*;
 
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
@@ -340,7 +342,7 @@ public class Transaction extends ChildMessage {
     public int getVsize() {
         if (!hasWitnesses())
             return getMessageSize();
-        return (getWeight() + 3) / 4; // round up
+        return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
     }
 
     /**
