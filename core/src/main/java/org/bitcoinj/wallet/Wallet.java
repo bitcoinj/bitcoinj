@@ -5201,7 +5201,7 @@ public class Wallet extends BaseTaggableObject
                 } else if (ScriptPattern.isP2WPKH(script)) {
                     key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), Script.ScriptType.P2WPKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
-                    vsize += (script.getNumberOfBytesRequiredToSpend(key, redeemScript) + 3) / 4; // round up
+                    vsize += (int) Math.ceil((float) (script.getNumberOfBytesRequiredToSpend(key, redeemScript) + 3) / 4);
                 } else if (ScriptPattern.isP2SH(script)) {
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");

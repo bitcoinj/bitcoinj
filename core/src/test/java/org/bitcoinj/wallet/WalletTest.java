@@ -2696,7 +2696,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request = SendRequest.to(OTHER_SEGWIT_ADDRESS, CENT);
         request.feePerKb = Transaction.DEFAULT_TX_FEE;
         mySegwitWallet.completeTx(request);
-        assertEquals(Coin.valueOf(14000), request.tx.getFee());
+        assertEquals(Coin.valueOf(14100), request.tx.getFee());
     }
 
     @Test
