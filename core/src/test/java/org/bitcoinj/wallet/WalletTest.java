@@ -2696,7 +2696,13 @@ public class WalletTest extends TestWithWallet {
         SendRequest request = SendRequest.to(OTHER_SEGWIT_ADDRESS, CENT);
         request.feePerKb = Transaction.DEFAULT_TX_FEE;
         mySegwitWallet.completeTx(request);
-        assertEquals(Coin.valueOf(14000), request.tx.getFee());
+
+        // Fee test, absolute and per virtual kilobyte
+        Coin fee = request.tx.getFee();
+        int vsize = request.tx.getVsize();
+        Coin feePerVkb = fee.multiply(1000).divide(vsize);
+        assertEquals(Coin.valueOf(14100), fee);
+        assertEquals(Transaction.DEFAULT_TX_FEE, feePerVkb);
     }
 
     @Test
