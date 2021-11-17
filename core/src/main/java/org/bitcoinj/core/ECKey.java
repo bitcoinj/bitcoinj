@@ -478,12 +478,8 @@ public class ECKey implements EncryptableItem {
     }
 
     public byte[] getTweakedPrivateKey() throws IOException {
-        BigInteger privKey;
+        BigInteger privKey = getPrivKey();
         Point privPoint = Point.mul(Point.getG(), getPrivKey());
-        if(Point.hasEvenY(privPoint))
-            privKey = getPrivKey();
-        else
-            privKey = Point.getn().subtract(getPrivKey());
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
         byte[] tag = Sha256Hash.hash("TapTweak".getBytes());
         bos.write(tag);

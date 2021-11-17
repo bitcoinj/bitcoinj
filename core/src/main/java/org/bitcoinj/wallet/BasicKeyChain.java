@@ -185,10 +185,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         byte[] witnessProgram = new byte[0];
         try {
             witnessProgram = key.getTweakedPublicKey();
-            hashToKeys.put(ByteString.copyFrom(witnessProgram), key);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        hashToKeys.put(ByteString.copyFrom(witnessProgram), key);
         checkState(previousKey == null);
     }
 

@@ -91,12 +91,13 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
         else if (outputScriptType == Script.ScriptType.P2WPKH)
             return SegwitAddress.fromKey(params, key);
         else if (outputScriptType == Script.ScriptType.P2TR) {
+            byte[] witnessProgram = new byte[0];
             try {
-                byte[] witnessProgram = key.getTweakedPublicKey();
-                return SegwitAddress.fromProgram(params, 1, witnessProgram);
+                witnessProgram = key.getTweakedPublicKey();
             } catch (IOException e) {
-                return null;
+                e.printStackTrace();
             }
+            return SegwitAddress.fromProgram(params, 1, witnessProgram);
         } else
             throw new IllegalArgumentException(outputScriptType.toString());
     }

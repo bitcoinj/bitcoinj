@@ -1488,12 +1488,14 @@ public class Transaction extends ChildMessage {
                 for (TransactionInput input : this.inputs) {
                     bosHashPrevouts.write(input.getOutpoint().getHash().getReversedBytes());
                     uint32ToByteStreamLE(input.getOutpoint().getIndex(), bosHashPrevouts);
+
                     TransactionOutput connectedOutput = input.getConnectedOutput();
                     bosHashScriptPubKeys.write(new VarInt(connectedOutput.getScriptBytes().length).encode());
                     bosHashScriptPubKeys.write(connectedOutput.getScriptBytes());
                 }
-                hashScriptPubKeys = Sha256Hash.hash(bosHashScriptPubKeys.toByteArray());
+
                 hashPrevouts = Sha256Hash.hash(bosHashPrevouts.toByteArray());
+                hashScriptPubKeys = Sha256Hash.hash(bosHashScriptPubKeys.toByteArray());
             }
 
             if (!anyoneCanPay && signAll) {
@@ -1505,8 +1507,8 @@ public class Transaction extends ChildMessage {
                     uint64ToByteStreamLE(BigInteger.valueOf(input.getValue().getValue()), bosAmounts);
                 }
 
-                hashAmounts = Sha256Hash.hash(bosAmounts.toByteArray());
                 hashSequence = Sha256Hash.hash(bosSequence.toByteArray());
+                hashAmounts = Sha256Hash.hash(bosAmounts.toByteArray());
             }
 
             if (signAll) {

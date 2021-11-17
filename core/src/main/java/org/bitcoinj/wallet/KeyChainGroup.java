@@ -358,16 +358,7 @@ public class KeyChainGroup implements KeyBag {
                 currentAddresses.put(purpose, current);
             }
             return current;
-        } else if(outputScriptType == ScriptType.P2TR) {
-            ECKey key = currentKey(purpose);
-            byte[] witnessProgram = new byte[0];
-            try {
-                witnessProgram = key.getTweakedPublicKey();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return SegwitAddress.fromProgram(params, 1, witnessProgram);
-        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
+        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH || outputScriptType == ScriptType.P2TR) {
             return Address.fromKey(params, currentKey(purpose), outputScriptType);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
@@ -437,16 +428,7 @@ public class KeyChainGroup implements KeyBag {
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
-        } else if(outputScriptType == ScriptType.P2TR) {
-            ECKey key = freshKey(purpose);
-            byte[] witnessProgram = new byte[0];
-            try {
-                witnessProgram = key.getTweakedPublicKey();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return SegwitAddress.fromProgram(params, 1, witnessProgram);
-        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
+        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH || outputScriptType == ScriptType.P2TR) {
             return Address.fromKey(params, freshKey(purpose), outputScriptType);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());

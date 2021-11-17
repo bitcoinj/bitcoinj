@@ -292,7 +292,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
     
     /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
-    private volatile boolean vBloomFilteringEnabled = true;
+    private volatile boolean vBloomFilteringEnabled = false; // bloom filtering is disabled by default in Core now.
 
     /** See {@link #PeerGroup(Context)} */
     public PeerGroup(NetworkParameters params) {
@@ -376,7 +376,7 @@ public class PeerGroup implements TransactionBroadcaster {
         peerDiscoverers = new CopyOnWriteArraySet<>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
-        vMinRequiredProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
+        vMinRequiredProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.WITNESS_VERSION);
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -2266,7 +2266,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // Only select peers that announce the minimum protocol and services and that we think is fully synchronized.
         List<Peer> candidates = new LinkedList<>();
         int highestPriority = Integer.MIN_VALUE;
-        final int MINIMUM_VERSION = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.WITNESS_VERSION);
+        final int MINIMUM_VERSION = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.WXTID_RELAY);
         for (Peer peer : peers) {
             final VersionMessage versionMessage = peer.getPeerVersionMessage();
             if (versionMessage.clientVersion < MINIMUM_VERSION)
