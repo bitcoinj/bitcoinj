@@ -66,7 +66,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     // Called by FXMLLoader
     public void initialize() {
         app = WalletApplication.instance();
-        Coin balance = app.walletAppKit().wallet().getBalance();
+        Coin balance = app.walletAppKit().wallet().getBalance(Wallet.BalanceType.ESTIMATED);
         checkState(!balance.isZero());
         new BitcoinAddressValidator(app.params(), address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
@@ -85,7 +85,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = Address.fromString(app.params(), address.getText());
             SendRequest req;
-            if (amount.equals(app.walletAppKit().wallet().getBalance()))
+            if (amount.equals(app.walletAppKit().wallet().getBalance(Wallet.BalanceType.ESTIMATED)))
                 req = SendRequest.emptyWallet(destination);
             else
                 req = SendRequest.to(destination, amount);

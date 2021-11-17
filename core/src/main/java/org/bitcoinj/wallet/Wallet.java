@@ -5210,6 +5210,10 @@ public class Wallet extends BaseTaggableObject
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
                     checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
+                } else if(ScriptPattern.isP2TR(script)) {
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractOutputKeyFromP2TR(script), Script.ScriptType.P2TR);
+                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else {
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 }

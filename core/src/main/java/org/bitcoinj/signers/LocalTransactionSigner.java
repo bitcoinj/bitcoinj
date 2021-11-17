@@ -135,7 +135,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                     txIn.setScriptSig(ScriptBuilder.createEmpty());
                     txIn.setWitness(TransactionWitness.redeemP2WPKH(signature, key));
                 } else if (ScriptPattern.isP2TR(scriptPubKey)) {
-                    Sha256Hash hash = tx.hashForTaprootWitnessSignature(i, Transaction.SigHash.ALL, false);
+                    Sha256Hash hash = tx.hashForTaprootWitnessSignature(i, Transaction.SigHash.UNSET, false);
                     byte[] schnorrSig = null;
                     try {
                         schnorrSig = Schnorr.sign(hash.getBytes(), key.getTweakedPrivateKey(), new SecureRandom().generateSeed(32));
@@ -143,7 +143,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                         e.printStackTrace();
                     }
                     txIn.setScriptSig(ScriptBuilder.createEmpty());
-                    txIn.setWitness(TransactionWitness.redeemP2TR(schnorrSig, Transaction.SigHash.ALL, false));
+                    txIn.setWitness(TransactionWitness.redeemP2TR(schnorrSig, Transaction.SigHash.UNSET, false));
                 } else {
                     throw new IllegalStateException(script.toString());
                 }

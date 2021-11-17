@@ -147,6 +147,7 @@ public abstract class WalletApplication implements AppDelegate {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
+                wallet().setAcceptRiskyTransactions(true);
             }
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen

@@ -52,7 +52,7 @@ public class BitcoinUIModel {
     }
 
     private void updateBalance(Wallet wallet) {
-        balance.set(wallet.getBalance());
+        balance.set(wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
 
     private void updateAddress(Wallet wallet) {

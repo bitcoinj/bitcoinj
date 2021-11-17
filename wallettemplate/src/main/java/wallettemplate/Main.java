@@ -29,7 +29,7 @@ import org.bitcoinj.walletfx.application.AppDelegate;
  * to {@link WalletTemplate}
  */
 public class Main extends Application {
-    private static final NetworkParameters params = MainNetParams.get();
+    private static final NetworkParameters params = TestNet3Params.get();
     private static final Script.ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = Script.ScriptType.P2TR;
     private static final String APP_NAME = "WalletTemplate";
 
