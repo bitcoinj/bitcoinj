@@ -1,0 +1,41 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        java: ['8', '11', '17']
+        distribution: ['temurin']
+        gradle: ['7.2']
+        include:
+          # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
+          - os: ubuntu-latest
+            java: '11'
+            distribution: 'temurin'
+            gradle: '4.10.3'
+      fail-fast: false
+    name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v1
+        with:
+          gradle-version: ${{ matrix.gradle }}
+          arguments: build --stacktrace
+      - name: Upload Test Results and Reports
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: bitcoinj-core-test-results-jdk${{ matrix.java }}-${{ matrix.os }}
+          path: |
+            core/build/reports/tests/test/
+            core/build/test-results/test/
