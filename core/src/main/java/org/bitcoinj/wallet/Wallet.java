@@ -1264,6 +1264,9 @@ public class Wallet extends BaseTaggableObject
                     } else if (ScriptPattern.isP2WH(script)) {
                         byte[] pubkeyHash = ScriptPattern.extractHashFromP2WH(script);
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
+                    } else if (ScriptPattern.isP2TR(script)) {
+                        byte[] witnessProgram = ScriptPattern.extractOutputKeyFromP2TR(script);
+                        keyChainGroup.markPubKeyHashAsUsed(witnessProgram);
                     }
                 } catch (ScriptException e) {
                     // Just means we didn't understand the output of this transaction: ignore it.

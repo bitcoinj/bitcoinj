@@ -111,9 +111,6 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             sendResult.tx.getConfidence().addEventListener((tx, reason) -> {
                 if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS)
                     updateTitleForBroadcast();
-
-                Transaction transaction = app.walletAppKit().wallet().getTransaction(tx.getTransactionHash());
-                System.out.print(transaction.toHexString());
             });
             sendBtn.setDisable(true);
             address.setDisable(true);

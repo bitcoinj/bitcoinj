@@ -148,6 +148,7 @@ public abstract class WalletApplication implements AppDelegate {
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
                 wallet().setAcceptRiskyTransactions(true);
+                //System.out.println(wallet().getRecentTransactions(0, false).get(0).toHexString());
             }
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen

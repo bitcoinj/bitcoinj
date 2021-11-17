@@ -257,6 +257,8 @@ public class Script {
             return ScriptPattern.extractHashFromP2SH(this);
         else if (ScriptPattern.isP2WH(this))
             return ScriptPattern.extractHashFromP2WH(this);
+        else if (ScriptPattern.isP2TR(this))
+            return ScriptPattern.extractOutputKeyFromP2TR(this);
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Script not in the standard scriptPubKey form");
     }

@@ -38,7 +38,7 @@ public class TransactionWitness {
      */
     public static TransactionWitness redeemP2TR(byte[] schnorrSig, Transaction.SigHash mode, boolean anyoneCanPay) {
         TransactionWitness witness = new TransactionWitness(1);
-        if(mode == Transaction.SigHash.ALL || mode == Transaction.SigHash.UNSET) {
+        if(mode == Transaction.SigHash.UNSET) {
             witness.setPush(0, schnorrSig);
         } else {
             witness.setPush(0, witness.encodeSchnorrToBitcoin(schnorrSig, mode, anyoneCanPay)); // signature
