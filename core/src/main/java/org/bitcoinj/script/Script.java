@@ -608,11 +608,16 @@ public class Script {
             // scriptSig is empty
             // witness: <sig> <pubKey>
             int compressedPubKeySize = 33;
-            return SIG_SIZE + (pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize);
+            int publicKeyLength = pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize;
+            return VarInt.sizeOf(2) // number of witness pushes
+                    + VarInt.sizeOf(SIG_SIZE) // size of signature push
+                    + SIG_SIZE // signature push
+                    + VarInt.sizeOf(publicKeyLength) // size of pubKey push
+                    + publicKeyLength; // pubKey push
         } else if(ScriptPattern.isP2TR(this)) {
             // scriptSig is empty
             // witness: <sig>
-            return 65;
+            return 65; //TODO add support for more complex P2TR inputs and their size calculation
         } else {
             throw new IllegalStateException("Unsupported script type");
         }
@@ -802,7 +807,8 @@ public class Script {
                     opcode == OP_INVERT || opcode == OP_AND || opcode == OP_OR || opcode == OP_XOR ||
                     opcode == OP_2MUL || opcode == OP_2DIV || opcode == OP_MUL || opcode == OP_DIV ||
                     opcode == OP_MOD || opcode == OP_LSHIFT || opcode == OP_RSHIFT)
-                throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE, "Script included a disabled Script Op.");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_DISABLED_OPCODE,
+                        "Script included disabled Script Op " + ScriptOpCodes.getOpCodeName(opcode));
 
             if (shouldExecute && OP_0 <= opcode && opcode <= OP_PUSHDATA4) {
                 // Check minimal push
