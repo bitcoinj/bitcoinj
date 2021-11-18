@@ -138,7 +138,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                     Sha256Hash hash = tx.hashForTaprootWitnessSignature(i, Transaction.SigHash.UNSET, false);
                     byte[] schnorrSig = null;
                     try {
-                        schnorrSig = Schnorr.sign(hash.getBytes(), key.getTweakedPrivateKey(), new SecureRandom().generateSeed(32));
+                        schnorrSig = Schnorr.sign(hash.getBytes(), key.getTweakedPrivateKey(null), new SecureRandom().generateSeed(32));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

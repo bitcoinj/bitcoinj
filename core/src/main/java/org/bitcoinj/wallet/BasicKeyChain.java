@@ -184,7 +184,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
         byte[] witnessProgram = new byte[0];
         try {
-            witnessProgram = key.getTweakedPublicKey();
+            witnessProgram = key.getTweakedPublicKey(null);
         } catch (IOException e) {
             e.printStackTrace();
         }

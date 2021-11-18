@@ -93,7 +93,7 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
         else if (outputScriptType == Script.ScriptType.P2TR) {
             byte[] witnessProgram = new byte[0];
             try {
-                witnessProgram = key.getTweakedPublicKey();
+                witnessProgram = key.getTweakedPublicKey(null);
             } catch (IOException e) {
                 e.printStackTrace();
             }

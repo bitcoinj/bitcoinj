@@ -461,7 +461,7 @@ public class ECKey implements EncryptableItem {
         return pubKeyHash;
     }
 
-    public byte[] getTweakedPublicKey() throws IOException {
+    public byte[] getTweakedPublicKey(@Nullable byte[] hash) throws IOException {
         byte[] pubkey = getPubKey();
         String pubKeyNoPrefix = Hex.toHexString(pubkey).substring(2);
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
@@ -469,22 +469,38 @@ public class ECKey implements EncryptableItem {
         bos.write(tag);
         bos.write(tag);
         bos.write(Hex.decode(pubKeyNoPrefix));
+        if(hash != null) {
+            bos.write(hash);
+        }
         byte[] tweak = Sha256Hash.hash(bos.toByteArray());
         ECKey tweakKey = ECKey.fromPrivate(tweak);
-        ECPoint point = getPubKeyPoint().add(tweakKey.getPubKeyPoint());
+        ECPoint pubKeyPoint = getPubKeyPoint();
+        if(!Point.hasEvenY(getPubKeyPoint())) {
+            pubKeyPoint = pubKeyPoint.negate();
+        }
+        ECPoint point = pubKeyPoint.add(tweakKey.getPubKeyPoint());
         ECKey tweakedKey = ECKey.fromPublicOnly(point, true);
         String tweakedPubKeyNoPrefix = Hex.toHexString(tweakedKey.getPubKey()).substring(2);
         return Hex.decode(tweakedPubKeyNoPrefix);
     }
 
-    public byte[] getTweakedPrivateKey() throws IOException {
-        BigInteger privKey = getPrivKey();
+    public byte[] getTweakedPrivateKey(@Nullable byte[] hash) throws IOException {
+        BigInteger privKey0 = getPrivKey();
         Point privPoint = Point.mul(Point.getG(), getPrivKey());
+        BigInteger privKey;
+        if(privPoint.hasEvenY()) {
+            privKey = privKey0;
+        } else {
+            privKey = Point.getn().subtract(privKey0);
+        }
         ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(32);
         byte[] tag = Sha256Hash.hash("TapTweak".getBytes());
         bos.write(tag);
         bos.write(tag);
         bos.write(privPoint.toBytes());
+        if(hash != null) {
+            bos.write(hash);
+        }
         byte[] tweak = Sha256Hash.hash(bos.toByteArray());
         ECKey tweakKey = ECKey.fromPrivate(tweak);
         ECKey tweakedPrivKey = ECKey.fromPrivate((privKey.add(tweakKey.getPrivKey())).mod(Point.getn()));

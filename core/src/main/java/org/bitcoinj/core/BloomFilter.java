@@ -246,7 +246,7 @@ public class BloomFilter extends Message {
         insert(key.getPubKey());
         insert(key.getPubKeyHash());
         try {
-            insert(key.getTweakedPublicKey());
+            insert(key.getTweakedPublicKey(null));
         } catch (IOException e) {
             e.printStackTrace();
         }

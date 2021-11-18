@@ -1,5 +1,10 @@
 package com.samourai.wallet.schnorr;
 
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.LazyECPoint;
+import org.bouncycastle.math.ec.ECFieldElement;
+import org.bouncycastle.math.ec.ECPoint;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -124,6 +129,10 @@ public class Point  {
         return P.getY().mod(TWO).compareTo(BigInteger.ZERO) == 0;
     }
 
+    public static boolean hasEvenY(ECPoint P) {
+        return P.getYCoord().toBigInteger().mod(TWO).compareTo(BigInteger.ZERO) == 0;
+    }
+
     public static boolean isSquare(BigInteger x) {
         return x.modPow(p.subtract(BigInteger.ONE).mod(TWO), p).longValue() == 1L;
     }
@@ -182,6 +191,25 @@ public class Point  {
         }
         else {
             return new Point(x, y.and(BigInteger.ONE).compareTo(BigInteger.ZERO) == 0 ? y : p.subtract(y));
+        }
+    }
+
+    public static ECPoint liftXCoord(ECPoint b) {
+
+        BigInteger x = Util.bigIntFromBytes(b.getEncoded(true));
+        if(x.compareTo(p) >= 0) {
+            return null;
+        }
+        BigInteger y_sq = x.modPow(BigInteger.valueOf(3L), p).add(BigInteger.valueOf(7L)).mod(p);
+        BigInteger y0 = y_sq.modPow(p.add(BigInteger.ONE).divide(BigInteger.valueOf(4L)), p);
+
+        if(y0.modPow(TWO, p).compareTo(y_sq) != 0) {
+            return null;
+        }
+        else {
+            BigInteger y = y0.and(BigInteger.ONE).compareTo(BigInteger.ZERO) == 0 ? y0 : p.subtract(y0);
+            Point point = new Point(x, y);
+            return new LazyECPoint(ECKey.CURVE.getCurve(), point.toBytes()).get();
         }
     }
 

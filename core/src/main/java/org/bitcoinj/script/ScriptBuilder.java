@@ -494,7 +494,7 @@ public class ScriptBuilder {
         checkArgument(key.isCompressed());
         byte[] witnessProgram = new byte[0];
         try {
-            witnessProgram = key.getTweakedPublicKey();
+            witnessProgram = key.getTweakedPublicKey(null);
         } catch (IOException e) {
             e.printStackTrace();
         }
