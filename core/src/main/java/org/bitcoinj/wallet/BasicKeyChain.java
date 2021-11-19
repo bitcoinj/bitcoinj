@@ -127,8 +127,13 @@ public class BasicKeyChain implements EncryptableKeyChain {
     /** Returns a copy of the list of keys that this chain is managing. */
     public List<ECKey> getKeys() {
         lock.lock();
+        ArrayList<ECKey> result = new ArrayList<>();
         try {
-            return new ArrayList<>(hashToKeys.values());
+            for(ECKey key : hashToKeys.values()) {
+                if(result.contains(key)) continue;
+                result.add(key);
+            }
+            return result;
         } finally {
             lock.unlock();
         }
@@ -583,7 +588,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
-            for (ECKey key : hashToKeys.values())
+            for (ECKey key : getKeys())
                 filter.insert(key);
             return filter;
         } finally {

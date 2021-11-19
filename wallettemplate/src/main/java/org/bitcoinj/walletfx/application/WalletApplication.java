@@ -149,8 +149,8 @@ public abstract class WalletApplication implements AppDelegate {
                 Platform.runLater(controller::onBitcoinSetup);
                 wallet().setAcceptRiskyTransactions(true);
 
-                for(int i = 0; i < 100; i++) {
-                    System.out.println(wallet().freshReceiveAddress().toString()+",0.0001");
+                for(Address address : wallet().getIssuedReceiveAddresses()) {
+                    System.out.println(address.toString());
                 }
             }
         };
