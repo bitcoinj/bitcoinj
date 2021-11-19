@@ -94,6 +94,9 @@ import static com.google.common.base.Preconditions.*;
 public class ECKey implements EncryptableItem {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
 
+    final static int PUBLIC_KEY_SIZE = 65;
+    final static int COMPRESSED_PUBLIC_KEY_SIZE = 33;
+
     /** Sorts oldest keys first, newest last. */
     public static final Comparator<ECKey> AGE_COMPARATOR = new Comparator<ECKey>() {
 

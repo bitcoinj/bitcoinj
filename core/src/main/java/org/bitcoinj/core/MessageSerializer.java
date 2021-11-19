@@ -34,6 +34,23 @@ public abstract class MessageSerializer {
      */
     public abstract MessageSerializer withProtocolVersion(int protocolVersion);
 
+
+    /**
+     * Utility method that sets a flag to the protocol version and returns the new serializer
+     * @param flag the flag to process e.g. SERIALIZE_TRANSACTION_NO_WITNESS == 0x40000000
+     * @param set if true will set the flag bit(s) to 1, otherwise to 0
+     * @return the new message serializer
+     */
+    public MessageSerializer withProtocolVersionFlag(int flag, boolean set) {
+        int newProtocolVersion = getProtocolVersion();
+        if (set) {
+            newProtocolVersion |= flag;
+        } else {
+            newProtocolVersion &= ~flag;
+        }
+        return withProtocolVersion(newProtocolVersion);
+    }
+
     /**
      * Get the protocol version of this serializer.
      */
