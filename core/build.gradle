@@ -22,7 +22,7 @@ dependencies {
     testImplementation 'com.h2database:h2:1.3.176'
     testImplementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.7.2'
-    testImplementation 'org.hamcrest:hamcrest-library:1.3'
+    testImplementation 'org.hamcrest:hamcrest-library:2.2'
 }
 
 sourceCompatibility = 1.7
