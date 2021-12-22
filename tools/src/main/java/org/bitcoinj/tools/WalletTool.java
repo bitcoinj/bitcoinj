@@ -20,9 +20,7 @@ package org.bitcoinj.tools;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
@@ -51,14 +49,12 @@ import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
-import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.DumpedPrivateKey;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.FullPrunedBlockChain;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.LegacyAddress;
@@ -71,7 +67,6 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
@@ -175,7 +170,7 @@ public class WalletTool implements Callable<Integer> {
             "                       If you omit both options, the creation time is being cleared (set to 0).%n")
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private NetworkEnum net = NetworkEnum.MAIN;
+    private Network net = Network.MAIN;
     @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.")
     private boolean debugLog = false;
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
@@ -371,25 +366,24 @@ public class WalletTool implements Callable<Integer> {
             java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
+        params = net.networkParameters();
+        String fileName;
         switch (net) {
             case MAIN:
             case PROD:
-                params = MainNetParams.get();
-                if (chainFile == null)
-                    chainFile = new File("mainnet.chain");
+                fileName = "mainnet.chain";
                 break;
             case TEST:
-                params = TestNet3Params.get();
-                if (chainFile == null)
-                    chainFile = new File("testnet.chain");
+                fileName = "testnet.chain";
                 break;
             case REGTEST:
-                params = RegTestParams.get();
-                if (chainFile == null)
-                    chainFile = new File("regtest.chain");
+                fileName = "regtest.chain";
                 break;
             default:
                 throw new RuntimeException("Unreachable.");
+        }
+        if (chainFile == null) {
+            chainFile = new File(fileName);
         }
         Context.propagate(new Context(params));
 

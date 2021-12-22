@@ -17,17 +17,12 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
-import com.google.common.io.Resources;
 import picocli.CommandLine;
 
 import java.io.DataOutputStream;
@@ -58,7 +53,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @CommandLine.Command(name = "build-checkpoints", usageHelpAutoWidth = true, sortOptions = false, description = "Create checkpoint files to use with CheckpointManager.")
 public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private NetworkEnum net = NetworkEnum.MAIN;
+    private Network net = Network.MAIN;
     @CommandLine.Option(names = "--peer", description = "IP address/domain name for connection instead of localhost.")
     private String peer = null;
     @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
@@ -77,18 +72,16 @@ public class BuildCheckpoints implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         final String suffix;
+        params = net.networkParameters();
         switch (net) {
             case MAIN:
             case PROD:
-                params = MainNetParams.get();
                 suffix = "";
                 break;
             case TEST:
-                params = TestNet3Params.get();
                 suffix = "-testnet";
                 break;
             case REGTEST:
-                params = RegTestParams.get();
                 suffix = "-regtest";
                 break;
             default:
