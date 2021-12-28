@@ -30,7 +30,7 @@ jobs:
         uses: gradle/gradle-build-action@v1
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: build --stacktrace
+          arguments: -PtestJdk8=true build --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v2
         if: always()
