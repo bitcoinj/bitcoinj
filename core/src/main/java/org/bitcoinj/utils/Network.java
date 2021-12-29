@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.tools;
+package org.bitcoinj.utils;
 
 import org.bitcoinj.core.NetworkParameters;
 
