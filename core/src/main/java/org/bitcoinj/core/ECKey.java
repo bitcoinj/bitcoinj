@@ -197,22 +197,6 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * @deprecated Use {@link LazyECPoint#compress()}
-     */
-    @Deprecated
-    public static LazyECPoint compressPoint(LazyECPoint point) {
-        return point.compress();
-    }
-
-    /**
-     * @deprecated Use {@link LazyECPoint#decompress()}
-     */
-    @Deprecated
-    public static LazyECPoint decompressPoint(LazyECPoint point) {
-        return point.decompress();
-    }
-
-    /**
      * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by Bitcoin
      * Core in its wallet. Note that this is slow because it requires an EC point multiply.
      */
@@ -306,31 +290,6 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Creates an ECKey given only the private key bytes. This is the same as using the BigInteger constructor, but
-     * is more convenient if you are importing a key from elsewhere. The public key will be automatically derived
-     * from the private key.
-     */
-    @Deprecated
-    public ECKey(@Nullable byte[] privKeyBytes, @Nullable byte[] pubKey) {
-        this(privKeyBytes == null ? null : new BigInteger(1, privKeyBytes), pubKey);
-    }
-
-    /**
-     * Create a new ECKey with an encrypted private key, a public key and a KeyCrypter.
-     *
-     * @param encryptedPrivateKey The private key, encrypted,
-     * @param pubKey The keys public key
-     * @param keyCrypter The KeyCrypter that will be used, with an AES key, to encrypt and decrypt the private key
-     */
-    @Deprecated
-    public ECKey(EncryptedData encryptedPrivateKey, byte[] pubKey, KeyCrypter keyCrypter) {
-        this((byte[])null, pubKey);
-
-        this.keyCrypter = checkNotNull(keyCrypter);
-        this.encryptedPrivateKey = encryptedPrivateKey;
-    }
-
-    /**
      * Constructs a key that has an encrypted private component. The given object wraps encrypted bytes and an
      * initialization vector. Note that the key will not be decrypted during this call: the returned ECKey is
      * unusable for signing unless a decryption key is supplied.
@@ -340,41 +299,6 @@ public class ECKey implements EncryptableItem {
         key.encryptedPrivateKey = checkNotNull(encryptedPrivateKey);
         key.keyCrypter = checkNotNull(crypter);
         return key;
-    }
-
-    /**
-     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
-     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
-     * the public key already correctly matches the private key. If only the public key is supplied, this ECKey cannot
-     * be used for signing.
-     * @param compressed If set to true and pubKey is null, the derived public key will be in compressed form.
-     */
-    @Deprecated
-    public ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey, boolean compressed) {
-        if (privKey == null && pubKey == null)
-            throw new IllegalArgumentException("ECKey requires at least private or public key");
-        this.priv = privKey;
-        if (pubKey == null) {
-            // Derive public from private.
-            ECPoint point = publicPointFromPrivate(privKey);
-            this.pub = new LazyECPoint(point, compressed);
-        } else {
-            // We expect the pubkey to be in regular encoded form, just as a BigInteger. Therefore the first byte is
-            // a special marker byte.
-            // TODO: This is probably not a useful API and may be confusing.
-            this.pub = new LazyECPoint(CURVE.getCurve(), pubKey);
-        }
-    }
-
-    /**
-     * Creates an ECKey given either the private key only, the public key only, or both. If only the private key
-     * is supplied, the public key will be calculated from it (this is slow). If both are supplied, it's assumed
-     * the public key already correctly matches the public key. If only the public key is supplied, this ECKey cannot
-     * be used for signing.
-     */
-    @Deprecated
-    private ECKey(@Nullable BigInteger privKey, @Nullable byte[] pubKey) {
-        this(privKey, pubKey, false);
     }
 
     /**
@@ -822,8 +746,7 @@ public class ECKey implements EncryptableItem {
             checkArgument(encoding >= 2 && encoding <= 4, "Input has 'publicKey' with invalid encoding");
 
             // Now sanity check to ensure the pubkey bytes match the privkey.
-            boolean compressed = isPubKeyCompressed(pubbits);
-            ECKey key = new ECKey(privkey, (byte[]) null, compressed);
+            ECKey key = ECKey.fromPrivate(privkey, isPubKeyCompressed(pubbits));
             if (!Arrays.equals(key.getPubKey(), pubbits))
                 throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
             return key;
