@@ -120,7 +120,8 @@ public class TransactionConfidence {
          */
         UNKNOWN(0);
         
-        private int value;
+        private final int value;
+
         ConfidenceType(int value) {
             this.value = value;
         }
