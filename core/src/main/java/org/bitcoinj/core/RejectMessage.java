@@ -61,8 +61,10 @@ public class RejectMessage extends Message {
         CHECKPOINT((byte) 0x43),
         OTHER((byte) 0xff);
 
-        byte code;
+        final byte code;
+
         RejectCode(byte code) { this.code = code; }
+
         static RejectCode fromCode(byte code) {
             for (RejectCode rejectCode : RejectCode.values())
                 if (rejectCode.code == code)
