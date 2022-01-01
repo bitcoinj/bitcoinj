@@ -18,8 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.*;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
@@ -1041,21 +1039,19 @@ public abstract class AbstractBlockChain {
      * @param height desired height
      * @return future that will complete when height is reached
      */
-    public ListenableFuture<StoredBlock> getHeightFuture(final int height) {
-        final SettableFuture<StoredBlock> result = SettableFuture.create();
+    public ListenableCompletableFuture<StoredBlock> getHeightFuture(final int height) {
+        final ListenableCompletableFuture<StoredBlock> result = new ListenableCompletableFuture<>();
         addNewBestBlockListener(Threading.SAME_THREAD, new NewBestBlockListener() {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 if (block.getHeight() >= height) {
                     removeNewBestBlockListener(this);
-                    result.set(block);
+                    result.complete(block);
                 }
             }
         });
         return result;
     }
-
-
 
     /**
      * The false positive rate is the average over all blockchain transactions of:

@@ -28,7 +28,6 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.rules.ExpectedException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +37,7 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 import static org.bitcoinj.core.Coin.*;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
@@ -102,7 +102,7 @@ public class BlockChainTest {
     @Test
     public void testBasicChaining() throws Exception {
         // Check that we can plug a few blocks together and the futures work.
-        ListenableFuture<StoredBlock> future = testNetChain.getHeightFuture(2);
+        CompletableFuture<StoredBlock> future = testNetChain.getHeightFuture(2);
         // Block 1 from the testnet.
         Block b1 = getBlock1();
         assertTrue(testNetChain.add(b1));
