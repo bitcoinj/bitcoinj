@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * <p>A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc).</p>
@@ -66,10 +67,10 @@ public class RejectMessage extends Message {
         RejectCode(byte code) { this.code = code; }
 
         static RejectCode fromCode(byte code) {
-            for (RejectCode rejectCode : RejectCode.values())
-                if (rejectCode.code == code)
-                    return rejectCode;
-            return OTHER;
+            return Stream.of(RejectCode.values())
+                    .filter(r -> r.code == code)
+                    .findFirst()
+                    .orElse(OTHER);
         }
     }
     private RejectCode code;
