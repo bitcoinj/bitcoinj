@@ -17,9 +17,9 @@
 package org.bitcoinj.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Comparator;
 
 import javax.annotation.Nullable;
 
@@ -286,6 +286,10 @@ public class SegwitAddress extends Address {
         return out.toByteArray();
     }
 
+    // Comparator for SegwitAddress, left argument must be SegwitAddress, right argument can be any Address
+    private static final Comparator<Address> SEGWIT_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
+            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Segwit bytes
+
     /**
      * {@inheritDoc}
      *
@@ -294,10 +298,6 @@ public class SegwitAddress extends Address {
      */
     @Override
     public int compareTo(Address o) {
-        int result = compareAddressPartial(o);
-        if (result != 0) return result;
-
-        // Compare the bytes
-        return UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
+        return SEGWIT_ADDRESS_COMPARATOR.compare(this, o);
     }
 }
