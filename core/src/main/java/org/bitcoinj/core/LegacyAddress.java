@@ -19,6 +19,7 @@
 package org.bitcoinj.core;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
@@ -215,6 +216,11 @@ public class LegacyAddress extends Address {
         return (LegacyAddress) super.clone();
     }
 
+    // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
+    private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
+            .thenComparingInt(a -> ((LegacyAddress) a).getVersion())                    // Then compare Legacy address version byte
+            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
+
     /**
      * {@inheritDoc}
      *
@@ -223,11 +229,6 @@ public class LegacyAddress extends Address {
      */
     @Override
     public int compareTo(Address o) {
-        int result = compareAddressPartial(o);
-        if (result != 0) return result;
-
-        // Compare version byte and finally the {@code bytes} field itself
-        result = Integer.compare(getVersion(), ((LegacyAddress) o).getVersion());
-        return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
+       return LEGACY_ADDRESS_COMPARATOR.compare(this, o);
     }
 }
