@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
     id 'eclipse'
 }
 
@@ -18,10 +19,5 @@ compileJava {
     options.compilerArgs.addAll(['--release', '11'])
 }
 
-task build_checkpoints(type: JavaExec) {
-    description = 'Create checkpoint files to use with CheckpointManager.'
-    main = 'org.bitcoinj.tools.BuildCheckpoints'
-    if (project.hasProperty('appArgs') && appArgs.length() > 0)
-        args = Arrays.asList(appArgs.split("\\s+"))
-    classpath = sourceSets.main.runtimeClasspath
-}
+mainClassName = "org.bitcoinj.wallettool.WalletTool"
+applicationName = "wallet-tool"
