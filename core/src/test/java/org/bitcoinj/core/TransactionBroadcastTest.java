@@ -17,7 +17,8 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AtomicDouble;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.testing.*;
 import org.bitcoinj.utils.*;

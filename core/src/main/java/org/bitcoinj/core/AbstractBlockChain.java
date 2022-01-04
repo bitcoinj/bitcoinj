@@ -18,7 +18,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
