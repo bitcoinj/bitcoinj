@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.tools;
+package org.bitcoinj.wallettool;
 
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.TransactionOutput;
