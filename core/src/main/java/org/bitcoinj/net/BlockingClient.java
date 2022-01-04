@@ -16,7 +16,9 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.*;
 import org.slf4j.*;
 

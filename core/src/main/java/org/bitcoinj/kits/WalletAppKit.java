@@ -19,7 +19,10 @@ package org.bitcoinj.kits;
 
 import com.google.common.collect.*;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.DeterministicKey;

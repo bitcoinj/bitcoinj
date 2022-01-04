@@ -18,7 +18,9 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
 import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;

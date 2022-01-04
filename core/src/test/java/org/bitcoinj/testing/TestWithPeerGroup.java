@@ -17,7 +17,8 @@
 package org.bitcoinj.testing;
 
 import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.store.*;

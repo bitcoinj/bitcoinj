@@ -19,7 +19,8 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.Script;
