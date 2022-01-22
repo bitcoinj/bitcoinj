@@ -71,30 +71,24 @@ public class Transaction extends ChildMessage {
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
      * into the past.
      */
-    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = new Comparator<Transaction>() {
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-            final long time1 = tx1.getUpdateTime().getTime();
-            final long time2 = tx2.getUpdateTime().getTime();
-            final int updateTimeComparison = -(Long.compare(time1, time2));
-            //If time1==time2, compare by tx hash to make comparator consistent with equals
-            return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
-        }
+    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = (tx1, tx2) -> {
+        final long time1 = tx1.getUpdateTime().getTime();
+        final long time2 = tx2.getUpdateTime().getTime();
+        final int updateTimeComparison = -(Long.compare(time1, time2));
+        //If time1==time2, compare by tx hash to make comparator consistent with equals
+        return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
     };
     /** A comparator that can be used to sort transactions by their chain height. */
-    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = new Comparator<Transaction>() {
-        @Override
-        public int compare(final Transaction tx1, final Transaction tx2) {
-            final TransactionConfidence confidence1 = tx1.getConfidence();
-            final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence1.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-            final TransactionConfidence confidence2 = tx2.getConfidence();
-            final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
-                    ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-            final int heightComparison = -(Integer.compare(height1, height2));
-            //If height1==height2, compare by tx hash to make comparator consistent with equals
-            return heightComparison != 0 ? heightComparison : tx1.getTxId().compareTo(tx2.getTxId());
-        }
+    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = (tx1, tx2) -> {
+        final TransactionConfidence confidence1 = tx1.getConfidence();
+        final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
+                ? confidence1.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
+        final TransactionConfidence confidence2 = tx2.getConfidence();
+        final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
+                ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
+        final int heightComparison = -(Integer.compare(height1, height2));
+        //If height1==height2, compare by tx hash to make comparator consistent with equals
+        return heightComparison != 0 ? heightComparison : tx1.getTxId().compareTo(tx2.getTxId());
     };
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
