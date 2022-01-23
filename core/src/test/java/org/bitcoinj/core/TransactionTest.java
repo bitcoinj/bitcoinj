@@ -29,6 +29,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import static org.bitcoinj.core.Utils.HEX;
 
 import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
@@ -572,7 +577,7 @@ public class TransactionTest {
      * Ensure that hashForSignature() doesn't modify a transaction's data, which could wreak multithreading havoc.
      */
     @Test
-    public void testHashForSignatureThreadSafety() {
+    public void testHashForSignatureThreadSafety() throws Exception {
         Block genesis = UNITTEST.getGenesisBlock();
         Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(UNITTEST, new ECKey()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
@@ -585,17 +590,25 @@ public class TransactionTest {
                 Transaction.SigHash.ALL.byteValue())
                 .toString();
 
-        for (int i = 0; i < 100; i++) {
+        final Callable<Void> c = () -> {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getTxId());
-            new Thread(() -> assertEquals(
+            assertEquals(
                     txNormalizedHash,
                     tx.hashForSignature(
-                            0,
-                            new byte[0],
-                            Transaction.SigHash.ALL.byteValue())
-                            .toString())).start();
-        }
+                                    0,
+                                    new byte[0],
+                                    Transaction.SigHash.ALL.byteValue())
+                            .toString());
+            assertEquals(txHash, tx.getTxId());
+            return null;
+        };
+        final int nThreads = 100;
+        ExecutorService executor = Executors.newFixedThreadPool(nThreads); // do our best to run as parallel as possible
+        List<Future<Void>> results = executor.invokeAll(Collections.nCopies(nThreads, c));
+        executor.shutdown();
+        for (Future result : results)
+            result.get(); // we're just interested in the exception, if any
     }
 
     @Test
