@@ -548,7 +548,7 @@ public class TransactionTest {
                             0,
                             new byte[0],
                             Transaction.SigHash.ALL.byteValue())
-                            .toString()));
+                            .toString())).start();
         }
     }
 
