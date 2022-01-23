@@ -542,17 +542,13 @@ public class TransactionTest {
         for (int i = 0; i < 100; i++) {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getTxId());
-            new Thread(){
-                public void run() {
-                    assertEquals(
-                            txNormalizedHash,
-                            tx.hashForSignature(
-                                    0,
-                                    new byte[0],
-                                    Transaction.SigHash.ALL.byteValue())
-                                    .toString());
-                }
-            };
+            new Thread(() -> assertEquals(
+                    txNormalizedHash,
+                    tx.hashForSignature(
+                            0,
+                            new byte[0],
+                            Transaction.SigHash.ALL.byteValue())
+                            .toString()));
         }
     }
 

@@ -423,12 +423,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private void queueOnKeysAdded(final List<ECKey> keys) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<KeyChainEventListener> registration : listeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onKeysAdded(keys);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onKeysAdded(keys));
         }
     }
 

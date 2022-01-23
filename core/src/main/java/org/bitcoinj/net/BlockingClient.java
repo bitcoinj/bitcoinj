@@ -69,35 +69,32 @@ public class BlockingClient implements MessageWriteTarget {
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
         final Context context = Context.get();
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                Context.propagate(context);
-                if (clientSet != null)
-                    clientSet.add(BlockingClient.this);
-                try {
-                    socket.connect(serverAddress, connectTimeoutMillis);
-                    connection.connectionOpened();
-                    connectFuture.set(serverAddress);
-                    InputStream stream = socket.getInputStream();
-                    runReadLoop(stream, connection);
-                } catch (Exception e) {
-                    if (!vCloseRequested) {
-                        log.error("Error trying to open/read from connection: {}: {}", serverAddress, e.getMessage());
-                        connectFuture.setException(e);
-                    }
-                } finally {
-                    try {
-                        socket.close();
-                    } catch (IOException e1) {
-                        // At this point there isn't much we can do, and we can probably assume the channel is closed
-                    }
-                    if (clientSet != null)
-                        clientSet.remove(BlockingClient.this);
-                    connection.connectionClosed();
+        Thread t = new Thread(() -> {
+            Context.propagate(context);
+            if (clientSet != null)
+                clientSet.add(BlockingClient.this);
+            try {
+                socket.connect(serverAddress, connectTimeoutMillis);
+                connection.connectionOpened();
+                connectFuture.set(serverAddress);
+                InputStream stream = socket.getInputStream();
+                runReadLoop(stream, connection);
+            } catch (Exception e) {
+                if (!vCloseRequested) {
+                    log.error("Error trying to open/read from connection: {}: {}", serverAddress, e.getMessage());
+                    connectFuture.setException(e);
                 }
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    // At this point there isn't much we can do, and we can probably assume the channel is closed
+                }
+                if (clientSet != null)
+                    clientSet.remove(BlockingClient.this);
+                connection.connectionClosed();
             }
-        };
+        });
         t.setName("BlockingClient network thread for " + serverAddress);
         t.setDaemon(true);
         t.start();

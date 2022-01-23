@@ -261,12 +261,7 @@ public class WalletProtobufSerializerTest {
         BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
 
         final ArrayList<Transaction> txns = new ArrayList<>(2);
-        myWallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                txns.add(tx);
-            }
-        });
+        myWallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txns.add(tx));
 
         // Start by building two blocks on top of the genesis block.
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(myAddress);

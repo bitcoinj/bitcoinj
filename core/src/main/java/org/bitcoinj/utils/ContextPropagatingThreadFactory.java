@@ -42,16 +42,13 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(final Runnable r) {
         final Context context = Context.get();
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Context.propagate(context);
-                    r.run();
-                } catch (Exception e) {
-                    log.error("Exception in thread", e);
-                    throw e;
-                }
+        Thread thread = new Thread(() -> {
+            try {
+                Context.propagate(context);
+                r.run();
+            } catch (Exception e) {
+                log.error("Exception in thread", e);
+                throw e;
             }
         }, name);
         thread.setPriority(priority);

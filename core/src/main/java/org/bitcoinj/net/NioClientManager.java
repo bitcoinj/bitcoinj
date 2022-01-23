@@ -189,11 +189,6 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
 
     @Override
     protected Executor executor() {
-        return new Executor() {
-            @Override
-            public void execute(Runnable command) {
-                new ContextPropagatingThreadFactory("NioClientManager").newThread(command).start();
-            }
-        };
+        return command -> new ContextPropagatingThreadFactory("NioClientManager").newThread(command).start();
     }
 }

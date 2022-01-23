@@ -64,11 +64,7 @@ public class Threading {
      */
     public static void waitForUserCode() {
         final CountDownLatch latch = new CountDownLatch(1);
-        USER_THREAD.execute(new Runnable() {
-            @Override public void run() {
-                latch.countDown();
-            }
-        });
+        USER_THREAD.execute(() -> latch.countDown());
         Uninterruptibles.awaitUninterruptibly(latch);
     }
 
@@ -133,12 +129,7 @@ public class Threading {
         throwOnLockCycles();
 
         USER_THREAD = new UserThread();
-        SAME_THREAD = new Executor() {
-            @Override
-            public void execute(@Nonnull Runnable runnable) {
-                runnable.run();
-            }
-        };
+        SAME_THREAD = runnable -> runnable.run();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,14 +181,11 @@ public class Threading {
 
     /** A caching thread pool that creates daemon threads, which won't keep the JVM alive waiting for more work. */
     public static ListeningExecutorService THREAD_POOL = MoreExecutors.listeningDecorator(
-            Executors.newCachedThreadPool(new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread t = new Thread(r);
-                    t.setName("Threading.THREAD_POOL worker");
-                    t.setDaemon(true);
-                    return t;
-                }
+            Executors.newCachedThreadPool(r -> {
+                Thread t = new Thread(r);
+                t.setName("Threading.THREAD_POOL worker");
+                t.setDaemon(true);
+                return t;
             })
     );
 }

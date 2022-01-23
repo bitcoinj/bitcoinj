@@ -78,12 +78,7 @@ public class ECKeyTest {
         final ECKey key = new ECKey();
         for (byte i = 0; i < ITERATIONS; i++) {
             final Sha256Hash hash = Sha256Hash.of(new byte[]{i});
-            sigFutures.add(executor.submit(new Callable<ECKey.ECDSASignature>() {
-                @Override
-                public ECKey.ECDSASignature call() throws Exception {
-                    return key.sign(hash);
-                }
-            }));
+            sigFutures.add(executor.submit(() -> key.sign(hash)));
         }
         List<ECKey.ECDSASignature> sigs = Futures.allAsList(sigFutures).get();
         for (ECKey.ECDSASignature signature : sigs) {

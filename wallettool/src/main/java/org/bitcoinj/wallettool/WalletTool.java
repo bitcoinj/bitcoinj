@@ -473,45 +473,39 @@ public class WalletTool implements Callable<Integer> {
                             return 1;
                         }
                         final Address validSelectAddr = selectAddr;
-                        coinSelector = new CoinSelector() {
-                            @Override
-                            public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
-                                Coin valueGathered = Coin.ZERO;
-                                List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
-                                for (TransactionOutput candidate : candidates) {
-                                    try {
-                                        Address candidateAddr = candidate.getScriptPubKey().getToAddress(params);
-                                        if (validSelectAddr.equals(candidateAddr)) {
-                                            gathered.add(candidate);
-                                            valueGathered = valueGathered.add(candidate.getValue());
-                                        }
-                                    } catch (ScriptException x) {
-                                        // swallow
+                        coinSelector = (target, candidates) -> {
+                            Coin valueGathered = Coin.ZERO;
+                            List<TransactionOutput> gathered = new LinkedList<>();
+                            for (TransactionOutput candidate : candidates) {
+                                try {
+                                    Address candidateAddr = candidate.getScriptPubKey().getToAddress(params);
+                                    if (validSelectAddr.equals(candidateAddr)) {
+                                        gathered.add(candidate);
+                                        valueGathered = valueGathered.add(candidate.getValue());
                                     }
+                                } catch (ScriptException x) {
+                                    // swallow
                                 }
-                                return new CoinSelection(valueGathered, gathered);
                             }
+                            return new CoinSelection(valueGathered, gathered);
                         };
                     }
                     if (selectOutputStr != null) {
                         String[] parts = selectOutputStr.split(":", 2);
                         Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
                         int selectIndex = Integer.parseInt(parts[1]);
-                        coinSelector = new CoinSelector() {
-                            @Override
-                            public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
-                                Coin valueGathered = Coin.ZERO;
-                                List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
-                                for (TransactionOutput candidate : candidates) {
-                                    int candicateIndex = candidate.getIndex();
-                                    final Sha256Hash candidateTransactionHash = candidate.getParentTransactionHash();
-                                    if (selectIndex == candicateIndex && selectTransactionHash.equals(candidateTransactionHash)) {
-                                        gathered.add(candidate);
-                                        valueGathered = valueGathered.add(candidate.getValue());
-                                    }
+                        coinSelector = (target, candidates) -> {
+                            Coin valueGathered = Coin.ZERO;
+                            List<TransactionOutput> gathered = new LinkedList<>();
+                            for (TransactionOutput candidate : candidates) {
+                                int candicateIndex = candidate.getIndex();
+                                final Sha256Hash candidateTransactionHash = candidate.getParentTransactionHash();
+                                if (selectIndex == candicateIndex && selectTransactionHash.equals(candidateTransactionHash)) {
+                                    gathered.add(candidate);
+                                    valueGathered = valueGathered.add(candidate.getValue());
                                 }
-                                return new CoinSelection(valueGathered, gathered);
                             }
+                            return new CoinSelection(valueGathered, gathered);
                         };
                     }
                     send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);

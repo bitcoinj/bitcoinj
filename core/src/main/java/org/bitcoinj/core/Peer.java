@@ -232,12 +232,7 @@ public class Peer extends PeerSocketHandler {
         this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
 
-        this.versionHandshakeFuture.addListener(new Runnable() {
-            @Override
-            public void run() {
-                versionHandshakeComplete();
-            }
-        }, Threading.SAME_THREAD);
+        this.versionHandshakeFuture.addListener(() -> versionHandshakeComplete(), Threading.SAME_THREAD);
     }
 
     /**
@@ -388,12 +383,7 @@ public class Peer extends PeerSocketHandler {
     @Override
     public void connectionClosed() {
         for (final ListenerRegistration<PeerDisconnectedEventListener> registration : disconnectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerDisconnected(Peer.this, 0);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerDisconnected(Peer.this, 0));
         }
     }
 
@@ -573,12 +563,7 @@ public class Peer extends PeerSocketHandler {
             log.debug("{}: Handshake complete.", this);
         setTimeoutEnabled(false);
         for (final ListenerRegistration<PeerConnectedEventListener> registration : connectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerConnected(Peer.this, 1);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerConnected(Peer.this, 1));
         }
         // We check min version after onPeerConnected as channel.close() will
         // call onPeerDisconnected, and we should probably call onPeerConnected first.
@@ -802,12 +787,7 @@ public class Peer extends PeerSocketHandler {
         // Tell all listeners about this tx so they can decide whether to keep it or not. If no listener keeps a
         // reference around then the memory pool will forget about it after a while too because it uses weak references.
         for (final ListenerRegistration<OnTransactionBroadcastListener> registration : onTransactionEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onTransaction(Peer.this, tx);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onTransaction(Peer.this, tx));
         }
     }
 
@@ -1122,12 +1102,7 @@ public class Peer extends PeerSocketHandler {
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
         final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
         for (final ListenerRegistration<BlocksDownloadedEventListener> registration : blocksDownloadedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onBlocksDownloaded(Peer.this, block, fb, blocksLeft);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onBlocksDownloaded(Peer.this, block, fb, blocksLeft));
         }
     }
 
@@ -1460,12 +1435,7 @@ public class Peer extends PeerSocketHandler {
         final int blocksLeft = getPeerBlockHeightDifference();
         if (blocksLeft >= 0) {
             for (final ListenerRegistration<ChainDownloadStartedEventListener> registration : chainDownloadStartedEventListeners) {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onChainDownloadStarted(Peer.this, blocksLeft);
-                    }
-                });
+                registration.executor.execute(() -> registration.listener.onChainDownloadStarted(Peer.this, blocksLeft));
             }
             // When we just want as many blocks as possible, we can set the target hash to zero.
             lock.lock();
@@ -1737,24 +1707,21 @@ public class Peer extends PeerSocketHandler {
             }
             // Ping/pong to wait for blocks that are still being streamed to us to finish being downloaded and
             // discarded.
-            ping().addListener(new Runnable() {
-                @Override
-                public void run() {
-                    lock.lock();
-                    checkNotNull(awaitingFreshFilter);
-                    GetDataMessage getdata = new GetDataMessage(params);
-                    for (Sha256Hash hash : awaitingFreshFilter)
-                        getdata.addFilteredBlock(hash);
-                    awaitingFreshFilter = null;
-                    lock.unlock();
+            ping().addListener(() -> {
+                lock.lock();
+                checkNotNull(awaitingFreshFilter);
+                GetDataMessage getdata = new GetDataMessage(params);
+                for (Sha256Hash hash : awaitingFreshFilter)
+                    getdata.addFilteredBlock(hash);
+                awaitingFreshFilter = null;
+                lock.unlock();
 
-                    log.info("Restarting chain download");
-                    sendMessage(getdata);
-                    // TODO: This bizarre ping-after-getdata hack probably isn't necessary.
-                    // It's to ensure we know when the end of a filtered block stream of txns is, but we should just be
-                    // able to match txns with the merkleblock. Ask Matt why it's written this way.
-                    sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
-                }
+                log.info("Restarting chain download");
+                sendMessage(getdata);
+                // TODO: This bizarre ping-after-getdata hack probably isn't necessary.
+                // It's to ensure we know when the end of a filtered block stream of txns is, but we should just be
+                // able to match txns with the merkleblock. Ask Matt why it's written this way.
+                sendMessage(new Ping((long) (Math.random() * Long.MAX_VALUE)));
             }, Threading.SAME_THREAD);
         } finally {
             lock.unlock();

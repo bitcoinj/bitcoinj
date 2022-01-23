@@ -460,12 +460,8 @@ public class TransactionConfidence {
      */
     public void queueListeners(final Listener.ChangeReason reason) {
         for (final ListenerRegistration<Listener> registration : listeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onConfidenceChanged(TransactionConfidence.this, reason);
-                }
-            });
+            registration.executor.execute(() ->
+                    registration.listener.onConfidenceChanged(TransactionConfidence.this, reason));
         }
     }
 

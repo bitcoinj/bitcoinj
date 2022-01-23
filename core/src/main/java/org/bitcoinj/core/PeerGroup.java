@@ -55,22 +55,22 @@ import static com.google.common.base.Preconditions.*;
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
  * the interaction between them all. Most applications will want to use one of these.</p>
- * 
+ *
  * <p>PeerGroup tries to maintain a constant number of connections to a set of distinct peers.
  * Each peer runs a network listener in its own thread.  When a connection is lost, a new peer
  * will be tried after a delay as long as the number of connections less than the maximum.</p>
- * 
+ *
  * <p>Connections are made to addresses from a provided list.  When that list is exhausted,
  * we start again from the head of the list.</p>
- * 
+ *
  * <p>The PeerGroup can broadcast a transaction to the currently connected set of peers.  It can
  * also handle download of the blockchain from peers, restarting the process when peers die.</p>
  *
- * <p>A PeerGroup won't do anything until you call the {@link PeerGroup#start()} method 
- * which will block until peer discovery is completed and some outbound connections 
- * have been initiated (it will return before handshaking is done, however). 
+ * <p>A PeerGroup won't do anything until you call the {@link PeerGroup#start()} method
+ * which will block until peer discovery is completed and some outbound connections
+ * have been initiated (it will return before handshaking is done, however).
  * You should call {@link PeerGroup#stop()} when finished. Note that not all methods
- * of PeerGroup are safe to call from a UI thread as some may do network IO, 
+ * of PeerGroup are safe to call from a UI thread as some may do network IO,
  * but starting and stopping the service should be fine.</p>
  */
 public class PeerGroup implements TransactionBroadcaster {
@@ -169,31 +169,17 @@ public class PeerGroup implements TransactionBroadcaster {
     private final PeerListener peerListener = new PeerListener();
 
     private int minBroadcastConnections = 0;
-    private final ScriptsChangeEventListener walletScriptsEventListener = new ScriptsChangeEventListener() {
-        @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+    private final ScriptsChangeEventListener walletScriptsEventListener = (wallet, scripts, isAddingScripts) ->
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
 
-    private final KeyChainEventListener walletKeyEventListener = new KeyChainEventListener() {
-        @Override public void onKeysAdded(List<ECKey> keys) {
+    private final KeyChainEventListener walletKeyEventListener = keys ->
             recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
 
-    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = new WalletCoinsReceivedEventListener() {
-        @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onCoinsReceivedOrSent(wallet, tx);
-        }
-    };
+    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener =
+            (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
 
-    private final WalletCoinsSentEventListener walletCoinsSentEventListener = new WalletCoinsSentEventListener() {
-        @Override
-        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onCoinsReceivedOrSent(wallet, tx);
-        }
-    };
+    private final WalletCoinsSentEventListener walletCoinsSentEventListener =
+            (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
 
     private void onCoinsReceivedOrSent(Wallet wallet, Transaction tx) {
         // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
@@ -298,7 +284,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /** The default timeout between when a connection attempt begins and version message exchange completes */
     public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
     private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
-    
+
     /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
     private volatile boolean vBloomFilteringEnabled = true;
 
@@ -395,12 +381,7 @@ public class PeerGroup implements TransactionBroadcaster {
         );
         // Hack: jam the executor so jobs just queue up until the user calls start() on us. For example, adding a wallet
         // results in a bloom filter recalc being queued, but we don't want to do that until we're actually started.
-        result.execute(new Runnable() {
-            @Override
-            public void run() {
-                Uninterruptibles.awaitUninterruptibly(executorStartupLatch);
-            }
-        });
+        result.execute(() -> Uninterruptibles.awaitUninterruptibly(executorStartupLatch));
         return result;
     }
 
@@ -614,7 +595,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Sets information that identifies this software to remote nodes. This is a convenience wrapper for creating 
+     * Sets information that identifies this software to remote nodes. This is a convenience wrapper for creating
      * a new {@link VersionMessage}, calling {@link VersionMessage#appendToSubVer(String, String, String)} on it,
      * and then calling {@link PeerGroup#setVersionMessage(VersionMessage)} on the result of that. See the docs for
      * {@link VersionMessage#appendToSubVer(String, String, String)} for information on what the fields should contain.
@@ -628,7 +609,7 @@ public class PeerGroup implements TransactionBroadcaster {
         ver.appendToSubVer(name, version, comments);
         setVersionMessage(ver);
     }
-    
+
     // Updates the relayTxesBeforeFilter flag of ver
     private void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
         // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
@@ -995,12 +976,7 @@ public class PeerGroup implements TransactionBroadcaster {
             }
             final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressList);
             for (final ListenerRegistration<PeerDiscoveredEventListener> registration : peerDiscoveredEventListeners /* COW */) {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onPeersDiscovered(peersDiscoveredSet);
-                    }
-                });
+                registration.executor.execute(() -> registration.listener.onPeersDiscovered(peersDiscoveredSet));
             }
         }
         watch.stop();
@@ -1063,18 +1039,15 @@ public class PeerGroup implements TransactionBroadcaster {
         vUsedUp = true;
         executorStartupLatch.countDown();
         // We do blocking waits during startup, so run on the executor thread.
-        return executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    log.info("Starting ...");
-                    channels.startAsync();
-                    channels.awaitRunning();
-                    triggerConnections();
-                    setupPinging();
-                } catch (Throwable e) {
-                    log.error("Exception when starting up", e);  // The executor swallows exceptions :(
-                }
+        return executor.submit(() -> {
+            try {
+                log.info("Starting ...");
+                channels.startAsync();
+                channels.awaitRunning();
+                triggerConnections();
+                setupPinging();
+            } catch (Throwable e) {
+                log.error("Exception when starting up", e);  // The executor swallows exceptions :(
             }
         });
     }
@@ -1087,25 +1060,22 @@ public class PeerGroup implements TransactionBroadcaster {
     public ListenableFuture stopAsync() {
         checkState(vRunning);
         vRunning = false;
-        ListenableFuture future = executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    log.info("Stopping ...");
-                    Stopwatch watch = Stopwatch.createStarted();
-                    // The log output this creates can be useful.
-                    setDownloadPeer(null);
-                    // Blocking close of all sockets.
-                    channels.stopAsync();
-                    channels.awaitTerminated();
-                    for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-                        peerDiscovery.shutdown();
-                    }
-                    vRunning = false;
-                    log.info("Stopped, took {}.", watch);
-                } catch (Throwable e) {
-                    log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
+        ListenableFuture future = executor.submit(() -> {
+            try {
+                log.info("Stopping ...");
+                Stopwatch watch = Stopwatch.createStarted();
+                // The log output this creates can be useful.
+                setDownloadPeer(null);
+                // Blocking close of all sockets.
+                channels.stopAsync();
+                channels.awaitTerminated();
+                for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+                    peerDiscovery.shutdown();
                 }
+                vRunning = false;
+                log.info("Stopped, took {}.", watch);
+            } catch (Throwable e) {
+                log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
             }
         });
         executor.shutdown();
@@ -1241,7 +1211,7 @@ public class PeerGroup implements TransactionBroadcaster {
         wallet.setTransactionBroadcaster(null);
         for (Peer peer : peers) {
             peer.removeWallet(wallet);
-        }        
+        }
     }
 
     public enum FilterRecalculateMode {
@@ -1325,13 +1295,13 @@ public class PeerGroup implements TransactionBroadcaster {
         }
         return future;
     }
-    
+
     /**
      * <p>Sets the false positive rate of bloom filters given to peers. The default is {@link #DEFAULT_BLOOM_FILTER_FP_RATE}.</p>
      *
      * <p>Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
      * compare transactions against both the new and old filters to significantly decrease the false positive rate.</p>
-     * 
+     *
      * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief
      * explanation of anonymity when using bloom filters.</p>
      */
@@ -1356,7 +1326,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Connect to a peer by creating a channel to the destination address.  This should not be
      * used normally - let the PeerGroup manage connections through {@link #start()}
-     * 
+     *
      * @param address destination IP and port.
      * @return The newly created Peer object or null if the peer could not be connected.
      *         Use {@link Peer#getConnectionOpenFuture()} if you
@@ -1500,7 +1470,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Download the blockchain from peers. Convenience that uses a {@link DownloadProgressTracker} for you.<p>
-     * 
+     *
      * This method waits until the download is complete.  "Complete" is defined as downloading
      * from at least one peer all the blocks that are in that peer's inventory.
      */
@@ -1571,12 +1541,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         final int fNewSize = newSize;
         for (final ListenerRegistration<PeerConnectedEventListener> registration : peerConnectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerConnected(peer, fNewSize);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerConnected(peer, fNewSize));
         }
     }
 
@@ -1587,26 +1552,23 @@ public class PeerGroup implements TransactionBroadcaster {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
 
-        vPingTask = executor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (getPingIntervalMsec() <= 0) {
-                        ListenableScheduledFuture<?> task = vPingTask;
-                        if (task != null) {
-                            task.cancel(false);
-                            vPingTask = null;
-                        }
-                        return;  // Disabled.
+        vPingTask = executor.scheduleAtFixedRate(() -> {
+            try {
+                if (getPingIntervalMsec() <= 0) {
+                    ListenableScheduledFuture<?> task = vPingTask;
+                    if (task != null) {
+                        task.cancel(false);
+                        vPingTask = null;
                     }
-                    for (Peer peer : getConnectedPeers()) {
-                        if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
-                            continue;
-                        peer.ping();
-                    }
-                } catch (Throwable e) {
-                    log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
+                    return;  // Disabled.
                 }
+                for (Peer peer : getConnectedPeers()) {
+                    if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
+                        continue;
+                    peer.ping();
+                }
+            } catch (Throwable e) {
+                log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
             }
         }, getPingIntervalMsec(), getPingIntervalMsec(), TimeUnit.MILLISECONDS);
     }
@@ -1745,12 +1707,7 @@ public class PeerGroup implements TransactionBroadcaster {
         for (ListenerRegistration<OnTransactionBroadcastListener> registration : peersTransactionBroadastEventListeners)
             peer.removeOnTransactionBroadcastListener(registration.listener);
         for (final ListenerRegistration<PeerDisconnectedEventListener> registration : peerDisconnectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerDisconnected(peer, fNumConnectedPeers);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerDisconnected(peer, fNumConnectedPeers));
             peer.removeDisconnectedEventListener(registration.listener);
         }
     }

@@ -25,15 +25,12 @@ public interface KeyChainGroupStructure {
     HDPath accountPathFor(Script.ScriptType outputScriptType);
 
     /** Default {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure". */
-    public static final KeyChainGroupStructure DEFAULT = new KeyChainGroupStructure() {
-        @Override
-        public HDPath accountPathFor(Script.ScriptType outputScriptType) {
-            if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
-                return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
-            else if (outputScriptType == Script.ScriptType.P2WPKH)
-                return DeterministicKeyChain.ACCOUNT_ONE_PATH;
-            else
-                throw new IllegalArgumentException(outputScriptType.toString());
-        }
+    public static final KeyChainGroupStructure DEFAULT = outputScriptType -> {
+        if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
+            return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
+        else if (outputScriptType == Script.ScriptType.P2WPKH)
+            return DeterministicKeyChain.ACCOUNT_ONE_PATH;
+        else
+            throw new IllegalArgumentException(outputScriptType.toString());
     };
 }
