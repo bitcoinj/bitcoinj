@@ -1,7 +1,6 @@
 /*
  * Copyright 2011 Google Inc.
  * Copyright 2014 Andreas Schildbach
- * Copyright 2014-2016 the libsecp256k1 contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +18,6 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.MoreObjects;
-import org.bitcoin.NativeSecp256k1;
-import org.bitcoin.NativeSecp256k1Util;
-import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.LegacyAddress;
@@ -587,20 +583,6 @@ public class ECKey implements EncryptableItem {
     }
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
-        if (Secp256k1Context.isEnabled()) {
-            try {
-                byte[] signature = NativeSecp256k1.sign(
-                        input.getBytes(),
-                        ByteUtils.bigIntegerToBytes(privateKeyForSigning, 32)
-                );
-                return ECDSASignature.decodeFromDER(signature);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                throw new RuntimeException(e);
-            } catch (SignatureDecodeException e) {
-                throw new RuntimeException(e); // cannot happen
-            }
-        }
         Objects.requireNonNull(privateKeyForSigning);
         ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
@@ -612,23 +594,11 @@ public class ECKey implements EncryptableItem {
     /**
      * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
      * 
-     * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
-     * larger than 520 bytes.</p>
-     *
      * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
-        if (Secp256k1Context.isEnabled()) {
-            try {
-                return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                return false;
-            }
-        }
-
         ECDSASigner signer = new ECDSASigner();
         ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.getCurve().decodePoint(pub), CURVE);
         signer.init(false, params);
@@ -651,14 +621,6 @@ public class ECKey implements EncryptableItem {
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) throws SignatureDecodeException {
-        if (Secp256k1Context.isEnabled()) {
-            try {
-                return NativeSecp256k1.verify(data, signature, pub);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                return false;
-            }
-        }
         return verify(data, ECDSASignature.decodeFromDER(signature), pub);
     }
 
