@@ -614,4 +614,26 @@ public class ECKeyTest {
         bytes[0] = 42;
         ECKey.fromPrivate(bytes);
     }
+
+    @Test
+    public void signGrindLowR() {
+        // test case from https://github.com/rust-bitcoin/rust-secp256k1/pull/259/files
+        Sha256Hash msg = Sha256Hash.wrap(
+                ByteUtils.parseHex("887d04bb1cf1b1554f1b268dfe62d13064ca67ae45348d50d1392ce2d13418ac"));
+        ECKey sk = ECKey.fromPrivate(
+                ByteUtils.parseHex("57f0148f94d13095cfda539d0da0d1541304b678d8b36e243980aab4e1b7cead"));
+        ECDSASignature sig = sk.sign(msg); // grinds 5 times
+        assertEquals(
+                "047dd4d049db02b430d24c41c7925b2725bcd5a85393513bdec04b4dc363632b1054d0180094122b380f4cfa391e6296244da773173e78fc745c1b9c79f7b713",
+                ByteUtils.formatHex(sig.encodeToCompact()));
+    }
+
+    @Test
+    public void signAlwaysProducesMax70ByteDER() {
+        for (int i = 0; i < 100; i++) {
+            ECKey sk = new ECKey();
+            ECDSASignature sig = sk.sign(Sha256Hash.ZERO_HASH);
+            assertTrue(sig.encodeToDER().length <= 70); // without sighash flags byte
+        }
+    }
 }
