@@ -76,6 +76,7 @@ public class Utils {
      * Otherwise the representation is not minimal.
      * For example, if the sign bit is 0000_00<b>0</b>0, then the representation is not minimal due to the rightmost zero.
      * </p>
+     * This is the antagonist to {@link #bytesToBigInteger(byte[])}.
      * @param b the integer to format into a byte array
      * @param numBytes the desired size of the resulting byte array
      * @return numBytes byte long array.
@@ -92,6 +93,17 @@ public class Utils {
         int destPos = numBytes - length;
         System.arraycopy(src, srcPos, dest, destPos, length);
         return dest;
+    }
+
+    /**
+     * Converts an array of bytes into a positive BigInteger. This is the antagonist to
+     * {@link #bigIntegerToBytes(BigInteger, int)}.
+     *
+     * @param bytes to convert into a BigInteger
+     * @return the converted BigInteger
+     */
+    public static BigInteger bytesToBigInteger(byte[] bytes) {
+        return new BigInteger(1, bytes);
     }
 
     /** Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */

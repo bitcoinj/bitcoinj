@@ -394,7 +394,7 @@ public class DeterministicKey extends ECKey {
             if (decryptedKey.length != 32)
                 throw new KeyCrypterException.InvalidCipherText(
                         "Decrypted key must be 32 bytes long, but is " + decryptedKey.length);
-            return new BigInteger(1, decryptedKey);
+            return Utils.bytesToBigInteger(decryptedKey);
         }
         // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
         // the first key that has some encrypted private key data.
@@ -431,7 +431,7 @@ public class DeterministicKey extends ECKey {
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
-                cursor.pub, new BigInteger(1, parentalPrivateKeyBytes), cursor.parent);
+                cursor.pub, Utils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
         // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parents path.
         List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
@@ -576,7 +576,7 @@ public class DeterministicKey extends ECKey {
         if (pub) {
             return new DeterministicKey(path, chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), data), parent, depth, parentFingerprint);
         } else {
-            return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent, depth, parentFingerprint);
+            return new DeterministicKey(path, chainCode, Utils.bytesToBigInteger(data), parent, depth, parentFingerprint);
         }
     }
 

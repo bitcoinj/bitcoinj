@@ -97,7 +97,7 @@ public class ECKeyTest {
     public void testSignatures() throws Exception {
         // Test that we can construct an ECKey from a private key (deriving the public from the private), then signing
         // a message with it.
-        BigInteger privkey = new BigInteger(1, HEX.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
+        BigInteger privkey = Utils.bytesToBigInteger(HEX.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
         ECKey key = ECKey.fromPrivate(privkey);
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));

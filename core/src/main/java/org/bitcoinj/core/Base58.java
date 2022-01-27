@@ -156,7 +156,7 @@ public class Base58 {
     }
     
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
-        return new BigInteger(1, decode(input));
+        return Utils.bytesToBigInteger(decode(input));
     }
 
     /**

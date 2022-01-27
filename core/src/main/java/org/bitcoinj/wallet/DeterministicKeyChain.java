@@ -889,7 +889,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
-                        DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, new BigInteger(1, key.getSecretBytes().toByteArray()), null);
+                        DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, Utils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeSpendingKeyChain(accountKey, isMarried, outputScriptType);
                         isSpendingKey = true;
@@ -918,7 +918,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 DeterministicKey detkey;
                 if (key.hasSecretBytes()) {
                     // Not encrypted: private key is available.
-                    final BigInteger priv = new BigInteger(1, key.getSecretBytes().toByteArray());
+                    final BigInteger priv = Utils.bytesToBigInteger(key.getSecretBytes().toByteArray());
                     detkey = new DeterministicKey(immutablePath, chainCode, pubkey, priv, parent);
                 } else {
                     if (key.hasEncryptedData()) {

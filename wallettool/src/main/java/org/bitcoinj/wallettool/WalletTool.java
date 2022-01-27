@@ -1130,7 +1130,7 @@ public class WalletTool implements Callable<Integer> {
                     System.err.println("Could not understand --privkey as either WIF, hex or base58: " + privKeyStr);
                     return;
                 }
-                key = ECKey.fromPrivate(new BigInteger(1, decode));
+                key = ECKey.fromPrivate(Utils.bytesToBigInteger(decode));
             }
             if (pubKeyStr != null) {
                 // Give the user a hint.

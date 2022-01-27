@@ -155,7 +155,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
                 checkState(hashBytes.length == 40);
                 passFactorBytes = Sha256Hash.hashTwice(hashBytes);
             }
-            BigInteger passFactor = new BigInteger(1, passFactorBytes);
+            BigInteger passFactor = Utils.bytesToBigInteger(passFactorBytes);
             ECKey k = ECKey.fromPrivate(passFactor, true);
 
             byte[] salt = Bytes.concat(addressHash, ownerEntropy);
@@ -181,7 +181,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
             byte[] seed = Bytes.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
             checkState(seed.length == 24);
-            BigInteger seedFactor = new BigInteger(1, Sha256Hash.hashTwice(seed));
+            BigInteger seedFactor = Utils.bytesToBigInteger(Sha256Hash.hashTwice(seed));
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
             BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());

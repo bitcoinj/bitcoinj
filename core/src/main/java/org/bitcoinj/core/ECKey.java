@@ -212,7 +212,7 @@ public class ECKey implements EncryptableItem {
      * public key is compressed.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes) {
-        return fromPrivate(new BigInteger(1, privKeyBytes));
+        return fromPrivate(Utils.bytesToBigInteger(privKeyBytes));
     }
 
     /**
@@ -220,7 +220,7 @@ public class ECKey implements EncryptableItem {
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
-        return fromPrivate(new BigInteger(1, privKeyBytes), compressed);
+        return fromPrivate(Utils.bytesToBigInteger(privKeyBytes), compressed);
     }
 
     /**
@@ -241,7 +241,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         checkNotNull(priv);
         checkNotNull(pub);
-        return new ECKey(new BigInteger(1, priv), new LazyECPoint(CURVE.getCurve(), pub));
+        return new ECKey(Utils.bytesToBigInteger(priv), new LazyECPoint(CURVE.getCurve(), pub));
     }
 
     /**
@@ -339,7 +339,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Returns public key bytes from the given private key. To convert a byte array into a BigInteger,
-     * use {@code new BigInteger(1, bytes);}
+     * use {@link Utils#bytesToBigInteger(byte[])}
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
@@ -348,7 +348,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Returns public key point from the given private key. To convert a byte array into a BigInteger,
-     * use {@code new BigInteger(1, bytes);}
+     * use {@link Utils#bytesToBigInteger(byte[])}
      */
     public static ECPoint publicPointFromPrivate(BigInteger privKey) {
         /*
@@ -721,7 +721,7 @@ public class ECKey implements EncryptableItem {
                     "Input is of wrong version");
 
             byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
-            BigInteger privkey = new BigInteger(1, privbits);
+            BigInteger privkey = Utils.bytesToBigInteger(privbits);
 
             ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
             checkArgument(pubkey.getTagNo() == 1, "Input has 'publicKey' with bad tag number");
@@ -799,8 +799,8 @@ public class ECKey implements EncryptableItem {
         //                  0x1D = second key with even y, 0x1E = second key with odd y
         if (header < 27 || header > 34)
             throw new SignatureException("Header byte out of range: " + header);
-        BigInteger r = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 1, 33));
-        BigInteger s = new BigInteger(1, Arrays.copyOfRange(signatureEncoded, 33, 65));
+        BigInteger r = Utils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 1, 33));
+        BigInteger s = Utils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 33, 65));
         ECDSASignature sig = new ECDSASignature(r, s);
         byte[] messageBytes = formatMessageForSigning(message);
         // Note that the C++ code doesn't actually seem to specify any character encoding. Presumably it's whatever

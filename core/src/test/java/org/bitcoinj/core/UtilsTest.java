@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -52,6 +53,20 @@ public class UtilsTest {
     public void dateTimeFormat() {
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
         assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
+    }
+
+    @Test
+    public void bigIntegerToBytes_roundTrip() {
+        int ITERATIONS = 100;
+        int LENGTH = 32;
+        Random rnd = new Random();
+        byte[] bytes = new byte[LENGTH];
+
+        for (int i = 0; i < ITERATIONS; i++) {
+            rnd.nextBytes(bytes);
+            BigInteger bi = Utils.bytesToBigInteger(bytes);
+            assertArrayEquals(Utils.HEX.encode(bytes), bytes, Utils.bigIntegerToBytes(bi, LENGTH));
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -244,7 +244,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
      * Returns the bytes interpreted as a positive integer.
      */
     public BigInteger toBigInteger() {
-        return new BigInteger(1, bytes);
+        return Utils.bytesToBigInteger(bytes);
     }
 
     /**

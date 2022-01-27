@@ -142,7 +142,7 @@ public class StoredBlock {
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
         buffer.get(chainWorkBytes);
-        BigInteger chainWork = new BigInteger(1, chainWorkBytes);
+        BigInteger chainWork = Utils.bytesToBigInteger(chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
         byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
         buffer.get(header, 0, Block.HEADER_SIZE);
