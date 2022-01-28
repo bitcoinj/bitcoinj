@@ -171,15 +171,12 @@ public class PaymentSession {
     }
 
     private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
-        return executor.submit(new Callable<PaymentSession>() {
-            @Override
-            public PaymentSession call() throws Exception {
-                HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
-                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
-                connection.setUseCaches(false);
-                Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
-                return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
-            }
+        return executor.submit(() -> {
+            HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
+            connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
+            connection.setUseCaches(false);
+            Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
+            return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
         });
     }
 
@@ -353,28 +350,25 @@ public class PaymentSession {
 
     @VisibleForTesting
     protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return executor.submit(new Callable<PaymentProtocol.Ack>() {
-            @Override
-            public PaymentProtocol.Ack call() throws Exception {
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
-                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTACK);
-                connection.setRequestProperty("Content-Length", Integer.toString(payment.getSerializedSize()));
-                connection.setUseCaches(false);
-                connection.setDoInput(true);
-                connection.setDoOutput(true);
+        return executor.submit(() -> {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
+            connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTACK);
+            connection.setRequestProperty("Content-Length", Integer.toString(payment.getSerializedSize()));
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
 
-                // Send request.
-                DataOutputStream outStream = new DataOutputStream(connection.getOutputStream());
-                payment.writeTo(outStream);
-                outStream.flush();
-                outStream.close();
+            // Send request.
+            DataOutputStream outStream = new DataOutputStream(connection.getOutputStream());
+            payment.writeTo(outStream);
+            outStream.flush();
+            outStream.close();
 
-                // Get response.
-                Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
-                return PaymentProtocol.parsePaymentAck(paymentAck);
-            }
+            // Get response.
+            Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
+            return PaymentProtocol.parsePaymentAck(paymentAck);
         });
     }
 

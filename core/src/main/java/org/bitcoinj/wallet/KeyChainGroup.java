@@ -866,12 +866,7 @@ public class KeyChainGroup implements KeyBag {
 
     private void queueOnCurrentKeyChanged() {
         for (final ListenerRegistration<CurrentKeyChangeEventListener> registration : currentKeyChangeListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onCurrentKeyChanged();
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onCurrentKeyChanged());
         }
     }
 

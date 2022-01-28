@@ -77,19 +77,8 @@ public class ChainSplitTest {
         // (receiving coins). Checking that we understand reversed spends is in testForking2.
         final AtomicBoolean reorgHappened = new AtomicBoolean();
         final AtomicInteger walletChanged = new AtomicInteger();
-        wallet.addReorganizeEventListener(new WalletReorganizeEventListener() {
-            @Override
-            public void onReorganize(Wallet wallet) {
-                reorgHappened.set(true);
-            }
-        });
-        wallet.addChangeEventListener(new WalletChangeEventListener() {
-
-            @Override
-            public void onWalletChanged(Wallet wallet) {
-                walletChanged.incrementAndGet();
-            }
-        });
+        wallet.addReorganizeEventListener(wallet -> reorgHappened.set(true));
+        wallet.addChangeEventListener(wallet -> walletChanged.incrementAndGet());
 
         // Start by building a couple of blocks on top of the genesis block.
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinsTo);
@@ -300,12 +289,9 @@ public class ChainSplitTest {
         // double spend on the new best chain.
 
         final boolean[] eventCalled = new boolean[1];
-        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD)
-                    eventCalled[0] = true;
-            }
+        wallet.addTransactionConfidenceEventListener((wallet, tx) -> {
+            if (tx.getConfidence().getConfidenceType() == ConfidenceType.DEAD)
+                eventCalled[0] = true;
         });
 
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinsTo);
@@ -340,13 +326,10 @@ public class ChainSplitTest {
         // double spend on the new best chain.
         final Transaction[] eventDead = new Transaction[1];
         final Transaction[] eventReplacement = new Transaction[1];
-        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                if (tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD) {
-                    eventDead[0] = tx;
-                    eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
-                }
+        wallet.addTransactionConfidenceEventListener((wallet, tx) -> {
+            if (tx.getConfidence().getConfidenceType() == ConfidenceType.DEAD) {
+                eventDead[0] = tx;
+                eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
             }
         });
 
@@ -402,12 +385,7 @@ public class ChainSplitTest {
         // Check that as the chain forks and re-orgs, the confidence data associated with each transaction is
         // maintained correctly.
         final ArrayList<Transaction> txns = new ArrayList<>(3);
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                txns.add(tx);
-            }
-        });
+        wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txns.add(tx));
 
         // Start by building three blocks on top of the genesis block. All send to us.
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinsTo);
@@ -559,12 +537,7 @@ public class ChainSplitTest {
         // transactions would be. Also check that a dead coinbase on a sidechain is resurrected if the sidechain
         // becomes the best chain once more. Finally, check that dependent transactions are killed recursively.
         final ArrayList<Transaction> txns = new ArrayList<>(3);
-        wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                txns.add(tx);
-            }
-        });
+        wallet.addCoinsReceivedEventListener(Threading.SAME_THREAD, (wallet, tx, prevBalance, newBalance) -> txns.add(tx));
 
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(someOtherGuy);
         final ECKey coinsTo2 = wallet.freshReceiveKey();
@@ -603,12 +576,7 @@ public class ChainSplitTest {
         Transaction fodder = wallet.createSend(LegacyAddress.fromKey(UNITTEST, new ECKey()), FIFTY_COINS);
         wallet.commitTx(fodder);
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
-        fodder.getConfidence().addEventListener(Threading.SAME_THREAD, new TransactionConfidence.Listener() {
-            @Override
-            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
-                fodderIsDead.set(confidence.getConfidenceType() == ConfidenceType.DEAD);
-            }
-        });
+        fodder.getConfidence().addEventListener(Threading.SAME_THREAD, (confidence, reason) -> fodderIsDead.set(confidence.getConfidenceType() == ConfidenceType.DEAD));
 
         // Fork like this:
         //

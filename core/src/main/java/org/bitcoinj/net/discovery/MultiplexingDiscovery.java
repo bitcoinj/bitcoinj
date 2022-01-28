@@ -106,22 +106,14 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             List<Callable<List<InetSocketAddress>>> tasks = new ArrayList<>();
             if (parallelQueries) {
                 for (final PeerDiscovery seed : seeds) {
-                    tasks.add(new Callable<List<InetSocketAddress>>() {
-                        @Override
-                        public List<InetSocketAddress> call() throws Exception {
-                            return seed.getPeers(services, timeoutValue, timeoutUnit);
-                        }
-                    });
+                    tasks.add(() -> seed.getPeers(services, timeoutValue, timeoutUnit));
                 }
             } else {
-                tasks.add(new Callable<List<InetSocketAddress>>() {
-                    @Override
-                    public List<InetSocketAddress> call() throws Exception {
-                        List<InetSocketAddress> peers = new LinkedList<>();
-                        for (final PeerDiscovery seed : seeds)
-                            peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
-                        return peers;
-                    }
+                tasks.add(() -> {
+                    List<InetSocketAddress> peers = new LinkedList<>();
+                    for (final PeerDiscovery seed : seeds)
+                        peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
+                    return peers;
                 });
             }
             final List<Future<List<InetSocketAddress>>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);

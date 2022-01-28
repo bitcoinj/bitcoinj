@@ -64,12 +64,7 @@ public class TxConfidenceTableTest {
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());
         final int[] seen = new int[1];
-        tx.getConfidence().addEventListener(Threading.SAME_THREAD, new TransactionConfidence.Listener() {
-            @Override
-            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
-                seen[0] = confidence.numBroadcastPeers();
-            }
-        });
+        tx.getConfidence().addEventListener(Threading.SAME_THREAD, (confidence, reason) -> seen[0] = confidence.numBroadcastPeers());
         tx = null;
         System.gc();
         table.seen(hash, address2);
@@ -79,12 +74,7 @@ public class TxConfidenceTableTest {
     @Test
     public void events() throws Exception {
         final TransactionConfidence.Listener.ChangeReason[] run = new TransactionConfidence.Listener.ChangeReason[1];
-        tx1.getConfidence().addEventListener(Threading.SAME_THREAD, new TransactionConfidence.Listener() {
-            @Override
-            public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
-                run[0] = reason;
-            }
-        });
+        tx1.getConfidence().addEventListener(Threading.SAME_THREAD, (confidence, reason) -> run[0] = reason);
         table.seen(tx1.getTxId(), address1);
         assertEquals(TransactionConfidence.Listener.ChangeReason.SEEN_PEERS, run[0]);
         run[0] = null;

@@ -104,13 +104,10 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                     public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
                         if (!blockJobs)
                             return super.schedule(command, delay, unit);
-                        return super.schedule(new Runnable() {
-                            @Override
-                            public void run() {
-                                Utils.rollMockClockMillis(unit.toMillis(delay));
-                                command.run();
-                                jobBlocks.acquireUninterruptibly();
-                            }
+                        return super.schedule(() -> {
+                            Utils.rollMockClockMillis(unit.toMillis(delay));
+                            command.run();
+                            jobBlocks.acquireUninterruptibly();
                         }, 0 /* immediate */, unit);
                     }
                 });

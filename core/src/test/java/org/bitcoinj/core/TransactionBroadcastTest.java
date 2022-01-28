@@ -71,12 +71,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
-        broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
-            @Override
-            public void onBroadcastProgress(double progress) {
-                lastProgress.set(progress);
-            }
-        });
+        broadcast.setProgressCallback(progress -> lastProgress.set(progress));
         ListenableFuture<Transaction> future = broadcast.broadcast();
         assertFalse(future.isDone());
         assertEquals(0.0, lastProgress.get(), 0.0);
@@ -116,12 +111,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(channels[1], InventoryMessage.with(tx));
         pingAndWait(channels[1]);
         final AtomicDouble p = new AtomicDouble();
-        broadcast.setProgressCallback(new TransactionBroadcast.ProgressCallback() {
-            @Override
-            public void onBroadcastProgress(double progress) {
-                p.set(progress);
-            }
-        }, Threading.SAME_THREAD);
+        broadcast.setProgressCallback(progress -> p.set(progress), Threading.SAME_THREAD);
         assertEquals(1.0, p.get(), 0.01);
     }
 
@@ -201,12 +191,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Check that the wallet informs us of changes in confidence as the transaction ripples across the network.
         final Transaction[] transactions = new Transaction[1];
-        wallet.addTransactionConfidenceEventListener(new TransactionConfidenceEventListener() {
-            @Override
-            public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
-                transactions[0] = tx;
-            }
-        });
+        wallet.addTransactionConfidenceEventListener((wallet, tx) -> transactions[0] = tx);
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = LegacyAddress.fromKey(UNITTEST, new ECKey());

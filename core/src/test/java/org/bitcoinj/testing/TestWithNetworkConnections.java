@@ -153,13 +153,10 @@ public class TestWithNetworkConnections {
         checkArgument(versionMessage.hasBlockChain());
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
-        peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer p, int peerCount) {
-                synchronized (doneConnecting) {
-                    if (!doneConnecting.get())
-                        thisThread.interrupt();
-                }
+        peer.addDisconnectedEventListener((p, peerCount) -> {
+            synchronized (doneConnecting) {
+                if (!doneConnecting.get())
+                    thisThread.interrupt();
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
@@ -211,15 +208,12 @@ public class TestWithNetworkConnections {
     private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final SettableFuture<Void> pongReceivedFuture = SettableFuture.create();
-        PreMessageReceivedEventListener listener = new PreMessageReceivedEventListener() {
-            @Override
-            public Message onPreMessageReceived(Peer p, Message m) {
-                if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
-                    pongReceivedFuture.set(null);
-                    return null;
-                }
-                return m;
+        PreMessageReceivedEventListener listener = (p1, m) -> {
+            if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
+                pongReceivedFuture.set(null);
+                return null;
             }
+            return m;
         };
         p.peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, listener);
         inbound(p, new Pong(nonce));

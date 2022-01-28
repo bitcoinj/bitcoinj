@@ -482,25 +482,22 @@ public class Wallet extends BaseTaggableObject
 
     private void createTransientState() {
         ignoreNextNewBlock = new HashSet<>();
-        txConfidenceListener = new TransactionConfidence.Listener() {
-            @Override
-            public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
-                // This will run on the user code thread so we shouldn't do anything too complicated here.
-                // We only want to queue a wallet changed event and auto-save if the number of peers announcing
-                // the transaction has changed, as that confidence change is made by the networking code which
-                // doesn't necessarily know at that point which wallets contain which transactions, so it's up
-                // to us to listen for that. Other types of confidence changes (type, etc) are triggered by us,
-                // so we'll queue up a wallet change event in other parts of the code.
-                if (reason == ChangeReason.SEEN_PEERS) {
-                    lock.lock();
-                    try {
-                        checkBalanceFuturesLocked(null);
-                        Transaction tx = getTransaction(confidence.getTransactionHash());
-                        queueOnTransactionConfidenceChanged(tx);
-                        maybeQueueOnWalletChanged();
-                    } finally {
-                        lock.unlock();
-                    }
+        txConfidenceListener = (confidence, reason) -> {
+            // This will run on the user code thread so we shouldn't do anything too complicated here.
+            // We only want to queue a wallet changed event and auto-save if the number of peers announcing
+            // the transaction has changed, as that confidence change is made by the networking code which
+            // doesn't necessarily know at that point which wallets contain which transactions, so it's up
+            // to us to listen for that. Other types of confidence changes (type, etc) are triggered by us,
+            // so we'll queue up a wallet change event in other parts of the code.
+            if (reason == Listener.ChangeReason.SEEN_PEERS) {
+                lock.lock();
+                try {
+                    checkBalanceFuturesLocked(null);
+                    Transaction tx = getTransaction(confidence.getTransactionHash());
+                    queueOnTransactionConfidenceChanged(tx);
+                    maybeQueueOnWalletChanged();
+                } finally {
+                    lock.unlock();
                 }
             }
         };
@@ -2954,12 +2951,7 @@ public class Wallet extends BaseTaggableObject
             if (registration.executor == Threading.SAME_THREAD) {
                 registration.listener.onTransactionConfidenceChanged(this, tx);
             } else {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onTransactionConfidenceChanged(Wallet.this, tx);
-                    }
-                });
+                registration.executor.execute(() -> registration.listener.onTransactionConfidenceChanged(Wallet.this, tx));
             }
         }
     }
@@ -2971,36 +2963,21 @@ public class Wallet extends BaseTaggableObject
         checkState(onWalletChangedSuppressions >= 0);
         if (onWalletChangedSuppressions > 0) return;
         for (final ListenerRegistration<WalletChangeEventListener> registration : changeListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onWalletChanged(Wallet.this);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onWalletChanged(Wallet.this));
         }
     }
 
     protected void queueOnCoinsReceived(final Transaction tx, final Coin balance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletCoinsReceivedEventListener> registration : coinsReceivedListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onCoinsReceived(Wallet.this, tx, balance, newBalance);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onCoinsReceived(Wallet.this, tx, balance, newBalance));
         }
     }
 
     protected void queueOnCoinsSent(final Transaction tx, final Coin prevBalance, final Coin newBalance) {
         checkState(lock.isHeldByCurrentThread());
         for (final ListenerRegistration<WalletCoinsSentEventListener> registration : coinsSentListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onCoinsSent(Wallet.this, tx, prevBalance, newBalance));
         }
     }
 
@@ -3008,23 +2985,13 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
         checkState(insideReorg);
         for (final ListenerRegistration<WalletReorganizeEventListener> registration : reorganizeListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onReorganize(Wallet.this);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onReorganize(Wallet.this));
         }
     }
 
     protected void queueOnScriptsChanged(final List<Script> scripts, final boolean isAddingScripts) {
         for (final ListenerRegistration<ScriptsChangeEventListener> registration : scriptsChangeListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onScriptsChanged(Wallet.this, scripts, isAddingScripts);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onScriptsChanged(Wallet.this, scripts, isAddingScripts));
         }
     }
 
@@ -3827,11 +3794,7 @@ public class Wallet extends BaseTaggableObject
             it.remove();
             final Coin v = val;
             // Don't run any user-provided future listeners with our lock held.
-            Threading.USER_THREAD.execute(new Runnable() {
-                @Override public void run() {
-                    req.future.set(v);
-                }
-            });
+            Threading.USER_THREAD.execute(() -> req.future.set(v));
         }
     }
 

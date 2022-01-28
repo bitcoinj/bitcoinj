@@ -169,31 +169,13 @@ public class PeerGroup implements TransactionBroadcaster {
     private final PeerListener peerListener = new PeerListener();
 
     private int minBroadcastConnections = 0;
-    private final ScriptsChangeEventListener walletScriptsEventListener = new ScriptsChangeEventListener() {
-        @Override public void onScriptsChanged(Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
+    private final ScriptsChangeEventListener walletScriptsEventListener = (wallet, scripts, isAddingScripts) -> recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
 
-    private final KeyChainEventListener walletKeyEventListener = new KeyChainEventListener() {
-        @Override public void onKeysAdded(List<ECKey> keys) {
-            recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-        }
-    };
+    private final KeyChainEventListener walletKeyEventListener = keys -> recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
 
-    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = new WalletCoinsReceivedEventListener() {
-        @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onCoinsReceivedOrSent(wallet, tx);
-        }
-    };
+    private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
 
-    private final WalletCoinsSentEventListener walletCoinsSentEventListener = new WalletCoinsSentEventListener() {
-        @Override
-        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onCoinsReceivedOrSent(wallet, tx);
-        }
-    };
+    private final WalletCoinsSentEventListener walletCoinsSentEventListener = (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
 
     private void onCoinsReceivedOrSent(Wallet wallet, Transaction tx) {
         // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
@@ -395,12 +377,7 @@ public class PeerGroup implements TransactionBroadcaster {
         );
         // Hack: jam the executor so jobs just queue up until the user calls start() on us. For example, adding a wallet
         // results in a bloom filter recalc being queued, but we don't want to do that until we're actually started.
-        result.execute(new Runnable() {
-            @Override
-            public void run() {
-                Uninterruptibles.awaitUninterruptibly(executorStartupLatch);
-            }
-        });
+        result.execute(() -> Uninterruptibles.awaitUninterruptibly(executorStartupLatch));
         return result;
     }
 
@@ -995,12 +972,7 @@ public class PeerGroup implements TransactionBroadcaster {
             }
             final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressList);
             for (final ListenerRegistration<PeerDiscoveredEventListener> registration : peerDiscoveredEventListeners /* COW */) {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        registration.listener.onPeersDiscovered(peersDiscoveredSet);
-                    }
-                });
+                registration.executor.execute(() -> registration.listener.onPeersDiscovered(peersDiscoveredSet));
             }
         }
         watch.stop();
@@ -1063,18 +1035,15 @@ public class PeerGroup implements TransactionBroadcaster {
         vUsedUp = true;
         executorStartupLatch.countDown();
         // We do blocking waits during startup, so run on the executor thread.
-        return executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    log.info("Starting ...");
-                    channels.startAsync();
-                    channels.awaitRunning();
-                    triggerConnections();
-                    setupPinging();
-                } catch (Throwable e) {
-                    log.error("Exception when starting up", e);  // The executor swallows exceptions :(
-                }
+        return executor.submit(() -> {
+            try {
+                log.info("Starting ...");
+                channels.startAsync();
+                channels.awaitRunning();
+                triggerConnections();
+                setupPinging();
+            } catch (Throwable e) {
+                log.error("Exception when starting up", e);  // The executor swallows exceptions :(
             }
         });
     }
@@ -1087,25 +1056,22 @@ public class PeerGroup implements TransactionBroadcaster {
     public ListenableFuture stopAsync() {
         checkState(vRunning);
         vRunning = false;
-        ListenableFuture future = executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    log.info("Stopping ...");
-                    Stopwatch watch = Stopwatch.createStarted();
-                    // The log output this creates can be useful.
-                    setDownloadPeer(null);
-                    // Blocking close of all sockets.
-                    channels.stopAsync();
-                    channels.awaitTerminated();
-                    for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-                        peerDiscovery.shutdown();
-                    }
-                    vRunning = false;
-                    log.info("Stopped, took {}.", watch);
-                } catch (Throwable e) {
-                    log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
+        ListenableFuture future = executor.submit(() -> {
+            try {
+                log.info("Stopping ...");
+                Stopwatch watch = Stopwatch.createStarted();
+                // The log output this creates can be useful.
+                setDownloadPeer(null);
+                // Blocking close of all sockets.
+                channels.stopAsync();
+                channels.awaitTerminated();
+                for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+                    peerDiscovery.shutdown();
                 }
+                vRunning = false;
+                log.info("Stopped, took {}.", watch);
+            } catch (Throwable e) {
+                log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
             }
         });
         executor.shutdown();
@@ -1571,12 +1537,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         final int fNewSize = newSize;
         for (final ListenerRegistration<PeerConnectedEventListener> registration : peerConnectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerConnected(peer, fNewSize);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerConnected(peer, fNewSize));
         }
     }
 
@@ -1587,26 +1548,23 @@ public class PeerGroup implements TransactionBroadcaster {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
 
-        vPingTask = executor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (getPingIntervalMsec() <= 0) {
-                        ListenableScheduledFuture<?> task = vPingTask;
-                        if (task != null) {
-                            task.cancel(false);
-                            vPingTask = null;
-                        }
-                        return;  // Disabled.
+        vPingTask = executor.scheduleAtFixedRate(() -> {
+            try {
+                if (getPingIntervalMsec() <= 0) {
+                    ListenableScheduledFuture<?> task = vPingTask;
+                    if (task != null) {
+                        task.cancel(false);
+                        vPingTask = null;
                     }
-                    for (Peer peer : getConnectedPeers()) {
-                        if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
-                            continue;
-                        peer.ping();
-                    }
-                } catch (Throwable e) {
-                    log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
+                    return;  // Disabled.
                 }
+                for (Peer peer : getConnectedPeers()) {
+                    if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
+                        continue;
+                    peer.ping();
+                }
+            } catch (Throwable e) {
+                log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
             }
         }, getPingIntervalMsec(), getPingIntervalMsec(), TimeUnit.MILLISECONDS);
     }
@@ -1745,12 +1703,7 @@ public class PeerGroup implements TransactionBroadcaster {
         for (ListenerRegistration<OnTransactionBroadcastListener> registration : peersTransactionBroadastEventListeners)
             peer.removeOnTransactionBroadcastListener(registration.listener);
         for (final ListenerRegistration<PeerDisconnectedEventListener> registration : peerDisconnectedEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerDisconnected(peer, fNumConnectedPeers);
-                }
-            });
+            registration.executor.execute(() -> registration.listener.onPeerDisconnected(peer, fNumConnectedPeers));
             peer.removeDisconnectedEventListener(registration.listener);
         }
     }

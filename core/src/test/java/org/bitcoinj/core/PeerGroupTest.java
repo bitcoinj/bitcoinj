@@ -81,18 +81,15 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerToMessageCount = new HashMap<>();
         connectedPeers = new LinkedBlockingQueue<>();
         disconnectedPeers = new LinkedBlockingQueue<>();
-        preMessageReceivedListener = new PreMessageReceivedEventListener() {
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                AtomicInteger messageCount = peerToMessageCount.get(peer);
-                if (messageCount == null) {
-                    messageCount = new AtomicInteger(0);
-                    peerToMessageCount.put(peer, messageCount);
-                }
-                messageCount.incrementAndGet();
-                // Just pass the message right through for further processing.
-                return m;
+        preMessageReceivedListener = (peer, m) -> {
+            AtomicInteger messageCount = peerToMessageCount.get(peer);
+            if (messageCount == null) {
+                messageCount = new AtomicInteger(0);
+                peerToMessageCount.put(peer, messageCount);
             }
+            messageCount.incrementAndGet();
+            // Just pass the message right through for further processing.
+            return m;
         };
     }
 
@@ -188,12 +185,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addPeerDiscovery(createPeerDiscovery(96, 200));
         peerGroup.addPeerDiscovery(createPeerDiscovery(3, 300));
         peerGroup.addPeerDiscovery(createPeerDiscovery(1, 400));
-        peerGroup.addDiscoveredEventListener(new PeerDiscoveredEventListener() {
-            @Override
-            public void onPeersDiscovered(Set<PeerAddress> peerAddresses) {
-                assertEquals(99, peerAddresses.size());
-            }
-        });
+        peerGroup.addDiscoveredEventListener(peerAddresses -> assertEquals(99, peerAddresses.size()));
         peerGroup.start();
     }
 
@@ -298,12 +290,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNull(outbound(p2));
         // Peer 1 goes away, peer 2 becomes the download peer and thus queries the remote mempool.
         final SettableFuture<Void> p1CloseFuture = SettableFuture.create();
-        peerOf(p1).addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                p1CloseFuture.set(null);
-            }
-        });
+        peerOf(p1).addDisconnectedEventListener((peer, peerCount) -> p1CloseFuture.set(null));
         closePeer(peerOf(p1));
         p1CloseFuture.get();
         // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
@@ -355,12 +342,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final Transaction[] event = new Transaction[1];
         final TransactionConfidence[] confEvent = new TransactionConfidence[1];
-        peerGroup.addOnTransactionBroadcastListener(Threading.SAME_THREAD, new OnTransactionBroadcastListener() {
-            @Override
-            public void onTransaction(Peer peer, Transaction t) {
-                event[0] = t;
-            }
-        });
+        peerGroup.addOnTransactionBroadcastListener(Threading.SAME_THREAD, (peer, t) -> event[0] = t);
 
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
@@ -397,12 +379,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
         assertNotNull(tx.getConfidence().getLastBroadcastedAt());
 
-        tx.getConfidence().addEventListener(new TransactionConfidence.Listener() {
-            @Override
-            public void onConfidenceChanged(TransactionConfidence confidence, TransactionConfidence.Listener.ChangeReason reason) {
-                confEvent[0] = confidence;
-            }
-        });
+        tx.getConfidence().addEventListener((confidence, reason) -> confEvent[0] = confidence);
         // A straggler reports in.
         inbound(p3, inv);
         pingAndWait(p3);
@@ -517,18 +494,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
         final SettableFuture<Void> peerDisconnectedFuture = SettableFuture.create();
-        peerGroup.addConnectedEventListener(Threading.SAME_THREAD, new PeerConnectedEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                peerConnectedFuture.set(null);
-            }
-        });
-        peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                peerDisconnectedFuture.set(null);
-            }
-        });
+        peerGroup.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerConnectedFuture.set(null));
+        peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerDisconnectedFuture.set(null));
         // connect to peer but don't do handshake
         final Stopwatch watch = Stopwatch.createStarted(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);

@@ -99,12 +99,7 @@ public class WalletProtobufSerializer {
     private KeyChainFactory keyChainFactory;
 
     public WalletProtobufSerializer() {
-        this(new WalletFactory() {
-            @Override
-            public Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup) {
-                return new Wallet(params, keyChainGroup);
-            }
-        });
+        this((params, keyChainGroup) -> new Wallet(params, keyChainGroup));
     }
 
     public WalletProtobufSerializer(WalletFactory factory) {

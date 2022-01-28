@@ -84,21 +84,19 @@ public class WalletFiles {
         this.delay = delay;
         this.delayTimeUnit = checkNotNull(delayTimeUnit);
 
-        this.saver = new Callable<Void>() {
-            @Override public Void call() throws Exception {
-                // Runs in an auto save thread.
-                if (!savePending.getAndSet(false)) {
-                    // Some other scheduled request already beat us to it.
-                    return null;
-                }
-                Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
-                log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
-                        wallet.getLastBlockSeenHeight(),
-                        lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
-                        wallet.getLastBlockSeenHash());
-                saveNowInternal();
+        this.saver = () -> {
+            // Runs in an auto save thread.
+            if (!savePending.getAndSet(false)) {
+                // Some other scheduled request already beat us to it.
                 return null;
             }
+            Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
+            log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
+                    wallet.getLastBlockSeenHeight(),
+                    lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                    wallet.getLastBlockSeenHash());
+            saveNowInternal();
+            return null;
         };
     }
 

@@ -661,20 +661,17 @@ public abstract class AbstractBlockChain {
             } else {
                 // Listener wants to be run on some other thread, so marshal it across here.
                 final boolean notFirst = !first;
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // We can't do false-positive handling when executing on another thread
-                            Set<Sha256Hash> ignoredFalsePositives = new HashSet<>();
-                            informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
-                                    newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception: ", e);
-                            // Don't attempt to relay this back to the original peer thread if this was an async
-                            // listener invocation.
-                            // TODO: Make exception reporting a global feature and use it here.
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        // We can't do false-positive handling when executing on another thread
+                        Set<Sha256Hash> ignoredFalsePositives = new HashSet<>();
+                        informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
+                                newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception: ", e);
+                        // Don't attempt to relay this back to the original peer thread if this was an async
+                        // listener invocation.
+                        // TODO: Make exception reporting a global feature and use it here.
                     }
                 });
             }
@@ -687,18 +684,15 @@ public abstract class AbstractBlockChain {
                     registration.listener.notifyNewBestBlock(newStoredBlock);
             } else {
                 // Listener wants to be run on some other thread, so marshal it across here.
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (newBlockType == NewBlockType.BEST_CHAIN)
-                                registration.listener.notifyNewBestBlock(newStoredBlock);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception: ", e);
-                            // Don't attempt to relay this back to the original peer thread if this was an async
-                            // listener invocation.
-                            // TODO: Make exception reporting a global feature and use it here.
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        if (newBlockType == NewBlockType.BEST_CHAIN)
+                            registration.listener.notifyNewBestBlock(newStoredBlock);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception: ", e);
+                        // Don't attempt to relay this back to the original peer thread if this was an async
+                        // listener invocation.
+                        // TODO: Make exception reporting a global feature and use it here.
                     }
                 });
             }
@@ -830,14 +824,11 @@ public abstract class AbstractBlockChain {
                 // TODO: Do we really need to do this or should it be irrelevant?
                 registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
             } else {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception during reorg", e);
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception during reorg", e);
                     }
                 });
             }

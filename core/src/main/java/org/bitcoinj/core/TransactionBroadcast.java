@@ -165,12 +165,9 @@ public class TransactionBroadcast {
                     if (dropPeersAfterBroadcast) {
                         // We drop the peer shortly after the transaction has been sent, because this peer will not
                         // send us back useful broadcast confirmations.
-                        future.addListener(new Runnable() {
-                            @Override
-                            public void run() {
-                                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
-                                peer.close();
-                            }
+                        future.addListener(() -> {
+                            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+                            peer.close();
                         }, Threading.THREAD_POOL);
                     }
                     // We don't record the peer as having seen the tx in the memory pool because we want to track only
@@ -241,12 +238,7 @@ public class TransactionBroadcast {
                 if (executor == null)
                     callback.onBroadcastProgress(progress);
                 else
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onBroadcastProgress(progress);
-                        }
-                    });
+                    executor.execute(() -> callback.onBroadcastProgress(progress));
             } catch (Throwable e) {
                 log.error("Exception during progress callback", e);
             }

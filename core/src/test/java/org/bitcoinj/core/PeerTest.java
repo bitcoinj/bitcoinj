@@ -365,12 +365,9 @@ public class PeerTest extends TestWithNetworkConnections {
 
         connect();
         fail.set(true);
-        peer.addChainDownloadStartedEventListener(Threading.SAME_THREAD, new ChainDownloadStartedEventListener() {
-            @Override
-            public void onChainDownloadStarted(Peer p, int blocksLeft) {
-                if (p == peer && blocksLeft == 108)
-                    fail.set(false);
-            }
+        peer.addChainDownloadStartedEventListener(Threading.SAME_THREAD, (p, blocksLeft) -> {
+            if (p == peer && blocksLeft == 108)
+                fail.set(false);
         });
         peer.startBlockChainDownload();
 
@@ -523,12 +520,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, COIN, address);
         final Transaction[] result = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                result[0] = tx;
-            }
-        });
+        wallet.addCoinsReceivedEventListener((wallet, tx1, prevBalance, newBalance) -> result[0] = tx1);
         inbound(writeTarget, tx);
         pingAndWait(writeTarget);
         assertEquals(tx, result[0]);
@@ -541,12 +533,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey to = new ECKey();
 
         final Transaction[] onTx = new Transaction[1];
-        peer.addOnTransactionBroadcastListener(Threading.SAME_THREAD, new OnTransactionBroadcastListener() {
-            @Override
-            public void onTransaction(Peer peer1, Transaction t) {
-                onTx[0] = t;
-            }
-        });
+        peer.addOnTransactionBroadcastListener(Threading.SAME_THREAD, (peer1, t) -> onTx[0] = t);
 
         // Make some fake transactions in the following graph:
         //   t1 -> t2 -> [t5]
@@ -691,12 +678,7 @@ public class PeerTest extends TestWithNetworkConnections {
         ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                vtx[0] = tx;
-            }
-        });
+        wallet.addCoinsReceivedEventListener((wallet1, tx, prevBalance, newBalance) -> vtx[0] = tx);
         // Send a normal relevant transaction, it's received correctly.
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, key);
         inbound(writeTarget, t1);
@@ -743,12 +725,7 @@ public class PeerTest extends TestWithNetworkConnections {
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                vtx[0] = tx;
-            }
-        });
+        wallet.addCoinsReceivedEventListener((wallet1, tx, prevBalance, newBalance) -> vtx[0] = tx);
         // t1 -> t2 [locked] -> t3 (not available)
         Transaction t2 = new Transaction(UNITTEST);
         t2.setLockTime(999999);
@@ -795,19 +772,9 @@ public class PeerTest extends TestWithNetworkConnections {
         // Set up the connection with an old version.
         final SettableFuture<Void> connectedFuture = SettableFuture.create();
         final SettableFuture<Void> disconnectedFuture = SettableFuture.create();
-        peer.addConnectedEventListener(new PeerConnectedEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                connectedFuture.set(null);
-            }
-        });
+        peer.addConnectedEventListener((peer, peerCount) -> connectedFuture.set(null));
 
-        peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                disconnectedFuture.set(null);
-            }
-        });
+        peer.addDisconnectedEventListener((peer, peerCount) -> disconnectedFuture.set(null));
         connectWithVersion(500, VersionMessage.NODE_NETWORK);
         // We must wait uninterruptibly here because connect[WithVersion] generates a peer that interrupts the current
         // thread when it disconnects.
@@ -824,27 +791,16 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void exceptionListener() throws Exception {
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                throw new NullPointerException("boo!");
-            }
+        wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
+            throw new NullPointerException("boo!");
         });
         final Throwable[] throwables = new Throwable[1];
-        Threading.uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                throwables[0] = throwable;
-            }
-        };
+        Threading.uncaughtExceptionHandler = (thread, throwable) -> throwables[0] = throwable;
         // In real usage we're not really meant to adjust the uncaught exception handler after stuff started happening
         // but in the unit test environment other tests have just run so the thread is probably still kicking around.
         // Force it to crash so it'll be recreated with our new handler.
-        Threading.USER_THREAD.execute(new Runnable() {
-            @Override
-            public void run() {
-                throw new RuntimeException();
-            }
+        Threading.USER_THREAD.execute(() -> {
+            throw new RuntimeException();
         });
         connect();
         Transaction t1 = new Transaction(UNITTEST);
@@ -899,20 +855,10 @@ public class PeerTest extends TestWithNetworkConnections {
     public void badMessage() throws Exception {
         // Bring up an actual network connection and feed it bogus data.
         final SettableFuture<Void> result = SettableFuture.create();
-        Threading.uncaughtExceptionHandler = new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                result.setException(throwable);
-            }
-        };
+        Threading.uncaughtExceptionHandler = (thread, throwable) -> result.setException(throwable);
         connect(); // Writes out a verack+version.
         final SettableFuture<Void> peerDisconnected = SettableFuture.create();
-        writeTarget.peer.addDisconnectedEventListener(new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer p, int peerCount) {
-                peerDisconnected.set(null);
-            }
-        });
+        writeTarget.peer.addDisconnectedEventListener((p, peerCount) -> peerDisconnected.set(null));
         MessageSerializer serializer = TESTNET.getDefaultSerializer();
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
