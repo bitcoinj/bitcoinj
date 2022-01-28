@@ -84,6 +84,9 @@ public class BuildCheckpoints implements Callable<Integer> {
             case TEST:
                 suffix = "-testnet";
                 break;
+            case SIGNET:
+                suffix = "-signet";
+                break;
             case REGTEST:
                 suffix = "-regtest";
                 break;
@@ -111,7 +114,7 @@ public class BuildCheckpoints implements Callable<Integer> {
                 return 1;
             }
         } else if (networkHasDnsSeeds) {
-            // for PROD and TEST use a peer group discovered with dns
+            // use a peer group discovered with dns
             peerGroup.setUserAgent("PeerMonitor", "1.0");
             peerGroup.setMaxConnections(20);
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
@@ -227,6 +230,11 @@ public class BuildCheckpoints implements Callable<Integer> {
             checkState(test.getHeight() == 167328);
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
+        } else if (params.getId().equals(NetworkParameters.ID_SIGNET)) {
+            StoredBlock test = manager.getCheckpointBefore(1642000000); // 2022-01-12
+            checkState(test.getHeight() == 72576);
+            checkState(test.getHeader().getHashAsString()
+                    .equals("0000008f763bdf23bd159a21ccf211098707671d2ca9aa72d0f586c24505c5e7"));
         }
     }
 

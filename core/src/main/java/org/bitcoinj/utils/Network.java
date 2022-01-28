@@ -25,6 +25,7 @@ public enum Network {
     MAIN(NetworkParameters.ID_MAINNET),
     PROD(NetworkParameters.ID_MAINNET), // alias for MAIN
     TEST(NetworkParameters.ID_TESTNET),
+    SIGNET(NetworkParameters.ID_SIGNET),
     REGTEST(NetworkParameters.ID_REGTEST);
 
     private final String id;

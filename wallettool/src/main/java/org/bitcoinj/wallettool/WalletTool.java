@@ -377,6 +377,9 @@ public class WalletTool implements Callable<Integer> {
             case TEST:
                 fileName = "testnet.chain";
                 break;
+            case SIGNET:
+                fileName = "signet.chain";
+                break;
             case REGTEST:
                 fileName = "regtest.chain";
                 break;
