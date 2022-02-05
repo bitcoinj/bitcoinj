@@ -431,6 +431,17 @@
             <artifactId>okhttp</artifactId>
             <version>3.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>co.rsk</groupId>
+            <artifactId>native</artifactId>
+            <version>1.2.1</version>
+        </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>rsk-repo</id>
+            <url>https://deps.rsklabs.io</url>
+        </repository>
+    </repositories>
 </project>

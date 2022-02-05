@@ -18,16 +18,15 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoin.NativeSecp256k1;
+import org.bitcoin.NativeSecp256k1Exception;
+import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.crypto.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
-import org.bitcoin.NativeSecp256k1;
-import org.bitcoin.NativeSecp256k1Util;
-import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -674,7 +673,7 @@ public class ECKey implements EncryptableItem {
                         Utils.bigIntegerToBytes(privateKeyForSigning, 32)
                 );
                 return ECDSASignature.decodeFromDER(signature);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
+            } catch (NativeSecp256k1Exception e) {
                 log.error("Caught AssertFailException inside secp256k1", e);
                 throw new RuntimeException(e);
             }
@@ -691,7 +690,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
-     * 
+     *
      * <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
      * larger than 520 bytes.</p>
      *
@@ -704,12 +703,7 @@ public class ECKey implements EncryptableItem {
             return true;
 
         if (Secp256k1Context.isEnabled()) {
-            try {
-                return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                return false;
-            }
+            return NativeSecp256k1.verify(data, signature.encodeToDER(), pub);
         }
 
         ECDSASigner signer = new ECDSASigner();
@@ -734,12 +728,7 @@ public class ECKey implements EncryptableItem {
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
         if (Secp256k1Context.isEnabled()) {
-            try {
-                return NativeSecp256k1.verify(data, signature, pub);
-            } catch (NativeSecp256k1Util.AssertFailException e) {
-                log.error("Caught AssertFailException inside secp256k1", e);
-                return false;
-            }
+            return NativeSecp256k1.verify(data, signature, pub);
         }
         return verify(data, ECDSASignature.decodeFromDER(signature), pub);
     }
