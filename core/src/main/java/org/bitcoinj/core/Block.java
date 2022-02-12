@@ -993,16 +993,9 @@ public class Block extends Message {
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-                // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
-                // but it must be unique to avoid 'different' transactions looking the same.
-                byte[] counter = new byte[32];
-                counter[0] = (byte) txCounter;
-                counter[1] = (byte) (txCounter++ >> 8);
-                input.getOutpoint().setHash(Sha256Hash.wrap(counter));
-            } else {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
+                prevOut = new TransactionOutPoint(params, 0, nextTestOutPointHash());
             }
+            input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
             b.addTransaction(t);
         }
@@ -1023,6 +1016,15 @@ public class Block extends Message {
             throw new RuntimeException();
         }
         return b;
+    }
+
+    // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+    // but it must be unique to avoid 'different' transactions looking the same.
+    private Sha256Hash nextTestOutPointHash() {
+        byte[] counter = new byte[32];
+        counter[0] = (byte) txCounter;
+        counter[1] = (byte) (txCounter++ >> 8);
+        return Sha256Hash.wrap(counter);
     }
 
     @VisibleForTesting

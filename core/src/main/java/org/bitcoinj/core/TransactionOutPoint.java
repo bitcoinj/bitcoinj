@@ -197,6 +197,11 @@ public class TransactionOutPoint extends ChildMessage {
         return hash;
     }
 
+    /**
+     * @param hash new hash
+     * @deprecated Don't mutate this class -- create a new instance instead.
+     */
+    @Deprecated
     void setHash(Sha256Hash hash) {
         this.hash = hash;
     }
@@ -204,7 +209,12 @@ public class TransactionOutPoint extends ChildMessage {
     public long getIndex() {
         return index;
     }
-    
+
+    /**
+     * @param index new index
+     * @deprecated Don't mutate this class -- create a new instance instead.
+     */
+    @Deprecated
     public void setIndex(long index) {
         this.index = index;
     }
