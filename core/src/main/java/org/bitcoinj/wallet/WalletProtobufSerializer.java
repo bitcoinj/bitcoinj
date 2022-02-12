@@ -64,16 +64,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * a data interchange format developed by Google with an efficient binary representation, a type safe specification
  * language and compilers that generate code to work with those data structures for many languages. Protocol buffers
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
- * format is defined by the {@code wallet.proto} file in the bitcoinj source distribution.<p>
- *
+ * format is defined by the {@code wallet.proto} file in the bitcoinj source distribution.
+ * <p>
  * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
  * the obvious operations on Output/InputStreams. You can use a {@link ByteArrayInputStream} and equivalent
  * {@link ByteArrayOutputStream} if you'd like byte arrays instead. The protocol buffer can also be manipulated
- * in its object form if you'd like to modify the flattened data structure before serialization to binary.<p>
- *
+ * in its object form if you'd like to modify the flattened data structure before serialization to binary.
+ * <p>
  * You can extend the wallet format with additional fields specific to your application if you want, but make sure
  * to either put the extra data in the provided extension areas, or select tag numbers that are unlikely to be used
- * by anyone else.<p>
+ * by anyone else.
  *
  * @author Miron Cuperman
  * @author Andreas Schildbach
