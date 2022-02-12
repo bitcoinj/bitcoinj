@@ -2723,12 +2723,10 @@ public class Wallet extends BaseTaggableObject
     /**
      * Updates the wallet with the given transaction: puts it into the pending pool, sets the spent flags and runs
      * the onCoinsSent/onCoinsReceived event listener. Used in two situations:
-     * <p>
      * <ol>
      *     <li>When we have just successfully transmitted the tx we created to the network.</li>
      *     <li>When we receive a pending transaction that didn't appear in the chain yet, and we did not create it.</li>
      * </ol>
-     * <p>
      * Triggers an auto save (if enabled.)
      * <p>
      * Unlike {@link Wallet#maybeCommitTx} {@code commitTx} throws an exception if the transaction
