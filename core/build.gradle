@@ -32,6 +32,8 @@ targetCompatibility = 8
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+// Uncomment the following line to see all the JavaDoc warnings
+//javadoc.options.addStringOption('Xmaxwarns', '10000')
 
 compileJava {
     options.compilerArgs.addAll(['--release', '8'])
