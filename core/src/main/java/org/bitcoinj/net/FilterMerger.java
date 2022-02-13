@@ -81,7 +81,7 @@ public class FilterMerger {
                 // it will likely mean we never need to create a filter with different parameters.
                 lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
                 double fpRate = vBloomFilterFPRate;
-                // We now always use UPDATE_ALL because with SegWit there is hardly any wallet that can do without.
+                // We now always use UPDATE_ALL because with segwit there is hardly any wallet that can do without.
                 BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak,
                         BloomFilter.BloomUpdate.UPDATE_ALL);
                 for (PeerFilterProvider p : providers)

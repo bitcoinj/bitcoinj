@@ -202,7 +202,7 @@ public class WalletTool implements Callable<Integer> {
     private String pubKeyStr;
     @CommandLine.Option(names = "--privkey", description = "Specifies a WIF-, hex- or base58-encoded private key.")
     private String privKeyStr;
-    @CommandLine.Option(names = "--addr", description ="Specifies a Bitcoin address, either SegWit or legacy.")
+    @CommandLine.Option(names = "--addr", description ="Specifies a Bitcoin address, either segwit or legacy.")
     private String addrStr;
     @CommandLine.Option(names = "--peers", description = "Comma separated IP addresses/domain names for connections instead of peer discovery.")
     private String peersStr;

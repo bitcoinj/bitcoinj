@@ -664,7 +664,7 @@ public class TransactionTest {
 
     @Test
     public void nonSegwitZeroInputZeroOutputTx() {
-        // Non SegWit tx with zero input and outputs
+        // Non segwit tx with zero input and outputs
         String txHex = "010000000000f1f2f3f4";
         Transaction tx = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode(txHex));
         assertEquals(txHex, tx.toHexString());
@@ -672,8 +672,8 @@ public class TransactionTest {
 
     @Test
     public void nonSegwitZeroInputOneOutputTx() {
-        // Non SegWit tx with zero input and one output that has an amount of `0100000000000000` that could confuse
-        // a naive segwit parser. This can only be read with SegWit disabled
+        // Non segwit tx with zero input and one output that has an amount of `0100000000000000` that could confuse
+        // a naive segwit parser. This can only be read with segwit disabled
         MessageSerializer serializer = UNITTEST.getDefaultSerializer();
         String txHex = "0100000000010100000000000000016af1f2f3f4";
         int protoVersionNoWitness = serializer.getProtocolVersion() | Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
