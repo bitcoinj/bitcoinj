@@ -51,7 +51,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     /**
      * Builds a suitable set of peer discoveries. Will query them in parallel before producing a merged response.
-     * If specific services are required, DNS is not used as the protocol can't handle it.
      * @param params Network to use.
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      */
@@ -61,7 +60,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     /**
      * Builds a suitable set of peer discoveries.
-     * If specific services are required, DNS is not used as the protocol can't handle it.
      * @param params Network to use.
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      * @param parallelQueries When true, seeds are queried in parallel
