@@ -31,8 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import okhttp3.OkHttpClient;
-
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -68,12 +66,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services, boolean parallelQueries,
                                                     boolean shufflePeers) {
         List<PeerDiscovery> discoveries = new ArrayList<>();
-        HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
-        if (httpSeeds != null) {
-            OkHttpClient httpClient = new OkHttpClient();
-            for (HttpDiscovery.Details httpSeed : httpSeeds)
-                discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
-        }
         String[] dnsSeeds = params.getDnsSeeds();
         if (dnsSeeds != null)
             for (String dnsSeed : dnsSeeds)

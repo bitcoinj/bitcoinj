@@ -62,7 +62,6 @@ public class SigNetParams extends AbstractBitcoinNetParams {
         dnsSeeds = new String[] {
                 "seed.signet.bitcoin.sprovoost.nl",
         };
-        httpSeeds = null;
         addrSeeds = null;
     }
 

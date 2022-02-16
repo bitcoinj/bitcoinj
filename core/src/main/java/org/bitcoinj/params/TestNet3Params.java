@@ -28,7 +28,6 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
@@ -74,14 +73,6 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
                 "seed.tbtc.petertodd.org",               // Peter Todd
                 "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
                 "testnet-seed.bluematt.me",              // Matt Corallo
-        };
-        httpSeeds = new HttpDiscovery.Details[] {
-                // Andreas Schildbach
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode(
-                                "0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
-                        URI.create("http://testnet.httpseed.bitcoin.schildbach.de/peers")
-                )
         };
         addrSeeds = null;
 

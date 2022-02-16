@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.params.*;
 import org.bitcoinj.script.*;
 import org.bitcoinj.store.BlockStore;
@@ -97,7 +96,6 @@ public abstract class NetworkParameters {
     
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
-    protected HttpDiscovery.Details[] httpSeeds = {};
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected volatile transient MessageSerializer defaultSerializer = null;
 
@@ -245,14 +243,6 @@ public abstract class NetworkParameters {
      */
     public int[] getAddrSeeds() {
         return addrSeeds;
-    }
-
-    /**
-     * Returns discovery objects for seeds implementing the Cartographer protocol. See {@link HttpDiscovery} for more info.
-     * @return array of discovery objects
-     */
-    public HttpDiscovery.Details[] getHttpSeeds() {
-        return httpSeeds;
     }
 
     /**

@@ -23,7 +23,6 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.net.discovery.HttpDiscovery;
 
 
 import static com.google.common.base.Preconditions.checkState;
@@ -82,18 +81,6 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
                 "dnsseed.emzy.de",              // Stephan Oeste
                 "seed.bitcoin.wiz.biz",         // Jason Maurice
-        };
-        httpSeeds = new HttpDiscovery.Details[] {
-                // Andreas Schildbach
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
-                        URI.create("http://httpseed.bitcoin.schildbach.de/peers")
-                ),
-                // Anton Kumaigorodski
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("02c682e83db4efac3c841d6fa544211fb1e4a55061060019b3682fc306f228c558")),
-                        URI.create("http://lightning-wallet.com:8081/peers")
-                )
         };
 
         // These are in big-endian format, which is what the SeedPeers code expects.
