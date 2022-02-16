@@ -326,19 +326,6 @@ public class BitcoindComparisonTool {
                     rulesSinceFirstFail++;
                 }
                 mostRecentInv = null;
-            } else if (rule instanceof UTXORule) {
-                if (bitcoind.getPeerVersionMessage().isGetUTXOsSupported()) {
-                    UTXORule r = (UTXORule) rule;
-                    UTXOsMessage result = bitcoind.getUTXOs(r.query).get();
-                    if (!result.equals(r.result)) {
-                        log.error("utxo result was not what we expected.");
-                        log.error("Wanted  {}", r.result);
-                        log.error("but got {}", result);
-                        rulesSinceFirstFail++;
-                    } else {
-                        log.info("Successful utxo query {}: {}", r.ruleName, result);
-                    }
-                }
             } else {
                 throw new RuntimeException("Unknown rule");
             }

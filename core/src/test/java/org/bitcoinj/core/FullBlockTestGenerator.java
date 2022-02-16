@@ -16,8 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -112,23 +110,6 @@ class MemoryPoolState extends Rule {
     public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
         super(ruleName);
         this.mempool = mempool;
-    }
-}
-
-class UTXORule extends Rule {
-    List<TransactionOutPoint> query;
-    UTXOsMessage result;
-
-    public UTXORule(String ruleName, TransactionOutPoint query, UTXOsMessage result) {
-        super(ruleName);
-        this.query = Collections.singletonList(query);
-        this.result = result;
-    }
-
-    public UTXORule(String ruleName, List<TransactionOutPoint> query, UTXOsMessage result) {
-        super(ruleName);
-        this.query = query;
-        this.result = result;
     }
 }
 
@@ -232,17 +213,6 @@ public class FullBlockTestGenerator {
         // Make sure nothing breaks if we add b3 twice
         blocks.add(new BlockAndValidity(b3, true, false, b2.getHash(), chainHeadHeight + 2, "b3"));
 
-        // Do a simple UTXO query.
-        UTXORule utxo1;
-        {
-            Transaction coinbase = b2.block.getTransactions().get(0);
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getTxId());
-            long[] heights = {chainHeadHeight + 2};
-            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
-            utxo1 = new UTXORule("utxo1", outpoint, result);
-            blocks.add(utxo1);
-        }
-
         // Now we add another block to make the alternative chain longer.
         //
         //     genesis -> b1 (0) -> b2 (1)
@@ -251,18 +221,6 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out2 = checkNotNull(spendableOutputs.poll());
         NewBlock b4 = createNextBlock(b3, chainHeadHeight + 3, out2, null);
         blocks.add(new BlockAndValidity(b4, true, false, b4.getHash(), chainHeadHeight + 3, "b4"));
-
-        // Check that the old coinbase is no longer in the UTXO set and the new one is.
-        {
-            Transaction coinbase = b4.block.getTransactions().get(0);
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getTxId());
-            List<TransactionOutPoint> queries = ImmutableList.of(utxo1.query.get(0), outpoint);
-            List<TransactionOutput> results = Lists.asList(null, coinbase.getOutput(0), new TransactionOutput[]{});
-            long[] heights = {chainHeadHeight + 3};
-            UTXOsMessage result = new UTXOsMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
-            UTXORule utxo2 = new UTXORule("utxo2", queries, result);
-            blocks.add(utxo2);
-        }
 
         // ... and back to the first chain.
         NewBlock b5 = createNextBlock(b2, chainHeadHeight + 3, out2, null);
@@ -1514,15 +1472,6 @@ public class FullBlockTestGenerator {
         post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b78tx.getTxId()));
         post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b79tx.getTxId()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
-
-        // Check the UTXO query takes mempool into account.
-        {
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getTxId());
-            long[] heights = { UTXOsMessage.MEMPOOL_HEIGHT };
-            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
-            UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
-            blocks.add(utxo3);
-        }
 
         // Test invalid opcodes in dead execution paths.
         // -> b81 (26) -> b82 (27) -> b83 (28)

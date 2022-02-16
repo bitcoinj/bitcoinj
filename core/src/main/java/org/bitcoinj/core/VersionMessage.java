@@ -50,8 +50,6 @@ public class VersionMessage extends Message {
 
     /** A service bit that denotes whether the peer has a full copy of the block chain or not. */
     public static final int NODE_NETWORK = 1 << 0;
-    /** A service bit that denotes whether the peer supports the getutxos message or not. */
-    public static final int NODE_GETUTXOS = 1 << 1;
     /** A service bit that denotes whether the peer supports BIP37 bloom filters or not. The service bit is defined in BIP111. */
     public static final int NODE_BLOOM = 1 << 2;
     /** Indicates that a node can be asked for blocks and transactions including witness data. */
@@ -287,12 +285,6 @@ public class VersionMessage extends Message {
         return false;
     }
 
-    /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
-    public boolean isGetUTXOsSupported() {
-        return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
-                (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
-    }
-
     /** Returns true if a peer can be asked for blocks and transactions including witness data. */
     public boolean isWitnessSupported() {
         return (localServices & NODE_WITNESS) == NODE_WITNESS;
@@ -316,10 +308,6 @@ public class VersionMessage extends Message {
         if ((services & NODE_NETWORK) == NODE_NETWORK) {
             strings.add("NETWORK");
             services &= ~NODE_NETWORK;
-        }
-        if ((services & NODE_GETUTXOS) == NODE_GETUTXOS) {
-            strings.add("GETUTXOS");
-            services &= ~NODE_GETUTXOS;
         }
         if ((services & NODE_BLOOM) == NODE_BLOOM) {
             strings.add("BLOOM");

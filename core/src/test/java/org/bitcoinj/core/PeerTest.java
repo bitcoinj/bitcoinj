@@ -820,38 +820,6 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Test
-    public void getUTXOs() throws Exception {
-        // Basic test of support for BIP 64: getutxos support. The Lighthouse unit tests exercise this stuff more
-        // thoroughly.
-        connectWithVersion(GetUTXOsMessage.MIN_PROTOCOL_VERSION, VersionMessage.NODE_NETWORK | VersionMessage.NODE_GETUTXOS);
-        TransactionOutPoint op1 = new TransactionOutPoint(UNITTEST, 1, Sha256Hash.of("foo".getBytes()));
-        TransactionOutPoint op2 = new TransactionOutPoint(UNITTEST, 2, Sha256Hash.of("bar".getBytes()));
-
-        ListenableFuture<UTXOsMessage> future1 = peer.getUTXOs(ImmutableList.of(op1));
-        ListenableFuture<UTXOsMessage> future2 = peer.getUTXOs(ImmutableList.of(op2));
-
-        GetUTXOsMessage msg1 = (GetUTXOsMessage) outbound(writeTarget);
-        GetUTXOsMessage msg2 = (GetUTXOsMessage) outbound(writeTarget);
-
-        assertEquals(op1, msg1.getOutPoints().get(0));
-        assertEquals(op2, msg2.getOutPoints().get(0));
-        assertEquals(1, msg1.getOutPoints().size());
-
-        assertFalse(future1.isDone());
-
-        ECKey key = new ECKey();
-        TransactionOutput out1 = new TransactionOutput(UNITTEST, null, Coin.CENT, key);
-        UTXOsMessage response1 = new UTXOsMessage(UNITTEST, ImmutableList.of(out1), new long[]{UTXOsMessage.MEMPOOL_HEIGHT}, Sha256Hash.ZERO_HASH, 1234);
-        inbound(writeTarget, response1);
-        assertEquals(future1.get(), response1);
-
-        TransactionOutput out2 = new TransactionOutput(UNITTEST, null, Coin.FIFTY_COINS, key);
-        UTXOsMessage response2 = new UTXOsMessage(UNITTEST, ImmutableList.of(out2), new long[]{1000}, Sha256Hash.ZERO_HASH, 1234);
-        inbound(writeTarget, response2);
-        assertEquals(future2.get(), response2);
-    }
-
-    @Test
     public void badMessage() throws Exception {
         // Bring up an actual network connection and feed it bogus data.
         final SettableFuture<Void> result = SettableFuture.create();

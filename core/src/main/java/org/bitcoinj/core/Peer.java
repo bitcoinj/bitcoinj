@@ -146,7 +146,6 @@ public class Peer extends PeerSocketHandler {
     // TODO: The types/locking should be rationalised a bit.
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
     @GuardedBy("getAddrFutures") private final LinkedList<SettableFuture<AddressMessage>> getAddrFutures;
-    @Nullable @GuardedBy("lock") private LinkedList<SettableFuture<UTXOsMessage>> getutxoFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock lastPingTimesLock = new ReentrantLock();
@@ -467,8 +466,6 @@ public class Peer extends PeerSocketHandler {
             processVersionMessage((VersionMessage) m);
         } else if (m instanceof VersionAck) {
             processVersionAck((VersionAck) m);
-        } else if (m instanceof UTXOsMessage) {
-            processUTXOMessage((UTXOsMessage) m);
         } else if (m instanceof RejectMessage) {
             log.error("{} {}: Received {}", this, getPeerVersionMessage().subVer, m);
         } else if (m instanceof SendHeadersMessage) {
@@ -478,19 +475,6 @@ public class Peer extends PeerSocketHandler {
         } else {
             log.warn("{}: Received unhandled message: {}", this, m);
         }
-    }
-
-    protected void processUTXOMessage(UTXOsMessage m) {
-        SettableFuture<UTXOsMessage> future = null;
-        lock.lock();
-        try {
-            if (getutxoFutures != null)
-                future = getutxoFutures.pollFirst();
-        } finally {
-            lock.unlock();
-        }
-        if (future != null)
-            future.set(m);
     }
 
     private void processAddressMessage(AddressMessage m) {
@@ -1734,49 +1718,6 @@ public class Peer extends PeerSocketHandler {
      */
     public BloomFilter getBloomFilter() {
         return vBloomFilter;
-    }
-
-    /**
-     * Sends a query to the remote peer asking for the unspent transaction outputs (UTXOs) for the given outpoints,
-     * with the memory pool included. The result should be treated only as a hint: it's possible for the returned
-     * outputs to be fictional and not exist in any transaction, and it's possible for them to be spent the moment
-     * after the query returns. <b>Most peers do not support this request. You will need to connect to Bitcoin XT
-     * peers if you want this to work.</b>
-     *
-     * @throws ProtocolException if this peer doesn't support the protocol.
-     */
-    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints) {
-        return getUTXOs(outPoints, true);
-    }
-
-    /**
-     * Sends a query to the remote peer asking for the unspent transaction outputs (UTXOs) for the given outpoints.
-     * The result should be treated only as a hint: it's possible for the returned outputs to be fictional and not
-     * exist in any transaction, and it's possible for them to be spent the moment after the query returns.
-     * <b>Most peers do not support this request. You will need to connect to Bitcoin XT peers if you want
-     * this to work.</b>
-     *
-     * @param includeMempool If true (the default) the results take into account the contents of the memory pool too.
-     * @throws ProtocolException if this peer doesn't support the protocol.
-     */
-    public ListenableFuture<UTXOsMessage> getUTXOs(List<TransactionOutPoint> outPoints, boolean includeMempool) {
-        lock.lock();
-        try {
-            VersionMessage peerVer = getPeerVersionMessage();
-            if (peerVer.clientVersion < GetUTXOsMessage.MIN_PROTOCOL_VERSION)
-                throw new ProtocolException("Peer does not support getutxos protocol version");
-            if ((peerVer.localServices & GetUTXOsMessage.SERVICE_FLAGS_REQUIRED) != GetUTXOsMessage.SERVICE_FLAGS_REQUIRED)
-                throw new ProtocolException("Peer does not support getutxos protocol flag: find Bitcoin XT nodes.");
-            SettableFuture<UTXOsMessage> future = SettableFuture.create();
-            // Add to the list of in flight requests.
-            if (getutxoFutures == null)
-                getutxoFutures = new LinkedList<>();
-            getutxoFutures.add(future);
-            sendMessage(new GetUTXOsMessage(params, outPoints, includeMempool));
-            return future;
-        } finally {
-            lock.unlock();
-        }
     }
 
     /**

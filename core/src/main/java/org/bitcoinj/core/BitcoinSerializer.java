@@ -74,8 +74,6 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(NotFoundMessage.class, "notfound");
         names.put(MemoryPoolMessage.class, "mempool");
         names.put(RejectMessage.class, "reject");
-        names.put(GetUTXOsMessage.class, "getutxos");
-        names.put(UTXOsMessage.class, "utxos");
         names.put(SendHeadersMessage.class, "sendheaders");
         names.put(FeeFilterMessage.class, "feefilter");
     }
@@ -256,10 +254,6 @@ public class BitcoinSerializer extends MessageSerializer {
             return new MemoryPoolMessage();
         } else if (command.equals("reject")) {
             return new RejectMessage(params, payloadBytes);
-        } else if (command.equals("utxos")) {
-            return new UTXOsMessage(params, payloadBytes);
-        } else if (command.equals("getutxos")) {
-            return new GetUTXOsMessage(params, payloadBytes);
         } else if (command.equals("sendheaders")) {
             return new SendHeadersMessage(params, payloadBytes);
         } else if (command.equals("feefilter")) {
