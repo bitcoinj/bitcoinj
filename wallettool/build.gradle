@@ -1,13 +1,24 @@
+import org.gradle.util.GradleVersion
+
 plugins {
     id 'java'
     id 'application'
     id 'eclipse'
+    id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
 }
+
+def annotationProcessorMinVersion = GradleVersion.version("4.6")
+boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) > 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.6.3'
     implementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    if (hasAnnotationProcessor) {
+        annotationProcessor 'info.picocli:picocli-codegen:4.6.3'
+    } else {
+        compileOnly 'info.picocli:picocli-codegen:4.6.3'
+    }
 }
 
 sourceCompatibility = 11
@@ -21,3 +32,27 @@ compileJava {
 
 mainClassName = "org.bitcoinj.wallettool.WalletTool"
 applicationName = "wallet-tool"
+
+task generateManpageAsciiDoc(type: JavaExec) {
+    dependsOn(classes)
+    group = "Documentation"
+    description = "Generate AsciiDoc manpage"
+    if (hasAnnotationProcessor) {
+        classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    } else {
+        classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+    }
+    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
+}
+
+apply plugin: 'org.asciidoctor.jvm.convert'
+asciidoctor {
+    dependsOn(generateManpageAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-picocli-docs")
+    outputDir = file("${project.buildDir}/docs")
+    logDocuments = true
+    outputOptions {
+        backends = ['manpage', 'html5']
+    }
+}
