@@ -9,7 +9,7 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.4.1'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.32'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
 }
 
 javafx {
