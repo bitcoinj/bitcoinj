@@ -169,7 +169,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testBuildingSimpleP2PKH() {
+    public void addSignedInput_P2PKH() throws Exception {
         final Address toAddr = Address.fromKey(TESTNET, new ECKey(), Script.ScriptType.P2PKH);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
@@ -192,7 +192,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testBuildingSimpleP2WPKH() {
+    public void addSignedInput_P2WPKH() throws Exception {
         final Address toAddr = Address.fromKey(TESTNET, new ECKey(), Script.ScriptType.P2WPKH);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
