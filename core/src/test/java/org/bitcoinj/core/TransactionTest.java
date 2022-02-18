@@ -181,7 +181,10 @@ public class TransactionTest {
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         TransactionOutput output = new TransactionOutput(TESTNET, null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
-        tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
+        TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
+
+        // verify signature
+        input.getScriptSig().correctlySpends(tx, 0, null, null, ScriptBuilder.createOutputScript(fromAddress), null);
 
         byte[] rawTx = tx.bitcoinSerialize();
 
@@ -200,7 +203,11 @@ public class TransactionTest {
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         tx.addOutput(outAmount, toAddr);
-        tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
+        TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
+
+        // verify signature
+        input.getScriptSig().correctlySpends(tx, 0, input.getWitness(), input.getValue(),
+                ScriptBuilder.createOutputScript(fromAddress), null);
 
         byte[] rawTx = tx.bitcoinSerialize();
 
