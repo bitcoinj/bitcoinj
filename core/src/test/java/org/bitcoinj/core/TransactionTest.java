@@ -29,10 +29,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.function.IntFunction;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.core.Utils.HEX;
 
@@ -589,8 +592,7 @@ public class TransactionTest {
                 new byte[0],
                 Transaction.SigHash.ALL.byteValue())
                 .toString();
-
-        final Callable<Void> c = () -> {
+        final Supplier<Void> supplier = () -> {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getTxId());
             assertEquals(
@@ -605,10 +607,26 @@ public class TransactionTest {
         };
         final int nThreads = 100;
         ExecutorService executor = Executors.newFixedThreadPool(nThreads); // do our best to run as parallel as possible
-        List<Future<Void>> results = executor.invokeAll(Collections.nCopies(nThreads, c));
+        // Build a stream of nThreads CompletableFutures and convert to an array
+        CompletableFuture<Void>[] results = Stream
+                .generate(() -> CompletableFuture.supplyAsync(supplier, executor))
+                .limit(nThreads)
+                .toArray(genericArray(CompletableFuture[]::new));
         executor.shutdown();
-        for (Future result : results)
-            result.get(); // we're just interested in the exception, if any
+        CompletableFuture.allOf(results).get();  // we're just interested in the exception, if any
+    }
+
+    /**
+     * Function used to create/cast generic array to expected type. Using this function prevents us from
+     * needing a {@code @SuppressWarnings("unchecked")} in the calling code.
+     * @param arrayCreator Array constructor lambda taking an integer size parameter and returning array of type T
+     * @param <T> The erased type
+     * @param <R> The desired type
+     * @return Array constructor lambda taking an integer size parameter and returning array of type R
+     */
+    @SuppressWarnings("unchecked")
+    static <T, R extends T> IntFunction<R[]> genericArray(IntFunction<T[]> arrayCreator) {
+        return size -> (R[]) arrayCreator.apply(size);
     }
 
     @Test
