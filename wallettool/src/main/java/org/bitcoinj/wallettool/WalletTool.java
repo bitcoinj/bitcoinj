@@ -425,7 +425,7 @@ public class WalletTool implements Callable<Integer> {
             if (ignoreMandatoryExtensions)
                 loader.setRequireMandatoryExtensions(false);
             walletInputStream = new BufferedInputStream(new FileInputStream(walletFile));
-            wallet = loader.readWallet(walletInputStream, forceReset, (WalletExtension[])(null));
+            wallet = loader.readWallet(walletInputStream, forceReset, null);
             if (!wallet.getParams().equals(params)) {
                 System.err.println("Wallet does not match requested network parameters: " +
                         wallet.getParams().getId() + " vs " + params.getId());
@@ -469,7 +469,7 @@ public class WalletTool implements Callable<Integer> {
                     }
                     CoinSelector coinSelector = null;
                     if (selectAddrStr != null) {
-                        Address selectAddr = null;
+                        Address selectAddr;
                         try {
                             selectAddr = Address.fromString(params, selectAddrStr);
                         } catch (AddressFormatException x) {
@@ -1247,7 +1247,7 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("One of --pubkey or --addr must be specified.");
             return;
         }
-        ECKey key = null;
+        ECKey key;
         if (pubKeyStr != null) {
             key = wallet.findKeyFromPubKey(HEX.decode(pubKeyStr));
         } else {
