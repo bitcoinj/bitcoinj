@@ -1255,14 +1255,18 @@ public class WalletTool implements Callable<Integer> {
                 final KeyParameter aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return; // Error message already printed.
-                System.out.println(wallet.toString(dumpLookAhead, true, aesKey, true, true, chain));
+                printWallet( aesKey);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return;
             }
         } else {
-            System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, null, true, true, chain));
+            printWallet( null);
         }
+    }
+
+    private void printWallet(@Nullable KeyParameter aesKey) {
+        System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 
     private void setCreationTime() {
