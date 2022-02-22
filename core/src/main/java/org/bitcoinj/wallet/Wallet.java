@@ -3735,11 +3735,17 @@ public class Wallet extends BaseTaggableObject
     }
 
     private static class BalanceFutureRequest {
-        public SettableFuture<Coin> future;
-        public Coin value;
-        public BalanceType type;
+        public final SettableFuture<Coin> future;
+        public final Coin value;
+        public final BalanceType type;
+
+        private BalanceFutureRequest(SettableFuture<Coin> future, Coin value, BalanceType type) {
+            this.future = future;
+            this.value = value;
+            this.type = type;
+        }
     }
-    @GuardedBy("lock") private List<BalanceFutureRequest> balanceFutureRequests = new LinkedList<>();
+    @GuardedBy("lock") private final List<BalanceFutureRequest> balanceFutureRequests = new LinkedList<>();
 
     /**
      * <p>Returns a future that will complete when the balance of the given type has becom equal or larger to the given
@@ -3767,11 +3773,7 @@ public class Wallet extends BaseTaggableObject
                 // Will be checked later in checkBalanceFutures. We don't just add an event listener for ourselves
                 // here so that running getBalanceFuture().get() in the user code thread works - generally we must
                 // avoid giving the user back futures that require the user code thread to be free.
-                BalanceFutureRequest req = new BalanceFutureRequest();
-                req.future = future;
-                req.value = value;
-                req.type = type;
-                balanceFutureRequests.add(req);
+                balanceFutureRequests.add(new BalanceFutureRequest(future, value, type));
             }
             return future;
         } finally {
