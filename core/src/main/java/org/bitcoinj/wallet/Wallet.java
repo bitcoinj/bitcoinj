@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
@@ -3735,11 +3734,11 @@ public class Wallet extends BaseTaggableObject
     }
 
     private static class BalanceFutureRequest {
-        public final SettableFuture<Coin> future;
+        public final ListenableCompletableFuture<Coin> future;
         public final Coin value;
         public final BalanceType type;
 
-        private BalanceFutureRequest(SettableFuture<Coin> future, Coin value, BalanceType type) {
+        private BalanceFutureRequest(ListenableCompletableFuture<Coin> future, Coin value, BalanceType type) {
             this.future = future;
             this.value = value;
             this.type = type;
@@ -3761,14 +3760,14 @@ public class Wallet extends BaseTaggableObject
      * you can use {@link Threading#waitForUserCode()} to block until the future had a
      * chance to be updated.</p>
      */
-    public ListenableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
+    public ListenableCompletableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
         lock.lock();
         try {
-            final SettableFuture<Coin> future = SettableFuture.create();
+            final ListenableCompletableFuture<Coin> future = new ListenableCompletableFuture<>();
             final Coin current = getBalance(type);
             if (current.compareTo(value) >= 0) {
                 // Already have enough.
-                future.set(current);
+                future.complete(current);
             } else {
                 // Will be checked later in checkBalanceFutures. We don't just add an event listener for ourselves
                 // here so that running getBalanceFuture().get() in the user code thread works - generally we must
@@ -3785,17 +3784,15 @@ public class Wallet extends BaseTaggableObject
     @SuppressWarnings("FieldAccessNotGuarded")
     private void checkBalanceFuturesLocked(@Nullable Coin avail) {
         checkState(lock.isHeldByCurrentThread());
-        final ListIterator<BalanceFutureRequest> it = balanceFutureRequests.listIterator();
-        while (it.hasNext()) {
-            final BalanceFutureRequest req = it.next();
-            Coin val = getBalance(req.type);   // This could be slow for lots of futures.
-            if (val.compareTo(req.value) < 0) continue;
-            // Found one that's finished.
-            it.remove();
-            final Coin v = val;
-            // Don't run any user-provided future listeners with our lock held.
-            Threading.USER_THREAD.execute(() -> req.future.set(v));
-        }
+        balanceFutureRequests.forEach(req -> {
+            Coin current = getBalance(req.type);   // This could be slow for lots of futures.
+            if (current.compareTo(req.value) >= 0) {
+                // Found one that's finished.
+                // Don't run any user-provided future listeners with our lock held.
+                Threading.USER_THREAD.execute(() -> req.future.complete(current));
+            }
+        });
+        balanceFutureRequests.removeIf(req -> req.future.isDone());
     }
 
     /**
