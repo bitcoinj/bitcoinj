@@ -565,7 +565,7 @@ public class Transaction extends ChildMessage {
         /**
          * @param value
          */
-        private SigHash(final int value) {
+        SigHash(final int value) {
             this.value = value;
         }
 

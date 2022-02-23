@@ -35,7 +35,7 @@ public class InventoryItem {
 
         public final int code;
 
-        private Type(int code) {
+        Type(int code) {
             this.code = code;
         }
 

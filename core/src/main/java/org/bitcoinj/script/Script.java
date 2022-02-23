@@ -64,7 +64,7 @@ public class Script {
 
         public final int id;
 
-        private ScriptType(int id) {
+        ScriptType(int id) {
             this.id = id;
         }
     }
