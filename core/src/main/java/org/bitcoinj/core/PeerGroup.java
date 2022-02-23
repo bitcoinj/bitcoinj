@@ -1024,7 +1024,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Starts the PeerGroup and begins network activity.
      * @return A future that completes when first connection activity has been triggered (note: not first connection made).
      */
-    public ListenableFuture startAsync() {
+    public ListenableCompletableFuture<Void> startAsync() {
         // This is run in a background thread by the Service implementation.
         if (chain == null) {
             // Just try to help catch what might be a programming error.
@@ -1035,7 +1035,7 @@ public class PeerGroup implements TransactionBroadcaster {
         vUsedUp = true;
         executorStartupLatch.countDown();
         // We do blocking waits during startup, so run on the executor thread.
-        return executor.submit(() -> {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
                 log.info("Starting ...");
                 channels.startAsync();
@@ -1045,18 +1045,19 @@ public class PeerGroup implements TransactionBroadcaster {
             } catch (Throwable e) {
                 log.error("Exception when starting up", e);  // The executor swallows exceptions :(
             }
-        });
+        }, executor);
+        return ListenableCompletableFuture.of(future);
     }
 
     /** Does a blocking startup. */
     public void start() {
-        Futures.getUnchecked(startAsync());
+        startAsync().join();
     }
 
-    public ListenableFuture stopAsync() {
+    public ListenableCompletableFuture<Void>  stopAsync() {
         checkState(vRunning);
         vRunning = false;
-        ListenableFuture future = executor.submit(() -> {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
                 log.info("Stopping ...");
                 Stopwatch watch = Stopwatch.createStarted();
@@ -1073,9 +1074,9 @@ public class PeerGroup implements TransactionBroadcaster {
             } catch (Throwable e) {
                 log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
             }
-        });
+        }, executor);
         executor.shutdown();
-        return future;
+        return ListenableCompletableFuture.of(future);
     }
 
     /** Does a blocking stop */

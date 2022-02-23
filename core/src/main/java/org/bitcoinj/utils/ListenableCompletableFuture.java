@@ -22,4 +22,32 @@ import java.util.concurrent.CompletableFuture;
  * from Guava {@code ListenableFuture} to {@link CompletableFuture}.
  */
 public class ListenableCompletableFuture<V> extends CompletableFuture<V> implements ListenableCompletionStage<V> {
+
+    /**
+     * Converts a generic {@link CompletableFuture} to a {@code ListenableCompletableFuture}. If the passed
+     * in future is already a {@code ListenableCompletableFuture} no conversion is performed.
+     * <p>
+     * When the migration to {@link CompletableFuture} is finished usages of this method
+     * can simply be removed as the conversion will no longer be required.
+     * @param future A CompletableFuture that may need to be converted
+     * @param <T> the type of the futures return value
+     * @return A ListenableCompletableFuture
+     */
+    public static <T> ListenableCompletableFuture<T> of(CompletableFuture<T> future) {
+        ListenableCompletableFuture<T> listenable;
+        if (future instanceof ListenableCompletableFuture) {
+            listenable = (ListenableCompletableFuture<T>) future;
+        } else {
+            listenable = new ListenableCompletableFuture<>();
+            future.whenComplete((val, ex) -> {
+                // We can't test for a null val, because of the CompletableFuture<Void> special case.
+                if (ex == null) {
+                    listenable.complete(val);
+                } else {
+                    listenable.completeExceptionally(ex);
+                }
+            });
+        }
+        return listenable;
+    }
 }

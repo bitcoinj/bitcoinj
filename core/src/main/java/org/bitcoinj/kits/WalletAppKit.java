@@ -20,9 +20,6 @@ package org.bitcoinj.kits;
 import com.google.common.collect.*;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.DeterministicKey;
@@ -359,19 +356,14 @@ public class WalletAppKit extends AbstractIdleService {
                 vPeerGroup.startBlockChainDownload(listener);
                 listener.await();
             } else {
-                Futures.addCallback(vPeerGroup.startAsync(), new FutureCallback() {
-                    @Override
-                    public void onSuccess(@Nullable Object result) {
+                vPeerGroup.startAsync().whenComplete((result, t) -> {
+                    if (t == null) {
                         final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
                         vPeerGroup.startBlockChainDownload(l);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
+                    } else {
                         throw new RuntimeException(t);
-
                     }
-                }, MoreExecutors.directExecutor());
+                });
             }
         } catch (BlockStoreException e) {
             throw new IOException(e);
