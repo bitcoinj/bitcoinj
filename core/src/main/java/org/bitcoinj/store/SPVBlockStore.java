@@ -159,7 +159,7 @@ public class SPVBlockStore implements BlockStore {
 
     private void initNewStore(NetworkParameters params) throws Exception {
         byte[] header;
-        header = HEADER_MAGIC.getBytes("US-ASCII");
+        header = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
         buffer.put(header);
         // Insert the genesis block.
         lock.lock();
