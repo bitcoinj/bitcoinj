@@ -22,4 +22,50 @@ import java.util.concurrent.CompletableFuture;
  * from Guava {@code ListenableFuture} to {@link CompletableFuture}.
  */
 public class ListenableCompletableFuture<V> extends CompletableFuture<V> implements ListenableCompletionStage<V> {
+
+    /**
+     * Returns a new {@link CompletableFuture} that is already completed with
+     * the given value.
+     * <p>
+     * When the migration to {@link CompletableFuture} is finished use of this method
+     * can be replaced with {@link CompletableFuture#completedFuture(Object)}.
+     *
+     * @param value the value
+     * @param <T> the type of the value
+     * @return the completed CompletableFuture
+     */
+    public static <T> ListenableCompletableFuture<T> completedFuture(T value) {
+        ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
+        future.complete(value);
+        return future;
+    }
+
+    /**
+     * Converts a generic {@link CompletableFuture} to a {@code ListenableCompletableFuture}. If the passed
+     * in future is already a {@code ListenableCompletableFuture} no conversion is performed.
+     * <p>
+     * When the migration to {@link CompletableFuture} is finished usages of this method
+     * can simply be removed as the conversion will no longer be required.
+     * @param future A CompletableFuture that may need to be converted
+     * @param <T> the type of the futures return value
+     * @return A ListenableCompletableFuture
+     */
+    public static <T> ListenableCompletableFuture<T> of(CompletableFuture<T> future) {
+        ListenableCompletableFuture<T> listenable;
+        if (future instanceof ListenableCompletableFuture) {
+            listenable = (ListenableCompletableFuture<T>) future;
+        } else {
+            listenable = new ListenableCompletableFuture<>();
+            future.whenComplete((val, ex) -> {
+                // We can't test for a not-null val, because of the CompletableFuture<Void> special case, so
+                // we test for a null ex instead.
+                if (ex == null) {
+                    listenable.complete(val);
+                } else {
+                    listenable.completeExceptionally(ex);
+                }
+            });
+        }
+        return listenable;
+    }
 }

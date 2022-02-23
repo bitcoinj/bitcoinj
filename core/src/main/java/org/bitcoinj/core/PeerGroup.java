@@ -2035,7 +2035,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * peers. Once all connected peers have announced the transaction, the future available via the
      * {@link TransactionBroadcast#future()} method will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
-     * {@link ListenableFuture}. This method returns immediately, so if you want it to block just call get() on the
+     * {@link ListenableCompletableFuture}. This method returns immediately, so if you want it to block just call get() on the
      * result.</p>
      *
      * <p>Optionally, peers will be dropped after they have been used for broadcasting the transaction and they have
@@ -2063,9 +2063,8 @@ public class PeerGroup implements TransactionBroadcaster {
         broadcast.setMinConnections(minConnections);
         broadcast.setDropPeersAfterBroadcast(dropPeersAfterBroadcast && tx.getConfidence().numBroadcastPeers() == 0);
         // Send the TX to the wallet once we have a successful broadcast.
-        Futures.addCallback(broadcast.future(), new FutureCallback<Transaction>() {
-            @Override
-            public void onSuccess(Transaction transaction) {
+        broadcast.future().whenComplete((transaction, throwable) -> {
+            if (transaction != null) {
                 runningBroadcasts.remove(broadcast);
                 // OK, now tell the wallet about the transaction. If the wallet created the transaction then
                 // it already knows and will ignore this. If it's a transaction we received from
@@ -2082,14 +2081,11 @@ public class PeerGroup implements TransactionBroadcaster {
                         throw new RuntimeException(e);   // Cannot fail to verify a tx we created ourselves.
                     }
                 }
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
+            } else {
                 // This can happen if we get a reject message from a peer.
                 runningBroadcasts.remove(broadcast);
             }
-        }, MoreExecutors.directExecutor());
+        });
         // Keep a reference to the TransactionBroadcast object. This is important because otherwise, the entire tree
         // of objects we just created would become garbage if the user doesn't hold on to the returned future, and
         // eventually be collected. This in turn could result in the transaction not being committed to the wallet
