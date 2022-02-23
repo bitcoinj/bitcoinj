@@ -24,6 +24,23 @@ import java.util.concurrent.CompletableFuture;
 public class ListenableCompletableFuture<V> extends CompletableFuture<V> implements ListenableCompletionStage<V> {
 
     /**
+     * Returns a new {@link CompletableFuture} that is already completed with
+     * the given value.
+     * <p>
+     * When the migration to {@link CompletableFuture} is finished use of this method
+     * can be replaced with {@link CompletableFuture#completedFuture(Object)}.
+     *
+     * @param value the value
+     * @param <T> the type of the value
+     * @return the completed CompletableFuture
+     */
+    public static <T> ListenableCompletableFuture<T> completedFuture(T value) {
+        ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
+        future.complete(value);
+        return future;
+    }
+
+    /**
      * Converts a generic {@link CompletableFuture} to a {@code ListenableCompletableFuture}. If the passed
      * in future is already a {@code ListenableCompletableFuture} no conversion is performed.
      * <p>

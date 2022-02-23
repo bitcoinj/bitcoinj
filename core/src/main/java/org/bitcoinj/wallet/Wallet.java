@@ -20,10 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.common.annotations.*;
 import com.google.common.collect.*;
 import com.google.common.math.IntMath;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
@@ -3882,7 +3879,7 @@ public class Wallet extends BaseTaggableObject
         /** The Bitcoin transaction message that moves the money. */
         public final Transaction tx;
         /** A future that will complete once the tx message has been successfully broadcast to the network. This is just the result of calling broadcast.future() */
-        public final ListenableFuture<Transaction> broadcastComplete;
+        public final ListenableCompletableFuture<Transaction> broadcastComplete;
         /** The broadcast object returned by the linked TransactionBroadcaster */
         public final TransactionBroadcast broadcast;
 
@@ -5319,7 +5316,7 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend)
+    public ListenableCompletableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend)
             throws DeterministicUpgradeRequiresPassword {
         return doMaintenance(KeyChainGroupStructure.DEFAULT, aesKey, signAndSend);
     }
@@ -5339,7 +5336,7 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
+    public ListenableCompletableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
             @Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
@@ -5347,34 +5344,30 @@ public class Wallet extends BaseTaggableObject
         try {
             txns = maybeRotateKeys(structure, aesKey, signAndSend);
             if (!signAndSend)
-                return Futures.immediateFuture(txns);
+                return ListenableCompletableFuture.completedFuture(txns);
         } finally {
             keyChainGroupLock.unlock();
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
-        ArrayList<ListenableFuture<Transaction>> futures = new ArrayList<>(txns.size());
+        ArrayList<CompletableFuture<Transaction>> futures = new ArrayList<>(txns.size());
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         for (Transaction tx : txns) {
             try {
-                final ListenableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
+                final CompletableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
                 futures.add(future);
-                Futures.addCallback(future, new FutureCallback<Transaction>() {
-                    @Override
-                    public void onSuccess(Transaction transaction) {
+                future.whenComplete((transaction, throwable) -> {
+                    if (transaction != null) {
                         log.info("Successfully broadcast key rotation tx: {}", transaction);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable throwable) {
+                    } else {
                         log.error("Failed to broadcast key rotation tx", throwable);
                     }
-                }, MoreExecutors.directExecutor());
+                });
             } catch (Exception e) {
                 log.error("Failed to broadcast rekey tx", e);
             }
         }
-        return Futures.allAsList(futures);
+        return FutureUtils.allAsList(futures);
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
