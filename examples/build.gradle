@@ -7,7 +7,6 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.6.3'
     implementation 'org.slf4j:slf4j-jdk14:1.7.36'
-    implementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
 }
 
 sourceCompatibility = 11
