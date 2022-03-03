@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.bitcoinj.core.TransactionConfidence.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.*;
@@ -630,8 +631,7 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredInputsSize() throws Exception {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, true, false, false);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = transactionSerialize(true, false, false);
         try {
             new Transaction(UNITTEST, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
@@ -642,8 +642,7 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredOutputsSize() throws Exception {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, true, false);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = transactionSerialize(false, true, false);
         try {
             new Transaction(UNITTEST, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
@@ -654,14 +653,19 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredWitnessPushCountSize() throws Exception {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, false, true);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = transactionSerialize(false, false, true);
         try {
             new Transaction(UNITTEST, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
         }
+    }
+
+    public byte[] transactionSerialize(Boolean hackInputsSize, Boolean hacksOutputsSize, Boolean hackWitnessPushCountSize) {
+        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, hackInputsSize, hacksOutputsSize, hackWitnessPushCountSize);
+        byte[] serializedTx = tx.bitcoinSerialize();
+        return serializedTx;
     }
 
     private static class HugeDeclaredSizeTransaction extends Transaction {
