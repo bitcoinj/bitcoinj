@@ -77,6 +77,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -423,7 +424,7 @@ public class WalletTest extends TestWithWallet {
         // Send some pending coins to the wallet.
         Transaction t1 = sendMoneyToWallet(wallet, null, amount, toAddress);
         Threading.waitForUserCode();
-        final ListenableFuture<TransactionConfidence> depthFuture = t1.getConfidence().getDepthFuture(1);
+        final CompletableFuture<TransactionConfidence> depthFuture = t1.getConfidence().getDepthFuture(1);
         assertFalse(depthFuture.isDone());
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals(amount, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
