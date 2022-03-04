@@ -8,7 +8,7 @@ plugins {
 }
 
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
-boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) > 0)
+boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
