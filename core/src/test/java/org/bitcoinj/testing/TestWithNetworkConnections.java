@@ -30,8 +30,6 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
-import com.google.common.util.concurrent.SettableFuture;
-
 import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -39,6 +37,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -198,7 +197,7 @@ public class TestWithNetworkConnections {
 
     private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws Exception {
         // Send a ping and wait for it to get to the other side
-        SettableFuture<Void> pingReceivedFuture = SettableFuture.create();
+        CompletableFuture<Void> pingReceivedFuture = new CompletableFuture<>();
         p.mapPingFutures.put(nonce, pingReceivedFuture);
         p.peer.sendMessage(new Ping(nonce));
         pingReceivedFuture.get();
@@ -207,10 +206,10 @@ public class TestWithNetworkConnections {
 
     private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
-        final SettableFuture<Void> pongReceivedFuture = SettableFuture.create();
+        final CompletableFuture<Void> pongReceivedFuture = new CompletableFuture<>();
         PreMessageReceivedEventListener listener = (p1, m) -> {
             if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
-                pongReceivedFuture.set(null);
+                pongReceivedFuture.complete(null);
                 return null;
             }
             return m;

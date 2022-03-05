@@ -26,10 +26,7 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import org.bitcoinj.utils.FutureUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -39,12 +36,13 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SignatureException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.core.Utils.reverseBytes;
@@ -72,15 +70,18 @@ public class ECKeyTest {
     public void sValue() throws Exception {
         // Check that we never generate an S value that is larger than half the curve order. This avoids a malleability
         // issue that can allow someone to change a transaction [hash] without invalidating the signature.
-        final int ITERATIONS = 10;
-        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(ITERATIONS));
-        List<ListenableFuture<ECKey.ECDSASignature>> sigFutures = new ArrayList<>();
+        final byte ITERATIONS = 10;
         final ECKey key = new ECKey();
-        for (byte i = 0; i < ITERATIONS; i++) {
-            final Sha256Hash hash = Sha256Hash.of(new byte[]{i});
-            sigFutures.add(executor.submit(() -> key.sign(hash)));
-        }
-        List<ECKey.ECDSASignature> sigs = Futures.allAsList(sigFutures).get();
+
+        Function<Byte, ECKey.ECDSASignature> signer = b -> key.sign(Sha256Hash.of(new byte[]{b}));
+        Function<Byte, CompletableFuture<ECKey.ECDSASignature>> asyncSigner = b -> CompletableFuture.supplyAsync(() -> signer.apply(b));
+
+        List<CompletableFuture<ECKey.ECDSASignature>> sigFutures = IntStream.range(0, ITERATIONS - 1)
+                .mapToObj(i -> (byte) i)
+                .map(asyncSigner)
+                .collect(Collectors.toList());
+        List<ECKey.ECDSASignature> sigs = FutureUtils.allAsList(sigFutures).join();
+
         for (ECKey.ECDSASignature signature : sigs) {
             assertTrue(signature.isCanonical());
         }

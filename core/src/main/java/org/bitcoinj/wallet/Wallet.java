@@ -20,7 +20,6 @@ package org.bitcoinj.wallet;
 import com.google.common.annotations.*;
 import com.google.common.collect.*;
 import com.google.common.math.IntMath;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.*;
 import net.jcip.annotations.*;
 import org.bitcoinj.core.listeners.*;
