@@ -24,7 +24,6 @@ import org.bitcoinj.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -86,7 +85,7 @@ public class Threading {
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
         public static int WARNING_THRESHOLD = 10000;
-        private LinkedBlockingQueue<Runnable> tasks;
+        private final LinkedBlockingQueue<Runnable> tasks;
 
         public UserThread() {
             super("bitcoinj user thread");
@@ -131,7 +130,7 @@ public class Threading {
         throwOnLockCycles();
 
         USER_THREAD = new UserThread();
-        SAME_THREAD = runnable -> runnable.run();
+        SAME_THREAD = Runnable::run;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
