@@ -28,13 +28,12 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -77,13 +76,13 @@ public class PrintPeers {
         final Object lock = new Object();
         final long[] bestHeight = new long[1];
 
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
         NioClientManager clientManager = new NioClientManager();
         for (final InetAddress addr : addrs) {
             InetSocketAddress address = new InetSocketAddress(addr, params.getPort());
             final Peer peer = new Peer(params, new VersionMessage(params, 0),
                     new PeerAddress(params, address), null);
-            final SettableFuture<Void> future = SettableFuture.create();
+            final CompletableFuture<Void> future = new CompletableFuture<>();
             // Once the connection has completed version handshaking ...
             peer.addConnectedEventListener((p, peerCount) -> {
                 // Check the chain height it claims to have.
@@ -102,18 +101,18 @@ public class PrintPeers {
                     }
                 }
                 // Now finish the future and close the connection
-                future.set(null);
+                future.complete(null);
                 peer.close();
             });
             peer.addDisconnectedEventListener((p, peerCount) -> {
                 if (!future.isDone())
                     System.out.println("Failed to talk to " + addr);
-                future.set(null);
+                future.complete(null);
             });
             clientManager.openConnection(address, peer);
             futures.add(future);
         }
         // Wait for every tried connection to finish.
-        Futures.successfulAsList(futures).get();
+        CompletableFuture.allOf(futures.toArray( new CompletableFuture[0])).join();
     }
 }
