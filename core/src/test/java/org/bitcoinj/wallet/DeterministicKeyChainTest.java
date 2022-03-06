@@ -747,29 +747,40 @@ public class DeterministicKeyChainTest {
     private String protoToString(List<Protos.Key> keys) {
         StringBuilder sb = new StringBuilder();
         for (Protos.Key key : keys) {
-            try {
-                BufferedReader reader = new BufferedReader(new StringReader(key.toString()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.startsWith("#"))
-                        sb.append(line).append('\n');
-                }
-                sb.append('\n');
-                reader.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e); // cannot happen
-            }
+            String keyString = serializeKey(key);
+            sb.append(keyString);
         }
         return sb.toString().trim();
     }
 
-    private String checkSerialization(List<Protos.Key> keys, String filename) {
+    private String serializeKey(Protos.Key key) {
+        StringBuilder sb = new StringBuilder();
         try {
-            String sb = protoToString(keys);
+            BufferedReader reader = new BufferedReader(new StringReader(key.toString()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("#"))
+                    sb.append(line).append('\n');
+            }
+            sb.append('\n');
+            reader.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e); // cannot happen
+        }
+        return sb.toString();
+    }
+
+    private String checkSerialization(List<Protos.Key> keys, String filename) {
+        String sb = protoToString(keys);
+        String expected = readResourceFile(filename);
+        assertEquals(expected, sb);
+        return expected;
+    }
+
+    private String readResourceFile(String filename) {
+        try {
             List<String> lines = Resources.readLines(getClass().getResource(filename), StandardCharsets.UTF_8);
-            String expected = Joiner.on('\n').join(lines);
-            assertEquals(expected, sb);
-            return expected;
+            return Joiner.on('\n').join(lines);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
