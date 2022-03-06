@@ -10,7 +10,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         java: ['11', '17']
         distribution: ['temurin', 'zulu', 'microsoft']
-        gradle: ['7.4']
+        gradle: ['7.3.3']
         include:
           # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
           - os: ubuntu-latest
