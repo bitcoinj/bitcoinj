@@ -17,7 +17,6 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.core.*;
-import com.google.common.util.concurrent.SettableFuture;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,13 +24,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An extension of {@link PeerSocketHandler} that keeps inbound messages in a queue for later processing
  */
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<>(1000);
-    public final Map<Long, SettableFuture<Void>> mapPingFutures = new HashMap<>();
+    public final Map<Long, CompletableFuture<Void>> mapPingFutures = new HashMap<>();
 
     public Peer peer;
     public BloomFilter lastReceivedFilter;
@@ -51,9 +51,9 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     @Override
     protected void processMessage(Message m) throws Exception {
         if (m instanceof Ping) {
-            SettableFuture<Void> future = mapPingFutures.get(((Ping) m).getNonce());
+            CompletableFuture<Void> future = mapPingFutures.get(((Ping) m).getNonce());
             if (future != null) {
-                future.set(null);
+                future.complete(null);
                 return;
             }
         }
