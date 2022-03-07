@@ -32,10 +32,8 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +42,11 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -779,9 +781,10 @@ public class DeterministicKeyChainTest {
 
     private String readResourceFile(String filename) {
         try {
-            List<String> lines = Resources.readLines(getClass().getResource(filename), StandardCharsets.UTF_8);
-            return Joiner.on('\n').join(lines);
-        } catch (IOException e) {
+            Path path = Paths.get(getClass().getResource(filename).toURI());
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            return String.join("\n", lines);
+        } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }
