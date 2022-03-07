@@ -21,11 +21,11 @@ import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.uri.BitcoinURI;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -39,7 +39,6 @@ import java.security.KeyStoreException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * <p>Provides a standard implementation of the Payment Protocol (BIP 0070)</p>
@@ -53,7 +52,7 @@ import java.util.concurrent.Callable;
  * </ul>
  *
  * <p>If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
- * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.</p>
+ * {@link ListenableCompletableFuture} is returned that will be notified with the PaymentSession object after it is downloaded.</p>
  *
  * <p>Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
  * amount and recipient are correct, perform any additional steps, and then construct a list of transactions to pass to
@@ -61,7 +60,7 @@ import java.util.concurrent.Callable;
  *
  * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
  * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
- * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
+ * transactions to the bitcoin network. Instead it returns a ListenableCompletableFuture that will be notified when a
  * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
  * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
  * tx itself later if needed.</p>
@@ -69,7 +68,7 @@ import java.util.concurrent.Callable;
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
-    private static ListeningExecutorService executor = Threading.THREAD_POOL;
+    private final static ListeningExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;
     private Protos.PaymentRequest paymentRequest;
     private Protos.PaymentDetails paymentDetails;
@@ -90,7 +89,7 @@ public class PaymentSession {
      * the signature provided by the payment request. An exception is thrown by the future if the signature cannot
      * be verified.</p>
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri) throws PaymentProtocolException {
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri) throws PaymentProtocolException {
         return createFromBitcoinUri(uri, true, null);
     }
 
@@ -102,7 +101,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki)
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki)
             throws PaymentProtocolException {
         return createFromBitcoinUri(uri, verifyPki, null);
     }
@@ -116,7 +115,7 @@ public class PaymentSession {
      * signature cannot be verified.
      * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentProtocolException {
         String url = uri.getPaymentRequestUrl();
         if (url == null)
@@ -135,7 +134,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url) throws PaymentProtocolException {
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url) throws PaymentProtocolException {
         return createFromUrl(url, true, null);
     }
 
@@ -146,7 +145,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki)
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki)
             throws PaymentProtocolException {
         return createFromUrl(url, verifyPki, null);
     }
@@ -159,7 +158,7 @@ public class PaymentSession {
      * signature cannot be verified.
      * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentProtocolException {
         if (url == null)
             throw new PaymentProtocolException.InvalidPaymentRequestURL("null paymentRequestUrl");
@@ -170,14 +169,14 @@ public class PaymentSession {
         }
     }
 
-    private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
-        return executor.submit(() -> {
+    private static ListenableCompletableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
+        return ListenableCompletableFuture.supplyAsync(() -> {
             HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
             connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
             connection.setUseCaches(false);
             Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
             return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
-        });
+        }, executor);
     }
 
     /**
@@ -311,7 +310,7 @@ public class PaymentSession {
      * @param memo is a message to include in the payment message sent to the merchant.
      */
     @Nullable
-    public ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
+    public ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
             throws PaymentProtocolException, VerificationException, IOException {
         Protos.Payment payment = getPayment(txns, refundAddr, memo);
         if (payment == null)
@@ -349,8 +348,8 @@ public class PaymentSession {
     }
 
     @VisibleForTesting
-    protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return executor.submit(() -> {
+    protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        return ListenableCompletableFuture.supplyAsync(() -> {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
@@ -369,7 +368,7 @@ public class PaymentSession {
             // Get response.
             Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
             return PaymentProtocol.parsePaymentAck(paymentAck);
-        });
+        }, executor);
     }
 
     private void parsePaymentRequest(Protos.PaymentRequest request) throws PaymentProtocolException {

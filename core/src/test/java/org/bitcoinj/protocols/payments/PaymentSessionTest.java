@@ -30,9 +30,9 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -212,7 +212,7 @@ public class PaymentSessionTest {
         }
 
         @Override
-        protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
             paymentLog.add(new PaymentLogItem(url, payment));
             return null;
         }
