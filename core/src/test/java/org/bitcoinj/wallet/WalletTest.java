@@ -61,7 +61,6 @@ import org.easymock.EasyMock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -417,8 +416,8 @@ public class WalletTest extends TestWithWallet {
     }
 
     private void receiveATransactionAmount(Wallet wallet, Address toAddress, Coin amount) {
-        final ListenableFuture<Coin> availFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.AVAILABLE);
-        final ListenableFuture<Coin> estimatedFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.ESTIMATED);
+        final CompletableFuture<Coin> availFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.AVAILABLE);
+        final CompletableFuture<Coin> estimatedFuture = wallet.getBalanceFuture(amount, Wallet.BalanceType.ESTIMATED);
         assertFalse(availFuture.isDone());
         assertFalse(estimatedFuture.isDone());
         // Send some pending coins to the wallet.
