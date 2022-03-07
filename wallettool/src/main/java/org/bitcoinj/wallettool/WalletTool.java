@@ -42,8 +42,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.core.AbstractBlockChain;
@@ -99,6 +97,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -634,7 +633,7 @@ public class WalletTool implements Callable<Integer> {
             if (aesKey == null)
                 return;
         }
-        Futures.getUnchecked(wallet.doMaintenance(aesKey, true));
+        wallet.doMaintenance(aesKey, true).join();
     }
 
     private void encrypt() {
@@ -817,7 +816,7 @@ public class WalletTool implements Callable<Integer> {
     private void sendPaymentRequest(String location, boolean verifyPki) {
         if (location.startsWith("http") || location.startsWith("bitcoin")) {
             try {
-                ListenableFuture<PaymentSession> future;
+                CompletableFuture<PaymentSession> future;
                 if (location.startsWith("http")) {
                     future = PaymentSession.createFromUrl(location, verifyPki);
                 } else {
@@ -893,7 +892,7 @@ public class WalletTool implements Callable<Integer> {
             }
             setup();
             // No refund address specified, no user-specified memo field.
-            ListenableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
+            CompletableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
             if (future == null) {
                 // No payment_url for submission so, broadcast and wait.
                 peerGroup.start();
