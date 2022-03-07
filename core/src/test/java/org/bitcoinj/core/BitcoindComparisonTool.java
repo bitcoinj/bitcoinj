@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
-import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.*;
 import org.bitcoinj.params.*;
@@ -30,6 +29,7 @@ import org.slf4j.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.*;
 
 /**
@@ -86,7 +86,7 @@ public class BitcoindComparisonTool {
         final Set<Sha256Hash> blocksRequested = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final Set<Sha256Hash> blocksPendingSend = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
-        final SettableFuture<Void> connectedFuture = SettableFuture.create();
+        final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         bitcoind.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
             if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
                 System.out.println();
@@ -103,7 +103,7 @@ public class BitcoindComparisonTool {
             // Make sure bitcoind has no blocks
             bitcoind.setDownloadParameters(0, false);
             bitcoind.startBlockChainDownload();
-            connectedFuture.set(null);
+            connectedFuture.complete(null);
         });
 
         bitcoind.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
