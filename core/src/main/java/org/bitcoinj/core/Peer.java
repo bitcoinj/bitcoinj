@@ -45,10 +45,10 @@ import javax.annotation.Nullable;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -825,11 +825,10 @@ public class Peer extends PeerSocketHandler {
         // or depends on a no-fee transaction.
 
         // We may end up requesting transactions that we've already downloaded and thrown away here.
-        Set<Sha256Hash> needToRequest = new CopyOnWriteArraySet<>();
-        for (TransactionInput input : tx.getInputs()) {
-            // There may be multiple inputs that connect to the same transaction.
-            needToRequest.add(input.getOutpoint().getHash());
-        }
+        // There may be multiple inputs that connect to the same transaction.
+        Set<Sha256Hash> needToRequest = tx.getInputs().stream()
+                .map(input -> input.getOutpoint().getHash())
+                .collect(Collectors.toSet());
         lock.lock();
         try {
             // Build the request for the missing dependencies.
