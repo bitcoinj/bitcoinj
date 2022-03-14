@@ -131,7 +131,7 @@ public class Threading {
         throwOnLockCycles();
 
         USER_THREAD = new UserThread();
-        SAME_THREAD = runnable -> runnable.run();
+        SAME_THREAD = Runnable::run;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
