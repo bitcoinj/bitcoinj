@@ -86,7 +86,7 @@ public class Threading {
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
         public static int WARNING_THRESHOLD = 10000;
-        private LinkedBlockingQueue<Runnable> tasks;
+        private final LinkedBlockingQueue<Runnable> tasks;
 
         public UserThread() {
             super("bitcoinj user thread");
