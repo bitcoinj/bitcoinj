@@ -797,8 +797,7 @@ public class Peer extends PeerSocketHandler {
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         final LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        final ListenableFuture<Object> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx,
-                new Object(), results);
+        final ListenableFuture<Void> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx, results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback<Object>() {
             @Override
@@ -814,11 +813,10 @@ public class Peer extends PeerSocketHandler {
         return resultFuture;
     }
 
-    // The marker object in the future returned is the same as the parameter. It is arbitrary and can be anything.
-    protected ListenableFuture<Object> downloadDependenciesInternal(final int maxDepth, final int depth,
-            final Transaction tx, final Object marker, final List<Transaction> results) {
+    protected ListenableFuture<Void> downloadDependenciesInternal(final int maxDepth, final int depth,
+            final Transaction tx, final List<Transaction> results) {
 
-        final SettableFuture<Object> resultFuture = SettableFuture.create();
+        final SettableFuture<Void> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getTxId();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
         // whether a transaction is dependent on a timelocked transaction or has an unexpectedly deep dependency tree
@@ -848,25 +846,25 @@ public class Peer extends PeerSocketHandler {
                 public void onSuccess(List<Transaction> transactions) {
                     // Once all transactions either were received, or we know there are no more to come ...
                     // Note that transactions will contain "null" for any positions that weren't successful.
-                    List<ListenableFuture<Object>> childFutures = new LinkedList<>();
+                    List<ListenableFuture<Void>> childFutures = new LinkedList<>();
                     for (Transaction tx : transactions) {
                         if (tx == null) continue;
                         log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getTxId());
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
                         if (depth + 1 < maxDepth)
-                            childFutures.add(downloadDependenciesInternal(maxDepth, depth + 1, tx, marker, results));
+                            childFutures.add(downloadDependenciesInternal(maxDepth, depth + 1, tx, results));
                     }
                     if (childFutures.size() == 0) {
                         // Short-circuit: we're at the bottom of this part of the tree.
-                        resultFuture.set(marker);
+                        resultFuture.set(null);
                     } else {
                         // There are some children to download. Wait until it's done (and their children and their
                         // children...) to inform the caller that we're finished.
                         Futures.addCallback(Futures.successfulAsList(childFutures), new FutureCallback<List<Object>>() {
                             @Override
                             public void onSuccess(List<Object> objects) {
-                                resultFuture.set(marker);
+                                resultFuture.set(null);
                             }
 
                             @Override
