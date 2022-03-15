@@ -795,10 +795,10 @@ public class Peer extends PeerSocketHandler {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
-        final LinkedList<Transaction> results = new LinkedList<>();
+        LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        final ListenableFuture<Void> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx, results);
-        final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
+        ListenableFuture<Void> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx, results);
+        SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback<Object>() {
             @Override
             public void onSuccess(Object ignored) {
@@ -813,8 +813,8 @@ public class Peer extends PeerSocketHandler {
         return resultFuture;
     }
 
-    protected ListenableFuture<Void> downloadDependenciesInternal(final int maxDepth, final int depth,
-            final Transaction tx, final List<Transaction> results) {
+    protected ListenableFuture<Void> downloadDependenciesInternal(int maxDepth, int depth,
+            Transaction tx, List<Transaction> results) {
 
         final SettableFuture<Void> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getTxId();
