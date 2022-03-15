@@ -797,7 +797,7 @@ public class Peer extends PeerSocketHandler {
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         final LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        final ListenableFuture<Void> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx, results);
+        final ListenableFuture<Void> future = downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0, results);
         final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         Futures.addCallback(future, new FutureCallback<Object>() {
             @Override
@@ -813,8 +813,8 @@ public class Peer extends PeerSocketHandler {
         return resultFuture;
     }
 
-    protected ListenableFuture<Void> downloadDependenciesInternal(final int maxDepth, final int depth,
-            final Transaction tx, final List<Transaction> results) {
+    protected ListenableFuture<Void> downloadDependenciesInternal(final Transaction tx, final int maxDepth, final int depth,
+            final List<Transaction> results) {
 
         final SettableFuture<Void> resultFuture = SettableFuture.create();
         final Sha256Hash rootTxHash = tx.getTxId();
@@ -853,7 +853,7 @@ public class Peer extends PeerSocketHandler {
                         results.add(tx);
                         // Now recurse into the dependencies of this transaction too.
                         if (depth + 1 < maxDepth)
-                            childFutures.add(downloadDependenciesInternal(maxDepth, depth + 1, tx, results));
+                            childFutures.add(downloadDependenciesInternal(tx, maxDepth, depth + 1, results));
                     }
                     if (childFutures.size() == 0) {
                         // Short-circuit: we're at the bottom of this part of the tree.
