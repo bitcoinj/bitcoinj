@@ -28,7 +28,6 @@ import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
@@ -49,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -770,11 +770,11 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void disconnectOldVersions1() throws Exception {
         // Set up the connection with an old version.
-        final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        final SettableFuture<Void> disconnectedFuture = SettableFuture.create();
-        peer.addConnectedEventListener((peer, peerCount) -> connectedFuture.set(null));
+        final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+        final CompletableFuture<Void> disconnectedFuture = new CompletableFuture<>();
+        peer.addConnectedEventListener((peer, peerCount) -> connectedFuture.complete(null));
 
-        peer.addDisconnectedEventListener((peer, peerCount) -> disconnectedFuture.set(null));
+        peer.addDisconnectedEventListener((peer, peerCount) -> disconnectedFuture.complete(null));
         connectWithVersion(500, VersionMessage.NODE_NETWORK);
         // We must wait uninterruptibly here because connect[WithVersion] generates a peer that interrupts the current
         // thread when it disconnects.
@@ -822,11 +822,11 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void badMessage() throws Exception {
         // Bring up an actual network connection and feed it bogus data.
-        final SettableFuture<Void> result = SettableFuture.create();
-        Threading.uncaughtExceptionHandler = (thread, throwable) -> result.setException(throwable);
+        final CompletableFuture<Void> result = new CompletableFuture<>();
+        Threading.uncaughtExceptionHandler = (thread, throwable) -> result.completeExceptionally(throwable);
         connect(); // Writes out a verack+version.
-        final SettableFuture<Void> peerDisconnected = SettableFuture.create();
-        writeTarget.peer.addDisconnectedEventListener((p, peerCount) -> peerDisconnected.set(null));
+        final CompletableFuture<Void> peerDisconnected = new CompletableFuture<>();
+        writeTarget.peer.addDisconnectedEventListener((p, peerCount) -> peerDisconnected.complete(null));
         MessageSerializer serializer = TESTNET.getDefaultSerializer();
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
