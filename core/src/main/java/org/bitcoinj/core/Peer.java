@@ -23,6 +23,8 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.net.SocketAddress;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -137,12 +140,11 @@ public class Peer extends PeerSocketHandler {
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
     private static class GetDataRequest {
-        public GetDataRequest(Sha256Hash hash, SettableFuture future) {
-            this.hash = hash;
-            this.future = future;
-        }
         final Sha256Hash hash;
-        final SettableFuture future;
+        final ListenableCompletableFuture future = new ListenableCompletableFuture();
+        public GetDataRequest(Sha256Hash hash) {
+            this.hash = hash;
+        }
     }
     // TODO: The types/locking should be rationalised a bit.
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
@@ -795,12 +797,12 @@ public class Peer extends PeerSocketHandler {
      * @param tx The transaction
      * @return A Future for a list of dependent transactions
      */
-    public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
+    public ListenableCompletableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        return downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0);
+        return ListenableCompletableFuture.of(downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0));
     }
 
     /**
@@ -810,8 +812,8 @@ public class Peer extends PeerSocketHandler {
      * @param depth current recursion depth (starts at 0)
      * @return A Future for a list of dependent transactions
      */
-    protected ListenableFuture<List<Transaction>> downloadDependenciesInternal(Transaction rootTx, int maxDepth, int depth) {
-        final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
+    protected CompletableFuture<List<Transaction>> downloadDependenciesInternal(Transaction rootTx, int maxDepth, int depth) {
+        final CompletableFuture<List<Transaction>> resultFuture = new CompletableFuture<>();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
         // whether a transaction is dependent on a timelocked transaction or has an unexpectedly deep dependency tree
         // or depends on a no-fee transaction.
@@ -824,62 +826,58 @@ public class Peer extends PeerSocketHandler {
         lock.lock();
         try {
             // Build the request for the missing dependencies.
-            List<ListenableFuture<Transaction>> futures = new ArrayList<>();
+            List<CompletableFuture<Transaction>> futures = new ArrayList<>();
             GetDataMessage getdata = new GetDataMessage(params);
             if (needToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
             for (Sha256Hash hash : needToRequest) {
                 getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
-                GetDataRequest req = new GetDataRequest(hash, SettableFuture.create());
+                GetDataRequest req = new GetDataRequest(hash);
                 futures.add(req.future);
                 getDataFutures.add(req);
             }
-            ListenableFuture<List<Transaction>> successful = Futures.successfulAsList(futures);
-            Futures.addCallback(successful, new FutureCallback<List<Transaction>>() {
-                @Override
-                public void onSuccess(List<Transaction> transactionsWithNulls) {
+            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList(futures);
+            successful.whenComplete((transactionsWithNulls, throwable) -> {
+                if (throwable == null) {
+                    // If no exception/throwable, then success
                     // Note that transactionsWithNulls will contain "null" for any positions that weren't successful.
                     List<Transaction> transactions = transactionsWithNulls.stream()
                             .filter(Objects::nonNull)
                             .peek(tx -> log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTx.getTxId(), tx.getTxId()))
                             .collect(Collectors.toList());
                     // Once all transactions either were received, or we know there are no more to come ...
-                    List<ListenableFuture<List<Transaction>>> childFutures = (depth + 1 >= maxDepth) ? Collections.emptyList() :
+                    List<CompletableFuture<List<Transaction>>> childFutures = (depth + 1 >= maxDepth) ? Collections.emptyList() :
                             // if not at max depth, build a list of child transaction-list futures
                             transactions.stream()
-                                .map(tx -> downloadDependenciesInternal(tx, maxDepth, depth + 1))
-                                .collect(Collectors.toList());
+                                    .map(tx -> downloadDependenciesInternal(tx, maxDepth, depth + 1))
+                                    .collect(Collectors.toList());
                     if (childFutures.size() == 0) {
                         // Short-circuit: we're at the bottom of this part of the tree.
-                        resultFuture.set(transactions);
+                        resultFuture.complete(transactions);
                     } else {
                         // There are some children to download. Wait until it's done (and their children and their
                         // children...) to inform the caller that we're finished.
-                        ListenableFuture<List<List<Transaction>>> allSuccessfulChildren = Futures.successfulAsList(childFutures);
-                        Futures.addCallback(allSuccessfulChildren, new FutureCallback<List<List<Transaction>>>() {
-                            @Override
-                            public void onSuccess(List<List<Transaction>> successfulChildrenWithNulls) {
-                                resultFuture.set(concatDependencies(transactions, successfulChildrenWithNulls));
+                        CompletableFuture<List<List<Transaction>>> allSuccessfulChildren = FutureUtils.successfulAsList(childFutures);
+                        allSuccessfulChildren.whenComplete((successfulChildrenWithNulls, nestedThrowable) ->  {
+                            if (nestedThrowable == null) {
+                                // If no exception/throwable, then success
+                                resultFuture.complete(concatDependencies(transactions, successfulChildrenWithNulls));
+                            } else {
+                                // nestedThrowable is not null, an exception occurred
+                                resultFuture.completeExceptionally(nestedThrowable);
                             }
-
-                            @Override
-                            public void onFailure(Throwable throwable) {
-                                resultFuture.setException(throwable);
-                            }
-                        }, MoreExecutors.directExecutor());
+                        });
                     }
+                } else {
+                    // throwable is not null, an exception occurred
+                    resultFuture.completeExceptionally(throwable);
                 }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    resultFuture.setException(throwable);
-                }
-            }, MoreExecutors.directExecutor());
+            });
             // Start the operation.
             sendMessage(getdata);
         } catch (Exception e) {
             log.error("{}: Couldn't send getdata in downloadDependencies({})", this, rootTx.getTxId(), e);
-            resultFuture.setException(e);
+            resultFuture.completeExceptionally(e);
             return resultFuture;
         } finally {
             lock.unlock();
@@ -1078,7 +1076,7 @@ public class Peer extends PeerSocketHandler {
         Sha256Hash hash = m.getHash();
         for (GetDataRequest req : getDataFutures) {
             if (hash.equals(req.hash)) {
-                req.future.set(m);
+                req.future.complete(m);
                 getDataFutures.remove(req);
                 found = true;
                 // Keep going in case there are more.
@@ -1262,10 +1260,10 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getdata with a single item in it. */
-    private ListenableFuture sendSingleGetData(GetDataMessage getdata) {
+    private ListenableCompletableFuture sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         Preconditions.checkArgument(getdata.getItems().size() == 1);
-        GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash, SettableFuture.create());
+        GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash);
         getDataFutures.add(req);
         sendMessage(getdata);
         return req.future;

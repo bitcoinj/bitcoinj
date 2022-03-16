@@ -15,10 +15,12 @@
  */
 package org.bitcoinj.utils;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 /**
  * Utilities for {@link CompletableFuture}.
@@ -27,42 +29,6 @@ import java.util.concurrent.CompletionStage;
  * either be removed or its remaining methods changed to use generic {@code CompletableFuture}s.
  */
 public class FutureUtils {
-
-    /**
-     * Thank you Apache-licensed Spotify https://github.com/spotify/completable-futures
-     * @param stages A list of {@code CompletionStage}s all returning the same type
-     * @param <T> the result type
-     * @return  A generic CompletableFuture that returns a list of result type
-     */
-    private static <T> CompletableFuture<List<T>> allAsCFList(
-            List<? extends CompletionStage<? extends T>> stages) {
-        @SuppressWarnings("unchecked") // generic array creation
-        final CompletableFuture<? extends T>[] all = new CompletableFuture[stages.size()];
-        for (int i = 0; i < stages.size(); i++) {
-            all[i] = stages.get(i).toCompletableFuture();
-        }
-
-        CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
-
-        for (CompletableFuture<? extends T> completableFuture : all) {
-            completableFuture.exceptionally(throwable -> {
-                if (!allOf.isDone()) {
-                    allOf.completeExceptionally(throwable);
-                }
-                return null; // intentionally unused
-            });
-        }
-
-        return allOf
-                .thenApply(ignored -> {
-                    final List<T> result = new ArrayList<>(all.length);
-                    for (CompletableFuture<? extends T> completableFuture : all) {
-                        result.add(completableFuture.join());
-                    }
-                    return result;
-                });
-    }
-
     /**
      * Note: When the migration to {@code CompletableFuture} is complete this routine will
      * either be removed or changed to return a generic {@code CompletableFuture}.
@@ -74,4 +40,89 @@ public class FutureUtils {
             List<? extends CompletionStage<? extends T>> stages) {
         return ListenableCompletableFuture.of(FutureUtils.allAsCFList(stages));
     }
+
+    /**
+     * Note: When the migration to {@code CompletableFuture} is complete this routine will
+     * either be removed or changed to return a generic {@code CompletableFuture}.
+     * @param stages A list of {@code CompletionStage}s all returning the same type
+     * @param <T> the result type
+     * @return  A ListenableCompletableFuture that returns a list of result type
+     */
+    public static <T> ListenableCompletableFuture<List<T>> successfulAsList(
+            List<? extends CompletionStage<? extends T>> stages) {
+        return ListenableCompletableFuture.of(FutureUtils.successfulAsCFList(stages));
+    }
+
+    /**
+     * Thank you Apache-licensed Spotify https://github.com/spotify/completable-futures
+     * @param stages A list of {@code CompletionStage}s all returning the same type
+     * @param <T> the result type
+     * @return  A generic CompletableFuture that returns a list of result type
+     */
+    private static <T> CompletableFuture<List<T>> allAsCFList(
+            List<? extends CompletionStage<? extends T>> stages) {
+        // Convert List to Array
+        final CompletableFuture<? extends T>[] all = listToArray(stages);
+
+        // Use allOf on the Array
+        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
+
+        // If any of the components fails, fail the whole thing
+        stages.forEach(stage -> stage.whenComplete((r, throwable) -> {
+            if (throwable != null) {
+                allOf.completeExceptionally(throwable);
+            }
+        }));
+
+        // Transform allOf from Void to List<T>
+        return transformToListResult(allOf, all);
+    }
+
+    private static <T> CompletableFuture<List<T>> successfulAsCFList(
+            List<? extends CompletionStage<? extends T>> stages) {
+        // Convert List to Array
+        final CompletableFuture<? extends T>[] all = listToArray2(stages);
+
+        // Use allOf on the Array
+        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
+
+        // Transform allOf from Void to List<T>
+        return transformToListResult(allOf, all);
+    }
+
+    private static <T> CompletableFuture<? extends T>[] listToArray( List<? extends CompletionStage<? extends T>> stages) {
+        // Convert List to Array
+        final CompletableFuture<? extends T>[] all = stages.stream()
+                .map(CompletionStage::toCompletableFuture)
+                .toArray(genericArray(CompletableFuture[]::new));
+        return all;
+    }
+
+    private static <T> CompletableFuture<? extends T>[] listToArray2( List<? extends CompletionStage<? extends T>> stages) {
+        // Convert List to Array
+        final CompletableFuture<? extends T>[] all = stages.stream()
+                .map(s -> s.exceptionally(throwable -> null).toCompletableFuture())
+                .toArray(genericArray(CompletableFuture[]::new));
+        return all;
+    }
+
+    private static <T> CompletableFuture<List<T>>  transformToListResult(CompletableFuture<Void> allOf, CompletableFuture<? extends T>[] all) {
+        return allOf.thenApply(ignored -> Arrays.stream(all)
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * Function used to create/cast generic array to expected type. Using this function prevents us from
+     * needing a {@code @SuppressWarnings("unchecked")} in the calling code.
+     * @param arrayCreator Array constructor lambda taking an integer size parameter and returning array of type T
+     * @param <T> The erased type
+     * @param <R> The desired type
+     * @return Array constructor lambda taking an integer size parameter and returning array of type R
+     */
+    @SuppressWarnings("unchecked")
+    static <T, R extends T> IntFunction<R[]> genericArray(IntFunction<T[]> arrayCreator) {
+        return size -> (R[]) arrayCreator.apply(size);
+    }
+
 }
