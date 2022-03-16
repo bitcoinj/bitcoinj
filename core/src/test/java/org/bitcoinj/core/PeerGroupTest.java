@@ -20,7 +20,6 @@ package org.bitcoinj.core;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.Script;
@@ -289,8 +288,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(outbound(p1) instanceof GetDataMessage);
         assertNull(outbound(p2));
         // Peer 1 goes away, peer 2 becomes the download peer and thus queries the remote mempool.
-        final SettableFuture<Void> p1CloseFuture = SettableFuture.create();
-        peerOf(p1).addDisconnectedEventListener((peer, peerCount) -> p1CloseFuture.set(null));
+        final CompletableFuture<Void> p1CloseFuture = new CompletableFuture<>();
+        peerOf(p1).addDisconnectedEventListener((peer, peerCount) -> p1CloseFuture.complete(null));
         closePeer(peerOf(p1));
         p1CloseFuture.get();
         // Peer 2 fetches it next time it hears an inv (should it fetch immediately?).
@@ -492,10 +491,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.start();
         peerGroup.setConnectTimeoutMillis(timeout);
 
-        final SettableFuture<Void> peerConnectedFuture = SettableFuture.create();
-        final SettableFuture<Void> peerDisconnectedFuture = SettableFuture.create();
-        peerGroup.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerConnectedFuture.set(null));
-        peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerDisconnectedFuture.set(null));
+        final CompletableFuture<Void> peerConnectedFuture = new CompletableFuture<>();
+        final CompletableFuture<Void> peerDisconnectedFuture = new CompletableFuture<>();
+        peerGroup.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerConnectedFuture.complete(null));
+        peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerDisconnectedFuture.complete(null));
         // connect to peer but don't do handshake
         final Stopwatch watch = Stopwatch.createStarted(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);
