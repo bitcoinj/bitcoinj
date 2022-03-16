@@ -49,6 +49,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -790,41 +791,34 @@ public class Peer extends PeerSocketHandler {
      * transactions that depend on unconfirmed free transactions.</p>
      *
      * <p>Note that dependencies downloaded this way will not trigger the onTransaction method of event listeners.</p>
+     *
+     * @param tx The transaction
+     * @return A Future for a list of dependent transactions
      */
     public ListenableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
-        LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        ListenableFuture<Void> future = downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0, results);
-        SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
-        Futures.addCallback(future, new FutureCallback<Object>() {
-            @Override
-            public void onSuccess(Object ignored) {
-                resultFuture.set(results);
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                resultFuture.setException(throwable);
-            }
-        }, MoreExecutors.directExecutor());
-        return resultFuture;
+        return downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0);
     }
 
-    protected ListenableFuture<Void> downloadDependenciesInternal(Transaction tx, int maxDepth, int depth,
-            List<Transaction> results) {
-
-        final SettableFuture<Void> resultFuture = SettableFuture.create();
-        final Sha256Hash rootTxHash = tx.getTxId();
+    /**
+     * Internal, recursive dependency downloader
+     * @param rootTx The root transaction
+     * @param maxDepth maximum recursion depth
+     * @param depth current recursion depth (starts at 0)
+     * @return A Future for a list of dependent transactions
+     */
+    protected ListenableFuture<List<Transaction>> downloadDependenciesInternal(Transaction rootTx, int maxDepth, int depth) {
+        final SettableFuture<List<Transaction>> resultFuture = SettableFuture.create();
         // We want to recursively grab its dependencies. This is so listeners can learn important information like
         // whether a transaction is dependent on a timelocked transaction or has an unexpectedly deep dependency tree
         // or depends on a no-fee transaction.
 
         // We may end up requesting transactions that we've already downloaded and thrown away here.
         // There may be multiple inputs that connect to the same transaction.
-        Set<Sha256Hash> needToRequest = tx.getInputs().stream()
+        Set<Sha256Hash> needToRequest = rootTx.getInputs().stream()
                 .map(input -> input.getOutpoint().getHash())
                 .collect(Collectors.toSet());
         lock.lock();
@@ -843,28 +837,29 @@ public class Peer extends PeerSocketHandler {
             ListenableFuture<List<Transaction>> successful = Futures.successfulAsList(futures);
             Futures.addCallback(successful, new FutureCallback<List<Transaction>>() {
                 @Override
-                public void onSuccess(List<Transaction> transactions) {
+                public void onSuccess(List<Transaction> transactionsWithNulls) {
+                    // Note that transactionsWithNulls will contain "null" for any positions that weren't successful.
+                    List<Transaction> transactions = transactionsWithNulls.stream()
+                            .filter(Objects::nonNull)
+                            .peek(tx -> log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTx.getTxId(), tx.getTxId()))
+                            .collect(Collectors.toList());
                     // Once all transactions either were received, or we know there are no more to come ...
-                    // Note that transactions will contain "null" for any positions that weren't successful.
-                    List<ListenableFuture<Void>> childFutures = new LinkedList<>();
-                    for (Transaction tx : transactions) {
-                        if (tx == null) continue;
-                        log.info("{}: Downloaded dependency of {}: {}", getAddress(), rootTxHash, tx.getTxId());
-                        results.add(tx);
-                        // Now recurse into the dependencies of this transaction too.
-                        if (depth + 1 < maxDepth)
-                            childFutures.add(downloadDependenciesInternal(tx, maxDepth, depth + 1, results));
-                    }
+                    List<ListenableFuture<List<Transaction>>> childFutures = (depth + 1 >= maxDepth) ? Collections.emptyList() :
+                            // if not at max depth, build a list of child transaction-list futures
+                            transactions.stream()
+                                .map(tx -> downloadDependenciesInternal(tx, maxDepth, depth + 1))
+                                .collect(Collectors.toList());
                     if (childFutures.size() == 0) {
                         // Short-circuit: we're at the bottom of this part of the tree.
-                        resultFuture.set(null);
+                        resultFuture.set(transactions);
                     } else {
                         // There are some children to download. Wait until it's done (and their children and their
                         // children...) to inform the caller that we're finished.
-                        Futures.addCallback(Futures.successfulAsList(childFutures), new FutureCallback<List<Object>>() {
+                        ListenableFuture<List<List<Transaction>>> allSuccessfulChildren = Futures.successfulAsList(childFutures);
+                        Futures.addCallback(allSuccessfulChildren, new FutureCallback<List<List<Transaction>>>() {
                             @Override
-                            public void onSuccess(List<Object> objects) {
-                                resultFuture.set(null);
+                            public void onSuccess(List<List<Transaction>> successfulChildrenWithNulls) {
+                                resultFuture.set(concatDependencies(transactions, successfulChildrenWithNulls));
                             }
 
                             @Override
@@ -883,13 +878,28 @@ public class Peer extends PeerSocketHandler {
             // Start the operation.
             sendMessage(getdata);
         } catch (Exception e) {
-            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, tx.getTxId(), e);
+            log.error("{}: Couldn't send getdata in downloadDependencies({})", this, rootTx.getTxId(), e);
             resultFuture.setException(e);
             return resultFuture;
         } finally {
             lock.unlock();
         }
         return resultFuture;
+    }
+
+    /**
+     * Combine the direct results and the child dependencies. Make sure to filter out nulls from
+     * {@code Futures.successfulAsList}.
+     * @param results direct dependencies of a given transaction
+     * @param children  A list of lists of child dependencies
+     * @return A list of all dependencies
+     */
+    private List<Transaction> concatDependencies(List<Transaction> results, List<List<Transaction>> children) {
+        return Stream.concat(   results.stream(),
+                                children.stream().filter(Objects::nonNull).flatMap(Collection::stream)
+                )
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     protected void processBlock(Block m) {
