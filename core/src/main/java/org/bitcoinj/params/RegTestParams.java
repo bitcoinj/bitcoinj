@@ -1,6 +1,6 @@
 /*
  * Copyright 2013 Google Inc.
- * Copyright 2018 Andreas Schildbach
+ * Copyright 2014 Andreas Schildbach
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,66 +24,46 @@ import java.math.BigInteger;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
+ * Parameters for the testnet, a separate public instance of Bitcoin that has relaxed rules suitable for development
+ * and testing of applications and new Bitcoin versions.
  */
 public class RegTestParams extends AbstractBitcoinNetParams {
     private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public RegTestParams() {
         super();
-        packetMagic = 0xfabfb5daL;
+        id = ID_REGTEST;
+         packetMagic = 0xfabfb5da;
+
+        maxTarget = Utils.decodeCompactBits(0x207fffffL);
+        port = 9888;
         addressHeader = 111;
         p2shHeader = 196;
-        targetTimespan = TARGET_TIMESPAN;
         dumpedPrivateKeyHeader = 239;
-        segwitAddressHrp = "bcrt";
+       // segwitAddressHrp = "rart";
         genesisBlock.setTime(1296688602L);
-        genesisBlock.setDifficultyTarget(0x1d07fff8L);
-        genesisBlock.setNonce(384568319);
-        spendableCoinbaseDepth = 100;
+        genesisBlock.setDifficultyTarget(0x207fffffL);
+        genesisBlock.setNonce(2);
+        spendableCoinbaseDepth = 10;
+        subsidyDecreaseBlockCount = 100000;
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("00000007199508e34a9ff81e6ec0c477a4cccff2a4767a8eee39c11db367b008"));
-        dnsSeeds = null;
-        addrSeeds = null;
-        bip32HeaderP2PKHpub = 0x043587cf; // The 4 byte header that serializes in base58 to "tpub".
-        bip32HeaderP2PKHpriv = 0x04358394; // The 4 byte header that serializes in base58 to "tprv"
-        bip32HeaderP2WPKHpub = 0x045f1cf6; // The 4 byte header that serializes in base58 to "vpub".
-        bip32HeaderP2WPKHpriv = 0x045f18bc; // The 4 byte header that serializes in base58 to "vprv"
+        checkState(genesisHash.equals("1b38af7fac04373a2619b6f0e8f2fc73f45380fb98bef338b41fb64e893b9cd2"));
 
-        // Difficulty adjustments are disabled for regtest.
-        // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
-        // changes.
-        interval = Integer.MAX_VALUE;
-        maxTarget = MAX_TARGET;
-        subsidyDecreaseBlockCount = 150;
-        port = 18444;
-        id = ID_REGTEST;
+        majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
+        majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
+        majorityWindow = TESTNET_MAJORITY_WINDOW;
 
-        majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
-        majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
-        majorityWindow = MainNetParams.MAINNET_MAJORITY_WINDOW;
+        dnsSeeds = new String[] {
+            "testseed.jrn.me.uk"
+        };
+        // Note this is the same as the BIP32 testnet, as BIP44 makes HD wallets
+        // chain agnostic. Dogecoin mainnet has its own headers for legacy reasons.
+        bip32HeaderP2PKHpub = 0x043587CF;
+        bip32HeaderP2PKHpriv = 0x04358394;
     }
 
-    @Override
-    public boolean allowEmptyPeerChain() {
-        return true;
-    }
-
-    private static Block genesis;
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (RegTestParams.class) {
-            if (genesis == null) {
-                genesis = super.getGenesisBlock();
-                genesis.setNonce(2);
-                genesis.setDifficultyTarget(0x207fFFFFL);
-                genesis.setTime(1296688602L);
-                checkState(genesis.getHashAsString().toLowerCase().equals("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-            }
-            return genesis;
-        }
-    }
+      
+    
 
     private static RegTestParams instance;
     public static synchronized RegTestParams get() {
@@ -96,5 +76,40 @@ public class RegTestParams extends AbstractBitcoinNetParams {
     @Override
     public String getPaymentProtocolId() {
         return PAYMENT_PROTOCOL_ID_REGTEST;
+    }
+
+    // February 16th 2012
+    private static final Date testnetDiffDate = new Date(1329264000000L);
+
+    @Override
+    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
+        final BlockStore blockStore) throws VerificationException, BlockStoreException {
+        if (!isDifficultyTransitionPoint(storedPrev.getHeight()) && nextBlock.getTime().after(testnetDiffDate)) {
+            Block prev = storedPrev.getHeader();
+
+            // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
+            // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
+            // blocks are allowed if there has been a span of 20 minutes without one.
+            final long timeDelta = nextBlock.getTimeSeconds() - prev.getTimeSeconds();
+            // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+            // goes backwards.
+            if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
+                // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
+                // that difficulty is equal to that one.
+                StoredBlock cursor = storedPrev;
+                while (!cursor.getHeader().equals(getGenesisBlock()) &&
+                           cursor.getHeight() % getInterval() != 0 &&
+                           cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
+                        cursor = cursor.getPrev(blockStore);
+                BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
+                BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
+                if (!cursorTarget.equals(newTarget))
+                        throw new VerificationException("RegTest block transition that is not allowed: " +
+                        Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
+                        Long.toHexString(nextBlock.getDifficultyTarget()));
+            }
+        } else {
+            super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
+        }
     }
 }

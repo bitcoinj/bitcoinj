@@ -45,37 +45,47 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     public TestNet3Params() {
         super();
         id = ID_TESTNET;
-         packetMagic = 0xfcc1b7dc;
-
-        maxTarget = Utils.decodeCompactBits(0x1e0fffffL);
-        port = 9888;
-        addressHeader = 113;
+        packetMagic = 0x0b110907;
+        interval = INTERVAL;
+        targetTimespan = TARGET_TIMESPAN;
+        maxTarget = Utils.decodeCompactBits(0x1d00ffffL);
+        port = 18333;
+        addressHeader = 111;
         p2shHeader = 196;
-        dumpedPrivateKeyHeader = 241;
-        segwitAddressHrp = "trdc";
-        genesisBlock.setTime(1486949366L);
-        genesisBlock.setDifficultyTarget(0x1e0ffff0L);
-        genesisBlock.setNonce(211209);
-        spendableCoinbaseDepth = 10;
-        subsidyDecreaseBlockCount = 100000;
+        dumpedPrivateKeyHeader = 239;
+        segwitAddressHrp = "tb";
+        genesisBlock.setTime(1296688602L);
+        genesisBlock.setDifficultyTarget(0x1d00ffffL);
+        genesisBlock.setNonce(414098458);
+        spendableCoinbaseDepth = 100;
+        subsidyDecreaseBlockCount = 210000;
         String genesisHash = genesisBlock.getHashAsString();
-        checkState(genesisHash.equals("00000a2ee9363d21e47bc10d5b1e39d4ae4bd950491790e522f90dad86d2d1eb"));
+        checkState(genesisHash.equals("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+
+        dnsSeeds = new String[] {
+                "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
+                "seed.tbtc.petertodd.org",               // Peter Todd
+                "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
+                "testnet-seed.bluematt.me",              // Matt Corallo
+        };
+        httpSeeds = new HttpDiscovery.Details[] {
+                // Andreas Schildbach
+                new HttpDiscovery.Details(
+                        ECKey.fromPublicOnly(Utils.HEX.decode(
+                                "0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
+                        URI.create("http://testnet.httpseed.bitcoin.schildbach.de/peers")
+                )
+        };
+        addrSeeds = null;
+        bip32HeaderP2PKHpub = 0x043587cf; // The 4 byte header that serializes in base58 to "tpub".
+        bip32HeaderP2PKHpriv = 0x04358394; // The 4 byte header that serializes in base58 to "tprv"
+        bip32HeaderP2WPKHpub = 0x045f1cf6; // The 4 byte header that serializes in base58 to "vpub".
+        bip32HeaderP2WPKHpriv = 0x045f18bc; // The 4 byte header that serializes in base58 to "vprv"
 
         majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = TESTNET_MAJORITY_WINDOW;
-
-        dnsSeeds = new String[] {
-            "testseed.jrn.me.uk"
-        };
-        // Note this is the same as the BIP32 testnet, as BIP44 makes HD wallets
-        // chain agnostic. Dogecoin mainnet has its own headers for legacy reasons.
-        bip32HeaderP2PKHpub = 0x043587CF;
-        bip32HeaderP2PKHpriv = 0x04358394;
     }
-
-      
-    
 
     private static TestNet3Params instance;
     public static synchronized TestNet3Params get() {

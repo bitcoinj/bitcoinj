@@ -48,8 +48,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     /**
      * Scheme part for Bitcoin URIs.
      */
-    public static final String BITCOIN_SCHEME = "";
-    public static final int REWARD_HALVING_INTERVAL = 100000;
+    public static final String BITCOIN_SCHEME = "bitcoin";
+    public static final int REWARD_HALVING_INTERVAL = 210000;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
 
