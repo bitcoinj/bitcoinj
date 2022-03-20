@@ -43,6 +43,23 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
     }
 
     /**
+     * Returns a new {@link CompletableFuture} that is already completed exceptionally
+     * the given throwable.
+     * <p>
+     * When the migration to {@link CompletableFuture} is finished we'll probably move this
+     * method to FutureUtils as the {@code failedFuture()} is not available until Java 9.
+     *
+     * @param throwable the exceptions
+     * @param <T> the type of the expected value
+     * @return the completed CompletableFuture
+     */
+    public static <T> ListenableCompletableFuture<T> failedFuture(Throwable throwable) {
+        ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
+        future.completeExceptionally(throwable);
+        return future;
+    }
+
+    /**
      * Converts a generic {@link CompletableFuture} to a {@code ListenableCompletableFuture}. If the passed
      * in future is already a {@code ListenableCompletableFuture} no conversion is performed.
      * <p>

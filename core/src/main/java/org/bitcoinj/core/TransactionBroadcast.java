@@ -18,7 +18,6 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
 import com.google.common.base.*;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
@@ -160,11 +159,11 @@ public class TransactionBroadcast {
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Joiner.on(",").join(peers));
             for (final Peer peer : peers) {
                 try {
-                    ListenableFuture future = peer.sendMessage(tx);
+                    CompletableFuture<Void> future = peer.sendMessage(tx);
                     if (dropPeersAfterBroadcast) {
                         // We drop the peer shortly after the transaction has been sent, because this peer will not
                         // send us back useful broadcast confirmations.
-                        future.addListener(() -> {
+                        future.thenRunAsync(() -> {
                             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
                             peer.close();
                         }, Threading.THREAD_POOL);
