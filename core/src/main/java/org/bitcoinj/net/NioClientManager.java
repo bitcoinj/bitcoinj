@@ -18,9 +18,6 @@ package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.utils.*;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +42,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
         SocketChannel sc;
         StreamConnection connection;
         SocketAddress address;
-        SettableFuture<SocketAddress> future = SettableFuture.create();
+        CompletableFuture<SocketAddress> future = new CompletableFuture<>();
 
         PendingConnect(SocketChannel sc, StreamConnection connection, SocketAddress address) { this.sc = sc; this.connection = connection; this.address = address; }
     }
@@ -68,11 +65,11 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                     log.info("Connected to {}", sc.socket().getRemoteSocketAddress());
                     key.interestOps((key.interestOps() | SelectionKey.OP_READ) & ~SelectionKey.OP_CONNECT).attach(handler);
                     connection.connectionOpened();
-                    data.future.set(data.address);
+                    data.future.complete(data.address);
                 } else {
                     log.warn("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
                     handler.closeConnection(); // Failed to connect for some reason
-                    data.future.setException(new ConnectException("Unknown reason"));
+                    data.future.completeExceptionally(new ConnectException("Unknown reason"));
                     data.future = null;
                 }
             } catch (Exception e) {
@@ -82,7 +79,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 Throwable cause = Throwables.getRootCause(e);
                 log.warn("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage(), e);
                 handler.closeConnection();
-                data.future.setException(cause);
+                data.future.completeExceptionally(cause);
                 data.future = null;
             }
         } else // Process bytes read
@@ -148,7 +145,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
     }
 
     @Override
-    public ListenableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
+    public ListenableCompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
         if (!isRunning())
             throw new IllegalStateException();
         // Create a new connection, give it a connection as an attachment
@@ -159,9 +156,9 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             PendingConnect data = new PendingConnect(sc, connection, serverAddress);
             newConnectionChannels.offer(data);
             selector.wakeup();
-            return data.future;
+            return ListenableCompletableFuture.of(data.future);
         } catch (Throwable e) {
-            return Futures.immediateFailedFuture(e);
+            return ListenableCompletableFuture.failedFuture(e);
         }
     }
 

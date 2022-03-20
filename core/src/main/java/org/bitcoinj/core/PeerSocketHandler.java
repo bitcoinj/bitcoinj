@@ -16,13 +16,12 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.MessageWriteTarget;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -79,7 +78,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
      * the peer will have received it. Throws NotYetConnectedException if we are not yet connected to the remote peer.
      * TODO: Maybe use something other than the unchecked NotYetConnectedException here
      */
-    public ListenableFuture sendMessage(Message message) throws NotYetConnectedException {
+    public ListenableCompletableFuture<Void> sendMessage(Message message) throws NotYetConnectedException {
         lock.lock();
         try {
             if (writeTarget == null)
@@ -94,7 +93,7 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
             return writeTarget.writeBytes(out.toByteArray());
         } catch (IOException e) {
             exceptionCaught(e);
-            return Futures.immediateFailedFuture(e);
+            return ListenableCompletableFuture.failedFuture(e);
         }
     }
 

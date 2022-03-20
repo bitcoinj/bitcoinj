@@ -20,9 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -1381,7 +1379,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             log.info("Attempting connection to {}     ({} connected, {} pending, {} max)", address,
                     peers.size(), pendingPeers.size(), maxConnections);
-            ListenableFuture<SocketAddress> future = channels.openConnection(address.toSocketAddress(), peer);
+            CompletableFuture<SocketAddress> future = channels.openConnection(address.toSocketAddress(), peer);
             if (future.isDone())
                 Uninterruptibles.getUninterruptibly(future);
         } catch (ExecutionException e) {

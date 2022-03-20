@@ -18,10 +18,7 @@
 package org.bitcoinj.net;
 
 import com.google.common.base.*;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.*;
 
 import java.io.*;
@@ -105,16 +102,11 @@ public class NioClient implements MessageWriteTarget {
         manager.startAsync();
         manager.awaitRunning();
         handler = new Handler(parser, connectTimeoutMillis);
-        Futures.addCallback(manager.openConnection(serverAddress, handler), new FutureCallback<SocketAddress>() {
-            @Override
-            public void onSuccess(SocketAddress result) {
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
+        manager.openConnection(serverAddress, handler).whenComplete((result, t) -> {
+            if (t != null) {
                 log.error("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t));
             }
-        }, MoreExecutors.directExecutor());
+        });
     }
 
     @Override
@@ -123,7 +115,7 @@ public class NioClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableFuture writeBytes(byte[] message) throws IOException {
+    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         return handler.writeTarget.writeBytes(message);
     }
 }
