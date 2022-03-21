@@ -29,16 +29,10 @@ import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 
-import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +142,7 @@ public class Peer extends PeerSocketHandler {
     }
     // TODO: The types/locking should be rationalised a bit.
     private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
-    @GuardedBy("getAddrFutures") private final LinkedList<SettableFuture<AddressMessage>> getAddrFutures;
+    @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock lastPingTimesLock = new ReentrantLock();
@@ -161,22 +155,16 @@ public class Peer extends PeerSocketHandler {
     private volatile VersionMessage vPeerVersionMessage;
     private volatile Coin vFeeFilter;
 
-    // A settable future which completes (with this) when the connection is open
-    private final SettableFuture<Peer> connectionOpenFuture = SettableFuture.create();
-    private final SettableFuture<Peer> outgoingVersionHandshakeFuture = SettableFuture.create();
-    private final SettableFuture<Peer> incomingVersionHandshakeFuture = SettableFuture.create();
-    private final ListenableFuture<Peer> versionHandshakeFuture = Futures.transform(
-            Futures.allAsList(outgoingVersionHandshakeFuture, incomingVersionHandshakeFuture),
-            new Function<List<Peer>, Peer>() {
-
-                @Override
-                @Nullable
-                public Peer apply(@Nullable List<Peer> peers) {
-                    checkNotNull(peers);
-                    checkState(peers.size() == 2 && peers.get(0) == peers.get(1));
-                    return peers.get(0);
-                }
-            }, MoreExecutors.directExecutor());
+    // A future which completes (with this) when the connection is open
+    private final CompletableFuture<Peer> connectionOpenFuture = new CompletableFuture<>();
+    private final CompletableFuture<Peer> outgoingVersionHandshakeFuture = new CompletableFuture<>();
+    private final CompletableFuture<Peer> incomingVersionHandshakeFuture = new CompletableFuture<>();
+    private final CompletableFuture<Peer> versionHandshakeFuture = outgoingVersionHandshakeFuture
+                    .thenCombine(incomingVersionHandshakeFuture, (peer1, peer2) -> {
+                        checkNotNull(peer1);
+                        checkState(peer1 == peer2);
+                        return peer1;
+                    });
 
     /** @deprecated Use {@link #Peer(NetworkParameters, VersionMessage, PeerAddress, AbstractBlockChain)}. */
     @Deprecated
@@ -234,7 +222,7 @@ public class Peer extends PeerSocketHandler {
         this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
 
-        this.versionHandshakeFuture.addListener(() -> versionHandshakeComplete(), Threading.SAME_THREAD);
+        this.versionHandshakeFuture.thenRunAsync(this::versionHandshakeComplete, Threading.SAME_THREAD);
     }
 
     /**
@@ -396,21 +384,21 @@ public class Peer extends PeerSocketHandler {
         PeerAddress address = getAddress();
         log.info("Announcing to {} as: {}", address == null ? "Peer" : address.toSocketAddress(), versionMessage.subVer);
         sendMessage(versionMessage);
-        connectionOpenFuture.set(this);
+        connectionOpenFuture.complete(this);
         // When connecting, the remote peer sends us a version message with various bits of
         // useful data in it. We need to know the peer protocol version before we can talk to it.
     }
 
     /**
-     * Provides a ListenableFuture that can be used to wait for the socket to connect.  A socket connection does not
+     * Provides a ListenableCompletableFuture that can be used to wait for the socket to connect.  A socket connection does not
      * mean that protocol handshake has occurred.
      */
-    public ListenableFuture<Peer> getConnectionOpenFuture() {
-        return connectionOpenFuture;
+    public ListenableCompletableFuture<Peer> getConnectionOpenFuture() {
+        return ListenableCompletableFuture.of(connectionOpenFuture);
     }
 
-    public ListenableFuture<Peer> getVersionHandshakeFuture() {
-        return versionHandshakeFuture;
+    public ListenableCompletableFuture<Peer> getVersionHandshakeFuture() {
+        return ListenableCompletableFuture.of(versionHandshakeFuture);
     }
 
     @Override
@@ -481,13 +469,13 @@ public class Peer extends PeerSocketHandler {
     }
 
     private void processAddressMessage(AddressMessage m) {
-        SettableFuture<AddressMessage> future;
+        CompletableFuture<AddressMessage> future;
         synchronized (getAddrFutures) {
             future = getAddrFutures.poll();
             if (future == null)  // Not an addr message we are waiting for.
                 return;
         }
-        future.set(m);
+        future.complete(m);
     }
 
     private void processVersionMessage(VersionMessage peerVersionMessage) throws ProtocolException {
@@ -530,7 +518,7 @@ public class Peer extends PeerSocketHandler {
         sendMessage(new VersionAck());
         if (log.isDebugEnabled())
             log.debug("{}: Incoming version handshake complete.", this);
-        incomingVersionHandshakeFuture.set(this);
+        incomingVersionHandshakeFuture.complete(this);
     }
 
     private void processVersionAck(VersionAck m) throws ProtocolException {
@@ -542,7 +530,7 @@ public class Peer extends PeerSocketHandler {
         }
         if (log.isDebugEnabled())
             log.debug("{}: Outgoing version handshake complete.", this);
-        outgoingVersionHandshakeFuture.set(this);
+        outgoingVersionHandshakeFuture.complete(this);
     }
 
     private void versionHandshakeComplete() {
@@ -739,9 +727,8 @@ public class Peer extends PeerSocketHandler {
                             // through transactions that have confirmed, as getdata on the remote peer also checks
                             // relay memory not only the mempool. Unfortunately we have no way to know that here. In
                             // practice it should not matter much.
-                            Futures.addCallback(downloadDependencies(tx), new FutureCallback<List<Transaction>>() {
-                                @Override
-                                public void onSuccess(List<Transaction> dependencies) {
+                            downloadDependencies(tx).whenComplete((List<Transaction> dependencies, Throwable throwable) -> {
+                                if (throwable == null) {
                                     try {
                                         log.info("{}: Dependency download complete!", getAddress());
                                         wallet.receivePending(tx, dependencies);
@@ -750,15 +737,12 @@ public class Peer extends PeerSocketHandler {
                                         log.error("Error was: ", e);
                                         // Not much more we can do at this point.
                                     }
-                                }
-
-                                @Override
-                                public void onFailure(Throwable throwable) {
+                                } else {
                                     log.error("Could not download dependencies of tx {}", tx.getTxId());
                                     log.error("Error was: ", throwable);
                                     // Not much more we can do at this point.
                                 }
-                            }, MoreExecutors.directExecutor());
+                            });
                         } else {
                             wallet.receivePending(tx, null);
                         }
@@ -1231,9 +1215,9 @@ public class Peer extends PeerSocketHandler {
      */
     @SuppressWarnings("unchecked")
     // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
-    // ListenableFuture instead of ListenableFuture<Block>. This is okay as sendSingleGetData() actually returns
-    // ListenableFuture<Block> in this context. Note that sendSingleGetData() is also used for Transactions.
-    public ListenableFuture<Block> getBlock(Sha256Hash blockHash) {
+    // ListenableCompletableFuture instead of ListenableCompletableFuture<Block>. This is okay as sendSingleGetData() actually returns
+    // ListenableCompletableFuture<Block> in this context. Note that sendSingleGetData() is also used for Transactions.
+    public ListenableCompletableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
@@ -1248,9 +1232,9 @@ public class Peer extends PeerSocketHandler {
      */
     @SuppressWarnings("unchecked")
     // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
-    // ListenableFuture instead of ListenableFuture<Transaction>. This is okay as sendSingleGetData() actually returns
-    // ListenableFuture<Transaction> in this context. Note that sendSingleGetData() is also used for Blocks.
-    public ListenableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
+    // ListenableCompletableFuture instead of ListenableCompletableFuture<Transaction>. This is okay as sendSingleGetData() actually returns
+    // ListenableCompletableFuture<Transaction> in this context. Note that sendSingleGetData() is also used for Blocks.
+    public ListenableCompletableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
         // This does not need to be locked.
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
@@ -1270,8 +1254,8 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
-    public ListenableFuture<AddressMessage> getAddr() {
-        SettableFuture<AddressMessage> future = SettableFuture.create();
+    public ListenableCompletableFuture<AddressMessage> getAddr() {
+        ListenableCompletableFuture<AddressMessage> future = new ListenableCompletableFuture<>();
         synchronized (getAddrFutures) {
             getAddrFutures.add(future);
         }
@@ -1438,14 +1422,14 @@ public class Peer extends PeerSocketHandler {
 
     private class PendingPing {
         // The future that will be invoked when the pong is heard back.
-        public final SettableFuture<Long> future;
+        public final CompletableFuture<Long> future;
         // The random nonce that lets us tell apart overlapping pings/pongs.
         public final long nonce;
         // Measurement of the time elapsed.
         public final long startTimeMsec;
 
         public PendingPing(long nonce) {
-            this.future = SettableFuture.create();
+            this.future = new CompletableFuture<>();
             this.nonce = nonce;
             this.startTimeMsec = Utils.currentTimeMillis();
         }
@@ -1456,7 +1440,7 @@ public class Peer extends PeerSocketHandler {
                 Peer.this.addPingTimeData(elapsed);
                 if (log.isDebugEnabled())
                     log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed);
-                future.set(elapsed);
+                future.complete(elapsed);
             }
         }
     }
@@ -1487,11 +1471,11 @@ public class Peer extends PeerSocketHandler {
      * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
-    public ListenableFuture<Long> ping() throws ProtocolException {
+    public ListenableCompletableFuture<Long> ping() throws ProtocolException {
         return ping((long) (Math.random() * Long.MAX_VALUE));
     }
 
-    protected ListenableFuture<Long> ping(long nonce) throws ProtocolException {
+    protected ListenableCompletableFuture<Long> ping(long nonce) throws ProtocolException {
         final VersionMessage ver = vPeerVersionMessage;
         if (!ver.isPingPongSupported())
             throw new ProtocolException("Peer version is too low for measurable pings: " + ver);
@@ -1502,7 +1486,7 @@ public class Peer extends PeerSocketHandler {
         PendingPing pendingPing = new PendingPing(nonce);
         pendingPings.add(pendingPing);
         sendMessage(new Ping(pendingPing.nonce));
-        return pendingPing.future;
+        return ListenableCompletableFuture.of(pendingPing.future);
     }
 
     /**
