@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.*;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -39,7 +40,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
-    private final ListenableCompletableFuture<Long> future = new ListenableCompletableFuture<>();
+    private final CompletableFuture<Long> future = new CompletableFuture<>();
     private boolean caughtUp = false;
 
     @Override
@@ -127,6 +128,6 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
      * download seems to be finished.
      */
     public ListenableCompletableFuture<Long> getFuture() {
-        return future;
+        return ListenableCompletableFuture.of(future);
     }
 }
