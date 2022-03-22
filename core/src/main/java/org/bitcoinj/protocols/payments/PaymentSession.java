@@ -172,7 +172,7 @@ public class PaymentSession {
     }
 
     private static CompletableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
-        return CompletableFuture.supplyAsync((ListenableCompletableFuture.ThrowingSupplier<PaymentSession>) () -> {
+        return CompletableFuture.supplyAsync((FutureUtils.ThrowingSupplier<PaymentSession>) () -> {
             HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
             connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
             connection.setUseCaches(false);
@@ -355,7 +355,7 @@ public class PaymentSession {
 
     @VisibleForTesting
     protected CompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return CompletableFuture.supplyAsync((ListenableCompletableFuture.ThrowingSupplier<PaymentProtocol.Ack>) () -> {
+        return CompletableFuture.supplyAsync((FutureUtils.ThrowingSupplier<PaymentProtocol.Ack>) () -> {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
