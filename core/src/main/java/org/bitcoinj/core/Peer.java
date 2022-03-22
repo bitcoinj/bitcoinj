@@ -135,7 +135,7 @@ public class Peer extends PeerSocketHandler {
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
     private static class GetDataRequest {
         final Sha256Hash hash;
-        final ListenableCompletableFuture future = new ListenableCompletableFuture();
+        final CompletableFuture future = new CompletableFuture();
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
         }
@@ -1222,7 +1222,7 @@ public class Peer extends PeerSocketHandler {
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = new GetDataMessage(params);
         getdata.addBlock(blockHash, true);
-        return sendSingleGetData(getdata);
+        return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
 
     /**
@@ -1240,11 +1240,11 @@ public class Peer extends PeerSocketHandler {
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = new GetDataMessage(params);
         getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
-        return sendSingleGetData(getdata);
+        return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
 
     /** Sends a getdata with a single item in it. */
-    private ListenableCompletableFuture sendSingleGetData(GetDataMessage getdata) {
+    private CompletableFuture sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         Preconditions.checkArgument(getdata.getItems().size() == 1);
         GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash);
