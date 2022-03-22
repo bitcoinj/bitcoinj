@@ -64,6 +64,7 @@ import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
@@ -892,28 +893,46 @@ public class WalletTool implements Callable<Integer> {
             }
             setup();
             // No refund address specified, no user-specified memo field.
-            CompletableFuture<PaymentProtocol.Ack> future = session.sendPayment(ImmutableList.of(req.tx), null, null);
-            if (future == null) {
-                // No payment_url for submission so, broadcast and wait.
-                peerGroup.start();
-                peerGroup.broadcastTransaction(req.tx).future().get();
-            } else {
-                PaymentProtocol.Ack ack = future.get();
-                wallet.commitTx(req.tx);
-                System.out.println("Memo from server: " + ack.getMemo());
+            PaymentProtocol.Ack ack = session.sendPayment(ImmutableList.of(req.tx), null, null).get();
+            wallet.commitTx(req.tx);
+            System.out.println("Memo from server: " + ack.getMemo());
+        } catch (ExecutionException e) {
+            try {
+                throw e.getCause();
+            } catch (PaymentProtocolException.InvalidPaymentRequestURL e1) {
+                broadcastPayment(req.tx);
+            } catch (PaymentProtocolException e1) {
+                System.err.println("Failed to send payment " + e.getMessage());
+                System.exit(1);
+            } catch (IOException e1) {
+                System.err.println("Invalid payment " + e.getMessage());
+                System.exit(1);
+            } catch (Throwable t) {
+                System.err.println("Unexpected error " + e.getMessage());
+                System.exit(1);
             }
-        } catch (PaymentProtocolException | ExecutionException | VerificationException e) {
+        } catch (VerificationException e) {
             System.err.println("Failed to send payment " + e.getMessage());
             System.exit(1);
-        } catch (IOException e) {
-            System.err.println("Invalid payment " + e.getMessage());
-            System.exit(1);
-        } catch (InterruptedException e1) {
+        }
+        catch (InterruptedException e1) {
             // Ignore.
         } catch (InsufficientMoneyException e) {
             System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void broadcastPayment(Transaction tx) {
+        peerGroup.start();
+        TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
+        try {
+            // Wait for broadcast to be sent
+            broadcast.future().get();
+        } catch (InterruptedException | ExecutionException be) {
+            System.err.println("Failed to broadcast payment " + be.getMessage());
+            System.exit(1);
         }
     }
 
