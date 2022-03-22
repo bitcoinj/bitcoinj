@@ -37,10 +37,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.bitcoinj.core.Coin.COIN;
 import static org.junit.Assert.*;
@@ -116,7 +119,7 @@ public class PaymentSessionTest {
     }
 
     @Test
-    public void testExpiredPaymentRequest() throws Exception {
+    public void testExpiredPaymentRequest() throws PaymentProtocolException, IOException {
         MockPaymentSession paymentSession = new MockPaymentSession(newExpiredPaymentRequest());
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.
@@ -124,12 +127,19 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
+
+        CompletableFuture<PaymentProtocol.Ack> ack = paymentSession.sendPayment(txns, null, null);
         try {
-            paymentSession.sendPayment(txns, null, null);
-        } catch(PaymentProtocolException.Expired e) {
-            assertEquals(0, paymentSession.getPaymentLog().size());
-            assertEquals(e.getMessage(), "PaymentRequest is expired");
-            return;
+            ack.get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof PaymentProtocolException.Expired) {
+                PaymentProtocolException.Expired cause = (PaymentProtocolException.Expired) e.getCause();
+                assertEquals(0, paymentSession.getPaymentLog().size());
+                assertEquals(cause.getMessage(), "PaymentRequest is expired");
+                return;
+            }
+        } catch (InterruptedException e) {
+            // Ignore
         }
         fail("Expected exception due to expired PaymentRequest");
     }
@@ -146,7 +156,7 @@ public class PaymentSessionTest {
     }
 
     @Test(expected = PaymentProtocolException.InvalidNetwork.class)
-    public void testWrongNetwork() throws Exception {
+    public void testWrongNetwork() throws Throwable {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
         assertEquals(MAINNET, paymentSession.getNetworkParameters());
@@ -157,8 +167,14 @@ public class PaymentSessionTest {
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         Address refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
-        paymentSession.sendPayment(txns, refundAddr, paymentMemo);
-        assertEquals(1, paymentSession.getPaymentLog().size());
+        try {
+            paymentSession.sendPayment(txns, refundAddr, paymentMemo).get();
+        } catch (InterruptedException e) {
+            fail("Incorrect exception type");
+        } catch (ExecutionException e) {
+            // We're expecting PaymentProtocolException.InvalidNetwork as the cause
+            throw e.getCause();
+        }
     }
 
     private Protos.PaymentRequest newSimplePaymentRequest(String netID) {

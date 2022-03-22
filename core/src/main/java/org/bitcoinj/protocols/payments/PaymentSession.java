@@ -21,6 +21,7 @@ import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.uri.BitcoinURI;
+import org.bitcoinj.utils.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
@@ -304,35 +305,39 @@ public class PaymentSession {
      * NOTE: This does not broadcast the transactions to the bitcoin network, it merely sends a Payment message to the
      * merchant confirming the payment.
      * Returns an object wrapping PaymentACK once received.
-     * If the PaymentRequest did not specify a payment_url, returns null and does nothing.
+     * If the PaymentRequest did not specify a payment_url, completes exceptionally.
      * @param txns list of transactions to be included with the Payment message.
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
+     * @return a future for the PaymentACK
      */
-    @Nullable
-    public ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
-            throws PaymentProtocolException, VerificationException, IOException {
-        Protos.Payment payment = getPayment(txns, refundAddr, memo);
+    public ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo) {
+        Protos.Payment payment = null;
+        try {
+            payment = getPayment(txns, refundAddr, memo);
+        } catch (IOException | PaymentProtocolException.InvalidNetwork e) {
+            return ListenableCompletableFuture.failedFuture(e);
+        }
         if (payment == null)
-            return null;
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.InvalidPaymentRequestURL("Missing Payment URL"));
         if (isExpired())
-            throw new PaymentProtocolException.Expired("PaymentRequest is expired");
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.Expired("PaymentRequest is expired"));
         URL url;
         try {
             url = new URL(paymentDetails.getPaymentUrl());
         } catch (MalformedURLException e) {
-            throw new PaymentProtocolException.InvalidPaymentURL(e);
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.InvalidPaymentURL(e));
         }
         return sendPayment(url, payment);
     }
 
     /**
-     * Generates a Payment message based on the information in the PaymentRequest.
+     * Generate a Payment message based on the information in the PaymentRequest.
      * Provide transactions built by the wallet.
-     * If the PaymentRequest did not specify a payment_url, returns null.
      * @param txns list of transactions to be included with the Payment message.
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
+     * @return Payment message or null (if the PaymentRequest did not specify a payment_url)
      */
     @Nullable
     public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
