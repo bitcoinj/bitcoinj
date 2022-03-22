@@ -3780,11 +3780,11 @@ public class Wallet extends BaseTaggableObject
     }
 
     private static class BalanceFutureRequest {
-        public final ListenableCompletableFuture<Coin> future;
+        public final CompletableFuture<Coin> future;
         public final Coin value;
         public final BalanceType type;
 
-        private BalanceFutureRequest(ListenableCompletableFuture<Coin> future, Coin value, BalanceType type) {
+        private BalanceFutureRequest(CompletableFuture<Coin> future, Coin value, BalanceType type) {
             this.future = future;
             this.value = value;
             this.type = type;
@@ -3809,7 +3809,7 @@ public class Wallet extends BaseTaggableObject
     public ListenableCompletableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
         lock.lock();
         try {
-            final ListenableCompletableFuture<Coin> future = new ListenableCompletableFuture<>();
+            final CompletableFuture<Coin> future = new CompletableFuture<>();
             final Coin current = getBalance(type);
             if (current.compareTo(value) >= 0) {
                 // Already have enough.
@@ -3820,7 +3820,7 @@ public class Wallet extends BaseTaggableObject
                 // avoid giving the user back futures that require the user code thread to be free.
                 balanceFutureRequests.add(new BalanceFutureRequest(future, value, type));
             }
-            return future;
+            return ListenableCompletableFuture.of(future);
         } finally {
             lock.unlock();
         }
