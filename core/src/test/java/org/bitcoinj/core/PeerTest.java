@@ -27,7 +27,6 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.junit.After;
 import org.junit.Before;
@@ -489,7 +488,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
-        ListenableFuture<Long> future = peer.ping();
+        CompletableFuture<Long> future = peer.ping();
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
@@ -573,7 +572,7 @@ public class PeerTest extends TestWithNetworkConnections {
         pingAndWait(writeTarget);
         assertEquals(t1, onTx[0]);
         // We want its dependencies so ask for them.
-        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        CompletableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
         assertFalse(futures.isDone());
         // It will recursively ask for the dependencies of t1: t2, t3, t7, t8.
         getdata = (GetDataMessage) outbound(writeTarget);
@@ -650,7 +649,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, t1);
         pingAndWait(writeTarget);
         // We want its dependencies so ask for them.
-        ListenableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
+        CompletableFuture<List<Transaction>> futures = peer.downloadDependencies(t1);
         assertFalse(futures.isDone());
         // level 1
         getdata = (GetDataMessage) outbound(writeTarget);
