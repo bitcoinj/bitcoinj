@@ -329,10 +329,10 @@ public class PaymentSession {
     /**
      * Generates a Payment message based on the information in the PaymentRequest.
      * Provide transactions built by the wallet.
-     * If the PaymentRequest did not specify a payment_url, returns null.
      * @param txns list of transactions to be included with the Payment message.
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
+     * @return Payment message or null (if the PaymentRequest did not specify a payment_url)
      */
     @Nullable
     public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
