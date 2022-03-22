@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.*;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.Script;
@@ -650,7 +649,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void waitForNumPeers1() throws Exception {
-        ListenableFuture<List<Peer>> future = peerGroup.waitForPeers(3);
+        CompletableFuture<List<Peer>> future = peerGroup.waitForPeers(3);
         peerGroup.start();
         assertFalse(future.isDone());
         connectPeer(1);
@@ -668,7 +667,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final int bip37ver = UNITTEST.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
         final int bip111ver = UNITTEST.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111);
 
-        ListenableFuture<List<Peer>> future = peerGroup.waitForPeersOfVersion(2, bip111ver);
+        CompletableFuture<List<Peer>> future = peerGroup.waitForPeersOfVersion(2, bip111ver);
 
         VersionMessage ver1 = new VersionMessage(UNITTEST, 10);
         ver1.clientVersion = bip37ver;
@@ -690,7 +689,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void waitForPeersWithServiceFlags() throws Exception {
-        ListenableFuture<List<Peer>> future = peerGroup.waitForPeersWithServiceMask(2, 3);
+        CompletableFuture<List<Peer>> future = peerGroup.waitForPeersWithServiceMask(2, 3);
 
         VersionMessage ver1 = new VersionMessage(UNITTEST, 10);
         ver1.clientVersion = 70000;
