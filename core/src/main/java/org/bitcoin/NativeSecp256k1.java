@@ -171,7 +171,13 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
+        return rate(retByteArray);
+
+    }
+
+    public static byte[] rate(byte[][] retByteArray) throws AssertFailException {
         byte[] pubArr = retByteArray[0];
+
         int pubLen = new BigInteger(new byte[] { retByteArray[1][0] }).intValue();
         int retVal = new BigInteger(new byte[] { retByteArray[1][1] }).intValue();
 
@@ -236,6 +242,10 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
+        return  privateByte(retByteArray,0);
+    }
+
+    public static byte[] privateByte(byte[][] retByteArray, int length) throws  NativeSecp256k1Util.AssertFailException {
         byte[] privArr = retByteArray[0];
 
         int privLen = (byte) new BigInteger(new byte[] { retByteArray[1][0] }).intValue() & 0xFF;
@@ -277,16 +287,7 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
-        byte[] privArr = retByteArray[0];
-
-        int privLen = (byte) new BigInteger(new byte[] { retByteArray[1][0] }).intValue() & 0xFF;
-        int retVal = new BigInteger(new byte[] { retByteArray[1][1] }).intValue();
-
-        assertEquals(privArr.length, privLen, "Got bad pubkey length.");
-
-        assertEquals(retVal, 1, "Failed return value check.");
-
-        return privArr;
+       return privateByte(retByteArray,0);
     }
 
     /**
@@ -317,17 +318,8 @@ public class NativeSecp256k1 {
         } finally {
             r.unlock();
         }
-
-        byte[] pubArr = retByteArray[0];
-
-        int pubLen = (byte) new BigInteger(new byte[] { retByteArray[1][0] }).intValue() & 0xFF;
-        int retVal = new BigInteger(new byte[] { retByteArray[1][1] }).intValue();
-
-        assertEquals(pubArr.length, pubLen, "Got bad pubkey length.");
-
-        assertEquals(retVal, 1, "Failed return value check.");
-
-        return pubArr;
+        RateByteArray rateByteArray = new RateByteArray();
+        return rateByteArray.rate(retByteArray,0);
     }
 
     /**
@@ -359,16 +351,8 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
-        byte[] pubArr = retByteArray[0];
-
-        int pubLen = (byte) new BigInteger(new byte[] { retByteArray[1][0] }).intValue() & 0xFF;
-        int retVal = new BigInteger(new byte[] { retByteArray[1][1] }).intValue();
-
-        assertEquals(pubArr.length, pubLen, "Got bad pubkey length.");
-
-        assertEquals(retVal, 1, "Failed return value check.");
-
-        return pubArr;
+        RateByteArray rateByteArray = new RateByteArray();
+        return rateByteArray.rate(retByteArray,0);
     }
 
     /**
@@ -400,13 +384,8 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
-        byte[] resArr = retByteArray[0];
-        int retVal = new BigInteger(new byte[] { retByteArray[1][0] }).intValue();
-
-        assertEquals(resArr.length, 32, "Got bad result length.");
-        assertEquals(retVal, 1, "Failed return value check.");
-
-        return resArr;
+        RateByteArray rateByteArray = new RateByteArray();
+        return rateByteArray.rate(retByteArray,32);
     }
 
     /**
@@ -464,12 +443,8 @@ public class NativeSecp256k1 {
             r.unlock();
         }
 
-        byte[] sigArr = retByteArray[0];
-        int retVal = new BigInteger(new byte[] { retByteArray[1][0] }).intValue();
-
-        assertEquals(sigArr.length, 64, "Got bad signature length.");
-
-        return retVal == 0 ? new byte[0] : sigArr;
+        RateByteArray rateByteArray = new RateByteArray();
+        return rateByteArray.rate(retByteArray,32);
     }
 
     private static native long secp256k1_ctx_clone(long context);

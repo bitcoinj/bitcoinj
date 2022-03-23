@@ -109,20 +109,5 @@ public abstract class OverlayableStackPaneController {
             currentOverlay = this;
         }
 
-        public void outsideClickDismisses() {
-            stopClickPane.setOnMouseClicked((ev) -> done());
-        }
-
-        public void done() {
-            checkGuiThread();
-            if (ui == null) return;  // In the middle of being dismissed and got an extra click.
-            explodeOut(ui);
-            fadeOutAndRemove(uiStack, ui, stopClickPane);
-            blurIn(mainUI);
-            //undark(mainUI);
-            this.ui = null;
-            this.controller = null;
-            currentOverlay = null;
-        }
     }
 }

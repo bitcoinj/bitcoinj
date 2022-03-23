@@ -16,6 +16,9 @@
 
 package wallettemplate;
 
+import javafx.scene.Node;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.wallet.DeterministicSeed;
@@ -45,8 +48,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javafx.beans.binding.Bindings.*;
-import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
-import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
+import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 import static org.bitcoinj.walletfx.utils.WTUtils.didThrow;
 import static org.bitcoinj.walletfx.utils.WTUtils.unchecked;
 
@@ -64,10 +66,31 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
     private KeyParameter aesKey;
 
+    Node ui = null;
+    final StackPane uiStack = new StackPane();
+    final Node stopClickPane = new Pane();
+    Pane mainUI = null;
+
+    @Nullable
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<?>> currentOverlay;
+    private Object controller;
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
         rootController = overlayableStackPaneController;
         overlayUI = ui;
+    }
+    public void done() {
+
+
+        checkGuiThread();
+        if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+        explodeOut(ui);
+        fadeOutAndRemove(uiStack, ui, stopClickPane);
+        blurIn(mainUI);
+        //undark(mainUI);
+        this.ui = null;
+        this.controller = null;
+        currentOverlay = null;
     }
 
     // Note: NOT called by FXMLLoader!
@@ -155,7 +178,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     public void closeClicked(ActionEvent event) {
-        overlayUI.done();
+        done();
     }
 
     public void restoreClicked(ActionEvent event) {
@@ -177,7 +200,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
-        overlayUI.done();
+        done();
         app.mainWindowController().restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);

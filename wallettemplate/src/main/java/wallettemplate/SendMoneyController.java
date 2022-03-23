@@ -16,7 +16,10 @@
 
 package wallettemplate;
 
+import javafx.scene.Node;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import org.bitcoinj.core.*;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -57,10 +60,33 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     private Wallet.SendResult sendResult;
     private KeyParameter aesKey;
 
+    Node ui = null;
+    final StackPane uiStack = new StackPane();
+    final Node stopClickPane = new Pane();
+    Pane mainUI = null;
+
+    @Nullable
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<?>> currentOverlay;
+    private Object controller;
+
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> ui) {
         rootController = overlayableStackPaneController;
         overlayUI = ui;
+    }
+
+    public void done() {
+
+
+        checkGuiThread();
+        if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+        explodeOut(ui);
+        fadeOutAndRemove(uiStack, ui, stopClickPane);
+        blurIn(mainUI);
+        //undark(mainUI);
+        this.ui = null;
+        this.controller = null;
+        currentOverlay = null;
     }
 
     // Called by FXMLLoader
@@ -76,7 +102,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     public void cancel(ActionEvent event) {
-        overlayUI.done();
+        done();
     }
 
     public void send(ActionEvent event) {
@@ -98,7 +124,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
                 @Override
                 public void onSuccess(@Nullable Transaction result) {
                     checkGuiThread();
-                    overlayUI.done();
+                    done();
                 }
 
                 @Override
@@ -119,7 +145,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         } catch (InsufficientMoneyException e) {
             informationalAlert("Could not empty the wallet",
                     "You may have too little money left in the wallet to make a transaction.");
-            overlayUI.done();
+            done();
         } catch (ECKey.KeyIsEncryptedException e) {
             askForPasswordAndRetry();
         }

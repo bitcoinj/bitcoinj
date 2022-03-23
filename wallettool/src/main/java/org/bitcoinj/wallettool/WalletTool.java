@@ -176,7 +176,7 @@ public class WalletTool implements Callable<Integer> {
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
     private boolean force = false;
     @CommandLine.Option(names = "--wallet", description = "Specifies what wallet file to load and save.")
-    private File walletFile = null;
+    private static File walletFile = null;
     @CommandLine.Option(names = "--seed", description = "Specifies either a mnemonic code or hex/base58 raw seed bytes.")
     private String seedStr = null;
     @CommandLine.Option(names = "--watchkey", description = "Describes a watching wallet using the specified base58 xpub.")
@@ -1105,7 +1105,7 @@ public class WalletTool implements Callable<Integer> {
         wallet.saveToFile(walletFile);
     }
 
-    private void saveWallet(File walletFile) {
+    private static void saveWallet(File walletFile) {
         try {
             // This will save the new state of the wallet to a temp file then rename, in case anything goes wrong.
             wallet.saveToFile(walletFile);
@@ -1283,7 +1283,7 @@ public class WalletTool implements Callable<Integer> {
             System.out.println("Clearing creation time.");
     }
 
-    private synchronized void onChange(final CountDownLatch latch) {
+    private static synchronized void onChange(final CountDownLatch latch) {
         saveWallet(walletFile);
         Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
         if (condition.matchBitcoins(balance)) {
@@ -1292,11 +1292,11 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private class WalletEventListener implements WalletChangeEventListener, WalletCoinsReceivedEventListener,
+    static class WalletEventListener implements WalletChangeEventListener, WalletCoinsReceivedEventListener,
             WalletCoinsSentEventListener, WalletReorganizeEventListener {
         private final CountDownLatch latch;
 
-        private  WalletEventListener(final CountDownLatch latch) {
+        WalletEventListener(final CountDownLatch latch) {
             this.latch = latch;
         }
 

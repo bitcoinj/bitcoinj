@@ -17,6 +17,9 @@
 package wallettemplate;
 
 import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -38,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -63,6 +67,15 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
+    Node ui = null;
+    final StackPane uiStack = new StackPane();
+    final Node stopClickPane = new Pane();
+    Pane mainUI = null;
+
+    @Nullable
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<?>> currentOverlay;
+    private Object controller;
+
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
         rootController = overlayableStackPaneController;
@@ -73,6 +86,19 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
         app = WalletApplication.instance();
         progressMeter.setOpacity(0);
         Platform.runLater(pass1::requestFocus);
+    }
+    public void done() {
+
+
+        checkGuiThread();
+        if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+        explodeOut(ui);
+        fadeOutAndRemove(uiStack, ui, stopClickPane);
+        blurIn(mainUI);
+        //undark(mainUI);
+        this.ui = null;
+        this.controller = null;
+        currentOverlay = null;
     }
 
     @FXML void confirmClicked(ActionEvent event) {
@@ -111,7 +137,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     }
 
     public void cancelClicked(ActionEvent event) {
-        overlayUI.done();
+        done();
     }
 
     public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty() {

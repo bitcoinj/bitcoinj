@@ -19,6 +19,7 @@ package wallettemplate;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.bitcoinj.crypto.*;
@@ -35,6 +36,9 @@ import java.time.Duration;
 import java.util.concurrent.*;
 
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
+
+import javax.annotation.Nullable;
+
 import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 public class WalletSetPasswordController implements OverlayController<WalletSetPasswordController> {
@@ -51,12 +55,21 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
+    Node ui = null;
+    final StackPane uiStack = new StackPane();
+    final Node stopClickPane = new Pane();
+    Pane mainUI = null;
+
+    @Nullable
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<?>> currentOverlay;
+    private Object controller;
     public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder()
             .setP(6)
             .setR(8)
             .setN(32768)
             .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()))
             .build();
+
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> ui) {
@@ -133,14 +146,28 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
                 log.info("Encryption done");
                 informationalAlert("Wallet encrypted",
                         "You can remove the password at any time from the settings screen.");
-                overlayUI.done();
+                done();
             }
         };
         progressMeter.progressProperty().bind(tasks.progress);
         tasks.start();
     }
 
+    public void done() {
+
+
+        checkGuiThread();
+        if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+        explodeOut(ui);
+        fadeOutAndRemove(uiStack, ui, stopClickPane);
+        blurIn(mainUI);
+        //undark(mainUI);
+        this.ui = null;
+        this.controller = null;
+        currentOverlay = null;
+    }
+
     public void closeClicked(ActionEvent event) {
-        overlayUI.done();
+        done();
     }
 }

@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -39,6 +40,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 
+import javafx.scene.layout.StackPane;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
@@ -50,7 +52,10 @@ import org.bitcoinj.walletfx.utils.QRCodeImages;
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
 
+import javax.annotation.Nullable;
+
 import static javafx.beans.binding.Bindings.convert;
+import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 /**
  * A custom control that implements a clickable, copyable Bitcoin address. Clicking it opens a local wallet app. The
@@ -74,6 +79,14 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayContro
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<ClickableBitcoinAddress>> ui) {
         rootController = overlayableStackPaneController;
     }
+    Node ui = null;
+    final StackPane uiStack = new StackPane();
+    final Node stopClickPane = new Pane();
+    Pane mainUI = null;
+
+    @Nullable
+    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<?>> currentOverlay;
+    private Object controller;
 
     /**
      * @param theAppName The application name to use in Bitcoin URIs
@@ -163,7 +176,21 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayContro
         Pane pane = new Pane(view);
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
         final OverlayableStackPaneController.OverlayUI<ClickableBitcoinAddress> overlay = rootController.overlayUI(pane, this);
-        view.setOnMouseClicked(event1 -> overlay.done());
+        view.setOnMouseClicked(event1 -> done());
+    }
+    public void done() {
+
+
+        checkGuiThread();
+        if (ui == null) return;  // In the middle of being dismissed and got an extra click.
+        explodeOut(ui);
+        fadeOutAndRemove(uiStack, ui, stopClickPane);
+        blurIn(mainUI);
+        //undark(mainUI);
+        this.ui = null;
+        this.controller = null;
+        currentOverlay = null;
     }
 
 }
+
