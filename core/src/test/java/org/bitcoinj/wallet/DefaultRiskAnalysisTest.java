@@ -43,7 +43,7 @@ public class DefaultRiskAnalysisTest {
 
     @Before
     public void setup() {
-        wallet = new Wallet(new Context(MAINNET));
+        wallet = Wallet.createDeterministic(new Context(MAINNET), Script.ScriptType.P2PKH);
         wallet.setLastBlockSeenHeight(1000);
         wallet.setLastBlockSeenTimeSecs(TIMESTAMP);
     }

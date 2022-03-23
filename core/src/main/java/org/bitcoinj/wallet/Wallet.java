@@ -367,18 +367,6 @@ public class Wallet extends BaseTaggableObject
     /**
      * @param params network parameters
      * @param seed deterministic seed
-     * @return a wallet from a deterministic seed with a
-     * {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH 0 hardened path}
-     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, KeyChainGroupStructure)}
-     */
-    @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        return fromSeed(params, seed, Script.ScriptType.P2PKH);
-    }
-
-    /**
-     * @param params network parameters
-     * @param seed deterministic seed
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
      * @param accountPath account path to generate receiving addresses on
      * @return an instance of a wallet from a deterministic seed.
@@ -391,18 +379,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @param params network parameters
-     * @param seed deterministic seed
-     * @param accountPath account path
-     * @return an instance of a wallet from a deterministic seed.
-     * @deprecated Use {@link #fromSeed(NetworkParameters, DeterministicSeed, ScriptType, List)}
-     */
-    @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, List<ChildNumber> accountPath) {
-        return fromSeed(params, seed, Script.ScriptType.P2PKH, accountPath);
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
@@ -411,16 +387,6 @@ public class Wallet extends BaseTaggableObject
         DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
                 .build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
-    }
-
-    /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
-     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
-     * @deprecated Use {@link #fromWatchingKey(NetworkParameters, DeterministicKey, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey) {
-        return fromWatchingKey(params, watchKey, Script.ScriptType.P2PKH);
     }
 
     /**
@@ -446,16 +412,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
-     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
-     * @deprecated Use {@link #fromSpendingKey(NetworkParameters, DeterministicKey, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey) {
-        return fromSpendingKey(params, spendKey, Script.ScriptType.P2PKH);
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
      * The key is specified in base58 notation and the creation time of the key. If you don't know the creation time,
      * you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
@@ -478,19 +434,6 @@ public class Wallet extends BaseTaggableObject
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(outputScriptType).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
-    }
-
-    /**
-     * @deprecated Use {@link #createBasic(NetworkParameters)}, then {@link #importKeys(List)}.
-     */
-    @Deprecated
-    public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
-        for (ECKey key : keys)
-            checkArgument(!(key instanceof DeterministicKey));
-
-        KeyChainGroup group = KeyChainGroup.builder(params).build();
-        group.importKeys(keys);
-        return new Wallet(params, group);
     }
 
     private static Script.ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
@@ -774,12 +717,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** @deprecated Use {@link #upgradeToDeterministic(ScriptType, KeyParameter)} */
-    @Deprecated
-    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) {
-        upgradeToDeterministic(Script.ScriptType.P2PKH, aesKey);
-    }
-
     /**
      * Upgrades the wallet to be deterministic (BIP32). You should call this, possibly providing the users encryption
      * key, after loading a wallet produced by previous versions of bitcoinj. If the wallet is encrypted the key
@@ -808,12 +745,6 @@ public class Wallet extends BaseTaggableObject
         } finally {
             keyChainGroupLock.unlock();
         }
-    }
-
-    /** @deprecated Use {@link #isDeterministicUpgradeRequired(ScriptType)} */
-    @Deprecated
-    public boolean isDeterministicUpgradeRequired() {
-        return isDeterministicUpgradeRequired(Script.ScriptType.P2PKH);
     }
 
     /**
@@ -1168,12 +1099,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** @deprecated Use {@link #findKeyFromPubKeyHash(byte[], ScriptType)} */
-    @Deprecated
-    public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
-        return findKeyFromPubKeyHash(pubKeyHash, Script.ScriptType.P2PKH);
-    }
-
     /**
      * Locates a keypair from the basicKeyChain given the hash of the public key. This is needed when finding out which
      * key we need to use to redeem a transaction output.
@@ -1214,12 +1139,6 @@ public class Wallet extends BaseTaggableObject
             return false;
         else
             throw new IllegalArgumentException(address.toString());
-    }
-
-    /** @deprecated Use {@link #isPubKeyHashMine(byte[], ScriptType)} */
-    @Deprecated
-    public boolean isPubKeyHashMine(byte[] pubKeyHash) {
-        return isPubKeyHashMine(pubKeyHash, Script.ScriptType.P2PKH);
     }
 
     @Override
@@ -3404,24 +3323,6 @@ public class Wallet extends BaseTaggableObject
     @Override
     public String toString() {
         return toString(false, false, null, true, true, null);
-    }
-
-    /**
-     * @deprecated Use {@link #toString(boolean, boolean, KeyParameter, boolean, boolean, AbstractBlockChain)} instead.
-     */
-    @Deprecated
-    public String toString(boolean includePrivateKeys, boolean includeTransactions, boolean includeExtensions,
-            @Nullable AbstractBlockChain chain) {
-        return toString(false, includePrivateKeys, null, includeTransactions, includeExtensions, chain);
-    }
-
-    /**
-     * @deprecated Use {@link #toString(boolean, boolean, KeyParameter, boolean, boolean, AbstractBlockChain)} instead.
-     */
-    @Deprecated
-    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, boolean includeTransactions,
-            boolean includeExtensions, @Nullable AbstractBlockChain chain) {
-        return toString(false, includePrivateKeys, aesKey, includeTransactions, includeExtensions, chain);
     }
 
     /**
