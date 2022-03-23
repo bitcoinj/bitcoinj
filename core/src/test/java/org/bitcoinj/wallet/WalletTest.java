@@ -3484,9 +3484,10 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void fromKeys() {
+    public void createBasicUpgradeToDeterministic() {
         ECKey key = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
-        Wallet wallet = Wallet.fromKeys(UNITTEST, Arrays.asList(key));
+        Wallet wallet = Wallet.createBasic(UNITTEST);
+        wallet.importKey(key);
         assertEquals(1, wallet.getImportedKeys().size());
         assertEquals(key, wallet.getImportedKeys().get(0));
         wallet.upgradeToDeterministic(Script.ScriptType.P2PKH, null);
