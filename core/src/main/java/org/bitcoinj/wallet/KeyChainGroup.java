@@ -218,7 +218,7 @@ public class KeyChainGroup implements KeyBag {
 
     private BasicKeyChain basic;
     private final NetworkParameters params;
-    // Keychains for deterministically derived keys. If this is null, no chains should be created automatically.
+    // Keychains for deterministically derived keys.
     protected final @Nullable LinkedList<DeterministicKeyChain> chains;
     // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
     // P2SH addresses. They're mutually exclusive.
@@ -282,7 +282,7 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    /** Returns true if it contains any deterministic keychain or one could be created. */
+    /** Returns true if it contains any deterministic keychain. */
     public boolean isSupportsDeterministicChains() {
         return chains != null;
     }
@@ -949,61 +949,12 @@ public class KeyChainGroup implements KeyBag {
      */
     public void upgradeToDeterministic(Script.ScriptType preferredScriptType, KeyChainGroupStructure structure,
             long keyRotationTimeSecs, @Nullable KeyParameter aesKey)
-            throws DeterministicUpgradeRequiresPassword, AllRandomKeysRotating {
+            throws DeterministicUpgradeRequiresPassword {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
         checkNotNull(structure);
         checkArgument(keyRotationTimeSecs >= 0);
         if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTimeSecs))
             return; // Nothing to do.
-
-        // Basic --> P2PKH upgrade
-        if (basic.numKeys() > 0 && getActiveKeyChain(Script.ScriptType.P2PKH, keyRotationTimeSecs) == null) {
-            // Subtract one because the key rotation time might have been set to the creation time of the first known good
-            // key, in which case, that's the one we want to find.
-            ECKey keyToUse = basic.findOldestKeyAfter(keyRotationTimeSecs - 1);
-            if (keyToUse == null)
-                throw new AllRandomKeysRotating();
-            boolean keyWasEncrypted = keyToUse.isEncrypted();
-            if (keyWasEncrypted) {
-                if (aesKey == null) {
-                    // We can't auto upgrade because we don't know the users password at this point. We throw an
-                    // exception so the calling code knows to abort the load and ask the user for their password, they can
-                    // then try loading the wallet again passing in the AES key.
-                    //
-                    // There are a few different approaches we could have used here, but they all suck. The most obvious
-                    // is to try and be as lazy as possible, running in the old random-wallet mode until the user enters
-                    // their password for some other reason and doing the upgrade then. But this could result in strange
-                    // and unexpected UI flows for the user, as well as complicating the job of wallet developers who then
-                    // have to support both "old" and "new" UI modes simultaneously, switching them on the fly. Given that
-                    // this is a one-off transition, it seems more reasonable to just ask the user for their password
-                    // on startup, and then the wallet app can have all the widgets for accessing seed words etc active
-                    // all the time.
-                    throw new DeterministicUpgradeRequiresPassword();
-                }
-                keyToUse = keyToUse.decrypt(aesKey);
-            } else if (aesKey != null) {
-                throw new IllegalStateException("AES Key was provided but wallet is not encrypted.");
-            }
-
-            log.info(
-                    "Upgrading from basic keychain to P2PKH deterministic keychain. Using oldest non-rotating private key (address: {})",
-                    LegacyAddress.fromKey(params, keyToUse));
-            byte[] entropy = checkNotNull(keyToUse.getSecretBytes());
-            // Private keys should be at least 128 bits long.
-            checkState(entropy.length >= DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-            // We reduce the entropy here to 128 bits because people like to write their seeds down on paper, and 128
-            // bits should be sufficient forever unless the laws of the universe change or ECC is broken; in either case
-            // we all have bigger problems.
-            entropy = Arrays.copyOfRange(entropy, 0, DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);    // final argument is exclusive range.
-            checkState(entropy.length == DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS / 8);
-            DeterministicKeyChain chain = DeterministicKeyChain.builder()
-                    .entropy(entropy, keyToUse.getCreationTimeSeconds())
-                    .outputScriptType(Script.ScriptType.P2PKH)
-                    .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
-            if (keyWasEncrypted)
-                chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
-            addAndActivateHDChain(chain);
-        }
 
         // P2PKH --> P2WPKH upgrade
         if (preferredScriptType == Script.ScriptType.P2WPKH

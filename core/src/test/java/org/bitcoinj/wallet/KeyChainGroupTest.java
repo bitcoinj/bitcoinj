@@ -542,13 +542,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void deterministicUpgradeUnencrypted() throws Exception {
-        // Check that a group that contains only random keys has its HD chain created using the private key bytes of
-        // the oldest random key, so upgrading the same wallet twice gives the same outcome.
-        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).build();
-        ECKey key1 = new ECKey();
-        Utils.rollMockClock(86400);
-        ECKey key2 = new ECKey();
-        group.importKeys(key2, key1);
+        group = KeyChainGroup.builder(MAINNET).fromRandom(Script.ScriptType.P2PKH).lookaheadSize(LOOKAHEAD_SIZE).build();
 
         List<Protos.Key> protobufs = group.serializeToProtobuf();
         group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, null);
@@ -568,45 +562,12 @@ public class KeyChainGroupTest {
         DeterministicSeed seed2 = group.getActiveKeyChain().getSeed();
         assertEquals(seed1, seed2);
         assertEquals(dkey1, dkey2);
-
-        // Check we used the right (oldest) key despite backwards import order.
-        byte[] truncatedBytes = Arrays.copyOfRange(key1.getSecretBytes(), 0, 16);
-        assertArrayEquals(seed1.getEntropyBytes(), truncatedBytes);
-    }
-
-    @Test
-    public void deterministicUpgradeRotating() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).build();
-        long now = Utils.currentTimeSeconds();
-        ECKey key1 = new ECKey();
-        Utils.rollMockClock(86400);
-        ECKey key2 = new ECKey();
-        Utils.rollMockClock(86400);
-        ECKey key3 = new ECKey();
-        group.importKeys(key2, key1, key3);
-        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, now + 10, null);
-        DeterministicSeed seed = group.getActiveKeyChain().getSeed();
-        assertNotNull(seed);
-        // Check we used the right key: oldest non rotating.
-        byte[] truncatedBytes = Arrays.copyOfRange(key2.getSecretBytes(), 0, 16);
-        assertArrayEquals(seed.getEntropyBytes(), truncatedBytes);
     }
 
     @Test
     public void deterministicUpgradeEncrypted() throws Exception {
-        group = KeyChainGroup.builder(MAINNET).build();
-        final ECKey key = new ECKey();
-        group.importKeys(key);
-        assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
+        group = KeyChainGroup.builder(MAINNET).fromRandom(Script.ScriptType.P2PKH).build();
         group.encrypt(KEY_CRYPTER, AES_KEY);
-        assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
-        try {
-            group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, null);
-            fail();
-        } catch (DeterministicUpgradeRequiresPassword e) {
-            // Expected.
-        }
-        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, AES_KEY);
         assertTrue(group.isEncrypted());
         assertFalse(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2WPKH, 0));
@@ -614,9 +575,6 @@ public class KeyChainGroupTest {
         assertNotNull(deterministicSeed);
         assertTrue(deterministicSeed.isEncrypted());
         byte[] entropy = checkNotNull(group.getActiveKeyChain().toDecrypted(AES_KEY).getSeed()).getEntropyBytes();
-        // Check we used the right key: oldest non rotating.
-        byte[] truncatedBytes = Arrays.copyOfRange(key.getSecretBytes(), 0, 16);
-        assertArrayEquals(entropy, truncatedBytes);
     }
 
     @Test
