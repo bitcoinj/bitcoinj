@@ -885,13 +885,28 @@ public class WalletTool implements Callable<Integer> {
                 return;   // Error message already printed.
         }
 
+        // Complete the transaction
         try {
             wallet.completeTx(req);  // may throw InsufficientMoneyException.
-            if (offline) {
-                wallet.commitTx(req.tx);
-                return;
-            }
+        } catch (InsufficientMoneyException e) {
+            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
+            System.exit(1);
+        }
+        if (offline) {
+            wallet.commitTx(req.tx);
+            return;
+        }
+
+        // Setup network communication (but not PeerGroup)
+        try {
             setup();
+        } catch (BlockStoreException e) {
+            System.err.println("BlockStoreException: " + e.getMessage());
+            System.exit(1);
+        }
+
+        // Send the payment
+        try {
             // No refund address specified, no user-specified memo field.
             PaymentProtocol.Ack ack = session.sendPayment(ImmutableList.of(req.tx), null, null).get();
             wallet.commitTx(req.tx);
@@ -900,6 +915,7 @@ public class WalletTool implements Callable<Integer> {
             try {
                 throw e.getCause();
             } catch (PaymentProtocolException.InvalidPaymentRequestURL e1) {
+                System.out.println("Missing/Invalid Payment Request URL, broadcasting transaction with PeerGroup");
                 broadcastPayment(req);
             } catch (PaymentProtocolException e1) {
                 System.err.println("Failed to send payment " + e.getMessage());
@@ -914,12 +930,9 @@ public class WalletTool implements Callable<Integer> {
         } catch (VerificationException e) {
             System.err.println("Failed to send payment " + e.getMessage());
             System.exit(1);
-        } catch (InterruptedException e1) {
-            // Ignore.
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
-        } catch (BlockStoreException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            System.err.println("Interrupted: " + e.getMessage());
+            System.exit(1);
         }
     }
 
