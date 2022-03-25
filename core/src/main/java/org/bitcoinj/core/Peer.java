@@ -804,7 +804,7 @@ public class Peer extends PeerSocketHandler {
 
         // We may end up requesting transactions that we've already downloaded and thrown away here.
         // There may be multiple inputs that connect to the same transaction.
-        Set<Sha256Hash> needToRequest = rootTx.getInputs().stream()
+        Set<Sha256Hash> txIdsToRequest = rootTx.getInputs().stream()
                 .map(input -> input.getOutpoint().getHash())
                 .collect(Collectors.toSet());
         lock.lock();
@@ -812,9 +812,9 @@ public class Peer extends PeerSocketHandler {
             // Build the request for the missing dependencies.
             List<CompletableFuture<Transaction>> futures = new ArrayList<>();
             GetDataMessage getdata = new GetDataMessage(params);
-            if (needToRequest.size() > 1)
-                log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), needToRequest.size(), depth + 1);
-            for (Sha256Hash hash : needToRequest) {
+            if (txIdsToRequest.size() > 1)
+                log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
+            for (Sha256Hash hash : txIdsToRequest) {
                 getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
                 GetDataRequest req = new GetDataRequest(hash);
                 futures.add(req.future);
