@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -141,7 +142,7 @@ public class Peer extends PeerSocketHandler {
         }
     }
     // TODO: The types/locking should be rationalised a bit.
-    private final CopyOnWriteArrayList<GetDataRequest> getDataFutures;
+    private final Queue<GetDataRequest> getDataFutures;
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
@@ -214,7 +215,7 @@ public class Peer extends PeerSocketHandler {
         this.blockChain = chain;  // Allowed to be null.
         this.requiredServices = requiredServices;
         this.vDownloadData = chain != null;
-        this.getDataFutures = new CopyOnWriteArrayList<>();
+        this.getDataFutures = new ConcurrentLinkedQueue<>();
         this.getAddrFutures = new LinkedList<>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         this.pendingPings = new CopyOnWriteArrayList<>();
