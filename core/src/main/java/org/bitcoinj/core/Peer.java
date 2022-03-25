@@ -809,17 +809,18 @@ public class Peer extends PeerSocketHandler {
                 .collect(Collectors.toSet());
         lock.lock();
         try {
-            // Build the request for the missing dependencies.
-            List<CompletableFuture<Transaction>> futures = new ArrayList<>();
-            GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
             if (txIdsToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
-            for (Sha256Hash hash : txIdsToRequest) {
-                GetDataRequest req = new GetDataRequest(hash);
-                futures.add(req);
-                getDataFutures.add(req);
-            }
-            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList(futures);
+            // Build the request for the missing dependencies.
+            GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
+            // Create futures for each TxId this request will produce
+            List<GetDataRequest> futures = txIdsToRequest.stream()
+               .map(GetDataRequest::new)
+               .collect(Collectors.toList());
+            // Add the futures to the queue of outstanding requests
+            getDataFutures.addAll(futures);
+
+            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList((List) futures);
             successful.whenComplete((transactionsWithNulls, throwable) -> {
                 if (throwable == null) {
                     // If no exception/throwable, then success
