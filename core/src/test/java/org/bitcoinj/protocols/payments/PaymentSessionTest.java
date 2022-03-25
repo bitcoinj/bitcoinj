@@ -230,7 +230,8 @@ public class PaymentSessionTest {
         @Override
         protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
             paymentLog.add(new PaymentLogItem(url, payment));
-            return null;
+            // Return a completed future that has a `null` value. This will satisfy the current tests.
+            return ListenableCompletableFuture.completedFuture(null);
         }
 
         public class PaymentLogItem {
