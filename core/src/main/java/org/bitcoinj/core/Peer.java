@@ -812,11 +812,10 @@ public class Peer extends PeerSocketHandler {
         try {
             // Build the request for the missing dependencies.
             List<CompletableFuture<Transaction>> futures = new ArrayList<>();
-            GetDataMessage getdata = new GetDataMessage(params);
+            GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
             if (txIdsToRequest.size() > 1)
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
             for (Sha256Hash hash : txIdsToRequest) {
-                getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
                 GetDataRequest req = new GetDataRequest(hash);
                 futures.add(req.future);
                 getDataFutures.add(req);
@@ -868,6 +867,18 @@ public class Peer extends PeerSocketHandler {
             lock.unlock();
         }
         return resultFuture;
+    }
+
+    /**
+     * Build a GetDataMessage to query multiple transactions by ID
+     * @param txIds A set of transaction IDs to query
+     * @return A GetDataMessage that will query those IDs
+     */
+    private GetDataMessage buildMultiTransactionDataMessage(Set<Sha256Hash> txIds) {
+        GetDataMessage getdata = new GetDataMessage(params);
+        txIds.forEach(txId ->
+            getdata.addTransaction(txId, vPeerVersionMessage.isWitnessSupported()));
+        return getdata;
     }
 
     /**
