@@ -268,21 +268,21 @@ public class WalletTool implements Callable<Integer> {
             else if (from.startsWith(">")) type = Type.GT;
             else throw new RuntimeException("Unknown operator in condition: " + from);
 
-            String s;
+            String ComparisonString;
             switch (type) {
                 case LT:
                 case GT:
                 case EQUAL:
-                    s = from.substring(1);
+                    ComparisonString = from.substring(1);
                     break;
                 case LTE:
                 case GTE:
-                    s = from.substring(2);
+                    ComparisonString = from.substring(2);
                     break;
                 default:
                     throw new RuntimeException("Unreachable");
             }
-            value = s;
+            value = ComparisonString;
         }
 
         public boolean matchBitcoins(Coin comparison) {
