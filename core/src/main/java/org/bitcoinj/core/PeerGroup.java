@@ -967,7 +967,7 @@ public class PeerGroup implements TransactionBroadcaster {
             for (PeerAddress address : addressList) {
                 addInactive(address, 0);
             }
-            final ImmutableSet<PeerAddress> peersDiscoveredSet = ImmutableSet.copyOf(addressList);
+            final Set<PeerAddress> peersDiscoveredSet = Collections.unmodifiableSet(new HashSet<>(addressList));
             for (final ListenerRegistration<PeerDiscoveredEventListener> registration : peerDiscoveredEventListeners /* COW */) {
                 registration.executor.execute(() -> registration.listener.onPeersDiscovered(peersDiscoveredSet));
             }
