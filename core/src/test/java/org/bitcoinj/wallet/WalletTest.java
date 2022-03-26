@@ -403,7 +403,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, unspents1.size());
         broadcastAndCommit(wallet, t2);
         List<TransactionOutput> unspents2 = wallet.getUnspents();
-        assertNotEquals(unspents1, unspents2.size());
+        assertNotSame(unspents1, unspents2);
 
         // Now check that we can spend the unconfirmed change, with a new change address of our own selection.
         // (req.aesKey is null for unencrypted / the correct aesKey for encrypted.)
