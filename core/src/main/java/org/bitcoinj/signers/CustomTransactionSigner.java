@@ -97,7 +97,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
 
     protected abstract SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath);
 
-    public class SignatureAndKey {
+    public static class SignatureAndKey {
         public final ECKey.ECDSASignature sig;
         public final ECKey pubKey;
 
@@ -106,7 +106,6 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
             this.pubKey = pubKey;
         }
     }
-
 }
 
 

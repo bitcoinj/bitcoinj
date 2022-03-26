@@ -216,7 +216,7 @@ public class PaymentSessionTest {
                 .build();
     }
 
-    private class MockPaymentSession extends PaymentSession {
+    private static class MockPaymentSession extends PaymentSession {
         private ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
 
         public MockPaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
@@ -234,7 +234,7 @@ public class PaymentSessionTest {
             return ListenableCompletableFuture.completedFuture(null);
         }
 
-        public class PaymentLogItem {
+        public static class PaymentLogItem {
             private final URL url;
             private final Protos.Payment payment;
 

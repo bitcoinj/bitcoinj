@@ -38,7 +38,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
 
     private final Selector selector;
 
-    class PendingConnect {
+    static class PendingConnect {
         SocketChannel sc;
         StreamConnection connection;
         SocketAddress address;

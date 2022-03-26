@@ -4499,7 +4499,7 @@ public class Wallet extends BaseTaggableObject
      * required for spending without actually having all the linked data (i.e parent tx).
      *
      */
-    private class FreeStandingTransactionOutput extends TransactionOutput {
+    private static class FreeStandingTransactionOutput extends TransactionOutput {
         private UTXO output;
         private int chainHeight;
 

@@ -107,7 +107,7 @@ public abstract class AbstractBlockChain {
     private final CopyOnWriteArrayList<ListenerRegistration<TransactionReceivedInBlockListener>> transactionReceivedListeners;
 
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    class OrphanBlock {
+    static class OrphanBlock {
         final Block block;
         final List<Sha256Hash> filteredTxHashes;
         final Map<Sha256Hash, Transaction> filteredTxn;

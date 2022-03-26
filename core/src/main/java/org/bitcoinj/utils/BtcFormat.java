@@ -1308,7 +1308,7 @@ public abstract class BtcFormat extends Format {
     @Override
     public final Object parseObject(String source, ParsePosition pos) { return parse(source, pos); }
 
-    private class ScaleMatcher {
+    private static class ScaleMatcher {
         public Pattern pattern;
         public int scale;
         ScaleMatcher(Pattern p, int s) { pattern = p; scale = s; }
