@@ -17,7 +17,6 @@
 package org.bitcoinj.utils;
 
 import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
-import com.google.common.collect.ImmutableList;
 
 import java.math.BigInteger;
 import static java.math.BigDecimal.ONE;
@@ -29,6 +28,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 
+import java.util.Collections;
 import java.util.Locale;
 
 /**
@@ -109,7 +109,7 @@ public final class BtcAutoFormat extends BtcFormat {
 
     /** Constructor */
     protected BtcAutoFormat(Locale locale, Style style, int fractionPlaces) {
-        super((DecimalFormat)NumberFormat.getCurrencyInstance(locale), fractionPlaces, ImmutableList.<Integer>of());
+        super((DecimalFormat)NumberFormat.getCurrencyInstance(locale), fractionPlaces, Collections.emptyList());
         style.apply(this.numberFormat);
     }
 

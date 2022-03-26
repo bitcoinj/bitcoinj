@@ -34,9 +34,9 @@ import java.util.List;
  * {@code HDPath} is immutable and uses the {@code Collections.UnmodifiableList} type internally.
  * <p>
  * It implements {@code java.util.List<ChildNumber>} to ease migration
- * from the previous Guava {@code ImmutableList<ChildNumber>}. It should be a minor breaking change
- * to replace {@code ImmutableList<ChildNumber>} with {@code List<ChildNumber>} where necessary in your code. Although
- * it is recommended to use the {@code HDPath} type for clarity and for access to {@code HDPath}-specific functionality.
+ * from the previous implementation. When an {@code HDPath} is returned you can treat it as a {@code List<ChildNumber>}
+ * where necessary in your code. Although it is recommended to use the {@code HDPath} type for clarity and for
+ * access to {@code HDPath}-specific functionality.
  * <p>
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create HDPath objects (especially when statically imported.)

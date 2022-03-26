@@ -16,32 +16,40 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents Block Locator in GetBlocks and GetHeaders messages
  **/
 public final class BlockLocator {
-    private final ImmutableList<Sha256Hash> hashes;
+    private final List<Sha256Hash> hashes;  // unmodifiable list
 
     public BlockLocator() {
-        hashes = ImmutableList.of();
+        hashes = Collections.emptyList();
     }
 
     /**
      * Creates a Block locator with defined list of hashes.
      */
-    public BlockLocator(ImmutableList<Sha256Hash> hashes) {
-        this.hashes = hashes;
+    public BlockLocator(List<Sha256Hash> hashes) {
+        this.hashes = Collections.unmodifiableList(hashes);
+    }
+
+    // Create a new BlockLocator by copying an instance and appending an element
+    private BlockLocator(BlockLocator old, Sha256Hash hashToAdd) {
+        this(Stream.concat(old.hashes.stream(), Stream.of(hashToAdd))
+                .collect(Collectors.toList())
+        );
     }
 
     /**
      * Add a {@link Sha256Hash} to a newly created block locator.
      */
     public BlockLocator add(Sha256Hash hash) {
-        return new BlockLocator(new ImmutableList.Builder<Sha256Hash>().addAll(this.hashes).add(hash).build());
+        return new BlockLocator(this, hash);
     }
 
     /**
