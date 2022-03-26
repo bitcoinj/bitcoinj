@@ -18,8 +18,9 @@ package org.bitcoinj.script;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -279,13 +280,16 @@ public class ScriptOpCodes {
         .put(OP_NOP9, "NOP9")
         .put(OP_NOP10, "NOP10").build();
 
-    private static final Map<String, Integer> opCodeNameMap = ImmutableMap.<String, Integer>builder()
-            .putAll(opCodeMap.inverse())
-            .put("OP_FALSE", OP_FALSE)
-            .put("OP_TRUE", OP_TRUE)
-            .put("NOP2", OP_NOP2)
-            .put("NOP3", OP_NOP3)
-            .build();
+    private static final Map<String, Integer> opCodeNameMap = createOpCodeNameMap();
+
+    private static Map<String, Integer> createOpCodeNameMap() {
+        Map<String, Integer> map = new HashMap<>(opCodeMap.inverse());
+        map.put("OP_FALSE", OP_FALSE);
+        map.put("OP_TRUE", OP_TRUE);
+        map.put("NOP2", OP_NOP2);
+        map.put("NOP3", OP_NOP3);
+        return Collections.unmodifiableMap(map);
+    }
 
     /**
      * Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
