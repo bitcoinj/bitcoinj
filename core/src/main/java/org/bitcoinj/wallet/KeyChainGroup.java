@@ -447,7 +447,9 @@ public class KeyChainGroup implements KeyBag {
      */
     public final DeterministicKeyChain getActiveKeyChain(Script.ScriptType outputScriptType, long keyRotationTimeSecs) {
         checkState(isSupportsDeterministicChains(), "doesn't support deterministic chains");
-        for (DeterministicKeyChain chain : ImmutableList.copyOf(chains).reverse())
+        List<DeterministicKeyChain> chainsReversed = new ArrayList<>(chains);
+        Collections.reverse(chainsReversed);
+        for (DeterministicKeyChain chain : chainsReversed)
             if (chain.getOutputScriptType() == outputScriptType
                     && chain.getEarliestKeyCreationTime() >= keyRotationTimeSecs)
                 return chain;
@@ -508,7 +510,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** Imports the given keys into the basic chain, creating it if necessary. */
     public int importKeys(ECKey... keys) {
-        return importKeys(ImmutableList.copyOf(keys));
+        return importKeys(Collections.unmodifiableList(Arrays.asList(keys)));
     }
 
     public boolean checkPassword(CharSequence password) {

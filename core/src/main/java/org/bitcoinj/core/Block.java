@@ -915,10 +915,10 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
+    /** Returns an unmodifiable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : ImmutableList.copyOf(transactions);
+        return transactions == null ? null : Collections.unmodifiableList(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////

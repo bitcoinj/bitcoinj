@@ -39,7 +39,6 @@ import org.bitcoinj.wallet.DeterministicSeed;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.protobuf.ByteString;
@@ -93,6 +92,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -585,13 +586,13 @@ public class WalletTool implements Callable<Integer> {
         }
 
         String[] xpubkeys = xpubKeysStr.split(",");
-        ImmutableList.Builder<DeterministicKey> keys = ImmutableList.builder();
+        List<DeterministicKey> keys = new ArrayList<>();
         for (String xpubkey : xpubkeys) {
             keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim(), params));
         }
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
-                .followingKeys(keys.build())
+                .followingKeys(Collections.unmodifiableList(keys))
                 .build();
         wallet.addAndActivateHDChain(chain);
     }
@@ -908,7 +909,7 @@ public class WalletTool implements Callable<Integer> {
         // Send the payment
         try {
             // No refund address specified, no user-specified memo field.
-            PaymentProtocol.Ack ack = session.sendPayment(ImmutableList.of(req.tx), null, null).get();
+            PaymentProtocol.Ack ack = session.sendPayment(Collections.singletonList(req.tx), null, null).get();
             wallet.commitTx(req.tx);
             System.out.println("Memo from server: " + ack.getMemo());
         } catch (ExecutionException e) {
@@ -1106,8 +1107,8 @@ public class WalletTool implements Callable<Integer> {
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
-            final List<String> split = ImmutableList
-                    .copyOf(Splitter.on(CharMatcher.anyOf(" :;,")).omitEmptyStrings().split(seedStr));
+            final List<String> split = Collections
+                    .unmodifiableList(Splitter.on(CharMatcher.anyOf(" :;,")).omitEmptyStrings().splitToList(seedStr));
             String passphrase = ""; // TODO allow user to specify a passphrase
             seed = new DeterministicSeed(split, null, passphrase, creationTimeSecs);
             try {

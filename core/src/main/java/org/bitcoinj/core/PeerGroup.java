@@ -1247,7 +1247,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 if ((chain != null && chain.shouldVerifyTransactions()) || !vBloomFilteringEnabled)
                     return;
                 // We only ever call bloomFilterMerger.calculate on jobQueue, so we cannot be calculating two filters at once.
-                FilterMerger.Result result = bloomFilterMerger.calculate(ImmutableList.copyOf(peerFilterProviders /* COW */));
+                FilterMerger.Result result = bloomFilterMerger.calculate(Collections.unmodifiableList(peerFilterProviders /* COW */));
                 boolean send;
                 switch (mode) {
                     case SEND_IF_CHANGED:

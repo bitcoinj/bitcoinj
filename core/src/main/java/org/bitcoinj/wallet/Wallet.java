@@ -19,7 +19,6 @@ package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -542,7 +541,7 @@ public class Wallet extends BaseTaggableObject
     public List<TransactionSigner> getTransactionSigners() {
         lock.lock();
         try {
-            return ImmutableList.copyOf(signers);
+            return Collections.unmodifiableList(signers);
         } finally {
             lock.unlock();
         }
@@ -1041,7 +1040,7 @@ public class Wallet extends BaseTaggableObject
      * @return true if successful
      */
     public boolean removeWatchedAddress(final Address address) {
-        return removeWatchedAddresses(ImmutableList.of(address));
+        return removeWatchedAddresses(Collections.singletonList(address));
     }
 
     /**
@@ -1903,7 +1902,7 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         try {
             if (dependencies == null)
-                dependencies = ImmutableList.of();
+                dependencies = Collections.emptyList();
             RiskAnalysis analysis = riskAnalyzer.create(this, tx, dependencies);
             RiskAnalysis.Result result = analysis.analyze();
             if (result != RiskAnalysis.Result.OK) {
