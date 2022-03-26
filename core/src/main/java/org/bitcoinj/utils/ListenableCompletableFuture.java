@@ -73,10 +73,11 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
             listenable = (ListenableCompletableFuture<T>) future;
         } else {
             listenable = new ListenableCompletableFuture<>();
-            future.whenComplete((val, ex) -> {
-                // We can't test for a null val, because of the CompletableFuture<Void> special case.
+            future.whenComplete((value, ex) -> {
+                // We can't test for a not-null T `value`, because of the CompletableFuture<Void> case,
+                // so we test for a null Throwable `ex` instead.
                 if (ex == null) {
-                    listenable.complete(val);
+                    listenable.complete(value);
                 } else {
                     listenable.completeExceptionally(ex);
                 }
