@@ -19,7 +19,6 @@ package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
@@ -4938,7 +4937,7 @@ public class Wallet extends BaseTaggableObject
     public Map<String, WalletExtension> getExtensions() {
         lock.lock();
         try {
-            return ImmutableMap.copyOf(extensions);
+            return Collections.unmodifiableMap(new HashMap<>(extensions));
         } finally {
             lock.unlock();
         }
