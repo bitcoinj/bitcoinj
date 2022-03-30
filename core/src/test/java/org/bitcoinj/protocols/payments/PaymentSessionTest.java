@@ -60,14 +60,14 @@ public class PaymentSessionTest {
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
-    private Coin coin = COIN;
+    private Coin amount = COIN;
 
     @Before
     public void setUp() throws Exception {
         new Context(TESTNET);
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
-        outputToMe = new TransactionOutput(TESTNET, tx, coin, serverKey);
+        outputToMe = new TransactionOutput(TESTNET, tx, amount, serverKey);
         tx.addOutput(outputToMe);
     }
 
@@ -76,7 +76,7 @@ public class PaymentSessionTest {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("test"));
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
-        assertEquals(coin, paymentSession.getValue());
+        assertEquals(amount, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
         assertTrue(new Date(time * 1000L).equals(paymentSession.getDate()));
         assertTrue(paymentSession.getSendRequest().tx.equals(tx));
@@ -95,8 +95,8 @@ public class PaymentSessionTest {
         assertEquals(paymentMemo, payment.getMemo());
         assertEquals(merchantData, payment.getMerchantData());
         assertEquals(1, payment.getRefundToCount());
-        assertEquals(coin.value, payment.getRefundTo(0).getAmount());
-        TransactionOutput refundOutput = new TransactionOutput(TESTNET, null, coin, refundAddr);
+        assertEquals(amount.value, payment.getRefundTo(0).getAmount());
+        TransactionOutput refundOutput = new TransactionOutput(TESTNET, null, amount, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
     }
@@ -179,7 +179,7 @@ public class PaymentSessionTest {
 
     private Protos.PaymentRequest newSimplePaymentRequest(String netID) {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(coin.value)
+                .setAmount(amount.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork(netID)
@@ -198,7 +198,7 @@ public class PaymentSessionTest {
 
     private Protos.PaymentRequest newExpiredPaymentRequest() {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(coin.value)
+                .setAmount(amount.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork("test")
