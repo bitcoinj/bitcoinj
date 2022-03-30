@@ -81,7 +81,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
     protected String userAgent, version;
-    protected WalletProtobufSerializer.WalletFactory walletFactory;
+    @Nonnull protected WalletProtobufSerializer.WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
@@ -193,8 +193,11 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * Sets a wallet factory which will be used when the kit creates a new wallet.
+     * @param walletFactory Factory for making new wallets (Use {@link WalletProtobufSerializer.WalletFactory#DEFAULT} for default behavior)
+     * @return WalletAppKit for method chaining purposes
      */
-    public WalletAppKit setWalletFactory(WalletProtobufSerializer.WalletFactory walletFactory) {
+    public WalletAppKit setWalletFactory(@Nonnull WalletProtobufSerializer.WalletFactory walletFactory) {
+        checkNotNull(walletFactory);
         this.walletFactory = walletFactory;
         return this;
     }
@@ -407,11 +410,7 @@ public class WalletAppKit extends AbstractIdleService {
             List<WalletExtension> extensions = provideWalletExtensions();
             WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer;
-            if (walletFactory != null)
-                serializer = new WalletProtobufSerializer(walletFactory);
-            else
-                serializer = new WalletProtobufSerializer();
+            final WalletProtobufSerializer serializer = new WalletProtobufSerializer(walletFactory);
             wallet = serializer.readWallet(params, extArray, proto);
             if (shouldReplayWallet)
                 wallet.reset();
@@ -427,11 +426,8 @@ public class WalletAppKit extends AbstractIdleService {
             kcg.fromKey(restoreFromKey, preferredOutputScriptType).build();
         else
             kcg.fromRandom(preferredOutputScriptType);
-        if (walletFactory != null) {
-            return walletFactory.create(params, kcg.build());
-        } else {
-            return new Wallet(params, kcg.build()); // default
-        }
+
+        return walletFactory.create(params, kcg.build());
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {
