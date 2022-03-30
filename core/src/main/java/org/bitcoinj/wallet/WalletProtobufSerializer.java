@@ -66,7 +66,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * can have their format evolved over time: conceptually they represent data using (tag, length, value) tuples. The
  * format is defined by the {@code wallet.proto} file in the bitcoinj source distribution.
  * <p>
- * This class is used through its static methods. The most common operations are writeWallet and readWallet, which do
+ * The most common operations are writeWallet and readWallet, which do
  * the obvious operations on Output/InputStreams. You can use a {@link ByteArrayInputStream} and equivalent
  * {@link ByteArrayOutputStream} if you'd like byte arrays instead. The protocol buffer can also be manipulated
  * in its object form if you'd like to modify the flattened data structure before serialization to binary.
