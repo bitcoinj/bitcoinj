@@ -60,7 +60,7 @@ public class PaymentSessionTest {
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
-    private Coin amount = COIN;
+    private final Coin amount = COIN;
 
     @Before
     public void setUp() throws Exception {
@@ -217,7 +217,7 @@ public class PaymentSessionTest {
     }
 
     private static class MockPaymentSession extends PaymentSession {
-        private ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
+        private final ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
 
         public MockPaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
             super(request);
