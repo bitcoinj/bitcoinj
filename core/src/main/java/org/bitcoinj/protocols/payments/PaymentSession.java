@@ -40,6 +40,7 @@ import java.security.KeyStoreException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>Provides a standard implementation of the Payment Protocol (BIP 0070)</p>
@@ -122,7 +123,7 @@ public class PaymentSession {
         if (url == null)
             throw new PaymentProtocolException.InvalidPaymentRequestURL("No payment request URL (r= parameter) in BitcoinURI " + uri);
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
+            return ListenableCompletableFuture.of(fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader));
         } catch (URISyntaxException e) {
             throw new PaymentProtocolException.InvalidPaymentRequestURL(e);
         }
@@ -164,14 +165,14 @@ public class PaymentSession {
         if (url == null)
             throw new PaymentProtocolException.InvalidPaymentRequestURL("null paymentRequestUrl");
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
+            return ListenableCompletableFuture.of(fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader));
         } catch(URISyntaxException e) {
             throw new PaymentProtocolException.InvalidPaymentRequestURL(e);
         }
     }
 
-    private static ListenableCompletableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
-        return ListenableCompletableFuture.supplyAsync(() -> {
+    private static CompletableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
+        return CompletableFuture.supplyAsync((ListenableCompletableFuture.ThrowingSupplier<PaymentSession>) () -> {
             HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
             connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
             connection.setUseCaches(false);
@@ -328,7 +329,7 @@ public class PaymentSession {
         } catch (MalformedURLException e) {
             return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.InvalidPaymentURL(e));
         }
-        return sendPayment(url, payment);
+        return ListenableCompletableFuture.of(sendPayment(url, payment));
     }
 
     /**
@@ -353,8 +354,8 @@ public class PaymentSession {
     }
 
     @VisibleForTesting
-    protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return ListenableCompletableFuture.supplyAsync(() -> {
+    protected CompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        return CompletableFuture.supplyAsync((ListenableCompletableFuture.ThrowingSupplier<PaymentProtocol.Ack>) () -> {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
