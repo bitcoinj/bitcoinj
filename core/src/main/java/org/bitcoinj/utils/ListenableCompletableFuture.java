@@ -16,7 +16,6 @@
 package org.bitcoinj.utils;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 /**
@@ -85,19 +84,6 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
             });
         }
         return listenable;
-    }
-
-    public static <T> ListenableCompletableFuture<T> supplyAsync(ThrowingSupplier<T> throwingSupplier, Executor executor) {
-        ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                T result = throwingSupplier.getThrows();
-                future.complete(result);
-            } catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
     }
 
     /**
