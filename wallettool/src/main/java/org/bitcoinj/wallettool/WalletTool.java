@@ -340,7 +340,7 @@ public class WalletTool implements Callable<Integer> {
         SPV
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         int exitCode = new CommandLine(new WalletTool()).execute(args);
         System.exit(exitCode);
     }
