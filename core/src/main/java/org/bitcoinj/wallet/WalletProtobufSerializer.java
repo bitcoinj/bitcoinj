@@ -93,13 +93,14 @@ public class WalletProtobufSerializer {
 
     public interface WalletFactory {
         Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
+        WalletFactory DEFAULT = Wallet::new;
     }
 
     private final WalletFactory factory;
     private KeyChainFactory keyChainFactory;
 
     public WalletProtobufSerializer() {
-        this((params, keyChainGroup) -> new Wallet(params, keyChainGroup));
+        this(WalletFactory.DEFAULT);
     }
 
     public WalletProtobufSerializer(WalletFactory factory) {
