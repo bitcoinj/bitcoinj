@@ -134,9 +134,8 @@ public class Peer extends PeerSocketHandler {
     private volatile int vMinProtocolVersion;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
-    private static class GetDataRequest {
+    private static class GetDataRequest extends CompletableFuture {
         final Sha256Hash hash;
-        final CompletableFuture future = new CompletableFuture();
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
         }
@@ -570,7 +569,7 @@ public class Peer extends PeerSocketHandler {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
                     log.info("{}: Bottomed out dep tree at {}", this, req.hash);
-                    req.future.cancel(true);
+                    req.cancel(true);
                     getDataFutures.remove(req);
                     break;
                 }
@@ -817,7 +816,7 @@ public class Peer extends PeerSocketHandler {
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
             for (Sha256Hash hash : txIdsToRequest) {
                 GetDataRequest req = new GetDataRequest(hash);
-                futures.add(req.future);
+                futures.add(req);
                 getDataFutures.add(req);
             }
             CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList(futures);
@@ -1072,7 +1071,7 @@ public class Peer extends PeerSocketHandler {
         Sha256Hash hash = m.getHash();
         for (GetDataRequest req : getDataFutures) {
             if (hash.equals(req.hash)) {
-                req.future.complete(m);
+                req.complete(m);
                 getDataFutures.remove(req);
                 found = true;
                 // Keep going in case there are more.
@@ -1262,7 +1261,7 @@ public class Peer extends PeerSocketHandler {
         GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash);
         getDataFutures.add(req);
         sendMessage(getdata);
-        return req.future;
+        return req;
     }
 
     /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
