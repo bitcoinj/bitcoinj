@@ -18,10 +18,8 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.Base58;
-import com.google.common.base.Functions;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -219,7 +217,7 @@ public class BIP32Test {
             }
 
             String getPathDescription() {
-                return "m/" + Joiner.on("/").join(Iterables.transform(Arrays.asList(path), Functions.toStringFunction()));
+                return "m/" + InternalUtils.joiner("/").join(Arrays.asList(path));
             }
         }
     }

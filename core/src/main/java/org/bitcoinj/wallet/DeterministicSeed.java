@@ -18,11 +18,11 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.*;
 
 import com.google.common.base.MoreObjects;
 import java.util.Objects;
-import com.google.common.base.Splitter;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
@@ -250,7 +250,7 @@ public class DeterministicSeed implements EncryptableItem {
     /** Get the mnemonic code as string, or null if unknown. */
     @Nullable
     public String getMnemonicString() {
-        return mnemonicCode != null ? Utils.SPACE_JOINER.join(mnemonicCode) : null;
+        return mnemonicCode != null ? InternalUtils.SPACE_JOINER.join(mnemonicCode) : null;
     }
 
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
@@ -258,6 +258,6 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {
-        return Splitter.on(" ").splitToList(mnemonicCode);
+        return InternalUtils.WHITESPACE_SPLITTER.splitToList(mnemonicCode);
     }
 }

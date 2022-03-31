@@ -37,8 +37,6 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.protobuf.ByteString;
@@ -105,6 +103,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.core.Coin.parseCoin;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -1107,8 +1108,7 @@ public class WalletTool implements Callable<Integer> {
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
-            final List<String> split = Collections
-                    .unmodifiableList(Splitter.on(CharMatcher.anyOf(" :;,")).omitEmptyStrings().splitToList(seedStr));
+            final List<String> split = splitMnemonic(seedStr);
             String passphrase = ""; // TODO allow user to specify a passphrase
             seed = new DeterministicSeed(split, null, passphrase, creationTimeSecs);
             try {
@@ -1135,6 +1135,12 @@ public class WalletTool implements Callable<Integer> {
         if (password != null)
             wallet.encrypt(password);
         wallet.saveToFile(walletFile);
+    }
+
+    private List<String> splitMnemonic(String seedStr) {
+        return Stream.of(seedStr.split("[ :;,]")) // anyOf(" :;,")
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toUnmodifiableList());
     }
 
     private void saveWallet(File walletFile) {

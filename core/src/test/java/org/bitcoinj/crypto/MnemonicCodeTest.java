@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
 
 /**
  * Test the various guard clauses of {@link MnemonicCode}.

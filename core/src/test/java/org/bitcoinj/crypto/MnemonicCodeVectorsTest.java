@@ -28,8 +28,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.SPACE_JOINER;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.core.internal.InternalUtils.SPACE_JOINER;
+import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
 import static org.junit.Assert.assertEquals;
 
 /**

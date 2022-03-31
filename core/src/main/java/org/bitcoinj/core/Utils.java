@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +48,20 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  */
 public class Utils {
 
-    /** Joiner for concatenating words with a space inbetween. */
+    /**
+     * Joiner for concatenating words with a space inbetween.
+     * @deprecated Use @link java.util.StringJoiner} or a direct Guava dependency
+     */
+    @Deprecated
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
-    /** Splitter for splitting words on whitespaces. */
+
+    /**
+     * Splitter for splitting words on whitespaces.
+     * @deprecated Use {@link java.lang.String#split(String)} or a direct Guava dependency
+     */
+    @Deprecated
     public static final Splitter WHITESPACE_SPLITTER = Splitter.on(Pattern.compile("\\s+"));
+
     /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
@@ -550,6 +561,6 @@ public class Utils {
         List<String> parts = new ArrayList<>(stack.size());
         for (byte[] push : stack)
             parts.add('[' + HEX.encode(push) + ']');
-        return SPACE_JOINER.join(parts);
+        return InternalUtils.SPACE_JOINER.join(parts);
     }
 }
