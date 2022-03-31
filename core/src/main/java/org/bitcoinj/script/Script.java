@@ -148,7 +148,7 @@ public class Script {
     @Override
     public String toString() {
         if (!chunks.isEmpty())
-            return Utils.SPACE_JOINER.join(chunks);
+            return Utils.SPACE_JOINER_FUNC.join(chunks);
         else
             return "<empty>";
     }

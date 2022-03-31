@@ -89,6 +89,6 @@ public class AddressV2Message extends AddressMessage {
 
     @Override
     public String toString() {
-        return "addrv2: " + Utils.SPACE_JOINER.join(addresses);
+        return "addrv2: " + Utils.SPACE_JOINER_FUNC.join(addresses);
     }
 }

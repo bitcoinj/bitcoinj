@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER_FUNC;
 
 /**
  * Test the various guard clauses of {@link MnemonicCode}.
@@ -49,19 +49,19 @@ public class MnemonicCodeTest {
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
     public void testBadLength() throws Exception {
-        List<String> words = WHITESPACE_SPLITTER.splitToList("risk tiger venture dinner age assume float denial penalty hello");
+        List<String> words = WHITESPACE_SPLITTER_FUNC.splitToList("risk tiger venture dinner age assume float denial penalty hello");
         mc.check(words);
     }
 
     @Test(expected = MnemonicException.MnemonicWordException.class)
     public void testBadWord() throws Exception {
-        List<String> words = WHITESPACE_SPLITTER.splitToList("risk tiger venture dinner xyzzy assume float denial penalty hello game wing");
+        List<String> words = WHITESPACE_SPLITTER_FUNC.splitToList("risk tiger venture dinner xyzzy assume float denial penalty hello game wing");
         mc.check(words);
     }
 
     @Test(expected = MnemonicException.MnemonicChecksumException.class)
     public void testBadChecksum() throws Exception {
-        List<String> words = WHITESPACE_SPLITTER.splitToList("bless cloud wheel regular tiny venue bird web grief security dignity zoo");
+        List<String> words = WHITESPACE_SPLITTER_FUNC.splitToList("bless cloud wheel regular tiny venue bird web grief security dignity zoo");
         mc.check(words);
     }
 
@@ -79,7 +79,7 @@ public class MnemonicCodeTest {
 
     @Test(expected = NullPointerException.class)
     public void testNullPassphrase() {
-        List<String> code = WHITESPACE_SPLITTER.splitToList("legal winner thank year wave sausage worth useful legal winner thank yellow");
+        List<String> code = WHITESPACE_SPLITTER_FUNC.splitToList("legal winner thank year wave sausage worth useful legal winner thank yellow");
         MnemonicCode.toSeed(code, null);
     }
 }

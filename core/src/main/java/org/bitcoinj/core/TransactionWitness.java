@@ -97,7 +97,7 @@ public class TransactionWitness {
                 stringPushes.add(Utils.HEX.encode(push));
             }
         }
-        return Utils.SPACE_JOINER.join(stringPushes);
+        return Utils.SPACE_JOINER_FUNC.join(stringPushes);
     }
 
     @Override

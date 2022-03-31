@@ -27,6 +27,8 @@ import javax.annotation.*;
 import java.io.*;
 import java.math.*;
 import java.util.*;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.Coin.*;
@@ -494,8 +496,7 @@ public class Block extends Message {
         s.append(" block: \n");
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
-        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null);
+        String bips = commaJoin(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null, isBIP65() ? "BIP65" : null);
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
@@ -512,6 +513,11 @@ public class Block extends Message {
             }
         }
         return s.toString();
+    }
+
+    // Join strings with ", " skipping nulls
+    private String commaJoin(String... strings) {
+        return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
     }
 
     /**

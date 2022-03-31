@@ -75,7 +75,7 @@ public final class BlockLocator {
 
     @Override
     public String toString() {
-        return "Block locator with " + size() + " blocks\n " + Utils.SPACE_JOINER.join(hashes);
+        return "Block locator with " + size() + " blocks\n " + Utils.SPACE_JOINER_FUNC.join(hashes);
     }
 
     @Override

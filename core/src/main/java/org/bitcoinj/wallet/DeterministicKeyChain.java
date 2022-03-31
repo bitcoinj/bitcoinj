@@ -1390,7 +1390,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         ? seed.decrypt(getKeyCrypter(), DEFAULT_PASSPHRASE_FOR_MNEMONIC, aesKey)
                         : seed;
                 final List<String> words = decryptedSeed.getMnemonicCode();
-                builder.append("Seed as words:     ").append(Utils.SPACE_JOINER.join(words)).append('\n');
+                builder.append("Seed as words:     ").append(Utils.SPACE_JOINER_FUNC.join(words)).append('\n');
                 builder.append("Seed as hex:       ").append(decryptedSeed.toHexString()).append('\n');
             } else {
                 if (seed.isEncrypted())

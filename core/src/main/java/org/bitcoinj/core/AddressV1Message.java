@@ -92,6 +92,6 @@ public class AddressV1Message extends AddressMessage {
 
     @Override
     public String toString() {
-        return "addr: " + Utils.SPACE_JOINER.join(addresses);
+        return "addr: " + Utils.SPACE_JOINER_FUNC.join(addresses);
     }
 }

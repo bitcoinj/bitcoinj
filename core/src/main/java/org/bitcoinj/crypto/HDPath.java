@@ -16,7 +16,7 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Splitter;
+import org.bitcoinj.core.Utils;
 
 import javax.annotation.Nonnull;
 import java.util.AbstractList;
@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
@@ -45,7 +47,9 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
     private static final char PREFIX_PUBLIC = 'M';
     private static final char SEPARATOR = '/';
-    private static final Splitter SEPARATOR_SPLITTER = Splitter.on(SEPARATOR).trimResults();
+    private static final Utils.SplitterFunc SEPARATOR_SPLITTER_FUNC = s -> Stream.of(s.split("/"))
+            .map(String::trim)
+            .collect(Collectors.toList());
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
@@ -155,7 +159,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Where a letter "H" means hardened key. Spaces are ignored.
      */
     public static HDPath parsePath(@Nonnull String path) {
-        List<String> parsedNodes = new LinkedList<>(SEPARATOR_SPLITTER.splitToList(path));
+        List<String> parsedNodes = SEPARATOR_SPLITTER_FUNC.splitToList(path);
         boolean hasPrivateKey = false;
         if (!parsedNodes.isEmpty()) {
             final String firstNode = parsedNodes.get(0);

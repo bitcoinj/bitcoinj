@@ -23,8 +23,6 @@ import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
-import com.google.common.base.Joiner;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +30,7 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -539,7 +538,7 @@ public class TransactionInput extends ChildMessage {
                 s.append(": COINBASE");
             } else {
                 s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
-                String flags = Joiner.on(", ").skipNulls().join(hasWitness() ? "witness" : null,
+                String flags = commaJoin(hasWitness() ? "witness" : null,
                         hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())
@@ -549,5 +548,9 @@ public class TransactionInput extends ChildMessage {
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String commaJoin(String... strings) {
+        return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
     }
 }

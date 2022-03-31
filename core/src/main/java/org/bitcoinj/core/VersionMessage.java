@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Joiner;
 import com.google.common.net.InetAddresses;
 
 import javax.annotation.Nullable;
@@ -323,6 +322,6 @@ public class VersionMessage extends Message {
         }
         if (services != 0)
             strings.add("remaining: " + Long.toBinaryString(services));
-        return Joiner.on(", ").join(strings);
+        return Utils.joiner(", ").join(strings);
     }
 }

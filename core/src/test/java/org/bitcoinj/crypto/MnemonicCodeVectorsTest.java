@@ -28,8 +28,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.SPACE_JOINER;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.core.Utils.SPACE_JOINER_FUNC;
+import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER_FUNC;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -60,10 +60,10 @@ public class MnemonicCodeVectorsTest {
     public void testMnemonicCode() throws Exception {
         final List<String> mnemonicCode = mc.toMnemonic(HEX.decode(vectorEntropy));
         final byte[] seed = MnemonicCode.toSeed(mnemonicCode, vectorPassphrase);
-        final byte[] entropy = mc.toEntropy(WHITESPACE_SPLITTER.splitToList(vectorMnemonicCode));
+        final byte[] entropy = mc.toEntropy(WHITESPACE_SPLITTER_FUNC.splitToList(vectorMnemonicCode));
 
         assertEquals(vectorEntropy, HEX.encode(entropy));
-        assertEquals(vectorMnemonicCode, SPACE_JOINER.join(mnemonicCode));
+        assertEquals(vectorMnemonicCode, SPACE_JOINER_FUNC.join(mnemonicCode));
         assertEquals(vectorSeed, HEX.encode(seed));
     }
 

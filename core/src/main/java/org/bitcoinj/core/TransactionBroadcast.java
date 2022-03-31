@@ -156,7 +156,7 @@ public class TransactionBroadcast {
             Collections.shuffle(peers, random);
             peers = peers.subList(0, numToBroadcastTo);
             log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getTxId());
-            log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Joiner.on(",").join(peers));
+            log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Utils.joiner(",").join(peers));
             for (final Peer peer : peers) {
                 try {
                     CompletableFuture<Void> future = peer.sendMessage(tx);
