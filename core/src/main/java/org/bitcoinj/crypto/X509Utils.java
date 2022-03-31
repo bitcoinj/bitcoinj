@@ -66,12 +66,16 @@ public class X509Utils {
             else if (type.equals(RFC4519Style.c))
                 country = val;
         }
-        final Collection<List<?>> subjectAlternativeNames = certificate.getSubjectAlternativeNames();
         String altName = null;
-        if (subjectAlternativeNames != null)
-            for (final List<?> subjectAlternativeName : subjectAlternativeNames)
-                if ((Integer) subjectAlternativeName.get(0) == 1) // rfc822name
-                    altName = (String) subjectAlternativeName.get(1);
+        try {
+            final Collection<List<?>> subjectAlternativeNames = certificate.getSubjectAlternativeNames();
+            if (subjectAlternativeNames != null)
+                for (final List<?> subjectAlternativeName : subjectAlternativeNames)
+                    if ((Integer) subjectAlternativeName.get(0) == 1) // rfc822name
+                        altName = (String) subjectAlternativeName.get(1);
+        } catch (CertificateParsingException e) {
+            // swallow
+        }
 
         if (org != null) {
             return withLocation ? Joiner.on(", ").skipNulls().join(org, location, country) : org;
