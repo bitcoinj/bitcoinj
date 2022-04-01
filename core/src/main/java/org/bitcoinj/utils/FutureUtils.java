@@ -62,7 +62,7 @@ public class FutureUtils {
      * 2. As a {@code FunctionalInterface} where a lambda that throws exceptions is
      * expected or allowed.
      *
-     * @param <T>
+     * @param <T> the supplied type
      */
     @FunctionalInterface
     public interface ThrowingSupplier<T> extends Supplier<T> {
