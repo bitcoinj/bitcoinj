@@ -34,7 +34,7 @@ import static org.bitcoinj.core.Utils.*;
 import static org.junit.Assert.*;
 
 @RunWith(value = Parameterized.class)
-public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
+public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
 
     private static final BitcoinSerializer SERIALIZER = new BitcoinSerializer(UNITTEST, true);
 
@@ -44,7 +44,7 @@ public class FilteredBlockAndPartialMerkleTreeTests extends TestWithPeerGroup {
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
     }
 
-    public FilteredBlockAndPartialMerkleTreeTests(ClientType clientType) {
+    public FilteredBlockAndPartialMerkleTreeTest(ClientType clientType) {
         super(clientType);
     }
 
