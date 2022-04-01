@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertEquals;
@@ -218,7 +217,7 @@ public class BIP32Test {
             }
 
             String getPathDescription() {
-                return "m/" + Utils.joiner("/").join(Arrays.asList(path));
+                return "m/" + InternalUtils.joiner("/").join(Arrays.asList(path));
             }
         }
     }

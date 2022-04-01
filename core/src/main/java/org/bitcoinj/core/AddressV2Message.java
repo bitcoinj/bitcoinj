@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.internal.InternalUtils;
+
 import java.util.ArrayList;
 
 /**
@@ -89,6 +91,6 @@ public class AddressV2Message extends AddressMessage {
 
     @Override
     public String toString() {
-        return "addrv2: " + Utils.SPACE_JOINER_FUNC.join(addresses);
+        return "addrv2: " + InternalUtils.SPACE_JOINER.join(addresses);
     }
 }

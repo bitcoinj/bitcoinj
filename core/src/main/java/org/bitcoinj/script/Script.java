@@ -20,6 +20,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +149,7 @@ public class Script {
     @Override
     public String toString() {
         if (!chunks.isEmpty())
-            return Utils.SPACE_JOINER_FUNC.join(chunks);
+            return InternalUtils.SPACE_JOINER.join(chunks);
         else
             return "<empty>";
     }

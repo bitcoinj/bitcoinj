@@ -16,7 +16,7 @@
 
 package wallettemplate;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.util.concurrent.Service;
@@ -95,13 +95,13 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         // Set the mnemonic seed words.
         final List<String> mnemonicCode = seed.getMnemonicCode();
         checkNotNull(mnemonicCode);    // Already checked for encryption.
-        String origWords = Utils.SPACE_JOINER_FUNC.join(mnemonicCode);
+        String origWords = InternalUtils.SPACE_JOINER.join(mnemonicCode);
         wordsArea.setText(origWords);
 
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
         TextFieldValidator validator = new TextFieldValidator(wordsArea, text ->
-            !didThrow(() -> codec.check(Utils.splitter(" ").splitToList(text)))
+            !didThrow(() -> codec.check(InternalUtils.splitter(" ").splitToList(text)))
         );
 
         // Clear the date picker if the user starts editing the words, if it contained the current wallets date.
@@ -180,7 +180,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         app.mainWindowController().restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
-        DeterministicSeed seed = new DeterministicSeed(Utils.splitter(" ").splitToList(wordsArea.getText()), null, "", birthday);
+        DeterministicSeed seed = new DeterministicSeed(InternalUtils.splitter(" ").splitToList(wordsArea.getText()), null, "", birthday);
         // Shut down bitcoinj and restart it with the new seed.
         app.walletAppKit().addListener(new Service.Listener() {
             @Override

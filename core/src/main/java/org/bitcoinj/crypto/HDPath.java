@@ -16,14 +16,13 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nonnull;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +46,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
     private static final char PREFIX_PUBLIC = 'M';
     private static final char SEPARATOR = '/';
-    private static final Utils.SplitterFunc SEPARATOR_SPLITTER_FUNC = s -> Stream.of(s.split("/"))
+    private static final InternalUtils.Splitter SEPARATOR_SPLITTER_FUNC = s -> Stream.of(s.split("/"))
             .map(String::trim)
             .collect(Collectors.toList());
     protected final boolean hasPrivateKey;

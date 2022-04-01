@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 
@@ -97,7 +98,7 @@ public class TransactionWitness {
                 stringPushes.add(Utils.HEX.encode(push));
             }
         }
-        return Utils.SPACE_JOINER_FUNC.join(stringPushes);
+        return InternalUtils.SPACE_JOINER.join(stringPushes);
     }
 
     @Override

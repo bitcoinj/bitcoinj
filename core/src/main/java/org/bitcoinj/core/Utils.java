@@ -24,14 +24,13 @@ import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,41 +49,17 @@ public class Utils {
 
     /**
      * Joiner for concatenating words with a space inbetween.
-     * @deprecated Use {@link Utils.JoinerFunc} instead
+     * @deprecated Use @link java.util.StringJoiner} or a direct Guava dependency
      */
     @Deprecated
     public static final Joiner SPACE_JOINER = Joiner.on(" ");
 
-    @FunctionalInterface
-    public interface JoinerFunc {
-        String join(List<?> objects);
-    }
-
-    public static JoinerFunc joiner(String delimiter) {
-        return list -> list.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(delimiter));
-    }
-
-    public static final JoinerFunc SPACE_JOINER_FUNC = joiner(" ");
-
     /**
      * Splitter for splitting words on whitespaces.
-     * @deprecated Use {@link Utils.SplitterFunc} instead
+     * @deprecated Use {@link java.lang.String#split(String)} or a direct Guava dependency
      */
     @Deprecated
     public static final Splitter WHITESPACE_SPLITTER = Splitter.on(Pattern.compile("\\s+"));
-
-    @FunctionalInterface
-    public interface SplitterFunc {
-        List<String> splitToList(String string);
-    }
-
-    public static SplitterFunc splitter(String pattern) {
-        return s -> Arrays.asList(s.split(pattern));
-    }
-
-    public static final SplitterFunc WHITESPACE_SPLITTER_FUNC = splitter("\\s+");
 
     /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
@@ -585,6 +560,6 @@ public class Utils {
         List<String> parts = new ArrayList<>(stack.size());
         for (byte[] push : stack)
             parts.add('[' + HEX.encode(push) + ']');
-        return SPACE_JOINER_FUNC.join(parts);
+        return InternalUtils.SPACE_JOINER.join(parts);
     }
 }

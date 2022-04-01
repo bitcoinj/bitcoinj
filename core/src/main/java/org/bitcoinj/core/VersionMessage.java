@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
+import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -322,6 +323,6 @@ public class VersionMessage extends Message {
         }
         if (services != 0)
             strings.add("remaining: " + Long.toBinaryString(services));
-        return Utils.joiner(", ").join(strings);
+        return InternalUtils.joiner(", ").join(strings);
     }
 }

@@ -20,6 +20,7 @@ import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.ListenerRegistration;
@@ -1390,7 +1391,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         ? seed.decrypt(getKeyCrypter(), DEFAULT_PASSPHRASE_FOR_MNEMONIC, aesKey)
                         : seed;
                 final List<String> words = decryptedSeed.getMnemonicCode();
-                builder.append("Seed as words:     ").append(Utils.SPACE_JOINER_FUNC.join(words)).append('\n');
+                builder.append("Seed as words:     ").append(InternalUtils.SPACE_JOINER.join(words)).append('\n');
                 builder.append("Seed as hex:       ").append(decryptedSeed.toHexString()).append('\n');
             } else {
                 if (seed.isEncrypted())

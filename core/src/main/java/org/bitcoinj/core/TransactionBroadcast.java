@@ -17,8 +17,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
-import com.google.common.base.*;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.utils.*;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.*;
@@ -156,7 +156,7 @@ public class TransactionBroadcast {
             Collections.shuffle(peers, random);
             peers = peers.subList(0, numToBroadcastTo);
             log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getTxId());
-            log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, Utils.joiner(",").join(peers));
+            log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, InternalUtils.joiner(",").join(peers));
             for (final Peer peer : peers) {
                 try {
                     CompletableFuture<Void> future = peer.sendMessage(tx);

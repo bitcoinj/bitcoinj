@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.internal.InternalUtils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,7 +77,7 @@ public final class BlockLocator {
 
     @Override
     public String toString() {
-        return "Block locator with " + size() + " blocks\n " + Utils.SPACE_JOINER_FUNC.join(hashes);
+        return "Block locator with " + size() + " blocks\n " + InternalUtils.SPACE_JOINER.join(hashes);
     }
 
     @Override
