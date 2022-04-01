@@ -191,7 +191,7 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void serializationUnencrypted() throws UnreadableWalletException {
+    public void serializationUnencrypted() throws Exception {
         Utils.setMockClock();
         Date now = Utils.now();
         final ECKey key1 = new ECKey();
@@ -215,7 +215,7 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void serializationEncrypted() throws UnreadableWalletException {
+    public void serializationEncrypted() throws Exception {
         ECKey key1 = new ECKey();
         chain.importKeys(key1);
         chain = chain.toEncrypted("foo bar");
@@ -231,7 +231,7 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void watching() throws UnreadableWalletException {
+    public void watching() throws Exception {
         ECKey key1 = new ECKey();
         ECKey pub = ECKey.fromPublicOnly(key1);
         chain.importKeys(pub);

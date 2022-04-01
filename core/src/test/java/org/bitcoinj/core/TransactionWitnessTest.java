@@ -39,7 +39,7 @@ public class TransactionWitnessTest {
     }
 
     @Test
-    public void testRedeemP2WSH() throws SignatureDecodeException {
+    public void testRedeemP2WSH() throws Exception {
         ECKey.ECDSASignature ecdsaSignature1 = TransactionSignature.decodeFromDER(Hex.decode("3045022100c3d84f7bf41c7eda3b23bbbccebde842a451c1a0aca39df706a3ff2fe78b1e0a02206e2e3c23559798b02302ad6fa5ddbbe87af5cc7d3b9f86b88588253770ab9f79"));
         TransactionSignature signature1 = new TransactionSignature(ecdsaSignature1, Transaction.SigHash.ALL, false);
         ECKey.ECDSASignature ecdsaSignature2 = TransactionSignature.decodeFromDER(Hex.decode("3045022100fcfe4a58f2878047ef7c5889fc52a3816ad2dd218807daa3c3eafd4841ffac4d022073454df7e212742f0fee20416b418a2c1340a33eebed5583d19a61088b112832"));

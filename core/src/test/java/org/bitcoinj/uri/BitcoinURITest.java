@@ -95,7 +95,7 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testGood_legacy() throws BitcoinURIParseException {
+    public void testGood_legacy() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
         assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
@@ -104,7 +104,7 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testGood_uppercaseScheme() throws BitcoinURIParseException {
+    public void testGood_uppercaseScheme() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME.toUpperCase(Locale.US) + ":" + MAINNET_GOOD_ADDRESS);
         assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
@@ -113,7 +113,7 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testGood_segwit() throws BitcoinURIParseException {
+    public void testGood_segwit() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_SEGWIT_ADDRESS);
         assertEquals(MAINNET_GOOD_SEGWIT_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
@@ -193,7 +193,7 @@ public class BitcoinURITest {
      *             If something goes wrong
      */
     @Test
-    public void testGood_Amount() throws BitcoinURIParseException {
+    public void testGood_Amount() throws Exception {
         // Test the decimal parsing
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210.12345678");
@@ -217,7 +217,7 @@ public class BitcoinURITest {
      *             If something goes wrong
      */
     @Test
-    public void testGood_Label() throws BitcoinURIParseException {
+    public void testGood_Label() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?label=Hello%20World");
         assertEquals("Hello World", testObject.getLabel());
@@ -230,7 +230,7 @@ public class BitcoinURITest {
      *             If something goes wrong
      */
     @Test
-    public void testGood_LabelWithAmpersandAndPlus() throws BitcoinURIParseException {
+    public void testGood_LabelWithAmpersandAndPlus() throws Exception {
         String testString = "Hello Earth & Mars + Venus";
         String encodedLabel = BitcoinURI.encodeURLString(testString);
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
@@ -245,7 +245,7 @@ public class BitcoinURITest {
      *             If something goes wrong
      */
     @Test
-    public void testGood_LabelWithRussian() throws BitcoinURIParseException {
+    public void testGood_LabelWithRussian() throws Exception {
         // Moscow in Russian in Cyrillic
         String moscowString = "\u041c\u043e\u0441\u043a\u0432\u0430";
         String encodedLabel = BitcoinURI.encodeURLString(moscowString); 
@@ -256,12 +256,9 @@ public class BitcoinURITest {
 
     /**
      * Handles a simple message
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testGood_Message() throws BitcoinURIParseException {
+    public void testGood_Message() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?message=Hello%20World");
         assertEquals("Hello World", testObject.getMessage());
@@ -269,12 +266,9 @@ public class BitcoinURITest {
 
     /**
      * Handles various well-formed combinations
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testGood_Combinations() throws BitcoinURIParseException {
+    public void testGood_Combinations() throws Exception {
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210&label=Hello%20World&message=Be%20well");
         assertEquals(
@@ -307,13 +301,13 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testEmpty_Label() throws BitcoinURIParseException {
+    public void testEmpty_Label() throws Exception {
         assertNull(new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?label=").getLabel());
     }
 
     @Test
-    public void testEmpty_Message() throws BitcoinURIParseException {
+    public void testEmpty_Message() throws Exception {
         assertNull(new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?message=").getMessage());
     }
@@ -333,19 +327,16 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testGood_ManyEquals() throws BitcoinURIParseException {
+    public void testGood_ManyEquals() throws Exception {
         assertEquals("aardvark=zebra", new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":"
                 + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra").getLabel());
     }
     
     /**
      * Handles unknown fields (required and not required)
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testUnknown() throws BitcoinURIParseException {
+    public void testUnknown() throws Exception {
         // Unknown not required field
         testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?aardvark=true");
@@ -373,7 +364,7 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void brokenURIs() throws BitcoinURIParseException {
+    public void brokenURIs() throws Exception {
         // Check we can parse the incorrectly formatted URIs produced by blockchain.info and its iPhone app.
         String str = "bitcoin://1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH?amount=0.01000000";
         BitcoinURI uri = new BitcoinURI(str);
@@ -382,19 +373,19 @@ public class BitcoinURITest {
     }
 
     @Test(expected = BitcoinURIParseException.class)
-    public void testBad_AmountTooPrecise() throws BitcoinURIParseException {
+    public void testBad_AmountTooPrecise() throws Exception {
         new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=0.123456789");
     }
 
     @Test(expected = BitcoinURIParseException.class)
-    public void testBad_NegativeAmount() throws BitcoinURIParseException {
+    public void testBad_NegativeAmount() throws Exception {
         new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=-1");
     }
 
     @Test(expected = BitcoinURIParseException.class)
-    public void testBad_TooLargeAmount() throws BitcoinURIParseException {
+    public void testBad_TooLargeAmount() throws Exception {
         new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=100000000");
     }

@@ -29,7 +29,7 @@ import org.junit.Test;
 public class DnsDiscoveryTest {
 
     @Test
-    public void testBuildDiscoveries() throws PeerDiscoveryException {
+    public void testBuildDiscoveries() throws Exception {
         String[] seeds = new String[] { "seed.bitcoin.sipa.be", "dnsseed.bluematt.me" };
         DnsDiscovery dnsDiscovery = new DnsDiscovery(seeds, MainNetParams.get());
         assertTrue(dnsDiscovery.seeds.size() == 2);
@@ -39,13 +39,13 @@ public class DnsDiscoveryTest {
     }
 
     @Test(expected = PeerDiscoveryException.class)
-    public void testGetPeersThrowsPeerDiscoveryExceptionWithServicesGreaterThanZero() throws PeerDiscoveryException {
+    public void testGetPeersThrowsPeerDiscoveryExceptionWithServicesGreaterThanZero() throws Exception {
         DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(), "");
         dnsSeedDiscovery.getPeers(1, 100, TimeUnit.MILLISECONDS);
     }
 
     @Test
-    public void testGetPeersReturnsNotEmptyListOfSocketAddresses() throws PeerDiscoveryException {
+    public void testGetPeersReturnsNotEmptyListOfSocketAddresses() throws Exception {
         DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(),
                 "localhost");
         List<InetSocketAddress> inetSocketAddresses = dnsSeedDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS);
@@ -53,7 +53,7 @@ public class DnsDiscoveryTest {
     }
 
     @Test(expected = PeerDiscoveryException.class)
-    public void testGetPeersThrowsPeerDiscoveryExceptionForUnknownHost() throws PeerDiscoveryException {
+    public void testGetPeersThrowsPeerDiscoveryExceptionForUnknownHost() throws Exception {
         DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(),
                 "unknown host");
         dnsSeedDiscovery.getPeers(0, 100, TimeUnit.MILLISECONDS);

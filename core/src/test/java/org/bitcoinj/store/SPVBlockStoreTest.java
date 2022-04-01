@@ -136,7 +136,7 @@ public class SPVBlockStoreTest {
     }
 
     @Test
-    public void performanceTest() throws BlockStoreException {
+    public void performanceTest() throws Exception {
         // On slow machines, this test could fail. Then either add @Ignore or adapt the threshold and please report to
         // us.
         final int ITERATIONS = 100000;

@@ -159,7 +159,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void checkSeed() throws MnemonicException {
+    public void checkSeed() throws Exception {
         wallet.getKeyChainSeed().check();
     }
 
@@ -2044,7 +2044,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void importAndEncrypt() throws InsufficientMoneyException {
+    public void importAndEncrypt() throws Exception {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
@@ -2158,7 +2158,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = Wallet.DustySendRequested.class)
-    public void sendDustTest() throws InsufficientMoneyException {
+    public void sendDustTest() throws Exception {
         // Tests sending dust, should throw DustySendRequested.
         Transaction tx = new Transaction(UNITTEST);
         Coin dustThreshold = new TransactionOutput(UNITTEST, null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
@@ -2657,7 +2657,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void lowerThanDefaultFee() throws InsufficientMoneyException {
+    public void lowerThanDefaultFee() throws Exception {
         int feeFactor = 200;
         Coin fee = Transaction.DEFAULT_TX_FEE.divide(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
@@ -2678,7 +2678,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void higherThanDefaultFee() throws InsufficientMoneyException {
+    public void higherThanDefaultFee() throws Exception {
         int feeFactor = 10;
         Coin fee = Transaction.DEFAULT_TX_FEE.multiply(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
@@ -3316,14 +3316,14 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = java.lang.IllegalStateException.class)
-    public void sendCoinsNoBroadcasterTest() throws InsufficientMoneyException {
+    public void sendCoinsNoBroadcasterTest() throws Exception {
         ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         SendRequest req = SendRequest.to(OTHER_ADDRESS.getParameters(), key, SATOSHI.multiply(12));
         wallet.sendCoins(req);
     }
 
     @Test
-    public void sendCoinsWithBroadcasterTest() throws InsufficientMoneyException {
+    public void sendCoinsWithBroadcasterTest() throws Exception {
         ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);

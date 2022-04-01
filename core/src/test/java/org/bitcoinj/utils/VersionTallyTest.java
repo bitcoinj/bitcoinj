@@ -23,7 +23,6 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.junit.BeforeClass;
@@ -101,7 +100,7 @@ public class VersionTallyTest {
     }
 
     @Test
-    public void testInitialize() throws BlockStoreException {
+    public void testInitialize() throws Exception {
         final BlockStore blockStore = new MemoryBlockStore(UNITTEST);
         final BlockChain chain = new BlockChain(UNITTEST, blockStore);
 

@@ -287,7 +287,7 @@ public class BtcFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void parseTest() throws java.text.ParseException {
+    public void parseTest() throws Exception {
         BtcFormat us = BtcFormat.getSymbolInstance(Locale.US);
         BtcFormat usCoded = BtcFormat.getCodeInstance(Locale.US);
         // Coins
@@ -497,7 +497,7 @@ public class BtcFormatTest {
     }
 
     @Test
-    public void parseMetricTest() throws ParseException {
+    public void parseMetricTest() throws Exception {
         BtcFormat cp = BtcFormat.getCodeInstance(Locale.US);
         BtcFormat sp = BtcFormat.getSymbolInstance(Locale.US);
         // coin

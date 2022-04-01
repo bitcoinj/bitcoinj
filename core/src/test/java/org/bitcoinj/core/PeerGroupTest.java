@@ -29,7 +29,6 @@ import org.junit.*;
 import org.junit.runner.*;
 import org.junit.runners.*;
 
-import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -131,7 +130,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void peerDiscoveryPolling() throws InterruptedException {
+    public void peerDiscoveryPolling() throws Exception {
         // Check that if peer discovery fails, we keep trying until we have some nodes to talk with.
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicBoolean result = new AtomicBoolean();
@@ -713,7 +712,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void preferLocalPeer() throws IOException {
+    public void preferLocalPeer() throws Exception {
         // Because we are using the same port (8333 or 18333) that is used by Bitcoin Core
         // We have to consider 2 cases:
         // 1. Test are executed on the same machine that is running a full node

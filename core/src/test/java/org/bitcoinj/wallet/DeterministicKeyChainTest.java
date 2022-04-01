@@ -222,7 +222,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void serializeUnencrypted() throws UnreadableWalletException {
+    public void serializeUnencrypted() throws Exception {
         chain.maybeLookAhead();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -260,7 +260,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void serializeSegwitUnencrypted() throws UnreadableWalletException {
+    public void serializeSegwitUnencrypted() throws Exception {
         segwitChain.maybeLookAhead();
         DeterministicKey key1 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -297,7 +297,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void serializeUnencryptedBIP44() throws UnreadableWalletException {
+    public void serializeUnencryptedBIP44() throws Exception {
         bip44chain.maybeLookAhead();
         DeterministicKey key1 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -361,7 +361,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void encryption() throws UnreadableWalletException {
+    public void encryption() throws Exception {
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKeyChain encChain = chain.toEncrypted("open secret");
         DeterministicKey encKey1 = encChain.findKeyFromPubKey(key1.getPubKey());
@@ -395,7 +395,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void watchingChain() throws UnreadableWalletException {
+    public void watchingChain() throws Exception {
         Utils.setMockClock();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -434,7 +434,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void watchingChainArbitraryPath() throws UnreadableWalletException {
+    public void watchingChainArbitraryPath() throws Exception {
         Utils.setMockClock();
         DeterministicKey key1 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -471,7 +471,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void watchingChainAccountOne() throws UnreadableWalletException {
+    public void watchingChainAccountOne() throws Exception {
         Utils.setMockClock();
         final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
@@ -514,7 +514,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void watchingSegwitChain() throws UnreadableWalletException {
+    public void watchingSegwitChain() throws Exception {
         Utils.setMockClock();
         DeterministicKey key1 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -554,7 +554,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void spendingChain() throws UnreadableWalletException {
+    public void spendingChain() throws Exception {
         Utils.setMockClock();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -593,7 +593,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void spendingChainAccountTwo() throws UnreadableWalletException {
+    public void spendingChainAccountTwo() throws Exception {
         Utils.setMockClock();
         final long secs = 1389353062L;
         final List<ChildNumber> accountTwo = ImmutableList.of(new ChildNumber(2, true));
@@ -621,7 +621,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void masterKeyAccount() throws UnreadableWalletException {
+    public void masterKeyAccount() throws Exception {
         Utils.setMockClock();
         long secs = 1389353062L;
         DeterministicKey firstReceiveKey = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -674,7 +674,7 @@ public class DeterministicKeyChainTest {
      */
     private void verifySpendableKeyChain(DeterministicKey firstReceiveKey, DeterministicKey secondReceiveKey,
                                          DeterministicKey firstChangeKey, DeterministicKey secondChangeKey,
-                                         DeterministicKeyChain keyChain, String serializationFile) throws UnreadableWalletException {
+                                         DeterministicKeyChain keyChain, String serializationFile) throws Exception {
 
         //verify that the keys are the same as the keyChain
         assertEquals(firstReceiveKey.getPubKeyPoint(), keyChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKeyPoint());

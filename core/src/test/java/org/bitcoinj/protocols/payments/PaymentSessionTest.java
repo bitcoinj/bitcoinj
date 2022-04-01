@@ -118,7 +118,7 @@ public class PaymentSessionTest {
     }
 
     @Test
-    public void testExpiredPaymentRequest() throws PaymentProtocolException {
+    public void testExpiredPaymentRequest() throws Exception {
         MockPaymentSession paymentSession = new MockPaymentSession(newExpiredPaymentRequest());
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.
@@ -155,7 +155,7 @@ public class PaymentSessionTest {
     }
 
     @Test(expected = PaymentProtocolException.InvalidNetwork.class)
-    public void testWrongNetwork() throws Throwable {
+    public void testWrongNetwork() throws Exception {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
         assertEquals(MAINNET, paymentSession.getNetworkParameters());
@@ -172,7 +172,7 @@ public class PaymentSessionTest {
             fail("Incorrect exception type");
         } catch (ExecutionException e) {
             // We're expecting PaymentProtocolException.InvalidNetwork as the cause
-            throw e.getCause();
+            throw (Exception) e.getCause();
         }
     }
 
