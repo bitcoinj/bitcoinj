@@ -3180,7 +3180,7 @@ public class WalletTest extends TestWithWallet {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
         wallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).fromRandom(Script.ScriptType.P2PKH).build());
         final List<ECKey> keys = new LinkedList<>();
-        wallet.addKeyChainEventListener(Threading.SAME_THREAD, k -> keys.addAll(k));
+        wallet.addKeyChainEventListener(Threading.SAME_THREAD, keys::addAll);
         wallet.freshReceiveKey();
         assertEquals(1, keys.size());
     }

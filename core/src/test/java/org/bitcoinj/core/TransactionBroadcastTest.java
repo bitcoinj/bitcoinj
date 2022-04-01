@@ -70,7 +70,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
-        broadcast.setProgressCallback(progress -> lastProgress.set(progress));
+        broadcast.setProgressCallback(lastProgress::set);
         CompletableFuture<Transaction> future = broadcast.broadcast();
         assertFalse(future.isDone());
         assertEquals(0.0, lastProgress.get(), 0.0);
@@ -110,7 +110,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(channels[1], InventoryMessage.with(tx));
         pingAndWait(channels[1]);
         final AtomicDouble p = new AtomicDouble();
-        broadcast.setProgressCallback(progress -> p.set(progress), Threading.SAME_THREAD);
+        broadcast.setProgressCallback(p::set, Threading.SAME_THREAD);
         assertEquals(1.0, p.get(), 0.01);
     }
 

@@ -99,7 +99,7 @@ public class WalletProtobufSerializer {
     private KeyChainFactory keyChainFactory;
 
     public WalletProtobufSerializer() {
-        this((params, keyChainGroup) -> new Wallet(params, keyChainGroup));
+        this(Wallet::new);
     }
 
     public WalletProtobufSerializer(WalletFactory factory) {
