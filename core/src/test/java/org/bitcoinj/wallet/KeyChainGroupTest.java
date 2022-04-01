@@ -249,7 +249,7 @@ public class KeyChainGroupTest {
         encryption(true);
     }
 
-    public void encryption(boolean withImported) throws Exception {
+    private void encryption(boolean withImported) {
         Utils.rollMockClock(0);
         long now = Utils.currentTimeSeconds();
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
