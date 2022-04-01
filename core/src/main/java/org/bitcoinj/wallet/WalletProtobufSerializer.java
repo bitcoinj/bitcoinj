@@ -91,6 +91,7 @@ public class WalletProtobufSerializer {
     private boolean requireAllExtensionsKnown = false;
     private int walletWriteBufferSize = CodedOutputStream.DEFAULT_BUFFER_SIZE;
 
+    @FunctionalInterface
     public interface WalletFactory {
         Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
         WalletFactory DEFAULT = Wallet::new;
