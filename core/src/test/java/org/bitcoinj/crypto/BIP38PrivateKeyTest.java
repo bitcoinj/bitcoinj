@@ -187,7 +187,7 @@ public class BIP38PrivateKeyTest {
     }
 
     @Test
-    public void roundtripBase58() throws Exception {
+    public void roundtripBase58() {
         String base58 = "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb";
         assertEquals(base58, BIP38PrivateKey.fromBase58(MAINNET, base58).toBase58());
     }

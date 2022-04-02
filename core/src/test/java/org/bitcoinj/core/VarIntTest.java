@@ -24,7 +24,7 @@ import org.junit.Test;
 public class VarIntTest {
 
     @Test
-    public void testBytes() throws Exception {
+    public void testBytes() {
         VarInt a = new VarInt(10); // with widening conversion
         assertEquals(1, a.getSizeInBytes());
         assertEquals(1, a.encode().length);
@@ -32,7 +32,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testShorts() throws Exception {
+    public void testShorts() {
         VarInt a = new VarInt(64000); // with widening conversion
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
@@ -40,7 +40,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testShortFFFF() throws Exception {
+    public void testShortFFFF() {
         VarInt a = new VarInt(0xFFFFL);
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
@@ -48,7 +48,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testInts() throws Exception {
+    public void testInts() {
         VarInt a = new VarInt(0xAABBCCDDL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
@@ -57,7 +57,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testIntFFFFFFFF() throws Exception {
+    public void testIntFFFFFFFF() {
         VarInt a = new VarInt(0xFFFFFFFFL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
@@ -66,7 +66,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testLong() throws Exception {
+    public void testLong() {
         VarInt a = new VarInt(0xCAFEBABEDEADBEEFL);
         assertEquals(9, a.getSizeInBytes());
         assertEquals(9, a.encode().length);
@@ -75,7 +75,7 @@ public class VarIntTest {
     }
 
     @Test
-    public void testSizeOfNegativeInt() throws Exception {
+    public void testSizeOfNegativeInt() {
         // shouldn't normally be passed, but at least stay consistent (bug regression test)
         assertEquals(VarInt.sizeOf(-1), new VarInt(-1).encode().length);
     }

@@ -47,7 +47,7 @@ public class SPVBlockStoreTest {
     private File blockStoreFile;
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() {
         Utils.resetMocking();
         UNITTEST = UnitTestParams.get();
     }

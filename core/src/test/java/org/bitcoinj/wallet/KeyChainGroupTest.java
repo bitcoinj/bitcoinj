@@ -105,7 +105,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void freshCurrentKeys() throws Exception {
+    public void freshCurrentKeys() {
         int numKeys = ((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
                 + 1  // keys issued
                 + group.getActiveKeyChain().getAccountPath().size() + 2  /* account key + int/ext parent keys */;
@@ -141,7 +141,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void freshCurrentKeysForMarriedKeychain() throws Exception {
+    public void freshCurrentKeysForMarriedKeychain() {
         group = createMarriedKeyChainGroup();
 
         try {
@@ -158,7 +158,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void imports() throws Exception {
+    public void imports() {
         ECKey key1 = new ECKey();
         int numKeys = group.numKeys();
         assertFalse(group.removeImportedKey(key1));
@@ -169,7 +169,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void findKey() throws Exception {
+    public void findKey() {
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey b = group.freshKey(KeyChain.KeyPurpose.CHANGE);
         ECKey c = new ECKey();
@@ -196,7 +196,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void currentP2SHAddress() throws Exception {
+    public void currentP2SHAddress() {
         group = createMarriedKeyChainGroup();
         Address a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(ScriptType.P2SH, a1.getOutputScriptType());
@@ -207,7 +207,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void freshAddress() throws Exception {
+    public void freshAddress() {
         group = createMarriedKeyChainGroup();
         Address a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         Address a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -223,7 +223,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void findRedeemData() throws Exception {
+    public void findRedeemData() {
         group = createMarriedKeyChainGroup();
 
         // test script hash that we don't have
@@ -240,12 +240,12 @@ public class KeyChainGroupTest {
     // Check encryption with and without a basic keychain.
 
     @Test
-    public void encryptionWithoutImported() throws Exception {
+    public void encryptionWithoutImported() {
         encryption(false);
     }
 
     @Test
-    public void encryptionWithImported() throws Exception {
+    public void encryptionWithImported() {
         encryption(true);
     }
 
@@ -321,7 +321,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void encryptionWhilstEmpty() throws Exception {
+    public void encryptionWhilstEmpty() {
         group = KeyChainGroup.builder(MAINNET).lookaheadSize(5).fromRandom(Script.ScriptType.P2PKH).build();
         group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).isEncrypted());
@@ -331,7 +331,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void bloom() throws Exception {
+    public void bloom() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = new ECKey();
         BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, (long)(Math.random() * Long.MAX_VALUE));
@@ -353,7 +353,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void findRedeemScriptFromPubHash() throws Exception {
+    public void findRedeemScriptFromPubHash() {
         group = createMarriedKeyChainGroup();
         Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(group.findRedeemDataFromScriptHash(address.getHash()) != null);
@@ -370,7 +370,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void bloomFilterForMarriedChains() throws Exception {
+    public void bloomFilterForMarriedChains() {
         group = createMarriedKeyChainGroup();
         int bufferSize = group.getLookaheadSize() + group.getLookaheadThreshold();
         int expected = bufferSize * 2 /* chains */ * 2 /* elements */;
@@ -393,7 +393,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void earliestKeyTime() throws Exception {
+    public void earliestKeyTime() {
         long now = Utils.currentTimeSeconds();   // mock
         long yesterday = now - 86400;
         assertEquals(now, group.getEarliestKeyCreationTime());
@@ -410,7 +410,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void events() throws Exception {
+    public void events() {
         // Check that events are registered with the right chains and that if a chain is added, it gets the event
         // listeners attached properly even post-hoc.
         final AtomicReference<ECKey> ran = new AtomicReference<>(null);
@@ -492,14 +492,14 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void addFollowingAccounts() throws Exception {
+    public void addFollowingAccounts() {
         assertFalse(group.isMarried());
         group.addAndActivateHDChain(createMarriedKeyChain());
         assertTrue(group.isMarried());
     }
 
     @Test
-    public void constructFromSeed() throws Exception {
+    public void constructFromSeed() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         final DeterministicSeed seed = checkNotNull(group.getActiveKeyChain().getSeed());
         KeyChainGroup group2 = KeyChainGroup.builder(MAINNET).lookaheadSize(5)
@@ -531,7 +531,7 @@ public class KeyChainGroupTest {
     }
 
     @Test(expected = DeterministicUpgradeRequiredException.class)
-    public void deterministicUpgradeRequired() throws Exception {
+    public void deterministicUpgradeRequired() {
         // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
         group = KeyChainGroup.builder(MAINNET).build();
         group.importKeys(new ECKey(), new ECKey());
@@ -578,7 +578,7 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void markAsUsed() throws Exception {
+    public void markAsUsed() {
         Address addr1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         Address addr2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(addr1, addr2);

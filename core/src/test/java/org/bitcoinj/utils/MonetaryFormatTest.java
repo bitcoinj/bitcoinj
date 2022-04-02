@@ -35,7 +35,7 @@ public class MonetaryFormatTest {
     private static final MonetaryFormat NO_CODE = MonetaryFormat.BTC.noCode();
 
     @Test
-    public void testSigns() throws Exception {
+    public void testSigns() {
         assertEquals("-1.00", NO_CODE.format(Coin.COIN.negate()).toString());
         assertEquals("@1.00", NO_CODE.negativeSign('@').format(Coin.COIN.negate()).toString());
         assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
@@ -43,18 +43,18 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void testDigits() throws Exception {
+    public void testDigits() {
         assertEquals("١٢.٣٤٥٦٧٨٩٠", NO_CODE.digits('\u0660').format(Coin.valueOf(1234567890l)).toString());
     }
 
     @Test
-    public void testDecimalMark() throws Exception {
+    public void testDecimalMark() {
         assertEquals("1.00", NO_CODE.format(Coin.COIN).toString());
         assertEquals("1,00", NO_CODE.decimalMark(',').format(Coin.COIN).toString());
     }
 
     @Test
-    public void testGrouping() throws Exception {
+    public void testGrouping() {
         assertEquals("0.1", format(Coin.parseCoin("0.1"), 0, 1, 2, 3));
         assertEquals("0.010", format(Coin.parseCoin("0.01"), 0, 1, 2, 3));
         assertEquals("0.001", format(Coin.parseCoin("0.001"), 0, 1, 2, 3));
@@ -64,7 +64,7 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void btcRounding() throws Exception {
+    public void btcRounding() {
         assertEquals("0", format(ZERO, 0, 0));
         assertEquals("0.00", format(ZERO, 0, 2));
 
@@ -110,7 +110,7 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void mBtcRounding() throws Exception {
+    public void mBtcRounding() {
         assertEquals("0", format(ZERO, 3, 0));
         assertEquals("0.00", format(ZERO, 3, 2));
 
@@ -152,7 +152,7 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void uBtcRounding() throws Exception {
+    public void uBtcRounding() {
         assertEquals("0", format(ZERO, 6, 0));
         assertEquals("0.00", format(ZERO, 6, 2));
 
@@ -187,7 +187,7 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void sat() throws Exception {
+    public void sat() {
         assertEquals("0", format(ZERO, 8, 0));
         assertEquals("100000000", format(COIN, 8, 0));
         assertEquals("2100000000000000", format(NetworkParameters.MAX_MONEY, 8, 0));
@@ -218,7 +218,7 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void standardCodes() throws Exception {
+    public void standardCodes() {
         assertEquals("BTC 0.00", MonetaryFormat.BTC.format(Coin.ZERO).toString());
         assertEquals("mBTC 0.00", MonetaryFormat.MBTC.format(Coin.ZERO).toString());
         assertEquals("µBTC 0", MonetaryFormat.UBTC.format(Coin.ZERO).toString());
@@ -226,12 +226,12 @@ public class MonetaryFormatTest {
     }
 
     @Test
-    public void standardSymbol() throws Exception {
+    public void standardSymbol() {
         assertEquals(MonetaryFormat.SYMBOL_BTC + " 0.00", new MonetaryFormat(true).format(Coin.ZERO).toString());
     }
 
     @Test
-    public void customCode() throws Exception {
+    public void customCode() {
         assertEquals("dBTC 0", MonetaryFormat.UBTC.code(1, "dBTC").shift(1).format(Coin.ZERO).toString());
     }
 
@@ -239,30 +239,30 @@ public class MonetaryFormatTest {
      * Test clearing all codes, and then setting codes after clearing.
      */
     @Test
-    public void noCode() throws Exception {
+    public void noCode() {
         assertEquals("0", MonetaryFormat.UBTC.noCode().shift(0).format(Coin.ZERO).toString());
         // Ensure that inserting a code after codes are wiped, works
         assertEquals("dBTC 0", MonetaryFormat.UBTC.noCode().code(1, "dBTC").shift(1).format(Coin.ZERO).toString());
     }
 
     @Test
-    public void codeOrientation() throws Exception {
+    public void codeOrientation() {
         assertEquals("BTC 0.00", MonetaryFormat.BTC.prefixCode().format(Coin.ZERO).toString());
         assertEquals("0.00 BTC", MonetaryFormat.BTC.postfixCode().format(Coin.ZERO).toString());
     }
 
     @Test
-    public void codeSeparator() throws Exception {
+    public void codeSeparator() {
         assertEquals("BTC@0.00", MonetaryFormat.BTC.codeSeparator('@').format(Coin.ZERO).toString());
     }
 
     @Test(expected = NumberFormatException.class)
-    public void missingCode() throws Exception {
+    public void missingCode() {
         MonetaryFormat.UBTC.shift(1).format(Coin.ZERO);
     }
 
     @Test
-    public void withLocale() throws Exception {
+    public void withLocale() {
         final Coin value = Coin.valueOf(-1234567890l);
         assertEquals("-12.34567890", NO_CODE.withLocale(Locale.US).format(value).toString());
         assertEquals("-12,34567890", NO_CODE.withLocale(Locale.GERMANY).format(value).toString());
@@ -270,13 +270,13 @@ public class MonetaryFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void withLocaleDevanagari() throws Exception {
+    public void withLocaleDevanagari() {
         final Coin value = Coin.valueOf(-1234567890l);
         assertEquals("-१२.३४५६७८९०", NO_CODE.withLocale(new Locale("hi", "IN")).format(value).toString()); // Devanagari
     }
 
     @Test
-    public void parse() throws Exception {
+    public void parse() {
         assertEquals(Coin.COIN, NO_CODE.parse("1"));
         assertEquals(Coin.COIN, NO_CODE.parse("1."));
         assertEquals(Coin.COIN, NO_CODE.parse("1.0"));
@@ -311,59 +311,59 @@ public class MonetaryFormatTest {
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidEmpty() throws Exception {
+    public void parseInvalidEmpty() {
         NO_CODE.parse("");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidWhitespaceBefore() throws Exception {
+    public void parseInvalidWhitespaceBefore() {
         NO_CODE.parse(" 1");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidWhitespaceSign() throws Exception {
+    public void parseInvalidWhitespaceSign() {
         NO_CODE.parse("- 1");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidWhitespaceAfter() throws Exception {
+    public void parseInvalidWhitespaceAfter() {
         NO_CODE.parse("1 ");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidMultipleDecimalMarks() throws Exception {
+    public void parseInvalidMultipleDecimalMarks() {
         NO_CODE.parse("1.0.0");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidDecimalMark() throws Exception {
+    public void parseInvalidDecimalMark() {
         NO_CODE.decimalMark(',').parse("1.0");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidPositiveSign() throws Exception {
+    public void parseInvalidPositiveSign() {
         NO_CODE.positiveSign('@').parse("+1.0");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidNegativeSign() throws Exception {
+    public void parseInvalidNegativeSign() {
         NO_CODE.negativeSign('@').parse("-1.0");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidHugeNumber() throws Exception {
+    public void parseInvalidHugeNumber() {
         NO_CODE.parse("99999999999999999999");
     }
 
     @Test(expected = NumberFormatException.class)
-    public void parseInvalidHugeNegativeNumber() throws Exception {
+    public void parseInvalidHugeNegativeNumber() {
         NO_CODE.parse("-99999999999999999999");
     }
 
     private static final Fiat ONE_EURO = Fiat.parseFiat("EUR", "1");
 
     @Test
-    public void fiat() throws Exception {
+    public void fiat() {
         assertEquals(ONE_EURO, NO_CODE.parseFiat("EUR", "1"));
     }
 

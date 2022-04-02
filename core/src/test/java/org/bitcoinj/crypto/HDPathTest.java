@@ -28,14 +28,14 @@ import java.util.List;
  */
 public class HDPathTest {
     @Test
-    public void testPrimaryConstructor() throws Exception {
+    public void testPrimaryConstructor() {
         HDPath path = new HDPath(true, Collections.<ChildNumber>emptyList());
         Assert.assertTrue("Has private key returns false incorrectly", path.hasPrivateKey);
         Assert.assertEquals("Path not empty", path.size(), 0);
     }
 
     @Test
-    public void testExtendVarargs() throws Exception {
+    public void testExtendVarargs() {
         HDPath basePath = new HDPath(true, Collections.<ChildNumber>emptyList());
         // Make sure we can do a depth of 5 as per BIP44, etc.
         // m / 44' / coinType' / accountIndex' / change / addressIndex

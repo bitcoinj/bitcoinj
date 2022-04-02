@@ -47,12 +47,12 @@ public class KeyCrypterScryptTest {
     private KeyCrypterScrypt keyCrypter;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         keyCrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
     }
 
     @Test
-    public void testKeyCrypterGood1() throws KeyCrypterException {
+    public void testKeyCrypterGood1() {
         // Encrypt.
         EncryptedData data = keyCrypter.encrypt(TEST_BYTES1, keyCrypter.deriveKey(PASSWORD1));
         assertNotNull(data);
@@ -88,7 +88,7 @@ public class KeyCrypterScryptTest {
     }
 
     @Test
-    public void testKeyCrypterWrongPassword() throws KeyCrypterException {
+    public void testKeyCrypterWrongPassword() {
         // create a longer encryption string
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
@@ -114,7 +114,7 @@ public class KeyCrypterScryptTest {
     }
 
     @Test
-    public void testEncryptDecryptBytes1() throws KeyCrypterException {
+    public void testEncryptDecryptBytes1() {
         // Encrypt bytes.
         EncryptedData data = keyCrypter.encrypt(TEST_BYTES1, keyCrypter.deriveKey(PASSWORD1));
         assertNotNull(data);
@@ -128,7 +128,7 @@ public class KeyCrypterScryptTest {
     }
 
     @Test
-    public void testEncryptDecryptBytes2() throws KeyCrypterException {
+    public void testEncryptDecryptBytes2() {
         // Encrypt random bytes of various lengths up to length 50.
         Random random = new Random();
 

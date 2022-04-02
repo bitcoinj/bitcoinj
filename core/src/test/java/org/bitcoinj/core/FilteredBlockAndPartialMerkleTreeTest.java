@@ -74,7 +74,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void deserializeFilteredBlock() throws Exception {
+    public void deserializeFilteredBlock() {
         // Random real block (000000000000dab0130bbcc991d3d7ae6b81aa6f50a798888dfe62337458dc45)
         // With one tx
         FilteredBlock block = new FilteredBlock(UNITTEST, HEX.decode("0100000079cda856b143d9db2c1caff01d1aecc8630d30625d10e8b4b8b0000000000000b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f196367291b4d4c86041b8fa45d630100000001b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f19630101"));
@@ -116,7 +116,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     }
 
     @Test(expected = VerificationException.class)
-    public void merkleTreeMalleability() throws Exception {
+    public void merkleTreeMalleability() {
         List<Sha256Hash> hashes = new ArrayList<>();
         for (byte i = 1; i <= 10; i++) hashes.add(numAsHash(i));
         hashes.add(numAsHash(9));
@@ -208,7 +208,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void parseHugeDeclaredSizePartialMerkleTree() throws Exception{
+    public void parseHugeDeclaredSizePartialMerkleTree() {
         final byte[] bits = new byte[1];
         bits[0] = 0x3f;
         final List<Sha256Hash> hashes = new ArrayList<>();

@@ -24,7 +24,7 @@ import static org.bitcoinj.core.Utils.HEX;
 
 public class HDUtilsTest {
     @Test
-    public void testHmac() throws Exception {
+    public void testHmac() {
         String[] tv = {
                 "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b" +
                         "0b0b0b0b",
@@ -117,7 +117,7 @@ public class HDUtilsTest {
     }
 
     @Test
-    public void testLongToByteArray() throws Exception {
+    public void testLongToByteArray() {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
         Assert.assertEquals("00000402", HEX.encode(bytes));
     }

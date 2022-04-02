@@ -151,22 +151,22 @@ public class BIP32Test {
     };
 
     @Test
-    public void testVector1() throws Exception {
+    public void testVector1() {
         testVector(0);
     }
 
     @Test
-    public void testVector2() throws Exception {
+    public void testVector2() {
         testVector(1);
     }
 
     @Test
-    public void testVector3() throws Exception {
+    public void testVector3() {
         testVector(2);
     }
 
     @Test
-    public void testVector4() throws Exception {
+    public void testVector4() {
         testVector(3);
     }
 

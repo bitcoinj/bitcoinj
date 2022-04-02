@@ -60,7 +60,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected FullPrunedBlockStore store;
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() {
         Utils.resetMocking();
         PARAMS = new UnitTestParams() {
             @Override public int getInterval() {
@@ -70,7 +70,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         BriefLogFormatter.init();
         Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
     }

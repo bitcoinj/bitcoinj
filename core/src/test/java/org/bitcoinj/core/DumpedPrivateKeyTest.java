@@ -36,12 +36,12 @@ public class DumpedPrivateKeyTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     @Test
-    public void checkNetwork() throws Exception {
+    public void checkNetwork() {
         DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
     @Test(expected = AddressFormatException.WrongNetwork.class)
-    public void checkNetworkWrong() throws Exception {
+    public void checkNetworkWrong() {
         DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
@@ -67,7 +67,7 @@ public class DumpedPrivateKeyTest {
     }
 
     @Test
-    public void roundtripBase58() throws Exception {
+    public void roundtripBase58() {
         String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk"; // 32-bytes key
         DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(null, base58);
         assertFalse(dumpedPrivateKey.isPubKeyCompressed());
@@ -75,7 +75,7 @@ public class DumpedPrivateKeyTest {
     }
 
     @Test
-    public void roundtripBase58_compressed() throws Exception {
+    public void roundtripBase58_compressed() {
         String base58 = "cSthBXr8YQAexpKeh22LB9PdextVE1UJeahmyns5LzcmMDSy59L4"; // 33-bytes, compressed == true
         DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(null, base58);
         assertTrue(dumpedPrivateKey.isPubKeyCompressed());
@@ -105,7 +105,7 @@ public class DumpedPrivateKeyTest {
     }
 
     @Test
-    public void roundtripBase58_getKey() throws Exception {
+    public void roundtripBase58_getKey() {
         ECKey k = new ECKey().decompress();
         assertFalse(k.isCompressed());
         assertEquals(k.getPrivKey(),
@@ -113,7 +113,7 @@ public class DumpedPrivateKeyTest {
     }
 
     @Test
-    public void roundtripBase58_compressed_getKey() throws Exception {
+    public void roundtripBase58_compressed_getKey() {
         ECKey k = new ECKey();
         assertTrue(k.isCompressed());
         assertEquals(k.getPrivKey(),

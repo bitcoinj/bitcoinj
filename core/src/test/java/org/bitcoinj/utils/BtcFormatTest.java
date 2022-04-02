@@ -724,7 +724,7 @@ public class BtcFormatTest {
     }
 
     @Test
-    public void testGrouping() throws Exception {
+    public void testGrouping() {
         BtcFormat usCoin = BtcFormat.getInstance(0, Locale.US, 1, 2, 3);
         assertEquals("0.1", usCoin.format(Coin.parseCoin("0.1")));
         assertEquals("0.010", usCoin.format(Coin.parseCoin("0.01")));
@@ -1060,7 +1060,7 @@ public class BtcFormatTest {
 
     /* Copied (and modified) from CoinFormatTest.java */
     @Test
-    public void btcRounding() throws Exception {
+    public void btcRounding() {
         BtcFormat coinFormat = BtcFormat.getCoinInstance(Locale.US);
         assertEquals("0", BtcFormat.getCoinInstance(Locale.US, 0).format(ZERO));
         assertEquals("0", coinFormat.format(ZERO, 0));
@@ -1164,7 +1164,7 @@ public class BtcFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void negativeTest() throws Exception {
+    public void negativeTest() {
         assertEquals("-1,00 BTC", BtcFormat.getInstance(FRANCE).format(COIN.multiply(-1)));
         assertEquals("BTC -1,00", BtcFormat.getInstance(ITALY).format(COIN.multiply(-1)));
         assertEquals("฿ -1,00", BtcFormat.getSymbolInstance(ITALY).format(COIN.multiply(-1)));
@@ -1274,7 +1274,7 @@ public class BtcFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void attributeTest() throws Exception {
+    public void attributeTest() {
         String codePat = BtcFormat.getCodeInstance(Locale.US).pattern();
         assertTrue(codePat.contains("BTC") && ! codePat.contains("(^|[^฿])฿([^฿]|$)") && ! codePat.contains("(^|[^¤])¤([^¤]|$)"));
         String symPat = BtcFormat.getSymbolInstance(Locale.US).pattern();

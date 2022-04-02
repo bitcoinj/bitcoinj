@@ -67,7 +67,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     }
 
     @Test
-    public void depthOrdering() throws Exception {
+    public void depthOrdering() {
         // Send two transactions in two blocks on top of each other.
         Transaction t1 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
         Transaction t2 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
@@ -88,7 +88,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     }
 
     @Test
-    public void coinAgeOrdering() throws Exception {
+    public void coinAgeOrdering() {
         // Send three transactions in four blocks on top of each other. Coin age of t1 is 1*4=4, coin age of t2 = 2*2=4
         // and t3=0.01.
         Transaction t1 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
@@ -110,7 +110,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     }
 
     @Test
-    public void identicalInputs() throws Exception {
+    public void identicalInputs() {
         // Add four outputs to a transaction with same value and destination. Select them all.
         Transaction t = new Transaction(UNITTEST);
         java.util.List<TransactionOutput> outputs = Arrays.asList(

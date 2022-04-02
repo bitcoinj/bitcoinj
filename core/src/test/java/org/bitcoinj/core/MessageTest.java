@@ -25,7 +25,7 @@ public class MessageTest {
 
     // If readStr() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
-    public void readStrOfExtremeLength() throws Exception {
+    public void readStrOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
         new VarStrMessage(UNITTEST, payload);
@@ -44,7 +44,7 @@ public class MessageTest {
 
     // If readBytes() is vulnerable this causes OutOfMemory
     @Test(expected = ProtocolException.class)
-    public void readByteArrayOfExtremeLength() throws Exception {
+    public void readByteArrayOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
         byte[] payload = length.encode();
         new VarBytesMessage(UNITTEST, payload);

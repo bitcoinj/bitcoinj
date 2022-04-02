@@ -183,7 +183,7 @@ public class BasicKeyChainTest {
     }
 
     @Test(expected = KeyCrypterException.class)
-    public void cannotMixParams() throws Exception {
+    public void cannotMixParams() {
         chain = chain.toEncrypted("foobar");
         KeyCrypterScrypt scrypter = new KeyCrypterScrypt(2);    // Some bogus params.
         ECKey key1 = new ECKey().encrypt(scrypter, scrypter.deriveKey("other stuff"));
@@ -246,7 +246,7 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void bloom() throws Exception {
+    public void bloom() {
         ECKey key1 = new ECKey();
         ECKey key2 = new ECKey();
         chain.importKeys(key1, key2);
@@ -271,7 +271,7 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void keysBeforeAndAfter() throws Exception {
+    public void keysBeforeAndAfter() {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         final ECKey key1 = new ECKey();

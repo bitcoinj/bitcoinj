@@ -29,28 +29,28 @@ import org.bitcoinj.core.Coin;
 public class ExchangeRateTest {
 
     @Test
-    public void normalRate() throws Exception {
+    public void normalRate() {
         ExchangeRate rate = new ExchangeRate(Fiat.parseFiat("EUR", "500"));
         assertEquals("0.5", rate.coinToFiat(Coin.MILLICOIN).toPlainString());
         assertEquals("0.002", rate.fiatToCoin(Fiat.parseFiat("EUR", "1")).toPlainString());
     }
 
     @Test
-    public void bigRate() throws Exception {
+    public void bigRate() {
         ExchangeRate rate = new ExchangeRate(Coin.parseCoin("0.0001"), Fiat.parseFiat("BYR", "5320387.3"));
         assertEquals("53203873000", rate.coinToFiat(Coin.COIN).toPlainString());
         assertEquals("0", rate.fiatToCoin(Fiat.parseFiat("BYR", "1")).toPlainString()); // Tiny value!
     }
 
     @Test
-    public void smallRate() throws Exception {
+    public void smallRate() {
         ExchangeRate rate = new ExchangeRate(Coin.parseCoin("1000"), Fiat.parseFiat("XXX", "0.0001"));
         assertEquals("0", rate.coinToFiat(Coin.COIN).toPlainString()); // Tiny value!
         assertEquals("10000000", rate.fiatToCoin(Fiat.parseFiat("XXX", "1")).toPlainString());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void currencyCodeMismatch() throws Exception {
+    public void currencyCodeMismatch() {
         ExchangeRate rate = new ExchangeRate(Fiat.parseFiat("EUR", "500"));
         rate.fiatToCoin(Fiat.parseFiat("USD", "1"));
     }

@@ -429,7 +429,7 @@ public class BlockChainTest {
     }
 
     @Test
-    public void falsePositives() throws Exception {
+    public void falsePositives() {
         double decay = AbstractBlockChain.FP_ESTIMATOR_ALPHA;
         assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
         chain.trackFalsePositives(55);

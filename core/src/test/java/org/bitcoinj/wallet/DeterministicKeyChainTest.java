@@ -84,7 +84,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void derive() throws Exception {
+    public void derive() {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key1.isPubKeyOnly());
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -107,7 +107,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void getKeys() throws Exception {
+    public void getKeys() {
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         chain.getKey(KeyChain.KeyPurpose.CHANGE);
         chain.maybeLookAhead();
@@ -115,7 +115,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void deriveAccountOne() throws Exception {
+    public void deriveAccountOne() {
         final long secs = 1389353062L;
         final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
@@ -174,7 +174,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void events() throws Exception {
+    public void events() {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = new ArrayList<>();
         long secs = 1389353062L;
@@ -704,7 +704,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void watchingCannotEncrypt() throws Exception {
+    public void watchingCannotEncrypt() {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
         chain = DeterministicKeyChain.builder().watch(accountKey.dropPrivateBytes().dropParent())
                 .outputScriptType(chain.getOutputScriptType()).build();
@@ -733,7 +733,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void bloom2() throws Exception {
+    public void bloom2() {
         // Verify that if when we watch a key, the filter contains at least 100 keys.
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)

@@ -59,7 +59,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void nonFinal() throws Exception {
+    public void nonFinal() {
         // Verify that just having a lock time in the future is not enough to be considered risky (it's still final).
         Transaction tx = new Transaction(MAINNET);
         TransactionInput input = tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
@@ -197,7 +197,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void standardOutputs() throws Exception {
+    public void standardOutputs() {
         Transaction tx = new Transaction(MAINNET);
         tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
@@ -218,7 +218,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void optInFullRBF() throws Exception {
+    public void optInFullRBF() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
@@ -227,7 +227,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void relativeLockTime() throws Exception {
+    public void relativeLockTime() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.setVersion(2);
         checkState(!tx.hasRelativeLockTime());
@@ -243,7 +243,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void transactionVersions() throws Exception {
+    public void transactionVersions() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.setVersion(1);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);

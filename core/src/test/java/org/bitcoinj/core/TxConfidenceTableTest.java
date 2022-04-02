@@ -58,7 +58,7 @@ public class TxConfidenceTableTest {
     }
 
     @Test
-    public void pinHandlers() throws Exception {
+    public void pinHandlers() {
         Transaction tx = UNITTEST.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
         Sha256Hash hash = tx.getTxId();
         table.seen(hash, address1);
@@ -72,7 +72,7 @@ public class TxConfidenceTableTest {
     }
 
     @Test
-    public void events() throws Exception {
+    public void events() {
         final TransactionConfidence.Listener.ChangeReason[] run = new TransactionConfidence.Listener.ChangeReason[1];
         tx1.getConfidence().addEventListener(Threading.SAME_THREAD, (confidence, reason) -> run[0] = reason);
         table.seen(tx1.getTxId(), address1);
@@ -117,7 +117,7 @@ public class TxConfidenceTableTest {
     }
 
     @Test
-    public void invAndDownload() throws Exception {
+    public void invAndDownload() {
         // Base case: we see a transaction announced twice and then download it. The count is in the confidence object.
         assertEquals(0, table.numBroadcastPeers(tx1.getTxId()));
         table.seen(tx1.getTxId(), address1);

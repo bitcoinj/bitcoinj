@@ -176,7 +176,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void multiplePeerDiscovery() throws InterruptedException {
+    public void multiplePeerDiscovery() {
         peerGroup.setMaxPeersToDiscoverCount(98);
         peerGroup.addPeerDiscovery(createPeerDiscovery(1, 0));
         peerGroup.addPeerDiscovery(createPeerDiscovery(2, 100));
@@ -388,7 +388,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void testWalletCatchupTime() throws Exception {
+    public void testWalletCatchupTime() {
         // Check the fast catchup time was initialized to something around the current runtime minus a week.
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
@@ -839,7 +839,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void testMaxOfMostFreq() throws Exception {
+    public void testMaxOfMostFreq() {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.<Integer>emptyList()));
         assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
         assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));

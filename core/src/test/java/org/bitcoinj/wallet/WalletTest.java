@@ -526,7 +526,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void sideChain() throws Exception {
+    public void sideChain() {
         // The wallet receives a coin on the best chain, then on a side chain. Balance is equal to both added together
         // as we assume the side chain tx is pending and will be included shortly.
         Coin v1 = COIN;
@@ -665,7 +665,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void isConsistent_duplicates() throws Exception {
+    public void isConsistent_duplicates() {
         // This test ensures that isConsistent catches duplicate transactions, eg, because we submitted the same block
         // twice (this is not allowed).
         Transaction tx = createFakeTx(UNITTEST, COIN, myAddress);
@@ -685,7 +685,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void isConsistent_pools() throws Exception {
+    public void isConsistent_pools() {
         // This test ensures that isConsistent catches transactions that are in incompatible pools.
         Transaction tx = createFakeTx(UNITTEST, COIN, myAddress);
         TransactionOutput output = new TransactionOutput(UNITTEST, tx, valueOf(0, 5), OTHER_ADDRESS);
@@ -699,7 +699,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void isConsistent_spent() throws Exception {
+    public void isConsistent_spent() {
         // This test ensures that isConsistent catches transactions that are marked spent when
         // they aren't.
         Transaction tx = createFakeTx(UNITTEST, COIN, myAddress);
@@ -743,7 +743,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void transactions() throws Exception {
+    public void transactions() {
         // This test covers a bug in which Transaction.getValueSentFromMe was calculating incorrectly.
         Transaction tx = createFakeTx(UNITTEST, COIN, myAddress);
         // Now add another output (ie, change) that goes to some other address.
@@ -1093,7 +1093,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void doubleSpendWeReceive() throws Exception {
+    public void doubleSpendWeReceive() {
         FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(UNITTEST, myAddress);
         // doubleSpends.t1 spends to our wallet. doubleSpends.t2 double spends somewhere else.
 
@@ -1263,7 +1263,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void pending1() throws Exception {
+    public void pending1() {
         // Check that if we receive a pending transaction that is then confirmed, we are notified as appropriate.
         final Coin nanos = COIN;
         final Transaction t1 = createFakeTx(UNITTEST, nanos, myAddress);
@@ -1356,7 +1356,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void pending3() throws Exception {
+    public void pending3() {
         // Check that if we receive a pending tx, and it's overridden by a double spend from the best chain, we
         // are notified that it's dead. This should work even if the pending tx inputs are NOT ours, ie, they don't
         // connect to anything.
@@ -1441,7 +1441,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void keyCreationTime() throws Exception {
+    public void keyCreationTime() {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
@@ -1452,7 +1452,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void scriptCreationTime() throws Exception {
+    public void scriptCreationTime() {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
@@ -1576,7 +1576,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = ECKey.MissingPrivateKeyException.class)
-    public void watchingWalletWithCreationTime() throws Exception {
+    public void watchingWalletWithCreationTime() {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(UNITTEST);
         Wallet watchingWallet = Wallet.fromWatchingKeyB58(UNITTEST, serialized, 1415282801);
@@ -1591,7 +1591,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void watchingScripts() throws Exception {
+    public void watchingScripts() {
         // Verify that pending transactions to watched addresses are relevant
         Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
@@ -1613,7 +1613,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void watchingScriptsSentFrom() throws Exception {
+    public void watchingScriptsSentFrom() {
         int baseElements = wallet.getBloomFilterElementCount();
 
         Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
@@ -1635,7 +1635,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void watchingScriptsBloomFilter() throws Exception {
+    public void watchingScriptsBloomFilter() {
         Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         Transaction t1 = createFakeTx(UNITTEST, CENT, watchedAddress);
         TransactionOutPoint outPoint = new TransactionOutPoint(UNITTEST, 0, t1);
@@ -1649,7 +1649,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void getWatchedAddresses() throws Exception {
+    public void getWatchedAddresses() {
         Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
         wallet.addWatchedAddress(watchedAddress);
         List<Address> watchedAddresses = wallet.getWatchedAddresses();
@@ -1680,7 +1680,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void removeScriptsBloomFilter() throws Exception {
+    public void removeScriptsBloomFilter() {
         List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Address watchedAddress = LegacyAddress.fromKey(UNITTEST, new ECKey());
@@ -1842,7 +1842,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void replayWhilstPending() throws Exception {
+    public void replayWhilstPending() {
         // Check that if a pending transaction spends outputs of chain-included transactions, we mark them as spent.
         // See bug 345. This can happen if there is a pending transaction floating around and then you replay the
         // chain without emptying the memory pool (or refilling it from a peer).
@@ -1862,7 +1862,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void outOfOrderPendingTxns() throws Exception {
+    public void outOfOrderPendingTxns() {
         // Check that if there are two pending transactions which we receive out of order, they are marked as spent
         // correctly. For instance, we are watching a wallet, someone pays us (A) and we then pay someone else (B)
         // with a change address but the network delivers the transactions to us in order B then A.
@@ -1882,7 +1882,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void encryptionDecryptionAESBasic() throws Exception {
+    public void encryptionDecryptionAESBasic() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -1905,7 +1905,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void encryptionDecryptionPasswordBasic() throws Exception {
+    public void encryptionDecryptionPasswordBasic() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
@@ -1923,7 +1923,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void encryptionDecryptionBadPassword() throws Exception {
+    public void encryptionDecryptionBadPassword() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -1970,7 +1970,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void encryptionDecryptionCheckExceptions() throws Exception {
+    public void encryptionDecryptionCheckExceptions() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -2009,7 +2009,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = KeyCrypterException.class)
-    public void addUnencryptedKeyToEncryptedWallet() throws Exception {
+    public void addUnencryptedKeyToEncryptedWallet() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
@@ -2018,7 +2018,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = KeyCrypterException.class)
-    public void addEncryptedKeyToUnencryptedWallet() throws Exception {
+    public void addEncryptedKeyToUnencryptedWallet() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -2029,7 +2029,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = KeyCrypterException.class)
-    public void mismatchedCrypter() throws Exception {
+    public void mismatchedCrypter() {
         Wallet encryptedWallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -2761,7 +2761,7 @@ public class WalletTest extends TestWithWallet {
     // Support for offline spending is tested in PeerGroupTest
 
     @Test
-    public void exceptionsDoNotBlockAllListeners() throws Exception {
+    public void exceptionsDoNotBlockAllListeners() {
         // Check that if a wallet listener throws an exception, the others still run.
         wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
             log.info("onCoinsReceived 1");
@@ -2836,7 +2836,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void childPaysForParent() throws Exception {
+    public void childPaysForParent() {
         // Receive confirmed balance to play with.
         Transaction toMe = createFakeTxWithoutChangeAddress(UNITTEST, COIN, myAddress);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, toMe);
@@ -2983,12 +2983,12 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void importOfHDKeyForbidden() throws Exception {
+    public void importOfHDKeyForbidden() {
         wallet.importKey(wallet.freshReceiveKey());
     }
 
     //@Test   //- this test is slow, disable for now.
-    public void fragmentedReKeying() throws Exception {
+    public void fragmentedReKeying() {
         // Send lots of small coins and check the fee is correct.
         ECKey key = wallet.freshReceiveKey();
         Address address = LegacyAddress.fromKey(UNITTEST, key);
@@ -3126,7 +3126,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void riskAnalysis() throws Exception {
+    public void riskAnalysis() {
         // Send a tx that is considered risky to the wallet, verify it doesn't show up in the balances.
         final Transaction tx = createFakeTx(UNITTEST, COIN, myAddress);
         final AtomicBoolean bool = new AtomicBoolean();
@@ -3176,7 +3176,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void keyEvents() throws Exception {
+    public void keyEvents() {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
         wallet = new Wallet(UNITTEST, KeyChainGroup.builder(UNITTEST).fromRandom(Script.ScriptType.P2PKH).build());
         final List<ECKey> keys = new LinkedList<>();
@@ -3186,7 +3186,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void upgradeToDeterministic_P2PKH_to_P2WPKH_unencrypted() throws Exception {
+    public void upgradeToDeterministic_P2PKH_to_P2WPKH_unencrypted() {
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH));
@@ -3203,7 +3203,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void upgradeToDeterministic_P2PKH_to_P2WPKH_encrypted() throws Exception {
+    public void upgradeToDeterministic_P2PKH_to_P2WPKH_encrypted() {
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH));
@@ -3230,7 +3230,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void upgradeToDeterministic_noDowngrade_unencrypted() throws Exception {
+    public void upgradeToDeterministic_noDowngrade_unencrypted() {
         wallet = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2WPKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH));
@@ -3247,7 +3247,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void shouldNotAddTransactionSignerThatIsNotReady() throws Exception {
+    public void shouldNotAddTransactionSignerThatIsNotReady() {
         wallet.addTransactionSigner(new NopTransactionSigner(false));
     }
 

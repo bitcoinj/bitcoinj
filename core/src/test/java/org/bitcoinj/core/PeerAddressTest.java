@@ -31,7 +31,7 @@ public class PeerAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     
     @Test
-    public void parse_versionVariant() throws Exception {
+    public void parse_versionVariant() {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";

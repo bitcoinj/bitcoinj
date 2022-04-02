@@ -24,7 +24,7 @@ import org.junit.Test;
 public class TransactionWitnessTest {
 
     @Test
-    public void testToString() throws Exception {
+    public void testToString() {
         TransactionWitness w1 = new TransactionWitness(0);
         assertEquals("", w1.toString());
 

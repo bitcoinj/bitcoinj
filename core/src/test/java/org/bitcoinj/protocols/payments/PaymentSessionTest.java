@@ -37,7 +37,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -63,7 +62,7 @@ public class PaymentSessionTest {
     private final Coin amount = COIN;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         new Context(TESTNET);
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
@@ -119,7 +118,7 @@ public class PaymentSessionTest {
     }
 
     @Test
-    public void testExpiredPaymentRequest() throws PaymentProtocolException, IOException {
+    public void testExpiredPaymentRequest() throws PaymentProtocolException {
         MockPaymentSession paymentSession = new MockPaymentSession(newExpiredPaymentRequest());
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.

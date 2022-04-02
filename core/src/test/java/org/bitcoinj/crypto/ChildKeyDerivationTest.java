@@ -38,7 +38,7 @@ public class ChildKeyDerivationTest {
     private static final int HDW_CHAIN_INTERNAL = 1;
 
     @Test
-    public void testChildKeyDerivation() throws Exception {
+    public void testChildKeyDerivation() {
         String[] ckdTestVectors = {
                 // test case 1:
                 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -155,7 +155,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void inverseEqualsNormal() throws Exception {
+    public void inverseEqualsNormal() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
         HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
         HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
@@ -164,7 +164,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void encryptedDerivation() throws Exception {
+    public void encryptedDerivation() {
         // Check that encrypting a parent key in the hierarchy and then deriving from it yields a DeterministicKey
         // with no private key component, and that the private key bytes are derived on demand.
         KeyCrypter scrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
@@ -194,7 +194,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void pubOnlyDerivation() throws Exception {
+    public void pubOnlyDerivation() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         assertFalse(key1.isPubKeyOnly());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);

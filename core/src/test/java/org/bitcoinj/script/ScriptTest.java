@@ -62,12 +62,12 @@ public class ScriptTest {
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Context context = new Context(TESTNET);
     }
 
     @Test
-    public void testScriptSig() throws Exception {
+    public void testScriptSig() {
         byte[] sigProgBytes = HEX.decode(sigProg);
         Script script = new Script(sigProgBytes);
         assertEquals(
@@ -76,7 +76,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void testScriptPubKey() throws Exception {
+    public void testScriptPubKey() {
         // Check we can extract the to address
         byte[] pubkeyBytes = HEX.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
@@ -86,7 +86,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void testMultiSig() throws Exception {
+    public void testMultiSig() {
         List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
         assertTrue(ScriptPattern.isSentToMultisig(ScriptBuilder.createMultiSigOutputScript(2, keys)));
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
@@ -112,13 +112,13 @@ public class ScriptTest {
     }
 
     @Test
-    public void testP2SHOutputScript() throws Exception {
+    public void testP2SHOutputScript() {
         Address p2shAddress = LegacyAddress.fromBase58(MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertTrue(ScriptPattern.isP2SH(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
     @Test
-    public void testIp() throws Exception {
+    public void testIp() {
         byte[] bytes = HEX.decode("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
         Script s = new Script(bytes);
         assertTrue(ScriptPattern.isP2PK(s));
@@ -169,7 +169,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void createAndUpdateEmptyInputScript() throws Exception {
+    public void createAndUpdateEmptyInputScript() {
         TransactionSignature dummySig = TransactionSignature.dummy();
         ECKey key = new ECKey();
 
@@ -443,7 +443,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void getToAddress() throws Exception {
+    public void getToAddress() {
         // P2PK
         ECKey toKey = new ECKey();
         Address toAddress = LegacyAddress.fromKey(TESTNET, toKey);
@@ -468,7 +468,7 @@ public class ScriptTest {
     }
 
     @Test(expected = ScriptException.class)
-    public void getToAddressNoPubKey() throws Exception {
+    public void getToAddressNoPubKey() {
         ScriptBuilder.createP2PKOutputScript(new ECKey()).getToAddress(TESTNET, false);
     }
 }

@@ -36,7 +36,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void compactEncoding() throws Exception {
+    public void compactEncoding() {
         assertEquals(new BigInteger("1234560000", 16), Utils.decodeCompactBits(0x05123456L));
         assertEquals(new BigInteger("c0de000000", 16), Utils.decodeCompactBits(0x0600c0de));
         assertEquals(0x05123456L, Utils.encodeCompactBits(new BigInteger("1234560000", 16)));

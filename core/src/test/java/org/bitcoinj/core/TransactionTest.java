@@ -57,31 +57,31 @@ public class TransactionTest {
     private Transaction tx;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         Context context = new Context(UNITTEST);
         tx = FakeTxBuilder.createFakeTx(UNITTEST);
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
-    public void emptyOutputs() throws Exception {
+    public void emptyOutputs() {
         tx.clearOutputs();
         tx.verify();
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
-    public void emptyInputs() throws Exception {
+    public void emptyInputs() {
         tx.clearInputs();
         tx.verify();
     }
 
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
-    public void tooHuge() throws Exception {
+    public void tooHuge() {
         tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
         tx.verify();
     }
 
     @Test(expected = VerificationException.DuplicatedOutPoint.class)
-    public void duplicateOutPoint() throws Exception {
+    public void duplicateOutPoint() {
         TransactionInput input = tx.getInput(0);
         input.setScriptBytes(new byte[1]);
         tx.addInput(input.duplicateDetached());
@@ -89,13 +89,13 @@ public class TransactionTest {
     }
 
     @Test(expected = VerificationException.NegativeValueOutput.class)
-    public void negativeOutput() throws Exception {
+    public void negativeOutput() {
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
         tx.verify();
     }
 
     @Test(expected = VerificationException.ExcessiveValue.class)
-    public void exceedsMaxMoney2() throws Exception {
+    public void exceedsMaxMoney2() {
         Coin half = UNITTEST.getMaxMoney().divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
@@ -103,20 +103,20 @@ public class TransactionTest {
     }
 
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
-    public void coinbaseInputInNonCoinbaseTX() throws Exception {
+    public void coinbaseInputInNonCoinbaseTX() {
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
         tx.verify();
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
-    public void coinbaseScriptSigTooSmall() throws Exception {
+    public void coinbaseScriptSigTooSmall() {
         tx.clearInputs();
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
         tx.verify();
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
-    public void coinbaseScriptSigTooLarge() throws Exception {
+    public void coinbaseScriptSigTooLarge() {
         tx.clearInputs();
         TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
@@ -177,7 +177,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void addSignedInput_P2PKH() throws Exception {
+    public void addSignedInput_P2PKH() {
         final Address toAddr = Address.fromKey(TESTNET, new ECKey(), Script.ScriptType.P2PKH);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
@@ -200,7 +200,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void addSignedInput_P2WPKH() throws Exception {
+    public void addSignedInput_P2WPKH() {
         final Address toAddr = Address.fromKey(TESTNET, new ECKey(), Script.ScriptType.P2WPKH);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
@@ -529,7 +529,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testPrioSizeCalc() throws Exception {
+    public void testPrioSizeCalc() {
         Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, ADDRESS);
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
@@ -543,7 +543,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testCoinbaseHeightCheck() throws VerificationException {
+    public void testCoinbaseHeightCheck() {
         // Coinbase transaction from block 300,000
         final byte[] transactionBytes = HEX.decode(
                 "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
@@ -557,7 +557,7 @@ public class TransactionTest {
      * See https://github.com/bitcoinj/bitcoinj/issues/1097
      */
     @Test
-    public void testCoinbaseHeightCheckWithDamagedScript() throws VerificationException {
+    public void testCoinbaseHeightCheckWithDamagedScript() {
         // Coinbase transaction from block 224,430
         final byte[] transactionBytes = HEX.decode(
             "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d00000000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf115515b7c135e779e9f442f88ac00000000");
@@ -629,7 +629,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void parseTransactionWithHugeDeclaredInputsSize() throws Exception {
+    public void parseTransactionWithHugeDeclaredInputsSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, true, false, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
@@ -641,7 +641,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void parseTransactionWithHugeDeclaredOutputsSize() throws Exception {
+    public void parseTransactionWithHugeDeclaredOutputsSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, true, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
@@ -653,7 +653,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void parseTransactionWithHugeDeclaredWitnessPushCountSize() throws Exception {
+    public void parseTransactionWithHugeDeclaredWitnessPushCountSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, false, true);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {

@@ -60,7 +60,7 @@ public class BlockTest {
     }
 
     @Test
-    public void testWork() throws Exception {
+    public void testWork() {
         BigInteger work = TESTNET.getGenesisBlock().getWork();
         double log2Work = Math.log(work.longValue()) / Math.log(2);
         // This number is printed by Bitcoin Core at startup as the calculated value of chainWork on testnet:
@@ -69,17 +69,17 @@ public class BlockTest {
     }
 
     @Test
-    public void testBlockVerification() throws Exception {
+    public void testBlockVerification() {
         block700000.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
     }
     
     @Test
-    public void testDate() throws Exception {
+    public void testDate() {
         assertEquals("2016-02-13T22:59:39Z", Utils.dateTimeFormat(block700000.getTime()));
     }
 
     @Test
-    public void testProofOfWork() throws Exception {
+    public void testProofOfWork() {
         // This params accepts any difficulty target.
         Block block = UNITTEST.getDefaultSerializer().makeBlock(block700000Bytes);
         block.setNonce(12346);
@@ -108,7 +108,7 @@ public class BlockTest {
     }
 
     @Test
-    public void testBadTransactions() throws Exception {
+    public void testBadTransactions() {
         // Re-arrange so the coinbase transaction is not first.
         Transaction tx1 = block700000.transactions.get(0);
         Transaction tx2 = block700000.transactions.get(1);
@@ -123,14 +123,14 @@ public class BlockTest {
     }
 
     @Test
-    public void testHeaderParse() throws Exception {
+    public void testHeaderParse() {
         Block header = block700000.cloneAsHeader();
         Block reparsed = TESTNET.getDefaultSerializer().makeBlock(header.bitcoinSerialize());
         assertEquals(reparsed, header);
     }
 
     @Test
-    public void testBitcoinSerialization() throws Exception {
+    public void testBitcoinSerialization() {
         // We have to be able to reserialize everything exactly as we found it for hashing to work. This test also
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
@@ -322,7 +322,7 @@ public class BlockTest {
     }
 
     @Test
-    public void parseBlockWithHugeDeclaredTransactionsSize() throws Exception{
+    public void parseBlockWithHugeDeclaredTransactionsSize() {
         Block block = new Block(UNITTEST, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {

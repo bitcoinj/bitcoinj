@@ -91,13 +91,13 @@ public class WalletProtobufSerializerTest {
     private long mScriptCreationTime;
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() {
         Utils.resetMocking();
         UNITTEST = UnitTestParams.get();
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         BriefLogFormatter.initVerbose();
         Context ctx = new Context(UNITTEST);
         myWatchedKey = new ECKey();

@@ -41,7 +41,7 @@ public class BitcoinURITest {
     private static final String BITCOIN_SCHEME = MAINNET.getUriScheme();
 
     @Test
-    public void testConvertToBitcoinURI() throws Exception {
+    public void testConvertToBitcoinURI() {
         Address goodAddress = LegacyAddress.fromBase58(MAINNET, MAINNET_GOOD_ADDRESS);
         
         // simple example
@@ -89,7 +89,7 @@ public class BitcoinURITest {
     }
 
     @Test
-    public void testConvertToBitcoinURI_segwit() throws Exception {
+    public void testConvertToBitcoinURI_segwit() {
         assertEquals("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS + "?message=segwit%20rules", BitcoinURI.convertToBitcoinURI(
                 SegwitAddress.fromBech32(MAINNET, MAINNET_GOOD_SEGWIT_ADDRESS), null, null, "segwit rules"));
     }
@@ -284,12 +284,9 @@ public class BitcoinURITest {
 
     /**
      * Handles a badly formatted amount field
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testBad_Amount() throws BitcoinURIParseException {
+    public void testBad_Amount() {
         // Missing
         try {
             testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
@@ -323,12 +320,9 @@ public class BitcoinURITest {
 
     /**
      * Handles duplicated fields (sneaky address overwrite attack)
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testBad_Duplicated() throws BitcoinURIParseException {
+    public void testBad_Duplicated() {
         try {
             testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?address=aardvark");
