@@ -701,17 +701,16 @@ public class WalletProtobufSerializer {
         final WalletTransaction.Pool pool;
         switch (txProto.getPool()) {
             case DEAD: pool = WalletTransaction.Pool.DEAD; break;
-            case PENDING: pool = WalletTransaction.Pool.PENDING; break;
-            case SPENT: pool = WalletTransaction.Pool.SPENT; break;
-            case UNSPENT: pool = WalletTransaction.Pool.UNSPENT; break;
-            // Upgrade old wallets: inactive pool has been merged with the pending pool.
-            // Remove this some time after 0.9 is old and everyone has upgraded.
-            // There should not be any spent outputs in this tx as old wallets would not allow them to be spent
-            // in this state.
+            case PENDING:
+                // Upgrade old wallets: inactive pool has been merged with the pending pool.
+                // Remove this some time after 0.9 is old and everyone has upgraded.
+                // There should not be any spent outputs in this tx as old wallets would not allow them to be spent
+                // in this state.
             case INACTIVE:
             case PENDING_INACTIVE:
-                pool = WalletTransaction.Pool.PENDING;
-                break;
+                pool = WalletTransaction.Pool.PENDING; break;
+            case SPENT: pool = WalletTransaction.Pool.SPENT; break;
+            case UNSPENT: pool = WalletTransaction.Pool.UNSPENT; break;
             default:
                 throw new UnreadableWalletException("Unknown transaction pool: " + txProto.getPool());
         }
