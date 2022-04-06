@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'java-library'
     id 'eclipse'
-    id 'org.jetbrains.kotlin.jvm' version "1.4.0"
+    id 'org.jetbrains.kotlin.jvm' version "1.4.32"
 }
 
 dependencies {
