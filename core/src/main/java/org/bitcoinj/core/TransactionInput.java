@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
@@ -538,7 +539,7 @@ public class TransactionInput extends ChildMessage {
                 s.append(": COINBASE");
             } else {
                 s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
-                String flags = commaJoin(hasWitness() ? "witness" : null,
+                String flags = InternalUtils.commaJoin(hasWitness() ? "witness" : null,
                         hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())
@@ -548,9 +549,5 @@ public class TransactionInput extends ChildMessage {
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String commaJoin(String... strings) {
-        return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
     }
 }

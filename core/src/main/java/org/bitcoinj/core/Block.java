@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.*;
 import com.google.common.base.*;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.*;
 import org.slf4j.*;
@@ -496,7 +497,7 @@ public class Block extends Message {
         s.append(" block: \n");
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
-        String bips = commaJoin(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null, isBIP65() ? "BIP65" : null);
+        String bips = InternalUtils.commaJoin(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null, isBIP65() ? "BIP65" : null);
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
@@ -513,11 +514,6 @@ public class Block extends Message {
             }
         }
         return s.toString();
-    }
-
-    // Join strings with ", " skipping nulls
-    private String commaJoin(String... strings) {
-        return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
     }
 
     /**

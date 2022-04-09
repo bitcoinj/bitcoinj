@@ -18,6 +18,7 @@ package org.bitcoinj.core.internal;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -83,4 +84,14 @@ public class InternalUtils {
      * A {@link Splitter} for splitting a string into components by whitespace.
      */
     public static final Splitter WHITESPACE_SPLITTER = splitter("\\s+");
+
+    /**
+     * Join strings with ", " skipping nulls
+     * @param strings varargs strings
+     * @return A joined string
+     */
+    public static String commaJoin(String... strings) {
+        return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
+    }
+
 }
