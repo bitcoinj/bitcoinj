@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'eclipse'
+}
+
+dependencies {
+    implementation project(':bitcoinj-core')
+
+    testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
+}
+
+sourceCompatibility = 11
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+test {
+    useJUnitPlatform()
+}
