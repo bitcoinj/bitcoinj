@@ -347,7 +347,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws IOException, BlockStoreException {
         if (help) {
             System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), StandardCharsets.UTF_8));
             return 0;
