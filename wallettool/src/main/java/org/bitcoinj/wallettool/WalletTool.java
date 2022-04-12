@@ -68,8 +68,8 @@ import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletExtension;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
@@ -347,7 +347,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() throws IOException, BlockStoreException {
         if (help) {
             System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), StandardCharsets.UTF_8));
             return 0;
@@ -417,29 +417,20 @@ public class WalletTool implements Callable<Integer> {
             }
         }
 
-        InputStream walletInputStream = null;
-        try {
-            boolean forceReset = action == ActionEnum.RESET
+        boolean forceReset = action == ActionEnum.RESET
                 || (action == ActionEnum.SYNC
-                    && force);
-            WalletProtobufSerializer loader = new WalletProtobufSerializer();
-            if (ignoreMandatoryExtensions)
-                loader.setRequireMandatoryExtensions(false);
-            walletInputStream = new BufferedInputStream(new FileInputStream(walletFile));
-            wallet = loader.readWallet(walletInputStream, forceReset, (WalletExtension[])(null));
-            if (!wallet.getParams().equals(params)) {
-                System.err.println("Wallet does not match requested network parameters: " +
-                        wallet.getParams().getId() + " vs " + params.getId());
-                return 1;
-            }
-        } catch (Exception e) {
+                && force);
+        try {
+            wallet = Wallet.loadFromFile(walletFile, forceReset, ignoreMandatoryExtensions);
+        } catch (UnreadableWalletException e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
             return 1;
-        } finally {
-            if (walletInputStream != null) {
-                walletInputStream.close();
-            }
+        }
+        if (!wallet.getParams().equals(params)) {
+            System.err.println("Wallet does not match requested network parameters: " +
+                    wallet.getParams().getId() + " vs " + params.getId());
+            return 1;
         }
 
         // What should we do?

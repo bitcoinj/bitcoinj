@@ -1663,17 +1663,32 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * <p>Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
-     * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}</p>
+     * Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
+     * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
      *
      * @param file the wallet file to read
      * @param walletExtensions extensions possibly added to the wallet.
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem loading or parsing the file
      */
     public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        try {
-            try (FileInputStream stream = new FileInputStream(file)) {
-                return loadFromFileStream(stream, walletExtensions);
-            }
+        return loadFromFile(file, false, false, walletExtensions);
+    }
+
+    /**
+     * Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
+     * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
+     *
+     * @param file the wallet file to read
+     * @param forceReset force a reset of the wallet
+     * @param ignoreMandatoryExtensions if true, mandatory extensions will be ignored instead of causing load errors (not recommended)
+     * @param walletExtensions extensions possibly added to the wallet.
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem loading or parsing the file
+     */
+    public static Wallet loadFromFile(File file, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+        try (FileInputStream stream = new FileInputStream(file)) {
+            return loadFromFileStream(stream, forceReset, ignoreMandatoryExtensions, walletExtensions);
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not open file", e);
         }
@@ -1762,9 +1777,32 @@ public class Wallet extends BaseTaggableObject
         return isActuallySpent == isSpent;
     }
 
-    /** Returns a wallet deserialized from the given input stream and wallet extensions. */
+    /**
+     * Returns a wallet deserialized from the given input stream and wallet extensions.
+     * @param stream An open InputStream containing a ProtoBuf Wallet
+     * @param walletExtensions extensions possibly added to the wallet.
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     */
     public static Wallet loadFromFileStream(InputStream stream, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        Wallet wallet = new WalletProtobufSerializer().readWallet(stream, walletExtensions);
+        return loadFromFileStream(stream, false, false, walletExtensions);
+    }
+
+    /**
+     * Returns a wallet deserialized from the given input stream and wallet extensions.
+     * @param stream An open InputStream containing a ProtoBuf Wallet
+     * @param forceReset if true, configure wallet to replay transactions from the blockchain
+     * @param ignoreMandatoryExtensions if true, mandatory extensions will be ignored instead of causing load errors (not recommended)
+     * @param walletExtensions extensions possibly added to the wallet.
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     */
+    public static Wallet loadFromFileStream(InputStream stream, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+        WalletProtobufSerializer loader = new WalletProtobufSerializer();
+        if (ignoreMandatoryExtensions) {
+            loader.setRequireMandatoryExtensions(false);
+        }
+        Wallet wallet = loader.readWallet(stream, forceReset, walletExtensions);
         if (!wallet.isConsistent()) {
             log.error("Loaded an inconsistent wallet");
         }
