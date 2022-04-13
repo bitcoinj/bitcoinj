@@ -50,6 +50,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      * Scheme part for Bitcoin URIs.
      */
     public static final String BITCOIN_SCHEME = "bitcoin";
+    /**
+     * Block reward halving interval (number of blocks)
+     */
     public static final int REWARD_HALVING_INTERVAL = 210000;
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
@@ -57,6 +60,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
     protected Block genesisBlock;
 
+    /**
+     * No-args constructor
+     */
     public AbstractBitcoinNetParams() {
         super();
         interval = INTERVAL;
@@ -81,6 +87,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      * <p>The half-life is controlled by {@link NetworkParameters#getSubsidyDecreaseBlockCount()}.</p>
      *
      * @param height the height of the block to calculate inflation for
+     * @return block reward (inflation) for specified block
      */
     public Coin getBlockInflation(int height) {
         return Coin.FIFTY_COINS.shiftRight(height / getSubsidyDecreaseBlockCount());
