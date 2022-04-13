@@ -34,6 +34,8 @@ if (GradleVersion.current().compareTo(minFxGradleVersion) > 0) {
     System.err.println "Including wallettemplate because ${GradleVersion.current()}"
     include 'wallettemplate'
     project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+} else {
+    System.err.println "Skipping wallettemplate, requires Gradle ${minFxGradleVersion}+, currently running: ${GradleVersion.current()}"
 }
 
 if (GradleVersion.current().compareTo(minJunit5GradleVersion) >= 0) {
