@@ -9,6 +9,8 @@ plugins {
 
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
+def junit5MinVersion = GradleVersion.version("4.6")
+boolean hasJunit5 = (GradleVersion.current().compareTo(junit5MinVersion) >= 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
@@ -19,6 +21,11 @@ dependencies {
     } else {
         compileOnly 'info.picocli:picocli-codegen:4.6.3'
     }
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
+
+    testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
 }
 
 sourceCompatibility = 11
@@ -32,6 +39,13 @@ compileJava {
 
 mainClassName = "org.bitcoinj.wallettool.WalletTool"
 applicationName = "wallet-tool"
+
+// wallettool is using JUnit 5 for testing, if it's not available no tests will be run
+if (hasJunit5) {
+    test {
+        useJUnitPlatform()
+    }
+}
 
 task generateManpageAsciiDoc(type: JavaExec) {
     dependsOn(classes)

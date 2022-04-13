@@ -40,3 +40,5 @@ jobs:
           path: |
             core/build/reports/tests/test/
             core/build/test-results/test/
+            wallettool/build/reports/tests/test/
+            wallettool/build/test-results/test/
