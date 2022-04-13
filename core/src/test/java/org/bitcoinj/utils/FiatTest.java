@@ -20,9 +20,18 @@ import static org.bitcoinj.utils.Fiat.parseFiat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class FiatTest {
+    private Fiat fiatA;
+    private Fiat fiatB;
+
+    @Before
+    public void setUp() throws Exception {
+        fiatA = parseFiat("USD", "666");
+        fiatB = parseFiat("USD", "2");
+    }
 
     @Test
     public void testParseAndValueOf() {
@@ -109,34 +118,38 @@ public class FiatTest {
 
     @Test
     public void testOperations() {
-        Fiat fiatA = parseFiat("USD", "666");
-        Fiat fiatB = parseFiat("USD", "2");
+        testSumOperation(fiatA, fiatB);
+        testSubOperation(fiatA, fiatB);
+        testDivOperation(fiatA);
+        testLDivOperation(fiatA, fiatB);
+        testDivReminderOperation(fiatA);
+    }
 
+    public void testSumOperation(Fiat fiatA, Fiat fiatB){
         Fiat sumResult = fiatA.add(fiatB);
         assertEquals(6680000, sumResult.getValue());
         assertEquals("USD", sumResult.getCurrencyCode());
-
+    }
+    public void testSubOperation(Fiat fiatA, Fiat fiatB){
         Fiat subResult = fiatA.subtract(fiatB);
         assertEquals(6640000, subResult.getValue());
         assertEquals("USD", subResult.getCurrencyCode());
-
+    }
+    public void testDivOperation(Fiat fiatA){
         Fiat divResult = fiatA.divide(2);
         assertEquals(3330000, divResult.getValue());
         assertEquals("USD", divResult.getCurrencyCode());
-
+    }
+    public void testLDivOperation(Fiat fiatA, Fiat fiatB){
         long ldivResult = fiatA.divide(fiatB);
         assertEquals(333, ldivResult);
-
-        Fiat mulResult = fiatA.multiply(2);
-        assertEquals(13320000, mulResult.getValue());
-
+    }
+    public void testDivReminderOperation(Fiat fiatA){
         Fiat[] fiats = fiatA.divideAndRemainder(3);
         assertEquals(2, fiats.length);
-
         Fiat fiat1 = fiats[0];
         assertEquals(2220000, fiat1.getValue());
         assertEquals("USD", fiat1.getCurrencyCode());
-
         Fiat fiat2 = fiats[1];
         assertEquals(0, fiat2.getValue());
         assertEquals("USD", fiat2.getCurrencyCode());
