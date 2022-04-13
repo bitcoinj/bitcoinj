@@ -40,3 +40,5 @@ jobs:
           path: |
             core/build/reports/tests/test/
             core/build/test-results/test/
+            integration-test/build/reports/tests/test/
+            integration-test/build/test-results/test/
