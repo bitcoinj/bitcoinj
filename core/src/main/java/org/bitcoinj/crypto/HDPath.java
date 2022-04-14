@@ -227,6 +227,14 @@ public class HDPath extends AbstractList<ChildNumber> {
         return this.extend(HDPath.M(path2));
     }
 
+    /**
+     * Return a simple list of {@link ChildNumber}
+     * @return an unmodifiable list of {@code ChildNumber}
+     */
+    public List<ChildNumber> list() {
+        return unmodifiableList;
+    }
+
     @Override
     public ChildNumber get(int index) {
         return unmodifiableList.get(index);
