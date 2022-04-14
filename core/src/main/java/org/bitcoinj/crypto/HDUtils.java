@@ -60,44 +60,4 @@ public final class HDUtils {
         assert bytes.length == 4 : bytes.length;
         return bytes;
     }
-
-    /**
-     * Append a derivation level to an existing path
-     *
-     * @deprecated Use {@code HDPath#extend}
-     */
-    @Deprecated
-    public static HDPath append(List<ChildNumber> path, ChildNumber childNumber) {
-        return new HDPath(path).extend(childNumber);
-    }
-
-    /**
-     * Concatenate two derivation paths
-     *
-     * @deprecated Use {@code HDPath#extend}
-     */
-    @Deprecated
-    public static HDPath concat(List<ChildNumber> path, List<ChildNumber> path2) {
-        return new HDPath(path).extend(path2);
-    }
-
-    /**
-     * Convert to a string path, starting with "M/"
-     *
-     * @deprecated Use {@code HDPath#toString}
-     */
-    @Deprecated
-    public static String formatPath(List<ChildNumber> path) {
-        return HDPath.M(path).toString();
-    }
-
-    /**
-     * Create an HDPath from a path string.
-     *
-     * @deprecated Use {@code HDPath.parsePath}
-     */
-    @Deprecated
-    public static HDPath parsePath(@Nonnull String path) {
-        return HDPath.parsePath(path);
-    }
 }
