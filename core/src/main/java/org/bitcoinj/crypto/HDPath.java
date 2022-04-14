@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -244,6 +245,27 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public List<ChildNumber> list() {
         return unmodifiableList;
+    }
+
+    /**
+     * Return a list of all ancestors of this path
+     * @return unmodifiable list of ancestors
+     */
+    public List<HDPath> ancestors() {
+        return ancestors(false);
+    }
+
+    /**
+     * Return a list of all ancestors of this path
+     * @param includeSelf true if include path for self
+     * @return unmodifiable list of ancestors
+     */
+    public List<HDPath> ancestors(boolean includeSelf) {
+        int endExclusive =  unmodifiableList.size() + (includeSelf ? 1 : 0);
+        return IntStream.range(1, endExclusive)
+                .mapToObj(i -> unmodifiableList.subList(0, i))
+                .map(l -> HDPath.of(hasPrivateKey, l))
+                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
     }
 
     @Override
