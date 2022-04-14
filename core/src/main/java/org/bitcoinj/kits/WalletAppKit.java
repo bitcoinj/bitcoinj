@@ -405,17 +405,8 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
-        Wallet wallet;
-        try (FileInputStream walletStream = new FileInputStream(vWalletFile)) {
-            List<WalletExtension> extensions = provideWalletExtensions();
-            WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
-            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer = new WalletProtobufSerializer(walletFactory);
-            wallet = serializer.readWallet(params, extArray, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
-        }
-        return wallet;
+        WalletExtension[] extensions = provideWalletExtensions().toArray(new WalletExtension[0]);
+        return Wallet.loadFromFile(vWalletFile, walletFactory, shouldReplayWallet, false, extensions );
     }
 
     protected Wallet createWallet() {

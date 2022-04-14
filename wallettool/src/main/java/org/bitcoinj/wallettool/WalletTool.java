@@ -421,7 +421,7 @@ public class WalletTool implements Callable<Integer> {
                 || (action == ActionEnum.SYNC
                 && force);
         try {
-            wallet = Wallet.loadFromFile(walletFile, forceReset, ignoreMandatoryExtensions);
+            wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
         } catch (UnreadableWalletException e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
