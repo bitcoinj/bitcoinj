@@ -23,7 +23,6 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.utils.Threading;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import org.bitcoinj.wallet.BasicKeyChain;
@@ -34,6 +33,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -173,13 +174,13 @@ public class BasicKeyChainTest {
     @Test(expected = KeyCrypterException.class)
     public void cannotImportEncryptedKey() {
         final ECKey key1 = new ECKey();
-        chain.importKeys(ImmutableList.of(key1));
+        chain.importKeys(Collections.singletonList(key1));
         chain = chain.toEncrypted("foobar");
         ECKey encryptedKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(encryptedKey.isEncrypted());
 
         BasicKeyChain chain2 = new BasicKeyChain();
-        chain2.importKeys(ImmutableList.of(encryptedKey));
+        chain2.importKeys(Collections.singletonList(encryptedKey));
     }
 
     @Test(expected = KeyCrypterException.class)
@@ -197,7 +198,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(5000);
         final ECKey key2 = new ECKey();
-        chain.importKeys(ImmutableList.of(key1, key2));
+        chain.importKeys(Arrays.asList(key1, key2));
         List<Protos.Key> keys = chain.serializeToProtobuf();
         assertEquals(2, keys.size());
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());

@@ -18,7 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.*;
+import com.google.common.collect.Lists;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.net.discovery.*;
 import org.bitcoinj.script.Script;
@@ -604,7 +604,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(outbound(p1) instanceof GetDataMessage);
         final Sha256Hash dephash = tx.getInput(0).getOutpoint().getHash();
         final InventoryItem inv = new InventoryItem(InventoryItem.Type.TRANSACTION, dephash);
-        inbound(p1, new NotFoundMessage(UNITTEST, ImmutableList.of(inv)));
+        inbound(p1, new NotFoundMessage(UNITTEST, Collections.singletonList(inv)));
         assertNull(outbound(p1));
         assertNull(outbound(p2));
         peerGroup.waitForJobQueue();

@@ -16,9 +16,9 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,23 +62,23 @@ public class HDPathTest {
     public void testFormatPath() {
         Object[] tv = {
                 "M/44H/0H/0H/1/1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
 
                 "M/7H/3/3/1H",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                HDPath.M(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
 
                 "M/1H/2H/3H",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+                HDPath.M(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
 
                 "M/1/2/3",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+                HDPath.M(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
         };
 
         for (int i = 0; i < tv.length; i += 2) {
             String expectedStrPath = (String) tv[i];
-            HDPath path = HDPath.M((List<ChildNumber>) tv[i + 1]);
+            HDPath path = (HDPath) tv[i + 1];
 
             String generatedStrPath = path.toString();
 
@@ -90,26 +90,26 @@ public class HDPathTest {
     public void testParsePath() {
         Object[] tv = {
                 "M / 44H / 0H / 0H / 1 / 1",
-                ImmutableList.of(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
                         new ChildNumber(1, false), new ChildNumber(1, false)),
                 false,
 
                 "M/7H/3/3/1H/",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                HDPath.M(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
                 false,
 
                 "m/7H/3/3/1H/",
-                ImmutableList.of(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                HDPath.m(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
                         new ChildNumber(1, true)),
                 true,
 
                 "1 H / 2 H / 3 H /",
-                ImmutableList.of(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+                Arrays.asList(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
                 false,
 
                 "1 / 2 / 3 /",
-                ImmutableList.of(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
+                Arrays.asList(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
                 false
         };
 

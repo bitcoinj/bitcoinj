@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.*;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.*;
@@ -39,7 +38,7 @@ public class DefaultRiskAnalysisTest {
     private Wallet wallet;
     private final int TIMESTAMP = 1384190189;
     private static final ECKey key1 = new ECKey();
-    private final ImmutableList<Transaction> NO_DEPS = ImmutableList.of();
+    private final List<Transaction> NO_DEPS = Collections.emptyList();
 
     @Before
     public void setup() {
@@ -112,7 +111,7 @@ public class DefaultRiskAnalysisTest {
         tx2.addInput(output);
         tx2.addOutput(COIN, new ECKey());
 
-        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, ImmutableList.of(tx1));
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, Collections.singletonList(tx1));
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx1, analysis.getNonFinal());
     }
@@ -206,7 +205,7 @@ public class DefaultRiskAnalysisTest {
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         // 1-of-2 multisig output.
-        ImmutableList<ECKey> keys = ImmutableList.of(key1, new ECKey());
+        List<ECKey> keys = Arrays.asList(key1, new ECKey());
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(1, keys));
         // 2-of-2 multisig output.
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(2, keys));

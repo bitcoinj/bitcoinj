@@ -28,8 +28,6 @@ import org.bitcoinj.crypto.HDKeyDerivation.PublicDeriveMode;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
 /**
  * @author Andreas Schildbach
  */

@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -27,6 +26,9 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -53,7 +55,7 @@ public class TransactionOutputTest extends TestWithWallet {
 
         // Create multi-sig transaction
         Transaction multiSigTransaction = new Transaction(UNITTEST);
-        ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
+        List<ECKey> keys = Arrays.asList(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
         multiSigTransaction.addOutput(Coin.COIN, scriptPubKey);

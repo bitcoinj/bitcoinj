@@ -26,7 +26,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script.VerifyFlag;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import org.hamcrest.core.IsNot;
@@ -151,7 +150,7 @@ public class ScriptTest {
         TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
 
         // Create p2sh multisig input script
-        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript);
+        Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(party1TransactionSignature, party2TransactionSignature), multisigScript);
 
         // Assert that the input script contains 4 chunks
         assertTrue(inputScript.getChunks().size() == 4);
@@ -162,7 +161,7 @@ public class ScriptTest {
         assertArrayEquals(scriptChunk.data, multisigScript.getProgram());
 
         // Create regular multisig input script
-        inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature));
+        inputScript = ScriptBuilder.createMultiSigInputScript(Arrays.asList(party1TransactionSignature, party2TransactionSignature));
 
         // Assert that the input script only contains 3 chunks
         assertTrue(inputScript.getChunks().size() == 3);
