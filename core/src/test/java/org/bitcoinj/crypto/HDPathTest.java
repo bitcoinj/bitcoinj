@@ -37,6 +37,10 @@ public class HDPathTest {
     @Test
     public void testExtendVarargs() {
         HDPath basePath = new HDPath(true, Collections.<ChildNumber>emptyList());
+
+        Assert.assertTrue(basePath.hasPrivateKey());
+        Assert.assertEquals("m",  basePath.toString());
+
         // Make sure we can do a depth of 5 as per BIP44, etc.
         // m / 44' / coinType' / accountIndex' / change / addressIndex
         HDPath path1 = basePath.extend(ChildNumber.ZERO_HARDENED);
