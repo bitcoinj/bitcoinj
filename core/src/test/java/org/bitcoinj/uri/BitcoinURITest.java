@@ -20,7 +20,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import static org.bitcoinj.core.Coin.*;
@@ -29,6 +28,8 @@ import org.bitcoinj.core.SegwitAddress;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
 
 public class BitcoinURITest {
@@ -404,7 +405,7 @@ public class BitcoinURITest {
         // Non-backwards compatible form ...
         BitcoinURI uri = new BitcoinURI(TESTNET, "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
         assertEquals("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
+        assertEquals(Collections.singletonList("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
                 uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
     }
@@ -413,7 +414,7 @@ public class BitcoinURITest {
     public void testMultiplePaymentProtocolReq() throws Exception {
         BitcoinURI uri = new BitcoinURI(MAINNET,
                 "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin&r1=bt:112233445566");
-        assertEquals(ImmutableList.of("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
+        assertEquals(Arrays.asList("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
         assertEquals("https://bitcoincore.org/~gavin", uri.getPaymentRequestUrl());
     }
 
@@ -421,7 +422,7 @@ public class BitcoinURITest {
     public void testNoPaymentProtocolReq() throws Exception {
         BitcoinURI uri = new BitcoinURI(MAINNET, "bitcoin:" + MAINNET_GOOD_ADDRESS);
         assertNull(uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of(), uri.getPaymentRequestUrls());
+        assertEquals(Collections.emptyList(), uri.getPaymentRequestUrls());
         assertNotNull(uri.getAddress());
     }
 
@@ -430,7 +431,7 @@ public class BitcoinURITest {
         BitcoinURI uri = new BitcoinURI(TESTNET,
                 "bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe");
         assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
+        assertEquals(Collections.singletonList("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
     }
 }

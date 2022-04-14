@@ -32,13 +32,13 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -162,7 +162,7 @@ public class KeyChainGroupTest {
         ECKey key1 = new ECKey();
         int numKeys = group.numKeys();
         assertFalse(group.removeImportedKey(key1));
-        assertEquals(1, group.importKeys(ImmutableList.of(key1)));
+        assertEquals(1, group.importKeys(Collections.singletonList(key1)));
         assertEquals(numKeys + 1, group.numKeys());   // Lookahead is triggered by requesting a key, so none yet.
         group.removeImportedKey(key1);
         assertEquals(numKeys, group.numKeys());
@@ -294,10 +294,10 @@ public class KeyChainGroupTest {
                 fail();
             } catch (KeyCrypterException e) {
             }
-            group.importKeysAndEncrypt(ImmutableList.of(c), AES_KEY);
+            group.importKeysAndEncrypt(Collections.singletonList(c), AES_KEY);
             ECKey ec = group.findKeyFromPubKey(c.getPubKey());
             try {
-                group.importKeysAndEncrypt(ImmutableList.of(ec), AES_KEY);
+                group.importKeysAndEncrypt(Collections.singletonList(ec), AES_KEY);
                 fail();
             } catch (IllegalArgumentException e) {
             }

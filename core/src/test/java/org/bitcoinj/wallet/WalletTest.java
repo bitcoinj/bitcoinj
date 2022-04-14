@@ -59,7 +59,6 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
 import org.easymock.EasyMock;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
@@ -2049,7 +2048,7 @@ public class WalletTest extends TestWithWallet {
         encryptedWallet.encrypt(PASSWORD1);
 
         final ECKey key = new ECKey();
-        encryptedWallet.importKeysAndEncrypt(ImmutableList.of(key), PASSWORD1);
+        encryptedWallet.importKeysAndEncrypt(Collections.singletonList(key), PASSWORD1);
         assertEquals(1, encryptedWallet.getImportedKeys().size());
         assertEquals(key.getPubKeyPoint(), encryptedWallet.getImportedKeys().get(0).getPubKeyPoint());
         sendMoneyToWallet(encryptedWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN, LegacyAddress.fromKey(UNITTEST, key));
@@ -3271,13 +3270,13 @@ public class WalletTest extends TestWithWallet {
             @Override
             public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
                 assertEquals(propTx.partialTx.getInputs().size(), propTx.keyPaths.size());
-                List<ChildNumber> externalZeroLeaf = ImmutableList.<ChildNumber>builder()
-                        .addAll(DeterministicKeyChain.ACCOUNT_ZERO_PATH)
-                        .addAll(DeterministicKeyChain.EXTERNAL_SUBPATH).add(ChildNumber.ZERO).build();
+                HDPath externalZeroLeaf = DeterministicKeyChain.ACCOUNT_ZERO_PATH
+                        .extend(DeterministicKeyChain.EXTERNAL_SUBPATH)
+                        .extend(ChildNumber.ZERO);
                 for (TransactionInput input : propTx.partialTx.getInputs()) {
-                    List<ChildNumber> keypath = propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey());
+                    HDPath keypath = HDPath.M(propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey()));
                     assertNotNull(keypath);
-                    assertEquals(externalZeroLeaf, keypath);
+                    assertEquals(externalZeroLeaf.list(), keypath.list());
                 }
                 return true;
             }
