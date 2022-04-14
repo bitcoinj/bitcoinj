@@ -17,7 +17,6 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -27,6 +26,7 @@ import java.util.Collection;
 import java.util.Random;
 
 import static org.bitcoinj.script.ScriptOpCodes.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * ScriptChunk.size() determines the size of a serialized ScriptChunk without actually performing serialization.
@@ -79,6 +79,6 @@ public class ScriptChunkSizeTest {
 
     @Test
     public void testSize() {
-        Assert.assertEquals(scriptChunk.toByteArray().length, scriptChunk.size());
+        assertEquals(scriptChunk.toByteArray().length, scriptChunk.size());
     }
 }

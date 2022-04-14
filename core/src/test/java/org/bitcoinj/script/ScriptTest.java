@@ -30,7 +30,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import org.hamcrest.core.IsNot;
-import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,13 @@ import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.junit.Before;
 
 public class ScriptTest {
@@ -154,7 +159,7 @@ public class ScriptTest {
         // Assert that the input script created contains the original multisig
         // script as the last chunk
         ScriptChunk scriptChunk = inputScript.getChunks().get(inputScript.getChunks().size() - 1);
-        Assert.assertArrayEquals(scriptChunk.data, multisigScript.getProgram());
+        assertArrayEquals(scriptChunk.data, multisigScript.getProgram());
 
         // Create regular multisig input script
         inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature));
@@ -165,7 +170,7 @@ public class ScriptTest {
         // Assert that the input script created does not end with the original
         // multisig script
         scriptChunk = inputScript.getChunks().get(inputScript.getChunks().size() - 1);
-        Assert.assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
+        assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
     }
 
     @Test
