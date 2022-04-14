@@ -29,8 +29,6 @@ import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
 import com.google.protobuf.ByteString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -807,7 +805,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         List<ChildNumber> accountPath = new ArrayList<>();
         Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
-        PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
+        Iterator<Protos.Key> iter = keys.iterator();
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
