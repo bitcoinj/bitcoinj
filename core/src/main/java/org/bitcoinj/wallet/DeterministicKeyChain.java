@@ -806,9 +806,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         HDPath accountPath = HDPath.M();
         Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
-        Iterator<Protos.Key> iter = keys.iterator();
-        while (iter.hasNext()) {
-            Protos.Key key = iter.next();
+        for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 accountPath = deserializeAccountPath(key.getAccountPathList());
