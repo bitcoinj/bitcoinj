@@ -42,6 +42,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -805,19 +806,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        List<ChildNumber> accountPath = new ArrayList<>();
+        HDPath accountPath = HDPath.M();
         Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
         PeekingIterator<Protos.Key> iter = Iterators.peekingIterator(keys.iterator());
         while (iter.hasNext()) {
             Protos.Key key = iter.next();
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
-                accountPath = new ArrayList<>();
-                for (int i : key.getAccountPathList()) {
-                    accountPath.add(new ChildNumber(i));
-                }
-                if (accountPath.isEmpty())
-                    accountPath = ACCOUNT_ZERO_PATH;
+                accountPath = deserializeAccountPath(key.getAccountPathList());
                 if (chain != null) {
                     checkState(lookaheadSize >= 0);
                     chain.setLookaheadSize(lookaheadSize);
@@ -901,7 +897,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         isWatchingAccountKey = true;
                     } else {
                         chain = factory.makeKeyChain(seed, crypter, isMarried,
-                                outputScriptType, HDPath.M(accountPath));
+                                outputScriptType, accountPath);
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
                         // it up below as we parse in the keys. We just need to check at the end that we've loaded
@@ -978,6 +974,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             chains.add(chain);
         }
         return chains;
+    }
+
+    private static HDPath deserializeAccountPath(List<Integer> integerList) {
+        HDPath path = HDPath.deserialize(integerList);
+        return path.isEmpty() ? ACCOUNT_ZERO_PATH : path;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
