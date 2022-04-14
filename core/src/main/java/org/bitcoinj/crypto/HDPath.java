@@ -95,7 +95,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Returns an empty path for a public key.
      */
     public static HDPath M() {
-        return HDPath.M(Collections.<ChildNumber>emptyList());
+        return HDPath.M(Collections.emptyList());
     }
 
     /**
@@ -129,7 +129,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Returns an empty path for a private key.
      */
     public static HDPath m() {
-        return HDPath.m(Collections.<ChildNumber>emptyList());
+        return HDPath.m(Collections.emptyList());
     }
 
     /**
