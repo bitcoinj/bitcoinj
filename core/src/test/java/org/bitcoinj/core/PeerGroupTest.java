@@ -840,7 +840,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void testMaxOfMostFreq() {
-        assertEquals(0, PeerGroup.maxOfMostFreq(Collections.<Integer>emptyList()));
+        assertEquals(0, PeerGroup.maxOfMostFreq(Collections.emptyList()));
         assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
         assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));
         assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
