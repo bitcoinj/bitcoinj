@@ -59,6 +59,51 @@ public class HDPathTest {
     }
 
     @Test
+    public void testAncestors() {
+        HDPath path = HDPath.parsePath("m/0H/1H/0H/1/0");
+
+        List<HDPath> ancestors = path.ancestors();
+
+        assertEquals(4, ancestors.size());
+        assertEquals(HDPath.parsePath("m/0H"),              ancestors.get(0));
+        assertEquals(HDPath.parsePath("m/0H/1H"),           ancestors.get(1));
+        assertEquals(HDPath.parsePath("m/0H/1H/0H"),        ancestors.get(2));
+        assertEquals(HDPath.parsePath("m/0H/1H/0H/1"),      ancestors.get(3));
+
+
+        List<HDPath> ancestorsWithSelf = path.ancestors(true);
+
+        assertEquals(5, ancestorsWithSelf.size());
+        assertEquals(HDPath.parsePath("m/0H"),              ancestorsWithSelf.get(0));
+        assertEquals(HDPath.parsePath("m/0H/1H"),           ancestorsWithSelf.get(1));
+        assertEquals(HDPath.parsePath("m/0H/1H/0H"),        ancestorsWithSelf.get(2));
+        assertEquals(HDPath.parsePath("m/0H/1H/0H/1"),      ancestorsWithSelf.get(3));
+        assertEquals(HDPath.parsePath("m/0H/1H/0H/1/0"),    ancestorsWithSelf.get(4));
+
+        HDPath rootPath = HDPath.parsePath("m/0H");
+
+        List<HDPath> empty = rootPath.ancestors();
+
+        assertEquals(0, empty.size());
+
+        List<HDPath> self = rootPath.ancestors(true);
+
+        assertEquals(1, self.size());
+        assertEquals(rootPath, self.get(0));
+
+
+        HDPath emptyPath = HDPath.m();
+
+        List<HDPath> empty2 = emptyPath.ancestors();
+
+        assertEquals(0, empty2.size());
+
+        List<HDPath> empty3 = emptyPath.ancestors(true);
+
+        assertEquals(0, empty3.size());
+    }
+
+    @Test
     public void testFormatPath() {
         Object[] tv = {
                 "M/44H/0H/0H/1/1",

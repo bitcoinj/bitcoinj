@@ -370,8 +370,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (int i = 1; i <= getAccountPath().size(); i++) {
-                basicKeyChain.importKey(hierarchy.get(getAccountPath().subList(0, i), false, true));
+            for (HDPath path : getAccountPath().ancestors(true)) {
+                basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted(rootKey);
         }
@@ -408,8 +408,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         hierarchy = new DeterministicHierarchy(rootKey);
         basicKeyChain.importKey(rootKey);
 
-        for (int i = 1; i < getAccountPath().size(); i++) {
-            encryptNonLeaf(aesKey, chain, rootKey, getAccountPath().subList(0, i));
+        for (HDPath path : getAccountPath().ancestors()) {
+            encryptNonLeaf(aesKey, chain, rootKey, path);
         }
         DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, getAccountPath());
         externalParentKey = encryptNonLeaf(aesKey, chain, account, getAccountPath().extend(EXTERNAL_SUBPATH));
