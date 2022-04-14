@@ -44,11 +44,11 @@ import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
