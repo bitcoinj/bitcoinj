@@ -311,7 +311,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     public static Builder<?> builder() {
-        return new Builder();
+        return new Builder<>();
     }
 
     /**
