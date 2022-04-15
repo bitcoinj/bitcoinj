@@ -1672,7 +1672,7 @@ public class Wallet extends BaseTaggableObject
      * @throws UnreadableWalletException if there was a problem loading or parsing the file
      */
     public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        return loadFromFile(file, false, false, walletExtensions);
+        return loadFromFile(file, WalletProtobufSerializer.WalletFactory.DEFAULT, false, false, walletExtensions);
     }
 
     /**
@@ -1680,15 +1680,16 @@ public class Wallet extends BaseTaggableObject
      * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
      *
      * @param file the wallet file to read
+     * @param factory wallet factory
      * @param forceReset force a reset of the wallet
      * @param ignoreMandatoryExtensions if true, mandatory extensions will be ignored instead of causing load errors (not recommended)
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem loading or parsing the file
      */
-    public static Wallet loadFromFile(File file, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+    public static Wallet loadFromFile(File file, WalletProtobufSerializer.WalletFactory factory, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try (FileInputStream stream = new FileInputStream(file)) {
-            return loadFromFileStream(stream, forceReset, ignoreMandatoryExtensions, walletExtensions);
+            return loadFromFileStream(stream, factory, forceReset, ignoreMandatoryExtensions, walletExtensions);
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not open file", e);
         }
@@ -1785,20 +1786,21 @@ public class Wallet extends BaseTaggableObject
      * @throws UnreadableWalletException if there was a problem reading or parsing the stream
      */
     public static Wallet loadFromFileStream(InputStream stream, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        return loadFromFileStream(stream, false, false, walletExtensions);
+        return loadFromFileStream(stream, WalletProtobufSerializer.WalletFactory.DEFAULT, false, false, walletExtensions);
     }
 
     /**
      * Returns a wallet deserialized from the given input stream and wallet extensions.
      * @param stream An open InputStream containing a ProtoBuf Wallet
+     * @param factory wallet factory
      * @param forceReset if true, configure wallet to replay transactions from the blockchain
      * @param ignoreMandatoryExtensions if true, mandatory extensions will be ignored instead of causing load errors (not recommended)
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem reading or parsing the stream
      */
-    public static Wallet loadFromFileStream(InputStream stream, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
-        WalletProtobufSerializer loader = new WalletProtobufSerializer();
+    public static Wallet loadFromFileStream(InputStream stream,  WalletProtobufSerializer.WalletFactory factory, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
+        WalletProtobufSerializer loader = new WalletProtobufSerializer(factory);
         if (ignoreMandatoryExtensions) {
             loader.setRequireMandatoryExtensions(false);
         }
