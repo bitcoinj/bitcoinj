@@ -824,7 +824,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
                 if (key.hasSecretBytes()) {
                     if (key.hasEncryptedDeterministicSeed())
-                        throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                        throw new UnreadableWalletException("Malformed key proto: " + key);
                     byte[] seedBytes = null;
                     if (key.hasDeterministicSeed()) {
                         seedBytes = key.getDeterministicSeed().toByteArray();
@@ -832,7 +832,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, timestamp);
                 } else if (key.hasEncryptedData()) {
                     if (key.hasDeterministicSeed())
-                        throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                        throw new UnreadableWalletException("Malformed key proto: " + key);
                     EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
                             key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
                     EncryptedData encryptedSeedBytes = null;
@@ -843,13 +843,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     }
                     seed = new DeterministicSeed(data, encryptedSeedBytes, timestamp);
                 } else {
-                    throw new UnreadableWalletException("Malformed key proto: " + key.toString());
+                    throw new UnreadableWalletException("Malformed key proto: " + key);
                 }
                 if (log.isDebugEnabled())
                     log.debug("Deserializing: DETERMINISTIC_MNEMONIC: {}", seed);
             } else if (t == Protos.Key.Type.DETERMINISTIC_KEY) {
                 if (!key.hasDeterministicKey())
-                    throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
+                    throw new UnreadableWalletException("Deterministic key missing extra data: " + key);
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(ECKey.CURVE.getCurve(), key.getPublicKey().toByteArray());
