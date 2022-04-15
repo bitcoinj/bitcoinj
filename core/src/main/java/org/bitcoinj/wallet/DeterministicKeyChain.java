@@ -105,7 +105,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     private DeterministicHierarchy hierarchy;
     @Nullable private DeterministicKey rootKey;
-    @Nullable private DeterministicSeed seed;
+    @Nullable private final DeterministicSeed seed;
     private final Script.ScriptType outputScriptType;
     private final HDPath accountPath;
 
