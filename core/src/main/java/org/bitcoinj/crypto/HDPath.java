@@ -40,6 +40,8 @@ import java.util.stream.Stream;
  * where necessary in your code. Although it is recommended to use the {@code HDPath} type for clarity and for
  * access to {@code HDPath}-specific functionality.
  * <p>
+ * Note that it is possible for {@code HDPath} to be an empty list.
+ * <p>
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create HDPath objects (especially when statically imported.)
  */
@@ -245,6 +247,21 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public List<ChildNumber> list() {
         return unmodifiableList;
+    }
+
+    /**
+     * Return the parent path.
+     * <p>
+     * Note that this method defines the parent of a root path as the empty path and the parent
+     * of the empty path as the empty path. This behavior is what one would expect
+     * of an unmodifiable, copy-on-modify list. If you need to check for edge cases, you can use
+     * {@link HDPath#isEmpty()} before or after using {@code HDPath#parent()}
+     * @return parent path (which can be empty -- see above)
+     */
+    public HDPath parent() {
+        return unmodifiableList.size() > 1 ?
+                HDPath.of(hasPrivateKey, unmodifiableList.subList(0, unmodifiableList.size() - 1)) :
+                HDPath.of(hasPrivateKey, Collections.emptyList());
     }
 
     /**
