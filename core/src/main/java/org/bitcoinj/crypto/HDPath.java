@@ -246,6 +246,16 @@ public class HDPath extends AbstractList<ChildNumber> {
         return unmodifiableList;
     }
 
+    /**
+     * Return the parent path
+     * @return parent path or empty path
+     */
+    public HDPath parent() {
+        return unmodifiableList.size() > 1 ?
+                HDPath.of(hasPrivateKey, unmodifiableList.subList(0, unmodifiableList.size() - 1)) :
+                HDPath.of(hasPrivateKey, Collections.emptyList());
+    }
+
     @Override
     public ChildNumber get(int index) {
         return unmodifiableList.get(index);
