@@ -59,6 +59,21 @@ public class HDPathTest {
     }
 
     @Test
+    public void testParent() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/0H"), path1.parent());
+
+        HDPath path2 = HDPath.parsePath("m/0H");
+
+        assertEquals(HDPath.parsePath(""), path2.parent());
+
+        HDPath path3 = HDPath.parsePath("");
+
+        assertEquals(HDPath.parsePath(""), path3.parent());
+    }
+
+    @Test
     public void testAncestors() {
         HDPath path = HDPath.parsePath("m/0H/1H/0H/1/0");
 
