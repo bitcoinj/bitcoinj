@@ -849,13 +849,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (!key.hasDeterministicKey())
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key.toString());
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
-                // Deserialize the path through the tree.
-                LinkedList<ChildNumber> path = new LinkedList<>();
-                for (int i : key.getDeterministicKey().getPathList())
-                    path.add(new ChildNumber(i));
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(ECKey.CURVE.getCurve(), key.getPublicKey().toByteArray());
-                final HDPath immutablePath = HDPath.M(path);
+                // Deserialize the path through the tree.
+                final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
                     outputScriptType = Script.ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
@@ -881,12 +878,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
-                        DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, Utils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
+                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, Utils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeSpendingKeyChain(accountKey, isMarried, outputScriptType);
                         isSpendingKey = true;
                     } else if (seed == null) {
-                        DeterministicKey accountKey = new DeterministicKey(immutablePath, chainCode, pubkey, null, null);
+                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, null, null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeWatchingKeyChain(accountKey, isFollowingKey, isMarried,
                                 outputScriptType);
@@ -903,26 +900,24 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Find the parent key assuming this is not the root key, and not an account key for a watching chain.
                 DeterministicKey parent = null;
                 if (!path.isEmpty() && !isWatchingAccountKey && !isSpendingKey) {
-                    ChildNumber index = path.removeLast();
-                    parent = chain.hierarchy.get(path, false, false);
-                    path.add(index);
+                    parent = chain.hierarchy.get(path.parent(), false, false);
                 }
                 DeterministicKey detkey;
                 if (key.hasSecretBytes()) {
                     // Not encrypted: private key is available.
                     final BigInteger priv = Utils.bytesToBigInteger(key.getSecretBytes().toByteArray());
-                    detkey = new DeterministicKey(immutablePath, chainCode, pubkey, priv, parent);
+                    detkey = new DeterministicKey(path, chainCode, pubkey, priv, parent);
                 } else {
                     if (key.hasEncryptedData()) {
                         Protos.EncryptedData proto = key.getEncryptedData();
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                                 proto.getEncryptedPrivateKey().toByteArray());
                         checkNotNull(crypter, "Encountered an encrypted key but no key crypter provided");
-                        detkey = new DeterministicKey(immutablePath, chainCode, crypter, pubkey, data, parent);
+                        detkey = new DeterministicKey(path, chainCode, crypter, pubkey, data, parent);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
                         // will be rederived on the fly from the parent.
-                        detkey = new DeterministicKey(immutablePath, chainCode, pubkey, null, parent);
+                        detkey = new DeterministicKey(path, chainCode, pubkey, null, parent);
                     }
                 }
                 if (key.hasCreationTimestamp())
