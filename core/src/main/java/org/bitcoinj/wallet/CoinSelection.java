@@ -30,8 +30,8 @@ import java.util.List;
  * to their varying policies.
  */
 public class CoinSelection {
-    public Coin valueGathered;
-    public Collection<TransactionOutput> gathered;
+    public final Coin valueGathered;
+    public final Collection<TransactionOutput> gathered;
 
     public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
         this.valueGathered = valueGathered;
