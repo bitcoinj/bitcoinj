@@ -40,9 +40,11 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import static com.google.common.base.Preconditions.*;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the
@@ -1262,54 +1264,72 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    // For internal usage only
+    /**
+     * Return a subset list of keys
+     * For internal usage only
+     * @param includeLookahead if true include all keys, if false don't include lookahead keys
+     * @param includeParents if true, include parent keys. If false, leaf keys only
+     * @return Unmodifiable list of keys
+     */
     /* package */ List<DeterministicKey> getKeys(boolean includeLookahead, boolean includeParents) {
-        List<ECKey> keys = basicKeyChain.getKeys();
-        List<DeterministicKey> result = new LinkedList<>();
+        return getKeys(filterKeys(includeLookahead, includeParents));
+    }
+
+    /**
+     * Return a filter predicate for a stream (list) of keys
+     * @param includeLookahead if true include all keys, if false don't include lookahead keys
+     * @param includeParents if true, include parent keys. If false, leaf keys only
+     * @return A filter predicate that filters according to the parameters
+     */
+    private Predicate<DeterministicKey> filterKeys(boolean includeLookahead, boolean includeParents) {
+        Predicate<DeterministicKey> keyFilter;
         if (!includeLookahead) {
             int treeSize = internalParentKey.getPath().size();
-            for (ECKey key : keys) {
-                DeterministicKey detkey = (DeterministicKey) key;
-                DeterministicKey parent = detkey.getParent();
-                if (!includeParents && parent == null) continue;
-                if (!includeParents && detkey.getPath().size() <= treeSize) continue;
-                if (internalParentKey.equals(parent) && detkey.getChildNumber().i() >= issuedInternalKeys) continue;
-                if (externalParentKey.equals(parent) && detkey.getChildNumber().i() >= issuedExternalKeys) continue;
-                result.add(detkey);
-            }
+            keyFilter = key -> {
+                DeterministicKey parent = key.getParent();
+                return !(
+                        (!includeParents && parent == null) ||
+                        (!includeParents && key.getPath().size() <= treeSize) ||
+                        (internalParentKey.equals(parent) && key.getChildNumber().i() >= issuedInternalKeys) ||
+                        (externalParentKey.equals(parent) && key.getChildNumber().i() >= issuedExternalKeys)
+                );
+            };
         } else {
-            for (ECKey key : keys)
-                result.add((DeterministicKey) key);
             // TODO includeParents is ignored here
+            keyFilter = key -> true;
         }
-        return result;
+        return keyFilter;
+    }
+
+    /**
+     * Return a filtered subset of keys
+     * @param keyFilter filtering predicate
+     * @return Unmodifiable list of keys
+     */
+    private List<DeterministicKey> getKeys(Predicate<DeterministicKey> keyFilter) {
+        return basicKeyChain.getKeys().stream()
+                .map(key -> (DeterministicKey) key)
+                .filter(keyFilter)
+                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
     }
 
     /**
      * Returns only the external keys that have been issued by this chain, lookahead not included.
+     * @return Unmodifiable list of keys
      */
     public List<DeterministicKey> getIssuedReceiveKeys() {
-        final List<DeterministicKey> keys = new ArrayList<>(getKeys(false, false));
-        for (Iterator<DeterministicKey> i = keys.iterator(); i.hasNext();) {
-            DeterministicKey parent = i.next().getParent();
-            if (parent == null || !externalParentKey.equals(parent))
-                i.remove();
-        }
-        return keys;
+        return getKeys(
+                filterKeys(false, false)
+                    .and(key -> externalParentKey.equals(key.getParent()))  // keys with parent == externalParentKey
+        );
     }
 
     /**
      * Returns leaf keys issued by this chain (including lookahead zone)
+     * @return Unmodifiable list of keys
      */
     public List<DeterministicKey> getLeafKeys() {
-        List<DeterministicKey> keys = new ArrayList<>();
-        for (ECKey key : getKeys(true, false)) {
-            DeterministicKey dKey = (DeterministicKey) key;
-            if (dKey.getPath().size() == getAccountPath().size() + 2) {
-                keys.add(dKey);
-            }
-        }
-        return Collections.unmodifiableList(keys);
+        return getKeys(key -> key.getPath().size() == getAccountPath().size() + 2);    // leaf keys only
     }
 
     /*package*/ static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {
