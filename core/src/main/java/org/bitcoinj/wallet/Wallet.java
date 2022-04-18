@@ -4178,10 +4178,7 @@ public class Wallet extends BaseTaggableObject
         try {
             checkArgument(!req.completed, "Given SendRequest has already been completed.");
             // Calculate the amount of value we need to import.
-            Coin value = Coin.ZERO;
-            for (TransactionOutput output : req.tx.getOutputs()) {
-                value = value.add(output.getValue());
-            }
+            Coin value = req.tx.getOutputSum();
 
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
                     value.toFriendlyString(), req.feePerKb.toFriendlyString());
