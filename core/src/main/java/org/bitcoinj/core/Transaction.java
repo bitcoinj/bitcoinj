@@ -355,18 +355,11 @@ public class Transaction extends ChildMessage {
 
     /**
      * Gets the sum of the inputs, regardless of who owns them.
+     * @return the sum of the inputs
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
      */
     public Coin getInputSum() {
-        Coin inputTotal = Coin.ZERO;
-
-        for (TransactionInput input: inputs) {
-            Coin inputValue = input.getValue();
-            if (inputValue != null) {
-                inputTotal = inputTotal.add(inputValue);
-            }
-        }
-
-        return inputTotal;
+        return TransactionInput.sum(inputs);
     }
 
     /**
@@ -469,15 +462,10 @@ public class Transaction extends ChildMessage {
     /**
      * Gets the sum of the outputs of the transaction. If the outputs are less than the inputs, it does not count the fee.
      * @return the sum of the outputs regardless of who owns them.
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
      */
     public Coin getOutputSum() {
-        Coin totalOut = Coin.ZERO;
-
-        for (TransactionOutput output: outputs) {
-            totalOut = totalOut.add(output.getValue());
-        }
-
-        return totalOut;
+        return TransactionOutput.sum(outputs);
     }
 
     @Nullable private Coin cachedValue;

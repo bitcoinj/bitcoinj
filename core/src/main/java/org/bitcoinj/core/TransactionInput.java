@@ -20,18 +20,22 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
+import com.google.common.math.LongMath;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -47,6 +51,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class TransactionInput extends ChildMessage {
+    private static final Logger log = LoggerFactory.getLogger(TransactionInput.class);
+
     /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
     /**
@@ -551,5 +557,39 @@ public class TransactionInput extends ChildMessage {
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Gets the sum of a collection of inputs as a {@link Coin}
+     * <p>
+     * Note: inputs can have a null Coin value. Those inputs will be skipped and a warning logged.
+     * @param inputs collection of transaction inputs
+     * @return the sum
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
+     */
+    public static Coin sum(Collection<TransactionInput> inputs) {
+        return Coin.ofSat(sumSats(inputs));
+    }
+
+    /**
+     * Gets the sum of a collection of inputs in satoshis
+     * <p>
+     * Note: inputs can have a null Coin value. Those inputs will be skipped and a warning logged.
+     * TODO: See related TODO in Wallet.completeTx
+     * @param inputs collection of transaction inputs
+     * @return the sum (in satoshis)
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
+     */
+    public static long sumSats(Collection<TransactionInput> inputs) {
+        return inputs.stream()
+                .peek(input -> {
+                    if (input.value == null) {
+                        log.warn("input with unknown value: {}", input);
+                    }
+                })
+                .map(TransactionInput::getValue)
+                .filter(Objects::nonNull)
+                .mapToLong(Coin::getValue)
+                .reduce(0, LongMath::checkedAdd);
     }
 }

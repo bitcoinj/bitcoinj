@@ -3683,10 +3683,7 @@ public class Wallet extends BaseTaggableObject
                 CoinSelection selection = coinSelector.select(BitcoinNetwork.MAX_MONEY, candidates);
                 return selection.valueGathered;
             } else if (balanceType == BalanceType.ESTIMATED || balanceType == BalanceType.ESTIMATED_SPENDABLE) {
-                List<TransactionOutput> all = calculateAllSpendCandidates(false, balanceType == BalanceType.ESTIMATED_SPENDABLE);
-                Coin value = Coin.ZERO;
-                for (TransactionOutput out : all) value = value.add(out.getValue());
-                return value;
+                return TransactionOutput.sum(calculateAllSpendCandidates(false, balanceType == BalanceType.ESTIMATED_SPENDABLE));
             } else {
                 throw new AssertionError("Unknown balance type");  // Unreachable.
             }
@@ -4187,6 +4184,8 @@ public class Wallet extends BaseTaggableObject
                     value.toFriendlyString(), req.feePerKb.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
+            // TODO: Consider using Transaction.getInputSum() here, but is there a difference between
+            // `input.getConnectedOutput().getValue()` and `input.value`? and what about the warning?
             Coin totalInput = Coin.ZERO;
             for (TransactionInput input : req.tx.getInputs())
                 if (input.getConnectedOutput() != null)
