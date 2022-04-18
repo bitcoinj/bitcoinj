@@ -34,6 +34,7 @@ javadoc.options.encoding = 'UTF-8'
 
 compileJava {
     options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs << '-Xlint:deprecation'
 }
 
 protobuf {
