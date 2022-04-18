@@ -16,4 +16,5 @@ javadoc.options.encoding = 'UTF-8'
 
 compileJava {
     options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs << '-Xlint:deprecation'
 }
