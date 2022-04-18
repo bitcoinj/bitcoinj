@@ -43,7 +43,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     /**
      * Zero Bitcoins.
      */
-    public static final Coin ZERO = Coin.valueOf(0);
+    public static final Coin ZERO = new Coin(0);
 
     /**
      * One Bitcoin.
@@ -93,7 +93,8 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
      * @return {@code Coin} object containing value in satoshis
      */
     public static Coin valueOf(final long satoshis) {
-        return new Coin(satoshis);
+        // Avoid allocating a new object for Coins of value zero
+        return satoshis == 0 ? Coin.ZERO : new Coin(satoshis);
     }
 
     @Override
@@ -202,7 +203,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin add(final Coin value) {
-        return new Coin(LongMath.checkedAdd(this.value, value.value));
+        return Coin.valueOf(LongMath.checkedAdd(this.value, value.value));
     }
 
     /** Alias for add */
@@ -211,7 +212,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin subtract(final Coin value) {
-        return new Coin(LongMath.checkedSubtract(this.value, value.value));
+        return Coin.valueOf(LongMath.checkedSubtract(this.value, value.value));
     }
 
     /** Alias for subtract */
@@ -220,7 +221,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin multiply(final long factor) {
-        return new Coin(LongMath.checkedMultiply(this.value, factor));
+        return Coin.valueOf(LongMath.checkedMultiply(this.value, factor));
     }
 
     /** Alias for multiply */
@@ -234,7 +235,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin divide(final long divisor) {
-        return new Coin(this.value / divisor);
+        return Coin.valueOf(this.value / divisor);
     }
 
     /** Alias for divide */
@@ -248,7 +249,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin[] divideAndRemainder(final long divisor) {
-        return new Coin[] { new Coin(this.value / divisor), new Coin(this.value % divisor) };
+        return new Coin[] { Coin.valueOf(this.value / divisor), Coin.valueOf(this.value % divisor) };
     }
 
     public long divide(final Coin divisor) {
@@ -296,11 +297,11 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin shiftLeft(final int n) {
-        return new Coin(this.value << n);
+        return Coin.valueOf(this.value << n);
     }
 
     public Coin shiftRight(final int n) {
-        return new Coin(this.value >> n);
+        return Coin.valueOf(this.value >> n);
     }
 
     @Override
@@ -311,7 +312,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public Coin negate() {
-        return new Coin(-this.value);
+        return Coin.valueOf(-this.value);
     }
 
     /**
