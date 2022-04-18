@@ -96,7 +96,6 @@ import static java.util.stream.Collectors.toList;
  * 
  * @author Andreas Schildbach
  */
-@SuppressWarnings("PublicStaticCollectionField")
 public class DeterministicKeyChain implements EncryptableKeyChain {
     private static final Logger log = LoggerFactory.getLogger(DeterministicKeyChain.class);
     protected final ReentrantLock lock = Threading.lock(DeterministicKeyChain.class);
