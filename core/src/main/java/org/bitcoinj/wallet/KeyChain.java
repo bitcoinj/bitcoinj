@@ -17,7 +17,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import java.util.List;

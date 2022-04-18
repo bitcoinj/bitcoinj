@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.crypto.ECKey;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>

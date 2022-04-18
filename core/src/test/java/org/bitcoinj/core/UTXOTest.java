@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
+import org.bitcoinj.crypto.ECKey;
 
 public class UTXOTest {
 

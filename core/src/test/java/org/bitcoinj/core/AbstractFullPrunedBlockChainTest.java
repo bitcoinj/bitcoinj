@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;

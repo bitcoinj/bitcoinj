@@ -19,7 +19,7 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.junit.Test;
 
 import java.util.List;

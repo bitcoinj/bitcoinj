@@ -23,6 +23,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.junit.Before;
 import org.junit.Test;
+import org.bitcoinj.crypto.ECKey;
 
 import java.net.InetAddress;
 

@@ -32,6 +32,7 @@ import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.After;
 import org.junit.Before;

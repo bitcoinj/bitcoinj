@@ -20,7 +20,7 @@ package org.bitcoinj.store;
 import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;

@@ -18,7 +18,6 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.BIP38PrivateKey.BadPassphraseException;
 import org.bitcoinj.params.MainNetParams;

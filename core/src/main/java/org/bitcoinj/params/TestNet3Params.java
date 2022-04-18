@@ -18,6 +18,9 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.utils.ByteUtils;
+import java.math.BigInteger;
+import java.util.Date;
+
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;

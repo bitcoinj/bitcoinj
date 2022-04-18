@@ -16,7 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.ECKey;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;

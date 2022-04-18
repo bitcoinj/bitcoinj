@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;

@@ -17,8 +17,8 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.ECKey.ECDSASignature;
+import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;

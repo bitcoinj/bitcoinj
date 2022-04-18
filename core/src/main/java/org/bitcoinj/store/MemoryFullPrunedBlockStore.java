@@ -18,7 +18,6 @@ package org.bitcoinj.store;
 
 import com.google.common.base.Preconditions;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
@@ -29,6 +28,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
