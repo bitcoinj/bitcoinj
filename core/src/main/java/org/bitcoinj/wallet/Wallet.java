@@ -3893,7 +3893,7 @@ public class Wallet extends BaseTaggableObject
 
             // If there is an input that isn't from us, i.e. this is a shared transaction
             Coin txInputsTotal = tx.getInputSum();
-            if (txOwnedInputsTotal != txInputsTotal) {
+            if (!txOwnedInputsTotal.equals(txInputsTotal)) {
 
                 // multiply our output total by the appropriate proportion to account for the inputs that we don't own
                 BigInteger txOutputTotalNum = new BigInteger(txOutputTotal.toString());
