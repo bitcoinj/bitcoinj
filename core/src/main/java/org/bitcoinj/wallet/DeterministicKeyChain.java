@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.*;
 import static java.util.stream.Collectors.collectingAndThen;
@@ -505,6 +506,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // and calculate the full lookahead zone there, so network requests will always use the right amount.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index, 0, 0);
             basicKeyChain.importKeys(lookahead);
+            lookahead.forEach(hierarchy::putKey);
             List<DeterministicKey> keys = new ArrayList<>(numberOfKeys);
             for (int i = 0; i < numberOfKeys; i++) {
                 HDPath path = parentKey.getPath().extend(new ChildNumber(index - numberOfKeys + i, false));
@@ -1174,18 +1176,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public void maybeLookAhead() {
         lock.lock();
         try {
-            List<DeterministicKey> keys = maybeLookAhead(externalParentKey, issuedExternalKeys);
-            keys.addAll(maybeLookAhead(internalParentKey, issuedInternalKeys));
-            if (keys.isEmpty())
-                return;
-            keyLookaheadEpoch++;
-            // Batch add all keys at once so there's only one event listener invocation, as this will be listened to
-            // by the wallet and used to rebuild/broadcast the Bloom filter. That's expensive so we don't want to do
-            // it more often than necessary.
-            basicKeyChain.importKeys(keys);
+            List<DeterministicKey> keys = concatLists(
+                    maybeLookAhead(externalParentKey, issuedExternalKeys),
+                    maybeLookAhead(internalParentKey, issuedInternalKeys));
+            if (!keys.isEmpty()) {
+                keyLookaheadEpoch++;
+                // Batch add all keys at once so there's only one event listener invocation, as this will be listened to
+                // by the wallet and used to rebuild/broadcast the Bloom filter. That's expensive so we don't want to do
+                // it more often than necessary.
+                basicKeyChain.importKeys(keys);
+                keys.forEach(hierarchy::putKey);
+            }
         } finally {
             lock.unlock();
         }
+    }
+
+    private <T> List<T> concatLists(List<T> list1, List<T> list2) {
+        return Stream.concat(list1.stream(), list2.stream())
+                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
     }
 
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
@@ -1196,8 +1205,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     /**
      * Pre-generate enough keys to reach the lookahead size, but only if there are more than the lookaheadThreshold to
      * be generated, so that the Bloom filter does not have to be regenerated that often.
-     *
-     * The returned mutable list of keys must be inserted into the basic key chain.
+     * <p>
+     * Although this method reads fields, it has no side effects and simply returns a list of keys. This
+     * means the caller is responsible for adding them to the hierarchy and keychain.
+     * @param parent parent key
+     * @param issued number of keys already issued
+     * @param lookaheadSize target lookahead
+     * @param lookaheadThreshold lookahead threshold
+     * @return unmodifiable list of keys (typically the caller must insert them into the hierarchy and basic keychain)
      */
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued, int lookaheadSize, int lookaheadThreshold) {
         checkState(lock.isHeldByCurrentThread());
@@ -1212,10 +1227,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
                 .map(DeterministicKey::dropPrivateBytes)
-                .collect(Collectors.toList());
-        result.forEach(key -> {
-            hierarchy.putKey(key);
-        });
+                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
         watch.stop();
         log.info("Took {}", watch);
         return result;
