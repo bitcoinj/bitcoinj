@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.*;
 import static java.util.stream.Collectors.collectingAndThen;
@@ -1201,23 +1202,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(lock.isHeldByCurrentThread());
         final int numChildren = hierarchy.getNumChildren(parent.getPath());
         final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
-
-        if (needed <= lookaheadThreshold)
-            return new ArrayList<>();
+        final int limit = (needed > lookaheadThreshold) ? needed : 0;
 
         log.info("{} keys needed for {} = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
-                needed, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
+                limit, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
 
-        List<DeterministicKey> result  = new ArrayList<>(needed);
         final Stopwatch watch = Stopwatch.createStarted();
-        int nextChild = numChildren;
-        for (int i = 0; i < needed; i++) {
-            DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
-            key = key.dropPrivateBytes();
+        List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
+                .limit(limit)
+                .map(DeterministicKey::dropPrivateBytes)
+                .collect(Collectors.toList());
+        result.forEach(key -> {
             hierarchy.putKey(key);
-            result.add(key);
-            nextChild = key.getChildNumber().num() + 1;
-        }
+        });
         watch.stop();
         log.info("Took {}", watch);
         return result;

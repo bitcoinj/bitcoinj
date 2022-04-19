@@ -23,6 +23,8 @@ import java.math.*;
 import java.nio.*;
 import java.security.*;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.*;
 
@@ -120,6 +122,18 @@ public final class HDKeyDerivation {
         }
         throw new HDDerivationException("Maximum number of child derivation attempts reached, this is probably an indication of a bug.");
 
+    }
+
+    /**
+     * Generate an infinite stream of {@link DeterministicKey}s from the given parent and index.
+     * <p>
+     * Note: Use {@link Stream#limit(long)} to get the desired number of keys.
+     * @param parent The parent key
+     * @param childNumber The index of the first child to supply/generate
+     * @return A stream of {@code DeterministicKey}s
+     */
+    public static Stream<DeterministicKey> generate(DeterministicKey parent, int childNumber) {
+        return Stream.generate(new KeySupplier(parent, childNumber));
     }
 
     /**
@@ -226,6 +240,33 @@ public final class HDKeyDerivation {
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
         if (integer.compareTo(ECKey.CURVE.getN()) > 0)
             throw new HDDerivationException(errorMessage);
+    }
+
+    /**
+     * A supplier of a sequence of {@code DeterministicKey}s generated from a starting
+     * parent and child index.
+     * <p><b>Not threadsafe: Should be used on a single thread</b>
+     */
+    private static class KeySupplier implements Supplier<DeterministicKey> {
+        private final DeterministicKey parent;
+        private int nextChild;
+
+        /**
+         * Construct a key supplier with the specified starting point
+         * @param parent The parent key
+         * @param nextChild The index of the next child to supply/generate
+         */
+        public KeySupplier(DeterministicKey parent, int nextChild) {
+            this.parent = parent;
+            this.nextChild = nextChild;
+        }
+
+        @Override
+        public DeterministicKey get() {
+            DeterministicKey key = HDKeyDerivation.deriveThisOrNextChildKey(parent, nextChild);
+            nextChild = key.getChildNumber().num() + 1;
+            return key;
+        }
     }
 
     public static class RawKeyBytes {
