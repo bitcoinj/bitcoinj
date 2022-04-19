@@ -226,10 +226,10 @@ public class Wallet extends BaseTaggableObject
 
     // The key chain group is not thread safe, and generally the whole hierarchy of objects should not be mutated
     // outside the wallet lock. So don't expose this object directly via any accessors!
-    @GuardedBy("keyChainGroupLock") private KeyChainGroup keyChainGroup;
+    @GuardedBy("keyChainGroupLock") private final KeyChainGroup keyChainGroup;
 
     // A list of scripts watched by this wallet.
-    @GuardedBy("keyChainGroupLock") private Set<Script> watchedScripts;
+    @GuardedBy("keyChainGroupLock") private final Set<Script> watchedScripts;
 
     protected final Context context;
     protected final NetworkParameters params;
@@ -270,7 +270,7 @@ public class Wallet extends BaseTaggableObject
     // side effect of how the code is written (e.g. during re-orgs confidence data gets adjusted multiple times).
     private int onWalletChangedSuppressions;
     private boolean insideReorg;
-    private Map<Transaction, TransactionConfidence.Listener.ChangeReason> confidenceChanged;
+    private final Map<Transaction, TransactionConfidence.Listener.ChangeReason> confidenceChanged;
     protected volatile WalletFiles vFileManager;
     // Object that is used to send transactions asynchronously when the wallet requires it.
     protected volatile TransactionBroadcaster vTransactionBroadcaster;
@@ -291,7 +291,7 @@ public class Wallet extends BaseTaggableObject
     private final HashMap<String, WalletExtension> extensions;
 
     // Objects that perform transaction signing. Applied subsequently one after another
-    @GuardedBy("lock") private volatile List<TransactionSigner> signers;
+    @GuardedBy("lock") private final List<TransactionSigner> signers;
 
     // If this is set then the wallet selects spendable candidate outputs from a UTXO provider.
     @Nullable private volatile UTXOProvider vUTXOProvider;
@@ -4534,8 +4534,8 @@ public class Wallet extends BaseTaggableObject
      *
      */
     private static class FreeStandingTransactionOutput extends TransactionOutput {
-        private UTXO output;
-        private int chainHeight;
+        private final UTXO output;
+        private final int chainHeight;
 
         /**
          * Construct a free standing Transaction Output.
