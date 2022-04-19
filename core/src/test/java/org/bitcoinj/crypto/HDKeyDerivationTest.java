@@ -22,6 +22,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.HDKeyDerivation.PublicDeriveMode;
@@ -135,5 +138,31 @@ public class HDKeyDerivationTest {
         assertEquals(EXPECTED_CHILD_CHAIN_CODE, Utils.HEX.encode(fromPublicWithInversion.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPublicWithInversion.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublicWithInversion.getPublicKeyAsHex());
+    }
+
+    @Test
+    public void testGenerate() {
+        DeterministicKey parent = new DeterministicKey(HDPath.m(), new byte[32], BigInteger.TEN,
+                null);
+        assertFalse(parent.isPubKeyOnly());
+        assertFalse(parent.isEncrypted());
+
+        List<DeterministicKey> keys0 = HDKeyDerivation.generate(parent, CHILD_NUMBER.num())
+                                                        .limit(0)
+                                                        .collect(Collectors.toList());
+        assertEquals(0, keys0.size());
+
+        List<DeterministicKey> keys1 = HDKeyDerivation.generate(parent, CHILD_NUMBER.num())
+                                                        .limit(1)
+                                                        .collect(Collectors.toList());
+        assertEquals(1, keys1.size());
+        assertEquals(HDPath.m(CHILD_NUMBER), keys1.get(0).getPath());
+
+        List<DeterministicKey> keys2 = HDKeyDerivation.generate(parent, CHILD_NUMBER.num())
+                                                        .limit(2)
+                                                        .collect(Collectors.toList());
+        assertEquals(2, keys2.size());
+        assertEquals(HDPath.parsePath("m/1"), keys2.get(0).getPath());
+        assertEquals(HDPath.parsePath("m/2"), keys2.get(1).getPath());
     }
 }
