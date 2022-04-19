@@ -70,6 +70,14 @@ public class DeterministicHierarchy {
     }
 
     /**
+     * Inserts a list of keys into the hierarchy
+     * @param keys A list of keys to put in the hierarchy
+     */
+    public final void putKeys(List<DeterministicKey> keys) {
+        keys.forEach(this::putKey);
+    }
+
+    /**
      * Returns a key for the given path, optionally creating it.
      *
      * @param path the path to the key
