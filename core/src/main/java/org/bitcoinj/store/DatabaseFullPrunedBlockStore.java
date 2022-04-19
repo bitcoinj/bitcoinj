@@ -1178,7 +1178,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                     outputs.add(output);
                 }
             }
-            return outputs;
+            return Collections.unmodifiableList(outputs);
         } catch (SQLException | BlockStoreException ex) {
             throw new UTXOProviderException(ex);
         } finally {
