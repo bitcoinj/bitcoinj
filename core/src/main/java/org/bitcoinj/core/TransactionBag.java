@@ -17,12 +17,11 @@
 
 package org.bitcoinj.core;
 
-import javax.annotation.Nullable;
-
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**

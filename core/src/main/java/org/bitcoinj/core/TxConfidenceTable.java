@@ -16,12 +16,15 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.utils.*;
+import org.bitcoinj.utils.Threading;
 
-import javax.annotation.*;
-import java.lang.ref.*;
-import java.util.*;
-import java.util.concurrent.locks.*;
+import javax.annotation.Nullable;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

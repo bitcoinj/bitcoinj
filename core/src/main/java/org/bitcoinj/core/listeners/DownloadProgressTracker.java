@@ -25,7 +25,7 @@ import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;

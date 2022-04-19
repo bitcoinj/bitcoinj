@@ -16,7 +16,12 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerSocketHandler;
+import org.bitcoinj.core.Ping;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

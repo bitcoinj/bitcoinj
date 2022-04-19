@@ -17,14 +17,14 @@
 
 package org.bitcoinj.core;
 
-import static org.junit.Assert.assertEquals;
+import org.bitcoinj.script.ScriptBuilder;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import org.bitcoinj.script.ScriptBuilder;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class UTXOTest {
 

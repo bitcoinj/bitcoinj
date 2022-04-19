@@ -17,21 +17,34 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.core.TransactionConfidence.*;
-import org.bitcoinj.store.*;
-import org.bitcoinj.testing.*;
-import org.bitcoinj.wallet.*;
-import org.junit.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
+import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.testing.InboundMessageQueuer;
+import org.bitcoinj.testing.TestWithPeerGroup;
+import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.Wallet;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.*;
-import java.util.*;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-import static org.bitcoinj.core.Utils.*;
-import static org.junit.Assert.*;
+import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(value = Parameterized.class)
 public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {

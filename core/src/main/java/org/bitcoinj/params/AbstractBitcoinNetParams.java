@@ -17,11 +17,8 @@
 
 package org.bitcoinj.params;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import java.math.BigInteger;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Stopwatch;
+import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
@@ -30,16 +27,17 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.utils.MonetaryFormat;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.MonetaryFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
 
-import org.bitcoinj.core.BitcoinSerializer;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Parameters for Bitcoin-like networks.

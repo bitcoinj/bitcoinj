@@ -16,10 +16,10 @@
 
 package org.bitcoinj.jni;
 
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in

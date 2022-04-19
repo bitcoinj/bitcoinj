@@ -23,7 +23,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 
 import javax.annotation.Nullable;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;

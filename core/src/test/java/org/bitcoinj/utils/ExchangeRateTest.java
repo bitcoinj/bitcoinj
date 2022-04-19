@@ -16,15 +16,15 @@
 
 package org.bitcoinj.utils;
 
-import static org.junit.Assert.assertEquals;
+import org.bitcoinj.core.Coin;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.junit.Test;
-import org.bitcoinj.core.Coin;
+import static org.junit.Assert.assertEquals;
 
 public class ExchangeRateTest {
 

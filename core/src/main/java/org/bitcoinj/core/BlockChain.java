@@ -17,8 +17,6 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -29,6 +27,8 @@ import org.bitcoinj.wallet.WalletExtension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 // TODO: Rename this class to SPVBlockChain at some point.
 

@@ -17,7 +17,9 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.crypto.*;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
 
 import java.util.List;

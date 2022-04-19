@@ -17,6 +17,8 @@
 
 package org.bitcoinj.protocols.payments;
 
+import com.google.protobuf.ByteString;
+import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
@@ -30,8 +32,6 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import com.google.protobuf.ByteString;
-import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -45,7 +45,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static org.bitcoinj.core.Coin.COIN;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PaymentSessionTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();

@@ -16,8 +16,8 @@
 
 package org.bitcoinj.net;
 
-import java.net.InetAddress;
 import javax.annotation.Nullable;
+import java.net.InetAddress;
 
 /**
  * A factory which generates new {@link StreamConnection}s when a new connection is opened.

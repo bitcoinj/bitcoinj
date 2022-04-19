@@ -29,7 +29,11 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class BitcoinSerializerTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();

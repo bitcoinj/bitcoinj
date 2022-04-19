@@ -17,13 +17,12 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.core.Utils;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.PriorityQueue;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ExponentialBackoffTest {
     private ExponentialBackoff.Params params;

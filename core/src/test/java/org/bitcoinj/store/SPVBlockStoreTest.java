@@ -17,15 +17,7 @@
 
 package org.bitcoinj.store;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-
-import java.io.File;
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.ECKey;
@@ -33,14 +25,20 @@ import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.base.Stopwatch;
+import java.io.File;
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SPVBlockStoreTest {
     private static NetworkParameters UNITTEST;

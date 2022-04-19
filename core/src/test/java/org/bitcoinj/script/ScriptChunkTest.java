@@ -16,6 +16,12 @@
 
 package org.bitcoinj.script;
 
+import com.google.common.primitives.Bytes;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.Test;
+
+import java.util.Random;
+
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
@@ -25,13 +31,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Random;
-
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Test;
-
-import com.google.common.primitives.Bytes;
 
 public class ScriptChunkTest {
 

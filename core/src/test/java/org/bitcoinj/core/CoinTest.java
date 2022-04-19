@@ -16,19 +16,28 @@
 
 package org.bitcoinj.core;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+
+import static org.bitcoinj.core.Coin.CENT;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.core.Coin.NEGATIVE_SATOSHI;
+import static org.bitcoinj.core.Coin.SATOSHI;
+import static org.bitcoinj.core.Coin.ZERO;
+import static org.bitcoinj.core.Coin.btcToSatoshi;
+import static org.bitcoinj.core.Coin.parseCoin;
+import static org.bitcoinj.core.Coin.parseCoinInexact;
+import static org.bitcoinj.core.Coin.satoshiToBtc;
+import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class CoinTest {
 

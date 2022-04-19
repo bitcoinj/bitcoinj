@@ -16,20 +16,18 @@
 
 package org.bitcoinj.utils;
 
-import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
-
-import java.math.BigInteger;
-import static java.math.BigDecimal.ONE;
-import static java.math.BigDecimal.ZERO;
 import java.math.BigDecimal;
-import static java.math.RoundingMode.HALF_UP;
-
+import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-
 import java.util.Collections;
 import java.util.Locale;
+
+import static java.math.BigDecimal.ONE;
+import static java.math.BigDecimal.ZERO;
+import static java.math.RoundingMode.HALF_UP;
+import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
 
 /**
  * <p>This class, a concrete extension of {@link BtcFormat}, is distinguished by its

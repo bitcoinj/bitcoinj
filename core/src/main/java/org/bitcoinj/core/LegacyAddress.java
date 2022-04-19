@@ -18,15 +18,14 @@
 
 package org.bitcoinj.core;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-
-import javax.annotation.Nullable;
-
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script.ScriptType;
+
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key

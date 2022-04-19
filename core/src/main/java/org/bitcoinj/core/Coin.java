@@ -16,8 +16,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.utils.MonetaryFormat;
 import com.google.common.math.LongMath;
+import org.bitcoinj.utils.MonetaryFormat;
 
 import java.io.Serializable;
 import java.math.BigDecimal;

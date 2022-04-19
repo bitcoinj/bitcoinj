@@ -17,12 +17,7 @@
 
 package org.bitcoinj.params;
 
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.Date;
-
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -30,6 +25,9 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+
+import java.math.BigInteger;
+import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkState;
 

@@ -16,11 +16,11 @@
 
 package org.bitcoinj.core.listeners;
 
-import java.util.List;
-
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
+
+import java.util.List;
 
 /**
  * Listener interface for when the best chain has changed.

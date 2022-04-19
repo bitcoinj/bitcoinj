@@ -23,9 +23,9 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.script.Script.ScriptType;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -38,7 +38,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class LegacyAddressTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();

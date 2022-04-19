@@ -17,13 +17,12 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

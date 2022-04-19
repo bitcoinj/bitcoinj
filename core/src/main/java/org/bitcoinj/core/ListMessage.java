@@ -17,13 +17,13 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.MoreObjects;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import com.google.common.base.MoreObjects;
 
 /**
  * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>

@@ -16,11 +16,11 @@
 
 package org.bitcoinj.utils;
 
+import org.junit.Test;
+
 import static org.bitcoinj.utils.Fiat.parseFiat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
 
 public class FiatTest {
 

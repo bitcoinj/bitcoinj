@@ -16,7 +16,10 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionBroadcast;
+import org.bitcoinj.core.TransactionBroadcaster;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 

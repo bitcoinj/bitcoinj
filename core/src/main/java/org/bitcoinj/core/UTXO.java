@@ -17,10 +17,13 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.*;
+import org.bitcoinj.script.Script;
 
-import java.io.*;
-import java.math.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Objects;
 

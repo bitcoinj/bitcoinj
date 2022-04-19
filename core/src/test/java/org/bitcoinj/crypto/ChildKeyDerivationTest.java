@@ -17,13 +17,21 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.params.*;
-import org.junit.*;
-import org.bouncycastle.crypto.params.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.UnitTestParams;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.junit.Test;
 
-import static org.bitcoinj.core.Utils.*;
-import static org.junit.Assert.*;
+import static org.bitcoinj.core.Utils.HEX;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * This test is adapted from Armory's BIP 32 tests.

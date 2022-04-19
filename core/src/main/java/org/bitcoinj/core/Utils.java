@@ -17,6 +17,14 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.io.BaseEncoding;
+import org.bitcoinj.core.internal.InternalUtils;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,17 +38,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
-import org.bitcoinj.core.internal.InternalUtils;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.io.BaseEncoding;
-
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
 /**
  * A collection of various utility methods that are helpful for working with the Bitcoin protocol.

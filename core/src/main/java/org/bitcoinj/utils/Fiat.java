@@ -16,15 +16,15 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.math.LongMath;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Monetary;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Monetary;
 import java.util.Objects;
-import com.google.common.math.LongMath;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type

@@ -16,15 +16,15 @@
 
 package org.bitcoinj.net.discovery;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import org.bitcoinj.params.MainNetParams;
+import org.junit.Test;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.bitcoinj.params.MainNetParams;
-import org.junit.Test;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class DnsDiscoveryTest {
 

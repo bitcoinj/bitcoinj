@@ -16,20 +16,20 @@
 
 package org.bitcoinj.crypto;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.math.BigInteger;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.HDKeyDerivation.PublicDeriveMode;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Andreas Schildbach

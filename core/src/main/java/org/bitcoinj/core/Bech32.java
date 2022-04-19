@@ -17,11 +17,10 @@
 package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.Arrays;
 import java.util.Locale;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>Implementation of the Bech32 encoding.</p>
