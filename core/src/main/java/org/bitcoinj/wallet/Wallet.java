@@ -126,6 +126,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -1010,10 +1012,9 @@ public class Wallet extends BaseTaggableObject
             for (final Script script : scripts) {
                 // Script.equals/hashCode() only takes into account the program bytes, so this step lets the user replace
                 // a script in the wallet with an incorrect creation time.
-                if (watchedScripts.contains(script))
-                    watchedScripts.remove(script);
                 if (script.getCreationTimeSeconds() == 0)
                     log.warn("Adding a script to the wallet with a creation time of zero, this will disable the checkpointing optimization!    {}", script);
+                watchedScripts.remove(script);
                 watchedScripts.add(script);
                 added++;
             }
@@ -2383,7 +2384,7 @@ public class Wallet extends BaseTaggableObject
             // entirely by this point. We could and maybe should rebroadcast them so the network remembers and tries
             // to confirm them again. But this is a deeply unusual edge case that due to the maturity rule should never
             // happen in practice, thus for simplicities sake we ignore it here.
-            log.info("  coinbase tx <-dead: confidence {}", tx.getTxId(),
+            log.info("  coinbase tx {} <-dead: confidence {}", tx.getTxId(),
                     tx.getConfidence().getConfidenceType().name());
             dead.remove(tx.getTxId());
         }
@@ -3093,30 +3094,27 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * <p>Returns an list of N transactions, ordered by increasing age. Transactions on side chains are not included.
-     * Dead transactions (overridden by double spends) are optionally included.</p>
-     * <p>Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
-     * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
+     * Returns a list of transactions, ordered by increasing age. Transactions on side chains are not included.
+     * <p>
+     * Note: the current implementation sorts all the transactions in the wallet. Regardless of how many transactions are
+     * requested, this cost is always the same. In future, requesting smaller numbers of transactions may be faster
      * depending on how the wallet is implemented (eg if backed by a database).</p>
+     *
+     * @param numTransactions maximum number of transactions to return (0 will return all transactions)
+     * @param includeDead include dead transactions (transactions overridden by double spends)
+     * @return A list of transactions
      */
     public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         lock.lock();
         try {
             checkArgument(numTransactions >= 0);
-            // Firstly, put all transactions into an array.
             int size = unspent.size() + spent.size() + pending.size();
-            if (numTransactions > size || numTransactions == 0) {
-                numTransactions = size;
-            }
-            ArrayList<Transaction> all = new ArrayList<>(getTransactions(includeDead));
-            // Order by update time.
-            Collections.sort(all, Transaction.SORT_TX_BY_UPDATE_TIME);
-            if (numTransactions == all.size()) {
-                return all;
-            } else {
-                all.subList(numTransactions, all.size()).clear();
-                return all;
-            }
+            int limit = (numTransactions > size || numTransactions == 0) ? size : numTransactions;
+            return getTransactions(includeDead)
+                    .stream()
+                    .sorted(Transaction.SORT_TX_BY_UPDATE_TIME)
+                    .limit(limit)
+                    .collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
@@ -3820,7 +3818,7 @@ public class Wallet extends BaseTaggableObject
             // Count spent outputs to only if they were not to us. This means we don't count change outputs.
             Coin txOutputTotal = Coin.ZERO;
             for (TransactionOutput out : tx.getOutputs()) {
-                if (out.isMine(this) == false) {
+                if (!out.isMine(this)) {
                     txOutputTotal = txOutputTotal.add(out.getValue());
                 }
             }
@@ -4471,11 +4469,14 @@ public class Wallet extends BaseTaggableObject
      */
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
         UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
-        List<UTXO> candidates = new ArrayList<>();
-        List<ECKey> keys = getImportedKeys();
-        keys.addAll(getActiveKeyChain().getLeafKeys());
-        candidates.addAll(utxoProvider.getOpenTransactionOutputs(keys));
-        return candidates;
+        List<ECKey> keys = Stream
+                .concat(
+                    getImportedKeys().stream(),
+                    getActiveKeyChain().getLeafKeys().stream()
+                )
+                .collect(Collectors.toList());
+        // TODO: Make unmodifiable (possibly by changing the utxoProvider method)
+        return utxoProvider.getOpenTransactionOutputs(keys);
     }
 
     /** Returns the default {@link CoinSelector} object that is used by this wallet if no custom selector is specified. */
