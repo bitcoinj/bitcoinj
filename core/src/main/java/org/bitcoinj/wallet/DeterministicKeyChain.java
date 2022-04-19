@@ -425,8 +425,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new encrypted hierarchy.
             key = new DeterministicKey(key.dropPrivateBytes(), parent);
-            hierarchy.putKey(key);
-            basicKeyChain.importKey(key);
+            putKey(key);
         }
         for (ListenerRegistration<KeyChainEventListener> listener : chain.basicKeyChain.getListeners()) {
             basicKeyChain.addEventListener(listener);
@@ -445,8 +444,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                                             DeterministicKey parent, List<ChildNumber> path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
         key = key.encrypt(checkNotNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
-        hierarchy.putKey(key);
-        basicKeyChain.importKey(key);
+        putKey(key);
         return key;
     }
 
@@ -522,6 +520,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    private void putKey(DeterministicKey key) {
+        hierarchy.putKey(key);
+        basicKeyChain.importKey(key);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
@@ -955,8 +958,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         }
                     }
                 }
-                chain.hierarchy.putKey(detkey);
-                chain.basicKeyChain.importKey(detkey);
+                chain.putKey(detkey);
             }
         }
         if (chain != null) {
@@ -1027,8 +1029,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new decrypted hierarchy.
             key = new DeterministicKey(key.dropPrivateBytes(), parent);
-            chain.hierarchy.putKey(key);
-            chain.basicKeyChain.importKey(key);
+            chain.putKey(key);
         }
         chain.issuedExternalKeys = issuedExternalKeys;
         chain.issuedInternalKeys = issuedInternalKeys;
