@@ -318,18 +318,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
-     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
-     * {@link #loadFromFile}.
-     * @deprecated Use {@link #createDeterministic(Context, ScriptType)}
-     */
-    @Deprecated
-    @VisibleForTesting
-    protected Wallet(Context context) {
-        this(context, KeyChainGroup.builder(context.getParams()).fromRandom(Script.ScriptType.P2PKH).build());
-    }
-
-    /**
      * Creates a new, empty wallet with just a basic keychain and no transactions. No deterministic chains will be created
      * automatically. This is meant for when you just want to import a few keys and operate on them.
      * @param params network parameters
@@ -443,6 +431,13 @@ public class Wallet extends BaseTaggableObject
             throw new IllegalArgumentException(base58.substring(0, 4));
     }
 
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     * @param params network parameters
+     * @param keyChainGroup keychain group to manage keychains
+     */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
         this(Context.getOrCreate(params), keyChainGroup);
     }
