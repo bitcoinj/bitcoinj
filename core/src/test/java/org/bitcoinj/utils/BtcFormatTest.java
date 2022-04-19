@@ -24,21 +24,42 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigDecimal;
-import java.text.*;
+import java.text.AttributedCharacterIterator;
 import java.text.AttributedCharacterIterator.Attribute;
+import java.text.CharacterIterator;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-import static org.bitcoinj.core.Coin.*;
+import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
+import static java.util.Locale.CHINA;
+import static java.util.Locale.FRANCE;
+import static java.util.Locale.GERMANY;
+import static java.util.Locale.ITALY;
+import static java.util.Locale.JAPAN;
+import static java.util.Locale.TAIWAN;
+import static java.util.Locale.US;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.core.Coin.SATOSHI;
+import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
+import static org.bitcoinj.core.Coin.ZERO;
+import static org.bitcoinj.core.Coin.parseCoin;
+import static org.bitcoinj.core.Coin.valueOf;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 import static org.bitcoinj.utils.BtcFixedFormat.REPEATING_DOUBLETS;
 import static org.bitcoinj.utils.BtcFixedFormat.REPEATING_TRIPLETS;
-import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
-import static java.util.Locale.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class BtcFormatTest {

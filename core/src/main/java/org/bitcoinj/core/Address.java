@@ -16,11 +16,10 @@
 
 package org.bitcoinj.core;
 
-import javax.annotation.Nullable;
-
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
 
+import javax.annotation.Nullable;
 import java.util.Comparator;
 
 /**

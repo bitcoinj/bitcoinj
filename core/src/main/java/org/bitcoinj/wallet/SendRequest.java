@@ -17,8 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.base.MoreObjects;
 import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
@@ -32,7 +31,7 @@ import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import com.google.common.base.MoreObjects;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A SendRequest gives the wallet information about precisely how to send money to a recipient or set of recipients.

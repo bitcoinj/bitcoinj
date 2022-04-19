@@ -16,16 +16,15 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.io.ByteArrayOutputStream;
-import java.util.Comparator;
-
-import javax.annotation.Nullable;
-
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.util.Comparator;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>

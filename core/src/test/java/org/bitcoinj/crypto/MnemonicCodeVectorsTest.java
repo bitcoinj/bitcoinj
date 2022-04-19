@@ -17,15 +17,15 @@
 
 package org.bitcoinj.crypto;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.core.internal.InternalUtils.SPACE_JOINER;

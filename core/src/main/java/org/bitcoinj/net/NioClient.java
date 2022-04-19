@@ -17,13 +17,14 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.base.*;
+import com.google.common.base.Throwables;
 import org.bitcoinj.utils.ListenableCompletableFuture;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 
 /**
  * Creates a simple connection to a server using a {@link StreamConnection} to process data.

@@ -16,23 +16,12 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.utils.BtcAutoFormat.Style;
-import static org.bitcoinj.utils.BtcAutoFormat.Style.*;
-
-import org.bitcoinj.core.Coin;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Strings;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.utils.BtcAutoFormat.Style;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
-import static java.math.RoundingMode.HALF_UP;
-
 import java.text.AttributedCharacterIterator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -41,12 +30,20 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
-
-import java.util.Locale;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static java.math.RoundingMode.HALF_UP;
+import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
+import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 
 /**
  * <p>Instances of this class format and parse locale-specific numerical

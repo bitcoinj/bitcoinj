@@ -16,14 +16,13 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.core.Coin;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-
-import org.bitcoinj.core.Coin;
-
 import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * An exchange rate is expressed as a ratio of a {@link Coin} and a {@link Fiat} amount.

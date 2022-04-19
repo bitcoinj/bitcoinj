@@ -16,17 +16,19 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.*;
-import org.bouncycastle.math.ec.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Utils;
+import org.bouncycastle.math.ec.ECPoint;
 
-import java.math.*;
-import java.nio.*;
-import java.security.*;
-import java.util.*;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Implementation of the <a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">BIP 32</a>

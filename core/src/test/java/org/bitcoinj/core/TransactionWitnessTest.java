@@ -14,12 +14,13 @@
 
 package org.bitcoinj.core;
 
-import static org.junit.Assert.*;
-
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TransactionWitnessTest {
 

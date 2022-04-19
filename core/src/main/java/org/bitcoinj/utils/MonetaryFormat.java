@@ -16,11 +16,8 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.math.LongMath.checkedMultiply;
-import static com.google.common.math.LongMath.checkedPow;
-import static com.google.common.math.LongMath.divide;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Monetary;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormatSymbols;
@@ -30,8 +27,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Monetary;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.math.LongMath.checkedMultiply;
+import static com.google.common.math.LongMath.checkedPow;
+import static com.google.common.math.LongMath.divide;
 
 /**
  * <p>

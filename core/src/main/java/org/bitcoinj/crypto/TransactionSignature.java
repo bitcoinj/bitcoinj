@@ -16,12 +16,13 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.SignatureDecodeException;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.Transaction.SigHash;
 import com.google.common.base.Preconditions;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.SignatureDecodeException;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Transaction.SigHash;
+import org.bitcoinj.core.VerificationException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;

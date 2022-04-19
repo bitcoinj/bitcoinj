@@ -27,10 +27,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 @RunWith(EasyMockRunner.class)
 public class PrefixedChecksummedBytesTest {

@@ -19,8 +19,6 @@ package org.bitcoin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.SecurityException;
-
 /**
  * This class holds the context reference used in native methods to handle ECDSA operations.
  */

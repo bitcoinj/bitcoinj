@@ -14,19 +14,18 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
-import org.bitcoinj.core.internal.InternalUtils;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = new TransactionWitness(0);

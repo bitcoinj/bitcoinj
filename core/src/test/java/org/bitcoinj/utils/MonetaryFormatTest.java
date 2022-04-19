@@ -16,19 +16,18 @@
 
 package org.bitcoinj.utils;
 
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.Locale;
+
 import static org.bitcoinj.core.Coin.CENT;
 import static org.bitcoinj.core.Coin.COIN;
 import static org.bitcoinj.core.Coin.SATOSHI;
 import static org.bitcoinj.core.Coin.ZERO;
 import static org.junit.Assert.assertEquals;
-
-import java.util.Locale;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
 
 public class MonetaryFormatTest {
 

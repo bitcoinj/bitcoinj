@@ -16,6 +16,10 @@
 
 package org.bitcoinj.protocols.payments;
 
+import org.bitcoin.protocols.payments.Protos;
+import org.bitcoin.protocols.payments.Protos.Payment;
+import org.bitcoin.protocols.payments.Protos.PaymentACK;
+import org.bitcoin.protocols.payments.Protos.PaymentRequest;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
@@ -31,10 +35,6 @@ import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.protocols.payments.PaymentProtocolException.PkiVerificationException;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoin.protocols.payments.Protos;
-import org.bitcoin.protocols.payments.Protos.Payment;
-import org.bitcoin.protocols.payments.Protos.PaymentACK;
-import org.bitcoin.protocols.payments.Protos.PaymentRequest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +44,9 @@ import java.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class PaymentProtocolTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();

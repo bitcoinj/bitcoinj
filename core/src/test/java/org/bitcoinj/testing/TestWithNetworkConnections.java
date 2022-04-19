@@ -17,10 +17,28 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.Ping;
+import org.bitcoinj.core.Pong;
+import org.bitcoinj.core.VersionAck;
+import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.core.*;
-import org.bitcoinj.net.*;
+import org.bitcoinj.net.BlockingClient;
+import org.bitcoinj.net.BlockingClientManager;
+import org.bitcoinj.net.ClientConnectionManager;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.net.NioClientManager;
+import org.bitcoinj.net.NioServer;
+import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.net.StreamConnectionFactory;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;

@@ -17,11 +17,10 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.base.MoreObjects;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
-
-import com.google.common.base.MoreObjects;
 
 import java.util.ArrayList;
 import java.util.Collections;

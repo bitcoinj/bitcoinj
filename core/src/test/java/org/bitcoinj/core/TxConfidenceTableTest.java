@@ -16,12 +16,14 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.params.*;
-import org.bitcoinj.testing.*;
-import org.bitcoinj.utils.*;
-import org.junit.*;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.net.*;
+import java.net.InetAddress;
 
 import static org.bitcoinj.core.Coin.COIN;
 import static org.easymock.EasyMock.anyObject;

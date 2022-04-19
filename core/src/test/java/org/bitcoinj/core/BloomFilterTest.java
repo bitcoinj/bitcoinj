@@ -22,10 +22,10 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class BloomFilterTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();

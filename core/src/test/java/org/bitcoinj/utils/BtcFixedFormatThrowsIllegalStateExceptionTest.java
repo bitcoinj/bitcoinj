@@ -16,11 +16,11 @@
 
 package org.bitcoinj.utils;
 
+import org.junit.Test;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Locale;
-
-import org.junit.Test;
 
 public class BtcFixedFormatThrowsIllegalStateExceptionTest {
 

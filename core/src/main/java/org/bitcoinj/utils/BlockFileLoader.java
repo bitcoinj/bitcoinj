@@ -16,8 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
@@ -32,6 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>This class reads block files stored in the Bitcoin Core format. This is simply a way to concatenate

@@ -17,17 +17,24 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.*;
-
-import org.bitcoinj.utils.*;
+import com.google.common.collect.Iterators;
+import org.bitcoinj.utils.ListenableCompletableFuture;
+import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.Wallet;
 
-import javax.annotation.*;
-import java.util.*;
-import java.util.concurrent.*;
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Modify the getDepthInBlocks method to require the chain height to be specified, in preparation for ceasing to touch every tx on every block.
 

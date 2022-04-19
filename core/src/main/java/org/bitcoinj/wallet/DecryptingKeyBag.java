@@ -21,7 +21,6 @@ import org.bitcoinj.script.Script;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 

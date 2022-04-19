@@ -17,13 +17,9 @@
 
 package org.bitcoinj.params;
 
-import java.net.URI;
-
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
-
 
 import static com.google.common.base.Preconditions.checkState;
 

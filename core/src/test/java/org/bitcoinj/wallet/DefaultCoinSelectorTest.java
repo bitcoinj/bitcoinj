@@ -16,17 +16,33 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.params.*;
-import org.bitcoinj.testing.*;
-import org.junit.*;
+import org.bitcoinj.core.AbstractBlockChain;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.testing.TestWithWallet;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.net.*;
-import java.util.*;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.*;
-import static org.bitcoinj.core.Coin.*;
-import static org.junit.Assert.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.bitcoinj.core.Coin.CENT;
+import static org.bitcoinj.core.Coin.COIN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DefaultCoinSelectorTest extends TestWithWallet {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
