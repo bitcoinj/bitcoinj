@@ -133,10 +133,14 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    /** Returns a copy of the list of keys that this chain is managing. */
+    /**
+     * Returns a copy of the list of keys that this chain is managing.
+     * @return A list of keys (should be treated as unmodifiable)
+     */
     public List<ECKey> getKeys() {
         lock.lock();
         try {
+            // TODO: Make unmodifiable
             return new ArrayList<>(hashToKeys.values());
         } finally {
             lock.unlock();
@@ -638,10 +642,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
         final StringBuilder builder = new StringBuilder();
-        List<ECKey> keys = getKeys();
-        Collections.sort(keys, ECKey.AGE_COMPARATOR);
-        for (ECKey key : keys)
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, null, "imported");
+        getKeys().stream().sorted(ECKey.AGE_COMPARATOR).forEach(key ->
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, null, "imported")
+        );
         return builder.toString();
     }
 }
