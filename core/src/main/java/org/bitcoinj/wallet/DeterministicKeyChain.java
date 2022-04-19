@@ -505,8 +505,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             // It's safe to do this because when a network thread tries to calculate a Bloom filter, we'll go ahead
             // and calculate the full lookahead zone there, so network requests will always use the right amount.
             List<DeterministicKey> lookahead = maybeLookAhead(parentKey, index, 0, 0);
-            basicKeyChain.importKeys(lookahead);
-            lookahead.forEach(hierarchy::putKey);
+            putKeys(lookahead);
             List<DeterministicKey> keys = new ArrayList<>(numberOfKeys);
             for (int i = 0; i < numberOfKeys; i++) {
                 HDPath path = parentKey.getPath().extend(new ChildNumber(index - numberOfKeys + i, false));
@@ -528,6 +527,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private void putKey(DeterministicKey key) {
         hierarchy.putKey(key);
         basicKeyChain.importKey(key);
+    }
+
+    private void putKeys(List<DeterministicKey> keys) {
+        hierarchy.putKeys(keys);
+        basicKeyChain.importKeys(keys);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
@@ -1184,8 +1188,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Batch add all keys at once so there's only one event listener invocation, as this will be listened to
                 // by the wallet and used to rebuild/broadcast the Bloom filter. That's expensive so we don't want to do
                 // it more often than necessary.
-                basicKeyChain.importKeys(keys);
-                keys.forEach(hierarchy::putKey);
+                putKeys(keys);
             }
         } finally {
             lock.unlock();
