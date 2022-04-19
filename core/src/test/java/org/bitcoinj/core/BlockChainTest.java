@@ -25,6 +25,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 
@@ -80,7 +81,8 @@ public class BlockChainTest {
         Context.propagate(new Context(TESTNET, 100, Coin.ZERO, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, Script.ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
-        wallet = new Wallet(Context.get()) {
+        NetworkParameters params = Context.get().getParams();
+        wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(Script.ScriptType.P2PKH).build()) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
