@@ -35,6 +35,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -216,19 +218,21 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         }
     }
 
+    /**
+     * Serialize to list of keys
+     * @return a list of keys (treat as unmodifiable list, will change in future release)
+     */
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = new ArrayList<>();
         lock.lock();
         try {
-            for (DeterministicKeyChain chain : followingKeyChains) {
-                result.addAll(chain.serializeMyselfToProtobuf());
-            }
-            result.addAll(serializeMyselfToProtobuf());
+            Stream<Protos.Key> followingStream = followingKeyChains.stream()
+                    .flatMap(chain -> chain.serializeMyselfToProtobuf().stream());
+            return Stream.concat(followingStream, serializeMyselfToProtobuf().stream())
+                    .collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
-        return result;
     }
 
     @Override

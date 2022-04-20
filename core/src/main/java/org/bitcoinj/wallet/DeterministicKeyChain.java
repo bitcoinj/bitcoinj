@@ -758,18 +758,25 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Serialize to a list of keys
+     * @return A list of keys (treat as unmodifiable list, will change in future release)
+     */
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = new ArrayList<>();
         lock.lock();
         try {
-            result.addAll(serializeMyselfToProtobuf());
+            // TODO: return unmodifiable list
+            return serializeMyselfToProtobuf();
         } finally {
             lock.unlock();
         }
-        return result;
     }
 
+    /**
+     * Serialize to a list of keys. Does not use {@code lock}, expects caller to provide locking.
+     * @return A list of keys (treat as unmodifiable list, will change in future release)
+     */
     protected List<Protos.Key> serializeMyselfToProtobuf() {
         // Most of the serialization work is delegated to the basic key chain, which will serialize the bulk of the
         // data (handling encryption along the way), and letting us patch it up with the extra data we care about.
@@ -814,6 +821,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             }
             entries.add(proto.build());
         }
+        // TODO: return unmodifiable list
         return entries;
     }
 
