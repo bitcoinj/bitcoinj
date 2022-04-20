@@ -439,9 +439,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to encrypt.
         for (DeterministicKey key : chain.getLeafKeys()) {
-            DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
-            // Clone the key to the new encrypted hierarchy.
-            putKey(new DeterministicKey(key.dropPrivateBytes(), parent));
+            putKey(cloneKey(hierarchy, key));
         }
         for (ListenerRegistration<KeyChainEventListener> listener : chain.basicKeyChain.getListeners()) {
             basicKeyChain.addEventListener(listener);
@@ -546,6 +544,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private void putKeys(List<DeterministicKey> keys) {
         hierarchy.putKeys(keys);
         basicKeyChain.importKeys(keys);
+    }
+
+    // Clone key to new hierarchy.
+    private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
+        DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
+        return new DeterministicKey(key.dropPrivateBytes(), parent);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
@@ -1045,9 +1049,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         // anyway so there's nothing to decrypt.
         for (DeterministicKey key : getLeafKeys()) {
             checkState(key.isEncrypted());
-            DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
-            // Clone the key to the new decrypted hierarchy.
-            chain.putKey(new DeterministicKey(key.dropPrivateBytes(), parent));
+            chain.putKey(cloneKey(chain.hierarchy, key));
         }
         chain.issuedExternalKeys = issuedExternalKeys;
         chain.issuedInternalKeys = issuedInternalKeys;
