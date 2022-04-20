@@ -1438,9 +1438,13 @@ public class Wallet extends BaseTaggableObject
 
     //region Serialization support
 
-    // TODO: Make this package private once the classes finish moving around.
-    /** Internal use only. */
+    @Deprecated
     public List<Protos.Key> serializeKeyChainGroupToProtobuf() {
+        return serializeKeyChainGroupToProtobufInternal();
+    }
+
+    /** Internal use only. */
+    List<Protos.Key> serializeKeyChainGroupToProtobufInternal() {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.serializeToProtobuf();
