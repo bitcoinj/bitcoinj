@@ -180,7 +180,7 @@ public class WalletProtobufSerializer {
             walletBuilder.addTransaction(txProto);
         }
 
-        walletBuilder.addAllKey(wallet.serializeKeyChainGroupToProtobuf());
+        walletBuilder.addAllKey(wallet.serializeKeyChainGroupToProtobufInternal());
 
         for (Script script : wallet.getWatchedScripts()) {
             Protos.Script protoScript =
