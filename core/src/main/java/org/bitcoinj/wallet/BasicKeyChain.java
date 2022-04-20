@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -305,22 +306,37 @@ public class BasicKeyChain implements EncryptableKeyChain {
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Serialize to a map of {@code Protos.Key.Builder}
+     * <p>Returns a {@link LinkedHashMap} which preserves iteration order.
+     * @return A map (treat as unmodifiable)
+     */
     Map<ECKey, Protos.Key.Builder> serializeToEditableProtobufs() {
-        Map<ECKey, Protos.Key.Builder> result = new LinkedHashMap<>();
-        for (ECKey ecKey : hashToKeys.values()) {
-            Protos.Key.Builder protoKey = serializeEncryptableItem(ecKey);
-            protoKey.setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
-            result.put(ecKey, protoKey);
-        }
-        return result;
+        // Both hashToKeys and the returned map are LinkedHashMap to preserve order
+        return hashToKeys.values().stream()
+                .collect(Collectors.toMap(ecKey -> ecKey,   // key is ECKey
+                        ecKey -> toProtoKeyBuilder(ecKey),  // value is Builder
+                        (oldVal, newVal) -> newVal,         // if duplicate key, overwrite oldVal with newVal
+                        LinkedHashMap::new));               // Use LinkedHashMap to preserve element order
     }
 
+    // Create a Protos.Key.Builder from an ECKey
+    private static Protos.Key.Builder toProtoKeyBuilder(ECKey ecKey) {
+        Protos.Key.Builder protoKey = serializeEncryptableItem(ecKey);
+        protoKey.setPublicKey(ByteString.copyFrom(ecKey.getPubKey()));
+        return protoKey;
+    }
+
+    /**
+     * Serialize to a list of keys
+     * @return list of keys (treat as unmodifiable list, will change in future release)
+     */
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        Collection<Protos.Key.Builder> builders = serializeToEditableProtobufs().values();
-        List<Protos.Key> result = new ArrayList<>(builders.size());
-        for (Protos.Key.Builder builder : builders) result.add(builder.build());
-        return result;
+        // TODO: Return unmodifiable list
+        return serializeToEditableProtobufs().values().stream()
+                .map(Protos.Key.Builder::build)
+                .collect(Collectors.toList());
     }
 
     /*package*/ static Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {

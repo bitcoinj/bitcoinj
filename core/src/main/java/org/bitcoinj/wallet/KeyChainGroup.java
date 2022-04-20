@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -888,17 +890,19 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    /** Returns a list of key protobufs obtained by merging the chains. */
+    /**
+     * Return a list of key protobufs obtained by merging the chains.
+     * @return a list of key protobufs (treat as unmodifiable, will change in future release)
+     */
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result;
-        if (basic != null)
-            result = basic.serializeToProtobuf();
-        else
-            result = new ArrayList<>();
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                result.addAll(chain.serializeToProtobuf());
-        return result;
+        Stream<Protos.Key> basicStream = (basic != null) ?
+                basic.serializeToProtobuf().stream() :
+                Stream.empty();
+        Stream<Protos.Key> chainsStream = (chains != null) ?
+                chains.stream().flatMap(chain -> chain.serializeToProtobuf().stream()) :
+                Stream.empty();
+        return Stream.concat(basicStream, chainsStream)
+                .collect(Collectors.toList());
     }
 
     static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
