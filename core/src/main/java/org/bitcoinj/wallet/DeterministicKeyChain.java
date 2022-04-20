@@ -840,11 +840,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
                 accountPath = deserializeAccountPath(key.getAccountPathList());
                 if (chain != null) {
-                    checkState(lookaheadSize >= 0);
-                    chain.setLookaheadSize(lookaheadSize);
-                    chain.setSigsRequiredToSpend(sigsRequiredToSpend);
-                    chain.maybeLookAhead();
-                    chains.add(chain);
+                    addChain(chains, chain, lookaheadSize, sigsRequiredToSpend);
                     chain = null;
                 }
                 long timestamp = key.getCreationTimestamp() / 1000;
@@ -892,11 +888,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // placed in new following key chain
                 if (key.getDeterministicKey().getIsFollowing()) {
                     if (chain != null) {
-                        checkState(lookaheadSize >= 0);
-                        chain.setLookaheadSize(lookaheadSize);
-                        chain.setSigsRequiredToSpend(sigsRequiredToSpend);
-                        chain.maybeLookAhead();
-                        chains.add(chain);
+                        addChain(chains, chain, lookaheadSize, sigsRequiredToSpend);
                         chain = null;
                         seed = null;
                     }
@@ -986,13 +978,17 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             }
         }
         if (chain != null) {
-            checkState(lookaheadSize >= 0);
-            chain.setLookaheadSize(lookaheadSize);
-            chain.setSigsRequiredToSpend(sigsRequiredToSpend);
-            chain.maybeLookAhead();
-            chains.add(chain);
+            addChain(chains, chain, lookaheadSize, sigsRequiredToSpend);
         }
         return chains;
+    }
+
+    private static void addChain(List<DeterministicKeyChain> chains, DeterministicKeyChain chain, int lookaheadSize, int sigsRequiredToSpend) {
+        checkState(lookaheadSize >= 0);
+        chain.setLookaheadSize(lookaheadSize);
+        chain.setSigsRequiredToSpend(sigsRequiredToSpend);
+        chain.maybeLookAhead();
+        chains.add(chain);
     }
 
     private static HDPath deserializeAccountPath(List<Integer> integerList) {
