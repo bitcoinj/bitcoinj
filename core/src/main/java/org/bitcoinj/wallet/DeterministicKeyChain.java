@@ -438,13 +438,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to encrypt.
-        for (ECKey eckey : chain.basicKeyChain.getKeys()) {
-            DeterministicKey key = (DeterministicKey) eckey;
-            if (key.getPath().size() != getAccountPath().size() + 2) continue; // Not a leaf key.
+        for (DeterministicKey key : chain.getLeafKeys()) {
             DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new encrypted hierarchy.
-            key = new DeterministicKey(key.dropPrivateBytes(), parent);
-            putKey(key);
+            putKey(new DeterministicKey(key.dropPrivateBytes(), parent));
         }
         for (ListenerRegistration<KeyChainEventListener> listener : chain.basicKeyChain.getListeners()) {
             basicKeyChain.addEventListener(listener);
@@ -1046,14 +1043,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         chain.lookaheadSize = lookaheadSize;
         // Now copy the (pubkey only) leaf keys across to avoid rederiving them. The private key bytes are missing
         // anyway so there's nothing to decrypt.
-        for (ECKey eckey : basicKeyChain.getKeys()) {
-            DeterministicKey key = (DeterministicKey) eckey;
-            if (key.getPath().size() != getAccountPath().size() + 2) continue; // Not a leaf key.
+        for (DeterministicKey key : getLeafKeys()) {
             checkState(key.isEncrypted());
             DeterministicKey parent = chain.hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
             // Clone the key to the new decrypted hierarchy.
-            key = new DeterministicKey(key.dropPrivateBytes(), parent);
-            chain.putKey(key);
+            chain.putKey(new DeterministicKey(key.dropPrivateBytes(), parent));
         }
         chain.issuedExternalKeys = issuedExternalKeys;
         chain.issuedInternalKeys = issuedInternalKeys;
