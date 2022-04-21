@@ -19,7 +19,9 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.TransactionOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,10 +33,15 @@ import java.util.List;
  */
 public class CoinSelection {
     public final Coin valueGathered;
-    public final Collection<TransactionOutput> gathered;
+    public final List<TransactionOutput> gathered;
 
     public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
         this.valueGathered = valueGathered;
-        this.gathered = gathered;
+        this.gathered = Collections.unmodifiableList(new ArrayList<>(gathered));
+    }
+
+    public CoinSelection(Coin valueGathered, List<TransactionOutput> gathered) {
+        this.valueGathered = valueGathered;
+        this.gathered = Collections.unmodifiableList(gathered);
     }
 }
