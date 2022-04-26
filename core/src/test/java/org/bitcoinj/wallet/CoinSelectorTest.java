@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.bitcoinj.core.Coin.COIN;
 import static org.junit.Assert.assertEquals;
@@ -54,7 +55,7 @@ public class CoinSelectorTest {
     public void simpleTest() {
         // Add four outputs to a transaction with same value and destination. Select them all.
         Transaction t = new Transaction(UNITTEST);
-        java.util.List<TransactionOutput> outputs = Arrays.asList(
+        List<TransactionOutput> outputs = Arrays.asList(
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(1), myAddress),
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(2), myAddress),
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(3), myAddress),
@@ -77,7 +78,7 @@ public class CoinSelectorTest {
         // Add four outputs to a transaction with same value and destination. Select them all.
         Transaction t = new Transaction(UNITTEST);
         // Reverse order
-        java.util.List<TransactionOutput> outputs = Arrays.asList(
+        List<TransactionOutput> outputs = Arrays.asList(
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(4), myAddress),
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(3), myAddress),
                 new TransactionOutput(UNITTEST, t, Coin.valueOf(2), myAddress),
