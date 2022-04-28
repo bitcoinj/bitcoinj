@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.crypto.HDPath;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -39,5 +40,8 @@ public class WalletLoadTest {
 
         String mnemonic = wallet.getKeyChainSeed().getMnemonicString();
         assertEquals(testWalletMnemonic, mnemonic, "unexpected mnemonic");
+
+        HDPath accountPath = wallet.getActiveKeyChain().getAccountPath();
+        assertEquals(HDPath.parsePath("M/0H"), accountPath);
     }
 }
