@@ -373,7 +373,6 @@ public class WalletTool implements Callable<Integer> {
         String fileName;
         switch (net) {
             case MAIN:
-            case PROD:
                 fileName = "mainnet.chain";
                 break;
             case TEST:

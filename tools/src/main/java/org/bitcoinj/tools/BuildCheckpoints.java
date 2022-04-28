@@ -78,7 +78,6 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         switch (net) {
             case MAIN:
-            case PROD:
                 suffix = "";
                 break;
             case TEST:
