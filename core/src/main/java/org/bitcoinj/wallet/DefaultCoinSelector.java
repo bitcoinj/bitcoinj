@@ -16,14 +16,12 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -57,16 +55,6 @@ public class DefaultCoinSelector implements CoinSelector, Predicate<TransactionO
     public boolean test(TransactionOutput transactionOutput) {
         // Only pick chain-included transactions, or transactions that are ours and pending.
         return shouldSelect(transactionOutput.getParentTransaction());
-    }
-
-    /**
-     * Sort a mutable list of {@link TransactionOutput} in place with the {@link CoinSelector#TXOUT_COMPARATOR}.
-     * @param outputs mutable list to be sorted in-place
-     * @deprecated Use functional composition with the static methods in {@link CoinSelector} and/or {@link CoinSelector#TXOUT_COMPARATOR} instead
-     */
-    @Deprecated
-    @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
-        outputs.sort(CoinSelector.TXOUT_COMPARATOR);
     }
 
     /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
