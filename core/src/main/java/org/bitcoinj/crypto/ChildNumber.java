@@ -39,6 +39,18 @@ public class ChildNumber implements Comparable<ChildNumber> {
     public static final ChildNumber ONE = new ChildNumber(1);
     public static final ChildNumber ONE_HARDENED = new ChildNumber(1, true);
 
+    // See BIP-43, Purpose Field for Deterministic Wallets: https://github.com/bitcoin/bips/blob/master/bip-0043.mediawiki
+    public static final ChildNumber PURPOSE_BIP44 = new ChildNumber(44, true);  // P2PKH
+    public static final ChildNumber PURPOSE_BIP49 = new ChildNumber(49, true);  // P2WPKH-nested-in-P2SH
+    public static final ChildNumber PURPOSE_BIP84 = new ChildNumber(84, true);  // P2WPKH
+    public static final ChildNumber PURPOSE_BIP86 = new ChildNumber(86, true);  // P2TR
+
+    public static final ChildNumber COINTYPE_BTC = new ChildNumber(0, true);    // MainNet
+    public static final ChildNumber COINTYPE_TBTC = new ChildNumber(1, true);   // TestNet
+
+    public static final ChildNumber CHANGE_RECEIVING = new ChildNumber(0, false);
+    public static final ChildNumber CHANGE_CHANGE = new ChildNumber(1, false);
+
     /** Integer i as per BIP 32 spec, including the MSB denoting derivation type (0 = public, 1 = private) **/
     private final int i;
 
