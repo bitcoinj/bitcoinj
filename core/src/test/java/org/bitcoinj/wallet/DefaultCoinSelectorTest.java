@@ -36,6 +36,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.Coin.CENT;
@@ -129,7 +130,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     public void identicalInputs() {
         // Add four outputs to a transaction with same value and destination. Select them all.
         Transaction t = new Transaction(UNITTEST);
-        java.util.List<TransactionOutput> outputs = Arrays.asList(
+        List<TransactionOutput> outputs = Arrays.asList(
             new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
             new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
             new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
