@@ -55,6 +55,13 @@ public class HDPath extends AbstractList<ChildNumber> {
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
+    /** Partial path with BIP44 purpose */
+    public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
+    /** Partial path with BIP84 purpose */
+    public static final HDPath BIP84_PARENT = m(ChildNumber.PURPOSE_BIP84);
+    /** Partial path with BIP86 purpose */
+    public static final HDPath BIP86_PARENT = m(ChildNumber.PURPOSE_BIP86);
+
     /**
      * Constructs a path for a public or private key. Should probably be a private constructor.
      *

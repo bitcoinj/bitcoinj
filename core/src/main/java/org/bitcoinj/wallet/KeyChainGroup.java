@@ -34,6 +34,7 @@ import org.bitcoinj.script.Script.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
@@ -132,16 +133,16 @@ public class KeyChainGroup implements KeyBag {
             if (outputScriptType == Script.ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == Script.ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(Script.ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, params)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -165,16 +166,16 @@ public class KeyChainGroup implements KeyBag {
             if (outputScriptType == Script.ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == Script.ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(Script.ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, params)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -991,7 +992,7 @@ public class KeyChainGroup implements KeyBag {
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                     .outputScriptType(Script.ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH)).build();
+                    .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, Network.MAIN)).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);
