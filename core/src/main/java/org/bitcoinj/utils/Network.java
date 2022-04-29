@@ -50,4 +50,37 @@ public enum Network {
     public NetworkParameters networkParameters() {
         return NetworkParameters.fromID(id);
     }
+
+    /**
+     * Get the correct enum for a NetworkParameters
+     * Note: UNITTEST is not supported as an enum
+     * @param networkParameters specifies the network
+     * @return the enum
+     */
+    public static Network of(NetworkParameters networkParameters) {
+        return of(networkParameters.getId());
+    }
+
+    /**
+     * Get the correct enum for a network id string
+     * Note: UNITTEST is not supported as an enum
+     * @param idString specifies the network
+     * @return the enum
+     */
+    public static Network of(String idString) {
+        switch (idString) {
+            case NetworkParameters.ID_MAINNET:
+                return MAIN;
+            case NetworkParameters.ID_TESTNET:
+                return TEST;
+            case NetworkParameters.ID_SIGNET:
+                return SIGNET;
+            case NetworkParameters.ID_REGTEST:
+                return REGTEST;
+            case NetworkParameters.ID_UNITTESTNET:
+                return REGTEST;
+            default:
+                throw new IllegalArgumentException("Illegal NetworkParameters: " + idString);
+        }
+    }
 }
