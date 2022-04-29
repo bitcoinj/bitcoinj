@@ -29,6 +29,7 @@ import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import wallettemplate.WalletSetPasswordController;
 
@@ -46,16 +47,22 @@ public abstract class WalletApplication implements AppDelegate {
     private WalletAppKit walletAppKit;
     private final String applicationName;
     private final NetworkParameters params;
+    private final KeyChainGroupStructure keyChainGroupStructure;
     private final Script.ScriptType preferredOutputScriptType;
     private final String walletFileName;
     private MainWindowController controller;
 
-    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
+    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
         this.applicationName = applicationName;
         this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + params.getPaymentProtocolId();
         this.params = params;
         this.preferredOutputScriptType = preferredOutputScriptType;
+        this.keyChainGroupStructure = keyChainGroupStructure;
+    }
+
+    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
+        this(applicationName, params, preferredOutputScriptType, KeyChainGroupStructure.BIP43);
     }
 
     public static WalletApplication instance() {
@@ -143,7 +150,7 @@ public abstract class WalletApplication implements AppDelegate {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
-        walletAppKit = new WalletAppKit(params, preferredOutputScriptType, null, appDataDirectory, walletFileName) {
+        walletAppKit = new WalletAppKit(params, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
