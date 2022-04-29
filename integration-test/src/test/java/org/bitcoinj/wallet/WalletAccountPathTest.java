@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.stream.Stream;
 
 import static org.bitcoinj.script.Script.ScriptType.P2PKH;
+import static org.bitcoinj.script.Script.ScriptType.P2TR;
 import static org.bitcoinj.script.Script.ScriptType.P2WPKH;
 import static org.bitcoinj.utils.Network.MAIN;
 import static org.bitcoinj.utils.Network.TEST;
@@ -75,7 +76,9 @@ public class WalletAccountPathTest {
             Arguments.of(BIP43, "M/44H/0H/0H", P2PKH, MAIN),
             Arguments.of(BIP43, "M/44H/1H/0H", P2PKH, TEST),
             Arguments.of(BIP43, "M/84H/0H/0H", P2WPKH, MAIN),
-            Arguments.of(BIP43, "M/84H/1H/0H", P2WPKH, TEST)
+            Arguments.of(BIP43, "M/84H/1H/0H", P2WPKH, TEST),
+            Arguments.of(BIP43, "M/86H/0H/0H", P2TR, MAIN),
+            Arguments.of(BIP43, "M/86H/1H/0H", P2TR, TEST)
         );
     }
 
