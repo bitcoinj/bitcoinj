@@ -68,10 +68,10 @@ public interface KeyChainGroupStructure {
 
 
     /**
-     * Default {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure".
-     * For this structure network is ignored
+     * Original <b>bitcoinj</b> {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure".
+     * For this structure {@code network} is ignored
      */
-    KeyChainGroupStructure DEFAULT = (outputScriptType, network) -> {
+    KeyChainGroupStructure BIP32 = (outputScriptType, network) -> {
         // network is ignored
         if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
             return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
@@ -87,6 +87,11 @@ public interface KeyChainGroupStructure {
      */
     KeyChainGroupStructure BIP43 = (outputScriptType, network) ->
             purpose(outputScriptType).extend(coinType(network), account(0));
+
+    /**
+     * Default {@link KeyChainGroupStructure} implementation. Alias for {@link KeyChainGroupStructure#BIP32}
+     */
+    KeyChainGroupStructure DEFAULT = BIP32;
 
     /**
      * Return the (root) path containing "purpose" for the specified scriptType
