@@ -34,6 +34,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.core.Utils.HEX;
@@ -47,7 +48,7 @@ import static org.bitcoinj.core.Utils.HEX;
 public class MnemonicCode {
     private static final Logger log = LoggerFactory.getLogger(MnemonicCode.class);
 
-    private ArrayList<String> wordList;
+    private final List<String> wordList;
 
     private static final String BIP39_ENGLISH_RESOURCE_NAME = "mnemonic/wordlist/english.txt";
     private static final String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
@@ -86,17 +87,18 @@ public class MnemonicCode {
     /**
      * Creates an MnemonicCode object, initializing with words read from the supplied input stream.  If a wordListDigest
      * is supplied the digest of the words will be checked.
+     * @param wordstream input stream of 2048 line-seperated words
+     * @param wordListDigest hex-encoded Sha256 digest to check against
+     * @throws IOException if there was a problem reading the steam
+     * @throws IllegalArgumentException if list size is not 2048 or digest mismatch
      */
     public MnemonicCode(InputStream wordstream, String wordListDigest) throws IOException, IllegalArgumentException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, StandardCharsets.UTF_8));
-        this.wordList = new ArrayList<>(2048);
         MessageDigest md = Sha256Hash.newDigest();
-        String word;
-        while ((word = br.readLine()) != null) {
-            md.update(word.getBytes());
-            this.wordList.add(word);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, StandardCharsets.UTF_8))) {
+            this.wordList = br.lines()
+                    .peek(word -> md.update(word.getBytes()))
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
         }
-        br.close();
 
         if (this.wordList.size() != 2048)
             throw new IllegalArgumentException("input stream did not contain 2048 words");
@@ -112,6 +114,7 @@ public class MnemonicCode {
 
     /**
      * Gets the word list this code uses.
+     * @return unmodifiable word list
      */
     public List<String> getWordList() {
         return wordList;

@@ -26,6 +26,7 @@ import java.util.List;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test the various guard clauses of {@link MnemonicCode}.
@@ -39,6 +40,22 @@ public class MnemonicCodeTest {
     @Before
     public void setup() throws IOException {
         mc = new MnemonicCode();
+    }
+
+    @Test
+    public void testGetWordList() {
+        List<String> wordList = mc.getWordList();
+
+        assertEquals(2048, wordList.size());
+        assertEquals("abandon", wordList.get(0));
+        assertEquals("zoo", wordList.get(2047));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGetWordListUnmodifiable() {
+        List<String> wordList = mc.getWordList();
+
+        wordList.remove(0);
     }
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
