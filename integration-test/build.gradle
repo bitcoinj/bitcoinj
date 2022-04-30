@@ -10,7 +10,12 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.8.2"
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.easymock:easymock:4.3'
+    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.10'
+    testImplementation 'org.hamcrest:hamcrest-library:2.2'
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.2"
 }
 
 sourceCompatibility = 11
