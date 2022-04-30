@@ -22,10 +22,10 @@ import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.DumpedPrivateKey;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -59,9 +59,9 @@ public class PrivateKeys {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + LegacyAddress.fromKey(params, key).toString());
+            System.out.println("Address from private key is: " + SegwitAddress.fromKey(params, key).toString());
             // And the address ...
-            Address destination = LegacyAddress.fromBase58(params, args[1]);
+            Address destination = Address.fromString(params, args[1]);
 
             // Import the private key to a fresh wallet.
             Wallet wallet = Wallet.createDeterministic(params, Script.ScriptType.P2PKH);

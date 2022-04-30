@@ -74,7 +74,7 @@ public class ForwardingService {
             filePrefix = "forwarding-service";
         }
         // Parse the address given as the first parameter.
-        forwardingAddress = LegacyAddress.fromBase58(params, args[0]);
+        forwardingAddress = Address.fromString(params, args[0]);
 
         System.out.println("Network: " + params.getId());
         System.out.println("Forwarding address: " + forwardingAddress);
