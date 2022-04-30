@@ -48,7 +48,7 @@ public class SendRequest {
 
         // To which address you want to send the coins?
         // The Address class represents a Bitcoin address.
-        LegacyAddress to = LegacyAddress.fromBase58(params, "mupBAFeT63hXfeeT4rnAUcpKHDkz1n4fdw");
+        Address to = Address.fromString(params, "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2");
         System.out.println("Send money to: " + to.toString());
 
         // There are different ways to create and publish a SendRequest. This is probably the easiest one.

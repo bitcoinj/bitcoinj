@@ -48,8 +48,8 @@ public class DoubleSpend {
         System.out.println(kit.wallet());
 
         kit.wallet().getBalanceFuture(COIN, Wallet.BalanceType.AVAILABLE).get();
-        Transaction tx1 = kit.wallet().createSend(LegacyAddress.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT);
-        Transaction tx2 = kit.wallet().createSend(LegacyAddress.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
+        Transaction tx1 = kit.wallet().createSend(Address.fromString(params, "bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez"), CENT);
+        Transaction tx2 = kit.wallet().createSend(Address.fromString(params, "bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez"), CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
         peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD,
                 (peer1, m) -> {
