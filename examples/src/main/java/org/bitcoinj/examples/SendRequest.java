@@ -19,6 +19,8 @@ package org.bitcoinj.examples;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 
@@ -34,7 +36,7 @@ public class SendRequest {
 
         // We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details.
         NetworkParameters params = TestNet3Params.get();
-        WalletAppKit kit = new WalletAppKit(params, new File("."), "sendrequest-example");
+        WalletAppKit kit = new WalletAppKit(params, Script.ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
         kit.startAsync();
         kit.awaitRunning();
 

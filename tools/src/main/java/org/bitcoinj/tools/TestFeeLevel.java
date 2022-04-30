@@ -21,7 +21,9 @@ import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
@@ -47,7 +49,7 @@ public class TestFeeLevel {
         Coin feeRateToTest = Coin.valueOf(Long.parseLong(args[0]));
         System.out.println("Fee rate to test is " + feeRateToTest.toFriendlyString() + "/kB");
 
-        kit = new WalletAppKit(PARAMS, new File("."), "testfeelevel");
+        kit = new WalletAppKit(PARAMS, Script.ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "testfeelevel");
         kit.startAsync();
         kit.awaitRunning();
         try {
