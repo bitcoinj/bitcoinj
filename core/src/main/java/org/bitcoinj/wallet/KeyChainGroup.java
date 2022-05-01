@@ -255,7 +255,7 @@ public class KeyChainGroup implements KeyBag {
     }
 
     public static KeyChainGroup.Builder builder(NetworkParameters params) {
-        return new Builder(params, KeyChainGroupStructure.DEFAULT);
+        return new Builder(params, KeyChainGroupStructure.BIP32);
     }
 
     public static KeyChainGroup.Builder builder(NetworkParameters params, KeyChainGroupStructure structure) {

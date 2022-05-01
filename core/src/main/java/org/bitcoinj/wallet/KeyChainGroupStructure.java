@@ -25,7 +25,7 @@ import org.bitcoinj.utils.Network;
 /**
  *  Defines a structure for hierarchical deterministic wallets.
  *  <p>
- *  Use {@link KeyChainGroupStructure#DEFAULT} for BIP-32 wallets and {@link KeyChainGroupStructure#BIP43} for
+ *  Use {@link KeyChainGroupStructure#BIP32} for BIP-32 wallets and {@link KeyChainGroupStructure#BIP43} for
  *  BIP-43-family wallets.
  *  <p>
  *  <b>bitcoinj</b> BIP-32 wallets use {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH} for {@link Script.ScriptType#P2PKH}
@@ -90,7 +90,9 @@ public interface KeyChainGroupStructure {
 
     /**
      * Default {@link KeyChainGroupStructure} implementation. Alias for {@link KeyChainGroupStructure#BIP32}
+     * @deprecated Use {@link #BIP32} for BIP-32
      */
+    @Deprecated
     KeyChainGroupStructure DEFAULT = BIP32;
 
     /**

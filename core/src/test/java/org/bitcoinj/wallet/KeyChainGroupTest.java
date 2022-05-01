@@ -552,7 +552,7 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET).fromRandom(Script.ScriptType.P2PKH).lookaheadSize(LOOKAHEAD_SIZE).build();
 
         List<Protos.Key> protobufs = group.serializeToProtobuf();
-        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, null);
+        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.BIP32, 0, null);
         assertFalse(group.isEncrypted());
         assertFalse(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2WPKH, 0));
@@ -561,7 +561,7 @@ public class KeyChainGroupTest {
         assertNotNull(seed1);
 
         group = KeyChainGroup.fromProtobufUnencrypted(MAINNET, protobufs);
-        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.DEFAULT, 0, null);  // Should give same result as last time.
+        group.upgradeToDeterministic(Script.ScriptType.P2PKH, KeyChainGroupStructure.BIP32, 0, null);  // Should give same result as last time.
         assertFalse(group.isEncrypted());
         assertFalse(group.isDeterministicUpgradeRequired(Script.ScriptType.P2PKH, 0));
         assertTrue(group.isDeterministicUpgradeRequired(Script.ScriptType.P2WPKH, 0));

@@ -133,7 +133,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.context = context;
         this.params = checkNotNull(context.getParams());
         this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
-        this.structure = structure != null ? structure : KeyChainGroupStructure.DEFAULT;
+        this.structure = structure != null ? structure : KeyChainGroupStructure.BIP32;
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
     }
