@@ -334,7 +334,7 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed,
             Script.ScriptType outputScriptType) {
-        return fromSeed(params, seed, outputScriptType, KeyChainGroupStructure.DEFAULT);
+        return fromSeed(params, seed, outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
     /**
@@ -718,7 +718,7 @@ public class Wallet extends BaseTaggableObject
      */
     public void upgradeToDeterministic(Script.ScriptType outputScriptType, @Nullable KeyParameter aesKey)
             throws DeterministicUpgradeRequiresPassword {
-        upgradeToDeterministic(outputScriptType, KeyChainGroupStructure.DEFAULT, aesKey);
+        upgradeToDeterministic(outputScriptType, KeyChainGroupStructure.BIP32, aesKey);
     }
 
     /**
@@ -5301,7 +5301,7 @@ public class Wallet extends BaseTaggableObject
      */
     public ListenableCompletableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend)
             throws DeterministicUpgradeRequiresPassword {
-        return doMaintenance(KeyChainGroupStructure.DEFAULT, aesKey, signAndSend);
+        return doMaintenance(KeyChainGroupStructure.BIP32, aesKey, signAndSend);
     }
 
     /**
