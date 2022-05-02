@@ -83,11 +83,8 @@ public class WalletAccountPathTest {
     private static Wallet createWallet(File walletFile, NetworkParameters params, KeyChainGroupStructure structure, Script.ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context(params));
         DeterministicSeed seed = new DeterministicSeed(testWalletMnemonic, null, "", Instant.now().getEpochSecond());
-        KeyChainGroup keyChainGroup = KeyChainGroup.builder(params, structure)
-                .fromSeed(seed, outputScriptType)
-                .build();
-        Wallet memoryWallet = new Wallet(params, keyChainGroup);
-        memoryWallet.saveToFile(walletFile);
+        Wallet wallet = Wallet.fromSeed(params, seed, outputScriptType, structure);
+        wallet.saveToFile(walletFile);
         return Wallet.loadFromFile(walletFile);
     }
 }
