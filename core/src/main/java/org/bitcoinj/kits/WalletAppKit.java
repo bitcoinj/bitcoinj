@@ -114,7 +114,7 @@ public class WalletAppKit extends AbstractIdleService {
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      */
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), Script.ScriptType.P2PKH, null, directory, filePrefix);
+        this(new Context(params), Script.ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
     }
 
     /**
