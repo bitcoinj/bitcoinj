@@ -5,12 +5,16 @@ plugins {
     id 'application'
     id 'eclipse'
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
+    id 'org.graalvm.buildtools.native' version '0.9.11' apply false
 }
 
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
 def junit5MinVersion = GradleVersion.version("4.6")
 boolean hasJunit5 = (GradleVersion.current().compareTo(junit5MinVersion) >= 0)
+
+def toolchainsMinVersion = GradleVersion.version("6.8")     // Toolchains with selection by vendor
+boolean hasToolchains = (GradleVersion.current().compareTo(toolchainsMinVersion) >= 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
@@ -69,5 +73,24 @@ asciidoctor {
     logDocuments = true
     outputOptions {
         backends = ['manpage', 'html5']
+    }
+}
+
+if (hasToolchains) {
+
+    apply plugin: 'org.graalvm.buildtools.native'
+
+    graalvmNative {
+        binaries {
+            main {
+                imageName = applicationName
+                configurationFileDirectories.from(file('src/main/graal'))
+                buildArgs.add('--allow-incomplete-classpath')
+                javaLauncher = javaToolchains.launcherFor {
+                    languageVersion = JavaLanguageVersion.of(17)
+                    vendor = JvmVendorSpec.matching("GraalVM Community")
+                }
+            }
+        }
     }
 }
