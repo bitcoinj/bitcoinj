@@ -302,19 +302,48 @@ public class Wallet extends BaseTaggableObject
      * {@link #loadFromFile}.
      * @param params network parameters
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @return A new empty wallet
      */
     public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType) {
-        return createDeterministic(Context.getOrCreate(params), outputScriptType);
+        return createDeterministic(Context.getOrCreate(params), outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
     /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
+     * @param params network parameters
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param keyChainGroupStructure structure (e.g. BIP43)
+     * @return A new empty wallet
+     */
+    public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
+        return createDeterministic(Context.getOrCreate(params), outputScriptType, keyChainGroupStructure);
+    }
+
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     * @param context bitcoinj context
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @return A new empty wallet
      */
     public static Wallet createDeterministic(Context context, Script.ScriptType outputScriptType) {
-        return new Wallet(context, KeyChainGroup.builder(context.getParams()).fromRandom(outputScriptType).build());
+        return createDeterministic(context, outputScriptType, KeyChainGroupStructure.BIP32);
+    }
+
+    /**
+     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
+     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
+     * {@link #loadFromFile}.
+     * @param context bitcoinj context
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param keyChainGroupStructure structure (e.g. BIP43)
+     * @return A new empty wallet
+     */
+    public static Wallet createDeterministic(Context context, Script.ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
+        return new Wallet(context, KeyChainGroup.builder(context.getParams(), keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
     /**
