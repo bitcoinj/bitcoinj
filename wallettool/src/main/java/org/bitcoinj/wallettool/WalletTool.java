@@ -65,6 +65,7 @@ import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.SendRequest;
@@ -1088,6 +1089,8 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private void createWallet(NetworkParameters params, File walletFile) throws IOException {
+        KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
+
         if (walletFile.exists() && !force) {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
@@ -1116,11 +1119,11 @@ public class WalletTool implements Callable<Integer> {
                 // not reached - all subclasses handled above
                 throw new RuntimeException(e);
             }
-            wallet = Wallet.fromSeed(params, seed, outputScriptType);
+            wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
             wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTimeSecs);
         } else {
-            wallet = Wallet.createDeterministic(params, outputScriptType);
+            wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
         }
         if (password != null)
             wallet.encrypt(password);
