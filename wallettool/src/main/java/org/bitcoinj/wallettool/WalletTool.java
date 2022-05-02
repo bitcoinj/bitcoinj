@@ -124,6 +124,7 @@ public class WalletTool implements Callable<Integer> {
             "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
             "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
             "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
+            "                       If --structure is present, use that to determine HD account path.%n" +
             "                       If --output-script-type is present, use that for deriving addresses.%n" +
             "  marry                Makes the wallet married with other parties, requiring multisig to spend funds.%n" +
             "                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).%n" +
@@ -175,6 +176,8 @@ public class WalletTool implements Callable<Integer> {
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private Network net = Network.MAIN;
+    @CommandLine.Option(names = "--structure", description = "Which HD hierarchy structure to use. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
+    private Structure structure = Structure.BIP32;
     @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.")
     private boolean debugLog = false;
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
@@ -328,6 +331,11 @@ public class WalletTool implements Callable<Integer> {
         UPGRADE,
         ROTATE,
         SET_CREATION_TIME,
+    }
+
+    public enum Structure {
+        BIP32,
+        BIP43
     }
 
     public enum WaitForEnum {
@@ -1089,7 +1097,9 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private void createWallet(NetworkParameters params, File walletFile) throws IOException {
-        KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
+        KeyChainGroupStructure keyChainGroupStructure = (structure == Structure.BIP32) ?
+                KeyChainGroupStructure.BIP32 :
+                KeyChainGroupStructure.BIP43;
 
         if (walletFile.exists() && !force) {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
