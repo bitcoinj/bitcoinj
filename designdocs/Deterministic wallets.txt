@@ -1,9 +1,15 @@
-Design of deterministic wallets support
----------------------------------------
+Design of hierarchical deterministic (HD) wallets support
+---------------------------------------------------------
 
 Goals:
-- Wallets to derive new keys deterministically using the BIP32 algorithm.
-- Seamless/silent upgrade of old wallets to use the new scheme
+- Wallets to derive new keys deterministically using the BIP32 algorithm
+- Support different wallet structures:
+  - The default BIP32 structure, described in the later part of the document
+  - BIP43/44/84/86
+  - Custom, by implementing the KeyChainGroupStructure interface
+- Support multiple output script types (P2PKH, P2WPKH)
+  - One active chain per script type, so that compatible addresses can be generated
+  - Seamless upgrade to new script types
 - Support watching a key tree without knowing the private key
 - Integrate with existing features like key rotation, encryption and bloom filtering
 - Clean up and reduce the size of the Wallet class
@@ -12,18 +18,18 @@ Goals:
 
 Non-goals:
 - Expose multiple accounts or "wallets within a wallet" via the API.
-- Optional support for HD:   all wallets after the change will be HD by default, even though they may have
+- Optional support for HD: all wallets are HD by default, even though they may have
   non-HD keys imported into them.
 - Actual support for hardware wallets
 
 
 API design
------------
+----------
 
 Create a new KeyChain interface and provide BasicKeyChain, DeterministicKeyChain implementations.
 
-Wallets may contain multiple key chains. However only the last one is "active" in the sense that it will be used to
-create new keys. There's no way to change that.
+Wallets may contain multiple key chains per script type. However only the last one for each script type is "active"
+in the sense that it will be used to create new keys. There's no way to change that.
 
 The Wallet class has most key handling code refactored out into KeyChainGroup, which handles multiplexing a
 BasicKeyChain (for random keys, if any), and zero or more DeterministicKeyChain. Wallet ends up just forwarding method
@@ -39,7 +45,7 @@ specified by an enum parameter. The freshKey method supports requesting keys for
  - CHANGE
  - RECEIVE_FUNDS
 
-and may in future also have additional purposes like for micropayment channels, etc. These map to the notion of
+and may in future also have additional purposes like for layer 2 protocols, etc. These map to the notion of
 "accounts" as defined in the BIP32 spec, but otherwise should not be exposed in any user interfaces. freshKey is
 guaranteed to return a freshly generated key: it will not return the same key repeatedly. There is also a currentKey
 method that returns a stable key suitable for display in the user interface: it will be changed automatically when
@@ -81,10 +87,8 @@ it's less convenient than an integrated solution would be.
 Chain structure
 ---------------
 
-We follow the suggested chain structure outlined in BIP32 in which there is the notion of a top-level account, though
-in bitcoinj this will always be zero as it won't be exposed in the API for now. Under the account are two keys, one
-for receiving of funds (i.e. exposed to the use) and one which is used for "internal purposes", typically change keys
-though it may also be used for things like micropayment channels and, in future, de/refragmentation.
+We follow the suggested chain structure outlined in BIP32, or BIP 43/44/84/86. Custom structures can be implemented
+via the KeyChainGroupStructure interface.
 
 In the most obvious implementation, a standard key chain would have all private or all pubkey only nodes. However,
 this will not be the case in bitcoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
@@ -164,7 +168,7 @@ Encryption
 ----------
 
 bitcoinj allows private keys to be encrypted under an AES key derived from a password using scrypt. We need to keep
-this function working for deterministic wallets. Also, to achieve the goal of silent/automatic upgrade, we need to
+this function working for deterministic wallets. Also, to achieve the goal of seamless upgrade, we need to
 perform the upgrade once the AES key is provided by the user and keep it synchronizable in the previous state until
 then.
 
@@ -198,27 +202,6 @@ that encode the index of each child as the tree is traversed downwards, with the
 private derivation (see the BIP32 spec for more information on this).
 
 
-Upgrade
--------
-
-HD wallets are strictly superior to old random wallets, thus by default all new wallets will be HD. The deterministic
-key chain will be created on demand by the KeyChainGroup, which allows the default parameters like lookahead size to
-be configured after construction of the wallet but before the DeterministicKeyChain is constructed.
-
-For old wallets that contain random keys, attempts to use any methods that rely on an HD chain being present will
-either automatically upgrade the wallet to HD, or if encrypted, throw an unchecked exception until the API user invokes
-an upgrade method that takes the users encryption key. The upgrade will select the oldest non-rotating private key,
-truncate it to 128 bits and use that as the seed for the new HD chain. We truncate and thus lose entropy because
-128 bits is more than enough, and people like to write down their seeds on paper. 128 bit seeds using the BIP 39
-mnemonic code specification yields 12 words, which is a convenient size.
-
-As part of migrating to deterministic wallets, if the wallet is encrypted the wallet author is expected to test
-after load whether the wallet needs an upgrade, and call the upgrade method explicitly with the password.
-Note that attempting to create a spend will fail if the wallet is not upgraded, because it will attempt to retrieve a
-change key which is done deterministically in the new version of the code: thus an non-upgraded wallet is not very
-useful for more than viewing (unless the API caller explicitly overrides the change address behaviour using the
-relevant field in SendRequest of course).
-
 Test plan
 ---------
 
@@ -236,5 +219,3 @@ Basic:
 [ ] Decrypt the wallet. Dump: check it's the same as the first wallet, modulo a few pregenned public keys.
 [ ] Send another half coin back. Check we can send from a decrypted wallet.
 [ ] Send another half coin back. Check we can send from the change in a decrypted wallet.
-
-
