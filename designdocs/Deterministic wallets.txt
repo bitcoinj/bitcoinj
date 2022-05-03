@@ -53,7 +53,7 @@ There can be multiple key chains. There is always:
 Thus it's possible to have more than one deterministic key chain, but not more than one basic key chain.
 
 Multiple deterministic key chains become relevant when key rotation happens. Individual keys in a deterministic
-heirarchy do not rotate. Instead the rotation time is applied only to the seed. Either the whole key chain rotates or
+hierarchy do not rotate. Instead the rotation time is applied only to the seed. Either the whole key chain rotates or
 none of it does. This reflects the fact that a hierarchy only has one real secret and in the case of a wallet
 compromise, all keys derived from that secret must also be rotated.
 
@@ -96,7 +96,7 @@ this will not be the case in bitcoinj. Instead private keys will largely be rede
    fly seems to be a good way to make some savings. This is important because RAM on Android devices can be extremely
    tight and there is no swap file on those platforms.
 
-When synchronizing, the system may need to extend the key heirarchy without access to the seed or master private keys,
+When synchronizing, the system may need to extend the key hierarchy without access to the seed or master private keys,
 due to the need to calculate public keys in the gap.
 
 Because it would be complicated and confusing to have some user-exposed keys that have an encrypted private part and
@@ -105,7 +105,7 @@ an encrypted deterministic key chain:
 
 - The root seed is encrypted. We keep it around even after the master private key is derived from it, because wallet
   apps may wish to show it to users so they can opt to write it down later.
-- The private keys at the top of the heirarchy M, M/0, M/0/0, M/0/1 are precalculated when the heirarchy is initialized
+- The private keys at the top of the hierarchy M, M/0, M/0/0, M/0/1 are precalculated when the hierarchy is initialized
   and stored in the wallet encrypted.
 - Keys that hang off the external/internal parent keys only have their public keys stored. The private key is always
   derived on the fly. The ECKey API already allows an AES key/password to be specified when signing, and this operation
@@ -173,7 +173,7 @@ before"). Deterministic wallets must also support encryption, which requires enc
 private keys derived from it.
 
 Because there are no seeds or private keys, watching/hardware wallets do not support encryption. An attempt to encrypt
-a wallet that contains both a basic key chain and a key heirarchy without a seed/private keys will throw an exception
+a wallet that contains both a basic key chain and a key hierarchy without a seed/private keys will throw an exception
 to avoid the case where a wallet is "half encrypted".
 
 Serialization
