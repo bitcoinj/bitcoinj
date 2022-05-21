@@ -8,7 +8,7 @@ Goals:
   - BIP43/44/84/86
   - Custom, by implementing the KeyChainGroupStructure interface
 - Support multiple output script types (P2PKH, P2WPKH)
-  - One active chain per script type, so that compatible addresses can be generated
+  - One active keychain per script type, so that compatible addresses can be generated
   - Seamless upgrade to new script types
 - Support watching a key tree without knowing the private key
 - Integrate with existing features like key rotation, encryption and bloom filtering
@@ -28,18 +28,18 @@ API design
 
 Create a new KeyChain interface and provide BasicKeyChain, DeterministicKeyChain implementations.
 
-Wallets may contain multiple key chains per script type. However only the last one for each script type is "active"
+Wallets may contain multiple keychains per script type. However only the last one for each script type is "active"
 in the sense that it will be used to create new keys. There's no way to change that.
 
 The Wallet class has most key handling code refactored out into KeyChainGroup, which handles multiplexing a
 BasicKeyChain (for random keys, if any), and zero or more DeterministicKeyChain. Wallet ends up just forwarding method
 calls to this class most of the time. Thus in this section where the Wallet API is discussed, it can be assumed that
-KeyChainGroup has the same API. Although individual key chain objects have their own locks and are expected to be thread
+KeyChainGroup has the same API. Although individual keychain objects have their own locks and are expected to be thread
 safe, KeyChainGroup itself is not and is not exposed directly by Wallet: it's an implementation detail, and locked under
 the Wallet lock.
 
 The Wallet API changes to have an importKey method that works like addKey does today, and forwards to the BasicKeyChain.
-There's also a freshKey method that forwards to the active HD chain and requests a key for a specific purpose,
+There's also a freshKey method that forwards to the active HD keychain and requests a key for a specific purpose,
 specified by an enum parameter. The freshKey method supports requesting keys for the following purposes:
 
  - CHANGE
@@ -51,19 +51,19 @@ guaranteed to return a freshly generated key: it will not return the same key re
 method that returns a stable key suitable for display in the user interface: it will be changed automatically when
 it's observed being used in a transaction.
 
-There can be multiple key chains. There is always:
+There can be multiple keychains. There is always:
 
-* 1 basic key chain, though it may be empty.
-* >=0 deterministic key chains
+* 1 basic keychain, though it may be empty.
+* >=0 deterministic keychains
 
-Thus it's possible to have more than one deterministic key chain, but not more than one basic key chain.
+Thus it's possible to have more than one deterministic keychain, but not more than one basic keychain.
 
-Multiple deterministic key chains become relevant when key rotation happens. Individual keys in a deterministic
-hierarchy do not rotate. Instead the rotation time is applied only to the seed. Either the whole key chain rotates or
+Multiple deterministic keychains become relevant when key rotation happens. Individual keys in a deterministic
+hierarchy do not rotate. Instead the rotation time is applied only to the seed. Either the whole keychain rotates or
 none of it does. This reflects the fact that a hierarchy only has one real secret and in the case of a wallet
 compromise, all keys derived from that secret must also be rotated.
 
-Multiple key chains within a wallet are NOT intended to support the following use cases:
+Multiple keychains within a wallet are NOT intended to support the following use cases:
 
 - Watching wallets
 - Hardware wallets
@@ -71,15 +71,15 @@ Multiple key chains within a wallet are NOT intended to support the following us
 From a user interface design perspective, it does not make much sense to have a wallet that can have multiple
 "subwallets", as it would rapidly get confusing especially when trying to spend money from multiple kinds of
 hierarchy at once. Key rotation is a special case because it is expected that (a) the private key material is always
-available on a rotating chain and (b) the only spends crafted for keys in these chains will be created internally by
+available on a rotating keychain and (b) the only spends crafted for keys in these keychains will be created internally by
 bitcoinj and thus there is virtually no added complexity to the API or UI to handle it.
 
-When chains are encrypted, they must all be encrypted under exactly the same key. This is also true of rotating chains.
+When keychains are encrypted, they must all be encrypted under exactly the same key. This is also true of rotating keychains.
 The API will not support the case of multiple keychains in the same wallet that have a different password, as this would
 make the API and wallet apps too confusing.
 
 For hardware/watching wallets, where the private key/seed material is not available, the correct approach is to create
-an entirely separate Wallet object with a single deterministic key chain that does not have access to the seed. Special
+an entirely separate Wallet object with a single deterministic keychain that does not have access to the seed. Special
 support can be added to the wallet code later to handle "external signing" which would be a separate/new feature.
 External signing can be done today already of course by manually building a transaction and using hashForSignature, but
 it's less convenient than an integrated solution would be.
@@ -87,13 +87,13 @@ it's less convenient than an integrated solution would be.
 Chain structure
 ---------------
 
-We follow the suggested chain structure outlined in BIP32, or BIP 43/44/84/86. Custom structures can be implemented
+We follow the suggested keychain structure outlined in BIP32, or BIP 43/44/84/86. Custom structures can be implemented
 via the KeyChainGroupStructure interface.
 
-In the most obvious implementation, a standard key chain would have all private or all pubkey only nodes. However,
+In the most obvious implementation, a standard keychain would have all private or all pubkey only nodes. However,
 this will not be the case in bitcoinj. Instead private keys will largely be rederived on the fly, for a few reasons:
 
-1) When a chain is encrypted, the private key/seed bytes are not available, yet the chain still needs to be extended
+1) When a keychain is encrypted, the private key/seed bytes are not available, yet the keychain still needs to be extended
    on demand. In this sense an encrypted wallet is somewhat like a watching wallet.
 2) Private keys can be derived from their parent extremely fast, as it merely involves a single bigint modular addition.
 3) We would like to hold as many keys in RAM as possible, and so throwing away and rederiving private key bytes on the
@@ -105,7 +105,7 @@ due to the need to calculate public keys in the gap.
 
 Because it would be complicated and confusing to have some user-exposed keys that have an encrypted private part and
 others that are missing it entirely, and because private key derivation is fast, we use the following arrangement for
-an encrypted deterministic key chain:
+an encrypted deterministic keychain:
 
 - The root seed is encrypted. We keep it around even after the master private key is derived from it, because wallet
   apps may wish to show it to users so they can opt to write it down later.
@@ -119,13 +119,13 @@ an encrypted deterministic key chain:
 Bloom filtering
 ---------------
 
-Each key chain is responsible for implementing PeerFilterProvider, the wallet multiplexes all implementors together.
+Each keychain is responsible for implementing PeerFilterProvider, the wallet multiplexes all implementors together.
 The code that currently does this multiplexing (between Wallets) would be extracted and reused, resulting in what is
 internally a hierarchy of filter providers whose outputs are combined to result in a single Bloom filter and earliest
 key time, calculated by the PeerGroup.
 
 When a wallet is informed about a transaction, it compiles a list of what pubkeys were seen and sends those lists
-to each key chain. The basic key chain ignores this and does nothing. The deterministic key chain examines each key
+to each keychain. The basic keychain ignores this and does nothing. The deterministic keychain examines each key
 to see if it's within the "gap", which is defined as a set of keys that have been pre-generated but not yet used by
 the wallet for change or returned to the user.
 
@@ -134,13 +134,13 @@ wallet "in the future" are recognized and added to the Bloom filters. The gap mu
 that more than that number of keys will be consumed in a single block (or more accurately, in a single getdata run).
 For version one of this system, the gap will be manually sized to be appropriate for desktop wallets in typical use
 cases: web servers that are tracking very high traffic addresses might be at risk of exhausting the gap, and that would
-be treated as a fatal error. If the gap is exhausted before the key chain is asked to recalculate a new Bloom filter,
+be treated as a fatal error. If the gap is exhausted before the keychain is asked to recalculate a new Bloom filter,
 an exception is sent to the user-provided exception handler, which wallets should be treated as fatal and cause a
 crash (the user would not be able to sync beyond that point and would need help). In future, the gap should be resized
 on the fly and blocks re-downloaded if traffic seems to be higher than expected, but that's more complex and can be
 handled by future work.
 
-When the deterministic key chain is informed that a key has been observed, it finds its offset in the gap list, and
+When the deterministic keychain is informed that a key has been observed, it finds its offset in the gap list, and
 then extends the gap by that amount of keys. Thus if a key is seen that is 10 keys in the future, the gap would be
 extended by 10 keys, where "extended" means the BIP32 algorithm is run to derive more keys and they would become
 persisted to disk/held in memory. Extension does not automatically result in recalculation of the bloom filter (see
@@ -177,7 +177,7 @@ before"). Deterministic wallets must also support encryption, which requires enc
 private keys derived from it.
 
 Because there are no seeds or private keys, watching/hardware wallets do not support encryption. An attempt to encrypt
-a wallet that contains both a basic key chain and a key hierarchy without a seed/private keys will throw an exception
+a wallet that contains both a basic keychain and a key hierarchy without a seed/private keys will throw an exception
 to avoid the case where a wallet is "half encrypted".
 
 Serialization
