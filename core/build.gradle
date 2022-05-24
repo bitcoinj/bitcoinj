@@ -54,8 +54,6 @@ protobuf {
 }
 
 tasks.withType(Test) {
-    exclude 'org/bitcoinj/core/PeerTest*'
-    exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     testLogging {
         events "failed"
