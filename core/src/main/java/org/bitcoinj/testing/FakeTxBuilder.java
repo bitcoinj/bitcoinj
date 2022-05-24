@@ -17,6 +17,7 @@
 
 package org.bitcoinj.testing;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Coin;
@@ -48,6 +49,12 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.Coin.COIN;
 import static org.bitcoinj.core.Coin.valueOf;
 
+/**
+ * Methods for building fake transactions for unit tests. Since these methods are currently used both in the `bitcoinj-core`
+ * unit tests and in the `integration-test` subproject, they are (for now) included in the `bitcoinj-core` JAR. They should
+ * not be considered part of the API.
+ */
+@VisibleForTesting
 public class FakeTxBuilder {
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTx(final NetworkParameters params) {
