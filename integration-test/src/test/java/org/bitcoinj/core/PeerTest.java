@@ -524,7 +524,7 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.setDownloadTxDependencies(false);
         connect();
         // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, COIN, address);
+        Transaction tx = createFakeTx(UNITTEST, COIN, address);
         final Transaction[] result = new Transaction[1];
         wallet.addCoinsReceivedEventListener((wallet, tx1, prevBalance, newBalance) -> result[0] = tx1);
         inbound(writeTarget, tx);
@@ -547,9 +547,9 @@ public class PeerTest extends TestWithNetworkConnections {
         //      -> [t7]
         //      -> [t8]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
-        Transaction t2 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, to);
+        Transaction t2 = createFakeTx(UNITTEST, COIN, to);
         Sha256Hash t5hash = t2.getInput(0).getOutpoint().getHash();
-        Transaction t4 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, new ECKey());
+        Transaction t4 = createFakeTx(UNITTEST, COIN, new ECKey());
         Sha256Hash t6hash = t4.getInput(0).getOutpoint().getHash();
         t4.addOutput(COIN, new ECKey());
         Transaction t3 = new Transaction(UNITTEST);
@@ -686,7 +686,7 @@ public class PeerTest extends TestWithNetworkConnections {
         final Transaction[] vtx = new Transaction[1];
         wallet.addCoinsReceivedEventListener((wallet1, tx, prevBalance, newBalance) -> vtx[0] = tx);
         // Send a normal relevant transaction, it's received correctly.
-        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, key);
+        Transaction t1 = createFakeTx(UNITTEST, COIN, key);
         inbound(writeTarget, t1);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         inbound(writeTarget, new NotFoundMessage(UNITTEST, getdata.getItems()));
@@ -695,7 +695,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertNotNull(vtx[0]);
         vtx[0] = null;
         // Send a timelocked transaction, nothing happens.
-        Transaction t2 = FakeTxBuilder.createFakeTx(UNITTEST, valueOf(2, 0), key);
+        Transaction t2 = createFakeTx(UNITTEST, valueOf(2, 0), key);
         t2.setLockTime(999999);
         inbound(writeTarget, t2);
         Threading.waitForUserCode();
