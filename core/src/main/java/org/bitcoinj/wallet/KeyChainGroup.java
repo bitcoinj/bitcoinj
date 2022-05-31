@@ -146,6 +146,17 @@ public class KeyChainGroup implements KeyBag {
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
+            } else if (outputScriptType == Script.ScriptType.P2TR) {
+                // TODO: Think this through a little more carefully.
+                DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
+                        .outputScriptType(Script.ScriptType.P2WPKH)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, params)).build();
+                DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
+                        .outputScriptType(Script.ScriptType.P2TR)
+                        .accountPath(structure.accountPathFor(Script.ScriptType.P2TR, params)).build();
+                this.chains.clear();
+                this.chains.add(fallbackChain);
+                this.chains.add(defaultChain);
             } else {
                 throw new IllegalArgumentException(outputScriptType.toString());
             }

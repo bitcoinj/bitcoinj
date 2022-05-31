@@ -105,6 +105,8 @@ public interface KeyChainGroupStructure {
             return HDPath.BIP44_PARENT;
         } else if (scriptType == Script.ScriptType.P2WPKH) {
             return HDPath.BIP84_PARENT;
+        } else if (scriptType == Script.ScriptType.P2TR) {
+            return HDPath.BIP86_PARENT;
         } else {
             throw new IllegalArgumentException(scriptType.toString());
         }

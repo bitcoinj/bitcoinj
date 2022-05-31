@@ -141,6 +141,7 @@ message Key {
   enum OutputScriptType {
     P2PKH = 1;
     P2WPKH = 2;
+    P2TR = 3;
   }
   // Type of addresses (aka output scripts) to generate for receiving.
   optional OutputScriptType output_script_type = 11;

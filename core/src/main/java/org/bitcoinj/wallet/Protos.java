@@ -2393,6 +2393,10 @@ public final class Protos {
        * <code>P2WPKH = 2;</code>
        */
       P2WPKH(2),
+      /**
+       * <code>P2TR = 3;</code>
+       */
+      P2TR(3),
       ;
 
       /**
@@ -2403,6 +2407,10 @@ public final class Protos {
        * <code>P2WPKH = 2;</code>
        */
       public static final int P2WPKH_VALUE = 2;
+      /**
+       * <code>P2TR = 3;</code>
+       */
+      public static final int P2TR_VALUE = 3;
 
 
       @java.lang.Override
@@ -2424,6 +2432,7 @@ public final class Protos {
         switch (value) {
           case 1: return P2PKH;
           case 2: return P2WPKH;
+          case 3: return P2TR;
           default: return null;
         }
       }
