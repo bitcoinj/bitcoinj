@@ -1454,22 +1454,27 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
             NetworkParameters params, StringBuilder builder) {
-        for (DeterministicKey key : getKeys(includeLookahead, true)) {
-            String comment = null;
-            if (key.equals(getRootKey()))
-                comment = "root";
-            else if (key.equals(getWatchingKey()))
-                comment = "account";
-            else if (key.equals(internalParentKey))
-                comment = "internal";
-            else if (key.equals(externalParentKey))
-                comment = "external";
-            else if (internalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedInternalKeys)
-                comment = "*";
-            else if (externalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedExternalKeys)
-                comment = "*";
+        getKeys(includeLookahead, true).forEach(key -> {
+            String comment = commentFromKey(key);
             key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, outputScriptType, comment);
-        }
+        });
+    }
+
+    private String commentFromKey(DeterministicKey key) {
+        String comment = null;
+        if (key.equals(getRootKey()))
+            comment = "root";
+        else if (key.equals(getWatchingKey()))
+            comment = "account";
+        else if (key.equals(internalParentKey))
+            comment = "internal";
+        else if (key.equals(externalParentKey))
+            comment = "external";
+        else if (internalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedInternalKeys)
+            comment = "*";
+        else if (externalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedExternalKeys)
+            comment = "*";
+        return comment;
     }
 
     /** The number of signatures required to spend coins received by this keychain. */
