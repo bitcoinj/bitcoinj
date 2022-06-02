@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -93,7 +95,17 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     private static final String CREATE_UNDOABLE_TABLE_INDEX             = "CREATE INDEX undoableblocks_height_idx ON undoableBlocks USING btree (height)";
 
     private static final String SELECT_UNDOABLEBLOCKS_EXISTS_SQL        = "select 1 from undoableblocks where hash = ?";
-
+    private static final String INSERT_OPENOUTPUTS_ONCONFLICT_SQL       = "INSERT INTO openoutputs (hash, index, height, value, scriptbytes, toaddress, addresstargetable, coinbase) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING";
+    
+    // Postgresql 9.5 UPSERT documentation: https://www.postgresql.org/docs/9.5/static/sql-insert.html
+    // Two things of note:
+    // - a WHERE clause is not needed (and will normally be an ambiguous reference), because only the conflicting rows are updatable
+    // - the "excluded" table is a special table defined to be the rows that were going to be inserted, but failed. This allows us to
+    //   specify values once in the INSERT clause, and reuse them in the UPDATE clause.
+    private static final String UPSERT_HEADERS_SQL                      = "INSERT INTO headers(hash, chainwork, height, header, wasundoable) VALUES(?, ?, ?, ?, ?) ON CONFLICT (hash) DO UPDATE SET wasundoable=EXCLUDED.wasundoable";
+    private static final String UPSERT_UNDOABLEBLOCKS_SQL               = "INSERT INTO undoableblocks(hash, height, txoutchanges, transactions) VALUES(?, ?, ?, ?) ON CONFLICT (hash) DO UPDATE SET txoutchanges=EXCLUDED.txoutchanges, transactions=EXCLUDED.transactions";
+    
+    protected final ThreadLocal<Long> supportsOnConflict = new ThreadLocal<Long>();
     /**
      * Creates a new PostgresFullPrunedBlockStore.
      *
@@ -169,13 +181,96 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
     }
-
+    
+    protected boolean isSupportsOnConflict() {
+        if (supportsOnConflict == null) {
+            // The DatabaseFullPrunedBlockStore constructor may call createNewStore() which calls overridden method put(),
+            // before this class's constructor has been executed (and initialized final fields). This is a workaround for
+            // that problem.
+            return false;
+        }
+        
+        Connection conn = this.conn.get();
+        Long n = supportsOnConflict.get();
+        if (n != null) {
+            if (n.intValue() == conn.hashCode()) {
+                // Connection's hash code matches, check support flag
+                return (n & 0x100000000L) != 0;
+            }
+        }
+        
+        long newValue = (long)conn.hashCode() & 0xFFFFFFFFL;
+        try {
+            DatabaseMetaData metaData = conn.getMetaData();
+            if ((metaData.getDatabaseMajorVersion() >= 9) && (metaData.getDatabaseMinorVersion() >= 5)) {
+                newValue |= 0x100000000L;
+                return true;
+            }
+        } catch (Exception e) {
+            if (log.isDebugEnabled())
+                log.debug("Unable to check if database is version 9.5 or later: " + e.toString());
+        } finally {
+            supportsOnConflict.set(Long.valueOf(newValue));
+        }
+        
+        return false;
+    }
+    
+    @Override
+    protected void putUpdateStoredBlock(StoredBlock storedBlock, boolean wasUndoable) throws SQLException {
+        // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
+        byte[] hashBytes = getTruncatedHashBytes(storedBlock);
+        if (!isSupportsOnConflict() || !wasUndoable) {
+            // If ON CONFLICT not supported, or if this is not an undoable block, use a modified version of the standard code
+            // The standard (superclass) code will not work correctly with Postgresql if the header already exists, because it
+            // will abort the transaction. So instead, try to update, and insert if nothing is updated.
+            PreparedStatement s = null;
+            try {
+                if (wasUndoable) {
+                    s = conn.get().prepareStatement(getUpdateHeadersSQL());
+                    s.setBoolean(1, true);
+                    s.setBytes(2, hashBytes);
+                    if (s.executeUpdate() > 0) {
+                        return;
+                    }
+                    s.close();
+                }
+                s = conn.get().prepareStatement(getInsertHeadersSQL());
+                s.setBytes(1, hashBytes);
+                s.setBytes(2, storedBlock.getChainWork().toByteArray());
+                s.setInt(3, storedBlock.getHeight());
+                s.setBytes(4, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
+                s.setBoolean(5, wasUndoable);
+                s.executeUpdate();
+            } finally {
+                if (s != null) {
+                    s.close();
+                }
+            }
+            return;
+        }
+        
+        PreparedStatement s = null;
+        try {
+            s = conn.get().prepareStatement(UPSERT_HEADERS_SQL);
+            s.setBytes(1, hashBytes);
+            s.setBytes(2, storedBlock.getChainWork().toByteArray());
+            s.setInt(3, storedBlock.getHeight());
+            s.setBytes(4, storedBlock.getHeader().cloneAsHeader().unsafeBitcoinSerialize());
+            s.setBoolean(5, wasUndoable);
+            s.executeUpdate();
+        } finally {
+            if (s != null) {
+                s.close();
+            }
+        }
+    }
+    
     @Override
     public void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         maybeConnect();
         // We skip the first 4 bytes because (on mainnet) the minimum target has 4 0-bytes
-        byte[] hashBytes = new byte[28];
-        System.arraycopy(storedBlock.getHeader().getHash().getBytes(), 4, hashBytes, 0, 28);
+        byte[] hashBytes = getTruncatedHashBytes(storedBlock);
         int height = storedBlock.getHeight();
         byte[] transactions = null;
         byte[] txOutChanges = null;
@@ -196,24 +291,31 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             throw new BlockStoreException(e);
         }
 
-
+        PreparedStatement s = null;
         try {
-            if (log.isDebugEnabled())
-                log.debug("Looking for undoable block with hash: " + Utils.HEX.encode(hashBytes));
+            if (isSupportsOnConflict()) {
+                s = conn.get().prepareStatement(UPSERT_UNDOABLEBLOCKS_SQL);
+                s.setBytes(1, hashBytes);
+                s.setInt(2, height);
 
-            PreparedStatement findS = conn.get().prepareStatement(SELECT_UNDOABLEBLOCKS_EXISTS_SQL);
-            findS.setBytes(1, hashBytes);
+                if (log.isDebugEnabled())
+                    log.debug("Upserting undoable block with hash: " + Utils.HEX.encode(hashBytes)  + " at height " + height);
 
-            ResultSet rs = findS.executeQuery();
-            if (rs.next())
-            {
-                // We already have this output, update it.
-                findS.close();
-
-                // Postgres insert-or-updates are very complex (and finnicky).  This level of transaction isolation
-                // seems to work for bitcoinj
-                PreparedStatement s =
-                        conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
+                if (transactions == null) {
+                    s.setBytes(3, txOutChanges);
+                    s.setNull(4, Types.BINARY);
+                } else {
+                    s.setNull(3, Types.BINARY);
+                    s.setBytes(4, transactions);
+                }
+                s.executeUpdate();
+                s.close();
+            } else {
+                if (log.isDebugEnabled())
+                    log.debug("Looking for undoable block with hash: " + Utils.HEX.encode(hashBytes));
+                
+                // Try to update first
+                s = conn.get().prepareStatement(getUpdateUndoableBlocksSQL());
                 s.setBytes(3, hashBytes);
 
                 if (log.isDebugEnabled())
@@ -226,29 +328,28 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                     s.setNull(1, Types.BINARY);
                     s.setBytes(2, transactions);
                 }
+                if (s.executeUpdate() > 0) {
+                    return;
+                }
+
+                s.close();
+                s = conn.get().prepareStatement(getInsertUndoableBlocksSQL());
+                s.setBytes(1, hashBytes);
+                s.setInt(2, height);
+
+                if (log.isDebugEnabled())
+                    log.debug("Inserting undoable block with hash: " + Utils.HEX.encode(hashBytes)  + " at height " + height);
+
+                if (transactions == null) {
+                    s.setBytes(3, txOutChanges);
+                    s.setNull(4, Types.BINARY);
+                } else {
+                    s.setNull(3, Types.BINARY);
+                    s.setBytes(4, transactions);
+                }
                 s.executeUpdate();
                 s.close();
-
-                return;
             }
-
-            PreparedStatement s =
-                    conn.get().prepareStatement(getInsertUndoableBlocksSQL());
-            s.setBytes(1, hashBytes);
-            s.setInt(2, height);
-
-            if (log.isDebugEnabled())
-                log.debug("Inserting undoable block with hash: " + Utils.HEX.encode(hashBytes)  + " at height " + height);
-
-            if (transactions == null) {
-                s.setBytes(3, txOutChanges);
-                s.setNull(4, Types.BINARY);
-            } else {
-                s.setNull(3, Types.BINARY);
-                s.setBytes(4, transactions);
-            }
-            s.executeUpdate();
-            s.close();
             try {
                 putUpdateStoredBlock(storedBlock, true);
             } catch (SQLException e) {
@@ -257,7 +358,42 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
         } catch (SQLException e) {
             if (!e.getSQLState().equals(POSTGRES_DUPLICATE_KEY_ERROR_CODE))
                 throw new BlockStoreException(e);
+        } finally {
+            closeRethrow(s);
         }
+    }
+    
+    @Override
+    protected String getInsertOpenoutputsSQL() {
+        if (isSupportsOnConflict()) {
+            return INSERT_OPENOUTPUTS_ONCONFLICT_SQL;
+        }
+        return super.getInsertOpenoutputsSQL();
+    }
 
+    @Override
+    public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
+        maybeConnect();
+        if (!isSupportsOnConflict()) {
+            
+            PreparedStatement s = null;
+            try {
+                s = conn.get()
+                        .prepareStatement(getSelectOpenoutputsSQL());
+                s.setBytes(1, out.getHash().getBytes());
+                // index is actually an unsigned int
+                s.setInt(2, (int) out.getIndex());
+                ResultSet results = s.executeQuery();
+                if (results.next()) {
+                    return;
+                }
+            } catch (SQLException e) {
+                throw new BlockStoreException(e);
+            } finally {
+                closeRethrow(s);
+            }
+        }
+        
+        super.addUnspentTransactionOutput(out);
     }
 }
