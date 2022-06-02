@@ -19,8 +19,7 @@ package org.bitcoinj.utils;
 import org.junit.Test;
 
 import static org.bitcoinj.utils.Fiat.parseFiat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class FiatTest {
 
@@ -84,6 +83,7 @@ public class FiatTest {
     public void testComparing() {
         assertTrue(parseFiat("EUR", "1.11").isLessThan(parseFiat("EUR", "6.66")));
         assertTrue(parseFiat("EUR", "6.66").isGreaterThan(parseFiat("EUR", "2.56")));
+        assertEquals(parseFiat("EUR", "0.80").compareTo(parseFiat("USD","0.80")), -16);
     }
 
     @Test
@@ -105,6 +105,7 @@ public class FiatTest {
         Fiat fiat = parseFiat("USD", "666");
         assertEquals(6660000, fiat.longValue());
         assertEquals("6660000", fiat.toString());
+        assertEquals(206545287, fiat.hashCode());
     }
 
     @Test
