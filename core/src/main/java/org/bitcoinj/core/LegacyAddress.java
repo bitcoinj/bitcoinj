@@ -20,7 +20,10 @@ package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
+import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -92,7 +95,30 @@ public class LegacyAddress extends Address {
      * @return constructed address
      */
     public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
-        return fromPubKeyHash(params, key.getPubKeyHash());
+        return fromKey(params, key, ScriptType.P2PKH);
+    }
+
+    /**
+     * Construct a {@link LegacyAddress} that represents the public part of the given {@link ECKey}. Note that an address is
+     * derived from a hash of the public key and is not the public key itself.
+     *
+     * @param params
+     *            network this address is valid for
+     * @param key
+     *            only the public part is used
+     * @param scriptType
+     *            script type. P2PKH and P2SH supported.
+     * @return constructed address
+     */
+    public static LegacyAddress fromKey(NetworkParameters params, ECKey key, Script.ScriptType scriptType) {
+        if (ScriptType.P2PKH == scriptType) {
+            return fromPubKeyHash(params, key.getPubKeyHash());
+        } else if(ScriptType.P2SH == scriptType) {
+            final Script script = ScriptBuilder.createP2SHOutputScript(key);
+            return fromScriptHash(params, ScriptPattern.extractHashFromP2SH(script));
+        } else {
+            throw new IllegalArgumentException("Script type " + scriptType + " not supported");
+        }
     }
 
     /**

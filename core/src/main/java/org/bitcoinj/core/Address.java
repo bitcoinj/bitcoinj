@@ -77,17 +77,17 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      *            network this address is valid for
      * @param key
      *            only the public part is used
-     * @param outputScriptType
+     * @param scriptType
      *            script type the address should use
      * @return constructed address
      */
-    public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        if (outputScriptType == Script.ScriptType.P2PKH)
-            return LegacyAddress.fromKey(params, key);
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+    public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType scriptType) {
+        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2SH)
+            return LegacyAddress.fromKey(params, key, scriptType);
+        else if (scriptType == ScriptType.P2WPKH)
             return SegwitAddress.fromKey(params, key);
         else
-            throw new IllegalArgumentException(outputScriptType.toString());
+            throw new IllegalArgumentException(scriptType.toString());
     }
 
     /**
