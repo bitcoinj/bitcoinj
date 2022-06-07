@@ -17,11 +17,6 @@
 
 package org.bitcoinj.core;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -40,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * keys exported using Bitcoin Core's dumpprivkey command.
  * </p>
  */
-public abstract class PrefixedChecksummedBytes implements Serializable, Cloneable {
+public abstract class PrefixedChecksummedBytes implements Cloneable {
     protected final transient NetworkParameters params;
     protected final byte[] bytes;
 
@@ -77,24 +72,5 @@ public abstract class PrefixedChecksummedBytes implements Serializable, Cloneabl
     @Override
     public PrefixedChecksummedBytes clone() throws CloneNotSupportedException {
         return (PrefixedChecksummedBytes) super.clone();
-    }
-
-    // Java serialization
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
-        out.writeUTF(params.getId());
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        try {
-            Field paramsField = PrefixedChecksummedBytes.class.getDeclaredField("params");
-            paramsField.setAccessible(true);
-            paramsField.set(this, checkNotNull(NetworkParameters.fromID(in.readUTF())));
-            paramsField.setAccessible(false);
-        } catch (NoSuchFieldException | IllegalAccessException x) {
-            throw new RuntimeException(x);
-        }
     }
 }

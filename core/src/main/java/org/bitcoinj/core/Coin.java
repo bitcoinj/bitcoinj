@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 import com.google.common.math.LongMath;
 import org.bitcoinj.utils.MonetaryFormat;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -27,7 +26,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Represents a monetary Bitcoin value. This class is immutable.
  */
-public final class Coin implements Monetary, Comparable<Coin>, Serializable {
+public final class Coin implements Monetary, Comparable<Coin> {
 
     /**
      * Number of decimals for one Bitcoin. This constant is useful for quick adapting to other coins because a lot of

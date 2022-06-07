@@ -20,10 +20,6 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -43,17 +39,6 @@ public class DumpedPrivateKeyTest {
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void checkNetworkWrong() {
         DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
-    }
-
-    @Test
-    public void testJavaSerialization() throws Exception {
-
-        DumpedPrivateKey key = new DumpedPrivateKey(MAINNET, new ECKey().getPrivKeyBytes(), true);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(key);
-        DumpedPrivateKey keyCopy = (DumpedPrivateKey) new ObjectInputStream(new ByteArrayInputStream(os.toByteArray()))
-                .readObject();
-        assertEquals(key, keyCopy);
     }
 
     @Test

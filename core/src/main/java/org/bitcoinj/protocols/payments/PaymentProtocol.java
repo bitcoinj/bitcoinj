@@ -30,7 +30,6 @@ import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.script.ScriptBuilder;
 
 import javax.annotation.Nullable;
-import java.io.Serializable;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -426,7 +425,7 @@ public class PaymentProtocol {
     /**
      * Value object to hold amount/script pairs.
      */
-    public static class Output implements Serializable {
+    public static class Output {
         @Nullable public final Coin amount;
         public final byte[] scriptData;
 
