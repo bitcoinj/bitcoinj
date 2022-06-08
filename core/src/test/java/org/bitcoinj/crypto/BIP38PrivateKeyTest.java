@@ -177,16 +177,6 @@ public class BIP38PrivateKeyTest {
     }
 
     @Test
-    public void cloning() throws Exception {
-        BIP38PrivateKey a = BIP38PrivateKey.fromBase58(TESTNET, "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb");
-        // TODO: Consider overriding clone() in BIP38PrivateKey to narrow the type
-        BIP38PrivateKey b = (BIP38PrivateKey) a.clone();
-
-        assertEquals(a, b);
-        assertNotSame(a, b);
-    }
-
-    @Test
     public void roundtripBase58() {
         String base58 = "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb";
         assertEquals(base58, BIP38PrivateKey.fromBase58(MAINNET, base58).toBase58());

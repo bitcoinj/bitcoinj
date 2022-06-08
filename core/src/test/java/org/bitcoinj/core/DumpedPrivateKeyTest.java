@@ -57,16 +57,6 @@ public class DumpedPrivateKeyTest {
     }
 
     @Test
-    public void cloning() throws Exception {
-        DumpedPrivateKey a = new DumpedPrivateKey(MAINNET, new ECKey().getPrivKeyBytes(), true);
-        // TODO: Consider overriding clone() in DumpedPrivateKey to narrow the type
-        DumpedPrivateKey b = (DumpedPrivateKey) a.clone();
-
-        assertEquals(a, b);
-        assertNotSame(a, b);
-    }
-
-    @Test
     public void roundtripBase58() {
         String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk"; // 32-bytes key
         DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(null, base58);

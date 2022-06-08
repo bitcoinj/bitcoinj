@@ -71,29 +71,4 @@ public class PrefixedChecksummedBytesTest {
         PrefixedChecksummedBytes b = new PrefixedChecksummedBytesToTest(params, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
     }
-
-    @Test
-    public void cloning() throws Exception {
-        expect(params.getAddressHeader()).andReturn(111);
-        replay(params);
-
-        PrefixedChecksummedBytes a = new PrefixedChecksummedBytesToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        PrefixedChecksummedBytes b = a.clone();
-
-        assertEquals(a, b);
-        assertNotSame(a, b);
-    }
-
-    @Test
-    public void comparisonCloneEqualTo() throws Exception {
-        expect(params.getAddressHeader()).andReturn(111);
-        expect(params.getId()).andReturn("org.bitcoin.test").times(2);
-        replay(params);
-
-        PrefixedChecksummedBytes a = new PrefixedChecksummedBytesToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        PrefixedChecksummedBytes b = a.clone();
-
-        assertNotSame(a, b);
-        assertEquals(a, b);
-    }
 }
