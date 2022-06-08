@@ -4921,7 +4921,7 @@ public class Wallet extends BaseTaggableObject
     public boolean checkForFilterExhaustion(FilteredBlock block) {
         keyChainGroupLock.lock();
         try {
-            if (!keyChainGroup.isSupportsDeterministicChains())
+            if (!keyChainGroup.supportsDeterministicChains())
                 return false;
             int epoch = keyChainGroup.getCombinedKeyLookaheadEpochs();
             for (Transaction tx : block.getAssociatedTransactions().values()) {
@@ -5394,7 +5394,7 @@ public class Wallet extends BaseTaggableObject
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
         Script.ScriptType preferredScriptType = Script.ScriptType.P2PKH;
-        if (keyChainGroup.isSupportsDeterministicChains()) {
+        if (keyChainGroup.supportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
                 if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp)
                     allChainsRotating = false;
