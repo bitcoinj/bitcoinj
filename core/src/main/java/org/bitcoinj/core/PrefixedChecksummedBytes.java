@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * keys exported using Bitcoin Core's dumpprivkey command.
  * </p>
  */
-public abstract class PrefixedChecksummedBytes implements Cloneable {
+public abstract class PrefixedChecksummedBytes {
     protected final transient NetworkParameters params;
     protected final byte[] bytes;
 
@@ -62,15 +62,5 @@ public abstract class PrefixedChecksummedBytes implements Cloneable {
         if (o == null || getClass() != o.getClass()) return false;
         PrefixedChecksummedBytes other = (PrefixedChecksummedBytes) o;
         return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
-    }
-
-    /**
-     * This implementation narrows the return type to {@link PrefixedChecksummedBytes}
-     * and allows subclasses to throw {@link CloneNotSupportedException} even though it
-     * is never thrown by this implementation.
-     */
-    @Override
-    public PrefixedChecksummedBytes clone() throws CloneNotSupportedException {
-        return (PrefixedChecksummedBytes) super.clone();
     }
 }

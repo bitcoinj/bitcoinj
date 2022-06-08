@@ -188,27 +188,9 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void cloning() throws Exception {
-        LegacyAddress a = LegacyAddress.fromPubKeyHash(TESTNET, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        LegacyAddress b = a.clone();
-
-        assertEquals(a, b);
-        assertNotSame(a, b);
-    }
-
-    @Test
     public void roundtripBase58() {
         String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
         assertEquals(base58, LegacyAddress.fromBase58(null, base58).toBase58());
-    }
-
-    @Test
-    public void comparisonCloneEqualTo() throws Exception {
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        LegacyAddress b = a.clone();
-
-        int result = a.compareTo(b);
-        assertEquals(0, result);
     }
 
     @Test
