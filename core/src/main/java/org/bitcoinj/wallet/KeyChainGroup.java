@@ -237,8 +237,9 @@ public class KeyChainGroup implements KeyBag {
 
     private BasicKeyChain basic;
     private final NetworkParameters params;
+    private final boolean supportsDeterministic;
     // Keychains for deterministically derived keys.
-    protected final @Nullable LinkedList<DeterministicKeyChain> chains;
+    protected final LinkedList<DeterministicKeyChain> chains = new LinkedList<>();
     // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
     // P2SH addresses. They're mutually exclusive.
     private final EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys;
@@ -268,13 +269,14 @@ public class KeyChainGroup implements KeyBag {
         this.params = params;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         if (chains != null) {
+            supportsDeterministic = true;
             if (lookaheadSize > -1)
                 this.lookaheadSize = lookaheadSize;
             else if (params.getId().equals(NetworkParameters.ID_UNITTESTNET))
                 this.lookaheadSize = 5; // Cut down excess computation for unit tests.
             if (lookaheadThreshold > -1)
                 this.lookaheadThreshold = lookaheadThreshold;
-            this.chains = new LinkedList<>(chains);
+            this.chains.addAll(chains);
             for (DeterministicKeyChain chain : this.chains) {
                 if (this.lookaheadSize > -1)
                     chain.setLookaheadSize(this.lookaheadSize);
@@ -282,7 +284,7 @@ public class KeyChainGroup implements KeyBag {
                     chain.setLookaheadThreshold(this.lookaheadThreshold);
             }
         } else {
-            this.chains = null;
+            supportsDeterministic = false;
         }
         this.keyCrypter = crypter;
         this.currentKeys = currentKeys == null
@@ -306,7 +308,7 @@ public class KeyChainGroup implements KeyBag {
      * @return true if it contains any deterministic keychain
      */
     public boolean supportsDeterministicChains() {
-        return chains != null;
+        return supportsDeterministic;
     }
 
     /**
@@ -572,14 +574,12 @@ public class KeyChainGroup implements KeyBag {
     @Override
     @Nullable
     public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
-        if (chains != null) {
-            // Iterate in reverse order, since the active keychain is the one most likely to have the hit
-            for (Iterator<DeterministicKeyChain> iter = chains.descendingIterator(); iter.hasNext();) {
-                DeterministicKeyChain chain = iter.next();
-                RedeemData redeemData = chain.findRedeemDataByScriptHash(ByteString.copyFrom(scriptHash));
-                if (redeemData != null)
-                    return redeemData;
-            }
+        // Iterate in reverse order, since the active keychain is the one most likely to have the hit
+        for (Iterator<DeterministicKeyChain> iter = chains.descendingIterator(); iter.hasNext();) {
+            DeterministicKeyChain chain = iter.next();
+            RedeemData redeemData = chain.findRedeemDataByScriptHash(ByteString.copyFrom(scriptHash));
+            if (redeemData != null)
+                return redeemData;
         }
         return null;
     }
@@ -606,14 +606,12 @@ public class KeyChainGroup implements KeyBag {
         // BasicKeyChain can mix output script types.
         if ((result = basic.findKeyFromPubHash(pubKeyHash)) != null)
             return result;
-        if (chains != null) {
-            for (DeterministicKeyChain chain : chains) {
-                // This check limits DeterministicKeyChain to specific output script usage.
-                if (scriptType != null && scriptType != chain.getOutputScriptType())
-                    continue;
-                if ((result = chain.findKeyFromPubHash(pubKeyHash)) != null)
-                    return result;
-            }
+        for (DeterministicKeyChain chain : chains) {
+            // This check limits DeterministicKeyChain to specific output script usage.
+            if (scriptType != null && scriptType != chain.getOutputScriptType())
+                continue;
+            if ((result = chain.findKeyFromPubHash(pubKeyHash)) != null)
+                return result;
         }
         return null;
     }
@@ -623,13 +621,11 @@ public class KeyChainGroup implements KeyBag {
      * See {@link DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
     public void markPubKeyHashAsUsed(byte[] pubKeyHash) {
-        if (chains != null) {
-            for (DeterministicKeyChain chain : chains) {
-                DeterministicKey key;
-                if ((key = chain.markPubHashAsUsed(pubKeyHash)) != null) {
-                    maybeMarkCurrentKeyAsUsed(key);
-                    return;
-                }
+        for (DeterministicKeyChain chain : chains) {
+            DeterministicKey key;
+            if ((key = chain.markPubHashAsUsed(pubKeyHash)) != null) {
+                maybeMarkCurrentKeyAsUsed(key);
+                return;
             }
         }
     }
@@ -664,10 +660,9 @@ public class KeyChainGroup implements KeyBag {
     public boolean hasKey(ECKey key) {
         if (basic.hasKey(key))
             return true;
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                if (chain.hasKey(key))
-                    return true;
+        for (DeterministicKeyChain chain : chains)
+            if (chain.hasKey(key))
+                return true;
         return false;
     }
 
@@ -677,10 +672,9 @@ public class KeyChainGroup implements KeyBag {
         ECKey result;
         if ((result = basic.findKeyFromPubKey(pubKey)) != null)
             return result;
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                if ((result = chain.findKeyFromPubKey(pubKey)) != null)
-                    return result;
+        for (DeterministicKeyChain chain : chains)
+            if ((result = chain.findKeyFromPubKey(pubKey)) != null)
+                return result;
         return null;
     }
 
@@ -689,24 +683,20 @@ public class KeyChainGroup implements KeyBag {
      * See {@link DeterministicKeyChain#markKeyAsUsed(DeterministicKey)} for more info on this.
      */
     public void markPubKeyAsUsed(byte[] pubkey) {
-        if (chains != null) {
-            for (DeterministicKeyChain chain : chains) {
-                DeterministicKey key;
-                if ((key = chain.markPubKeyAsUsed(pubkey)) != null) {
-                    maybeMarkCurrentKeyAsUsed(key);
-                    return;
-                }
+        for (DeterministicKeyChain chain : chains) {
+            DeterministicKey key;
+            if ((key = chain.markPubKeyAsUsed(pubkey)) != null) {
+                maybeMarkCurrentKeyAsUsed(key);
+                return;
             }
         }
     }
 
     /** Returns the number of keys managed by this group, including the lookahead buffers. */
     public int numKeys() {
-        int result = basic.numKeys();
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                result += chain.numKeys();
-        return result;
+        return basic.numKeys() + chains.stream()
+                .mapToInt(DeterministicKeyChain::numKeys)
+                .sum();
     }
 
     /**
@@ -725,7 +715,7 @@ public class KeyChainGroup implements KeyBag {
      * @see org.bitcoinj.wallet.MarriedKeyChain
      */
     public final boolean isMarried() {
-        return chains != null && !chains.isEmpty() && getActiveKeyChain().isMarried();
+        return !chains.isEmpty() && getActiveKeyChain().isMarried();
     }
 
     /**
@@ -739,22 +729,18 @@ public class KeyChainGroup implements KeyBag {
     public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
-        checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
+        checkState(!chains.isEmpty() || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
 
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<>();
-        if (chains != null) {
-            for (DeterministicKeyChain chain : chains)
-                newChains.add(chain.toEncrypted(keyCrypter, aesKey));
-        }
+        for (DeterministicKeyChain chain : chains)
+            newChains.add(chain.toEncrypted(keyCrypter, aesKey));
 
         // Code below this point must be exception safe.
         this.keyCrypter = keyCrypter;
         this.basic = newBasic;
-        if (chains != null) {
-            this.chains.clear();
-            this.chains.addAll(newChains);
-        }
+        this.chains.clear();
+        this.chains.addAll(newChains);
     }
 
     /**
@@ -767,15 +753,13 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(aesKey);
 
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
-        if (chains != null) {
-            List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
-            for (DeterministicKeyChain chain : chains)
-                newChains.add(chain.toDecrypted(aesKey));
+        List<DeterministicKeyChain> newChains = new ArrayList<>(chains.size());
+        for (DeterministicKeyChain chain : chains)
+            newChains.add(chain.toDecrypted(aesKey));
 
-            // Code below this point must be exception safe.
-            this.chains.clear();
-            this.chains.addAll(newChains);
-        }
+        // Code below this point must be exception safe.
+        this.chains.clear();
+        this.chains.addAll(newChains);
         this.basic = newBasic;
         this.keyCrypter = null;
     }
@@ -794,7 +778,7 @@ public class KeyChainGroup implements KeyBag {
     public boolean isWatching() {
         BasicKeyChain.State basicState = basic.isWatching();
         BasicKeyChain.State activeState = BasicKeyChain.State.EMPTY;
-        if (chains != null && !chains.isEmpty()) {
+        if (!chains.isEmpty()) {
             if (getActiveKeyChain().isWatching())
                 activeState = BasicKeyChain.State.WATCHING;
             else
@@ -825,17 +809,15 @@ public class KeyChainGroup implements KeyBag {
 
     public long getEarliestKeyCreationTime() {
         long time = basic.getEarliestKeyCreationTime();   // Long.MAX_VALUE if empty.
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                time = Math.min(time, chain.getEarliestKeyCreationTime());
+        for (DeterministicKeyChain chain : chains)
+            time = Math.min(time, chain.getEarliestKeyCreationTime());
         return time;
     }
 
     public int getBloomFilterElementCount() {
         int result = basic.numBloomFilterEntries();
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                result += chain.numBloomFilterEntries();
+        for (DeterministicKeyChain chain : chains)
+            result += chain.numBloomFilterEntries();
         return result;
     }
 
@@ -843,9 +825,8 @@ public class KeyChainGroup implements KeyBag {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
         if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
+        for (DeterministicKeyChain chain : chains)
+            filter.merge(chain.getFilter(size, falsePositiveRate, nTweak));
         return filter;
     }
 
@@ -863,17 +844,15 @@ public class KeyChainGroup implements KeyBag {
         checkNotNull(listener);
         checkNotNull(executor);
         basic.addEventListener(listener, executor);
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                chain.addEventListener(listener, executor);
+        for (DeterministicKeyChain chain : chains)
+            chain.addEventListener(listener, executor);
     }
 
     /** Removes a listener for events that are run when keys are added. */
     public boolean removeEventListener(KeyChainEventListener listener) {
         checkNotNull(listener);
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                chain.removeEventListener(listener);
+        for (DeterministicKeyChain chain : chains)
+            chain.removeEventListener(listener);
         return basic.removeEventListener(listener);
     }
 
@@ -911,9 +890,7 @@ public class KeyChainGroup implements KeyBag {
         Stream<Protos.Key> basicStream = (basic != null) ?
                 basic.serializeToProtobuf().stream() :
                 Stream.empty();
-        Stream<Protos.Key> chainsStream = (chains != null) ?
-                chains.stream().flatMap(chain -> chain.serializeToProtobuf().stream()) :
-                Stream.empty();
+        Stream<Protos.Key> chainsStream = chains.stream().flatMap(chain -> chain.serializeToProtobuf().stream());
         return Stream.concat(basicStream, chainsStream)
                 .collect(Collectors.toList());
     }
@@ -1070,9 +1047,8 @@ public class KeyChainGroup implements KeyBag {
         final StringBuilder builder = new StringBuilder();
         if (basic != null)
             builder.append(basic.toString(includePrivateKeys, aesKey, params));
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params)).append('\n');
+        for (DeterministicKeyChain chain : chains)
+            builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params)).append('\n');
         return builder.toString();
     }
 
