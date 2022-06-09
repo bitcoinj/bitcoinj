@@ -287,10 +287,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public long getEarliestKeyCreationTime() {
         lock.lock();
         try {
-            long time = Long.MAX_VALUE;
-            for (ECKey key : hashToKeys.values())
-                time = Math.min(key.getCreationTimeSeconds(), time);
-            return time;
+            return hashToKeys.values().stream()
+                    .mapToLong(ECKey::getCreationTimeSeconds)
+                    .min()
+                    .orElse(Long.MAX_VALUE);
         } finally {
             lock.unlock();
         }

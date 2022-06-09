@@ -823,12 +823,20 @@ public class KeyChainGroup implements KeyBag {
         return basic.getKeys();
     }
 
+    /**
+     * @return Long.MAX_VALUE if empty
+     */
     public long getEarliestKeyCreationTime() {
-        long time = basic.getEarliestKeyCreationTime();   // Long.MAX_VALUE if empty.
-        if (chains != null)
-            for (DeterministicKeyChain chain : chains)
-                time = Math.min(time, chain.getEarliestKeyCreationTime());
-        return time;
+        return Math.min(basic.getEarliestKeyCreationTime(), getEarliestChainsCreationTime());
+    }
+
+    private long getEarliestChainsCreationTime() {
+        if (chains == null)
+            return Long.MAX_VALUE;
+        return chains.stream()
+                .mapToLong(DeterministicKeyChain::getEarliestKeyCreationTime)
+                .min()
+                .orElse(Long.MAX_VALUE);
     }
 
     public int getBloomFilterElementCount() {
