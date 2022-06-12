@@ -17,6 +17,7 @@
 
 package org.bitcoinj.crypto;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Base58;
@@ -472,15 +473,10 @@ public class DeterministicKey extends ECKey {
         checkState(key != null, "Private key bytes not available");
         return key;
     }
-
-    @Deprecated
-    public byte[] serializePublic(NetworkParameters params) {
-        return serialize(params, true, Script.ScriptType.P2PKH);
-    }
-
-    @Deprecated
-    public byte[] serializePrivate(NetworkParameters params) {
-        return serialize(params, false, Script.ScriptType.P2PKH);
+    
+    @VisibleForTesting
+    byte[] serialize(NetworkParameters params, boolean pub) {
+        return serialize(params, pub, Script.ScriptType.P2PKH);
     }
 
     private byte[] serialize(NetworkParameters params, boolean pub, Script.ScriptType outputScriptType) {
