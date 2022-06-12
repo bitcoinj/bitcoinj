@@ -19,8 +19,6 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import java.io.Serializable;
-
 /**
  * <p>A KeyCrypter can be used to encrypt and decrypt a message. The sequence of events to encrypt and then decrypt
  * a message are as follows:</p>
@@ -34,7 +32,7 @@ import java.io.Serializable;
  * <p>There can be different algorithms used for encryption/ decryption so the getUnderstoodEncryptionType is used
  * to determine whether any given KeyCrypter can understand the type of encrypted data you have.</p>
  */
-public interface KeyCrypter extends Serializable {
+public interface KeyCrypter {
 
     /**
      * Return the EncryptionType enum value which denotes the type of encryption/ decryption that this KeyCrypter

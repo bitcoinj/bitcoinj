@@ -20,7 +20,6 @@ import com.google.common.math.LongMath;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Monetary;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -32,7 +31,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * 
  * This class is immutable.
  */
-public final class Fiat implements Monetary, Comparable<Fiat>, Serializable {
+public final class Fiat implements Monetary, Comparable<Fiat> {
 
     /**
      * The absolute value of exponent of the value of a "smallest unit" in scientific notation. We picked 4 rather than

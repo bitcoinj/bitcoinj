@@ -27,13 +27,8 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Locale;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -225,19 +220,5 @@ public class SegwitAddressTest {
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void fromBech32_wrongNetwork() {
         SegwitAddress.fromBech32(TESTNET, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
-    }
-
-    @Test
-    public void testJavaSerialization() throws Exception {
-        SegwitAddress address = SegwitAddress.fromBech32(null, "BC1SW50QGDZ25J");
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(address);
-        PrefixedChecksummedBytes addressCopy = (PrefixedChecksummedBytes) new ObjectInputStream(
-                new ByteArrayInputStream(os.toByteArray())).readObject();
-
-        assertEquals(address, addressCopy);
-        assertEquals(address.params, addressCopy.params);
-        assertArrayEquals(address.bytes, addressCopy.bytes);
     }
 }

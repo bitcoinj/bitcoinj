@@ -16,12 +16,10 @@
 
 package org.bitcoinj.core;
 
-import java.io.Serializable;
-
 /**
  * Classes implementing this interface represent a monetary value, such as a Bitcoin or fiat amount.
  */
-public interface Monetary extends Serializable {
+public interface Monetary {
 
     /**
      * Returns the absolute value of exponent of the value of a "smallest unit" in scientific notation. For Bitcoin, a

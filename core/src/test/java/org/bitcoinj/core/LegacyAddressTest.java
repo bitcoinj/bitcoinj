@@ -29,11 +29,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,23 +51,6 @@ public class LegacyAddressTest {
                 .suppress(Warning.TRANSIENT_FIELDS)
                 .usingGetClass()
                 .verify();
-    }
-
-    @Test
-    public void testJavaSerialization() throws Exception {
-        LegacyAddress testAddress = LegacyAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(testAddress);
-        LegacyAddress testAddressCopy = (LegacyAddress) new ObjectInputStream(new ByteArrayInputStream(os.toByteArray()))
-                .readObject();
-        assertEquals(testAddress, testAddressCopy);
-
-        LegacyAddress mainAddress = LegacyAddress.fromBase58(MAINNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(mainAddress);
-        LegacyAddress mainAddressCopy = (LegacyAddress) new ObjectInputStream(new ByteArrayInputStream(os.toByteArray()))
-                .readObject();
-        assertEquals(mainAddress, mainAddressCopy);
     }
 
     @Test

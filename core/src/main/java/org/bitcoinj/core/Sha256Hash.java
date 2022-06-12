@@ -23,7 +23,6 @@ import com.google.common.primitives.Ints;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -37,7 +36,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>
  * Given that {@code Sha256Hash} instances can be created using {@link #wrapReversed(byte[])} or {@link #twiceOf(byte[])} or by wrapping raw bytes, there is no guarantee that if two {@code Sha256Hash} instances are found equal (via {@link #equals(Object)}) that their preimages would be the same (even in the absence of a hash collision.)
  */
-public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
+public class Sha256Hash implements Comparable<Sha256Hash> {
     public static final int LENGTH = 32; // bytes
     public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 

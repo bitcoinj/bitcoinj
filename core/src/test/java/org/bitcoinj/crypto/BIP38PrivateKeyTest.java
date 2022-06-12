@@ -25,11 +25,6 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
@@ -155,25 +150,6 @@ public class BIP38PrivateKeyTest {
     public void fromBase58_invalidLength() {
         String base58 = Base58.encodeChecked(1, new byte[16]);
         BIP38PrivateKey.fromBase58(null, base58);
-    }
-
-    @Test
-    public void testJavaSerialization() throws Exception {
-        BIP38PrivateKey testKey = BIP38PrivateKey.fromBase58(TESTNET,
-                "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb");
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(testKey);
-        BIP38PrivateKey testKeyCopy = (BIP38PrivateKey) new ObjectInputStream(
-                new ByteArrayInputStream(os.toByteArray())).readObject();
-        assertEquals(testKey, testKeyCopy);
-
-        BIP38PrivateKey mainKey = BIP38PrivateKey.fromBase58(MAINNET,
-                "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb");
-        os = new ByteArrayOutputStream();
-        new ObjectOutputStream(os).writeObject(mainKey);
-        BIP38PrivateKey mainKeyCopy = (BIP38PrivateKey) new ObjectInputStream(
-                new ByteArrayInputStream(os.toByteArray())).readObject();
-        assertEquals(mainKey, mainKeyCopy);
     }
 
     @Test
