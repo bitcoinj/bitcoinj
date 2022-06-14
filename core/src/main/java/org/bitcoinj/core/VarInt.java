@@ -23,9 +23,7 @@ import com.google.common.primitives.Ints;
  * A variable-length encoded unsigned integer using Satoshi's encoding (a.k.a. "CompactSize").
  */
 public class VarInt {
-    /** @deprecated use {{@link #intValue()} or {{@link #longValue()}}} */
-    @Deprecated
-    public final long value;
+    private final long value;
     private final int originallyEncodedSize;
 
     /**
