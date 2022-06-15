@@ -39,7 +39,9 @@ import static org.bitcoin.NativeSecp256k1Util.assertEquals;
  * and `make` then copy `.libs/libsecp256k1.so` to your system library path
  * or point the JVM to the folder containing it with -Djava.library.path
  * </p>
+ * @deprecated See https://github.com/bitcoinj/bitcoinj/issues/2267
  */
+@Deprecated
 public class NativeSecp256k1 {
 
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
