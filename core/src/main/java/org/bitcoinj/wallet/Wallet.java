@@ -239,17 +239,17 @@ public class Wallet extends BaseTaggableObject
     private int lastBlockSeenHeight;
     private long lastBlockSeenTimeSecs;
 
-    private final CopyOnWriteArrayList<ListenerRegistration<WalletChangeEventListener>> changeListeners
+    private final List<ListenerRegistration<WalletChangeEventListener>> changeListeners
         = new CopyOnWriteArrayList<>();
-    private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsReceivedEventListener>> coinsReceivedListeners
+    private final List<ListenerRegistration<WalletCoinsReceivedEventListener>> coinsReceivedListeners
         = new CopyOnWriteArrayList<>();
-    private final CopyOnWriteArrayList<ListenerRegistration<WalletCoinsSentEventListener>> coinsSentListeners
+    private final List<ListenerRegistration<WalletCoinsSentEventListener>> coinsSentListeners
         = new CopyOnWriteArrayList<>();
-    private final CopyOnWriteArrayList<ListenerRegistration<WalletReorganizeEventListener>> reorganizeListeners
+    private final List<ListenerRegistration<WalletReorganizeEventListener>> reorganizeListeners
         = new CopyOnWriteArrayList<>();
-    private final CopyOnWriteArrayList<ListenerRegistration<ScriptsChangeEventListener>> scriptsChangeListeners
+    private final List<ListenerRegistration<ScriptsChangeEventListener>> scriptsChangeListeners
         = new CopyOnWriteArrayList<>();
-    private final CopyOnWriteArrayList<ListenerRegistration<TransactionConfidenceEventListener>> transactionConfidenceListeners
+    private final List<ListenerRegistration<TransactionConfidenceEventListener>> transactionConfidenceListeners
         = new CopyOnWriteArrayList<>();
 
     // A listener that relays confidence changes from the transaction confidence object to the wallet event listener,
