@@ -259,7 +259,7 @@ public class Wallet extends BaseTaggableObject
     // in receive() via Transaction.setBlockAppearance(). As the BlockChain always calls notifyNewBestBlock even if
     // it sent transactions to the wallet, without this we'd double count.
     private HashSet<Sha256Hash> ignoreNextNewBlock;
-    // Whether or not to ignore pending transactions that are considered risky by the configured risk analyzer.
+    // Whether to ignore pending transactions that are considered risky by the configured risk analyzer.
     private boolean acceptRiskyTransactions;
     // Object that performs risk analysis of pending transactions. We might reject transactions that seem like
     // a high risk of being a double spending attack.
@@ -3391,14 +3391,15 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Formats the wallet as a human readable piece of text. Intended for debugging, the format is not meant to be
-     * stable or human readable.
-     * @param includeLookahead Wether lookahead keys should be included.
+     * Formats the wallet as a human-readable piece of text. Intended for debugging, the format is not meant to be
+     * stable or human-readable.
+     * @param includeLookahead Whether lookahead keys should be included.
      * @param includePrivateKeys Whether raw private key data should be included.
      * @param aesKey for decrypting private key data for if the wallet is encrypted.
      * @param includeTransactions Whether to print transaction data.
      * @param includeExtensions Whether to print extension data.
-     * @param chain If set, will be used to estimate lock times for block timelocked transactions.
+     * @param chain If set, will be used to estimate lock times for block time-locked transactions.
+     * @return Human-readable wallet debugging information
      */
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
             boolean includeTransactions, boolean includeExtensions, @Nullable AbstractBlockChain chain) {
