@@ -126,6 +126,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -4409,14 +4410,10 @@ public class Wallet extends BaseTaggableObject
         try {
             List<TransactionOutput> candidates;
             if (vUTXOProvider == null) {
-                candidates = new ArrayList<>(myUnspents.size());
-                for (TransactionOutput output : myUnspents) {
-                    if (excludeUnsignable && !canSignFor(output.getScriptPubKey())) continue;
-                    Transaction transaction = checkNotNull(output.getParentTransaction());
-                    if (excludeImmatureCoinbases && !transaction.isMature())
-                        continue;
-                    candidates.add(output);
-                }
+                candidates = myUnspents.stream()
+                    .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
+                                        (!excludeImmatureCoinbases || checkNotNull(output.getParentTransaction()).isMature()))
+                    .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
             }
