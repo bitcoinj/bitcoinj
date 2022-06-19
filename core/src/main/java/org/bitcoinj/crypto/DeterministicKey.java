@@ -479,6 +479,7 @@ public class DeterministicKey extends ECKey {
         return serialize(params, pub, Script.ScriptType.P2PKH);
     }
 
+    // TODO: remove outputScriptType parameter and merge with the two-param serialize() method. When deprecated serializePubB58/serializePrivB58 methods are removed.
     private byte[] serialize(NetworkParameters params, boolean pub, Script.ScriptType outputScriptType) {
         ByteBuffer ser = ByteBuffer.allocate(78);
         if (outputScriptType == Script.ScriptType.P2PKH)
@@ -496,20 +497,52 @@ public class DeterministicKey extends ECKey {
         return ser.array();
     }
 
+    /**
+     * Serialize public key to Base58
+     * <p>
+     * outputScriptType should not be used in generating "xpub" format. (and "ypub", "zpub", etc. should not be used)
+     * @param params Network parameters indicating which network to serialize key for
+     * @param outputScriptType output script type
+     * @return the key serialized as a Base58 address
+     * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
+     * @deprecated Use a {@link #serializePubB58(NetworkParameters)} or a descriptor if you need output type information
+     */
+    @Deprecated
     public String serializePubB58(NetworkParameters params, Script.ScriptType outputScriptType) {
         return toBase58(serialize(params, true, outputScriptType));
     }
 
+    /**
+     * Serialize public key to Base58
+     * <p>
+     * outputScriptType should not be used in generating "xprv" format. (and "zprv", "vprv", etc. should not be used)
+     * @param params Network parameters indicating which network to serialize key for
+     * @param outputScriptType output script type
+     * @return the key serialized as a Base58 address
+     * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
+     * @deprecated Use a {@link #serializePrivB58(NetworkParameters)} or a descriptor if you need output type information
+     */
+    @Deprecated
     public String serializePrivB58(NetworkParameters params, Script.ScriptType outputScriptType) {
         return toBase58(serialize(params, false, outputScriptType));
     }
 
+    /**
+     * Serialize public key to Base58 (either "xpub" or "tpub")
+     * @param params Network parameters indicating which network to serialize key for
+     * @return the key serialized as a Base58 address
+     */
     public String serializePubB58(NetworkParameters params) {
-        return serializePubB58(params, Script.ScriptType.P2PKH);
+        return toBase58(serialize(params, true));
     }
 
+    /**
+     * Serialize private key to Base58 (either "xprv" or "tprv")
+     * @param params Network parameters indicating which network to serialize key for
+     * @return the key serialized as a Base58 address
+     */
     public String serializePrivB58(NetworkParameters params) {
-        return serializePrivB58(params, Script.ScriptType.P2PKH);
+        return toBase58(serialize(params, false));
     }
 
     static String toBase58(byte[] ser) {
