@@ -31,7 +31,7 @@ import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
@@ -174,7 +174,7 @@ public class WalletTool implements Callable<Integer> {
             "                       If you omit both options, the creation time is being cleared (set to 0).%n")
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private Network net = Network.MAIN;
+    private BitcoinNetwork net = BitcoinNetwork.MAIN;
     @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.")
     private boolean debugLog = false;
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")

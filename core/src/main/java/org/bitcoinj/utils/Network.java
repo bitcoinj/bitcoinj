@@ -19,68 +19,17 @@ package org.bitcoinj.utils;
 import org.bitcoinj.core.NetworkParameters;
 
 /**
- * A convenient {@code enum} representation of a network.
+ * Cryptocurrency network identifier. In <b>bitcoinj</b> the only implementation of this
+ * class is the {@link BitcoinNetwork} {@code enum}. This interface is provided for
+ * implementations of Bitcoin-like alt-coins that are based on <b>bitcoinj</b>. It is recommended
+ * that implementations of this interface be {@code enum}s that enumerate the available networks
+ * for each alt-coin.
  */
-public enum Network {
-    MAIN(NetworkParameters.ID_MAINNET),
-    TEST(NetworkParameters.ID_TESTNET),
-    SIGNET(NetworkParameters.ID_SIGNET),
-    REGTEST(NetworkParameters.ID_REGTEST);
-
-    private final String id;
-
-    Network(String networkId) {
-        id = networkId;
-    }
-
+public interface Network {
     /**
-     * Get the network id string as specified in {@link NetworkParameters}
+     * Return a network id string as specified in {@link NetworkParameters}
      *
      * @return The network id string
      */
-    public String id() {
-        return id;
-    }
-
-    /**
-     * Get the associated {@link NetworkParameters}
-     *
-     * @return The network parameters
-     */
-    public NetworkParameters networkParameters() {
-        return NetworkParameters.fromID(id);
-    }
-
-    /**
-     * Get the correct enum for a NetworkParameters
-     * Note: UNITTEST is not supported as an enum
-     * @param networkParameters specifies the network
-     * @return the enum
-     */
-    public static Network of(NetworkParameters networkParameters) {
-        return of(networkParameters.getId());
-    }
-
-    /**
-     * Get the correct enum for a network id string
-     * Note: UNITTEST is not supported as an enum
-     * @param idString specifies the network
-     * @return the enum
-     */
-    public static Network of(String idString) {
-        switch (idString) {
-            case NetworkParameters.ID_MAINNET:
-                return MAIN;
-            case NetworkParameters.ID_TESTNET:
-                return TEST;
-            case NetworkParameters.ID_SIGNET:
-                return SIGNET;
-            case NetworkParameters.ID_REGTEST:
-                return REGTEST;
-            case NetworkParameters.ID_UNITTESTNET:
-                return REGTEST;
-            default:
-                throw new IllegalArgumentException("Illegal NetworkParameters: " + idString);
-        }
-    }
+    String id();
 }

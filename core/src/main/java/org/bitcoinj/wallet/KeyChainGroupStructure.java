@@ -20,6 +20,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.utils.Network;
 
 /**
@@ -45,7 +46,7 @@ public interface KeyChainGroupStructure {
      */
     @Deprecated
     default HDPath accountPathFor(Script.ScriptType outputScriptType) {
-        return accountPathFor(outputScriptType, Network.MAIN);
+        return accountPathFor(outputScriptType, BitcoinNetwork.MAIN);
     }
 
     /**
@@ -63,7 +64,7 @@ public interface KeyChainGroupStructure {
      * @return The HD Path: purpose / coinType / accountIndex
      */
     default HDPath accountPathFor(Script.ScriptType outputScriptType, NetworkParameters networkParameters) {
-        return accountPathFor(outputScriptType, Network.of(networkParameters));
+        return accountPathFor(outputScriptType, BitcoinNetwork.of(networkParameters));
     }
 
 
@@ -115,7 +116,11 @@ public interface KeyChainGroupStructure {
      * @param network network id string, eg. {@link NetworkParameters#ID_MAINNET}
      */
     static ChildNumber coinType(Network network) {
-        switch (network) {
+        if (!(network instanceof BitcoinNetwork)) {
+            throw new IllegalArgumentException("coinType: Unknown network");
+        }
+        BitcoinNetwork bitcoinNetwork = (BitcoinNetwork) network;
+        switch (bitcoinNetwork) {
             case MAIN:
                 return ChildNumber.COINTYPE_BTC;
             case TEST:

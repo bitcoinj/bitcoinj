@@ -22,7 +22,7 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.utils.Threading;
 import picocli.CommandLine;
 
@@ -54,7 +54,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @CommandLine.Command(name = "build-checkpoints", usageHelpAutoWidth = true, sortOptions = false, description = "Create checkpoint files to use with CheckpointManager.")
 public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private Network net = Network.MAIN;
+    private BitcoinNetwork net = BitcoinNetwork.MAIN;
     @CommandLine.Option(names = "--peer", description = "IP address/domain name for connection instead of localhost.")
     private String peer = null;
     @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
