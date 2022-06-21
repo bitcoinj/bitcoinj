@@ -23,7 +23,6 @@ import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
