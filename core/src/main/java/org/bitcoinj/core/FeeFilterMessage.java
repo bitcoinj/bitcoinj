@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;

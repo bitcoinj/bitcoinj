@@ -47,7 +47,7 @@ import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.DumpedPrivateKey;
 import org.bitcoinj.core.ECKey;
@@ -108,7 +108,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.bitcoinj.core.Coin.parseCoin;
+import static org.bitcoinj.base.Coin.parseCoin;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.Script;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.core.Sha256Hash.hashTwice;
 
 /**

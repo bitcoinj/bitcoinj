@@ -17,7 +17,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

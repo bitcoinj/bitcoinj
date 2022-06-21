@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.utils;
+package org.bitcoinj.base.utils;
 
+import org.bitcoinj.base.utils.Fiat;
 import org.junit.Test;
 
-import static org.bitcoinj.utils.Fiat.parseFiat;
+import static org.bitcoinj.base.utils.Fiat.parseFiat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

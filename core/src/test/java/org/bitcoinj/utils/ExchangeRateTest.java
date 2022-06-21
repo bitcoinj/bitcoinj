@@ -16,7 +16,8 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.utils.Fiat;
+import org.bitcoinj.base.Coin;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

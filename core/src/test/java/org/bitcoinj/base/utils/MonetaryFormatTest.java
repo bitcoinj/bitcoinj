@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.utils;
+package org.bitcoinj.base.utils;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.utils.Fiat;
+import org.bitcoinj.base.utils.MonetaryFormat;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Locale;
 
-import static org.bitcoinj.core.Coin.CENT;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.SATOSHI;
-import static org.bitcoinj.core.Coin.ZERO;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.ZERO;
 import static org.junit.Assert.assertEquals;
 
 public class MonetaryFormatTest {

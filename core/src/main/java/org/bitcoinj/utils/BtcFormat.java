@@ -17,7 +17,7 @@
 package org.bitcoinj.utils;
 
 import com.google.common.base.Strings;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.BtcAutoFormat.Style;
 
 import java.math.BigDecimal;

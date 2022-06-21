@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.wallet.SendRequest;
 import org.slf4j.Logger;

@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
+import org.bitcoinj.base.Coin;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 
-import static org.bitcoinj.core.Coin.CENT;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Coin.NEGATIVE_SATOSHI;
-import static org.bitcoinj.core.Coin.SATOSHI;
-import static org.bitcoinj.core.Coin.ZERO;
-import static org.bitcoinj.core.Coin.btcToSatoshi;
-import static org.bitcoinj.core.Coin.parseCoin;
-import static org.bitcoinj.core.Coin.parseCoinInexact;
-import static org.bitcoinj.core.Coin.satoshiToBtc;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.NEGATIVE_SATOSHI;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.btcToSatoshi;
+import static org.bitcoinj.base.Coin.parseCoin;
+import static org.bitcoinj.base.Coin.parseCoinInexact;
+import static org.bitcoinj.base.Coin.satoshiToBtc;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;

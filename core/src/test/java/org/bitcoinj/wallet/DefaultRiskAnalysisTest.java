@@ -17,7 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.utils;
+package org.bitcoinj.base.utils;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Monetary;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Monetary;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormatSymbols;

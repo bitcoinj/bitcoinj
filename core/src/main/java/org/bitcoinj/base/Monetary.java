@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 /**
  * Classes implementing this interface represent a monetary value, such as a Bitcoin or fiat amount.
