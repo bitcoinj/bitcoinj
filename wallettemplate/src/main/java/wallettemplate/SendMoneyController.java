@@ -17,6 +17,7 @@
 package wallettemplate;
 
 import javafx.scene.layout.HBox;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.*;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;

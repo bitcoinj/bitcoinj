@@ -16,7 +16,7 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;

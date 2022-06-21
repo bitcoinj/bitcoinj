@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
@@ -39,10 +40,10 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Coin.ZERO;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.assertEquals;

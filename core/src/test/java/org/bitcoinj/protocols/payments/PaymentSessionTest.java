@@ -20,7 +20,7 @@ package org.bitcoinj.protocols.payments;
 import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
@@ -44,7 +44,7 @@ import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.base.Coin.COIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;

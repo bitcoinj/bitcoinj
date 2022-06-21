@@ -37,10 +37,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.core.Coin.CENT;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

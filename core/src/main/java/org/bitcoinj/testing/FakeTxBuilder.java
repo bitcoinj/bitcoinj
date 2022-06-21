@@ -20,7 +20,7 @@ package org.bitcoinj.testing;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.MessageSerializer;
@@ -46,8 +46,8 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.valueOf;
 
 /**
  * Methods for building fake transactions for unit tests. Since these methods are currently used both in the `bitcoinj-core`

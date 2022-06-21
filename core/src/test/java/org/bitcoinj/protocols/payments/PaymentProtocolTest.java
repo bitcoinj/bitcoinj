@@ -21,7 +21,7 @@ import org.bitcoin.protocols.payments.Protos.Payment;
 import org.bitcoin.protocols.payments.Protos.PaymentACK;
 import org.bitcoin.protocols.payments.Protos.PaymentRequest;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;

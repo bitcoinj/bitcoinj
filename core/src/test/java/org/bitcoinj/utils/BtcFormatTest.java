@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,12 +43,12 @@ import static java.util.Locale.ITALY;
 import static java.util.Locale.JAPAN;
 import static java.util.Locale.TAIWAN;
 import static java.util.Locale.US;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.SATOSHI;
-import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
-import static org.bitcoinj.core.Coin.ZERO;
-import static org.bitcoinj.core.Coin.parseCoin;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.SMALLEST_UNIT_EXPONENT;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.parseCoin;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;

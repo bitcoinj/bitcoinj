@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
@@ -61,8 +62,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;

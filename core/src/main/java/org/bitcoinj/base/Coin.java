@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.math.LongMath;
-import org.bitcoinj.utils.MonetaryFormat;
+import org.bitcoinj.base.utils.MonetaryFormat;
 
 import java.math.BigDecimal;
 

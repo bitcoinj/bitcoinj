@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;

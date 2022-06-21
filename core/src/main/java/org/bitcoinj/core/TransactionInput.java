@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;

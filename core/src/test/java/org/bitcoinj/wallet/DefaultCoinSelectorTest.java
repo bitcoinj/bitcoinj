@@ -18,7 +18,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
@@ -39,8 +39,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.core.Coin.CENT;
-import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

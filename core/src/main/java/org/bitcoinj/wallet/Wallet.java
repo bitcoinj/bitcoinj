@@ -29,7 +29,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;

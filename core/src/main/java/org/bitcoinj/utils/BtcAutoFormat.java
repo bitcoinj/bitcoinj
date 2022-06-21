@@ -16,6 +16,8 @@
 
 package org.bitcoinj.utils;
 
+import org.bitcoinj.base.Coin;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
@@ -27,7 +29,7 @@ import java.util.Locale;
 import static java.math.BigDecimal.ONE;
 import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_UP;
-import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
+import static org.bitcoinj.base.Coin.SMALLEST_UNIT_EXPONENT;
 
 /**
  * <p>This class, a concrete extension of {@link BtcFormat}, is distinguished by its
@@ -52,7 +54,7 @@ import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
  * @see          java.text.NumberFormat
  * @see          java.text.DecimalFormat
  * @see          DecimalFormatSymbols
- * @see          org.bitcoinj.core.Coin
+ * @see          Coin
  */
 
 public final class BtcAutoFormat extends BtcFormat {

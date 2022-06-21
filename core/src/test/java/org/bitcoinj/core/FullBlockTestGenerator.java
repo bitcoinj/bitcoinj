@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -44,9 +45,9 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Coin.SATOSHI;
-import static org.bitcoinj.core.Coin.ZERO;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.ZERO;
 import static org.bitcoinj.script.ScriptOpCodes.OP_1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_2DUP;
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;

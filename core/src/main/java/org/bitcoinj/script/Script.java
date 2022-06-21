@@ -20,7 +20,7 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;

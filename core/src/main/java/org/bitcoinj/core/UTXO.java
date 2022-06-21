@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.script.Script;
 
 import java.io.EOFException;

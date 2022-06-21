@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.ByteStreams;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;

@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;

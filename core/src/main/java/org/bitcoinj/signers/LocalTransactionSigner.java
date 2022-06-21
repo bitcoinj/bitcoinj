@@ -17,7 +17,7 @@
 
 package org.bitcoinj.signers;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;

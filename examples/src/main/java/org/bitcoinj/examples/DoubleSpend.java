@@ -16,7 +16,6 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
@@ -28,7 +27,7 @@ import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
 
-import static org.bitcoinj.core.Coin.*;
+import static org.bitcoinj.base.Coin.*;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double

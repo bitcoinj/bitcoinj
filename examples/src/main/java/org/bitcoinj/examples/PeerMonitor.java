@@ -18,7 +18,7 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.core.AddressMessage;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;

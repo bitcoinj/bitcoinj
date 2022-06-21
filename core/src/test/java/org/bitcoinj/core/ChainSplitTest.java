@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -40,11 +41,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.core.Coin.CENT;
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Coin.ZERO;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

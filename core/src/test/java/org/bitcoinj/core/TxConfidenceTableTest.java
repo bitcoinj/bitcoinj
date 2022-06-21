@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
-import static org.bitcoinj.core.Coin.COIN;
+import static org.bitcoinj.base.Coin.COIN;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;

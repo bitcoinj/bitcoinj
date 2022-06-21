@@ -29,8 +29,8 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.bitcoinj.core.Coin.valueOf;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.core.Utils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
