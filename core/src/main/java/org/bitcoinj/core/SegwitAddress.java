@@ -17,8 +17,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -131,24 +131,24 @@ public class SegwitAddress extends Address {
 
     /**
      * Get the type of output script that will be used for sending to the address. This is either
-     * {@link Script.ScriptType#P2WPKH} or {@link Script.ScriptType#P2WSH}.
+     * {@link ScriptType#P2WPKH} or {@link ScriptType#P2WSH}.
      * 
      * @return type of output script
      */
     @Override
-    public Script.ScriptType getOutputScriptType() {
+    public ScriptType getOutputScriptType() {
         int version = getWitnessVersion();
         if (version == 0) {
             int programLength = getWitnessProgram().length;
             if (programLength == WITNESS_PROGRAM_LENGTH_PKH)
-                return Script.ScriptType.P2WPKH;
+                return ScriptType.P2WPKH;
             if (programLength == WITNESS_PROGRAM_LENGTH_SH)
-                return Script.ScriptType.P2WSH;
+                return ScriptType.P2WSH;
             throw new IllegalStateException(); // cannot happen
         } else if (version == 1) {
             int programLength = getWitnessProgram().length;
             if (programLength == WITNESS_PROGRAM_LENGTH_TR)
-                return Script.ScriptType.P2TR;
+                return ScriptType.P2TR;
             throw new IllegalStateException(); // cannot happen
         }
         throw new IllegalStateException("cannot handle: " + version);

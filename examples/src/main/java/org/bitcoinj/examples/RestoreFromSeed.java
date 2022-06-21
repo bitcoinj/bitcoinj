@@ -16,11 +16,11 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -48,7 +48,7 @@ public class RestoreFromSeed {
         DeterministicSeed seed = new DeterministicSeed(seedCode, null, passphrase, creationtime);
 
         // The wallet class provides a easy fromSeed() function that loads a new wallet from a given seed.
-        Wallet wallet = Wallet.fromSeed(params, seed, Script.ScriptType.P2PKH);
+        Wallet wallet = Wallet.fromSeed(params, seed, ScriptType.P2PKH);
 
         // Because we are importing an existing wallet which might already have transactions we must re-download the blockchain to make the wallet picks up these transactions
         // You can find some information about this in the guides: https://bitcoinj.github.io/working-with-the-wallet#setup

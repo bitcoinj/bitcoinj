@@ -69,7 +69,7 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptException;
@@ -305,7 +305,7 @@ public class Wallet extends BaseTaggableObject
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
      * @return A new empty wallet
      */
-    public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType) {
+    public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType) {
         return createDeterministic(Context.getOrCreate(params), outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
@@ -318,7 +318,7 @@ public class Wallet extends BaseTaggableObject
      * @param keyChainGroupStructure structure (e.g. BIP32 or BIP43)
      * @return A new empty wallet
      */
-    public static Wallet createDeterministic(NetworkParameters params, Script.ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
+    public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         return createDeterministic(Context.getOrCreate(params), outputScriptType, keyChainGroupStructure);
     }
 
@@ -330,7 +330,7 @@ public class Wallet extends BaseTaggableObject
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
      * @return A new empty wallet
      */
-    public static Wallet createDeterministic(Context context, Script.ScriptType outputScriptType) {
+    public static Wallet createDeterministic(Context context, ScriptType outputScriptType) {
         return createDeterministic(context, outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
@@ -343,7 +343,7 @@ public class Wallet extends BaseTaggableObject
      * @param keyChainGroupStructure structure (e.g. BIP32 or BIP43)
      * @return A new empty wallet
      */
-    public static Wallet createDeterministic(Context context, Script.ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
+    public static Wallet createDeterministic(Context context, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         return new Wallet(context, KeyChainGroup.builder(context.getParams(), keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
@@ -363,7 +363,7 @@ public class Wallet extends BaseTaggableObject
      * @return a wallet from a deterministic seed with a default account path
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed,
-            Script.ScriptType outputScriptType) {
+            ScriptType outputScriptType) {
         return fromSeed(params, seed, outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
@@ -374,7 +374,7 @@ public class Wallet extends BaseTaggableObject
      * @param structure structure for your wallet
      * @return a wallet from a deterministic seed with a default account path
      */
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ScriptType outputScriptType,
             KeyChainGroupStructure structure) {
         return new Wallet(params, KeyChainGroup.builder(params, structure).fromSeed(seed, outputScriptType).build());
     }
@@ -386,7 +386,7 @@ public class Wallet extends BaseTaggableObject
      * @param accountPath account path to generate receiving addresses on
      * @return an instance of a wallet from a deterministic seed.
      */
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, Script.ScriptType outputScriptType,
+    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ScriptType outputScriptType,
             List<ChildNumber> accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
@@ -398,7 +398,7 @@ public class Wallet extends BaseTaggableObject
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey,
-            Script.ScriptType outputScriptType) {
+            ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
                 .build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
@@ -420,7 +420,7 @@ public class Wallet extends BaseTaggableObject
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
      */
     public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey,
-            Script.ScriptType outputScriptType) {
+            ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
                 .build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
@@ -442,7 +442,7 @@ public class Wallet extends BaseTaggableObject
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
     public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey,
-            Script.ScriptType outputScriptType, ChildNumber accountNumber) {
+                                       ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
         accountKey = accountKey.dropParent();
         accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
@@ -451,12 +451,12 @@ public class Wallet extends BaseTaggableObject
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
-    private static Script.ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
+    private static ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
         int header = ByteBuffer.wrap(Base58.decodeChecked(base58)).getInt();
         if (header == params.getBip32HeaderP2PKHpub() || header == params.getBip32HeaderP2PKHpriv())
-            return Script.ScriptType.P2PKH;
+            return ScriptType.P2PKH;
         else if (header == params.getBip32HeaderP2WPKHpub() || header == params.getBip32HeaderP2WPKHpriv())
-            return Script.ScriptType.P2WPKH;
+            return ScriptType.P2WPKH;
         else
             throw new IllegalArgumentException(base58.substring(0, 4));
     }
@@ -684,12 +684,12 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * <p>Returns a fresh receive address for a given {@link Script.ScriptType}.</p>
+     * <p>Returns a fresh receive address for a given {@link ScriptType}.</p>
      * <p>This method is meant for when you really need a fallback address. Normally, you should be
      * using {@link #freshAddress(KeyChain.KeyPurpose)} or
      * {@link #currentAddress(KeyChain.KeyPurpose)}.</p>
      */
-    public Address freshReceiveAddress(Script.ScriptType scriptType) {
+    public Address freshReceiveAddress(ScriptType scriptType) {
         Address address;
         keyChainGroupLock.lock();
         try {
@@ -729,7 +729,7 @@ public class Wallet extends BaseTaggableObject
             List<Address> addresses = new ArrayList<>();
             long keyRotationTimeSecs = vKeyRotationTimestamp;
             for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTimeSecs)) {
-                Script.ScriptType outputScriptType = chain.getOutputScriptType();
+                ScriptType outputScriptType = chain.getOutputScriptType();
                 for (ECKey key : chain.getIssuedReceiveKeys())
                     addresses.add(Address.fromKey(getParams(), key, outputScriptType));
             }
@@ -746,7 +746,7 @@ public class Wallet extends BaseTaggableObject
      * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
-    public void upgradeToDeterministic(Script.ScriptType outputScriptType, @Nullable KeyParameter aesKey)
+    public void upgradeToDeterministic(ScriptType outputScriptType, @Nullable KeyParameter aesKey)
             throws DeterministicUpgradeRequiresPassword {
         upgradeToDeterministic(outputScriptType, KeyChainGroupStructure.BIP32, aesKey);
     }
@@ -758,8 +758,8 @@ public class Wallet extends BaseTaggableObject
      * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
-    public void upgradeToDeterministic(Script.ScriptType outputScriptType, KeyChainGroupStructure structure,
-            @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+    public void upgradeToDeterministic(ScriptType outputScriptType, KeyChainGroupStructure structure,
+                                       @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         keyChainGroupLock.lock();
         try {
             long keyRotationTimeSecs = vKeyRotationTimestamp;
@@ -774,7 +774,7 @@ public class Wallet extends BaseTaggableObject
      * {@link #upgradeToDeterministic(ScriptType, KeyParameter)} before attempting to do anything
      * that would require a new address or key.
      */
-    public boolean isDeterministicUpgradeRequired(Script.ScriptType outputScriptType) {
+    public boolean isDeterministicUpgradeRequired(ScriptType outputScriptType) {
         keyChainGroupLock.lock();
         try {
             long keyRotationTimeSecs = vKeyRotationTimestamp;
@@ -1129,7 +1129,7 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     @Nullable
-    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable ScriptType scriptType) {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.findKeyFromPubKeyHash(pubKeyHash, scriptType);
@@ -1164,7 +1164,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     @Override
-    public boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
+    public boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable ScriptType scriptType) {
         return findKeyFromPubKeyHash(pubKeyHash, scriptType) != null;
     }
 
@@ -4438,11 +4438,11 @@ public class Wallet extends BaseTaggableObject
             return data != null && canSignFor(data.redeemScript);
         } else if (ScriptPattern.isP2PKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
-                    Script.ScriptType.P2PKH);
+                    ScriptType.P2PKH);
             return key != null && (key.isEncrypted() || key.hasPrivKey());
         } else if (ScriptPattern.isP2WPKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script),
-                    Script.ScriptType.P2WPKH);
+                    ScriptType.P2WPKH);
             return key != null && (key.isEncrypted() || key.hasPrivKey()) && key.isCompressed();
         } else if (ScriptPattern.isSentToMultisig(script)) {
             for (ECKey pubkey : script.getPubKeys()) {
@@ -5168,11 +5168,11 @@ public class Wallet extends BaseTaggableObject
                 ECKey key = null;
                 Script redeemScript = null;
                 if (ScriptPattern.isP2PKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), Script.ScriptType.P2PKH);
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2PKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else if (ScriptPattern.isP2WPKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), Script.ScriptType.P2WPKH);
+                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                     vsize += IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, redeemScript), 4,
                             RoundingMode.CEILING); // round up
@@ -5393,7 +5393,7 @@ public class Wallet extends BaseTaggableObject
 
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
-        Script.ScriptType preferredScriptType = Script.ScriptType.P2PKH;
+        ScriptType preferredScriptType = ScriptType.P2PKH;
         if (keyChainGroup.supportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
                 if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp)

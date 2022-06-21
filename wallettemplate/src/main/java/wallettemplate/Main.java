@@ -18,9 +18,9 @@ package wallettemplate;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.walletfx.application.AppDelegate;
 
 /**
@@ -29,7 +29,7 @@ import org.bitcoinj.walletfx.application.AppDelegate;
  */
 public class Main extends Application {
     private static final NetworkParameters params = TestNet3Params.get();
-    private static final Script.ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = Script.ScriptType.P2WPKH;
+    private static final ScriptType PREFERRED_OUTPUT_SCRIPT_TYPE = ScriptType.P2WPKH;
     private static final String APP_NAME = "WalletTemplate";
 
     private final AppDelegate delegate;

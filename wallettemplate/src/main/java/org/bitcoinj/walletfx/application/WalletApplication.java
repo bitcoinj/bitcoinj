@@ -20,11 +20,11 @@ import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
@@ -48,11 +48,11 @@ public abstract class WalletApplication implements AppDelegate {
     private final String applicationName;
     private final NetworkParameters params;
     private final KeyChainGroupStructure keyChainGroupStructure;
-    private final Script.ScriptType preferredOutputScriptType;
+    private final ScriptType preferredOutputScriptType;
     private final String walletFileName;
     private MainWindowController controller;
 
-    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
+    public WalletApplication(String applicationName, NetworkParameters params, ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
         this.applicationName = applicationName;
         this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + params.getPaymentProtocolId();
@@ -61,7 +61,7 @@ public abstract class WalletApplication implements AppDelegate {
         this.keyChainGroupStructure = keyChainGroupStructure;
     }
 
-    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
+    public WalletApplication(String applicationName, NetworkParameters params, ScriptType preferredOutputScriptType) {
         this(applicationName, params, preferredOutputScriptType, KeyChainGroupStructure.BIP43);
     }
 
@@ -81,7 +81,7 @@ public abstract class WalletApplication implements AppDelegate {
         return params;
     }
 
-    public Script.ScriptType preferredOutputScriptType() {
+    public ScriptType preferredOutputScriptType() {
         return preferredOutputScriptType;
     }
 

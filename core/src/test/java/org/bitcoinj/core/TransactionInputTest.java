@@ -18,9 +18,9 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.SendRequest;
@@ -37,7 +37,7 @@ public class TransactionInputTest {
 
     @Test
     public void testStandardWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(new Context(UNITTEST), Script.ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(new Context(UNITTEST), ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(UNITTEST, Coin.COIN, a);
         w.receivePending(tx1, null);
@@ -60,7 +60,7 @@ public class TransactionInputTest {
 
     @Test
     public void testUTXOWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(new Context(UNITTEST), Script.ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(new Context(UNITTEST), ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));

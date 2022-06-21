@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
@@ -27,7 +28,6 @@ import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
@@ -268,7 +268,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Create a peer.
         InboundMessageQueuer p1 = connectPeer(1);
         
-        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey key2 = wallet2.freshReceiveKey();
         Address address2 = LegacyAddress.fromKey(UNITTEST, key2);
         
@@ -429,7 +429,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final long now = Utils.currentTimeSeconds();
         peerGroup.start();
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
-        Wallet w2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
+        Wallet w2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey key1 = new ECKey();
         key1.setCreationTimeSeconds(now - 86400);  // One day ago.
         w2.importKey(key1);
@@ -791,7 +791,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final int NUM_KEYS = 9;
 
         // First, grab a load of keys from the wallet, and then recreate it so it forgets that those keys were issued.
-        Wallet shadow = Wallet.fromSeed(wallet.getParams(), wallet.getKeyChainSeed(), Script.ScriptType.P2PKH);
+        Wallet shadow = Wallet.fromSeed(wallet.getParams(), wallet.getKeyChainSeed(), ScriptType.P2PKH);
         List<ECKey> keys = new ArrayList<>(NUM_KEYS);
         for (int i = 0; i < NUM_KEYS; i++) {
             keys.add(shadow.freshReceiveKey());

@@ -26,7 +26,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

@@ -19,6 +19,7 @@ package org.bitcoinj.kits;
 
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
@@ -30,7 +31,6 @@ import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscovery;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
@@ -85,7 +85,7 @@ public class WalletAppKit extends AbstractIdleService {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
     protected final NetworkParameters params;
-    protected final Script.ScriptType preferredOutputScriptType;
+    protected final ScriptType preferredOutputScriptType;
     protected final KeyChainGroupStructure structure;
     protected final String filePrefix;
     protected volatile BlockChain vChain;
@@ -114,13 +114,13 @@ public class WalletAppKit extends AbstractIdleService {
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      */
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), Script.ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
+        this(new Context(params), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
     }
 
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      */
-    public WalletAppKit(NetworkParameters params, Script.ScriptType preferredOutputScriptType,
+    public WalletAppKit(NetworkParameters params, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
         this(new Context(params), preferredOutputScriptType, structure, directory, filePrefix);
     }
@@ -128,7 +128,7 @@ public class WalletAppKit extends AbstractIdleService {
     /**
      * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
      */
-    public WalletAppKit(Context context, Script.ScriptType preferredOutputScriptType,
+    public WalletAppKit(Context context, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
         this.context = context;
         this.params = checkNotNull(context.getParams());

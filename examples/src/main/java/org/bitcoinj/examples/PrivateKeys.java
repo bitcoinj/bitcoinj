@@ -17,6 +17,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.BlockChain;
@@ -27,7 +28,6 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 
@@ -64,7 +64,7 @@ public class PrivateKeys {
             Address destination = Address.fromString(params, args[1]);
 
             // Import the private key to a fresh wallet.
-            Wallet wallet = Wallet.createDeterministic(params, Script.ScriptType.P2PKH);
+            Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
             wallet.importKey(key);
 
             // Find the transactions that involve those coins.

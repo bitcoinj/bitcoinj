@@ -16,10 +16,10 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Network;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,8 +32,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.stream.Stream;
 
-import static org.bitcoinj.script.Script.ScriptType.P2PKH;
-import static org.bitcoinj.script.Script.ScriptType.P2WPKH;
+import static org.bitcoinj.base.ScriptType.P2PKH;
+import static org.bitcoinj.base.ScriptType.P2WPKH;
 import static org.bitcoinj.utils.Network.MAIN;
 import static org.bitcoinj.utils.Network.TEST;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
@@ -56,7 +56,7 @@ public class WalletAccountPathTest {
 
     @MethodSource("walletStructureParams")
     @ParameterizedTest(name = "path {1} generated for {2}, {3}")
-    void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, Script.ScriptType scriptType,
+    void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
                                   Network network) throws IOException, UnreadableWalletException {
         // When we create a wallet with parameterized structure, network, and scriptType
         Wallet wallet = createWallet(walletFile, network.networkParameters(), structure, scriptType);
@@ -80,7 +80,7 @@ public class WalletAccountPathTest {
     }
 
     // Create a wallet, save it to a file, then reload from a file
-    private static Wallet createWallet(File walletFile, NetworkParameters params, KeyChainGroupStructure structure, Script.ScriptType outputScriptType) throws IOException, UnreadableWalletException {
+    private static Wallet createWallet(File walletFile, NetworkParameters params, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context(params));
         DeterministicSeed seed = new DeterministicSeed(testWalletMnemonic, null, "", Instant.now().getEpochSecond());
         Wallet wallet = Wallet.fromSeed(params, seed, outputScriptType, structure);

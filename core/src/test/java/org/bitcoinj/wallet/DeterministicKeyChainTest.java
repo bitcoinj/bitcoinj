@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
@@ -31,7 +32,6 @@ import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
@@ -75,15 +75,15 @@ public class DeterministicKeyChainTest {
         // serialized data properly.
         long secs = 1389353062L;
         chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(Script.ScriptType.P2PKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2PKH).build();
         chain.setLookaheadSize(10);
 
         segwitChain = DeterministicKeyChain.builder().entropy(ENTROPY, secs)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).outputScriptType(Script.ScriptType.P2WPKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).outputScriptType(ScriptType.P2WPKH).build();
         segwitChain.setLookaheadSize(10);
 
         bip44chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).accountPath(BIP44_COIN_1_ACCOUNT_ZERO_PATH)
-                .outputScriptType(Script.ScriptType.P2PKH).build();
+                .outputScriptType(ScriptType.P2PKH).build();
         bip44chain.setLookaheadSize(10);
     }
 
@@ -182,7 +182,7 @@ public class DeterministicKeyChainTest {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = new ArrayList<>();
         long secs = 1389353062L;
-        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).outputScriptType(Script.ScriptType.P2PKH)
+        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).outputScriptType(ScriptType.P2PKH)
                 .build();
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
@@ -554,7 +554,7 @@ public class DeterministicKeyChainTest {
         checkSerialization(serialization, "watching-wallet-p2wpkh-serialization.txt");
         final DeterministicKeyChain chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
         assertEquals(DeterministicKeyChain.ACCOUNT_ONE_PATH, chain.getAccountPath());
-        assertEquals(Script.ScriptType.P2WPKH, chain.getOutputScriptType());
+        assertEquals(ScriptType.P2WPKH, chain.getOutputScriptType());
         final DeterministicKey rekey4 = segwitChain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
     }

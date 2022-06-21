@@ -18,8 +18,8 @@ package wallettemplate;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.layout.Pane;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.walletfx.application.WalletApplication;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.net.URL;
  */
 public class WalletTemplate extends WalletApplication {
 
-    public WalletTemplate(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
+    public WalletTemplate(String applicationName, NetworkParameters params, ScriptType preferredOutputScriptType) {
         super(applicationName, params, preferredOutputScriptType);
     }
 
