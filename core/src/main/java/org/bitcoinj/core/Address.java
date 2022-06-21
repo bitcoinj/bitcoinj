@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
@@ -33,11 +34,11 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
     /**
      * Construct an address from its binary form.
      *
-     * @param params the network this address is valid for
+     * @param network the network this address is valid for
      * @param bytes the binary address data
      */
-    protected Address(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+    protected Address(Network network, byte[] bytes) {
+        super(network, bytes);
     }
 
     /**
@@ -126,7 +127,7 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      * Used by {@link LegacyAddress#compareTo(Address)} and {@link SegwitAddress#compareTo(Address)}.
      */
     protected static final Comparator<Address> PARTIAL_ADDRESS_COMPARATOR = Comparator
-        .comparing((Address a) -> a.params.getId()) // First compare netParams
+        .comparing((Address a) -> a.network.id()) // First compare netParams
         .thenComparing(Address::compareTypes);      // Then compare address type (subclass)
 
     private static int compareTypes(Address a, Address b) {

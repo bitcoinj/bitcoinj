@@ -21,6 +21,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.utils.Network;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.Test;
@@ -40,12 +41,12 @@ public class PrefixedChecksummedBytesTest {
 
     private static class PrefixedChecksummedBytesToTest extends PrefixedChecksummedBytes {
         public PrefixedChecksummedBytesToTest(NetworkParameters params, byte[] bytes) {
-            super(params, bytes);
+            super(Network.of(params), bytes);
         }
 
         @Override
         public String toString() {
-            return Base58.encodeChecked(params.getAddressHeader(), bytes);
+            return Base58.encodeChecked(getParameters().getAddressHeader(), bytes);
         }
     }
 

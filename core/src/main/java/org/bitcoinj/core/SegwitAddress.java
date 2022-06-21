@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -89,7 +90,7 @@ public class SegwitAddress extends Address {
      *             if any of the sanity checks fail
      */
     private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
-        super(params, data);
+        super(Network.of(params), data);
         if (data.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
@@ -248,9 +249,9 @@ public class SegwitAddress extends Address {
      */
     public String toBech32() {
         if (getWitnessVersion() == 0)
-            return Bech32.encode(Bech32.Encoding.BECH32, params.getSegwitAddressHrp(), bytes);
+            return Bech32.encode(Bech32.Encoding.BECH32, getParameters().getSegwitAddressHrp(), bytes);
         else
-            return Bech32.encode(Bech32.Encoding.BECH32M, params.getSegwitAddressHrp(), bytes);
+            return Bech32.encode(Bech32.Encoding.BECH32M, getParameters().getSegwitAddressHrp(), bytes);
     }
 
     /**

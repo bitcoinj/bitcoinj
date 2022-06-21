@@ -39,6 +39,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.utils.Network;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -88,6 +89,7 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
+    @Deprecated
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
@@ -105,6 +107,26 @@ public class FakeTxBuilder {
         // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(params, t);
     }
+
+    public static Transaction createFakeTxWithChangeAddress(Network network, Coin value, Address to, Address changeOutput) {
+        NetworkParameters params = network.networkParameters();
+        Transaction t = new Transaction(params);
+        TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
+        t.addOutput(outputToMe);
+        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), changeOutput);
+        t.addOutput(change);
+        // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
+        // matter for our purposes.
+        Transaction prevTx = new Transaction(params);
+        TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
+        prevTx.addOutput(prevOut);
+        // Connect it.
+        t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        // Fake signature.
+        // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
+        return roundTripTransaction(params, t);
+    }
+
 
     /**
      * Create a fake TX for unit tests, for use with unit tests that need greater control. One outputs, 2 random inputs,
@@ -146,8 +168,13 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
+    @Deprecated
     public static Transaction createFakeTx(NetworkParameters params, Coin value, Address to) {
         return createFakeTxWithChangeAddress(params, value, to, LegacyAddress.fromKey(params, new ECKey()));
+    }
+
+    public static Transaction createFakeTx(Network network, Coin value, Address to) {
+        return createFakeTxWithChangeAddress(network, value, to, LegacyAddress.fromKey(network, new ECKey()));
     }
 
     /**

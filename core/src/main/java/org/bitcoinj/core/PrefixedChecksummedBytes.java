@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.utils.Network;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -36,24 +38,48 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </p>
  */
 public abstract class PrefixedChecksummedBytes {
-    protected final transient NetworkParameters params;
+    protected final Network network;
     protected final byte[] bytes;
 
+    /**
+     * @param network the network
+     * @param bytes data bytes
+     */
+    protected PrefixedChecksummedBytes(Network network, byte[] bytes) {
+        this.network = checkNotNull(network);
+        this.bytes = checkNotNull(bytes);
+    }
+
+    /**
+     * @param params Network parameters
+     * @param bytes data bytes
+     * @deprecated Use {@link PrefixedChecksummedBytes#PrefixedChecksummedBytes(Network, byte[])}
+     */
     protected PrefixedChecksummedBytes(NetworkParameters params, byte[] bytes) {
-        this.params = checkNotNull(params);
+        checkNotNull(params);
+        this.network = Network.of(params);
         this.bytes = checkNotNull(bytes);
     }
 
     /**
      * @return network this data is valid for
+     * @deprecated Use {@link #network()}
      */
+    @Deprecated
     public final NetworkParameters getParameters() {
-        return params;
+        return network.networkParameters();
+    }
+
+    /**
+     * @return network this data is valid for
+     */
+    public final Network network() {
+        return network;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, Arrays.hashCode(bytes));
+        return Objects.hash(network, Arrays.hashCode(bytes));
     }
 
     @Override
@@ -61,6 +87,6 @@ public abstract class PrefixedChecksummedBytes {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PrefixedChecksummedBytes other = (PrefixedChecksummedBytes) o;
-        return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
+        return this.network == other.network && Arrays.equals(this.bytes, other.bytes);
     }
 }

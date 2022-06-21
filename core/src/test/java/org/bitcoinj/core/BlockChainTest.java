@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -26,6 +27,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -105,7 +107,7 @@ public class BlockChainTest {
         resetBlockStore();
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
-        coinbaseTo = LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey());
+        coinbaseTo = LegacyAddress.fromKey(Network.REGTEST, wallet.currentReceiveKey());
     }
 
     @Test
@@ -330,7 +332,7 @@ public class BlockChainTest {
         int height = 1;
         chain.addWallet(wallet2);
 
-        Address addressToSendTo = LegacyAddress.fromKey(UNITTEST, receiveKey);
+        Address addressToSendTo = LegacyAddress.fromKey(Network.REGTEST, receiveKey);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
@@ -354,7 +356,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < UNITTEST.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(UNITTEST, COIN, LegacyAddress.fromKey(UNITTEST, new ECKey()));
+            Transaction tx2 = createFakeTx(Network.REGTEST, COIN, LegacyAddress.fromKey(Network.REGTEST, new ECKey()));
 
             Block b2 = createFakeBlock(blockStore, height++, tx2).block;
             chain.add(b2);
@@ -375,7 +377,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(UNITTEST, COIN, LegacyAddress.fromKey(UNITTEST, new ECKey()));
+        Transaction tx3 = createFakeTx(Network.REGTEST, COIN, LegacyAddress.fromKey(Network.REGTEST, new ECKey()));
         Block b3 = createFakeBlock(blockStore, height++, tx3).block;
         chain.add(b3);
 

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
 import org.bitcoinj.params.Networks;
+import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -59,7 +60,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
     }
 
     private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+        super(Network.of(params), bytes);
         if (bytes.length != 32 && bytes.length != 33)
             throw new AddressFormatException.InvalidDataLength(
                     "Wrong number of bytes for a private key (32 or 33): " + bytes.length);
@@ -76,7 +77,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
      * @return textual form
      */
     public String toBase58() {
-        return Base58.encodeChecked(params.getDumpedPrivateKeyHeader(), bytes);
+        return Base58.encodeChecked(getParameters().getDumpedPrivateKeyHeader(), bytes);
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {
