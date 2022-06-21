@@ -18,6 +18,7 @@ package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -125,7 +126,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicKey accountKey, Script.ScriptType outputScriptType) {
+    protected MarriedKeyChain(DeterministicKey accountKey, ScriptType outputScriptType) {
         super(accountKey, false, true, outputScriptType);
     }
 
@@ -133,7 +134,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
+    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, ScriptType outputScriptType, List<ChildNumber> accountPath) {
         super(seed, crypter, outputScriptType, accountPath);
     }
 

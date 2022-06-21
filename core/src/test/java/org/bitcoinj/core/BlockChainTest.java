@@ -18,10 +18,10 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
@@ -86,10 +86,10 @@ public class BlockChainTest {
         BriefLogFormatter.initVerbose();
         Utils.setMockClock(); // Use mock clock
         Context.propagate(new Context(TESTNET, 100, Coin.ZERO, false));
-        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, Script.ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
+        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
         Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         NetworkParameters params = Context.get().getParams();
-        wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(Script.ScriptType.P2PKH).build()) {
+        wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
@@ -325,7 +325,7 @@ public class BlockChainTest {
         // Check that a coinbase transaction is only available to spend after NetworkParameters.getSpendableCoinbaseDepth() blocks.
 
         // Create a second wallet to receive the coinbase spend.
-        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
         chain.addWallet(wallet2);

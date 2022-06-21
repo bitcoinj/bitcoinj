@@ -30,7 +30,7 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.crypto.LinuxSecureRandom;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ListenerRegistration;
@@ -112,7 +112,7 @@ public class KeyChainGroup implements KeyBag {
          * activated.</p>
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
-        public Builder fromRandom(Script.ScriptType outputScriptType) {
+        public Builder fromRandom(ScriptType outputScriptType) {
             DeterministicSeed seed = new DeterministicSeed(new SecureRandom(),
                     DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, "");
             fromSeed(seed, outputScriptType);
@@ -129,20 +129,20 @@ public class KeyChainGroup implements KeyBag {
          * @param seed deterministic seed to derive all keys from
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
-        public Builder fromSeed(DeterministicSeed seed, Script.ScriptType outputScriptType) {
-            if (outputScriptType == Script.ScriptType.P2PKH) {
+        public Builder fromSeed(DeterministicSeed seed, ScriptType outputScriptType) {
+            if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
-                        .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
+                        .outputScriptType(ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
                 this.chains.clear();
                 this.chains.add(chain);
-            } else if (outputScriptType == Script.ScriptType.P2WPKH) {
+            } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
-                        .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
+                        .outputScriptType(ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
-                        .outputScriptType(Script.ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, params)).build();
+                        .outputScriptType(ScriptType.P2WPKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, params)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -162,20 +162,20 @@ public class KeyChainGroup implements KeyBag {
          * @param accountKey deterministic account key to derive all keys from
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
-        public Builder fromKey(DeterministicKey accountKey, Script.ScriptType outputScriptType) {
-            if (outputScriptType == Script.ScriptType.P2PKH) {
+        public Builder fromKey(DeterministicKey accountKey, ScriptType outputScriptType) {
+            if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
-                        .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
+                        .outputScriptType(ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
                 this.chains.clear();
                 this.chains.add(chain);
-            } else if (outputScriptType == Script.ScriptType.P2WPKH) {
+            } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().spend(accountKey)
-                        .outputScriptType(Script.ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2PKH, params)).build();
+                        .outputScriptType(ScriptType.P2PKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().spend(accountKey)
-                        .outputScriptType(Script.ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, params)).build();
+                        .outputScriptType(ScriptType.P2WPKH)
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, params)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -374,7 +374,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        Script.ScriptType outputScriptType = chain.getOutputScriptType();
+        ScriptType outputScriptType = chain.getOutputScriptType();
         if (chain.isMarried()) {
             Address current = currentAddresses.get(purpose);
             if (current == null) {
@@ -382,7 +382,7 @@ public class KeyChainGroup implements KeyBag {
                 currentAddresses.put(purpose, current);
             }
             return current;
-        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
+        } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
             return Address.fromKey(params, currentKey(purpose), outputScriptType);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
@@ -428,12 +428,12 @@ public class KeyChainGroup implements KeyBag {
 
     /**
      * <p>Returns a fresh address for a given {@link KeyChain.KeyPurpose} and of a given
-     * {@link Script.ScriptType}.</p>
+     * {@link ScriptType}.</p>
      * <p>This method is meant for when you really need a fallback address. Normally, you should be
      * using {@link #freshAddress(KeyChain.KeyPurpose)} or
      * {@link #currentAddress(KeyChain.KeyPurpose)}.</p>
      */
-    public Address freshAddress(KeyChain.KeyPurpose purpose, Script.ScriptType outputScriptType, long keyRotationTimeSecs) {
+    public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, long keyRotationTimeSecs) {
         DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTimeSecs);
         return Address.fromKey(params, chain.getKey(purpose), outputScriptType);
     }
@@ -443,7 +443,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        Script.ScriptType outputScriptType = chain.getOutputScriptType();
+        ScriptType outputScriptType = chain.getOutputScriptType();
         if (chain.isMarried()) {
             Script outputScript = chain.freshOutputScript(purpose);
             checkState(ScriptPattern.isP2SH(outputScript)); // Only handle P2SH for now
@@ -452,7 +452,7 @@ public class KeyChainGroup implements KeyBag {
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
-        } else if (outputScriptType == Script.ScriptType.P2PKH || outputScriptType == Script.ScriptType.P2WPKH) {
+        } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
             return Address.fromKey(params, freshKey(purpose), outputScriptType);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
@@ -476,7 +476,7 @@ public class KeyChainGroup implements KeyBag {
      * Returns the key chain that's used for generation of fresh/current keys of the given type. If it's not the default
      * type and no active chain for this type exists, {@code null} is returned. No upgrade or downgrade is tried.
      */
-    public final DeterministicKeyChain getActiveKeyChain(Script.ScriptType outputScriptType, long keyRotationTimeSecs) {
+    public final DeterministicKeyChain getActiveKeyChain(ScriptType outputScriptType, long keyRotationTimeSecs) {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         List<DeterministicKeyChain> chainsReversed = new ArrayList<>(chains);
         Collections.reverse(chainsReversed);
@@ -601,7 +601,7 @@ public class KeyChainGroup implements KeyBag {
 
     @Nullable
     @Override
-    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType) {
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable ScriptType scriptType) {
         ECKey result;
         // BasicKeyChain can mix output script types.
         if ((result = basic.findKeyFromPubHash(pubKeyHash)) != null)
@@ -990,8 +990,8 @@ public class KeyChainGroup implements KeyBag {
      * @throws DeterministicUpgradeRequiresPassword if the key chain group is encrypted
      *         and you should provide the users encryption key.
      */
-    public void upgradeToDeterministic(Script.ScriptType preferredScriptType, KeyChainGroupStructure structure,
-            long keyRotationTimeSecs, @Nullable KeyParameter aesKey)
+    public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
+                                       long keyRotationTimeSecs, @Nullable KeyParameter aesKey)
             throws DeterministicUpgradeRequiresPassword {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         checkNotNull(structure);
@@ -1000,9 +1000,9 @@ public class KeyChainGroup implements KeyBag {
             return; // Nothing to do.
 
         // P2PKH --> P2WPKH upgrade
-        if (preferredScriptType == Script.ScriptType.P2WPKH
-                && getActiveKeyChain(Script.ScriptType.P2WPKH, keyRotationTimeSecs) == null) {
-            DeterministicSeed seed = getActiveKeyChain(Script.ScriptType.P2PKH, keyRotationTimeSecs).getSeed();
+        if (preferredScriptType == ScriptType.P2WPKH
+                && getActiveKeyChain(ScriptType.P2WPKH, keyRotationTimeSecs) == null) {
+            DeterministicSeed seed = getActiveKeyChain(ScriptType.P2PKH, keyRotationTimeSecs).getSeed();
             boolean seedWasEncrypted = seed.isEncrypted();
             if (seedWasEncrypted) {
                 if (aesKey == null)
@@ -1011,8 +1011,8 @@ public class KeyChainGroup implements KeyBag {
             }
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
-                    .outputScriptType(Script.ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(Script.ScriptType.P2WPKH, Network.MAIN)).build();
+                    .outputScriptType(ScriptType.P2WPKH)
+                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, Network.MAIN)).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);
@@ -1023,7 +1023,7 @@ public class KeyChainGroup implements KeyBag {
      * Returns true if a call to {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)} is required
      * in order to have an active deterministic keychain of the desired script type.
      */
-    public boolean isDeterministicUpgradeRequired(Script.ScriptType preferredScriptType, long keyRotationTimeSecs) {
+    public boolean isDeterministicUpgradeRequired(ScriptType preferredScriptType, long keyRotationTimeSecs) {
         if (!supportsDeterministicChains())
             return false;
         if (getActiveKeyChain(preferredScriptType, keyRotationTimeSecs) == null)

@@ -16,8 +16,7 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
@@ -82,9 +81,9 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      * @return constructed address
      */
     public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        if (outputScriptType == Script.ScriptType.P2PKH)
+        if (outputScriptType == ScriptType.P2PKH)
             return LegacyAddress.fromKey(params, key);
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+        else if (outputScriptType == ScriptType.P2WPKH)
             return SegwitAddress.fromKey(params, key);
         else
             throw new IllegalArgumentException(outputScriptType.toString());

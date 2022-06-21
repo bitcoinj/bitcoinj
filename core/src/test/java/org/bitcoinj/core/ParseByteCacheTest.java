@@ -17,9 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -90,7 +90,7 @@ public class ParseByteCacheTest {
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
         Context context = new Context(UNITTEST);
-        Wallet wallet = Wallet.createDeterministic(context, Script.ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(context, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
         resetBlockStore();

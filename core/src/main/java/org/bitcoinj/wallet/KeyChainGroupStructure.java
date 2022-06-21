@@ -16,10 +16,10 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.Network;
 
 /**
@@ -28,8 +28,8 @@ import org.bitcoinj.utils.Network;
  *  Use {@link KeyChainGroupStructure#BIP32} for BIP-32 wallets and {@link KeyChainGroupStructure#BIP43} for
  *  BIP-43-family wallets.
  *  <p>
- *  <b>bitcoinj</b> BIP-32 wallets use {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH} for {@link Script.ScriptType#P2PKH}
- *  and {@link DeterministicKeyChain#ACCOUNT_ONE_PATH} for {@link Script.ScriptType#P2WPKH}
+ *  <b>bitcoinj</b> BIP-32 wallets use {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH} for {@link ScriptType#P2PKH}
+ *  and {@link DeterministicKeyChain#ACCOUNT_ONE_PATH} for {@link ScriptType#P2WPKH}
  *  <p>
  *  BIP-43-family wallets structured via {@link KeyChainGroupStructure} will always use account number zero. Currently,
  *  only BIP-44 (P2PKH) and BIP-84 (P2WPKH) are supported.
@@ -41,10 +41,10 @@ public interface KeyChainGroupStructure {
      *  Default to MainNet, BIP-32 Keychains use the same path for MainNet and TestNet
      * @param outputScriptType the script/address type
      * @return account path
-     * @deprecated Use {@link #accountPathFor(Script.ScriptType, Network)} or {@link #accountPathFor(Script.ScriptType, NetworkParameters)}
+     * @deprecated Use {@link #accountPathFor(ScriptType, Network)} or {@link #accountPathFor(ScriptType, NetworkParameters)}
      */
     @Deprecated
-    default HDPath accountPathFor(Script.ScriptType outputScriptType) {
+    default HDPath accountPathFor(ScriptType outputScriptType) {
         return accountPathFor(outputScriptType, Network.MAIN);
     }
 
@@ -54,7 +54,7 @@ public interface KeyChainGroupStructure {
      * @param network network/coin type
      * @return The HD Path: purpose / coinType / accountIndex
      */
-    HDPath accountPathFor(Script.ScriptType outputScriptType, Network network);
+    HDPath accountPathFor(ScriptType outputScriptType, Network network);
 
     /**
      * Map desired output script type and network to an account path
@@ -62,7 +62,7 @@ public interface KeyChainGroupStructure {
      * @param networkParameters network/coin type
      * @return The HD Path: purpose / coinType / accountIndex
      */
-    default HDPath accountPathFor(Script.ScriptType outputScriptType, NetworkParameters networkParameters) {
+    default HDPath accountPathFor(ScriptType outputScriptType, NetworkParameters networkParameters) {
         return accountPathFor(outputScriptType, Network.of(networkParameters));
     }
 
@@ -73,9 +73,9 @@ public interface KeyChainGroupStructure {
      */
     KeyChainGroupStructure BIP32 = (outputScriptType, network) -> {
         // network is ignored
-        if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
+        if (outputScriptType == null || outputScriptType == ScriptType.P2PKH)
             return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+        else if (outputScriptType == ScriptType.P2WPKH)
             return DeterministicKeyChain.ACCOUNT_ONE_PATH;
         else
             throw new IllegalArgumentException(outputScriptType.toString());
@@ -100,10 +100,10 @@ public interface KeyChainGroupStructure {
      * @param scriptType script/address type
      * @return An HDPath with a BIP44 "purpose" entry
      */
-    static HDPath purpose(Script.ScriptType scriptType) {
-        if (scriptType == null || scriptType == Script.ScriptType.P2PKH) {
+    static HDPath purpose(ScriptType scriptType) {
+        if (scriptType == null || scriptType == ScriptType.P2PKH) {
             return HDPath.BIP44_PARENT;
-        } else if (scriptType == Script.ScriptType.P2WPKH) {
+        } else if (scriptType == ScriptType.P2WPKH) {
             return HDPath.BIP84_PARENT;
         } else {
             throw new IllegalArgumentException(scriptType.toString());

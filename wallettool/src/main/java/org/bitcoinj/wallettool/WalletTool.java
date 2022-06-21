@@ -24,8 +24,7 @@ import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.*;
 import org.bitcoinj.uri.BitcoinURI;
@@ -104,7 +103,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -186,7 +184,7 @@ public class WalletTool implements Callable<Integer> {
     @CommandLine.Option(names = "--watchkey", description = "Describes a watching wallet using the specified base58 xpub.")
     private String watchKeyStr = null;
     @CommandLine.Option(names = "--output-script-type", description = "Provide an output script type to any action that requires one. Valid values: P2PKH, P2WPKH. Default: ${DEFAULT-VALUE}")
-    private Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
+    private ScriptType outputScriptType = ScriptType.P2PKH;
     @CommandLine.Option(names = "--date", description = "Provide a date in form YYYY-MM-DD to any action that requires one.")
     private Date date = null;
     @CommandLine.Option(names = "--unixtime", description = "Provide a date in seconds since epoch.")

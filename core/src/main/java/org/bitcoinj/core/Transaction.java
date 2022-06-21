@@ -24,7 +24,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;

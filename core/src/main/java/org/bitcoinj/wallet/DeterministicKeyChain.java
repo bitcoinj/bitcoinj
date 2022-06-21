@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -124,7 +125,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicHierarchy hierarchy;
     @Nullable private DeterministicKey rootKey;
     @Nullable private final DeterministicSeed seed;
-    private final Script.ScriptType outputScriptType;
+    private final ScriptType outputScriptType;
     private final HDPath accountPath;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
@@ -190,7 +191,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected long creationTimeSecs = 0;
         protected byte[] entropy;
         protected DeterministicSeed seed;
-        protected Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
+        protected ScriptType outputScriptType = ScriptType.P2PKH;
         protected DeterministicKey watchingKey = null;
         protected boolean isFollowing = false;
         protected DeterministicKey spendingKey = null;
@@ -279,7 +280,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
-        public T outputScriptType(Script.ScriptType outputScriptType) {
+        public T outputScriptType(ScriptType outputScriptType) {
             this.outputScriptType = outputScriptType;
             return self();
         }
@@ -348,7 +349,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * </p>
      */
     public DeterministicKeyChain(DeterministicKey key, boolean isFollowing, boolean isWatching,
-            Script.ScriptType outputScriptType) {
+            ScriptType outputScriptType) {
         if (isWatching)
             checkArgument(key.isPubKeyOnly(), "Private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
         else
@@ -378,10 +379,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * </p>
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
-            Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
-        checkArgument(outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH
-                || outputScriptType == Script.ScriptType.P2WPKH, "Only P2PKH or P2WPKH allowed.");
-        this.outputScriptType = outputScriptType != null ? outputScriptType : Script.ScriptType.P2PKH;
+                                    ScriptType outputScriptType, List<ChildNumber> accountPath) {
+        checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH
+                || outputScriptType == ScriptType.P2WPKH, "Only P2PKH or P2WPKH allowed.");
+        this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
         this.accountPath = HDPath.M(accountPath);
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
@@ -404,7 +405,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * For use in encryption when {@link #toEncrypted(KeyCrypter, KeyParameter)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
-     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, List, Script.ScriptType)}
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, List, ScriptType)}
      */
     protected DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
@@ -449,7 +450,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return accountPath;
     }
 
-    public Script.ScriptType getOutputScriptType() {
+    public ScriptType getOutputScriptType() {
         return outputScriptType;
     }
 
@@ -842,7 +843,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int sigsRequiredToSpend = 1;
 
         HDPath accountPath = HDPath.M();
-        Script.ScriptType outputScriptType = Script.ScriptType.P2PKH;
+        ScriptType outputScriptType = ScriptType.P2PKH;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
             if (t == Protos.Key.Type.DETERMINISTIC_MNEMONIC) {
@@ -887,7 +888,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Deserialize the path through the tree.
                 final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
-                    outputScriptType = Script.ScriptType.valueOf(key.getOutputScriptType().name());
+                    outputScriptType = ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
                 boolean isWatchingAccountKey = false;
                 boolean isFollowingKey = false;
@@ -1068,7 +1069,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * This is used in encryption/decryption.
      */
     protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, List<ChildNumber> accountPath,
-            Script.ScriptType outputScriptType) {
+            ScriptType outputScriptType) {
         return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
     }
 

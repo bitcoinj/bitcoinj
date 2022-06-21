@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
@@ -149,10 +150,10 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
-            return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH);
+            return keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2PKH);
         } else if (ScriptPattern.isP2WPKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
-            return keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH);
+            return keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2WPKH);
         } else if (ScriptPattern.isP2PK(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
@@ -175,10 +176,10 @@ public class TransactionOutPoint extends ChildMessage {
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2PKH), connectedScript);
+            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2PKH), connectedScript);
         } else if (ScriptPattern.isP2WPKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, Script.ScriptType.P2WPKH), connectedScript);
+            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2WPKH), connectedScript);
         } else if (ScriptPattern.isP2PK(connectedScript)) {
             byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);

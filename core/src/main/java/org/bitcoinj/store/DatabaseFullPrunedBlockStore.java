@@ -35,7 +35,7 @@ import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

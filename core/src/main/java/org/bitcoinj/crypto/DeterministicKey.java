@@ -19,13 +19,13 @@ package org.bitcoinj.crypto;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.script.Script;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.math.ec.ECPoint;
 
@@ -476,15 +476,15 @@ public class DeterministicKey extends ECKey {
 
     @VisibleForTesting
     byte[] serialize(NetworkParameters params, boolean pub) {
-        return serialize(params, pub, Script.ScriptType.P2PKH);
+        return serialize(params, pub, ScriptType.P2PKH);
     }
 
     // TODO: remove outputScriptType parameter and merge with the two-param serialize() method. When deprecated serializePubB58/serializePrivB58 methods are removed.
-    private byte[] serialize(NetworkParameters params, boolean pub, Script.ScriptType outputScriptType) {
+    private byte[] serialize(NetworkParameters params, boolean pub, ScriptType outputScriptType) {
         ByteBuffer ser = ByteBuffer.allocate(78);
-        if (outputScriptType == Script.ScriptType.P2PKH)
+        if (outputScriptType == ScriptType.P2PKH)
             ser.putInt(pub ? params.getBip32HeaderP2PKHpub() : params.getBip32HeaderP2PKHpriv());
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+        else if (outputScriptType == ScriptType.P2WPKH)
             ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
         else
             throw new IllegalStateException(outputScriptType.toString());
@@ -508,7 +508,7 @@ public class DeterministicKey extends ECKey {
      * @deprecated Use a {@link #serializePubB58(NetworkParameters)} or a descriptor if you need output type information
      */
     @Deprecated
-    public String serializePubB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+    public String serializePubB58(NetworkParameters params, ScriptType outputScriptType) {
         return toBase58(serialize(params, true, outputScriptType));
     }
 
@@ -523,7 +523,7 @@ public class DeterministicKey extends ECKey {
      * @deprecated Use a {@link #serializePrivB58(NetworkParameters)} or a descriptor if you need output type information
      */
     @Deprecated
-    public String serializePrivB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+    public String serializePrivB58(NetworkParameters params, ScriptType outputScriptType) {
         return toBase58(serialize(params, false, outputScriptType));
     }
 
@@ -675,7 +675,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-            NetworkParameters params, Script.ScriptType outputScriptType, @Nullable String comment) {
+                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
         builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());

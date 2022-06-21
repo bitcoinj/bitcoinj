@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script.ScriptType;
+import org.bitcoinj.base.ScriptType;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;

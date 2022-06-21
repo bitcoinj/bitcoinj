@@ -19,6 +19,7 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
@@ -183,22 +184,6 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_XOR;
  * static methods for building scripts.</p>
  */
 public class Script {
-
-    /** Enumeration to encapsulate the type of this script. */
-    public enum ScriptType {
-        P2PKH(1), // pay to pubkey hash (aka pay to address)
-        P2PK(2), // pay to pubkey
-        P2SH(3), // pay to script hash
-        P2WPKH(4), // pay to witness pubkey hash
-        P2WSH(5), // pay to witness script hash
-        P2TR(6); // pay to taproot
-
-        public final int id;
-
-        ScriptType(int id) {
-            this.id = id;
-        }
-    }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, int, TransactionWitness, Coin, Script, Set)}.
      * Note currently only P2SH, DERSIG and NULLDUMMY are actually supported.
@@ -1802,7 +1787,7 @@ public class Script {
     }
 
     /**
-     * Get the {@link Script.ScriptType}.
+     * Get the {@link ScriptType}.
      * @return The script type, or null if the script is of unknown type
      */
     public @Nullable ScriptType getScriptType() {

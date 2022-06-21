@@ -25,6 +25,7 @@ import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
@@ -65,7 +66,7 @@ public class GenerateLowSTests {
         final ECKey key = new ECKey(secureRandom);
         final KeyBag bag = new KeyBag() {
             @Override
-            public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, Script.ScriptType scriptType) {
+            public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, ScriptType scriptType) {
                 return key;
             }
 

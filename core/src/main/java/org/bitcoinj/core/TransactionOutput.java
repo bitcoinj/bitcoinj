@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
@@ -321,10 +322,10 @@ public class TransactionOutput extends ChildMessage {
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromP2SH(script));
             else if (ScriptPattern.isP2PKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        Script.ScriptType.P2PKH);
+                        ScriptType.P2PKH);
             else if (ScriptPattern.isP2WPKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2WH(script),
-                        Script.ScriptType.P2WPKH);
+                        ScriptType.P2WPKH);
             else
                 return false;
         } catch (ScriptException e) {

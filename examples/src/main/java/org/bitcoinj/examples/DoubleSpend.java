@@ -16,11 +16,10 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -39,7 +38,7 @@ public class DoubleSpend {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         final RegTestParams params = RegTestParams.get();
-        WalletAppKit kit = new WalletAppKit(params, Script.ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
+        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
         kit.connectToLocalHost();
         kit.setAutoSave(false);
         kit.startAsync();

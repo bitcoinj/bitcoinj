@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
@@ -68,9 +69,9 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 if (ScriptPattern.isP2PK(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
                 } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), Script.ScriptType.P2PKH);
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2PKH);
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), Script.ScriptType.P2WPKH);
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;

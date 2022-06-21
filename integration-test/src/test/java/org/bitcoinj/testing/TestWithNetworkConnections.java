@@ -17,6 +17,7 @@
 
 package org.bitcoinj.testing;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
@@ -40,7 +41,6 @@ import org.bitcoinj.net.NioServer;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.StreamConnectionFactory;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -109,7 +109,7 @@ public class TestWithNetworkConnections {
         if (wallet == null) {
             // Reduce the number of keys we need to work with to speed up these tests.
             KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST).lookaheadSize(4).lookaheadThreshold(2)
-                    .fromRandom(Script.ScriptType.P2PKH).build();
+                    .fromRandom(ScriptType.P2PKH).build();
             wallet = new Wallet(UNITTEST, kcg);
             key = wallet.freshReceiveKey();
             address = LegacyAddress.fromKey(UNITTEST, key);
