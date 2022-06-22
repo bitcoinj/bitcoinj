@@ -959,7 +959,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
             ScriptType scriptType = out.getScript().getScriptType();
-            s.setInt(7, scriptType != null ? scriptType.id : 0);
+            s.setInt(7, scriptType != null ? scriptType.id() : 0);
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();

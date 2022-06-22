@@ -27,9 +27,18 @@ public enum ScriptType {
     P2WSH(5), // pay to witness script hash
     P2TR(6); // pay to taproot
 
+    /**
+     * This will be made private in the next release.
+     * @deprecated use {@link #id()}
+     */
+    @Deprecated
     public final int id;
 
     ScriptType(int id) {
         this.id = id;
+    }
+
+    public int id() {
+        return id;
     }
 }
