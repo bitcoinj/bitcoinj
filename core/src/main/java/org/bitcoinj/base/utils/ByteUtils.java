@@ -114,14 +114,14 @@ public class ByteUtils {
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format. */
     public static void uint16ToByteStreamLE(int val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & val));
-        stream.write((int) (0xFF & (val >> 8)));
+        stream.write(      (0xFF & val));
+        stream.write(      (0xFF & (val >> 8)));
     }
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format. */
     public static void uint16ToByteStreamBE(int val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & (val >> 8)));
-        stream.write((int) (0xFF & val));
+        stream.write(      (0xFF & (val >> 8)));
+        stream.write(      (0xFF & val));
     }
 
     /** Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format. */
@@ -174,30 +174,30 @@ public class ByteUtils {
 
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
     public static long readUint32(byte[] bytes, int offset) {
-        return (bytes[offset] & 0xffl) |
-                ((bytes[offset + 1] & 0xffl) << 8) |
-                ((bytes[offset + 2] & 0xffl) << 16) |
-                ((bytes[offset + 3] & 0xffl) << 24);
+        return (bytes[offset] & 0xffL) |
+                ((bytes[offset + 1] & 0xffL) << 8) |
+                ((bytes[offset + 2] & 0xffL) << 16) |
+                ((bytes[offset + 3] & 0xffL) << 24);
     }
 
     /** Parse 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
     public static long readInt64(byte[] bytes, int offset) {
-        return (bytes[offset] & 0xffl) |
-               ((bytes[offset + 1] & 0xffl) << 8) |
-               ((bytes[offset + 2] & 0xffl) << 16) |
-               ((bytes[offset + 3] & 0xffl) << 24) |
-               ((bytes[offset + 4] & 0xffl) << 32) |
-               ((bytes[offset + 5] & 0xffl) << 40) |
-               ((bytes[offset + 6] & 0xffl) << 48) |
-               ((bytes[offset + 7] & 0xffl) << 56);
+        return (bytes[offset] & 0xffL) |
+               ((bytes[offset + 1] & 0xffL) << 8) |
+               ((bytes[offset + 2] & 0xffL) << 16) |
+               ((bytes[offset + 3] & 0xffL) << 24) |
+               ((bytes[offset + 4] & 0xffL) << 32) |
+               ((bytes[offset + 5] & 0xffL) << 40) |
+               ((bytes[offset + 6] & 0xffL) << 48) |
+               ((bytes[offset + 7] & 0xffL) << 56);
     }
 
     /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
     public static long readUint32BE(byte[] bytes, int offset) {
-        return ((bytes[offset] & 0xffl) << 24) |
-                ((bytes[offset + 1] & 0xffl) << 16) |
-                ((bytes[offset + 2] & 0xffl) << 8) |
-                (bytes[offset + 3] & 0xffl);
+        return ((bytes[offset] & 0xffL) << 24) |
+                ((bytes[offset + 1] & 0xffL) << 16) |
+                ((bytes[offset + 2] & 0xffL) << 8) |
+                (bytes[offset + 3] & 0xffL);
     }
 
     /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in big endian format. */
@@ -219,11 +219,12 @@ public class ByteUtils {
     /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format. */
     public static long readUint32FromStream(InputStream is) {
         try {
-            return (is.read() & 0xffl) |
-                    ((is.read() & 0xffl) << 8) |
-                    ((is.read() & 0xffl) << 16) |
-                    ((is.read() & 0xffl) << 24);
+            return (is.read() & 0xffL) |
+                    ((is.read() & 0xffL) << 8) |
+                    ((is.read() & 0xffL) << 16) |
+                    ((is.read() & 0xffL) << 24);
         } catch (IOException x) {
+
             throw new RuntimeException(x);
         }
     }
@@ -232,7 +233,7 @@ public class ByteUtils {
      * Returns a copy of the given byte array in reverse order.
      */
     public static byte[] reverseBytes(byte[] bytes) {
-        // We could use the XOR trick here but it's easier to understand if we don't. If we find this is really a
+        // We could use the XOR trick here, but it's easier to understand if we don't. If we find this is really a
         // performance issue the matter can be revisited.
         byte[] buf = new byte[bytes.length];
         for (int i = 0; i < bytes.length; i++)
@@ -342,7 +343,7 @@ public class ByteUtils {
             result >>= 8;
             size++;
         }
-        result |= size << 24;
+        result |= (long) size << 24;
         result |= value.signum() == -1 ? 0x00800000 : 0;
         return result;
     }
