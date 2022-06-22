@@ -18,12 +18,12 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +186,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                Utils.uint32ToByteStreamLE(numTxn, bos);
+                ByteUtils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
@@ -199,7 +199,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
         try {
             if (log.isDebugEnabled())
-                log.debug("Looking for undoable block with hash: " + Utils.HEX.encode(hashBytes));
+                log.debug("Looking for undoable block with hash: " + ByteUtils.HEX.encode(hashBytes));
 
             PreparedStatement findS = conn.get().prepareStatement(SELECT_UNDOABLEBLOCKS_EXISTS_SQL);
             findS.setBytes(1, hashBytes);
@@ -217,7 +217,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
                 s.setBytes(3, hashBytes);
 
                 if (log.isDebugEnabled())
-                    log.debug("Updating undoable block with hash: " + Utils.HEX.encode(hashBytes));
+                    log.debug("Updating undoable block with hash: " + ByteUtils.HEX.encode(hashBytes));
 
                 if (transactions == null) {
                     s.setBytes(1, txOutChanges);
@@ -238,7 +238,7 @@ public class PostgresFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
             s.setInt(2, height);
 
             if (log.isDebugEnabled())
-                log.debug("Inserting undoable block with hash: " + Utils.HEX.encode(hashBytes)  + " at height " + height);
+                log.debug("Inserting undoable block with hash: " + ByteUtils.HEX.encode(hashBytes)  + " at height " + height);
 
             if (transactions == null) {
                 s.setBytes(3, txOutChanges);

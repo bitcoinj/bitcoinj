@@ -17,9 +17,9 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.Sha256Hash;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -39,7 +39,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         id = ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
 
         port = 8333;
         packetMagic = 0xf9beb4d9L;

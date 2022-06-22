@@ -17,7 +17,8 @@
 
 package org.bitcoinj.wallettool;
 
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.RegTestParams;
@@ -104,7 +105,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -569,7 +569,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private static ByteString bytesToHex(ByteString bytes) {
-        return ByteString.copyFrom(Utils.HEX.encode(bytes.toByteArray()).getBytes());
+        return ByteString.copyFrom(ByteUtils.HEX.encode(bytes.toByteArray()).getBytes());
     }
 
     private void marry() {
@@ -1160,7 +1160,7 @@ public class WalletTool implements Callable<Integer> {
                     System.err.println("Could not understand --privkey as either WIF, hex or base58: " + privKeyStr);
                     return;
                 }
-                key = ECKey.fromPrivate(Utils.bytesToBigInteger(decode));
+                key = ECKey.fromPrivate(ByteUtils.bytesToBigInteger(decode));
             }
             if (pubKeyStr != null) {
                 // Give the user a hint.
@@ -1221,7 +1221,7 @@ public class WalletTool implements Callable<Integer> {
      */
     private byte[] parseAsHexOrBase58(String data) {
         try {
-            return Utils.HEX.decode(data);
+            return ByteUtils.HEX.decode(data);
         } catch (Exception e) {
             // Didn't decode as hex, try base58.
             try {

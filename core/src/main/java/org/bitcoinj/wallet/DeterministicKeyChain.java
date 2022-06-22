@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -907,7 +908,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
-                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, Utils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
+                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
                         chain = factory.makeSpendingKeyChain(accountKey, isMarried, outputScriptType);
                         isSpendingKey = true;
@@ -934,7 +935,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 DeterministicKey detkey;
                 if (key.hasSecretBytes()) {
                     // Not encrypted: private key is available.
-                    final BigInteger priv = Utils.bytesToBigInteger(key.getSecretBytes().toByteArray());
+                    final BigInteger priv = ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray());
                     detkey = new DeterministicKey(path, chainCode, pubkey, priv, parent);
                 } else {
                     if (key.hasEncryptedData()) {

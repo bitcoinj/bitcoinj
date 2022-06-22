@@ -18,6 +18,8 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -184,11 +186,11 @@ public class FullBlockTestGenerator {
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
                     try {
-                        Utils.uint32ToByteStreamBE(params.getPacketMagic(), outStream);
+                        ByteUtils.uint32ToByteStreamBE(params.getPacketMagic(), outStream);
                         byte[] block = ((BlockAndValidity)element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
-                        Utils.uint32ToByteArrayBE(block.length, length, 0);
-                        outStream.write(Utils.reverseBytes(length));
+                        ByteUtils.uint32ToByteArrayBE(block.length, length, 0);
+                        outStream.write(ByteUtils.reverseBytes(length));
                         outStream.write(block);
                         ((BlockAndValidity)element).block = null;
                     } catch (IOException e) {
@@ -1214,8 +1216,8 @@ public class FullBlockTestGenerator {
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
-            Utils.uint32ToByteArrayLE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
-            Utils.uint32ToByteArrayLE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
+            ByteUtils.uint32ToByteArrayLE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
+            ByteUtils.uint32ToByteArrayLE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
             stream.write(varIntBytes);
             checkState(new VarInt(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
@@ -1373,7 +1375,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is too large, the CHECKSIGs after that push are still counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b73);
             b73.addTransaction(tx);
@@ -1439,7 +1441,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b76);
             b76.addTransaction(tx);

@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 
@@ -156,7 +159,7 @@ public class Base58 {
     }
     
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
-        return Utils.bytesToBigInteger(decode(input));
+        return ByteUtils.bytesToBigInteger(decode(input));
     }
 
     /**

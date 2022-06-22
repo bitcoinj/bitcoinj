@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.internal.InternalUtils;
 
 import java.util.Collections;

@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
 import org.bitcoinj.core.listeners.GetDataEventListener;

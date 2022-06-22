@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.TestNet3Params;
@@ -46,8 +47,8 @@ import java.util.concurrent.Executors;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;

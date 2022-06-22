@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
 import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;

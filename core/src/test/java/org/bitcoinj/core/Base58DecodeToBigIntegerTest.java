@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -26,6 +27,6 @@ public class Base58DecodeToBigIntegerTest {
     @Test
     public void testDecodeToBigInteger() {
         byte[] input = Base58.decode("129");
-        assertEquals(Utils.bytesToBigInteger(input), Base58.decodeToBigInteger("129"));
+        assertEquals(ByteUtils.bytesToBigInteger(input), Base58.decodeToBigInteger("129"));
     }
 }

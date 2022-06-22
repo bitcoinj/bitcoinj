@@ -16,8 +16,8 @@
 
 package org.bitcoinj.net.discovery;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 
 import javax.annotation.Nullable;
 import java.net.InetAddress;
@@ -107,7 +107,7 @@ public class SeedPeers implements PeerDiscovery {
 
     private InetAddress convertAddress(int seed) throws UnknownHostException {
         byte[] v4addr = new byte[4];
-        Utils.uint32ToByteArrayLE(seed, v4addr, 0);
+        ByteUtils.uint32ToByteArrayLE(seed, v4addr, 0);
         return InetAddress.getByAddress(v4addr);
     }
 

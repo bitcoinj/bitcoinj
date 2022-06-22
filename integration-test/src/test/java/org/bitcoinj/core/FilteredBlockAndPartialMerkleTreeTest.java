@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
@@ -40,8 +42,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -136,8 +138,8 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         hashes.add(numAsHash(9));
         hashes.add(numAsHash(10));
         byte[] includeBits = new byte[2];
-        Utils.setBitLE(includeBits, 9);
-        Utils.setBitLE(includeBits, 10);
+        ByteUtils.setBitLE(includeBits, 9);
+        ByteUtils.setBitLE(includeBits, 10);
         PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(UNITTEST, includeBits, hashes);
         List<Sha256Hash> matchedHashes = new ArrayList<>();
         pmt.getTxnHashAndMerkleRoot(matchedHashes);

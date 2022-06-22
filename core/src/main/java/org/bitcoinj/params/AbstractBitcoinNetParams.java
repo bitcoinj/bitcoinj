@@ -18,15 +18,15 @@
 package org.bitcoinj.params;
 
 import com.google.common.base.Stopwatch;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -146,7 +146,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         if (timespan > targetTimespan * 4)
             timespan = targetTimespan * 4;
 
-        BigInteger newTarget = Utils.decodeCompactBits(prev.getDifficultyTarget());
+        BigInteger newTarget = ByteUtils.decodeCompactBits(prev.getDifficultyTarget());
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
         newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
@@ -161,7 +161,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         // The calculated difficulty is to a higher precision than received, so reduce here.
         BigInteger mask = BigInteger.valueOf(0xFFFFFFL).shiftLeft(accuracyBytes * 8);
         newTarget = newTarget.and(mask);
-        long newTargetCompact = Utils.encodeCompactBits(newTarget);
+        long newTargetCompact = ByteUtils.encodeCompactBits(newTarget);
 
         if (newTargetCompact != receivedTargetCompact)
             throw new VerificationException("Network provided difficulty bits do not match what was calculated: " +

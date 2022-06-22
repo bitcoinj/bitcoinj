@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -271,7 +273,7 @@ public abstract class Message {
 
     protected long readUint32() throws ProtocolException {
         try {
-            long u = Utils.readUint32(payload, cursor);
+            long u = ByteUtils.readUint32(payload, cursor);
             cursor += 4;
             return u;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -281,7 +283,7 @@ public abstract class Message {
 
     protected long readInt64() throws ProtocolException {
         try {
-            long u = Utils.readInt64(payload, cursor);
+            long u = ByteUtils.readInt64(payload, cursor);
             cursor += 8;
             return u;
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -291,7 +293,7 @@ public abstract class Message {
 
     protected BigInteger readUint64() throws ProtocolException {
         // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
-        return new BigInteger(Utils.reverseBytes(readBytes(8)));
+        return new BigInteger(ByteUtils.reverseBytes(readBytes(8)));
     }
 
     protected VarInt readVarInt() throws ProtocolException {

@@ -17,7 +17,7 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.utils.ByteUtils;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -120,11 +120,11 @@ public class ScriptChunk {
             } else if (opcode == OP_PUSHDATA2) {
                 checkState(data.length <= 0xFFFF);
                 stream.write(OP_PUSHDATA2);
-                Utils.uint16ToByteStreamLE(data.length, stream);
+                ByteUtils.uint16ToByteStreamLE(data.length, stream);
             } else if (opcode == OP_PUSHDATA4) {
                 checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
                 stream.write(OP_PUSHDATA4);
-                Utils.uint32ToByteStreamLE(data.length, stream);
+                ByteUtils.uint32ToByteStreamLE(data.length, stream);
             } else {
                 throw new RuntimeException("Unimplemented");
             }
@@ -165,7 +165,7 @@ public class ScriptChunk {
     public String toString() {
         if (data == null)
             return getOpCodeName(opcode);
-        return String.format("%s[%s]", getPushDataName(opcode), Utils.HEX.encode(data));
+        return String.format("%s[%s]", getPushDataName(opcode), ByteUtils.HEX.encode(data));
     }
 
     @Override

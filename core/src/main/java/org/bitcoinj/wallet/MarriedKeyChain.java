@@ -18,10 +18,10 @@ package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -250,7 +250,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         builder.append("  addr:");
         builder.append(script.getToAddress(params));
         builder.append("  hash160:");
-        builder.append(Utils.HEX.encode(script.getPubKeyHash()));
+        builder.append(ByteUtils.HEX.encode(script.getPubKeyHash()));
         if (script.getCreationTimeSeconds() > 0)
             builder.append("  creationTimeSeconds:").append(script.getCreationTimeSeconds());
         builder.append('\n');
