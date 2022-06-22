@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Bech32;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.junit.Test;
 
 import java.util.Locale;

@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base.exceptions;
+
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.Bech32;
 
 @SuppressWarnings("serial")
 public class AddressFormatException extends IllegalArgumentException {
@@ -28,7 +31,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@link PrefixedChecksummedBytes} hierarchy of
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@code PrefixedChecksummedBytes} hierarchy of
      * classes when you try to decode data and a character isn't valid. You shouldn't allow the user to proceed in this
      * case.
      */
@@ -44,7 +47,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@link PrefixedChecksummedBytes} hierarchy of
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@code PrefixedChecksummedBytes} hierarchy of
      * classes when you try to decode data and the data isn't of the right size. You shouldn't allow the user to proceed
      * in this case.
      */
@@ -59,7 +62,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@link PrefixedChecksummedBytes} hierarchy of
+     * This exception is thrown by {@link Base58}, {@link Bech32} and the {@code PrefixedChecksummedBytes} hierarchy of
      * classes when you try to decode data and the checksum isn't valid. You shouldn't allow the user to proceed in this
      * case.
      */
@@ -74,7 +77,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by {@link SegwitAddress} when you try to decode data and the witness version doesn't
+     * This exception is thrown by {@code SegwitAddress} when you try to decode data and the witness version doesn't
      * match the Bech32 encoding as per BIP350. You shouldn't allow the user to proceed in this case.
      */
     public static class UnexpectedWitnessVersion extends AddressFormatException {
@@ -88,7 +91,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
+     * This exception is thrown by the {@code PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
      * address or private key with an invalid prefix (version header or human-readable part). You shouldn't allow the
      * user to proceed in this case.
      */
@@ -103,7 +106,7 @@ public class AddressFormatException extends IllegalArgumentException {
     }
 
     /**
-     * This exception is thrown by the {@link PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
+     * This exception is thrown by the {@code PrefixedChecksummedBytes} hierarchy of classes when you try and decode an
      * address with a prefix (version header or human-readable part) that used by another network (usually: mainnet vs
      * testnet). You shouldn't allow the user to proceed in this case as they are trying to send money across different
      * chains, an operation that is guaranteed to destroy the money.

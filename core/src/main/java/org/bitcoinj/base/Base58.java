@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 
 import java.math.BigInteger;
@@ -28,7 +28,7 @@ import java.util.Arrays;
  * <p>
  * Note that this is not the same base58 as used by Flickr, which you may find referenced around the Internet.
  * <p>
- * You may want to consider working with {@link PrefixedChecksummedBytes} instead, which
+ * You may want to consider working with {@code org.bitcoinj.core.PrefixedChecksummedBytes} instead, which
  * adds support for testing the prefix and suffix bytes commonly found in addresses.
  * <p>
  * Satoshi explains: why base-58 instead of standard base-64 encoding?

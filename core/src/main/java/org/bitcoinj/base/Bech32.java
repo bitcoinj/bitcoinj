@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
+
+import org.bitcoinj.base.exceptions.AddressFormatException;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;

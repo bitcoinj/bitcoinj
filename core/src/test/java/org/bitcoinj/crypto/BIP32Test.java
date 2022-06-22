@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.Base58;
+import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
