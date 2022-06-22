@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;

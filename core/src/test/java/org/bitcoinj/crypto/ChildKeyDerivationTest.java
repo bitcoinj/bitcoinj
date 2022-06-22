@@ -19,14 +19,14 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

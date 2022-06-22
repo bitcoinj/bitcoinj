@@ -14,6 +14,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.util.encoders.Hex;
@@ -33,9 +34,9 @@ public class TransactionWitnessTest {
         assertEquals("", w2.toString());
 
         TransactionWitness w3 = new TransactionWitness(3);
-        w3.setPush(0, Utils.HEX.decode("123aaa"));
-        w3.setPush(1, Utils.HEX.decode("123bbb"));
-        w3.setPush(3, Utils.HEX.decode("123ccc"));
+        w3.setPush(0, ByteUtils.HEX.decode("123aaa"));
+        w3.setPush(1, ByteUtils.HEX.decode("123bbb"));
+        w3.setPush(3, ByteUtils.HEX.decode("123ccc"));
         assertEquals("123aaa 123bbb EMPTY 123ccc", w3.toString());
     }
 

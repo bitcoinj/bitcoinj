@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Iterators;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;

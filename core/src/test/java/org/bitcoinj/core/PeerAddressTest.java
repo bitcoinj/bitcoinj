@@ -17,13 +17,14 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -48,7 +49,7 @@ public class PeerAddressTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, BigInteger.ZERO,
                 serializer);
-        assertEquals("000000000000000000000000000000000000ffff7f000001208d", Utils.HEX.encode(pa.bitcoinSerialize()));
+        assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.HEX.encode(pa.bitcoinSerialize()));
         assertEquals(26, pa.length);
     }
 

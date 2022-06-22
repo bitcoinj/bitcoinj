@@ -17,14 +17,14 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.primitives.Bytes;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrefixedChecksummedBytes;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.generators.SCrypt;
 
 import javax.crypto.Cipher;
@@ -160,7 +160,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
                 checkState(hashBytes.length == 40);
                 passFactorBytes = Sha256Hash.hashTwice(hashBytes);
             }
-            BigInteger passFactor = Utils.bytesToBigInteger(passFactorBytes);
+            BigInteger passFactor = ByteUtils.bytesToBigInteger(passFactorBytes);
             ECKey k = ECKey.fromPrivate(passFactor, true);
 
             byte[] salt = Bytes.concat(addressHash, ownerEntropy);
@@ -186,7 +186,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
             byte[] seed = Bytes.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
             checkState(seed.length == 24);
-            BigInteger seedFactor = Utils.bytesToBigInteger(Sha256Hash.hashTwice(seed));
+            BigInteger seedFactor = ByteUtils.bytesToBigInteger(Sha256Hash.hashTwice(seed));
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
             BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());

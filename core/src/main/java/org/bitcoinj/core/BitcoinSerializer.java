@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.readUint32;
-import static org.bitcoinj.core.Utils.uint32ToByteArrayBE;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.readUint32;
+import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteArrayBE;
 
 /**
  * <p>Methods to serialize and de-serialize messages to the Bitcoin network format as defined in
@@ -128,7 +130,7 @@ public class BitcoinSerializer extends MessageSerializer {
             header[4 + i] = (byte) (name.codePointAt(i) & 0xFF);
         }
 
-        Utils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN);
+        ByteUtils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN);
 
         byte[] hash = Sha256Hash.hashTwice(message);
         System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);

@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
+import org.bitcoinj.base.utils.ByteUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,7 +68,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      *         hex string, or if it does not represent exactly 32 bytes
      */
     public static Sha256Hash wrap(String hexString) {
-        return wrap(Utils.HEX.decode(hexString));
+        return wrap(ByteUtils.HEX.decode(hexString));
     }
 
     /**
@@ -78,7 +79,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      * @throws IllegalArgumentException if the given array length is not exactly 32
      */
     public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
-        return wrap(Utils.reverseBytes(rawHashBytes));
+        return wrap(ByteUtils.reverseBytes(rawHashBytes));
     }
 
     /**
@@ -236,14 +237,14 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
 
     @Override
     public String toString() {
-        return Utils.HEX.encode(bytes);
+        return ByteUtils.HEX.encode(bytes);
     }
 
     /**
      * Returns the bytes interpreted as a positive integer.
      */
     public BigInteger toBigInteger() {
-        return Utils.bytesToBigInteger(bytes);
+        return ByteUtils.bytesToBigInteger(bytes);
     }
 
     /**
@@ -257,7 +258,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      * Returns a reversed copy of the internal byte array.
      */
     public byte[] getReversedBytes() {
-        return Utils.reverseBytes(bytes);
+        return ByteUtils.reverseBytes(bytes);
     }
 
     @Override

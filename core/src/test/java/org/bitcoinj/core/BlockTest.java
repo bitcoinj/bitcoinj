@@ -19,6 +19,8 @@ package org.bitcoinj.core;
 
 import com.google.common.io.ByteStreams;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -39,7 +41,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -331,12 +333,12 @@ public class BlockTest {
         Block block = new Block(UNITTEST, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                Utils.uint32ToByteStreamLE(getVersion(), stream);
+                ByteUtils.uint32ToByteStreamLE(getVersion(), stream);
                 stream.write(getPrevBlockHash().getReversedBytes());
                 stream.write(getMerkleRoot().getReversedBytes());
-                Utils.uint32ToByteStreamLE(getTimeSeconds(), stream);
-                Utils.uint32ToByteStreamLE(getDifficultyTarget(), stream);
-                Utils.uint32ToByteStreamLE(getNonce(), stream);
+                ByteUtils.uint32ToByteStreamLE(getTimeSeconds(), stream);
+                ByteUtils.uint32ToByteStreamLE(getDifficultyTarget(), stream);
+                ByteUtils.uint32ToByteStreamLE(getNonce(), stream);
 
                 stream.write(new VarInt(Integer.MAX_VALUE).encode());
             }

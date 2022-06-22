@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;

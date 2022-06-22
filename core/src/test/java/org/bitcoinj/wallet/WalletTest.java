@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
@@ -28,7 +29,7 @@ import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
@@ -100,7 +101,7 @@ import static org.bitcoinj.base.Coin.MILLICOIN;
 import static org.bitcoinj.base.Coin.SATOSHI;
 import static org.bitcoinj.base.Coin.ZERO;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTxWithoutChangeAddress;
@@ -3363,7 +3364,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void createBasicWithKeys() {
-        ECKey key = ECKey.fromPrivate(Utils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
+        ECKey key = ECKey.fromPrivate(ByteUtils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
         Wallet wallet = Wallet.createBasic(UNITTEST);
         wallet.importKey(key);
         assertEquals(1, wallet.getImportedKeys().size());

@@ -18,6 +18,7 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -25,14 +26,13 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutputChanges;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.ScriptType;
@@ -684,7 +684,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                Utils.uint32ToByteStreamLE(numTxn, bos);
+                ByteUtils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
@@ -812,7 +812,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] transactions = results.getBytes(2);
             StoredUndoableBlock block;
             if (txOutChanges == null) {
-                int numTxn = (int) Utils.readUint32(transactions, 0);
+                int numTxn = (int) ByteUtils.readUint32(transactions, 0);
                 int offset = 4;
                 List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {

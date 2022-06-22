@@ -19,11 +19,12 @@ package org.bitcoinj.crypto;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -40,7 +41,7 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
@@ -401,7 +402,7 @@ public class DeterministicKey extends ECKey {
             if (decryptedKey.length != 32)
                 throw new KeyCrypterException.InvalidCipherText(
                         "Decrypted key must be 32 bytes long, but is " + decryptedKey.length);
-            return Utils.bytesToBigInteger(decryptedKey);
+            return ByteUtils.bytesToBigInteger(decryptedKey);
         }
         // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
         // the first key that has some encrypted private key data.
@@ -438,7 +439,7 @@ public class DeterministicKey extends ECKey {
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
-                cursor.pub, Utils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
+                cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
         // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parents path.
         List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
@@ -611,7 +612,7 @@ public class DeterministicKey extends ECKey {
         if (pub) {
             return new DeterministicKey(path, chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), data), parent, depth, parentFingerprint);
         } else {
-            return new DeterministicKey(path, chainCode, Utils.bytesToBigInteger(data), parent, depth, parentFingerprint);
+            return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
         }
     }
 
@@ -661,7 +662,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        helper.add("pub", ByteUtils.HEX.encode(pub.getEncoded()));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());
         if (parent != null)
@@ -677,7 +678,7 @@ public class DeterministicKey extends ECKey {
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
             NetworkParameters params, Script.ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
-        builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
+        builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)
             builder.append(", ").append(comment);

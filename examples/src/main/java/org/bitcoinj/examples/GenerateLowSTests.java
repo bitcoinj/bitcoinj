@@ -25,6 +25,7 @@ import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
@@ -33,7 +34,6 @@ import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
@@ -167,7 +167,7 @@ public class GenerateLowSTests {
                 // Data chunk
                 buf.append("0x")
                     .append(Integer.toString(chunk.opcode, 16)).append(" 0x")
-                    .append(Utils.HEX.encode(chunk.data));
+                    .append(ByteUtils.HEX.encode(chunk.data));
             } else {
                 buf.append(chunk.toString());
             }

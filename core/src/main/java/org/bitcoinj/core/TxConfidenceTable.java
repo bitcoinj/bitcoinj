@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.utils.Threading;
 
 import javax.annotation.Nullable;

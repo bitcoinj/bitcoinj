@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class PeerAddress extends ChildMessage {
     private long time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
-    private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
+    private static final byte[] ONIONCAT_PREFIX = ByteUtils.HEX.decode("fd87d87eeb43");
 
     /**
      * Construct a peer address from a serialized payload.
@@ -130,7 +131,7 @@ public class PeerAddress extends ChildMessage {
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
         if (protocolVersion >= 1) {
-            Utils.uint32ToByteStreamLE(time, stream);
+            ByteUtils.uint32ToByteStreamLE(time, stream);
         }
         if (protocolVersion == 2) {
             stream.write(new VarInt(services.longValue()).encode());
@@ -172,7 +173,7 @@ public class PeerAddress extends ChildMessage {
                 throw new IllegalStateException();
             }
         } else {
-            Utils.uint64ToByteStreamLE(services, stream);  // nServices.
+            ByteUtils.uint64ToByteStreamLE(services, stream);  // nServices.
             if (addr != null) {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.
@@ -199,7 +200,7 @@ public class PeerAddress extends ChildMessage {
             }
         }
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
-        Utils.uint16ToByteStreamBE(port, stream);
+        ByteUtils.uint16ToByteStreamBE(port, stream);
     }
 
     @Override
@@ -271,7 +272,7 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         }
-        port = Utils.readUint16BE(payload, cursor);
+        port = ByteUtils.readUint16BE(payload, cursor);
         cursor += 2;
         length += 2;
     }

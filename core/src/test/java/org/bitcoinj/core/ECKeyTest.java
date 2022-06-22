@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -45,8 +47,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.reverseBytes;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.reverseBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -104,7 +106,7 @@ public class ECKeyTest {
     public void testSignatures() throws Exception {
         // Test that we can construct an ECKey from a private key (deriving the public from the private), then signing
         // a message with it.
-        BigInteger privkey = Utils.bytesToBigInteger(HEX.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
+        BigInteger privkey = ByteUtils.bytesToBigInteger(HEX.decode("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
         ECKey key = ECKey.fromPrivate(privkey);
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
@@ -203,8 +205,8 @@ public class ECKeyTest {
             ECKey key = new ECKey();
             ECKey key1 = DumpedPrivateKey.fromBase58(TESTNET,
                     key.getPrivateKeyEncoded(TESTNET).toString()).getKey();
-            assertEquals(Utils.HEX.encode(key.getPrivKeyBytes()),
-                    Utils.HEX.encode(key1.getPrivKeyBytes()));
+            assertEquals(ByteUtils.HEX.encode(key.getPrivKeyBytes()),
+                    ByteUtils.HEX.encode(key1.getPrivKeyBytes()));
         }
     }
 
@@ -321,7 +323,7 @@ public class ECKeyTest {
     public void testEncryptedCreate() {
         ECKey unencryptedKey = new ECKey();
         byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
-        log.info("Original private key = " + Utils.HEX.encode(originalPrivateKeyBytes));
+        log.info("Original private key = " + ByteUtils.HEX.encode(originalPrivateKeyBytes));
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
         assertTrue(encryptedKey.isEncrypted());
@@ -478,7 +480,7 @@ public class ECKeyTest {
         // We dump failed data to error log because this test is not expected to be deterministic
         ECKey key = new ECKey();
         if (!ECKey.isPubKeyCanonical(key.getPubKey())) {
-            log.error(Utils.HEX.encode(key.getPubKey()));
+            log.error(ByteUtils.HEX.encode(key.getPubKey()));
             fail();
         }
 
@@ -488,7 +490,7 @@ public class ECKeyTest {
         byte[] encodedSig = Arrays.copyOf(sigBytes, sigBytes.length + 1);
         encodedSig[sigBytes.length] = Transaction.SigHash.ALL.byteValue();
         if (!TransactionSignature.isEncodingCanonical(encodedSig)) {
-            log.error(Utils.HEX.encode(sigBytes));
+            log.error(ByteUtils.HEX.encode(sigBytes));
             fail();
         }
     }

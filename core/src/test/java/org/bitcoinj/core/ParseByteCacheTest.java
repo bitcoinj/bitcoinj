@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -31,7 +32,7 @@ import java.nio.ByteBuffer;
 
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.assertArrayEquals;
@@ -449,8 +450,8 @@ public class ParseByteCacheTest {
         if (sup.length < sub.length)
             return false;       
         
-        String superstring = Utils.HEX.encode(sup);
-        String substring = Utils.HEX.encode(sub);
+        String superstring = ByteUtils.HEX.encode(sup);
+        String substring = ByteUtils.HEX.encode(sub);
         
         int ind = superstring.indexOf(substring);
         

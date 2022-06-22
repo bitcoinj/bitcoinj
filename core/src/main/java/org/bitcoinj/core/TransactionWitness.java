@@ -14,6 +14,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -94,7 +95,7 @@ public class TransactionWitness {
             } else if (push.length == 0) {
                 stringPushes.add("EMPTY");
             } else {
-                stringPushes.add(Utils.HEX.encode(push));
+                stringPushes.add(ByteUtils.HEX.encode(push));
             }
         }
         return InternalUtils.SPACE_JOINER.join(stringPushes);

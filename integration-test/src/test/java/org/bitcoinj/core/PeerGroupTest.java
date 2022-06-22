@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;

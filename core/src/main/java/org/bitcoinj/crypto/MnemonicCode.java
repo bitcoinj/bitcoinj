@@ -18,7 +18,7 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.Stopwatch;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 
 /**
  * A MnemonicCode object may be used to convert between binary seed values and

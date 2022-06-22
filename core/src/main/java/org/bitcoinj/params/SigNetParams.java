@@ -16,9 +16,9 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.Sha256Hash;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -41,7 +41,7 @@ public class SigNetParams extends AbstractBitcoinNetParams {
         id = ID_SIGNET;
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
 
         port = 38333;
         packetMagic = 0x0a03cf40;

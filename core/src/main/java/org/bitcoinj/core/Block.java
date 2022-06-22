@@ -20,6 +20,8 @@ package org.bitcoinj.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.script.Script;
@@ -43,7 +45,7 @@ import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
-import static org.bitcoinj.core.Sha256Hash.hashTwice;
+import static org.bitcoinj.base.Sha256Hash.hashTwice;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -285,14 +287,14 @@ public class Block extends Message {
     // A script containing the difficulty bits and the following message:
     //
     //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
-    private static final byte[] genesisTxInputScriptBytes = Utils.HEX.decode
+    private static final byte[] genesisTxInputScriptBytes = ByteUtils.HEX.decode
                 ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
 
     private static final byte[] genesisTxScriptPubKeyBytes;
     static {
         ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
         try {
-            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
+            Script.writeBytes(scriptPubKeyBytes, ByteUtils.HEX.decode
                     ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
         } catch (IOException e) {
             throw new RuntimeException(e); // Cannot happen.
@@ -316,12 +318,12 @@ public class Block extends Message {
             return;
         }
         // fall back to manual write
-        Utils.uint32ToByteStreamLE(version, stream);
+        ByteUtils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        Utils.uint32ToByteStreamLE(time, stream);
-        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
-        Utils.uint32ToByteStreamLE(nonce, stream);
+        ByteUtils.uint32ToByteStreamLE(time, stream);
+        ByteUtils.uint32ToByteStreamLE(difficultyTarget, stream);
+        ByteUtils.uint32ToByteStreamLE(nonce, stream);
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
@@ -554,7 +556,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
+        BigInteger target = ByteUtils.decodeCompactBits(difficultyTarget);
         if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
@@ -696,9 +698,9 @@ public class Block extends Message {
                 // The right hand node can be the same as the left hand, in the case where we don't have enough
                 // transactions.
                 int right = Math.min(left + 1, levelSize - 1);
-                byte[] leftBytes = Utils.reverseBytes(tree.get(levelOffset + left));
-                byte[] rightBytes = Utils.reverseBytes(tree.get(levelOffset + right));
-                tree.add(Utils.reverseBytes(hashTwice(leftBytes, rightBytes)));
+                byte[] leftBytes = ByteUtils.reverseBytes(tree.get(levelOffset + left));
+                byte[] rightBytes = ByteUtils.reverseBytes(tree.get(levelOffset + right));
+                tree.add(ByteUtils.reverseBytes(hashTwice(leftBytes, rightBytes)));
             }
             // Move to the next level.
             levelOffset += levelSize;

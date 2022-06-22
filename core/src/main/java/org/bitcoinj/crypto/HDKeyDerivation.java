@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
 import org.bouncycastle.math.ec.ECPoint;
@@ -85,7 +86,7 @@ public final class HDKeyDerivation {
      * @throws HDDerivationException if privKeyBytes is invalid (not between 0 and n inclusive).
      */
     public static DeterministicKey createMasterPrivKeyFromBytes(byte[] privKeyBytes, byte[] chainCode) throws HDDerivationException {
-        BigInteger priv = Utils.bytesToBigInteger(privKeyBytes);
+        BigInteger priv = ByteUtils.bytesToBigInteger(privKeyBytes);
         assertNonZero(priv, "Generated master key is invalid.");
         assertLessThanN(priv, "Generated master key is invalid.");
         return new DeterministicKey(HDPath.m(), chainCode, priv, null);
@@ -153,7 +154,7 @@ public final class HDKeyDerivation {
             throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPrivate(parent, childNumber);
         return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
-                Utils.bytesToBigInteger(rawKey.keyBytes), parent);
+                ByteUtils.bytesToBigInteger(rawKey.keyBytes), parent);
     }
 
     public static RawKeyBytes deriveChildKeyBytesFromPrivate(DeterministicKey parent,
@@ -172,7 +173,7 @@ public final class HDKeyDerivation {
         checkState(i.length == 64, i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
-        BigInteger ilInt = Utils.bytesToBigInteger(il);
+        BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         final BigInteger priv = parent.getPrivKey();
         BigInteger ki = priv.add(ilInt).mod(ECKey.CURVE.getN());
@@ -203,7 +204,7 @@ public final class HDKeyDerivation {
         checkState(i.length == 64, i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         byte[] chainCode = Arrays.copyOfRange(i, 32, 64);
-        BigInteger ilInt = Utils.bytesToBigInteger(il);
+        BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
 
         final BigInteger N = ECKey.CURVE.getN();

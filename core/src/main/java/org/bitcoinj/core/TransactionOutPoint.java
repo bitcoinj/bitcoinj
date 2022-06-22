@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
@@ -106,7 +108,7 @@ public class TransactionOutPoint extends ChildMessage {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(hash.getReversedBytes());
-        Utils.uint32ToByteStreamLE(index, stream);
+        ByteUtils.uint32ToByteStreamLE(index, stream);
     }
 
     /**

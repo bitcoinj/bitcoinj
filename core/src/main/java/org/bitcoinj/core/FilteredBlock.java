@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;

@@ -19,7 +19,7 @@
  * minimal dependencies. The criteria for allowed dependencies for {@code base} types are:
  * <ul>
  *     <li>No dependencies on other packages of bitcoinj</li>
- *     <li>No API dependencies on external libraries other than the core JDK</li>
+ *     <li>No API dependencies on external libraries other than the core JDK (Guava is ok temporarily)</li>
  *     <li>Implementation dependencies on Guava are allowed for now (but should be avoided as much as possible)</li>
  * </ul>
  * The base package will help us make bitcoinj more modular as we will use it to break circular dependencies

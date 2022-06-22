@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nullable;
@@ -156,24 +157,24 @@ public class VersionMessage extends Message {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
-        Utils.uint32ToByteStreamLE(clientVersion, buf);
-        Utils.uint32ToByteStreamLE(localServices, buf);
-        Utils.uint32ToByteStreamLE(localServices >> 32, buf);
-        Utils.uint32ToByteStreamLE(time, buf);
-        Utils.uint32ToByteStreamLE(time >> 32, buf);
+        ByteUtils.uint32ToByteStreamLE(clientVersion, buf);
+        ByteUtils.uint32ToByteStreamLE(localServices, buf);
+        ByteUtils.uint32ToByteStreamLE(localServices >> 32, buf);
+        ByteUtils.uint32ToByteStreamLE(time, buf);
+        ByteUtils.uint32ToByteStreamLE(time >> 32, buf);
         receivingAddr.bitcoinSerializeToStream(buf);
         fromAddr.bitcoinSerializeToStream(buf);
         // Next up is the "local host nonce", this is to detect the case of connecting
         // back to yourself. We don't care about this as we won't be accepting inbound
         // connections.
-        Utils.uint32ToByteStreamLE(0, buf);
-        Utils.uint32ToByteStreamLE(0, buf);
+        ByteUtils.uint32ToByteStreamLE(0, buf);
+        ByteUtils.uint32ToByteStreamLE(0, buf);
         // Now comes subVer.
         byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
         buf.write(new VarInt(subVerBytes.length).encode());
         buf.write(subVerBytes);
         // Size of known block chain.
-        Utils.uint32ToByteStreamLE(bestHeight, buf);
+        ByteUtils.uint32ToByteStreamLE(bestHeight, buf);
         if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
             buf.write(relayTxesBeforeFilter ? 1 : 0);
         }

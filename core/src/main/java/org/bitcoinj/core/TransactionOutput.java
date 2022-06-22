@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
@@ -153,7 +155,7 @@ public class TransactionOutput extends ChildMessage {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value, stream);
+        ByteUtils.int64ToByteStreamLE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
@@ -348,7 +350,7 @@ public class TransactionOutput extends ChildMessage {
                     || ScriptPattern.isP2SH(script))
                 buf.append(" to ").append(script.getToAddress(params));
             else if (ScriptPattern.isP2PK(script))
-                buf.append(" to pubkey ").append(Utils.HEX.encode(ScriptPattern.extractKeyFromP2PK(script)));
+                buf.append(" to pubkey ").append(ByteUtils.HEX.encode(ScriptPattern.extractKeyFromP2PK(script)));
             else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else

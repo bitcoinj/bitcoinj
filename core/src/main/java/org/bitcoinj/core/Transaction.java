@@ -21,6 +21,8 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -59,8 +61,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
-import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
-import static org.bitcoinj.core.Utils.uint64ToByteStreamLE;
+import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
+import static org.bitcoinj.base.utils.ByteUtils.uint64ToByteStreamLE;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -942,7 +944,7 @@ public class Transaction extends ChildMessage {
      * @return raw transaction in hex format
      */
     public String toHexString() {
-        return Utils.HEX.encode(unsafeBitcoinSerialize());
+        return ByteUtils.HEX.encode(unsafeBitcoinSerialize());
     }
 
     /**

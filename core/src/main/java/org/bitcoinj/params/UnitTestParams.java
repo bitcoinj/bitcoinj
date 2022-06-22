@@ -17,6 +17,7 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
 
@@ -34,7 +35,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         id = ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
-        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 

@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+
 /**
  * <p>Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
  * hashes.</p>

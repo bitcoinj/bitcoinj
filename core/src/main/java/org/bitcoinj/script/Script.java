@@ -19,6 +19,7 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
@@ -26,7 +27,7 @@ import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
@@ -338,12 +339,12 @@ public class Script {
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = Utils.readUint16FromStream(bis);
+                dataToRead = ByteUtils.readUint16FromStream(bis);
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = Utils.readUint32FromStream(bis);
+                dataToRead = ByteUtils.readUint32FromStream(bis);
             }
 
             ScriptChunk chunk;
@@ -437,7 +438,7 @@ public class Script {
             os.write(buf);
         } else if (buf.length < 65536) {
             os.write(OP_PUSHDATA2);
-            Utils.uint16ToByteStreamLE(buf.length, os);
+            ByteUtils.uint16ToByteStreamLE(buf.length, os);
             os.write(buf);
         } else {
             throw new RuntimeException("Unimplemented");
@@ -610,7 +611,7 @@ public class Script {
             }
         }
 
-        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
+        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + ByteUtils.HEX.encode(signatureBytes));
     }
 
 
@@ -787,9 +788,9 @@ public class Script {
             } else if (opcode == OP_PUSHDATA1) {
                 additionalBytes = (0xFF & inputScript[cursor]) + 1;
             } else if (opcode == OP_PUSHDATA2) {
-                additionalBytes = Utils.readUint16(inputScript, cursor) + 2;
+                additionalBytes = ByteUtils.readUint16(inputScript, cursor) + 2;
             } else if (opcode == OP_PUSHDATA4) {
-                additionalBytes = (int) Utils.readUint32(inputScript, cursor) + 4;
+                additionalBytes = (int) ByteUtils.readUint32(inputScript, cursor) + 4;
             }
             if (!skip) {
                 try {
@@ -866,7 +867,7 @@ public class Script {
             }
         }
 
-        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+        return ByteUtils.decodeMPI(ByteUtils.reverseBytes(chunk), false);
     }
 
     /** @deprecated use {@link ScriptPattern#isOpReturn(Script)} */
@@ -978,7 +979,7 @@ public class Script {
 
                 // OP_0 is no opcode
                 case OP_1NEGATE:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ONE.negate(), false)));
                     break;
                 case OP_1:
                 case OP_2:
@@ -996,7 +997,7 @@ public class Script {
                 case OP_14:
                 case OP_15:
                 case OP_16:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(decodeFromOpN(opcode)), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(decodeFromOpN(opcode)), false)));
                     break;
                 case OP_NOP:
                     break;
@@ -1087,7 +1088,7 @@ public class Script {
                         stack.add(stack.getLast());
                     break;
                 case OP_DEPTH:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
                     break;
                 case OP_DROP:
                     if (stack.size() < 1)
@@ -1152,7 +1153,7 @@ public class Script {
                 case OP_SIZE:
                     if (stack.size() < 1)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack");
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
                     break;
                 case OP_EQUAL:
                     if (stack.size() < 2)
@@ -1205,7 +1206,7 @@ public class Script {
                         throw new AssertionError("Unreachable");
                     }
                     
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPnum, false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(numericOPnum, false)));
                     break;
                 case OP_ADD:
                 case OP_SUB:
@@ -1296,7 +1297,7 @@ public class Script {
                         throw new RuntimeException("Opcode switched at runtime?");
                     }
                     
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPresult, false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(numericOPresult, false)));
                     break;
                 case OP_NUMEQUALVERIFY:
                     if (stack.size() < 2)
@@ -1314,9 +1315,9 @@ public class Script {
                     BigInteger OPWITHINnum2 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     BigInteger OPWITHINnum1 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     if (OPWITHINnum2.compareTo(OPWITHINnum1) <= 0 && OPWITHINnum1.compareTo(OPWITHINnum3) < 0)
-                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE, false)));
+                        stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ONE, false)));
                     else
-                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ZERO, false)));
+                        stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ZERO, false)));
                     break;
                 case OP_RIPEMD160:
                     if (stack.size() < 1)

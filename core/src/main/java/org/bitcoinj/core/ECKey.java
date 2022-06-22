@@ -24,6 +24,8 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -232,7 +234,7 @@ public class ECKey implements EncryptableItem {
      * public key is compressed.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes) {
-        return fromPrivate(Utils.bytesToBigInteger(privKeyBytes));
+        return fromPrivate(ByteUtils.bytesToBigInteger(privKeyBytes));
     }
 
     /**
@@ -240,7 +242,7 @@ public class ECKey implements EncryptableItem {
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
      */
     public static ECKey fromPrivate(byte[] privKeyBytes, boolean compressed) {
-        return fromPrivate(Utils.bytesToBigInteger(privKeyBytes), compressed);
+        return fromPrivate(ByteUtils.bytesToBigInteger(privKeyBytes), compressed);
     }
 
     /**
@@ -261,7 +263,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         checkNotNull(priv);
         checkNotNull(pub);
-        return new ECKey(Utils.bytesToBigInteger(priv), new LazyECPoint(CURVE.getCurve(), pub));
+        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(CURVE.getCurve(), pub));
     }
 
     /**
@@ -359,7 +361,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Returns public key bytes from the given private key. To convert a byte array into a BigInteger,
-     * use {@link Utils#bytesToBigInteger(byte[])}
+     * use {@link ByteUtils#bytesToBigInteger(byte[])}
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
@@ -368,7 +370,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Returns public key point from the given private key. To convert a byte array into a BigInteger,
-     * use {@link Utils#bytesToBigInteger(byte[])}
+     * use {@link ByteUtils#bytesToBigInteger(byte[])}
      */
     public static ECPoint publicPointFromPrivate(BigInteger privKey) {
         /*
@@ -577,7 +579,7 @@ public class ECKey implements EncryptableItem {
             try {
                 byte[] signature = NativeSecp256k1.sign(
                         input.getBytes(),
-                        Utils.bigIntegerToBytes(privateKeyForSigning, 32)
+                        ByteUtils.bigIntegerToBytes(privateKeyForSigning, 32)
                 );
                 return ECDSASignature.decodeFromDER(signature);
             } catch (NativeSecp256k1Util.AssertFailException e) {
@@ -715,7 +717,7 @@ public class ECKey implements EncryptableItem {
         else if (encoded.length == 65 && encoded[0] == 0x04)
             return false;
         else
-            throw new IllegalArgumentException(Utils.HEX.encode(encoded));
+            throw new IllegalArgumentException(ByteUtils.HEX.encode(encoded));
     }
 
     private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
@@ -741,7 +743,7 @@ public class ECKey implements EncryptableItem {
                     "Input is of wrong version");
 
             byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
-            BigInteger privkey = Utils.bytesToBigInteger(privbits);
+            BigInteger privkey = ByteUtils.bytesToBigInteger(privbits);
 
             ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
             checkArgument(pubkey.getTagNo() == 1, "Input has 'publicKey' with bad tag number");
@@ -788,8 +790,8 @@ public class ECKey implements EncryptableItem {
         int headerByte = recId + 27 + (isCompressed() ? 4 : 0);
         byte[] sigData = new byte[65];  // 1 header + 32 bytes for R + 32 bytes for S
         sigData[0] = (byte)headerByte;
-        System.arraycopy(Utils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
-        System.arraycopy(Utils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
+        System.arraycopy(ByteUtils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
+        System.arraycopy(ByteUtils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
         return new String(Base64.encode(sigData), StandardCharsets.UTF_8);
     }
 
@@ -820,8 +822,8 @@ public class ECKey implements EncryptableItem {
         //                  0x1D = second key with even y, 0x1E = second key with odd y
         if (header < 27 || header > 34)
             throw new SignatureException("Header byte out of range: " + header);
-        BigInteger r = Utils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 1, 33));
-        BigInteger s = Utils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 33, 65));
+        BigInteger r = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 1, 33));
+        BigInteger s = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 33, 65));
         ECDSASignature sig = new ECDSASignature(r, s);
         byte[] messageBytes = formatMessageForSigning(message);
         // Note that the C++ code doesn't actually seem to specify any character encoding. Presumably it's whatever
@@ -952,7 +954,7 @@ public class ECKey implements EncryptableItem {
      * @throws org.bitcoinj.core.ECKey.MissingPrivateKeyException if the private key bytes are missing/encrypted.
      */
     public byte[] getPrivKeyBytes() {
-        return Utils.bigIntegerToBytes(getPrivKey(), 32);
+        return ByteUtils.bigIntegerToBytes(getPrivKey(), 32);
     }
 
     /**
@@ -1165,11 +1167,11 @@ public class ECKey implements EncryptableItem {
     }
 
     public String getPrivateKeyAsHex() {
-        return Utils.HEX.encode(getPrivKeyBytes());
+        return ByteUtils.HEX.encode(getPrivKeyBytes());
     }
 
     public String getPublicKeyAsHex() {
-        return Utils.HEX.encode(pub.getEncoded());
+        return ByteUtils.HEX.encode(pub.getEncoded());
     }
 
     public String getPrivateKeyAsWiF(NetworkParameters params) {
@@ -1214,7 +1216,7 @@ public class ECKey implements EncryptableItem {
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");
         builder.append("  hash160:");
-        builder.append(Utils.HEX.encode(getPubKeyHash()));
+        builder.append(ByteUtils.HEX.encode(getPubKeyHash()));
         if (creationTimeSeconds > 0)
             builder.append("  creationTimeSeconds:").append(creationTimeSeconds).append(" [")
                     .append(Utils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");
