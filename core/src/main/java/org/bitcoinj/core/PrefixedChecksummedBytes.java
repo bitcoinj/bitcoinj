@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </p>
  */
 public abstract class PrefixedChecksummedBytes {
-    protected final transient NetworkParameters params;
+    protected final NetworkParameters params;
     protected final byte[] bytes;
 
     protected PrefixedChecksummedBytes(NetworkParameters params, byte[] bytes) {
