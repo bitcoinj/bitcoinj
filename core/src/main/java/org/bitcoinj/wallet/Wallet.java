@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Base58;
+import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.base.Coin;

@@ -43,8 +43,8 @@ import com.google.protobuf.ByteString;
 
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.AddressFormatException;
-import org.bitcoinj.core.Base58;
+import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.base.Coin;

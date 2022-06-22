@@ -19,6 +19,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.base.ScriptType;
 

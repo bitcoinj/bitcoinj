@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.experimental.theories.DataPoints;
