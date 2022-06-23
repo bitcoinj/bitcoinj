@@ -63,7 +63,7 @@ public interface KeyChainGroupStructure {
      * @return The HD Path: purpose / coinType / accountIndex
      */
     default HDPath accountPathFor(ScriptType outputScriptType, NetworkParameters networkParameters) {
-        return accountPathFor(outputScriptType, Network.of(networkParameters));
+        return accountPathFor(outputScriptType, networkParameters.network());
     }
 
 
@@ -112,7 +112,7 @@ public interface KeyChainGroupStructure {
 
     /**
      * Return coin type path component for a network id
-     * @param network network id string, eg. {@link NetworkParameters#ID_MAINNET}
+     * @param network network id string, eg. {@link Network#ID_MAINNET}
      */
     static ChildNumber coinType(Network network) {
         switch (network) {

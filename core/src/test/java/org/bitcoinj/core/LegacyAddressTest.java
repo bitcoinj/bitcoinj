@@ -28,6 +28,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.utils.Network;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -123,6 +124,7 @@ public class LegacyAddressTest {
         class AltNetwork extends MainNetParams {
             AltNetwork() {
                 super();
+                network = Network.REGTEST; // TODO: Solution for enums for alt networks??
                 id = "alt.network";
                 addressHeader = 48;
                 p2shHeader = 5;

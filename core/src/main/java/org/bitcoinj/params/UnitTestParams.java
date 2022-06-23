@@ -20,6 +20,7 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.Network;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
@@ -32,7 +33,10 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
 
     public UnitTestParams() {
         super();
-        id = ID_UNITTESTNET;
+        // Unit Test Params are BY DEFINITION on the Bitcoin TEST network (i.e. not REGTEST or SIGNET)
+        // This means that tests that run against UnitTestParams expect TEST network behavior.
+        network = Network.TEST;
+        id = Network.ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

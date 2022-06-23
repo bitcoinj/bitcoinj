@@ -369,7 +369,7 @@ public class WalletTool implements Callable<Integer> {
             java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
-        params = net.networkParameters();
+        params = NetworkParameters.of(net);
         String fileName;
         switch (net) {
             case MAIN:
