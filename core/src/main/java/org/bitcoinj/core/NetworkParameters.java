@@ -28,6 +28,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;
@@ -48,16 +49,6 @@ import static org.bitcoinj.base.Coin.COIN;
  * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
 public abstract class NetworkParameters {
-    /** The string returned by getId() for the main, production network where people trade things. */
-    public static final String ID_MAINNET = "org.bitcoin.production";
-    /** The string returned by getId() for the testnet. */
-    public static final String ID_TESTNET = "org.bitcoin.test";
-    /** The string returned by getId() for the signet. */
-    public static final String ID_SIGNET = "org.bitcoin.signet";
-    /** The string returned by getId() for regtest mode. */
-    public static final String ID_REGTEST = "org.bitcoin.regtest";
-    /** Unit test network. */
-    public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
 
     /** The string used by the payment protocol to represent the main net. */
     public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
@@ -95,6 +86,7 @@ public abstract class NetworkParameters {
      * by looking at the port number.
      */
     protected String id;
+    protected Network network;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
@@ -139,6 +131,13 @@ public abstract class NetworkParameters {
         return id;
     }
 
+    /**
+     * @return Network enum for this network
+     */
+    public Network network() {
+        return network;
+    }
+
     public abstract String getPaymentProtocolId();
 
     @Override
@@ -160,18 +159,39 @@ public abstract class NetworkParameters {
      */
     @Nullable
     public static NetworkParameters fromID(String id) {
-        if (id.equals(ID_MAINNET)) {
+        if (id.equals(Network.ID_MAINNET)) {
             return MainNetParams.get();
-        } else if (id.equals(ID_TESTNET)) {
+        } else if (id.equals(Network.ID_TESTNET)) {
             return TestNet3Params.get();
-        } else if (id.equals(ID_SIGNET)) {
+        } else if (id.equals(Network.ID_SIGNET)) {
             return SigNetParams.get();
-        } else if (id.equals(ID_UNITTESTNET)) {
+        } else if (id.equals(Network.ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        } else if (id.equals(ID_REGTEST)) {
+        } else if (id.equals(Network.ID_REGTEST)) {
             return RegTestParams.get();
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Return network parameters for a {@link Network} enum
+     * @param network the network
+     * @return the network parameters for the given string ID
+     * @throws IllegalArgumentException if unknown network
+     */
+    public static NetworkParameters of(Network network) {
+        switch (network) {
+            case MAIN:
+                return MainNetParams.get();
+            case TEST:
+                return TestNet3Params.get();
+            case SIGNET:
+                return SigNetParams.get();
+            case REGTEST:
+                return RegTestParams.get();
+            default:
+                throw new IllegalArgumentException("Unknown network");
         }
     }
 

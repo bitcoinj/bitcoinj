@@ -74,7 +74,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         final String suffix;
-        params = net.networkParameters();
+        params = NetworkParameters.of(net);
         Context.propagate(new Context(params));
 
         switch (net) {
@@ -220,17 +220,17 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         checkState(manager.numCheckpoints() == expectedSize);
 
-        if (params.getId().equals(NetworkParameters.ID_MAINNET)) {
+        if (params.getId().equals(Network.ID_MAINNET)) {
             StoredBlock test = manager.getCheckpointBefore(1390500000); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 280224);
             checkState(test.getHeader().getHashAsString()
                     .equals("00000000000000000b5d59a15f831e1c45cb688a4db6b0a60054d49a9997fa34"));
-        } else if (params.getId().equals(NetworkParameters.ID_TESTNET)) {
+        } else if (params.getId().equals(Network.ID_TESTNET)) {
             StoredBlock test = manager.getCheckpointBefore(1390500000); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 167328);
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
-        } else if (params.getId().equals(NetworkParameters.ID_SIGNET)) {
+        } else if (params.getId().equals(Network.ID_SIGNET)) {
             StoredBlock test = manager.getCheckpointBefore(1642000000); // 2022-01-12
             checkState(test.getHeight() == 72576);
             checkState(test.getHeader().getHashAsString()

@@ -19,6 +19,7 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.utils.Network;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -38,7 +39,8 @@ public class SigNetParams extends AbstractBitcoinNetParams {
 
     public SigNetParams() {
         super();
-        id = ID_SIGNET;
+        network = Network.SIGNET;
+        id = Network.ID_SIGNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

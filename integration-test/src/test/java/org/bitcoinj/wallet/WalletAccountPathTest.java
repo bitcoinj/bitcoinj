@@ -59,7 +59,7 @@ public class WalletAccountPathTest {
     void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
                                   Network network) throws IOException, UnreadableWalletException {
         // When we create a wallet with parameterized structure, network, and scriptType
-        Wallet wallet = createWallet(walletFile, network.networkParameters(), structure, scriptType);
+        Wallet wallet = createWallet(walletFile, NetworkParameters.of(network), structure, scriptType);
 
         // Then the account path is as expected
         assertEquals(expectedPath, wallet.getActiveKeyChain().getAccountPath());

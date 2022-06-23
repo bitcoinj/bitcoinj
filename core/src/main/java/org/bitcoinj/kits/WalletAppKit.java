@@ -34,6 +34,7 @@ import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -363,7 +364,7 @@ public class WalletAppKit extends AbstractIdleService {
                 for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
                 vPeerGroup.setMaxConnections(peerAddresses.length);
                 peerAddresses = null;
-            } else if (!params.getId().equals(NetworkParameters.ID_REGTEST)) {
+            } else if (!params.getId().equals(Network.ID_REGTEST)) {
                 vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
             }
             vChain.addWallet(vWallet);

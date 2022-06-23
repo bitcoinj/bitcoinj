@@ -16,16 +16,27 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.NetworkParameters;
+import java.util.Arrays;
 
 /**
  * A convenient {@code enum} representation of a network.
  */
 public enum Network {
-    MAIN(NetworkParameters.ID_MAINNET),
-    TEST(NetworkParameters.ID_TESTNET),
-    SIGNET(NetworkParameters.ID_SIGNET),
-    REGTEST(NetworkParameters.ID_REGTEST);
+    MAIN("org.bitcoin.production"),
+    TEST("org.bitcoin.test"),
+    SIGNET("org.bitcoin.signet"),
+    REGTEST("org.bitcoin.regtest");
+
+    /** The ID string for the main, production network where people trade things. */
+    public static final String ID_MAINNET = MAIN.id();
+    /** The ID string for the testnet. */
+    public static final String ID_TESTNET = TEST.id();
+    /** The ID string for the signet. */
+    public static final String ID_SIGNET = SIGNET.id();
+    /** The ID string for regtest mode. */
+    public static final String ID_REGTEST = REGTEST.id();
+    /** The ID string for the Unit test network -- there is no corresponding {@code enum}. */
+    public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
 
     private final String id;
 
@@ -34,7 +45,7 @@ public enum Network {
     }
 
     /**
-     * Get the network id string as specified in {@link NetworkParameters}
+     * Get the network id string (previously specified in {@code NetworkParameters})
      *
      * @return The network id string
      */
@@ -43,44 +54,16 @@ public enum Network {
     }
 
     /**
-     * Get the associated {@link NetworkParameters}
-     *
-     * @return The network parameters
-     */
-    public NetworkParameters networkParameters() {
-        return NetworkParameters.fromID(id);
-    }
-
-    /**
-     * Get the correct enum for a NetworkParameters
-     * Note: UNITTEST is not supported as an enum
-     * @param networkParameters specifies the network
-     * @return the enum
-     */
-    public static Network of(NetworkParameters networkParameters) {
-        return of(networkParameters.getId());
-    }
-
-    /**
      * Get the correct enum for a network id string
+     * <p>
      * Note: UNITTEST is not supported as an enum
      * @param idString specifies the network
      * @return the enum
      */
     public static Network of(String idString) {
-        switch (idString) {
-            case NetworkParameters.ID_MAINNET:
-                return MAIN;
-            case NetworkParameters.ID_TESTNET:
-                return TEST;
-            case NetworkParameters.ID_SIGNET:
-                return SIGNET;
-            case NetworkParameters.ID_REGTEST:
-                return REGTEST;
-            case NetworkParameters.ID_UNITTESTNET:
-                return REGTEST;
-            default:
-                throw new IllegalArgumentException("Illegal NetworkParameters: " + idString);
-        }
+        return Arrays.stream(values())
+                .filter(n -> n.id.equals(idString))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Illegal network ID: " + idString));
     }
 }
