@@ -114,14 +114,14 @@ public class ByteUtils {
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format. */
     public static void uint16ToByteStreamLE(int val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & val));
-        stream.write((int) (0xFF & (val >> 8)));
+        stream.write(0xFF & val);
+        stream.write(0xFF & (val >> 8));
     }
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format. */
     public static void uint16ToByteStreamBE(int val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & (val >> 8)));
-        stream.write((int) (0xFF & val));
+        stream.write(0xFF & (val >> 8));
+        stream.write(0xFF & val);
     }
 
     /** Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format. */
