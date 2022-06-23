@@ -342,7 +342,7 @@ public class ByteUtils {
             result >>= 8;
             size++;
         }
-        result |= size << 24;
+        result |= (long) size << 24;
         result |= value.signum() == -1 ? 0x00800000 : 0;
         return result;
     }
