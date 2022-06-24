@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * keys exported using Bitcoin Core's dumpprivkey command.
  * </p>
  */
-public abstract class PrefixedChecksummedBytes {
+public abstract class PrefixedChecksummedBytes implements NetworkParametersSupplier {
     protected final NetworkParameters params;
     protected final byte[] bytes;
 
@@ -47,6 +47,7 @@ public abstract class PrefixedChecksummedBytes {
     /**
      * @return network this data is valid for
      */
+    @Override
     public final NetworkParameters getParameters() {
         return params;
     }

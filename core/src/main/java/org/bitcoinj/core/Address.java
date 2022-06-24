@@ -20,7 +20,11 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
@@ -28,7 +32,9 @@ import java.util.Comparator;
  * Use {@link #fromString(NetworkParameters, String)} to conveniently construct any kind of address from its textual
  * form.
  */
-public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
+public abstract class Address implements NetworkParametersSupplier, Comparable<Address> {
+    protected final NetworkParameters params;
+    protected final byte[] bytes;
 
     /**
      * Construct an address from its binary form.
@@ -37,7 +43,8 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      * @param bytes the binary address data
      */
     protected Address(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(bytes);
     }
 
     /**
@@ -88,6 +95,27 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
             return SegwitAddress.fromKey(params, key);
         else
             throw new IllegalArgumentException(outputScriptType.toString());
+    }
+
+    /**
+     * @return network this data is valid for
+     */
+    @Override
+    public final NetworkParameters getParameters() {
+        return params;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(params, Arrays.hashCode(bytes));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Address other = (Address) o;
+        return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
