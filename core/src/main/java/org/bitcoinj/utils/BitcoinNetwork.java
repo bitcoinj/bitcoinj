@@ -21,7 +21,7 @@ import java.util.Arrays;
 /**
  * A convenient {@code enum} representation of a network.
  */
-public enum BitcoinNetwork {
+public enum BitcoinNetwork implements Network {
     MAIN("org.bitcoin.production"),
     TEST("org.bitcoin.test"),
     SIGNET("org.bitcoin.signet"),
@@ -49,6 +49,7 @@ public enum BitcoinNetwork {
      *
      * @return The network id string
      */
+    @Override
     public String id() {
         return id;
     }
