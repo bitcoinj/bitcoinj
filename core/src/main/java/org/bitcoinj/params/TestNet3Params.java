@@ -25,7 +25,7 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -46,8 +46,8 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
 
     public TestNet3Params() {
         super();
-        network = Network.TEST;
-        id = Network.ID_TESTNET;
+        network = BitcoinNetwork.TEST;
+        id = BitcoinNetwork.ID_TESTNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);

@@ -29,13 +29,12 @@ import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.crypto.LinuxSecureRandom;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
@@ -271,7 +270,7 @@ public class KeyChainGroup implements KeyBag {
         if (chains != null) {
             if (lookaheadSize > -1)
                 this.lookaheadSize = lookaheadSize;
-            else if (params.getId().equals(Network.ID_UNITTESTNET))
+            else if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
                 this.lookaheadSize = 5; // Cut down excess computation for unit tests.
             if (lookaheadThreshold > -1)
                 this.lookaheadThreshold = lookaheadThreshold;
@@ -1013,7 +1012,7 @@ public class KeyChainGroup implements KeyBag {
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                     .outputScriptType(ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, Network.MAIN)).build();
+                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAIN)).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);

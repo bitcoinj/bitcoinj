@@ -22,7 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ public class DefaultCoinSelector implements CoinSelector {
                type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
-               (confidence.numBroadcastPeers() > 0 || tx.getParams().getId().equals(Network.ID_REGTEST));
+               (confidence.numBroadcastPeers() > 0 || tx.getParams().getId().equals(BitcoinNetwork.ID_REGTEST));
     }
 
     private static DefaultCoinSelector instance;

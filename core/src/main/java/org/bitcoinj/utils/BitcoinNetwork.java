@@ -21,7 +21,7 @@ import java.util.Arrays;
 /**
  * A convenient {@code enum} representation of a network.
  */
-public enum Network {
+public enum BitcoinNetwork {
     MAIN("org.bitcoin.production"),
     TEST("org.bitcoin.test"),
     SIGNET("org.bitcoin.signet"),
@@ -40,7 +40,7 @@ public enum Network {
 
     private final String id;
 
-    Network(String networkId) {
+    BitcoinNetwork(String networkId) {
         id = networkId;
     }
 
@@ -60,7 +60,7 @@ public enum Network {
      * @param idString specifies the network
      * @return the enum
      */
-    public static Network of(String idString) {
+    public static BitcoinNetwork of(String idString) {
         return Arrays.stream(values())
                 .filter(n -> n.id.equals(idString))
                 .findFirst()

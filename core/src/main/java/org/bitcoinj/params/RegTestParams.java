@@ -20,7 +20,7 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -34,8 +34,8 @@ public class RegTestParams extends AbstractBitcoinNetParams {
 
     public RegTestParams() {
         super();
-        network = Network.REGTEST;
-        id = Network.ID_REGTEST;
+        network = BitcoinNetwork.REGTEST;
+        id = BitcoinNetwork.ID_REGTEST;
         
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

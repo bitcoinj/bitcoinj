@@ -28,7 +28,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;
@@ -86,7 +86,7 @@ public abstract class NetworkParameters {
      * by looking at the port number.
      */
     protected String id;
-    protected Network network;
+    protected BitcoinNetwork network;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
@@ -134,7 +134,7 @@ public abstract class NetworkParameters {
     /**
      * @return Network enum for this network
      */
-    public Network network() {
+    public BitcoinNetwork network() {
         return network;
     }
 
@@ -159,15 +159,15 @@ public abstract class NetworkParameters {
      */
     @Nullable
     public static NetworkParameters fromID(String id) {
-        if (id.equals(Network.ID_MAINNET)) {
+        if (id.equals(BitcoinNetwork.ID_MAINNET)) {
             return MainNetParams.get();
-        } else if (id.equals(Network.ID_TESTNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_TESTNET)) {
             return TestNet3Params.get();
-        } else if (id.equals(Network.ID_SIGNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_SIGNET)) {
             return SigNetParams.get();
-        } else if (id.equals(Network.ID_UNITTESTNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        } else if (id.equals(Network.ID_REGTEST)) {
+        } else if (id.equals(BitcoinNetwork.ID_REGTEST)) {
             return RegTestParams.get();
         } else {
             return null;
@@ -175,12 +175,12 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * Return network parameters for a {@link Network} enum
+     * Return network parameters for a {@link BitcoinNetwork} enum
      * @param network the network
      * @return the network parameters for the given string ID
      * @throws IllegalArgumentException if unknown network
      */
-    public static NetworkParameters of(Network network) {
+    public static NetworkParameters of(BitcoinNetwork network) {
         switch (network) {
             case MAIN:
                 return MainNetParams.get();

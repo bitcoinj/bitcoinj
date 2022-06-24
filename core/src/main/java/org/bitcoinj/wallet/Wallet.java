@@ -81,7 +81,7 @@ import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.utils.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.utils.BitcoinNetwork;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
@@ -3999,7 +3999,7 @@ public class Wallet extends BaseTaggableObject
     public Transaction createSend(Address address, Coin value, boolean allowUnconfirmed)
             throws InsufficientMoneyException, BadWalletEncryptionKeyException {
         SendRequest req = SendRequest.to(address, value);
-        if (params.getId().equals(Network.ID_UNITTESTNET))
+        if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
             req.shuffleOutputs = false;
         if (allowUnconfirmed)
             req.allowUnconfirmed();
