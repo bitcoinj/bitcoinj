@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -147,6 +148,15 @@ public abstract class Address implements Comparable<Address> {
      */
     @Override
     abstract public int compareTo(Address o);
+
+    /**
+     * Get the network this address works on. Use of {@link Network} is preferred to use of {@link NetworkParameters}
+     * when you need to know what network an address is for.
+     * @return the Network.
+     */
+    public Network network() {
+        return params.network();
+    }
 
     /**
      * Comparator for the first two comparison fields in {@code Address} comparisons, see {@link Address#compareTo(Address)}.
