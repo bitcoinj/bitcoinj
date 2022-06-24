@@ -80,7 +80,6 @@ public class Context {
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
         lastConstructed = this;
-        slot.set(this);
     }
 
     private static volatile Context lastConstructed;

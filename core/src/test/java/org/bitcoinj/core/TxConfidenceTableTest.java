@@ -46,6 +46,7 @@ public class TxConfidenceTableTest {
     public void setup() throws Exception {
         BriefLogFormatter.init();
         Context context = new Context(UNITTEST);
+        Context.propagate(context);
         table = context.getConfidenceTable();
 
         Address to = LegacyAddress.fromKey(UNITTEST, new ECKey());
