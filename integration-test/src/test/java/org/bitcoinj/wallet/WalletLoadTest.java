@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.HDPath;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,7 @@ public class WalletLoadTest {
 
     @Test
     void basicWalletLoadTest() throws UnreadableWalletException {
+        Context.propagate(new Context());
         Wallet wallet = Wallet.loadFromFile(walletFile);
 
         long creation = wallet.getKeyChainSeed().getCreationTimeSeconds();

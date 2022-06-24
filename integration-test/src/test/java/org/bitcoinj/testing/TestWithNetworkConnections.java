@@ -102,7 +102,7 @@ public class TestWithNetworkConnections {
     
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {

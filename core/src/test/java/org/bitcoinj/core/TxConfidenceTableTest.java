@@ -45,7 +45,7 @@ public class TxConfidenceTableTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        Context context = new Context(UNITTEST);
+        Context context = new Context();
         Context.propagate(context);
         table = context.getConfidenceTable();
 

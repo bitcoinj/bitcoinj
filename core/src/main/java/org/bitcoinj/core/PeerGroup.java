@@ -329,45 +329,30 @@ public class PeerGroup implements TransactionBroadcaster {
     /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
     private volatile boolean vBloomFilteringEnabled = true;
 
-    /** See {@link #PeerGroup(Context)} */
+    /**
+     * Creates a PeerGroup with the given network. No chain is provided so this node will report its chain height
+     * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
+     * in downloading block data.
+     */
     public PeerGroup(NetworkParameters params) {
         this(params, null);
     }
 
     /**
-     * Creates a PeerGroup with the given context. No chain is provided so this node will report its chain height
-     * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
-     * in downloading block data.
-     */
-    public PeerGroup(Context context) {
-        this(context, null);
-    }
-
-    /** See {@link #PeerGroup(Context, AbstractBlockChain)} */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
-        this(Context.getOrCreate(params), chain, new NioClientManager());
-    }
-
-    /**
-     * Creates a PeerGroup for the given context and chain. Blocks will be passed to the chain as they are broadcast
+     * Creates a PeerGroup for the given network and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
      */
-    public PeerGroup(Context context, @Nullable AbstractBlockChain chain) {
-        this(context, chain, new NioClientManager());
-    }
-
-    /** See {@link #PeerGroup(Context, AbstractBlockChain, ClientConnectionManager)} */
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(Context.getOrCreate(params), chain, connectionManager);
+    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
+        this(params, chain, new NioClientManager());
     }
 
     /**
      * Creates a new PeerGroup allowing you to specify the {@link ClientConnectionManager} which is used to create new
      * connections and keep track of existing ones.
      */
-    private PeerGroup(Context context, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        checkNotNull(context);
-        this.params = context.getParams();
+    protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
+        checkNotNull(params);
+        this.params = params;
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
         wallets = new CopyOnWriteArrayList<>();

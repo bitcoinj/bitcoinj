@@ -70,7 +70,7 @@ public class BloomFilterTest {
 
     @Test
     public void walletTest() {
-        Context.propagate(new Context(MAINNET));
+        Context.propagate(new Context());
 
         DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
 

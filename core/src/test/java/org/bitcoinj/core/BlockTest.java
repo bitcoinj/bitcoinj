@@ -225,8 +225,7 @@ public class BlockTest {
         // Create a wallet contain the miner's key that receives a spend from a coinbase.
         ECKey miningKey = DumpedPrivateKey.fromBase58(MAINNET, MINING_PRIVATE_KEY).getKey();
         assertNotNull(miningKey);
-        Context context = new Context(MAINNET);
-        Wallet wallet = Wallet.createDeterministic(context, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(MAINNET, ScriptType.P2PKH);
         wallet.importKey(miningKey);
 
         // Initial balance should be zero by construction.

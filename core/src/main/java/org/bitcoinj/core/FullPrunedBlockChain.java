@@ -71,50 +71,27 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using
      * {@link Wallet#loadFromFile(File, WalletExtension...)}
      */
-    public FullPrunedBlockChain(Context context, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
-    }
-
-    /**
-     * Constructs a block chain connected to the given wallet and store. To obtain a {@link Wallet} you can construct
-     * one from scratch, or you can deserialize a saved wallet from disk using
-     * {@link Wallet#loadFromFile(File, WalletExtension...)}
-     */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), wallet, blockStore);
+        this(params, new ArrayList<Wallet>(), blockStore);
+        addWallet(wallet);
     }
 
     /**
      * Constructs a block chain connected to the given store.
      */
-    public FullPrunedBlockChain(Context context, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(context, new ArrayList<Wallet>(), blockStore);
-    }
-
-    /**
-     * See {@link #FullPrunedBlockChain(Context, Wallet, FullPrunedBlockStore)}
-     */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), blockStore);
+        this(params, new ArrayList<Wallet>(), blockStore);
     }
 
     /**
      * Constructs a block chain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(Context context, List<Wallet> listeners, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        super(context, listeners, blockStore);
+    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
+                                FullPrunedBlockStore blockStore) throws BlockStoreException {
+        super(params, listeners, blockStore);
         this.blockStore = blockStore;
         // Ignore upgrading for now
         this.chainHead = blockStore.getVerifiedChainHead();
-    }
-
-    /**
-     * See {@link #FullPrunedBlockChain(Context, List, FullPrunedBlockStore)}
-     */
-    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
-                                FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), listeners, blockStore);
     }
 
     @Override

@@ -233,7 +233,6 @@ public class Wallet extends BaseTaggableObject
     // A list of scripts watched by this wallet.
     @GuardedBy("keyChainGroupLock") private final Set<Script> watchedScripts;
 
-    protected final Context context;
     protected final NetworkParameters params;
 
     @Nullable private Sha256Hash lastBlockSeenHash;
@@ -307,7 +306,7 @@ public class Wallet extends BaseTaggableObject
      * @return A new empty wallet
      */
     public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType) {
-        return createDeterministic(Context.getOrCreate(params), outputScriptType, KeyChainGroupStructure.BIP32);
+        return createDeterministic(params, outputScriptType, KeyChainGroupStructure.BIP32);
     }
 
     /**
@@ -320,32 +319,7 @@ public class Wallet extends BaseTaggableObject
      * @return A new empty wallet
      */
     public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return createDeterministic(Context.getOrCreate(params), outputScriptType, keyChainGroupStructure);
-    }
-
-    /**
-     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
-     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
-     * {@link #loadFromFile}.
-     * @param context bitcoinj context
-     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
-     * @return A new empty wallet
-     */
-    public static Wallet createDeterministic(Context context, ScriptType outputScriptType) {
-        return createDeterministic(context, outputScriptType, KeyChainGroupStructure.BIP32);
-    }
-
-    /**
-     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
-     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
-     * {@link #loadFromFile}.
-     * @param context bitcoinj context
-     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
-     * @param keyChainGroupStructure structure (e.g. BIP32 or BIP43)
-     * @return A new empty wallet
-     */
-    public static Wallet createDeterministic(Context context, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return new Wallet(context, KeyChainGroup.builder(context.getParams(), keyChainGroupStructure).fromRandom(outputScriptType).build());
+        return new Wallet(params, KeyChainGroup.builder(params, keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
     /**
@@ -470,12 +444,7 @@ public class Wallet extends BaseTaggableObject
      * @param keyChainGroup keychain group to manage keychains
      */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this(Context.getOrCreate(params), keyChainGroup);
-    }
-
-    private Wallet(Context context, KeyChainGroup keyChainGroup) {
-        this.context = checkNotNull(context);
-        this.params = checkNotNull(context.getParams());
+        this.params = checkNotNull(params);
         this.keyChainGroup = checkNotNull(keyChainGroup);
         watchedScripts = new HashSet<>();
         unspent = new HashMap<>();
@@ -1687,11 +1656,6 @@ public class Wallet extends BaseTaggableObject
         return params;
     }
 
-    /** Returns the API context that this wallet was created with. */
-    public Context getContext() {
-        return context;
-    }
-
     /**
      * Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
      * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
@@ -2376,7 +2340,7 @@ public class Wallet extends BaseTaggableObject
                         // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
                         // but this way is backwards compatible with existing software, and the new state probably
                         // wouldn't mean anything different to just remembering peers anyway.
-                        if (confidence.incrementDepthInBlocks() > context.getEventHorizon())
+                        if (confidence.incrementDepthInBlocks() > Context.getOrCreate().getEventHorizon())
                             confidence.clearBroadcastBy();
                         confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                     }

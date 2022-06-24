@@ -77,7 +77,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Before
     public void setUp() {
         BriefLogFormatter.init();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false));
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
@@ -234,13 +234,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
     
     @Test
     public void testFirst100KBlocks() throws Exception {
-        Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
         
         store = createStore(MAINNET, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(context, store);
+        chain = new FullPrunedBlockChain(MAINNET, store);
         for (Block block : loader)
             chain.add(block);
         try {

@@ -86,10 +86,10 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         Utils.setMockClock(); // Use mock clock
-        Context.propagate(new Context(TESTNET, 100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
-        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
-        NetworkParameters params = Context.get().getParams();
+        Context.propagate(new Context(100, Coin.ZERO, false));
+        NetworkParameters params = TESTNET;
         wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
@@ -432,7 +432,7 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        BlockChain prod = new BlockChain(new Context(MAINNET), new MemoryBlockStore(MAINNET));
+        BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).parse("2012-10-23T08:35:05.000-0700"), d);

@@ -69,7 +69,7 @@ public class TestWithWallet {
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false));
         wallet = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
         myKey = wallet.freshReceiveKey();
         myAddress = wallet.freshReceiveAddress(ScriptType.P2PKH);

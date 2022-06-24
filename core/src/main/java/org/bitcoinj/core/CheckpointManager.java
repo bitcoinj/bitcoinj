@@ -89,8 +89,8 @@ public class CheckpointManager {
     public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
 
     /** Loads the default checkpoints bundled with bitcoinj */
-    public CheckpointManager(Context context) throws IOException {
-        this(context.getParams(), null);
+    public CheckpointManager(NetworkParameters params) throws IOException {
+        this(params, null);
     }
 
     /** Loads the checkpoints from the given stream */

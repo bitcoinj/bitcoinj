@@ -49,7 +49,6 @@ public class Context {
     public static final int DEFAULT_EVENT_HORIZON = 100;
 
     final private TxConfidenceTable confidenceTable;
-    final private NetworkParameters params;
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
@@ -57,25 +56,21 @@ public class Context {
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
      * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
-     *
-     * @param params The network parameters that will be associated with this context.
      */
-    public Context(NetworkParameters params) {
-        this(params, DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true);
+    public Context() {
+        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true);
     }
 
     /**
      * Creates a new custom context object. This is mainly meant for unit tests for now.
      *
-     * @param params The network parameters that will be associated with this context.
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
      * @param feePerKb The default fee per 1000 virtual bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
      */
-    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
+    public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
         this.confidenceTable = new TxConfidenceTable();
-        this.params = params;
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
@@ -129,17 +124,15 @@ public class Context {
     }
 
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
-    public static Context getOrCreate(NetworkParameters params) {
+    public static Context getOrCreate() {
         Context context;
         try {
             context = get();
         } catch (IllegalStateException e) {
             log.warn("Implicitly creating context. This is a migration step and this message will eventually go away.");
-            context = new Context(params);
+            context = new Context();
             return context;
         }
-        if (context.getParams() != params)
-            throw new IllegalStateException("Context does not match implicit network params: " + context.getParams() + " vs " + params);
         return context;
     }
 
@@ -161,15 +154,6 @@ public class Context {
      */
     public TxConfidenceTable getConfidenceTable() {
         return confidenceTable;
-    }
-
-    /**
-     * Returns the {@link NetworkParameters} specified when this context was (auto) created. The
-     * network parameters defines various hard coded constants for a specific instance of a Bitcoin network, such as
-     * main net, testnet, etc.
-     */
-    public NetworkParameters getParams() {
-        return params;
     }
 
     /**

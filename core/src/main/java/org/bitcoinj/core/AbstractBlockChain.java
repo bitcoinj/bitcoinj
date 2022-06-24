@@ -167,22 +167,10 @@ public abstract class AbstractBlockChain {
      */
     public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), wallets, blockStore);
-    }
-
-    /**
-     * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
-     * @param context context for this network
-     * @param wallets list of listeners (wallets)
-     * @param blockStore where to store blocks
-     * @throws BlockStoreException if a failure occurs while storing a block
-     */
-    public AbstractBlockChain(Context context, List<? extends Wallet> wallets,
-                              BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
-        this.params = context.getParams();
+        this.params = params;
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<>();
         this.reorganizeListeners = new CopyOnWriteArrayList<>();
@@ -191,7 +179,7 @@ public abstract class AbstractBlockChain {
         for (ReorganizeListener l : wallets) addReorganizeListener(Threading.SAME_THREAD, l);
         for (TransactionReceivedInBlockListener l : wallets) addTransactionReceivedListener(Threading.SAME_THREAD, l);
 
-        this.versionTally = new VersionTally(context.getParams());
+        this.versionTally = new VersionTally(params);
         this.versionTally.initialize(blockStore, chainHead);
     }
 

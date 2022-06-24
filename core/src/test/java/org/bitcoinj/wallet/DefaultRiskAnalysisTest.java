@@ -20,7 +20,6 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
@@ -58,7 +57,7 @@ public class DefaultRiskAnalysisTest {
 
     @Before
     public void setup() {
-        wallet = Wallet.createDeterministic(new Context(MAINNET), ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(MAINNET, ScriptType.P2PKH);
         wallet.setLastBlockSeenHeight(1000);
         wallet.setLastBlockSeenTimeSecs(TIMESTAMP);
     }

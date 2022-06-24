@@ -110,8 +110,6 @@ public class WalletAppKit extends AbstractIdleService {
     @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
 
-    protected volatile Context context;
-
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
      * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
@@ -144,25 +142,8 @@ public class WalletAppKit extends AbstractIdleService {
                         KeyChainGroupStructure structure, File directory, String filePrefix) {
         this.network = checkNotNull(network);
         this.params = NetworkParameters.of(this.network);
-        this.context = new Context(params);
         this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
         this.structure = checkNotNull(structure);
-        this.directory = checkNotNull(directory);
-        this.filePrefix = checkNotNull(filePrefix);
-    }
-
-    /**
-     * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
-     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
-     */
-    @Deprecated
-    public WalletAppKit(Context context, ScriptType preferredOutputScriptType,
-            @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this.context = context;
-        this.params = checkNotNull(context.getParams());
-        this.network = params.network();
-        this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
-        this.structure = structure != null ? structure : KeyChainGroupStructure.BIP32;
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
     }
@@ -331,7 +312,6 @@ public class WalletAppKit extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
-        Context.propagate(context);
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());
@@ -507,7 +487,6 @@ public class WalletAppKit extends AbstractIdleService {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
-            Context.propagate(context);
             vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();

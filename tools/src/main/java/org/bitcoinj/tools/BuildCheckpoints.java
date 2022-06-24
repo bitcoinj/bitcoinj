@@ -75,7 +75,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     public Integer call() throws Exception {
         final String suffix;
         params = NetworkParameters.of(net);
-        Context.propagate(new Context(params));
+        Context.propagate(new Context());
 
         switch (net) {
             case MAINNET:
