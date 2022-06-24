@@ -17,7 +17,6 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Utils;
@@ -48,7 +47,6 @@ public class VersionTallyTest {
     @Before
     public void setUp() {
         BriefLogFormatter.initVerbose();
-        Context context = new Context(UNITTEST);
     }
 
     /**

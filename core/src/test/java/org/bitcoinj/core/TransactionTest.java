@@ -75,7 +75,6 @@ public class TransactionTest {
 
     @Before
     public void setUp() {
-        Context context = new Context(UNITTEST);
         tx = FakeTxBuilder.createFakeTx(UNITTEST);
     }
 

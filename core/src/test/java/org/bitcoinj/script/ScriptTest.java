@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.DumpedPrivateKey;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
@@ -45,7 +44,6 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.hamcrest.core.IsNot;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,11 +85,6 @@ public class ScriptTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private static final Logger log = LoggerFactory.getLogger(ScriptTest.class);
-
-    @Before
-    public void setUp() {
-        Context context = new Context(TESTNET);
-    }
 
     @Test
     public void testScriptSig() {

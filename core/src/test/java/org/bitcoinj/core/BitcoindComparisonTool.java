@@ -68,8 +68,6 @@ public class BitcoindComparisonTool {
         System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
-        Context ctx = new Context(PARAMS);
-
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
 

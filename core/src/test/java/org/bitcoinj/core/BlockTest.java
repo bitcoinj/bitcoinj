@@ -59,7 +59,6 @@ public class BlockTest {
 
     @Before
     public void setUp() throws Exception {
-        new Context(TESTNET);
         // One with some of transactions in, so a good test of the merkle tree hashing.
         block700000Bytes = ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"));
         block700000 = TESTNET.getDefaultSerializer().makeBlock(block700000Bytes);

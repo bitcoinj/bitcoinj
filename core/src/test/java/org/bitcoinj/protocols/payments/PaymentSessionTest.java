@@ -21,7 +21,6 @@ import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -67,7 +66,6 @@ public class PaymentSessionTest {
 
     @Before
     public void setUp() {
-        new Context(TESTNET);
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
         outputToMe = new TransactionOutput(TESTNET, tx, amount, serverKey);

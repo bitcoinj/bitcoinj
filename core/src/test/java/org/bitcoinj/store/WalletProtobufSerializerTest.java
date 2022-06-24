@@ -26,7 +26,6 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BlockTest;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -103,7 +102,6 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() {
         BriefLogFormatter.initVerbose();
-        Context ctx = new Context(UNITTEST);
         myWatchedKey = new ECKey();
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
