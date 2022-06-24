@@ -411,7 +411,7 @@ public class PaymentProtocol {
     public static Protos.Output createPayToAddressOutput(@Nullable Coin amount, Address address) {
         Protos.Output.Builder output = Protos.Output.newBuilder();
         if (amount != null) {
-            final NetworkParameters params = address.getParameters();
+            final NetworkParameters params = NetworkParameters.fromAddress(address);
             if (params.hasMaxMoney() && amount.compareTo(params.getMaxMoney()) > 0)
                 throw new IllegalArgumentException("Amount too big: " + amount);
             output.setAmount(amount.value);

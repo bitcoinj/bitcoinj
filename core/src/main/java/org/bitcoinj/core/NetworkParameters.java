@@ -217,6 +217,27 @@ public abstract class NetworkParameters {
         }
     }
 
+    /**
+     * Get a NetworkParameters from an Address.
+     * Addresses should not be used for storing NetworkParameters. In the future Address will
+     * be an {@code interface} that only makes a {@link Network} available.
+     * @param address An address
+     * @return network parameters
+     * @deprecated You should be retrieving a {@link Network} instead
+     */
+    @Deprecated
+    public static NetworkParameters fromAddress(Address address) {
+        NetworkParameters parameters;
+        if (address instanceof SegwitAddress)  {
+            parameters = ((SegwitAddress)address).getParameters();
+        } else if (address instanceof LegacyAddress) {
+            parameters = ((LegacyAddress)address).getParameters();
+        } else {
+            parameters = null;
+        }
+        return parameters;
+    }
+
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }
