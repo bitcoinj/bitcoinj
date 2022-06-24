@@ -20,7 +20,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.utils.BitcoinNetwork;
+import org.bitcoinj.base.BitcoinNetwork;
 
 /**
  *  Defines a structure for hierarchical deterministic wallets.

@@ -28,7 +28,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.utils.BitcoinNetwork;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.Test;
 
 import java.io.BufferedReader;

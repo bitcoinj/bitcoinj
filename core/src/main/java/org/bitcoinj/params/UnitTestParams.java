@@ -20,7 +20,7 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.utils.BitcoinNetwork;
+import org.bitcoinj.base.BitcoinNetwork;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using

@@ -29,7 +29,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.utils.BitcoinNetwork;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;

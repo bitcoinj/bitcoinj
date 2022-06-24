@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.utils;
+package org.bitcoinj.base;
 
 /**
  * Cryptocurrency network identifier. In <b>bitcoinj</b> the only implementation of this
