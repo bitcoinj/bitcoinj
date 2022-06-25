@@ -27,6 +27,7 @@ import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -55,7 +56,7 @@ public abstract class WalletApplication implements AppDelegate {
     public WalletApplication(String applicationName, NetworkParameters params, ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
         this.applicationName = applicationName;
-        this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + params.getPaymentProtocolId();
+        this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + suffixFromNetParams(params);
         this.params = params;
         this.preferredOutputScriptType = preferredOutputScriptType;
         this.keyChainGroupStructure = keyChainGroupStructure;
@@ -174,5 +175,24 @@ public abstract class WalletApplication implements AppDelegate {
         walletAppKit.awaitTerminated();
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
+    }
+
+    protected String suffixFromNetParams(NetworkParameters params) {
+        return suffixFromNetwork(params.network());
+    }
+
+    protected String suffixFromNetwork(Network network) {
+        switch(network) {
+            case MAIN:
+                return "main";
+            case TEST:
+                return "test";
+            case SIGNET:
+                return "signet";
+            case REGTEST:
+                return "regtest";
+            default:
+                throw new IllegalArgumentException("Unsupported network");
+        }
     }
 }
