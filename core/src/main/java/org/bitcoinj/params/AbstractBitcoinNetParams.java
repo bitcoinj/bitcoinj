@@ -32,9 +32,11 @@ import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
+import org.bitcoinj.utils.Network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +68,28 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         super();
         interval = INTERVAL;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
+    }
+
+    /**
+     * Return network parameters for a network id
+     * @param id the network id
+     * @return the network parameters for the given string ID or NULL if not recognized
+     */
+    @Nullable
+    public static AbstractBitcoinNetParams fromID(String id) {
+        if (id.equals(Network.ID_MAINNET)) {
+            return MainNetParams.get();
+        } else if (id.equals(Network.ID_TESTNET)) {
+            return TestNet3Params.get();
+        } else if (id.equals(Network.ID_SIGNET)) {
+            return SigNetParams.get();
+        } else if (id.equals(Network.ID_UNITTESTNET)) {
+            return UnitTestParams.get();
+        } else if (id.equals(Network.ID_REGTEST)) {
+            return RegTestParams.get();
+        } else {
+            return null;
+        }
     }
 
     /**
