@@ -28,6 +28,7 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
@@ -65,6 +66,15 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         super();
         interval = INTERVAL;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
+    }
+
+    /**
+     * @return the payment protocol network id string
+     * @deprecated Use {@link PaymentProtocol#protocolIdFromParams(NetworkParameters)}
+     */
+    @Deprecated
+    public String getPaymentProtocolId() {
+        return PaymentProtocol.protocolIdFromParams(this);
     }
 
     /**

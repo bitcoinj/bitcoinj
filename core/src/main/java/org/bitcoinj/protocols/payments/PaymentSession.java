@@ -353,7 +353,7 @@ public class PaymentSession {
         if (paymentDetails.hasPaymentUrl()) {
             for (Transaction tx : txns)
                 if (!tx.getParams().equals(params))
-                    throw new PaymentProtocolException.InvalidNetwork(params.getPaymentProtocolId());
+                    throw new PaymentProtocolException.InvalidNetwork(PaymentProtocol.protocolIdFromParams(params));
             return PaymentProtocol.createPaymentMessage(txns, totalValue, refundAddr, memo, getMerchantData());
         } else {
             return null;
@@ -399,7 +399,7 @@ public class PaymentSession {
             if (!paymentDetails.hasNetwork())
                 params = MainNetParams.get();
             else
-                params = NetworkParameters.fromPmtProtocolID(paymentDetails.getNetwork());
+                params = PaymentProtocol.paramsFromPmtProtocolID(paymentDetails.getNetwork());
             if (params == null)
                 throw new PaymentProtocolException.InvalidNetwork("Invalid network " + paymentDetails.getNetwork());
             if (paymentDetails.getOutputsCount() < 1)

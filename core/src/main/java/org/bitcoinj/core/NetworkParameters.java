@@ -24,6 +24,7 @@ import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -51,14 +52,19 @@ import static org.bitcoinj.base.Coin.COIN;
 public abstract class NetworkParameters {
 
     /** The string used by the payment protocol to represent the main net. */
-    public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
+    @Deprecated
+    public static final String PAYMENT_PROTOCOL_ID_MAINNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_MAINNET;
     /** The string used by the payment protocol to represent the test net. */
-    public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
+    @Deprecated
+    public static final String PAYMENT_PROTOCOL_ID_TESTNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_TESTNET;
     /** The string used by the payment protocol to represent signet (note that this is non-standard). */
-    public static final String PAYMENT_PROTOCOL_ID_SIGNET = "signet";
+    @Deprecated
+    public static final String PAYMENT_PROTOCOL_ID_SIGNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_SIGNET;
     /** The string used by the payment protocol to represent unit testing (note that this is non-standard). */
-    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
-    public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
+    @Deprecated
+    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = PaymentProtocol.PAYMENT_PROTOCOL_ID_UNIT_TESTS;
+    @Deprecated
+    public static final String PAYMENT_PROTOCOL_ID_REGTEST = PaymentProtocol.PAYMENT_PROTOCOL_ID_REGTEST;
 
     // TODO: Seed nodes should be here as well.
 
@@ -138,6 +144,11 @@ public abstract class NetworkParameters {
         return network;
     }
 
+    /**
+     * @return the payment protocol network id string
+     * @deprecated Use {@link PaymentProtocol#protocolIdFromParams(NetworkParameters)}
+     */
+    @Deprecated
     public abstract String getPaymentProtocolId();
 
     @Override
@@ -156,7 +167,9 @@ public abstract class NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
+     * @deprecated Use {@link AbstractBitcoinNetParams#fromID(String)}
      */
+    @Deprecated
     @Nullable
     public static NetworkParameters fromID(String id) {
         if (id.equals(Network.ID_MAINNET)) {
@@ -199,22 +212,12 @@ public abstract class NetworkParameters {
      * Return network parameters for a paymentProtocol ID string
      * @param pmtProtocolId paymentProtocol ID string
      * @return network parameters for the given string paymentProtocolID or NULL if not recognized
+     * @deprecated Use {@link PaymentProtocol#paramsFromPmtProtocolID(String)} (String)}
      */
     @Nullable
+    @Deprecated
     public static NetworkParameters fromPmtProtocolID(String pmtProtocolId) {
-        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
-            return MainNetParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
-            return TestNet3Params.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_SIGNET)) {
-            return SigNetParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
-            return UnitTestParams.get();
-        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
-            return null;
-        }
+        return PaymentProtocol.paramsFromPmtProtocolID(pmtProtocolId);
     }
 
     public int getSpendableCoinbaseDepth() {

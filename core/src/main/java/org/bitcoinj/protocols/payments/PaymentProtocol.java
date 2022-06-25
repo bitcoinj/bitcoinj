@@ -27,6 +27,12 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.X509Utils;
+import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.SigNetParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptBuilder;
 
 import javax.annotation.Nullable;
@@ -71,6 +77,16 @@ public class PaymentProtocol {
     public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
     public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
 
+    /** The string used by the payment protocol to represent the main net. */
+    public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
+    /** The string used by the payment protocol to represent the test net. */
+    public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
+    /** The string used by the payment protocol to represent signet (note that this is non-standard). */
+    public static final String PAYMENT_PROTOCOL_ID_SIGNET = "signet";
+    /** The string used by the payment protocol to represent unit testing (note that this is non-standard). */
+    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
+    public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
+
     /**
      * Create a payment request with one standard pay to address output. You may want to sign the request using
      * {@link #signPaymentRequest}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
@@ -106,7 +122,7 @@ public class PaymentProtocol {
             List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
         final Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
-        paymentDetails.setNetwork(params.getPaymentProtocolId());
+        paymentDetails.setNetwork(protocolIdFromParams(params));
         for (Protos.Output output : outputs)
             paymentDetails.addOutputs(output);
         if (memo != null)
@@ -420,6 +436,44 @@ public class PaymentProtocol {
         }
         output.setScript(ByteString.copyFrom(ScriptBuilder.createOutputScript(address).getProgram()));
         return output.build();
+    }
+
+    /**
+     * Return network parameters for a paymentProtocol ID string
+     * @param pmtProtocolId paymentProtocol ID string
+     * @return network parameters for the given string paymentProtocolID or NULL if not recognized
+     */
+    @Nullable
+    public static AbstractBitcoinNetParams paramsFromPmtProtocolID(String pmtProtocolId) {
+        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
+            return MainNetParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
+            return TestNet3Params.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_SIGNET)) {
+            return SigNetParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
+            return RegTestParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
+            return UnitTestParams.get();
+        } else {
+            return null;
+        }
+    }
+
+    public static String protocolIdFromParams(NetworkParameters params) {
+        if (params instanceof MainNetParams) {
+            return PAYMENT_PROTOCOL_ID_MAINNET;
+        } else if (params instanceof TestNet3Params) {
+            return PAYMENT_PROTOCOL_ID_TESTNET;
+        } else if (params instanceof SigNetParams) {
+            return PAYMENT_PROTOCOL_ID_SIGNET;
+        } else if (params instanceof RegTestParams) {
+            return PAYMENT_PROTOCOL_ID_REGTEST;
+        } else if (params instanceof UnitTestParams) {
+            return PAYMENT_PROTOCOL_ID_UNIT_TESTS;
+        } else {
+            throw new IllegalArgumentException("Unknown network");
+        }
     }
 
     /**

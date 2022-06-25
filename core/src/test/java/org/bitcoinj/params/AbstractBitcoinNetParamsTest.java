@@ -30,11 +30,6 @@ public class AbstractBitcoinNetParamsTest {
         public Block getGenesisBlock() {
             return null;
         }
-
-        @Override
-        public String getPaymentProtocolId() {
-            return null;
-        }
     };
 
     @Test

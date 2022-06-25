@@ -100,11 +100,6 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
         return genesisBlock;
     }
 
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_TESTNET;
-    }
-
     // February 16th 2012
     private static final Date testnetDiffDate = new Date(1329264000000L);
 

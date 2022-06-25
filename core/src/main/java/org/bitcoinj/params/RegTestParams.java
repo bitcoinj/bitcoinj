@@ -91,9 +91,4 @@ public class RegTestParams extends AbstractBitcoinNetParams {
         }
         return genesisBlock;
     }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_REGTEST;
-    }
 }
