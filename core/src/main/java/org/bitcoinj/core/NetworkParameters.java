@@ -167,7 +167,6 @@ public abstract class NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
-     * @deprecated Use {@link AbstractBitcoinNetParams#fromID(String)}
      */
     @Deprecated
     @Nullable
