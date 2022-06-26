@@ -16,9 +16,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;

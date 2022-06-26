@@ -17,6 +17,7 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
@@ -25,7 +26,6 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.utils.Network;
 
 import java.math.BigInteger;
 import java.util.Date;

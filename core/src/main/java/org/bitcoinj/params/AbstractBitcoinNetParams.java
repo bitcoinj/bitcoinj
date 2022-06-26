@@ -18,6 +18,7 @@
 package org.bitcoinj.params;
 
 import com.google.common.base.Stopwatch;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -32,7 +33,6 @@ import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
-import org.bitcoinj.utils.Network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

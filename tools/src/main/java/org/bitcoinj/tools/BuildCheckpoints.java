@@ -17,13 +17,13 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Network;
 import org.bitcoinj.utils.Threading;
 import picocli.CommandLine;
 

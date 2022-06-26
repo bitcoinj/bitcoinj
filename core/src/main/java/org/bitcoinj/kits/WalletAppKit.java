@@ -19,6 +19,7 @@ package org.bitcoinj.kits;
 
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
@@ -34,7 +35,6 @@ import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.utils.Network;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.KeyChainGroupStructure;

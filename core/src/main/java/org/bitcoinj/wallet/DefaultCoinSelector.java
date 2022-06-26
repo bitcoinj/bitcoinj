@@ -18,11 +18,11 @@ package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.utils.Network;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

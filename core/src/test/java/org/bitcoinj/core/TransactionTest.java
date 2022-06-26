@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -29,7 +30,6 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.utils.Network;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
