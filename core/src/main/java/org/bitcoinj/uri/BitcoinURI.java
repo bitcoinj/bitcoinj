@@ -347,7 +347,7 @@ public class BitcoinURI {
      */
     public static String convertToBitcoinURI(Address address, Coin amount,
                                              String label, String message) {
-        return convertToBitcoinURI(address.getParameters(), address.toString(), amount, label, message);
+        return convertToBitcoinURI(NetworkParameters.fromAddress(address), address.toString(), amount, label, message);
     }
 
     /**

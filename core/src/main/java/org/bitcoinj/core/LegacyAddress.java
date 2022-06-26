@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
  * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
@@ -40,7 +42,9 @@ import java.util.Objects;
  * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
  * type) can contain a hash of a script instead.</p>
  */
-public class LegacyAddress extends Address {
+public class LegacyAddress extends CoreAddress {
+    protected final NetworkParameters params;
+    protected final byte[] bytes;
     /**
      * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
      */
@@ -62,7 +66,8 @@ public class LegacyAddress extends Address {
      *            20-byte hash of pubkey or script
      */
     private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws AddressFormatException {
-        super(params, hash160);
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(hash160);
         if (hash160.length != 20)
             throw new AddressFormatException.InvalidDataLength(
                     "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);
@@ -163,6 +168,14 @@ public class LegacyAddress extends Address {
         return Base58.encodeChecked(getVersion(), bytes);
     }
 
+    /**
+     * @return network this data is valid for
+     */
+    @Override
+    public final NetworkParameters getParameters() {
+        return params;
+    }
+
     /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
     @Override
     public byte[] getHash() {
@@ -188,9 +201,11 @@ public class LegacyAddress extends Address {
      * @return network the address is valid for
      * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
      */
+    @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
         return LegacyAddress.fromBase58(null, address).getParameters();
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -199,12 +214,17 @@ public class LegacyAddress extends Address {
         if (o == null || getClass() != o.getClass())
             return false;
         LegacyAddress other = (LegacyAddress) o;
-        return super.equals(other) && this.p2sh == other.p2sh;
+        return baseEquals(other) && this.p2sh == other.p2sh;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), p2sh);
+        return Objects.hash(baseHashCode(), p2sh);
     }
 
     @Override
@@ -218,9 +238,9 @@ public class LegacyAddress extends Address {
     }
 
     // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
-    private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
+    private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = CoreAddress.PARTIAL_ADDRESS_COMPARATOR
             .thenComparingInt(a -> ((LegacyAddress) a).getVersion())                    // Then compare Legacy address version byte
-            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
+            .thenComparing(Address::getBytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
 
     /**
      * {@inheritDoc}

@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
@@ -45,7 +46,10 @@ import static com.google.common.base.Preconditions.checkArgument;
  * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)} to construct a native
  * segwit address.</p>
  */
-public class SegwitAddress extends Address {
+public class SegwitAddress extends CoreAddress {
+    protected final NetworkParameters params;
+    protected final byte[] bytes;
+
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
     public static final int WITNESS_PROGRAM_LENGTH_SH = 32;
     public static final int WITNESS_PROGRAM_LENGTH_TR = 32;
@@ -91,7 +95,8 @@ public class SegwitAddress extends Address {
      *             if any of the sanity checks fail
      */
     private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
-        super(params, data);
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(data);
         if (data.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
@@ -124,6 +129,19 @@ public class SegwitAddress extends Address {
     public byte[] getWitnessProgram() {
         // skip version byte
         return convertBits(bytes, 1, bytes.length - 1, 5, 8, false);
+    }
+
+    /**
+     * @return network this data is valid for
+     */
+    @Override
+    public final NetworkParameters getParameters() {
+        return params;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @Override
@@ -159,6 +177,17 @@ public class SegwitAddress extends Address {
     @Override
     public String toString() {
         return toBech32();
+    }
+
+
+    @Override
+    public int hashCode() {
+        return baseHashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return baseEquals(o);
     }
 
     /**
@@ -288,8 +317,8 @@ public class SegwitAddress extends Address {
     }
 
     // Comparator for SegwitAddress, left argument must be SegwitAddress, right argument can be any Address
-    private static final Comparator<Address> SEGWIT_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
-            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Segwit bytes
+    private static final Comparator<Address> SEGWIT_ADDRESS_COMPARATOR = CoreAddress.PARTIAL_ADDRESS_COMPARATOR
+            .thenComparing(Address::getBytes, UnsignedBytes.lexicographicalComparator());    // Then compare Segwit bytes
 
     /**
      * {@inheritDoc}
