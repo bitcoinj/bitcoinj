@@ -69,6 +69,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <li>{@code label} any URL encoded alphanumeric</li>
  * <li>{@code message} any URL encoded alphanumeric</li>
  * </ul>
+ * TODO: Find a method other than NetworkParameters for getting the URI scheme.
  * 
  * @author Andreas Schildbach (initial code)
  * @author Jim Burton (enhancements for MultiBit)
@@ -347,7 +348,7 @@ public class BitcoinURI {
      */
     public static String convertToBitcoinURI(Address address, Coin amount,
                                              String label, String message) {
-        return convertToBitcoinURI(address.getParameters(), address.toString(), amount, label, message);
+        return convertToBitcoinURI(NetworkParameters.fromAddress(address), address.toString(), amount, label, message);
     }
 
     /**

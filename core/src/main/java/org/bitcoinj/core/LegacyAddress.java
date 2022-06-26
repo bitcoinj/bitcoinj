@@ -188,8 +188,10 @@ public class LegacyAddress extends Address {
      * @return network the address is valid for
      * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
      */
+    @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return LegacyAddress.fromBase58(null, address).getParameters();
+        // TODO: Provide a `Network`-based mechanism for resolving "alt addresses"
+        return NetworkParameters.fromAddress(LegacyAddress.fromBase58(null, address));
     }
 
     @Override

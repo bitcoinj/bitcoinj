@@ -100,7 +100,9 @@ public abstract class Address implements Comparable<Address> {
 
     /**
      * @return network this data is valid for
+     * @deprecated Use {@link #network()}
      */
+    @Deprecated
     public final NetworkParameters getParameters() {
         return params;
     }
