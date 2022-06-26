@@ -30,7 +30,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;

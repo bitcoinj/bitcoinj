@@ -81,7 +81,7 @@ import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.utils.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;

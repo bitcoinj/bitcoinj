@@ -25,7 +25,7 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 
 import java.math.BigInteger;
 import java.util.Date;

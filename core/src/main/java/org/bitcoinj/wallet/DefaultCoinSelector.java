@@ -22,7 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

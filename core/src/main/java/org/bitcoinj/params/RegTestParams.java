@@ -20,7 +20,7 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 
 import static com.google.common.base.Preconditions.checkState;
 

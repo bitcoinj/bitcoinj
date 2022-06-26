@@ -34,7 +34,7 @@ import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.utils.Network;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
