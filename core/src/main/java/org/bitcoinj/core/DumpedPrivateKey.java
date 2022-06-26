@@ -25,12 +25,16 @@ import org.bitcoinj.params.Networks;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Parses and generates private keys in the form used by the Bitcoin "dumpprivkey" command. This is the private key
  * bytes with a header byte and 4 checksum bytes at the end. If there are 33 private key bytes instead of 32, then
  * the last byte is a discriminator value for the compressed pubkey.
  */
-public class DumpedPrivateKey extends PrefixedChecksummedBytes {
+public class DumpedPrivateKey {
+    protected final NetworkParameters params;
+    protected final byte[] bytes;
 
     /**
      * Construct a private key from its Base58 representation.
@@ -61,7 +65,8 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
     }
 
     private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(bytes);
         if (bytes.length != 32 && bytes.length != 33)
             throw new AddressFormatException.InvalidDataLength(
                     "Wrong number of bytes for a private key (32 or 33): " + bytes.length);

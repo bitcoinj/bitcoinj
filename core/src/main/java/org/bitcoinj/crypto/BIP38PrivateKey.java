@@ -35,13 +35,16 @@ import java.security.GeneralSecurityException;
 import java.text.Normalizer;
 import java.util.Arrays;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Implementation of <a href="https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki">BIP 38</a>
  * passphrase-protected private keys. Currently, only decryption is supported.
  */
-public class BIP38PrivateKey extends PrefixedChecksummedBytes {
+public class BIP38PrivateKey {
+    protected final NetworkParameters params;
+    protected final byte[] bytes;
     public final boolean ecMultiply;
     public final boolean compressed;
     public final boolean hasLotAndSequence;
@@ -103,7 +106,8 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
 
     private BIP38PrivateKey(NetworkParameters params, byte[] bytes, boolean ecMultiply, boolean compressed,
             boolean hasLotAndSequence, byte[] addressHash, byte[] content) throws AddressFormatException {
-        super(params, bytes);
+        this.params = checkNotNull(params);
+        this.bytes = checkNotNull(bytes);
         this.ecMultiply = ecMultiply;
         this.compressed = compressed;
         this.hasLotAndSequence = hasLotAndSequence;
