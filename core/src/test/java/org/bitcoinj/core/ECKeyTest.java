@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.ECKey.ECDSASignature;

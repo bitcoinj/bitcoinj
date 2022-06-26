@@ -16,6 +16,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.AddressFactory;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;

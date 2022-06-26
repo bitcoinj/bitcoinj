@@ -1,6 +1,5 @@
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.utils.Network;
 

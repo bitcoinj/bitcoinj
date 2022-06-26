@@ -16,6 +16,8 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.AddressFactory;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;

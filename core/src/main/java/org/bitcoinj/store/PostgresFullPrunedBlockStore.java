@@ -19,7 +19,7 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;

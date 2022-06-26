@@ -17,7 +17,7 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.core.NetworkParameters;
 
 import java.util.ArrayList;

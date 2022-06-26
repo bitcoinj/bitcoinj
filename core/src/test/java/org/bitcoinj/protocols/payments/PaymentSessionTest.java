@@ -19,11 +19,11 @@ package org.bitcoinj.protocols.payments;
 
 import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;

@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.primitives.UnsignedBytes;
-import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.base.ScriptType;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import java.util.Objects;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
- * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
+ * plus a set of network parameters. Not to be confused with a {@code PeerAddress} or {@code AddressMessage}
  * which are about network (TCP) addresses.</p>
  *
  * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
@@ -220,7 +220,7 @@ public class LegacyAddress extends Address {
     // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
     private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
             .thenComparingInt(a -> ((LegacyAddress) a).getVersion())                    // Then compare Legacy address version byte
-            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
+            .thenComparing(a -> ((LegacyAddress)a).bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
 
     /**
      * {@inheritDoc}

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.DefaultAddressFactory;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrefixedChecksummedBytes;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
@@ -29,6 +32,7 @@ import java.util.Comparator;
  * form.
  */
 public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
+    @Deprecated
     private static final DefaultAddressFactory addressFactory = new DefaultAddressFactory();
 
     @FunctionalInterface

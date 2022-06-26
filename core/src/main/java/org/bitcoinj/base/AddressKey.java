@@ -1,6 +1,6 @@
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.utils.Network;
 
 /**

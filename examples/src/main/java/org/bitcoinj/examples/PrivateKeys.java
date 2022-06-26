@@ -18,9 +18,9 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.core.AddressFactory;
+import org.bitcoinj.base.AddressFactory;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.DefaultAddressFactory;
 import org.bitcoinj.core.DumpedPrivateKey;

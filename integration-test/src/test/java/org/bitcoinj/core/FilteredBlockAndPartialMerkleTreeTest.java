@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;

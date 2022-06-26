@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.primitives.UnsignedBytes;
-import org.bitcoinj.base.Bech32;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.utils.Network;
 
@@ -292,7 +292,7 @@ public class SegwitAddress extends Address {
 
     // Comparator for SegwitAddress, left argument must be SegwitAddress, right argument can be any Address
     private static final Comparator<Address> SEGWIT_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
-            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Segwit bytes
+            .thenComparing(a -> ((SegwitAddress) a).bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Segwit bytes
 
     /**
      * {@inheritDoc}

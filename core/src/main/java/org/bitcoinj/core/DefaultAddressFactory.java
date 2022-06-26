@@ -1,5 +1,9 @@
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.AddressFactory;
+import org.bitcoinj.base.LegacyAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.utils.Network;
 

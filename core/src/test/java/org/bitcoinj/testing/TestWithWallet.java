@@ -18,7 +18,7 @@ package org.bitcoinj.testing;
 
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
