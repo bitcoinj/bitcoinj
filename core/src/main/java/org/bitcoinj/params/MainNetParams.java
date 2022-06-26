@@ -17,7 +17,7 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
@@ -37,8 +37,8 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
     public MainNetParams() {
         super();
-        network = Network.MAIN;
-        id = Network.ID_MAINNET;
+        network = BitcoinNetwork.MAIN;
+        id = BitcoinNetwork.ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);

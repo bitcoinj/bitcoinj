@@ -17,7 +17,7 @@
 
 package org.bitcoinj.tools;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -55,7 +55,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @CommandLine.Command(name = "build-checkpoints", usageHelpAutoWidth = true, sortOptions = false, description = "Create checkpoint files to use with CheckpointManager.")
 public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private Network net = Network.MAIN;
+    private BitcoinNetwork net = BitcoinNetwork.MAIN;
     @CommandLine.Option(names = "--peer", description = "IP address/domain name for connection instead of localhost.")
     private String peer = null;
     @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
@@ -220,17 +220,17 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         checkState(manager.numCheckpoints() == expectedSize);
 
-        if (params.getId().equals(Network.ID_MAINNET)) {
+        if (params.getId().equals(BitcoinNetwork.ID_MAINNET)) {
             StoredBlock test = manager.getCheckpointBefore(1390500000); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 280224);
             checkState(test.getHeader().getHashAsString()
                     .equals("00000000000000000b5d59a15f831e1c45cb688a4db6b0a60054d49a9997fa34"));
-        } else if (params.getId().equals(Network.ID_TESTNET)) {
+        } else if (params.getId().equals(BitcoinNetwork.ID_TESTNET)) {
             StoredBlock test = manager.getCheckpointBefore(1390500000); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 167328);
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
-        } else if (params.getId().equals(Network.ID_SIGNET)) {
+        } else if (params.getId().equals(BitcoinNetwork.ID_SIGNET)) {
             StoredBlock test = manager.getCheckpointBefore(1642000000); // 2022-01-12
             checkState(test.getHeight() == 72576);
             checkState(test.getHeader().getHashAsString()

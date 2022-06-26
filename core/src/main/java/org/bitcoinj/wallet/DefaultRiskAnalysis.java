@@ -17,7 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.SignatureDecodeException;
@@ -200,7 +200,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     private Result analyzeIsStandard() {
         // The IsStandard rules don't apply on testnet, because they're just a safety mechanism and we don't want to
         // crush innovation with valueless test coins.
-        if (wallet != null && !wallet.getNetworkParameters().getId().equals(Network.ID_MAINNET))
+        if (wallet != null && !wallet.getNetworkParameters().getId().equals(BitcoinNetwork.ID_MAINNET))
             return Result.OK;
 
         RuleViolation ruleViolation = isStandard(tx);

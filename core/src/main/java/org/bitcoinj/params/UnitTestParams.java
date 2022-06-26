@@ -17,7 +17,7 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
@@ -35,8 +35,8 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         super();
         // Unit Test Params are BY DEFINITION on the Bitcoin TEST network (i.e. not REGTEST or SIGNET)
         // This means that tests that run against UnitTestParams expect TEST network behavior.
-        network = Network.TEST;
-        id = Network.ID_UNITTESTNET;
+        network = BitcoinNetwork.TEST;
+        id = BitcoinNetwork.ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

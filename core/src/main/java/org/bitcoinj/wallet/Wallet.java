@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Base58;
@@ -3999,7 +3999,7 @@ public class Wallet extends BaseTaggableObject
     public Transaction createSend(Address address, Coin value, boolean allowUnconfirmed)
             throws InsufficientMoneyException, BadWalletEncryptionKeyException {
         SendRequest req = SendRequest.to(address, value);
-        if (params.getId().equals(Network.ID_UNITTESTNET))
+        if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
             req.shuffleOutputs = false;
         if (allowUnconfirmed)
             req.allowUnconfirmed();

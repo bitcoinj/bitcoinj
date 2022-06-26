@@ -18,7 +18,7 @@
 package org.bitcoinj.params;
 
 import com.google.common.base.Stopwatch;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -77,15 +77,15 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      */
     @Nullable
     public static AbstractBitcoinNetParams fromID(String id) {
-        if (id.equals(Network.ID_MAINNET)) {
+        if (id.equals(BitcoinNetwork.ID_MAINNET)) {
             return MainNetParams.get();
-        } else if (id.equals(Network.ID_TESTNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_TESTNET)) {
             return TestNet3Params.get();
-        } else if (id.equals(Network.ID_SIGNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_SIGNET)) {
             return SigNetParams.get();
-        } else if (id.equals(Network.ID_UNITTESTNET)) {
+        } else if (id.equals(BitcoinNetwork.ID_UNITTESTNET)) {
             return UnitTestParams.get();
-        } else if (id.equals(Network.ID_REGTEST)) {
+        } else if (id.equals(BitcoinNetwork.ID_REGTEST)) {
             return RegTestParams.get();
         } else {
             return null;

@@ -17,7 +17,7 @@
 
 package org.bitcoinj.params;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
@@ -46,8 +46,8 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
 
     public TestNet3Params() {
         super();
-        network = Network.TEST;
-        id = Network.ID_TESTNET;
+        network = BitcoinNetwork.TEST;
+        id = BitcoinNetwork.ID_TESTNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);

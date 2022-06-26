@@ -17,8 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.params.MainNetParams;
@@ -93,7 +93,7 @@ public abstract class NetworkParameters {
      * by looking at the port number.
      */
     protected String id;
-    protected Network network;
+    protected BitcoinNetwork network;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
@@ -141,7 +141,7 @@ public abstract class NetworkParameters {
     /**
      * @return Network enum for this network
      */
-    public Network network() {
+    public BitcoinNetwork network() {
         return network;
     }
 
@@ -177,12 +177,12 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * Return network parameters for a {@link Network} enum
+     * Return network parameters for a {@link BitcoinNetwork} enum
      * @param network the network
      * @return the network parameters for the given string ID
      * @throws IllegalArgumentException if unknown network
      */
-    public static NetworkParameters of(Network network) {
+    public static NetworkParameters of(BitcoinNetwork network) {
         switch (network) {
             case MAIN:
                 return MainNetParams.get();
@@ -212,7 +212,7 @@ public abstract class NetworkParameters {
     /**
      * Get a NetworkParameters from an Address.
      * Addresses should not be used for storing NetworkParameters. In the future Address will
-     * be an {@code interface} that only makes a {@link Network} available.
+     * be an {@code interface} that only makes a {@link BitcoinNetwork} available.
      * @param address An address
      * @return network parameters
      * @deprecated You should be using {@link Address#network()} instead

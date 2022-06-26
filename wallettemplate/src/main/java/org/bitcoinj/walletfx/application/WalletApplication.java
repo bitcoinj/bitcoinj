@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
@@ -181,7 +181,7 @@ public abstract class WalletApplication implements AppDelegate {
         return suffixFromNetwork(params.network());
     }
 
-    protected String suffixFromNetwork(Network network) {
+    protected String suffixFromNetwork(BitcoinNetwork network) {
         switch(network) {
             case MAIN:
                 return "main";

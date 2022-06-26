@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
@@ -152,11 +152,11 @@ public abstract class Address implements Comparable<Address> {
     abstract public int compareTo(Address o);
 
     /**
-     * Get the network this address works on. Use of {@link Network} is preferred to use of {@link NetworkParameters}
+     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
      * when you need to know what network an address is for.
      * @return the Network.
      */
-    public Network network() {
+    public BitcoinNetwork network() {
         return params.network();
     }
 

@@ -20,7 +20,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,8 +34,8 @@ import java.util.stream.Stream;
 
 import static org.bitcoinj.base.ScriptType.P2PKH;
 import static org.bitcoinj.base.ScriptType.P2WPKH;
-import static org.bitcoinj.base.Network.MAIN;
-import static org.bitcoinj.base.Network.TEST;
+import static org.bitcoinj.base.BitcoinNetwork.MAIN;
+import static org.bitcoinj.base.BitcoinNetwork.TEST;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,7 +57,7 @@ public class WalletAccountPathTest {
     @MethodSource("walletStructureParams")
     @ParameterizedTest(name = "path {1} generated for {2}, {3}")
     void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
-                                  Network network) throws IOException, UnreadableWalletException {
+                                  BitcoinNetwork network) throws IOException, UnreadableWalletException {
         // When we create a wallet with parameterized structure, network, and scriptType
         Wallet wallet = createWallet(walletFile, NetworkParameters.of(network), structure, scriptType);
 

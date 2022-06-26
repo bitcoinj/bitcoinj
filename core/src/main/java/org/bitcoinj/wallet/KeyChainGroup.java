@@ -18,7 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.protobuf.ByteString;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
@@ -271,7 +271,7 @@ public class KeyChainGroup implements KeyBag {
         if (chains != null) {
             if (lookaheadSize > -1)
                 this.lookaheadSize = lookaheadSize;
-            else if (params.getId().equals(Network.ID_UNITTESTNET))
+            else if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
                 this.lookaheadSize = 5; // Cut down excess computation for unit tests.
             if (lookaheadThreshold > -1)
                 this.lookaheadThreshold = lookaheadThreshold;
@@ -1013,7 +1013,7 @@ public class KeyChainGroup implements KeyBag {
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                     .outputScriptType(ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, Network.MAIN)).build();
+                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAIN)).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);

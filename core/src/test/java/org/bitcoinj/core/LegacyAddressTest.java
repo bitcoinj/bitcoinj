@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
@@ -124,7 +124,7 @@ public class LegacyAddressTest {
         class AltNetwork extends MainNetParams {
             AltNetwork() {
                 super();
-                network = Network.REGTEST; // TODO: Solution for enums for alt networks??
+                network = BitcoinNetwork.REGTEST; // TODO: Solution for enums for alt networks??
                 id = "alt.network";
                 addressHeader = 48;
                 p2shHeader = 5;
