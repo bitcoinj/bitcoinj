@@ -195,13 +195,13 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2PKH() {
-        final Address toAddr = Address.fromKey(TESTNET, new ECKey(), ScriptType.P2PKH);
+        final Address toAddr = new ECKey().toAddress(ScriptType.P2PKH, Network.TEST);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
         ECKey fromKey = new ECKey();
-        Address fromAddress = Address.fromKey(TESTNET, fromKey, ScriptType.P2PKH);
+        Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, Network.TEST);
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         TransactionOutput output = new TransactionOutput(TESTNET, null, inAmount, fromAddress);
@@ -218,13 +218,13 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2WPKH() {
-        final Address toAddr = Address.fromKey(TESTNET, new ECKey(), ScriptType.P2WPKH);
+        final Address toAddr = new ECKey().toAddress(ScriptType.P2WPKH, Network.TEST);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
         ECKey fromKey = new ECKey();
-        Address fromAddress = Address.fromKey(TESTNET, fromKey, ScriptType.P2WPKH);
+        Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, Network.TEST);
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         tx.addOutput(outAmount, toAddr);

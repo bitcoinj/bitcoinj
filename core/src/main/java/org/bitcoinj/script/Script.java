@@ -398,7 +398,7 @@ public class Script {
         else if (ScriptPattern.isP2SH(this))
             return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromP2SH(this));
         else if (forcePayToPubKey && ScriptPattern.isP2PK(this))
-            return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)));
+            return ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)).toAddress(ScriptType.P2PKH, params);
         else if (ScriptPattern.isP2WH(this))
             return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromP2WH(this));
         else if (ScriptPattern.isP2TR(this))

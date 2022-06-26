@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
+import org.bitcoinj.utils.Network;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -31,6 +32,15 @@ import java.util.Arrays;
  * the last byte is a discriminator value for the compressed pubkey.
  */
 public class DumpedPrivateKey extends PrefixedChecksummedBytes {
+
+
+    public static DumpedPrivateKey fromBase58(String base58, Network network) {
+        return fromBase58(NetworkParameters.of(network), base58);
+    }
+
+    public static DumpedPrivateKey fromBase58(String base58) {
+        return fromBase58(null, base58);
+    }
 
     /**
      * Construct a private key from its Base58 representation.
@@ -43,6 +53,7 @@ public class DumpedPrivateKey extends PrefixedChecksummedBytes {
      * @throws AddressFormatException.WrongNetwork
      *             if the given private key is valid but for a different chain (eg testnet vs mainnet)
      */
+    @Deprecated
     public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);

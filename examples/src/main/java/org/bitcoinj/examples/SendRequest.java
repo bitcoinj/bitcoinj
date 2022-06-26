@@ -20,7 +20,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -32,12 +32,13 @@ import java.util.concurrent.CompletableFuture;
  * The following example shows you how to create a SendRequest to send coins from a wallet to a given address.
  */
 public class SendRequest {
+    private static final AddressFactory addressFactory = new DefaultAddressFactory();
 
     public static void main(String[] args) throws Exception {
 
         // We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details.
-        NetworkParameters params = TestNet3Params.get();
-        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
+        Network network = Network.TEST;
+        WalletAppKit kit = new WalletAppKit(NetworkParameters.of(network), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
         kit.startAsync();
         kit.awaitRunning();
 
@@ -49,7 +50,7 @@ public class SendRequest {
 
         // To which address you want to send the coins?
         // The Address class represents a Bitcoin address.
-        Address to = Address.fromString(params, "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2");
+        Address to = addressFactory.fromString("bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2", network);
         System.out.println("Send money to: " + to.toString());
 
         // There are different ways to create and publish a SendRequest. This is probably the easiest one.

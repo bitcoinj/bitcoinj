@@ -25,10 +25,16 @@ import java.util.Comparator;
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
- * Use {@link #fromString(NetworkParameters, String)} to conveniently construct any kind of address from its textual
+ * Use {@link AddressFactory#fromString(String, org.bitcoinj.utils.Network)} to conveniently construct any kind of address from its textual
  * form.
  */
 public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
+    private static final DefaultAddressFactory addressFactory = new DefaultAddressFactory();
+
+    @FunctionalInterface
+    public interface AddressParser {
+        Address parseString(String addressString) throws AddressFormatException;
+    }
 
     /**
      * Construct an address from its binary form.
@@ -53,21 +59,10 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
      */
+    @Deprecated
     public static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
-        try {
-            return LegacyAddress.fromBase58(params, str);
-        } catch (AddressFormatException.WrongNetwork x) {
-            throw x;
-        } catch (AddressFormatException x) {
-            try {
-                return SegwitAddress.fromBech32(params, str);
-            } catch (AddressFormatException.WrongNetwork x2) {
-                throw x;
-            } catch (AddressFormatException x2) {
-                throw new AddressFormatException(str);
-            }
-        }
+        return addressFactory.fromString(str, params);
     }
 
     /**
@@ -81,13 +76,9 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      *            script type the address should use
      * @return constructed address
      */
+    @Deprecated
     public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        if (outputScriptType == ScriptType.P2PKH)
-            return LegacyAddress.fromKey(params, key);
-        else if (outputScriptType == ScriptType.P2WPKH)
-            return SegwitAddress.fromKey(params, key);
-        else
-            throw new IllegalArgumentException(outputScriptType.toString());
+        return key.toAddress(outputScriptType, params);
     }
 
     /**

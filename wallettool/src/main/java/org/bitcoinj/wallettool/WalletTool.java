@@ -19,6 +19,8 @@ package org.bitcoinj.wallettool;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.AddressFactory;
+import org.bitcoinj.core.DefaultAddressFactory;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.params.RegTestParams;
@@ -246,6 +248,7 @@ public class WalletTool implements Callable<Integer> {
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
     private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
+    private static AddressFactory addressFactory = new DefaultAddressFactory();
     private static NetworkParameters params;
     private static BlockStore store;
     private static AbstractBlockChain chain;
@@ -462,7 +465,7 @@ public class WalletTool implements Callable<Integer> {
                     if (selectAddrStr != null) {
                         Address selectAddr;
                         try {
-                            selectAddr = Address.fromString(params, selectAddrStr);
+                            selectAddr = addressFactory.fromString(selectAddrStr, net);
                         } catch (AddressFormatException x) {
                             System.err.println("Could not parse given address, or wrong network: " + selectAddrStr);
                             return 1;
@@ -783,7 +786,7 @@ public class WalletTool implements Callable<Integer> {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = Address.fromString(params, destination);
+                addr = addressFactory.fromString(destination, params.network());
                 key = null;
             }
         }
@@ -1193,9 +1196,9 @@ public class WalletTool implements Callable<Integer> {
         if (!key.isCompressed())
             System.out.println("WARNING: Importing an uncompressed key");
         wallet.importKey(key);
-        System.out.print("Addresses: " + LegacyAddress.fromKey(params, key));
+        System.out.print("Addresses: " + key.toAddress(ScriptType.P2PKH, params.network()));
         if (key.isCompressed())
-            System.out.print("," + SegwitAddress.fromKey(params, key));
+            System.out.print("," + key.toAddress(ScriptType.P2WPKH, params.network()));
         System.out.println();
     }
 
@@ -1250,7 +1253,7 @@ public class WalletTool implements Callable<Integer> {
             key = wallet.findKeyFromPubKey(HEX.decode(pubKeyStr));
         } else {
             try {
-                Address address = Address.fromString(wallet.getParams(), addrStr);
+                Address address = addressFactory.fromString(addrStr, wallet.getParams().network());
                 key = wallet.findKeyFromAddress(address);
             } catch (AddressFormatException e) {
                 System.err.println(addrStr + " does not parse as a Bitcoin address of the right network parameters.");

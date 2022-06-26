@@ -20,25 +20,17 @@ package org.bitcoinj.examples;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.AddressFactory;
+import org.bitcoinj.core.DefaultAddressFactory;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Network;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.File;
 
@@ -49,6 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
+    private static final AddressFactory addressFactory = new DefaultAddressFactory();
     private static Address forwardingAddress;
     private static WalletAppKit kit;
 
@@ -61,28 +54,28 @@ public class ForwardingService {
         }
 
         // Figure out which network we should connect to. Each one gets its own set of files.
-        NetworkParameters params;
+        Network network;
         String filePrefix;
         if (args.length > 1 && args[1].equals("testnet")) {
-            params = TestNet3Params.get();
+            network = Network.TEST;
             filePrefix = "forwarding-service-testnet";
         } else if (args.length > 1 && args[1].equals("regtest")) {
-            params = RegTestParams.get();
+            network = Network.REGTEST;
             filePrefix = "forwarding-service-regtest";
         } else {
-            params = MainNetParams.get();
+            network = Network.MAIN;
             filePrefix = "forwarding-service";
         }
         // Parse the address given as the first parameter.
-        forwardingAddress = Address.fromString(params, args[0]);
+        forwardingAddress = addressFactory.fromString(args[0], network);
 
-        System.out.println("Network: " + params.getId());
+        System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + forwardingAddress);
 
         // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), filePrefix);
+        kit = new WalletAppKit(NetworkParameters.of(network), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), filePrefix);
 
-        if (params == RegTestParams.get()) {
+        if (network == Network.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
             // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
             kit.connectToLocalHost();
@@ -118,7 +111,7 @@ public class ForwardingService {
             });
         });
 
-        Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
+        Address sendToAddress = kit.wallet().currentReceiveKey().toAddress(ScriptType.P2PKH, network);
         System.out.println("Send coins to: " + sendToAddress);
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 
