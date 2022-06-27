@@ -33,6 +33,7 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.LazyECPoint;
 import org.bitcoinj.crypto.LinuxSecureRandom;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -112,7 +113,7 @@ import static com.google.common.base.Preconditions.checkState;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.</p>
  */
-public class ECKey implements EncryptableItem {
+public class ECKey implements EncryptableItem, AddressKey {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
     // Note: this can be replaced with Arrays.compare(a, b) once we require Java 9
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = UnsignedBytes.lexicographicalComparator();
@@ -421,6 +422,43 @@ public class ECKey implements EncryptableItem {
     public boolean isCompressed() {
         return pub.isCompressed();
     }
+
+    @Override
+    public Address toAddress(ScriptType scriptType, Network network) {
+        NetworkParameters params = NetworkParameters.of(network);
+        return toAddress(scriptType, params);
+    }
+
+    /**
+     * This deprecated method is provided because I don't know which callers may <i>require</i>
+     * an address that contains an actual (and possibly unit-test) {@link NetworkParameters} and
+     * which do not. We will need to replace all calls to this method (typically with {@link #toAddress(ScriptType, Network)}
+     * but only after making sure this isn't going to break any tests.
+     * @deprecated Use {@link #toAddress(ScriptType, Network)}
+     */
+    @Override
+    @Deprecated
+    public Address toAddress(ScriptType scriptType, NetworkParameters params) {
+        if (scriptType == ScriptType.P2PKH) {
+            return LegacyAddress.fromPubKeyHash(params, this.getPubKeyHash());
+        }
+        else if (scriptType == ScriptType.P2WPKH) {
+            checkArgument(this.isCompressed(), "only compressed keys allowed");
+            return SegwitAddress.fromHash(params, this.getPubKeyHash());
+        }
+        else
+            throw new IllegalArgumentException(scriptType.toString());
+    }
+
+    public static Address randomAddress(ScriptType scriptType, Network network) {
+        return new ECKey().toAddress(scriptType, NetworkParameters.of(network));
+    }
+
+    @Deprecated
+    public static Address randomAddress(ScriptType scriptType, NetworkParameters params) {
+        return new ECKey().toAddress(scriptType, params);
+    }
+
 
     /**
      * Groups the two components that make up a signature, and provides a way to encode to DER form, which is
@@ -1207,11 +1245,11 @@ public class ECKey implements EncryptableItem {
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
-            builder.append(Address.fromKey(params, this, outputScriptType));
+            builder.append(this.toAddress(outputScriptType, params));
         } else {
-            builder.append(LegacyAddress.fromKey(params, this));
+            builder.append(this.toAddress(ScriptType.P2PKH, params.network()));
             if (isCompressed())
-                builder.append(',').append(SegwitAddress.fromKey(params, this));
+                builder.append(',').append(this.toAddress(ScriptType.P2WPKH, params.network()));
         }
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");

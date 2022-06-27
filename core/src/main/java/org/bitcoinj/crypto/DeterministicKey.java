@@ -677,7 +677,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
-        builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
+        builder.append("  addr:").append(this.toAddress(outputScriptType, params).toString());
         builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)

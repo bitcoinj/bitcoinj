@@ -51,9 +51,8 @@ public class LegacyAddress extends Address {
 
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
-     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromScriptHash(NetworkParameters, byte[])} or
-     * {@link #fromKey(NetworkParameters, ECKey)}.
-     * 
+     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromScriptHash(NetworkParameters, byte[])}
+     *
      * @param params
      *            network this address is valid for
      * @param p2sh
@@ -93,8 +92,9 @@ public class LegacyAddress extends Address {
      *            only the public part is used
      * @return constructed address
      */
+    @Deprecated
     public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
-        return fromPubKeyHash(params, key.getPubKeyHash());
+        return (LegacyAddress) key.toAddress(ScriptType.P2PKH, params);
     }
 
     /**

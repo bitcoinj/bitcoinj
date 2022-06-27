@@ -22,6 +22,9 @@ import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.AddressFactory;
+import org.bitcoinj.core.DefaultAddressFactory;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
@@ -52,6 +55,7 @@ public abstract class WalletApplication implements AppDelegate {
     private final ScriptType preferredOutputScriptType;
     private final String walletFileName;
     private MainWindowController controller;
+    private final AddressFactory addressFactory = new DefaultAddressFactory();
 
     public WalletApplication(String applicationName, NetworkParameters params, ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
@@ -84,6 +88,10 @@ public abstract class WalletApplication implements AppDelegate {
 
     public ScriptType preferredOutputScriptType() {
         return preferredOutputScriptType;
+    }
+
+    public AddressFactory addressFactory() {
+        return this.addressFactory;
     }
 
     public MainWindowController mainWindowController() {

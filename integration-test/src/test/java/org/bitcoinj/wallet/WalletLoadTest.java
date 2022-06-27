@@ -44,4 +44,9 @@ public class WalletLoadTest {
         HDPath accountPath = wallet.getActiveKeyChain().getAccountPath();
         assertEquals(HDPath.parsePath("M/0H"), accountPath);
     }
+
+    @Test
+    void simple() {
+        assertEquals(1, 1);
+    }
 }

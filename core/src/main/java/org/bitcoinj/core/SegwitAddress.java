@@ -21,6 +21,7 @@ import org.bitcoinj.base.Bech32;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
+import org.bitcoinj.base.Network;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -237,7 +238,9 @@ public class SegwitAddress extends Address {
      * @param key
      *            only the public part is used
      * @return constructed address
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
      */
+    @Deprecated
     public static SegwitAddress fromKey(NetworkParameters params, ECKey key) {
         checkArgument(key.isCompressed(), "only compressed keys allowed");
         return fromHash(params, key.getPubKeyHash());

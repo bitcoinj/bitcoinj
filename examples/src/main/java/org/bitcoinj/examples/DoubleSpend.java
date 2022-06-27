@@ -19,8 +19,8 @@ package org.bitcoinj.examples;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
@@ -35,10 +35,11 @@ import static org.bitcoinj.base.Coin.*;
  * you would normally want to do.
  */
 public class DoubleSpend {
+    private static final AddressFactory addressFactory = new DefaultAddressFactory();
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        final RegTestParams params = RegTestParams.get();
-        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
+        final Network network = Network.REGTEST;
+        WalletAppKit kit = new WalletAppKit(NetworkParameters.of(network), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
         kit.connectToLocalHost();
         kit.setAutoSave(false);
         kit.startAsync();
@@ -47,8 +48,8 @@ public class DoubleSpend {
         System.out.println(kit.wallet());
 
         kit.wallet().getBalanceFuture(COIN, Wallet.BalanceType.AVAILABLE).get();
-        Transaction tx1 = kit.wallet().createSend(Address.fromString(params, "bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez"), CENT);
-        Transaction tx2 = kit.wallet().createSend(Address.fromString(params, "bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez"), CENT.add(SATOSHI.multiply(10)));
+        Transaction tx1 = kit.wallet().createSend(addressFactory.fromString("bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez", network), CENT);
+        Transaction tx2 = kit.wallet().createSend(addressFactory.fromString("bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez", network), CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
         peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD,
                 (peer1, m) -> {

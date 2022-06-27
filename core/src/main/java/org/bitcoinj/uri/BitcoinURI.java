@@ -19,6 +19,7 @@ package org.bitcoinj.uri;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.DefaultAddressFactory;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 
@@ -94,6 +95,8 @@ public class BitcoinURI {
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
+
+    private DefaultAddressFactory addressFactory = new DefaultAddressFactory();
 
     /**
      * Contains all the parameters in the order in which they were processed
@@ -176,7 +179,7 @@ public class BitcoinURI {
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             try {
-                Address address = Address.fromString(params, addressToken);
+                Address address = addressFactory.fromString(addressToken, params);
                 putWithValidation(FIELD_ADDRESS, address);
             } catch (final AddressFormatException e) {
                 throw new BitcoinURIParseException("Bad address", e);
