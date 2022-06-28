@@ -5029,6 +5029,9 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
+    /**
+     * @deprecated Applications should use another mechanism to persist application state information
+     */
     @Override
     public void setTag(String tag, ByteString value) {
         super.setTag(tag, value);
