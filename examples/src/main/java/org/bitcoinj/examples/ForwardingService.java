@@ -51,7 +51,7 @@ public class ForwardingService {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
         if (args.length < 1) {
-            System.err.println("Usage: address-to-send-back-to [main|regtest|testnet]");
+            System.err.println("Usage: address-to-send-back-to [main|regtest|testnet|signet]");
             return;
         }
 
@@ -161,6 +161,7 @@ public class ForwardingService {
             case "main":    return Optional.of(BitcoinNetwork.MAIN);
             case "test":    return Optional.of(BitcoinNetwork.TEST);
             case "regtest": return Optional.of(BitcoinNetwork.REGTEST);
+            case "signet":  return Optional.of(BitcoinNetwork.SIGNET);
             default:        return Optional.empty();
         }
     }
