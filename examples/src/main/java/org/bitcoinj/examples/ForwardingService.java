@@ -49,6 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
+    static final int requiredConfirmations = 1;
     private static Address forwardingAddress;
     private static WalletAppKit kit;
 
@@ -107,7 +108,7 @@ public class ForwardingService {
             // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
             // case of waiting for a block.
 
-            tx.getConfidence().getDepthFuture(1).whenComplete((result, t) -> {
+            tx.getConfidence().getDepthFuture(requiredConfirmations).whenComplete((result, t) -> {
                 if (result != null) {
                     System.out.println("Confirmation received.");
                     forwardCoins();
