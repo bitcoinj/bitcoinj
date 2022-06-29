@@ -23,9 +23,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableScheduledFuture;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import net.jcip.annotations.GuardedBy;
@@ -90,6 +87,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -145,7 +144,7 @@ public class PeerGroup implements TransactionBroadcaster {
     // This executor is used to queue up jobs: it's used when we don't want to use locks for mutual exclusion,
     // typically because the job might call in to user provided code that needs/wants the freedom to use the API
     // however it wants, or because a job needs to be ordered relative to other jobs like that.
-    protected final ListeningScheduledExecutorService executor;
+    protected final ScheduledExecutorService executor;
 
     // Whether the peer group is currently running. Once shut down it cannot be restarted.
     private volatile boolean vRunning;
@@ -417,10 +416,9 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
 
-    protected ListeningScheduledExecutorService createPrivateExecutor() {
-        ListeningScheduledExecutorService result = MoreExecutors.listeningDecorator(
-                new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup Thread"))
-        );
+    protected ScheduledExecutorService createPrivateExecutor() {
+        ScheduledExecutorService result =
+                new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup Thread"));
         // Hack: jam the executor so jobs just queue up until the user calls start() on us. For example, adding a wallet
         // results in a bloom filter recalc being queued, but we don't want to do that until we're actually started.
         result.execute(() -> Uninterruptibles.awaitUninterruptibly(executorStartupLatch));
@@ -1584,7 +1582,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    @Nullable private volatile ListenableScheduledFuture<?> vPingTask;
+    @Nullable private volatile ScheduledFuture<?> vPingTask;
 
     @SuppressWarnings("NonAtomicOperationOnVolatileField")
     private void setupPinging() {
@@ -1594,7 +1592,7 @@ public class PeerGroup implements TransactionBroadcaster {
         vPingTask = executor.scheduleAtFixedRate(() -> {
             try {
                 if (getPingIntervalMsec() <= 0) {
-                    ListenableScheduledFuture<?> task = vPingTask;
+                    ScheduledFuture<?> task = vPingTask;
                     if (task != null) {
                         task.cancel(false);
                         vPingTask = null;
@@ -2168,7 +2166,7 @@ public class PeerGroup implements TransactionBroadcaster {
         lock.lock();
         try {
             this.pingIntervalMsec = pingIntervalMsec;
-            ListenableScheduledFuture<?> task = vPingTask;
+            ScheduledFuture<?> task = vPingTask;
             if (task != null)
                 task.cancel(false);
             setupPinging();
