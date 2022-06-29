@@ -30,7 +30,6 @@ import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
@@ -74,9 +73,9 @@ import static com.google.common.base.Preconditions.checkState;
  * <p>A Peer handles the high level communication with a Bitcoin node, extending a {@link PeerSocketHandler} which
  * handles low-level message (de)serialization.</p>
  *
- * <p>Note that timeouts are handled by the extended
- * {@link AbstractTimeoutHandler} and timeout is automatically disabled (using
- * {@link AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
+ * <p>Note that timeouts are handled by the implemented
+ * {@link org.bitcoinj.net.TimeoutHandler} and timeout is automatically disabled (using
+ * {@link org.bitcoinj.net.TimeoutHandler#setTimeoutEnabled(boolean)}) once the version
  * handshake completes.</p>
  */
 public class Peer extends PeerSocketHandler {

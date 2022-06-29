@@ -17,11 +17,12 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.bitcoinj.net.AbstractTimeoutHandler;
 import org.bitcoinj.net.MessageWriteTarget;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
+import org.bitcoinj.net.SocketTimeoutTask;
 import org.bitcoinj.net.StreamConnection;
+import org.bitcoinj.net.TimeoutHandler;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.slf4j.Logger;
@@ -45,9 +46,10 @@ import static com.google.common.base.Preconditions.checkState;
  * Handles high-level message (de)serialization for peers, acting as the bridge between the
  * {@code org.bitcoinj.net} classes and {@link Peer}.
  */
-public abstract class PeerSocketHandler extends AbstractTimeoutHandler implements StreamConnection {
+public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnection {
     private static final Logger log = LoggerFactory.getLogger(PeerSocketHandler.class);
     private final Lock lock = Threading.lock(PeerSocketHandler.class);
+    private final SocketTimeoutTask timeoutTask;
 
     private final MessageSerializer serializer;
     protected PeerAddress peerAddress;
@@ -64,15 +66,24 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
     private BitcoinSerializer.BitcoinPacketHeader header;
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
-        checkNotNull(params);
-        serializer = params.getDefaultSerializer();
-        this.peerAddress = new PeerAddress(params, remoteIp);
+        this(params, new PeerAddress(params, remoteIp));
     }
 
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
         checkNotNull(params);
         serializer = params.getDefaultSerializer();
         this.peerAddress = checkNotNull(peerAddress);
+        this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
+    }
+
+    @Override
+    public void setTimeoutEnabled(boolean timeoutEnabled) {
+        timeoutTask.setTimeoutEnabled(timeoutEnabled);
+    }
+
+    @Override
+    public void setSocketTimeout(int timeoutMillis) {
+        timeoutTask.setSocketTimeout(timeoutMillis);
     }
 
     /**
@@ -115,7 +126,6 @@ public abstract class PeerSocketHandler extends AbstractTimeoutHandler implement
         writeTarget.closeConnection();
     }
 
-    @Override
     protected void timeoutOccurred() {
         log.info("{}: Timed out", getAddress());
         close();

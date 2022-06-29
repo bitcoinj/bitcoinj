@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,10 @@
 package org.bitcoinj.net;
 
 /**
- * A base class which provides basic support for socket timeouts. It is used instead of integrating timeouts into the
+ * Provides basic support for socket timeouts. It is used instead of integrating timeouts into the
  * NIO select thread both for simplicity and to keep code shared between NIO and blocking sockets as much as possible.
- * <p>
- * @deprecated Don't extend this class, implement {@link TimeoutHandler} using {@link SocketTimeoutTask} instead
  */
-@Deprecated
-public abstract class AbstractTimeoutHandler implements TimeoutHandler {
-    private final SocketTimeoutTask timeoutTask;
-
-    public AbstractTimeoutHandler() {
-        timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
-    }
-
+public interface TimeoutHandler {
     /**
      * <p>Enables or disables the timeout entirely. This may be useful if you want to store the timeout value but wish
      * to temporarily disable/enable timeouts.</p>
@@ -38,10 +29,7 @@ public abstract class AbstractTimeoutHandler implements TimeoutHandler {
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
-    @Override
-    public synchronized final void setTimeoutEnabled(boolean timeoutEnabled) {
-        timeoutTask.setTimeoutEnabled(timeoutEnabled);
-    }
+    void setTimeoutEnabled(boolean timeoutEnabled);
 
     /**
      * <p>Sets the receive timeout to the given number of milliseconds, automatically killing the connection if no
@@ -53,17 +41,5 @@ public abstract class AbstractTimeoutHandler implements TimeoutHandler {
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
-    @Override
-    public synchronized final void setSocketTimeout(int timeoutMillis) {
-        timeoutTask.setSocketTimeout(timeoutMillis);
-    }
-
-    /**
-     * Resets the current progress towards timeout to 0.
-     */
-    protected synchronized void resetTimeout() {
-        timeoutTask.resetTimeout();
-    }
-
-    protected abstract void timeoutOccurred();
+    void setSocketTimeout(int timeoutMillis);
 }
