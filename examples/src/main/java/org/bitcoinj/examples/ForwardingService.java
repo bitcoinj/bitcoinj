@@ -17,6 +17,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
@@ -62,28 +63,29 @@ public class ForwardingService {
         }
 
         // Figure out which network we should connect to. Each one gets its own set of files.
-        NetworkParameters params;
+        BitcoinNetwork network;
         String filePrefix;
         if (args.length > 1 && args[1].equals("testnet")) {
-            params = TestNet3Params.get();
+            network = BitcoinNetwork.TEST;
             filePrefix = "forwarding-service-testnet";
         } else if (args.length > 1 && args[1].equals("regtest")) {
-            params = RegTestParams.get();
+            network = BitcoinNetwork.REGTEST;
             filePrefix = "forwarding-service-regtest";
         } else {
-            params = MainNetParams.get();
+            network = BitcoinNetwork.MAIN;
             filePrefix = "forwarding-service";
         }
+        NetworkParameters params = NetworkParameters.of(network);
         // Parse the address given as the first parameter.
         forwardingAddress = Address.fromString(params, args[0]);
 
-        System.out.println("Network: " + params.getId());
+        System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + forwardingAddress);
 
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), filePrefix);
 
-        if (params == RegTestParams.get()) {
+        if (network == BitcoinNetwork.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
             // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
             kit.connectToLocalHost();
