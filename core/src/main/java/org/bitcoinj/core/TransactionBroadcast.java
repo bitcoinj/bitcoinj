@@ -74,6 +74,10 @@ public class TransactionBroadcast {
         this.tx = tx;
     }
 
+    public Transaction transaction() {
+        return tx;
+    }
+
     @VisibleForTesting
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
         return new TransactionBroadcast(tx) {
