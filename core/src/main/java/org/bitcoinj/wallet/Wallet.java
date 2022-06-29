@@ -3901,8 +3901,16 @@ public class Wallet extends BaseTaggableObject
         /** The broadcast object returned by the linked TransactionBroadcaster */
         public final TransactionBroadcast broadcast;
 
+        /**
+         * @deprecated Use {@link #SendResult(TransactionBroadcast)}
+         */
+        @Deprecated
         public SendResult(Transaction tx, TransactionBroadcast broadcast) {
-            this.tx = tx;
+            this(broadcast);
+        }
+
+        public SendResult(TransactionBroadcast broadcast) {
+            this.tx = broadcast.transaction();
             this.broadcast = broadcast;
             this.broadcastComplete = broadcast.future();
         }
@@ -4098,7 +4106,7 @@ public class Wallet extends BaseTaggableObject
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
         Transaction tx = sendCoinsOffline(request);
-        SendResult result = new SendResult(tx, broadcaster.broadcastTransaction(tx));
+        SendResult result = new SendResult(broadcaster.broadcastTransaction(tx));
         // The tx has been committed to the pending pool by this point (via sendCoinsOffline -> commitTx), so it has
         // a txConfidenceListener registered. Once the tx is broadcast the peers will update the memory pool with the
         // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
