@@ -35,21 +35,33 @@ public class NioClient implements MessageWriteTarget {
     private final Handler handler;
     private final NioClientManager manager = new NioClientManager();
 
-    class Handler extends AbstractTimeoutHandler implements StreamConnection {
+    class Handler implements TimeoutHandler, StreamConnection {
         private final StreamConnection upstreamConnection;
+        private final SocketTimeoutTask timeoutTask;
         private MessageWriteTarget writeTarget;
         private boolean closeOnOpen = false;
         private boolean closeCalled = false;
+
         Handler(StreamConnection upstreamConnection, int connectTimeoutMillis) {
             this.upstreamConnection = upstreamConnection;
+            this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
             setSocketTimeout(connectTimeoutMillis);
             setTimeoutEnabled(true);
         }
 
-        @Override
-        protected synchronized void timeoutOccurred() {
+        private synchronized void timeoutOccurred() {
             closeOnOpen = true;
             connectionClosed();
+        }
+
+        @Override
+        public void setTimeoutEnabled(boolean timeoutEnabled) {
+            timeoutTask.setTimeoutEnabled(timeoutEnabled);
+        }
+
+        @Override
+        public void setSocketTimeout(int timeoutMillis) {
+            timeoutTask.setSocketTimeout(timeoutMillis);
         }
 
         @Override
