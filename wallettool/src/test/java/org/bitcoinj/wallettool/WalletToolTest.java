@@ -45,12 +45,12 @@ public class WalletToolTest {
     void emptyStringArgFails() {
         int exitCode = execute("");
 
-        assertEquals(1, exitCode);
+        assertEquals(2, exitCode);
     }
 
     @Test
     void helpSucceeds() {
-        int exitCode = execute("--help");
+        int exitCode = execute("help");
 
         assertEquals(0, exitCode);
     }
