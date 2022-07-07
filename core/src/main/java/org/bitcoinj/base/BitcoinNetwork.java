@@ -37,7 +37,7 @@ public enum BitcoinNetwork implements Network {
     /**
      * The maximum money to be generated
      */
-    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
+    public static final Coin MAX_MONEY = Coin.ofBtc(MAX_COINS);
 
     /** The ID string for the main, production network where people trade things. */
     public static final String ID_MAINNET = MAIN.id();
