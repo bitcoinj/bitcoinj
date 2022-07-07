@@ -112,7 +112,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.ExcessiveValue.class)
     public void exceedsMaxMoney2() {
-        Coin half = UNITTEST.getMaxMoney().divide(2).add(Coin.SATOSHI);
+        Coin half = BitcoinNetwork.MAX_MONEY.divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
         tx.verify();

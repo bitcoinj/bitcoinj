@@ -203,8 +203,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     @Override
+    @Deprecated
     public Coin getMaxMoney() {
-        return MAX_MONEY;
+        return BitcoinNetwork.MAX_MONEY;
     }
 
     /** @deprecated use {@link TransactionOutput#getMinNonDustValue()} */
@@ -235,7 +236,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     @Override
+    @Deprecated
     public boolean hasMaxMoney() {
-        return true;
+        return network().hasMaxMoney();
     }
 }

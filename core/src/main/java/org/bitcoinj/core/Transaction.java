@@ -1773,7 +1773,7 @@ public class Transaction extends ChildMessage {
             } catch (ArithmeticException e) {
                 throw new VerificationException.ExcessiveValue();
             }
-            if (params.hasMaxMoney() && valueOut.compareTo(params.getMaxMoney()) > 0)
+            if (params.network().hasMaxMoney() && valueOut.compareTo(params.network().maxMoney()) > 0)
                 throw new VerificationException.ExcessiveValue();
         }
 

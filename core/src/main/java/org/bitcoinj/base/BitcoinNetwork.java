@@ -18,6 +18,8 @@ package org.bitcoinj.base;
 
 import java.util.Arrays;
 
+import static org.bitcoinj.base.Coin.COIN;
+
 /**
  * A convenient {@code enum} representation of a network.
  */
@@ -26,6 +28,16 @@ public enum BitcoinNetwork implements Network {
     TEST("org.bitcoin.test"),
     SIGNET("org.bitcoin.signet"),
     REGTEST("org.bitcoin.regtest");
+
+    /**
+     * The maximum number of coins to be generated
+     */
+    private static final long MAX_COINS = 21000000;
+
+    /**
+     * The maximum money to be generated
+     */
+    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** The ID string for the main, production network where people trade things. */
     public static final String ID_MAINNET = MAIN.id();
@@ -52,6 +64,16 @@ public enum BitcoinNetwork implements Network {
     @Override
     public String id() {
         return id;
+    }
+
+    @Override
+    public boolean hasMaxMoney() {
+        return true;
+    }
+
+    @Override
+    public Coin maxMoney() {
+        return MAX_MONEY;
     }
 
     /**
