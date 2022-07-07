@@ -16,10 +16,10 @@
 
 package org.bitcoinj.base.utils;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.utils.Fiat;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.NetworkParameters;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -191,7 +191,7 @@ public class MonetaryFormatTest {
     public void sat() {
         assertEquals("0", format(ZERO, 8, 0));
         assertEquals("100000000", format(COIN, 8, 0));
-        assertEquals("2100000000000000", format(NetworkParameters.MAX_MONEY, 8, 0));
+        assertEquals("2100000000000000", format(BitcoinNetwork.MAX_MONEY, 8, 0));
     }
 
     private String format(Coin coin, int shift, int minDecimals, int... decimalGroups) {

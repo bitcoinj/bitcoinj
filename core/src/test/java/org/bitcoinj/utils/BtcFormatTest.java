@@ -49,7 +49,7 @@ import static org.bitcoinj.base.Coin.SMALLEST_UNIT_EXPONENT;
 import static org.bitcoinj.base.Coin.ZERO;
 import static org.bitcoinj.base.Coin.parseCoin;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
+import static org.bitcoinj.base.BitcoinNetwork.MAX_MONEY;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 import static org.bitcoinj.utils.BtcFixedFormat.REPEATING_DOUBLETS;

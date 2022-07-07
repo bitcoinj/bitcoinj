@@ -25,4 +25,17 @@ public interface Network {
      * @return String ID for network
      */
     String id();
+
+    /**
+     * Does this network have a fixed maximum number of coins
+     * @return {@code true} if this network has a fixed maximum number of coins
+     */
+    boolean hasMaxMoney();
+
+    /**
+     * Maximum number of coins for this network as a {@link Monetary} value.
+     * Where not applicable, a very large number of coins is returned instead (e.g. the main coin issue for Dogecoin).
+     * @return Maximum number of coins for this network
+     */
+    Monetary maxMoney();
 }

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAX_MONEY;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
@@ -33,7 +34,6 @@ import static org.bitcoinj.base.Coin.parseCoin;
 import static org.bitcoinj.base.Coin.parseCoinInexact;
 import static org.bitcoinj.base.Coin.satoshiToBtc;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

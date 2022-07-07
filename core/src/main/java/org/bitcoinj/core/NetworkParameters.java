@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
 import org.bitcoinj.params.MainNetParams;
@@ -39,8 +40,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import static org.bitcoinj.base.Coin.COIN;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -122,13 +121,17 @@ public abstract class NetworkParameters {
     
     /**
      * The maximum number of coins to be generated
+     * @deprecated Use {@link BitcoinNetwork#MAX_MONEY}
      */
-    public static final long MAX_COINS = 21000000;
+    @Deprecated
+    public static final long MAX_COINS = BitcoinNetwork.MAX_MONEY.longValue();
 
     /**
      * The maximum money to be generated
+     * @deprecated Use {@link BitcoinNetwork#MAX_MONEY}
      */
-    public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
+    @Deprecated
+    public static final Coin MAX_MONEY = BitcoinNetwork.MAX_MONEY;
 
     /**
      * A Java package style string acting as unique ID for these parameters
@@ -412,7 +415,9 @@ public abstract class NetworkParameters {
      * network. Where not applicable, a very large number of coins is returned
      * instead (e.g. the main coin issue for Dogecoin).
      * @return maximum number of coins for this network
+     * @deprecated Use {@link Network#maxMoney()}
      */
+    @Deprecated
     public abstract Coin getMaxMoney();
 
     /**
@@ -439,7 +444,9 @@ public abstract class NetworkParameters {
      * not. Always returns true for Bitcoin, but exists to be overridden for other
      * networks.
      * @return true if network has a fixed maximum number of coins
+     * @deprecated Use {@link Network#hasMaxMoney()}
      */
+    @Deprecated
     public abstract boolean hasMaxMoney();
 
     /**

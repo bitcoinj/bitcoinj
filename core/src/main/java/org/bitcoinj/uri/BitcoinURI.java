@@ -16,6 +16,8 @@
 
 package org.bitcoinj.uri;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
@@ -194,6 +196,7 @@ public class BitcoinURI {
      *                            separated by '=' e.g. 'amount=0.2')
      */
     private void parseParameters(@Nullable NetworkParameters params, String addressToken, String[] nameValuePairTokens) throws BitcoinURIParseException {
+        Network network = (params != null) ? params.network() : BitcoinNetwork.MAIN;
         // Attempt to decode the rest of the tokens into a parameter map.
         for (String nameValuePairToken : nameValuePairTokens) {
             final int sepIndex = nameValuePairToken.indexOf('=');
@@ -211,7 +214,7 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
                     Coin amount = Coin.parseCoin(valueToken);
-                    if (params != null && amount.isGreaterThan(params.getMaxMoney()))
+                    if (network.hasMaxMoney() && amount.longValue() > network.maxMoney().getValue())
                         throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)
                         throw new ArithmeticException("Negative coins specified");
