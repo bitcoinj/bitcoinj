@@ -430,7 +430,9 @@ public abstract class NetworkParameters {
     /**
      * The monetary object for this currency.
      * @return formatting utility object
+     * @deprecated Get one another way or construct your own {@link MonetaryFormat} as needed.
      */
+    @Deprecated
     public abstract MonetaryFormat getMonetaryFormat();
 
     /**

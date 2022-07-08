@@ -215,7 +215,11 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
         return Transaction.MIN_NONDUST_OUTPUT;
     }
 
+    /**
+     * @deprecated Get one another way or construct your own {@link MonetaryFormat} as needed.
+     */
     @Override
+    @Deprecated
     public MonetaryFormat getMonetaryFormat() {
         return new MonetaryFormat();
     }
