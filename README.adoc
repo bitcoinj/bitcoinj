@@ -10,9 +10,22 @@ The bitcoinj library is a Java implementation of the Bitcoin protocol, which all
 
 ### Technologies
 
-* Java 8+ (needs Java 8 API or Android 7.0 API, compiles to Java 8 bytecode) and Gradle 4.4+ for the `core` module
-* Java 11+ and Gradle 4.4+ for `tools`, `wallettool` and `examples`
-* Java 11+ and Gradle 4.10+ for the JavaFX-based `wallettemplate`
+.Modules
+[cols="3,2,2,1,4"]
+|===
+|Module             | Build JDK | Build Gradle  | Bytecode | Runtime Library
+
+|`core`             | JDK 11+   | Gradle 4.4+   | JDK 8    | Java 8 API or Android 7.0 API
+
+|`examples`         | JDK 11+   | Gradle 4.4+   | JDK 11   | Java 11 API
+|`tools`            | JDK 11+   | Gradle 4.4+   | JDK 11   | Java 11 API
+|`wallettool`       | JDK 11+   | Gradle 4.4+   | JDK 11   | Java 11 API
+
+|`integration-test` | JDK 11+   | Gradle 4.6+   | JDK 11   | Java 11 API, JUnit 5
+|`wallettemplate`   | JDK 11+   | Gradle 4.10+  | JDK 11   | Java 11 API, JavaFX 17+
+
+|===
+
 * https://gradle.org/[Gradle] - for building the project
 * https://github.com/google/protobuf[Google Protocol Buffers] - for use with serialization and hardware communications
 
