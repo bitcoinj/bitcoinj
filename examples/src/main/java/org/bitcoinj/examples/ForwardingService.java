@@ -32,6 +32,7 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,19 +51,14 @@ public class ForwardingService {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
         if (args.length < 1) {
-            System.err.println("Usage: address-to-send-back-to [regtest|testnet]");
+            System.err.println("Usage: address-to-send-back-to [main|regtest|testnet]");
             return;
         }
 
         // Figure out which network we should connect to. Each one gets its own set of files.
-        BitcoinNetwork network;
-        if (args.length > 1 && args[1].equals("testnet")) {
-            network = BitcoinNetwork.TEST;
-        } else if (args.length > 1 && args[1].equals("regtest")) {
-            network = BitcoinNetwork.REGTEST;
-        } else {
-            network = BitcoinNetwork.MAIN;
-        }
+        String networkArgument = (args.length > 1) ? args[1] : "main";
+        BitcoinNetwork network = parseNetwork(networkArgument).orElseThrow();
+
         // Parse the address given as the first parameter.
         var address = Address.fromString(NetworkParameters.of(network), args[0]);
 
@@ -157,6 +153,15 @@ public class ForwardingService {
             case TEST:      return "forwarding-service-testnet";
             case REGTEST:   return "forwarding-service-regtest";
             default:        return "forwarding-service";
+        }
+    }
+
+    static Optional<BitcoinNetwork> parseNetwork(String networkOption) {
+        switch (networkOption) {
+            case "main":    return Optional.of(BitcoinNetwork.MAIN);
+            case "test":    return Optional.of(BitcoinNetwork.TEST);
+            case "regtest": return Optional.of(BitcoinNetwork.REGTEST);
+            default:        return Optional.empty();
         }
     }
 
