@@ -64,16 +64,12 @@ public class ForwardingService {
 
         // Figure out which network we should connect to. Each one gets its own set of files.
         BitcoinNetwork network;
-        String filePrefix;
         if (args.length > 1 && args[1].equals("testnet")) {
             network = BitcoinNetwork.TEST;
-            filePrefix = "forwarding-service-testnet";
         } else if (args.length > 1 && args[1].equals("regtest")) {
             network = BitcoinNetwork.REGTEST;
-            filePrefix = "forwarding-service-regtest";
         } else {
             network = BitcoinNetwork.MAIN;
-            filePrefix = "forwarding-service";
         }
         NetworkParameters params = NetworkParameters.of(network);
         // Parse the address given as the first parameter.
@@ -83,7 +79,11 @@ public class ForwardingService {
         System.out.println("Forwarding address: " + forwardingAddress);
 
         // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), filePrefix);
+        kit = new WalletAppKit(params,
+                ScriptType.P2WPKH,
+                KeyChainGroupStructure.BIP32,
+                new File("."),
+                getPrefix(network));
 
         if (network == BitcoinNetwork.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
@@ -128,6 +128,14 @@ public class ForwardingService {
         try {
             Thread.sleep(Long.MAX_VALUE);
         } catch (InterruptedException ignored) {}
+    }
+
+    static String getPrefix(BitcoinNetwork network) {
+        switch (network) {
+            case TEST:      return "forwarding-service-testnet";
+            case REGTEST:   return "forwarding-service-regtest";
+            default:        return "forwarding-service";
+        }
     }
 
     private static void forwardCoins() {
