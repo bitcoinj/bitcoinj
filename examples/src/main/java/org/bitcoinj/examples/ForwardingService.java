@@ -51,8 +51,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class ForwardingService {
     static final int requiredConfirmations = 1;
-    private static Address forwardingAddress;
-    private static WalletAppKit kit;
+    private final BitcoinNetwork network;
+    private final NetworkParameters params;
+    private final Address forwardingAddress;
+    private final WalletAppKit kit;
 
     public static void main(String[] args) throws Exception {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
@@ -64,37 +66,67 @@ public class ForwardingService {
 
         // Figure out which network we should connect to. Each one gets its own set of files.
         BitcoinNetwork network;
-        String filePrefix;
         if (args.length > 1 && args[1].equals("testnet")) {
             network = BitcoinNetwork.TEST;
-            filePrefix = "forwarding-service-testnet";
         } else if (args.length > 1 && args[1].equals("regtest")) {
             network = BitcoinNetwork.REGTEST;
-            filePrefix = "forwarding-service-regtest";
         } else {
             network = BitcoinNetwork.MAIN;
-            filePrefix = "forwarding-service";
         }
-        NetworkParameters params = NetworkParameters.of(network);
         // Parse the address given as the first parameter.
-        forwardingAddress = Address.fromString(params, args[0]);
+        var address = Address.fromString(NetworkParameters.of(network), args[0]);
 
         System.out.println("Network: " + network.id());
-        System.out.println("Forwarding address: " + forwardingAddress);
+        System.out.println("Forwarding address: " + address);
+
+        // Create the Service (and WalletKit)
+        ForwardingService forwardingService = new ForwardingService(address, network);
+
+        // Start the Service (and WalletKit)
+        forwardingService.start();
+
+        // Start listening and forwarding
+        forwardingService.forward();
+    }
+
+    /**
+     * Forwarding service. Creating this object creates the {@link WalletAppKit} object.
+     *
+     * @param forwardingAddress Address to forward to
+     * @param network Network to listen on
+     */
+    public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
+        this.forwardingAddress = forwardingAddress;
+        this.network = network;
+        this.params = NetworkParameters.of(network);
 
         // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), filePrefix);
+        kit = new WalletAppKit(NetworkParameters.of(network),
+                ScriptType.P2WPKH,
+                KeyChainGroupStructure.BIP32,
+                new File("."),
+                getPrefix(network));
+    }
 
+    /**
+     * Start the WalletAppKit
+     */
+    public void start() {
         if (network == BitcoinNetwork.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
             // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
             kit.connectToLocalHost();
         }
 
-        // Download the block chain and wait until it's done.
+        // Download the blockchain and wait until it's done.
         kit.startAsync();
         kit.awaitRunning();
+    }
 
+    /**
+     * Setup the listener to forward received coins and wait
+     */
+    public void forward() {
         // We want to know when we receive money.
         kit.wallet().addCoinsReceivedEventListener((w, tx, prevBalance, newBalance) -> {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
@@ -130,7 +162,15 @@ public class ForwardingService {
         } catch (InterruptedException ignored) {}
     }
 
-    private static void forwardCoins() {
+    static String getPrefix(BitcoinNetwork network) {
+        switch (network) {
+            case TEST:      return "forwarding-service-testnet";
+            case REGTEST:   return "forwarding-service-regtest";
+            default:        return "forwarding-service";
+        }
+    }
+
+    private void forwardCoins() {
         try {
             // Now send the coins onwards.
             SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
