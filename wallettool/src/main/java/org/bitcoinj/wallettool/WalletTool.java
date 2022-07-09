@@ -113,73 +113,71 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
  */
-@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.")
+@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.", subcommands = { CommandLine.HelpCommand.class })
 public class WalletTool implements Callable<Integer> {
-    @CommandLine.Parameters(index = "0", description = "Action to perform. Valid values:%n" +
-            "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
-            "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
-            "  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.%n" +
-            "  create               Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.%n" +
-            "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
-            "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
-            "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
-            "                       If --output-script-type is present, use that for deriving addresses.%n" +
-            "  marry                Makes the wallet married with other parties, requiring multisig to spend funds.%n" +
-            "                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).%n" +
-            "  add-key              Adds a new key to the wallet.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If --privkey is specified, use as a WIF-, hex- or base58-encoded private key.%n" +
-            "                       Don't specify --pubkey in that case, it will be derived automatically.%n" +
-            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.%n" +
-            "  add-addr             Requires --addr to be specified, and adds it as a watching address.%n" +
-            "  delete-key           Removes the key specified by --pubkey or --addr from the wallet.%n" +
-            "  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are%n" +
-            "                       independent of addresses derived with the add-key action.%n" +
-            "  sync                 Sync the wallet with the latest block chain (download new transactions).%n" +
-            "                       If the chain file does not exist or if --force is present, this will RESET the wallet.%n" +
-            "  reset                Deletes all transactions from the wallet, for if you want to replay the chain.%n" +
-            "  send                 Creates and broadcasts a transaction from the given wallet.%n" +
-            "                       Requires either --output or --payment-request to be specified.%n" +
-            "                       If --output is specified, a transaction is created from the provided output from this wallet and broadcasted, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245%n" +
-            "                       You can repeat --output=address:value multiple times.%n" +
-            "                       There is a magic value ALL which empties the wallet to that address, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL%n" +
-            "                       The output destination can also be a native segwit address.%n" +
-            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the send will use%n" +
-            "                       <key> CHECKSIG as the script.%n" +
-            "                       If --payment-request is specified, a transaction will be created using the provided payment request. A payment request can be a local file, a bitcoin uri, or url to download the payment request, e.g.:%n" +
-            "                         --payment-request=/path/to/my.bitcoinpaymentrequest%n" +
-            "                         --payment-request=bitcoin:?r=http://merchant.com/pay.php?123%n" +
-            "                         --payment-request=http://merchant.com/pay.php?123%n" +
-            "                       Other options include:%n" +
-            "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
-            "                         --select-addr or --select-output to select specific outputs%n" +
-            "                         --locktime=1234  sets the lock time to block 1234%n" +
-            "                         --locktime=2013/01/01  sets the lock time to 1st Jan 2013%n" +
-            "                         --allow-unconfirmed will let you create spends of pending non-change outputs.%n" +
-            "                         --no-pki disables pki verification for payment requests.%n" +
-            "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
-            "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
-            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
-            "                       If --output-script-type is present, use that as the upgrade target.%n" +
-            "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
-            "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
-            "                       will be created from a new random seed.%n" +
-            "  set-creation-time    Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidently have been created \"in the future\". Currently, watching wallets are not supported.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If you omit both options, the creation time is being cleared (set to 0).%n")
-    private String actionStr;
+//    @CommandLine.Parameters(index = "0", description = "Action to perform. Valid values:%n" +
+//            "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
+//            "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
+//            "  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.%n" +
+//            "  create               Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.%n" +
+//            "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
+//            "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
+//            "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
+//            "                       If --output-script-type is present, use that for deriving addresses.%n" +
+//            "  marry                Makes the wallet married with other parties, requiring multisig to spend funds.%n" +
+//            "                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).%n" +
+//            "  add-key              Adds a new key to the wallet.%n" +
+//            "                       If --date is specified, that's the creation date.%n" +
+//            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
+//            "                       If --privkey is specified, use as a WIF-, hex- or base58-encoded private key.%n" +
+//            "                       Don't specify --pubkey in that case, it will be derived automatically.%n" +
+//            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.%n" +
+//            "  add-addr             Requires --addr to be specified, and adds it as a watching address.%n" +
+//            "  delete-key           Removes the key specified by --pubkey or --addr from the wallet.%n" +
+//            "  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are%n" +
+//            "                       independent of addresses derived with the add-key action.%n" +
+//            "  sync                 Sync the wallet with the latest block chain (download new transactions).%n" +
+//            "                       If the chain file does not exist or if --force is present, this will RESET the wallet.%n" +
+//            "  reset                Deletes all transactions from the wallet, for if you want to replay the chain.%n" +
+//            "  send                 Creates and broadcasts a transaction from the given wallet.%n" +
+//            "                       Requires either --output or --payment-request to be specified.%n" +
+//            "                       If --output is specified, a transaction is created from the provided output from this wallet and broadcasted, e.g.:%n" +
+//            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245%n" +
+//            "                       You can repeat --output=address:value multiple times.%n" +
+//            "                       There is a magic value ALL which empties the wallet to that address, e.g.:%n" +
+//            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL%n" +
+//            "                       The output destination can also be a native segwit address.%n" +
+//            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the send will use%n" +
+//            "                       <key> CHECKSIG as the script.%n" +
+//            "                       If --payment-request is specified, a transaction will be created using the provided payment request. A payment request can be a local file, a bitcoin uri, or url to download the payment request, e.g.:%n" +
+//            "                         --payment-request=/path/to/my.bitcoinpaymentrequest%n" +
+//            "                         --payment-request=bitcoin:?r=http://merchant.com/pay.php?123%n" +
+//            "                         --payment-request=http://merchant.com/pay.php?123%n" +
+//            "                       Other options include:%n" +
+//            "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
+//            "                         --select-addr or --select-output to select specific outputs%n" +
+//            "                         --locktime=1234  sets the lock time to block 1234%n" +
+//            "                         --locktime=2013/01/01  sets the lock time to 1st Jan 2013%n" +
+//            "                         --allow-unconfirmed will let you create spends of pending non-change outputs.%n" +
+//            "                         --no-pki disables pki verification for payment requests.%n" +
+//            "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
+//            "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
+//            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
+//            "                       If --output-script-type is present, use that as the upgrade target.%n" +
+//            "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
+//            "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
+//            "                       will be created from a new random seed.%n" +
+//            "  set-creation-time    Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidently have been created \"in the future\". Currently, watching wallets are not supported.%n" +
+//            "                       If --date is specified, that's the creation date.%n" +
+//            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
+//            "                       If you omit both options, the creation time is being cleared (set to 0).%n")
+    //private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private BitcoinNetwork net = BitcoinNetwork.MAIN;
-    @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.")
+    @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.", scope = CommandLine.ScopeType.INHERIT)
     private boolean debugLog = false;
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
     private boolean force = false;
-    @CommandLine.Option(names = "--wallet", description = "Specifies what wallet file to load and save.")
-    private File walletFile = null;
     @CommandLine.Option(names = "--seed", description = "Specifies either a mnemonic code or hex/base58 raw seed bytes.")
     private String seedStr = null;
     @CommandLine.Option(names = "--watchkey", description = "Describes a watching wallet using the specified base58 xpub.")
@@ -230,18 +228,33 @@ public class WalletTool implements Callable<Integer> {
     private boolean offline = false;
     @CommandLine.Option(names = "--ignore-mandatory-extensions", description = "If a wallet has unknown required extensions that would otherwise cause load failures, this overrides that.")
     private boolean ignoreMandatoryExtensions = false;
-    @CommandLine.Option(names = "--password", description = "For an encrypted wallet, the password is provided here.")
-    private String password = null;
     @CommandLine.Option(names = "--payment-request", description = "Specifies a payment request either by name of a local file, a bitcoin uri, or url to download the payment request.")
     private String paymentRequestLocationStr;
     @CommandLine.Option(names = "--no-pki", description = "Disables pki verification for payment requests.")
     private boolean noPki = false;
-    @CommandLine.Option(names = "--dump-privkeys", description = "Private keys and seed are printed.")
-    private boolean dumpPrivKeys = false;
-    @CommandLine.Option(names = "--dump-lookahead", description = "Show pregenerated but not yet issued keys.")
-    private boolean dumpLookAhead = false;
-    @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
+//    @CommandLine.Option(names = "--dump-privkeys", description = "Private keys and seed are printed.")
+//    private boolean dumpPrivKeys = false;
+//    @CommandLine.Option(names = "--dump-lookahead", description = "Show pregenerated but not yet issued keys.")
+//    private boolean dumpLookAhead = false;
+//    @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
+
     private boolean help;
+
+    // Temporary workarounds
+    //private File walletFile;
+    private String password;
+
+    public static class WalletOptions {
+        @CommandLine.Option(names = "--wallet", description = "Specifies what wallet file to load and save.", required = true)
+        protected File walletFile = null;
+
+        @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
+        private BitcoinNetwork net = BitcoinNetwork.MAIN;
+
+        @CommandLine.Option(names = "--password", description = "For an encrypted wallet, the password is provided here.")
+        protected String password = null;
+
+    }
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
     private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
@@ -346,21 +359,7 @@ public class WalletTool implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    @Override
-    public Integer call() throws IOException, BlockStoreException {
-        if (help) {
-            System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), StandardCharsets.UTF_8));
-            return 0;
-        }
-
-        ActionEnum action;
-        try {
-            action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Could not understand action name " + actionStr);
-            return 1;
-        }
-
+    public void initialize(BitcoinNetwork net) {
         if (debugLog) {
             BriefLogFormatter.init();
             log.info("Starting up ...");
@@ -391,34 +390,17 @@ public class WalletTool implements Callable<Integer> {
             chainFile = new File(fileName);
         }
         Context.propagate(new Context(params));
+    }
 
-        if (conditionStr != null) {
-            condition = new Condition(conditionStr);
-        }
-
-        if (action == ActionEnum.CREATE) {
-            createWallet(params, walletFile);
-            return 0;  // We're done.
-        }
+    public int loadWallet(File walletFile, boolean forceReset) {
+//        boolean forceReset = action == ActionEnum.RESET
+//                || (action == ActionEnum.SYNC
+//                && force);
         if (!walletFile.exists()) {
             System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
             return 1;
         }
 
-        if (action == ActionEnum.RAW_DUMP) {
-            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
-            // useful mostly for investigating corrupted wallets.
-            try (FileInputStream stream = new FileInputStream(walletFile)) {
-                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
-                proto = attemptHexConversion(proto);
-                System.out.println(proto.toString());
-                return 0;
-            }
-        }
-
-        boolean forceReset = action == ActionEnum.RESET
-                || (action == ActionEnum.SYNC
-                && force);
         try {
             wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
         } catch (UnreadableWalletException e) {
@@ -431,10 +413,56 @@ public class WalletTool implements Callable<Integer> {
                     wallet.getParams().getId() + " vs " + params.getId());
             return 1;
         }
+        return 0;
+    }
+
+    @Override
+    public Integer call() throws IOException, BlockStoreException {
+//        if (help) {
+//            System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), StandardCharsets.UTF_8));
+//            return 0;
+//        }
+
+//        ActionEnum action;
+//        try {
+//            action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
+//        } catch (IllegalArgumentException e) {
+//            System.err.println("Could not understand action name " + actionStr);
+//            return 1;
+//        }
+
+        System.out.println("Main call method entered and not-working in this experiment");
+        ActionEnum action = null;
+        if (action == null) {
+            return 2;
+        }
+        initialize(BitcoinNetwork.MAIN);
+
+        if (conditionStr != null) {
+            condition = new Condition(conditionStr);
+        }
+
+//        if (action == ActionEnum.CREATE) {
+//            createWallet(params, walletFile);
+//            return 0;  // We're done.
+//        }
+
+//        if (action == ActionEnum.RAW_DUMP) {
+//            //rawDump();
+//            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
+//            // useful mostly for investigating corrupted wallets.
+//            try (FileInputStream stream = new FileInputStream(walletFile)) {
+//                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+//                proto = attemptHexConversion(proto);
+//                System.out.println(proto.toString());
+//                return 0;
+//            }
+//        }
+
 
         // What should we do?
         switch (action) {
-            case DUMP: dumpWallet(); break;
+            //case DUMP: dumpWallet(); break;
             case ADD_KEY: addKey(); break;
             case ADD_ADDR: addAddr(); break;
             case DELETE_KEY: deleteKey(); break;
@@ -524,7 +552,7 @@ public class WalletTool implements Callable<Integer> {
             return 10;
         }
 
-        saveWallet(walletFile);
+        //saveWallet(walletFile);
 
         if (waitFor != null) {
             wait(waitFor);
@@ -532,7 +560,7 @@ public class WalletTool implements Callable<Integer> {
                 System.err.println("************** WALLET IS INCONSISTENT *****************");
                 return 10;
             }
-            saveWallet(walletFile);
+            //saveWallet(walletFile);
         }
         shutdown();
 
@@ -996,7 +1024,7 @@ public class WalletTool implements Callable<Integer> {
     private void reset() {
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
-        saveWallet(walletFile);
+        //saveWallet(walletFile);
     }
 
     // Sets up all objects needed for network communication but does not bring up the peers.
@@ -1028,7 +1056,7 @@ public class WalletTool implements Callable<Integer> {
             chain = new FullPrunedBlockChain(params, wallet, (FullPrunedBlockStore) store);
         }
         // This will ensure the wallet is saved when it changes.
-        wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
+        //wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
         if (peerGroup == null) {
             peerGroup = new PeerGroup(params, chain);
         }
@@ -1079,7 +1107,7 @@ public class WalletTool implements Callable<Integer> {
             if (peerGroup == null) return;  // setup() never called so nothing to do.
             if (peerGroup.isRunning())
                 peerGroup.stop();
-            saveWallet(walletFile);
+            //saveWallet(walletFile);
             store.close();
             wallet = null;
         } catch (BlockStoreException e) {
@@ -1273,28 +1301,43 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(address);
     }
 
-    private void dumpWallet() throws BlockStoreException {
+    @CommandLine.Command(name="raw-dump", description = "Prints the wallet as a raw protobuf with no parsing or sanity checking applied.")
+    void rawDump(@CommandLine.Mixin WalletOptions walletOpts) {
+    }
+
+    @CommandLine.Command(name="dump", description = "Loads and prints the given wallet in textual form to stdout.")
+    Integer dumpWallet(
+            @CommandLine.Option(names = "--dump-lookahead", description = "Show pregenerated but not yet issued keys.") boolean dumpLookAhead,
+            @CommandLine.Option(names = "--dump-privkeys", description = "Private keys and seed are printed.") boolean dumpPrivKeys,
+            @CommandLine.Mixin WalletOptions walletOpts
+        ) throws BlockStoreException {
+        initialize(walletOpts.net);
+        int result = loadWallet(walletOpts.walletFile, force);
+        if (result != 0) {
+            return result;
+        }
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
         if (chainFile.exists())
             setup();
 
         if (dumpPrivKeys && wallet.isEncrypted()) {
-            if (password != null) {
+            if (walletOpts.password != null) {
                 final KeyParameter aesKey = passwordToKey(true);
                 if (aesKey == null)
-                    return; // Error message already printed.
-                printWallet( aesKey);
+                    return 1; // Error message already printed.
+                printWallet( aesKey, dumpLookAhead, dumpPrivKeys);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
-                return;
+                return 1;
             }
         } else {
-            printWallet( null);
+            printWallet( null, dumpLookAhead, dumpPrivKeys);
         }
+        return 0;
     }
 
-    private void printWallet(@Nullable KeyParameter aesKey) {
+    private void printWallet(@Nullable KeyParameter aesKey, boolean dumpLookAhead, boolean dumpPrivKeys) {
         System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 
@@ -1314,7 +1357,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private synchronized void onChange(final CountDownLatch latch) {
-        saveWallet(walletFile);
+        //saveWallet(walletFile);
         Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
         if (condition.matchBitcoins(balance)) {
             System.out.println(balance.toFriendlyString());
