@@ -22,7 +22,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
 
 import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
@@ -87,12 +86,12 @@ public class BitcoinURI {
     public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
     /**
-     * URI for Bitcoin network. Use {@link AbstractBitcoinNetParams#BITCOIN_SCHEME} if you specifically
-     * need Bitcoin, or use {@link NetworkParameters#getUriScheme} to get the scheme
+     * URI for Bitcoin network. Use {@link BitcoinNetwork#BITCOIN_SCHEME} if you specifically
+     * need Bitcoin, or use {@link Network#uriScheme} to get the scheme
      * from network parameters.
      */
     @Deprecated
-    public static final String BITCOIN_SCHEME = "bitcoin";
+    public static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
@@ -125,8 +124,8 @@ public class BitcoinURI {
         checkNotNull(input);
 
         String scheme = null == params
-            ? AbstractBitcoinNetParams.BITCOIN_SCHEME
-            : params.getUriScheme();
+            ? BitcoinNetwork.BITCOIN_SCHEME
+            : params.network().uriScheme();
 
         // Attempt to form the URI (fail fast syntax checking to official standards).
         URI uri;
@@ -375,7 +374,7 @@ public class BitcoinURI {
         }
         
         StringBuilder builder = new StringBuilder();
-        String scheme = params.getUriScheme();
+        String scheme = params.network().uriScheme();
         builder.append(scheme).append(":").append(address);
         
         boolean questionMarkHasBeenOutput = false;

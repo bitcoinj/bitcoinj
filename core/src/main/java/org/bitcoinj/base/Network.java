@@ -27,6 +27,12 @@ public interface Network {
     String id();
 
     /**
+     * The URI scheme for this network. See {@link BitcoinNetwork#uriScheme()}.
+     * @return The URI scheme for this network
+     */
+    String uriScheme();
+
+    /**
      * Does this network have a fixed maximum number of coins
      * @return {@code true} if this network has a fixed maximum number of coins
      */
