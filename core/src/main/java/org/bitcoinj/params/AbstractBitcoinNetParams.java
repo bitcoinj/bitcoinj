@@ -49,8 +49,11 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
 
     /**
      * Scheme part for Bitcoin URIs.
+     * @deprecated Use {@link BitcoinNetwork#BITCOIN_SCHEME}
      */
-    public static final String BITCOIN_SCHEME = "bitcoin";
+    @Deprecated
+    public static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
+
     /**
      * Block reward halving interval (number of blocks)
      */
@@ -235,8 +238,9 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     @Override
+    @Deprecated
     public String getUriScheme() {
-        return BITCOIN_SCHEME;
+        return BitcoinNetwork.BITCOIN_SCHEME;
     }
 
     @Override

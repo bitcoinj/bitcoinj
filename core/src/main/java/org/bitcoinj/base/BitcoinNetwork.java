@@ -38,6 +38,11 @@ public enum BitcoinNetwork implements Network {
     REGTEST("org.bitcoin.regtest", new String[0]);
 
     /**
+     * Scheme part for Bitcoin URIs.
+     */
+    public static final String BITCOIN_SCHEME = "bitcoin";
+
+    /**
      * The maximum number of coins to be generated
      */
     private static final long MAX_COINS = 21000000;
@@ -83,6 +88,16 @@ public enum BitcoinNetwork implements Network {
     @Override
     public String id() {
         return id;
+    }
+
+    /**
+     * The URI scheme for Bitcoin.
+     * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki">BIP 0021</a>
+     * @return string containing the URI scheme
+     */
+    @Override
+    public String uriScheme() {
+        return BITCOIN_SCHEME;
     }
 
     @Override

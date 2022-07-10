@@ -16,6 +16,7 @@
 
 package org.bitcoinj.uri;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -43,7 +44,7 @@ public class BitcoinURITest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
     private static final String MAINNET_GOOD_SEGWIT_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
-    private static final String BITCOIN_SCHEME = MAINNET.getUriScheme();
+    private static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
 
     @Test
     public void testConvertToBitcoinURI() {
@@ -82,6 +83,7 @@ public class BitcoinURITest {
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, "", ""));
 
         // different scheme
+        // TODO: Reimplement this test after we finish our alt-net support via refactoring
         final NetworkParameters alternativeParameters = new MainNetParams() {
             @Override
             public String getUriScheme() {
@@ -89,7 +91,8 @@ public class BitcoinURITest {
             }
         };
 
-        assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
+        // TODO: change the expected URL back to "test" when we finish the alt-net support refactoring
+        assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
              BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS), parseCoin("12.34"), "Hello", "AMessage"));
     }
 

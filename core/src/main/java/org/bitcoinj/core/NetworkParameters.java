@@ -438,7 +438,9 @@ public abstract class NetworkParameters {
     /**
      * Scheme part for URIs, for example "bitcoin".
      * @return a string with the "scheme" part
+     * @deprecated Use {@link Network#uriScheme()}
      */
+    @Deprecated
     public abstract String getUriScheme();
 
     /**
