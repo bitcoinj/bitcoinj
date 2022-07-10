@@ -159,7 +159,7 @@ public class ForwardingService {
     static Optional<BitcoinNetwork> parseNetwork(String networkOption) {
         switch (networkOption) {
             case "main":    return Optional.of(BitcoinNetwork.MAIN);
-            case "test":    return Optional.of(BitcoinNetwork.TEST);
+            case "testnet": return Optional.of(BitcoinNetwork.TEST);
             case "regtest": return Optional.of(BitcoinNetwork.REGTEST);
             case "signet":  return Optional.of(BitcoinNetwork.SIGNET);
             default:        return Optional.empty();
