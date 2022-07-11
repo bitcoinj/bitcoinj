@@ -32,10 +32,10 @@ import static org.bitcoinj.base.Coin.COIN;
  * method for input of network values.
  */
 public enum BitcoinNetwork implements Network {
-    MAIN("org.bitcoin.production"),
-    TEST("org.bitcoin.test"),
-    SIGNET("org.bitcoin.signet"),
-    REGTEST("org.bitcoin.regtest");
+    MAIN("org.bitcoin.production", new String[] { "mainnet", "prod" }),
+    TEST("org.bitcoin.test", new String[] { "testnet" }),
+    SIGNET("org.bitcoin.signet", new String[] { "sig" }),
+    REGTEST("org.bitcoin.regtest", new String[0]);
 
     /**
      * The maximum number of coins to be generated
@@ -59,9 +59,11 @@ public enum BitcoinNetwork implements Network {
     public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
 
     private final String id;
+    private final String[] alternateNames;
 
-    BitcoinNetwork(String networkId) {
-        id = networkId;
+    BitcoinNetwork(String networkId, String[] alternateNames) {
+        this.id = networkId;
+        this.alternateNames = alternateNames;
     }
 
     /**
@@ -94,13 +96,27 @@ public enum BitcoinNetwork implements Network {
     }
 
     /**
-     * Find the {@code BitcoinNetwork} from a name String.
-     * @param nameString A name string (e.g. "main", "test", "signet")
+     * Find the {@code BitcoinNetwork} from a name string, e.g. "main", "test" or "signet".
+     * A number of common alternate names are allowed too, e.g. "mainnet" or "prod".
+     * @param nameString A name string
      * @return An {@code Optional} containing the matching enum or empty
      */
     public static Optional<BitcoinNetwork> fromString(String nameString) {
+        final Optional<BitcoinNetwork> canonicalName = findCanonicalName(nameString);
+        return canonicalName.isPresent()
+                ? canonicalName
+                : findAlternateName(nameString);
+    }
+
+    private static Optional<BitcoinNetwork> findCanonicalName(String nameString) {
         return Arrays.stream(values())
                 .filter(n -> n.toString().equals(nameString))
+                .findFirst();
+    }
+
+    private static Optional<BitcoinNetwork> findAlternateName(String nameString) {
+        return Arrays.stream(values())
+                .filter(n -> Arrays.stream(n.alternateNames).anyMatch(a -> a.equals(nameString)))
                 .findFirst();
     }
 

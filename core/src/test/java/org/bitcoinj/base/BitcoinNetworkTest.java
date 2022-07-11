@@ -42,9 +42,13 @@ public class BitcoinNetworkTest {
 
     @Test
     public void fromString() {
+        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("mainnet").get());
         assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("main").get());
+        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("prod").get());
         assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.fromString("test").get());
+        assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.fromString("testnet").get());
         assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.fromString("signet").get());
+        assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.fromString("sig").get());
         assertEquals(BitcoinNetwork.REGTEST, BitcoinNetwork.fromString("regtest").get());
     }
 
