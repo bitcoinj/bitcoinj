@@ -17,6 +17,7 @@
 package org.bitcoinj.base;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.bitcoinj.base.Coin.COIN;
 
@@ -77,16 +78,48 @@ public enum BitcoinNetwork implements Network {
     }
 
     /**
+     * Get the {@code BitcoinNetwork} from a <i>validated</i> name String
+     * @param nameString A name string (e.g. "MAIN", "TEST", "SIGNET")
+     * @return The matching enum
+     * @throws IllegalArgumentException if there is no matching enum
+     */
+    public static BitcoinNetwork of(String nameString) {
+        return find(nameString)
+                .orElseThrow(() -> new IllegalArgumentException("Unrecognized network name : " + nameString));
+    }
+
+    /**
+     * Find the {@code BitcoinNetwork} from a name String
+     * @param nameString A name string (e.g. "MAIN", "TEST", "SIGNET")
+     * @return An {@code Optional} containing the matching enum or empty
+     */
+    public static Optional<BitcoinNetwork> find(String nameString) {
+        return Arrays.stream(values())
+                .filter(n -> n.toString().equals(nameString.toUpperCase()))
+                .findFirst();
+    }
+
+    /**
      * Get the correct enum for a network id string
      * <p>
      * Note: UNITTEST is not supported as an enum
      * @param idString specifies the network
      * @return the enum
+     * @throws IllegalArgumentException if there is no matching enum
      */
-    public static BitcoinNetwork of(String idString) {
+    public static BitcoinNetwork ofId(String idString) {
+        return findById(idString)
+                .orElseThrow(() -> new IllegalArgumentException("Illegal network ID: " + idString));
+    }
+
+    /**
+     * Find the {@code BitcoinNetwork} from an ID String
+     * @param idString specifies the network
+     * @return An {@code Optional} containing the matching enum or empty
+     */
+    public static Optional<BitcoinNetwork> findById(String idString) {
         return Arrays.stream(values())
                 .filter(n -> n.id.equals(idString))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Illegal network ID: " + idString));
+                .findFirst();
     }
 }
