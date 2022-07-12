@@ -16,6 +16,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
@@ -44,19 +45,20 @@ public class Kit {
 
         // First we configure the network we want to use.
         // The available options are:
-        // - MainNetParams
-        // - TestNet3Params
-        // - RegTestParams
+        // - BitcoinNetwork.MAIN
+        // - BitcoinNetwork.TEST
+        // - BitcoinNetwork.SIGNET
+        // - BitcoinNetwork.REGTEST
         // While developing your application you probably want to use the Regtest mode and run your local bitcoin network. Run bitcoind with the -regtest flag
         // To test you app with a real network you can use the testnet. The testnet is an alternative bitcoin network that follows the same rules as main network.
         // Coins are worth nothing and you can get coins from a faucet.
         // 
         // For more information have a look at: https://bitcoinj.github.io/testing and https://bitcoin.org/en/developer-examples#testing-applications
-        NetworkParameters params = TestNet3Params.get();
+        BitcoinNetwork network = BitcoinNetwork.TEST;
 
         // Now we initialize a new WalletAppKit. The kit handles all the boilerplate for us and is the easiest way to get everything up and running.
         // Have a look at the WalletAppKit documentation and its source to understand what's happening behind the scenes: https://github.com/bitcoinj/bitcoinj/blob/master/core/src/main/java/org/bitcoinj/kits/WalletAppKit.java
-        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "walletappkit-example");
+        WalletAppKit kit = new WalletAppKit(network, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "walletappkit-example");
 
         // In case you want to connect with your local bitcoind tell the kit to connect to localhost.
         // You must do that in reg test mode.

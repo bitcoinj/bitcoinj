@@ -151,7 +151,7 @@ public abstract class WalletApplication implements AppDelegate {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
-        walletAppKit = new WalletAppKit(params, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
+        walletAppKit = new WalletAppKit(params.network(), preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
