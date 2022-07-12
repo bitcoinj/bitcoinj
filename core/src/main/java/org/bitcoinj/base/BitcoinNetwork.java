@@ -16,9 +16,15 @@
 
 package org.bitcoinj.base;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.base.Coin.COIN;
 
@@ -64,11 +70,16 @@ public enum BitcoinNetwork implements Network {
     public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
 
     private final String id;
-    private final String[] alternateNames;
+
+    // All supported names for this BitcoinNetwork
+    private final List<String> allNames;
+
+    // Maps from names and alternateNames to BitcoinNetwork
+    private static final Map<String, BitcoinNetwork> stringToEnum = mergedNameMap();
 
     BitcoinNetwork(String networkId, String... alternateNames) {
         this.id = networkId;
-        this.alternateNames = alternateNames;
+        this.allNames = combine(this.toString(), alternateNames);
     }
 
     /**
@@ -117,22 +128,7 @@ public enum BitcoinNetwork implements Network {
      * @return An {@code Optional} containing the matching enum or empty
      */
     public static Optional<BitcoinNetwork> fromString(String nameString) {
-        final Optional<BitcoinNetwork> canonicalName = findCanonicalName(nameString);
-        return canonicalName.isPresent()
-                ? canonicalName
-                : findAlternateName(nameString);
-    }
-
-    private static Optional<BitcoinNetwork> findCanonicalName(String nameString) {
-        return Arrays.stream(values())
-                .filter(n -> n.toString().equals(nameString))
-                .findFirst();
-    }
-
-    private static Optional<BitcoinNetwork> findAlternateName(String nameString) {
-        return Arrays.stream(values())
-                .filter(n -> Arrays.stream(n.alternateNames).anyMatch(a -> a.equals(nameString)))
-                .findFirst();
+        return Optional.ofNullable(stringToEnum.get(nameString));
     }
 
     /**
@@ -146,5 +142,26 @@ public enum BitcoinNetwork implements Network {
         return Arrays.stream(values())
                 .filter(n -> n.id.equals(idString))
                 .findFirst();
+    }
+
+    // Create a Map that maps name Strings to networks for all instances
+    private static Map<String, BitcoinNetwork> mergedNameMap() {
+        return Stream.of(values())
+                    .collect(HashMap::new,                  // Supply HashMaps as mutable containers
+                        BitcoinNetwork::accumulateNames,    // Accumulate one network into hashmap
+                        Map::putAll);                       // Combine two containers
+    }
+
+    // Add allNames for this Network as keys to a map that can be used to find it
+    private static void accumulateNames(Map<String, BitcoinNetwork> map, BitcoinNetwork net) {
+        net.allNames.forEach(name -> map.put(name, net));
+    }
+
+    // Combine a String and an array of String and return as an unmodifiable list
+    private static List<String> combine(String canonical, String[] alternateNames) {
+        List<String> temp = new ArrayList<>();
+        temp.add(canonical);
+        temp.addAll(Arrays.asList(alternateNames));
+        return Collections.unmodifiableList(temp);
     }
 }
