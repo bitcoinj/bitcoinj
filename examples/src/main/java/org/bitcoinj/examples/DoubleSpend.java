@@ -38,7 +38,7 @@ public class DoubleSpend {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
         final RegTestParams params = RegTestParams.get();
-        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
+        WalletAppKit kit = new WalletAppKit(params.network(), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
         kit.connectToLocalHost();
         kit.setAutoSave(false);
         kit.startAsync();

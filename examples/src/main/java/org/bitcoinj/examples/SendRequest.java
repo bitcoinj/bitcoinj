@@ -37,7 +37,7 @@ public class SendRequest {
 
         // We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details.
         NetworkParameters params = TestNet3Params.get();
-        WalletAppKit kit = new WalletAppKit(params, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
+        WalletAppKit kit = new WalletAppKit(params.network(), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
         kit.startAsync();
         kit.awaitRunning();
 

@@ -85,6 +85,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class WalletAppKit extends AbstractIdleService {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
+    protected final BitcoinNetwork network;
     protected final NetworkParameters params;
     protected final ScriptType preferredOutputScriptType;
     protected final KeyChainGroupStructure structure;
@@ -113,26 +114,53 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
      */
+    @Deprecated
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
+        this(params.network(), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
     }
 
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
      */
+    @Deprecated
     public WalletAppKit(NetworkParameters params, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this(new Context(params), preferredOutputScriptType, structure, directory, filePrefix);
+        this(params.network(), preferredOutputScriptType, structure, directory, filePrefix);
+    }
+
+    /**
+     * Creates a new WalletAppKit, on the specified {@link BitcoinNetwork}. Files will be stored in the given directory.
+     *
+     * @param network The network the wallet connects to
+     * @param preferredOutputScriptType The output script type (and therefore {@code Address} type) of the wallet
+     * @param structure The keychain group structure (e.g. {@link KeyChainGroupStructure#BIP43} or {@link KeyChainGroupStructure#BIP32}
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
+     */
+    public WalletAppKit(BitcoinNetwork network, ScriptType preferredOutputScriptType,
+                        KeyChainGroupStructure structure, File directory, String filePrefix) {
+        this.network = checkNotNull(network);
+        this.params = NetworkParameters.of(this.network);
+        this.context = new Context(params);
+        this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
+        this.structure = checkNotNull(structure);
+        this.directory = checkNotNull(directory);
+        this.filePrefix = checkNotNull(filePrefix);
     }
 
     /**
      * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
+     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
      */
+    @Deprecated
     public WalletAppKit(Context context, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
         this.context = context;
         this.params = checkNotNull(context.getParams());
+        this.network = params.network();
         this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
         this.structure = structure != null ? structure : KeyChainGroupStructure.BIP32;
         this.directory = checkNotNull(directory);
@@ -491,6 +519,10 @@ public class WalletAppKit extends AbstractIdleService {
         } catch (BlockStoreException e) {
             throw new IOException(e);
         }
+    }
+
+    public BitcoinNetwork network() {
+        return network;
     }
 
     public NetworkParameters params() {

@@ -87,7 +87,7 @@ public class ForwardingService {
         this.params = NetworkParameters.of(network);
 
         // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(NetworkParameters.of(network),
+        kit = new WalletAppKit(network,
                 ScriptType.P2WPKH,
                 KeyChainGroupStructure.BIP32,
                 new File("."),

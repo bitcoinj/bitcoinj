@@ -50,7 +50,7 @@ public class TestFeeLevel {
         Coin feeRateToTest = Coin.valueOf(Long.parseLong(args[0]));
         System.out.println("Fee rate to test is " + feeRateToTest.toFriendlyString() + "/kB");
 
-        kit = new WalletAppKit(PARAMS, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "testfeelevel");
+        kit = new WalletAppKit(PARAMS.network(), ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "testfeelevel");
         kit.startAsync();
         kit.awaitRunning();
         try {
