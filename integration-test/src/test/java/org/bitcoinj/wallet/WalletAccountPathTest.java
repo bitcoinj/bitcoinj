@@ -34,8 +34,8 @@ import java.util.stream.Stream;
 
 import static org.bitcoinj.base.ScriptType.P2PKH;
 import static org.bitcoinj.base.ScriptType.P2WPKH;
-import static org.bitcoinj.base.BitcoinNetwork.MAIN;
-import static org.bitcoinj.base.BitcoinNetwork.TEST;
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,14 +68,14 @@ public class WalletAccountPathTest {
     private static Stream<Arguments> walletStructureParams() {
         return Stream.of(
             // Note: For BIP32 wallets the Network does not affect the path
-            Arguments.of(BIP32, "M/0H", P2PKH,  MAIN),
-            Arguments.of(BIP32, "M/0H", P2PKH,  TEST),
-            Arguments.of(BIP32, "M/1H", P2WPKH, MAIN),
-            Arguments.of(BIP32, "M/1H", P2WPKH, TEST),
-            Arguments.of(BIP43, "M/44H/0H/0H", P2PKH, MAIN),
-            Arguments.of(BIP43, "M/44H/1H/0H", P2PKH, TEST),
-            Arguments.of(BIP43, "M/84H/0H/0H", P2WPKH, MAIN),
-            Arguments.of(BIP43, "M/84H/1H/0H", P2WPKH, TEST)
+            Arguments.of(BIP32, "M/0H", P2PKH, MAINNET),
+            Arguments.of(BIP32, "M/0H", P2PKH, TESTNET),
+            Arguments.of(BIP32, "M/1H", P2WPKH, MAINNET),
+            Arguments.of(BIP32, "M/1H", P2WPKH, TESTNET),
+            Arguments.of(BIP43, "M/44H/0H/0H", P2PKH, MAINNET),
+            Arguments.of(BIP43, "M/44H/1H/0H", P2PKH, TESTNET),
+            Arguments.of(BIP43, "M/84H/0H/0H", P2WPKH, MAINNET),
+            Arguments.of(BIP43, "M/84H/1H/0H", P2WPKH, TESTNET)
         );
     }
 

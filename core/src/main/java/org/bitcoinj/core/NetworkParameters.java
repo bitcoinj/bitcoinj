@@ -187,9 +187,9 @@ public abstract class NetworkParameters {
      */
     public static NetworkParameters of(BitcoinNetwork network) {
         switch (network) {
-            case MAIN:
+            case MAINNET:
                 return MainNetParams.get();
-            case TEST:
+            case TESTNET:
                 return TestNet3Params.get();
             case SIGNET:
                 return SigNetParams.get();

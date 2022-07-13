@@ -150,7 +150,7 @@ public class ForwardingService {
 
     static String getPrefix(BitcoinNetwork network) {
         switch (network) {
-            case TEST:      return "forwarding-service-testnet";
+            case TESTNET:   return "forwarding-service-testnet";
             case REGTEST:   return "forwarding-service-regtest";
             default:        return "forwarding-service";
         }
@@ -158,8 +158,8 @@ public class ForwardingService {
 
     static Optional<BitcoinNetwork> parseNetwork(String networkOption) {
         switch (networkOption) {
-            case "main":    return Optional.of(BitcoinNetwork.MAIN);
-            case "testnet": return Optional.of(BitcoinNetwork.TEST);
+            case "main":    return Optional.of(BitcoinNetwork.MAINNET);
+            case "testnet": return Optional.of(BitcoinNetwork.TESTNET);
             case "regtest": return Optional.of(BitcoinNetwork.REGTEST);
             case "signet":  return Optional.of(BitcoinNetwork.SIGNET);
             default:        return Optional.empty();

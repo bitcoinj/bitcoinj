@@ -46,7 +46,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
 
     public TestNet3Params() {
         super();
-        network = BitcoinNetwork.TEST;
+        network = BitcoinNetwork.TESTNET;
         id = BitcoinNetwork.ID_TESTNET;
 
         targetTimespan = TARGET_TIMESPAN;

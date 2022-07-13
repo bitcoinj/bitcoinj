@@ -1013,7 +1013,7 @@ public class KeyChainGroup implements KeyBag {
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                     .outputScriptType(ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAIN)).build();
+                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAINNET)).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);

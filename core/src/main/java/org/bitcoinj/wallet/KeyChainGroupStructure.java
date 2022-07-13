@@ -45,7 +45,7 @@ public interface KeyChainGroupStructure {
      */
     @Deprecated
     default HDPath accountPathFor(ScriptType outputScriptType) {
-        return accountPathFor(outputScriptType, BitcoinNetwork.MAIN);
+        return accountPathFor(outputScriptType, BitcoinNetwork.MAINNET);
     }
 
     /**
@@ -116,9 +116,9 @@ public interface KeyChainGroupStructure {
      */
     static ChildNumber coinType(BitcoinNetwork network) {
         switch (network) {
-            case MAIN:
+            case MAINNET:
                 return ChildNumber.COINTYPE_BTC;
-            case TEST:
+            case TESTNET:
                 return ChildNumber.COINTYPE_TBTC;
             case REGTEST:
                 return ChildNumber.COINTYPE_TBTC;

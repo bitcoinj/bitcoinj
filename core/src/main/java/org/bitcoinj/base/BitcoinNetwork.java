@@ -32,8 +32,8 @@ import static org.bitcoinj.base.Coin.COIN;
  * method for input of network values.
  */
 public enum BitcoinNetwork implements Network {
-    MAIN("org.bitcoin.production", new String[] { "mainnet", "prod" }),
-    TEST("org.bitcoin.test", new String[] { "testnet" }),
+    MAINNET("org.bitcoin.production", new String[] { "main", "prod" }),
+    TESTNET("org.bitcoin.test", new String[] { "test" }),
     SIGNET("org.bitcoin.signet", new String[] { "sig" }),
     REGTEST("org.bitcoin.regtest", new String[0]);
 
@@ -53,9 +53,9 @@ public enum BitcoinNetwork implements Network {
     public static final Coin MAX_MONEY = COIN.multiply(MAX_COINS);
 
     /** The ID string for the main, production network where people trade things. */
-    public static final String ID_MAINNET = MAIN.id();
+    public static final String ID_MAINNET = MAINNET.id();
     /** The ID string for the testnet. */
-    public static final String ID_TESTNET = TEST.id();
+    public static final String ID_TESTNET = TESTNET.id();
     /** The ID string for the signet. */
     public static final String ID_SIGNET = SIGNET.id();
     /** The ID string for regtest mode. */
@@ -111,8 +111,8 @@ public enum BitcoinNetwork implements Network {
     }
 
     /**
-     * Find the {@code BitcoinNetwork} from a name string, e.g. "main", "test" or "signet".
-     * A number of common alternate names are allowed too, e.g. "mainnet" or "prod".
+     * Find the {@code BitcoinNetwork} from a name string, e.g. "mainnet", "testnet" or "signet".
+     * A number of common alternate names are allowed too, e.g. "main" or "prod".
      * @param nameString A name string
      * @return An {@code Optional} containing the matching enum or empty
      */

@@ -24,8 +24,8 @@ import static org.junit.Assert.assertFalse;
 public class BitcoinNetworkTest {
     @Test
     public void valueOf() {
-        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.valueOf("MAIN"));
-        assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.valueOf("TEST"));
+        assertEquals(BitcoinNetwork.MAINNET, BitcoinNetwork.valueOf("MAINNET"));
+        assertEquals(BitcoinNetwork.TESTNET, BitcoinNetwork.valueOf("TESTNET"));
         assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.valueOf("SIGNET"));
         assertEquals(BitcoinNetwork.REGTEST, BitcoinNetwork.valueOf("REGTEST"));
     }
@@ -42,11 +42,11 @@ public class BitcoinNetworkTest {
 
     @Test
     public void fromString() {
-        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("mainnet").get());
-        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("main").get());
-        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromString("prod").get());
-        assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.fromString("test").get());
-        assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.fromString("testnet").get());
+        assertEquals(BitcoinNetwork.MAINNET, BitcoinNetwork.fromString("mainnet").get());
+        assertEquals(BitcoinNetwork.MAINNET, BitcoinNetwork.fromString("main").get());
+        assertEquals(BitcoinNetwork.MAINNET, BitcoinNetwork.fromString("prod").get());
+        assertEquals(BitcoinNetwork.TESTNET, BitcoinNetwork.fromString("test").get());
+        assertEquals(BitcoinNetwork.TESTNET, BitcoinNetwork.fromString("testnet").get());
         assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.fromString("signet").get());
         assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.fromString("sig").get());
         assertEquals(BitcoinNetwork.REGTEST, BitcoinNetwork.fromString("regtest").get());
@@ -64,8 +64,8 @@ public class BitcoinNetworkTest {
 
     @Test
     public void fromIdString() {
-        assertEquals(BitcoinNetwork.MAIN, BitcoinNetwork.fromIdString("org.bitcoin.production").get());
-        assertEquals(BitcoinNetwork.TEST, BitcoinNetwork.fromIdString("org.bitcoin.test").get());
+        assertEquals(BitcoinNetwork.MAINNET, BitcoinNetwork.fromIdString("org.bitcoin.production").get());
+        assertEquals(BitcoinNetwork.TESTNET, BitcoinNetwork.fromIdString("org.bitcoin.test").get());
         assertEquals(BitcoinNetwork.SIGNET, BitcoinNetwork.fromIdString("org.bitcoin.signet").get());
         assertEquals(BitcoinNetwork.REGTEST, BitcoinNetwork.fromIdString("org.bitcoin.regtest").get());
     }

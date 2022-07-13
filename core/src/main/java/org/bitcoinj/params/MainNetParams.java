@@ -37,7 +37,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
     public MainNetParams() {
         super();
-        network = BitcoinNetwork.MAIN;
+        network = BitcoinNetwork.MAINNET;
         id = BitcoinNetwork.ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;

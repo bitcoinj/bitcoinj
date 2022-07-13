@@ -183,9 +183,9 @@ public abstract class WalletApplication implements AppDelegate {
 
     protected String suffixFromNetwork(BitcoinNetwork network) {
         switch(network) {
-            case MAIN:
+            case MAINNET:
                 return "main";
-            case TEST:
+            case TESTNET:
                 return "test";
             case SIGNET:
                 return "signet";

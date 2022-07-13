@@ -195,7 +195,7 @@ public class BitcoinURI {
      *                            separated by '=' e.g. 'amount=0.2')
      */
     private void parseParameters(@Nullable NetworkParameters params, String addressToken, String[] nameValuePairTokens) throws BitcoinURIParseException {
-        Network network = (params != null) ? params.network() : BitcoinNetwork.MAIN;
+        Network network = (params != null) ? params.network() : BitcoinNetwork.MAINNET;
         // Attempt to decode the rest of the tokens into a parameter map.
         for (String nameValuePairToken : nameValuePairTokens) {
             final int sepIndex = nameValuePairToken.indexOf('=');

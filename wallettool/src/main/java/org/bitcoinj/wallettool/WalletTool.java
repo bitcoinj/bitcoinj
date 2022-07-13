@@ -173,7 +173,7 @@ public class WalletTool implements Callable<Integer> {
             "                       If you omit both options, the creation time is being cleared (set to 0).%n")
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private BitcoinNetwork net = BitcoinNetwork.MAIN;
+    private BitcoinNetwork net = BitcoinNetwork.MAINNET;
     @CommandLine.Option(names = "--debuglog", description = "Enables logging from the core library.")
     private boolean debugLog = false;
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
@@ -372,10 +372,10 @@ public class WalletTool implements Callable<Integer> {
         params = NetworkParameters.of(net);
         String fileName;
         switch (net) {
-            case MAIN:
+            case MAINNET:
                 fileName = "mainnet.chain";
                 break;
-            case TEST:
+            case TESTNET:
                 fileName = "testnet.chain";
                 break;
             case SIGNET:
