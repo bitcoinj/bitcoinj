@@ -16,6 +16,7 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AbstractBitcoinNetParamsTest {
-    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams() {
+    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams(BitcoinNetwork.TESTNET) {
         @Override
         public Block getGenesisBlock() {
             return null;

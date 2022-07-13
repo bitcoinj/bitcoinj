@@ -38,8 +38,7 @@ public class SigNetParams extends AbstractBitcoinNetParams {
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6");
 
     public SigNetParams() {
-        super();
-        network = BitcoinNetwork.SIGNET;
+        super(BitcoinNetwork.SIGNET);
         id = BitcoinNetwork.ID_SIGNET;
 
         targetTimespan = TARGET_TIMESPAN;

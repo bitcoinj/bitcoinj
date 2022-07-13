@@ -36,8 +36,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
     public MainNetParams() {
-        super();
-        network = BitcoinNetwork.MAINNET;
+        super(BitcoinNetwork.MAINNET);
         id = BitcoinNetwork.ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;

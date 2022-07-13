@@ -124,7 +124,6 @@ public class LegacyAddressTest {
         class AltNetwork extends MainNetParams {
             AltNetwork() {
                 super();
-                network = BitcoinNetwork.REGTEST; // TODO: Solution for enums for alt networks??
                 id = "alt.network";
                 addressHeader = 48;
                 p2shHeader = 5;
