@@ -370,23 +370,7 @@ public class WalletTool implements Callable<Integer> {
             logger.setLevel(Level.SEVERE);
         }
         params = NetworkParameters.of(net);
-        String fileName;
-        switch (net) {
-            case MAINNET:
-                fileName = "mainnet.chain";
-                break;
-            case TESTNET:
-                fileName = "testnet.chain";
-                break;
-            case SIGNET:
-                fileName = "signet.chain";
-                break;
-            case REGTEST:
-                fileName = "regtest.chain";
-                break;
-            default:
-                throw new RuntimeException("Unreachable.");
-        }
+        String fileName = String.format("%s.chain", net);
         if (chainFile == null) {
             chainFile = new File(fileName);
         }
