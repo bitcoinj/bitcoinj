@@ -45,8 +45,7 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
 
     public TestNet3Params() {
-        super();
-        network = BitcoinNetwork.TEST;
+        super(BitcoinNetwork.TEST);
         id = BitcoinNetwork.ID_TESTNET;
 
         targetTimespan = TARGET_TIMESPAN;

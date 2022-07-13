@@ -67,8 +67,8 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     /**
      * No-args constructor
      */
-    public AbstractBitcoinNetParams() {
-        super();
+    public AbstractBitcoinNetParams(BitcoinNetwork network) {
+        super(network);
         interval = INTERVAL;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
     }

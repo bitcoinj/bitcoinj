@@ -32,10 +32,9 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
 
     public UnitTestParams() {
-        super();
         // Unit Test Params are BY DEFINITION on the Bitcoin TEST network (i.e. not REGTEST or SIGNET)
         // This means that tests that run against UnitTestParams expect TEST network behavior.
-        network = BitcoinNetwork.TEST;
+        super(BitcoinNetwork.TEST);
         id = BitcoinNetwork.ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
