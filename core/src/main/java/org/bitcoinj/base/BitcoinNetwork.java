@@ -32,10 +32,10 @@ import static org.bitcoinj.base.Coin.COIN;
  * method for input of network values.
  */
 public enum BitcoinNetwork implements Network {
-    MAINNET("org.bitcoin.production", new String[] { "main", "prod" }),
-    TESTNET("org.bitcoin.test", new String[] { "test" }),
-    SIGNET("org.bitcoin.signet", new String[] { "sig" }),
-    REGTEST("org.bitcoin.regtest", new String[0]);
+    MAINNET("org.bitcoin.production", "main", "prod"),
+    TESTNET("org.bitcoin.test", "test"),
+    SIGNET("org.bitcoin.signet", "sig"),
+    REGTEST("org.bitcoin.regtest");
 
     /**
      * Scheme part for Bitcoin URIs.
@@ -66,7 +66,7 @@ public enum BitcoinNetwork implements Network {
     private final String id;
     private final String[] alternateNames;
 
-    BitcoinNetwork(String networkId, String[] alternateNames) {
+    BitcoinNetwork(String networkId, String... alternateNames) {
         this.id = networkId;
         this.alternateNames = alternateNames;
     }
