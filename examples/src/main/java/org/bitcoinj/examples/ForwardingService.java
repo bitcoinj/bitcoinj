@@ -41,6 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
+    static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
     private final BitcoinNetwork network;
     private final NetworkParameters params;
@@ -53,15 +54,13 @@ public class ForwardingService {
         Context.propagate(new Context());
 
         if (args.length < 1) {
-            System.err.println("Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]");
-            return;
+            System.err.println(usage);
+            throw new IllegalArgumentException("Address required");
         }
 
-        // Figure out which network we should connect to. Each one gets its own set of files.
-        String networkArgument = (args.length > 1) ? args[1] : "main";
-        BitcoinNetwork network = BitcoinNetwork.fromString(networkArgument).orElseThrow();
-
-        // Parse the address given as the first parameter.
+        // Figure out which network we should connect to. Each network gets its own set of files.
+        var networkString = (args.length > 1) ? args[1] : "mainnet";
+        var network = BitcoinNetwork.fromString(networkString).orElseThrow();
         var address = Address.fromString(NetworkParameters.of(network), args[0]);
 
         forward(network, address);
