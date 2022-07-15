@@ -123,7 +123,7 @@ public class ForwardingService {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
             //
             // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-            Coin value = tx.getValueSentToMe(w);
+            Coin value = w.getValueSentToMe(tx);
             System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
             System.out.println("Transaction will be forwarded after it confirms.");
             // Wait until it's made it into the block chain (may run immediately if it's already there).

@@ -217,7 +217,7 @@ public class SendRequest {
     public static SendRequest childPaysForParent(Wallet wallet, Transaction parentTransaction, Coin feeRaise) {
         TransactionOutput outputToSpend = null;
         for (final TransactionOutput output : parentTransaction.getOutputs()) {
-            if (output.isMine(wallet) && output.isAvailableForSpending()
+            if (wallet.isMine(output) && output.isAvailableForSpending()
                     && output.getValue().isGreaterThan(feeRaise)) {
                 outputToSpend = output;
                 break;
