@@ -64,6 +64,10 @@ public class ForwardingService {
         // Parse the address given as the first parameter.
         var address = Address.fromString(NetworkParameters.of(network), args[0]);
 
+        forward(network, address);
+    }
+
+    public static void forward(BitcoinNetwork network, Address address) {
         System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + address);
 
