@@ -151,11 +151,7 @@ public class ForwardingService {
     }
 
     static String getPrefix(BitcoinNetwork network) {
-        switch (network) {
-            case TESTNET:   return "forwarding-service-testnet";
-            case REGTEST:   return "forwarding-service-regtest";
-            default:        return "forwarding-service";
-        }
+        return String.format("forwarding-service-%s", network.toString());
     }
 
     private void forwardCoins() {
