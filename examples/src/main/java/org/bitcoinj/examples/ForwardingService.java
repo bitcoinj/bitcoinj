@@ -22,7 +22,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.KeyCrypterException;
@@ -31,6 +30,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
 
@@ -44,9 +44,9 @@ public class ForwardingService {
     static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
     private final BitcoinNetwork network;
-    private final NetworkParameters params;
     private final Address forwardingAddress;
     private final WalletAppKit kit;
+    private Wallet wallet;
 
     public static void main(String[] args) throws Exception {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
@@ -78,6 +78,15 @@ public class ForwardingService {
 
         // Start listening and forwarding
         forwardingService.waitForCoins();
+
+        // After we start listening, we can tell the user the receiving address
+        System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
+        System.out.printf("Will send coins to %s\n", address);
+        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
+
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException ignored) {}
     }
 
     /**
@@ -89,7 +98,6 @@ public class ForwardingService {
     public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
-        this.params = NetworkParameters.of(network);
 
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(network,
@@ -112,6 +120,7 @@ public class ForwardingService {
         // Download the blockchain and wait until it's done.
         kit.startAsync();
         kit.awaitRunning();
+        wallet = kit.wallet();
     }
 
     /**
@@ -119,7 +128,7 @@ public class ForwardingService {
      */
     public void waitForCoins() {
         // We want to know when we receive money.
-        kit.wallet().addCoinsReceivedEventListener((w, tx, prevBalance, newBalance) -> {
+        final WalletCoinsReceivedEventListener listener = (w, tx, prevBalance, newBalance) -> {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
             //
             // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
@@ -132,17 +141,9 @@ public class ForwardingService {
             // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
             // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
             // case of waiting for a block.
-
             waitForConfirmation(tx);
-        });
-
-        Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
-        System.out.println("Send coins to: " + sendToAddress);
-        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
-
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException ignored) {}
+        };
+        wallet.addCoinsReceivedEventListener(listener);
     }
 
     /**
@@ -161,10 +162,6 @@ public class ForwardingService {
         });
     }
 
-    static String getPrefix(BitcoinNetwork network) {
-        return String.format("forwarding-service-%s", network.toString());
-    }
-
     private void forwardCoins(Address forwardingAddress) {
         try {
             // Now send the coins onwards.
@@ -181,5 +178,16 @@ public class ForwardingService {
             // We don't use encrypted wallets in this example - can never happen.
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @return The current receiving address of the forwarding wallet
+     */
+    public Address receivingAddress() {
+        return wallet.currentReceiveAddress();
+    }
+
+    static String getPrefix(BitcoinNetwork network) {
+        return String.format("forwarding-service-%s", network.toString());
     }
 }
