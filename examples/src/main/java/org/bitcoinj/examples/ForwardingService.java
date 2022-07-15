@@ -24,6 +24,7 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -34,23 +35,25 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.io.PrintStream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
  * sends them onwards to an address given on the command line.
+ * TODO: Needs testing
  */
 public class ForwardingService {
     static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
-    private final BitcoinNetwork network;
-    private final Address forwardingAddress;
     private final WalletAppKit kit;
     private Wallet wallet;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
+        PrintStream out = System.out;
         Context.propagate(new Context());
 
         if (args.length < 1) {
@@ -71,34 +74,45 @@ public class ForwardingService {
         System.out.println("Forwarding address: " + address);
 
         // Create the Service (and WalletKit)
-        ForwardingService forwardingService = new ForwardingService(address, network);
+        ForwardingService forwardingService = new ForwardingService(network);
 
         // Start the Service (and WalletKit)
         forwardingService.start();
 
         // Start listening and forwarding
-        forwardingService.waitForCoins();
+        CompletableFuture<Transaction> forwardedTxFuture = forwardingService.waitForCoins()
+            .thenCompose(tx -> {
+                // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
+                // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
+                Coin value = tx.getValueSentToMe(forwardingService.wallet);
+                System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), tx);
+                System.out.println("Transaction will be forwarded after it confirms.");
+                return forwardingService.waitForConfirmation(tx);
+            })
+            .thenCompose(confidence -> {
+                // Required confirmations received, now compose a call to broadcast the forwarding transaction
+                System.out.printf("Incoming tx has received %d confirmations.", confidence.getDepthInBlocks());
+                return forwardingService.forwardCoins(address);
+            });
 
         // After we start listening, we can tell the user the receiving address
         System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
         System.out.printf("Will send coins to %s\n", address);
-        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException ignored) {}
+        // Wait for the forwarding transaction to be broadcast or a {@code RuntimeException} if timeout or error
+        forwardedTxFuture.orTimeout(1, TimeUnit.HOURS)
+            .thenAccept(
+                tx -> System.out.printf("Sent %s onwards! Transaction hash is %s\n", tx.getOutputSum().toFriendlyString(),  tx.getTxId())
+            )
+            .join();
     }
 
     /**
      * Forwarding service. Creating this object creates the {@link WalletAppKit} object.
      *
-     * @param forwardingAddress Address to forward to
      * @param network Network to listen on
      */
-    public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
-        this.forwardingAddress = forwardingAddress;
-        this.network = network;
-
+    public ForwardingService(BitcoinNetwork network) {
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(network,
                 ScriptType.P2WPKH,
@@ -111,7 +125,7 @@ public class ForwardingService {
      * Start the WalletAppKit
      */
     public void start() {
-        if (network == BitcoinNetwork.REGTEST) {
+        if (wallet.getNetworkParameters().network() == BitcoinNetwork.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
             // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
             kit.connectToLocalHost();
@@ -126,57 +140,42 @@ public class ForwardingService {
     /**
      * Setup the listener to forward received coins and wait
      */
-    public void waitForCoins() {
+    CompletableFuture<Transaction> waitForCoins() {
+        final CompletableFuture<Transaction> txFuture = new CompletableFuture<>();
         // We want to know when we receive money.
         final WalletCoinsReceivedEventListener listener = (w, tx, prevBalance, newBalance) -> {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
-            //
-            // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-            Coin value = tx.getValueSentToMe(w);
-            System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
-            System.out.println("Transaction will be forwarded after it confirms.");
-            // Wait until it's made it into the block chain (may run immediately if it's already there).
-            //
-            // For this dummy app of course, we could just forward the unconfirmed transaction. If it were
-            // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
-            // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
-            // case of waiting for a block.
-            waitForConfirmation(tx);
+            txFuture.complete(tx);
         };
         wallet.addCoinsReceivedEventListener(listener);
+        return txFuture.whenComplete((tx, err) ->
+                wallet.removeCoinsReceivedEventListener(listener)
+        );
     }
 
     /**
      * Wait for confirmation on a transaction.
      * @param tx the transaction we are waiting for
      */
-    void waitForConfirmation(Transaction tx) {
-        tx.getConfidence().getDepthFuture(requiredConfirmations).whenComplete((result, t) -> {
-            if (result != null) {
-                System.out.println("Confirmation received.");
-                forwardCoins(forwardingAddress);
-            } else {
-                // This kind of future can't fail, just rethrow in case something weird happens.
-                throw new RuntimeException(t);
-            }
-        });
+    CompletableFuture<TransactionConfidence> waitForConfirmation(Transaction tx) {
+        return tx.getConfidence().getDepthFuture(requiredConfirmations);
     }
 
-    private void forwardCoins(Address forwardingAddress) {
+    /**
+     * Forward the entire contents of the wallet to the forwarding address.
+     * @param forwardingAddress Address to forward to
+     * @return A future for the broadcast transaction
+     */
+    CompletableFuture<Transaction> forwardCoins(Address forwardingAddress) {
+        // Now send the coins onwards by sending the entire contents of our wallet
+        SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
         try {
-            // Now send the coins onwards.
-            SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
-            Wallet.SendResult sendResult = kit.wallet().sendCoins(sendRequest);
-            checkNotNull(sendResult);  // We should never try to send more coins than we have!
-            System.out.println("Sending ...");
-            // Register a callback that is invoked when the transaction has propagated across the network.
-            sendResult.broadcastComplete.thenAccept(transaction -> {
-                // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
-                System.out.println("Sent coins onwards! Transaction hash is " + transaction.getTxId());
-            });
+            // Complete successfully when the transaction has propagated across the network.
+            return wallet.sendCoins(sendRequest).broadcastComplete;
         } catch (KeyCrypterException | InsufficientMoneyException e) {
-            // We don't use encrypted wallets in this example - can never happen.
-            throw new RuntimeException(e);
+            // We should never try to send more coins than we have, if we do we get an InsufficientMoneyException
+            // We don't use encrypted wallets in this example - KeyCrypterException can never happen.
+            return CompletableFuture.failedFuture(e);
         }
     }
 
