@@ -22,7 +22,6 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.KeyCrypterException;
@@ -44,7 +43,6 @@ public class ForwardingService {
     static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
     private final BitcoinNetwork network;
-    private final NetworkParameters params;
     private final Address forwardingAddress;
     private final WalletAppKit kit;
 
@@ -89,7 +87,6 @@ public class ForwardingService {
     public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
-        this.params = NetworkParameters.of(network);
 
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(network,
@@ -136,7 +133,7 @@ public class ForwardingService {
             waitForConfirmation(tx);
         });
 
-        Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
+        Address sendToAddress = kit.wallet().currentReceiveAddress();
         System.out.println("Send coins to: " + sendToAddress);
         System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 
