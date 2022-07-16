@@ -32,7 +32,6 @@ import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.LazyECPoint;
-import org.bitcoinj.crypto.LinuxSecureRandom;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -138,10 +137,6 @@ public class ECKey implements EncryptableItem {
     private static final SecureRandom secureRandom;
 
     static {
-        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
-        if (Utils.isAndroidRuntime())
-            new LinuxSecureRandom();
-
         // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations.
         FixedPointUtil.precompute(CURVE_PARAMS.getG());
         CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),

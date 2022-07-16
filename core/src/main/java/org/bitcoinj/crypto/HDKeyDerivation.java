@@ -37,10 +37,6 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public final class HDKeyDerivation {
     static {
-        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
-        if (Utils.isAndroidRuntime())
-            new LinuxSecureRandom();
-
         RAND_INT = new BigInteger(256, new SecureRandom());
     }
 

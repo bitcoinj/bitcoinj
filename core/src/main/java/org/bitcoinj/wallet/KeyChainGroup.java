@@ -24,12 +24,10 @@ import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.LinuxSecureRandom;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
@@ -226,12 +224,6 @@ public class KeyChainGroup implements KeyBag {
         public KeyChainGroup build() {
             return new KeyChainGroup(params, null, chains, lookaheadSize, lookaheadThreshold, null, null);
         }
-    }
-
-    static {
-        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
-        if (Utils.isAndroidRuntime())
-            new LinuxSecureRandom();
     }
 
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);

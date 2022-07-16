@@ -19,7 +19,6 @@ package org.bitcoinj.crypto;
 
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -75,10 +74,6 @@ public class KeyCrypterScrypt implements KeyCrypter {
     public static final int SALT_LENGTH = 8;
 
     static {
-        // Init proper random number generator, as some old Android installations have bugs that make it unsecure.
-        if (Utils.isAndroidRuntime())
-            new LinuxSecureRandom();
-
         secureRandom = new SecureRandom();
     }
 
