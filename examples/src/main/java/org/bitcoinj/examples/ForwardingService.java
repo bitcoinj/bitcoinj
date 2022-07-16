@@ -77,7 +77,7 @@ public class ForwardingService {
         forwardingService.start();
 
         // Start listening and forwarding
-        forwardingService.forward();
+        forwardingService.waitForCoins();
     }
 
     /**
@@ -117,7 +117,7 @@ public class ForwardingService {
     /**
      * Setup the listener to forward received coins and wait
      */
-    public void forward() {
+    public void waitForCoins() {
         // We want to know when we receive money.
         kit.wallet().addCoinsReceivedEventListener((w, tx, prevBalance, newBalance) -> {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
