@@ -480,23 +480,11 @@ public class Transaction extends ChildMessage {
         return totalOut;
     }
 
-    @Nullable private Coin cachedValue;
-    @Nullable private TransactionBag cachedForBag;
-
     /**
      * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
      */
     public Coin getValue(TransactionBag wallet) throws ScriptException {
-        // FIXME: TEMP PERF HACK FOR ANDROID - this crap can go away once we have a real payments API.
-        boolean isAndroid = Utils.isAndroidRuntime();
-        if (isAndroid && cachedValue != null && cachedForBag == wallet)
-            return cachedValue;
-        Coin result = getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
-        if (isAndroid) {
-            cachedValue = result;
-            cachedForBag = wallet;
-        }
-        return result;
+        return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
     }
 
     /**
