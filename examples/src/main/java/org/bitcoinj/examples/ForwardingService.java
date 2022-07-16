@@ -76,6 +76,15 @@ public class ForwardingService {
 
         // Start listening and forwarding
         forwardingService.waitForCoins();
+
+        // After we start listening, we can tell the user the receiving address
+        System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
+        System.out.printf("Will send coins to %s\n", address);
+        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
+
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException ignored) {}
     }
 
     /**
@@ -129,17 +138,8 @@ public class ForwardingService {
             // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
             // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
             // case of waiting for a block.
-
             waitForConfirmation(tx);
         });
-
-        Address sendToAddress = kit.wallet().currentReceiveAddress();
-        System.out.println("Send coins to: " + sendToAddress);
-        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
-
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException ignored) {}
     }
 
     /**
@@ -178,5 +178,12 @@ public class ForwardingService {
             // We don't use encrypted wallets in this example - can never happen.
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @return The current receiving address of the forwarding wallet
+     */
+    public Address receivingAddress() {
+        return kit.wallet().currentReceiveAddress();
     }
 }
