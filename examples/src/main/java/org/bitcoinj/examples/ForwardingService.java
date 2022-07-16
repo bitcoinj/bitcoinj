@@ -158,10 +158,6 @@ public class ForwardingService {
         });
     }
 
-    static String getPrefix(BitcoinNetwork network) {
-        return String.format("forwarding-service-%s", network.toString());
-    }
-
     private void forwardCoins(Address forwardingAddress) {
         try {
             // Now send the coins onwards.
@@ -185,5 +181,9 @@ public class ForwardingService {
      */
     public Address receivingAddress() {
         return kit.wallet().currentReceiveAddress();
+    }
+
+    static String getPrefix(BitcoinNetwork network) {
+        return String.format("forwarding-service-%s", network.toString());
     }
 }
