@@ -30,6 +30,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
 
@@ -125,7 +126,7 @@ public class ForwardingService {
      */
     public void waitForCoins() {
         // We want to know when we receive money.
-        kit.wallet().addCoinsReceivedEventListener((w, tx, prevBalance, newBalance) -> {
+        final WalletCoinsReceivedEventListener listener = (w, tx, prevBalance, newBalance) -> {
             // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
             //
             // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
@@ -139,7 +140,8 @@ public class ForwardingService {
             // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
             // case of waiting for a block.
             waitForConfirmation(tx);
-        });
+        };
+        kit.wallet().addCoinsReceivedEventListener(listener);
     }
 
     /**
@@ -156,10 +158,6 @@ public class ForwardingService {
                 throw new RuntimeException(t);
             }
         });
-    }
-
-    static String getPrefix(BitcoinNetwork network) {
-        return String.format("forwarding-service-%s", network.toString());
     }
 
     private void forwardCoins(Address forwardingAddress) {
@@ -185,5 +183,9 @@ public class ForwardingService {
      */
     public Address receivingAddress() {
         return kit.wallet().currentReceiveAddress();
+    }
+
+    static String getPrefix(BitcoinNetwork network) {
+        return String.format("forwarding-service-%s", network.toString());
     }
 }
