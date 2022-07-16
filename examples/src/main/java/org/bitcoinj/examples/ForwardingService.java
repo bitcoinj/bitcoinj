@@ -25,6 +25,7 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -133,15 +134,7 @@ public class ForwardingService {
             // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
             // case of waiting for a block.
 
-            tx.getConfidence().getDepthFuture(requiredConfirmations).whenComplete((result, t) -> {
-                if (result != null) {
-                    System.out.println("Confirmation received.");
-                    forwardCoins(forwardingAddress);
-                } else {
-                    // This kind of future can't fail, just rethrow in case something weird happens.
-                    throw new RuntimeException(t);
-                }
-            });
+            waitForConfirmation(tx);
         });
 
         Address sendToAddress = LegacyAddress.fromKey(params, kit.wallet().currentReceiveKey());
@@ -151,6 +144,22 @@ public class ForwardingService {
         try {
             Thread.sleep(Long.MAX_VALUE);
         } catch (InterruptedException ignored) {}
+    }
+
+    /**
+     * Wait for confirmation on a transaction.
+     * @param tx the transaction we are waiting for
+     */
+    void waitForConfirmation(Transaction tx) {
+        tx.getConfidence().getDepthFuture(requiredConfirmations).whenComplete((result, t) -> {
+            if (result != null) {
+                System.out.println("Confirmation received.");
+                forwardCoins(forwardingAddress);
+            } else {
+                // This kind of future can't fail, just rethrow in case something weird happens.
+                throw new RuntimeException(t);
+            }
+        });
     }
 
     static String getPrefix(BitcoinNetwork network) {
