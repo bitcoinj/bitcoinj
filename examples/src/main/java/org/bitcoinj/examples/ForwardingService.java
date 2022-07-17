@@ -166,11 +166,11 @@ public class ForwardingService {
             SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
             Wallet.SendResult sendResult = kit.wallet().sendCoins(sendRequest);
             checkNotNull(sendResult);  // We should never try to send more coins than we have!
-            System.out.println("Sending ...");
+            System.out.printf("Sending tx %s ...\n", sendResult.tx.getTxId());
             // Register a callback that is invoked when the transaction has propagated across the network.
             sendResult.broadcastComplete.thenAccept(transaction -> {
                 // The wallet has changed now, it'll get auto saved shortly or when the app shuts down.
-                System.out.println("Sent coins onwards! Transaction hash is " + transaction.getTxId());
+                System.out.println("Sent coins onwards!");
             });
         } catch (KeyCrypterException | InsufficientMoneyException e) {
             // We don't use encrypted wallets in this example - can never happen.
