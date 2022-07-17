@@ -56,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -1642,6 +1643,16 @@ public class Transaction extends ChildMessage {
     /** Same as getOutputs().get(index) */
     public TransactionOutput getOutput(long index) {
         return outputs.get((int)index);
+    }
+
+    /**
+     * Wait for confirmations
+     * @param requiredConfirmations How many confirmations to wait for
+     * @return A future for this transaction once it has the required confirmations
+     */
+    public CompletableFuture<Transaction> waitForConfirmation(int requiredConfirmations) {
+        return getConfidence().getDepthFuture(requiredConfirmations)
+                .thenApply(c -> this);
     }
 
     /**
