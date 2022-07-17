@@ -42,6 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ForwardingService {
     static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
+    static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
     private final WalletAppKit kit;
@@ -118,6 +119,7 @@ public class ForwardingService {
         // Download the blockchain and wait until it's done.
         kit.startAsync();
         kit.awaitRunning();
+        kit.peerGroup().setMaxConnections(MAX_CONNECTIONS);
     }
 
     /**
