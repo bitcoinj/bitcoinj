@@ -34,7 +34,6 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -75,32 +74,32 @@ public class ForwardingService {
         // Start the Service (and WalletKit)
         forwardingService.start();
 
-        // Start listening and forwarding
-        CompletableFuture<Transaction> forwardedTxFuture = forwardingService.waitForCoins()
-            .thenCompose(tx -> {
-                // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
-                // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-                Coin value = tx.getValueSentToMe(forwardingService.kit.wallet());
-                System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), tx);
-                System.out.println("Transaction will be forwarded after it confirms.");
-                return forwardingService.waitForConfirmation(tx);
-            })
-            .thenCompose(confidence -> {
-                // Required confirmations received, now compose a call to broadcast the forwarding transaction
-                System.out.printf("Incoming tx has received %d confirmations.", confidence.getDepthInBlocks());
-                return forwardingService.forwardCoins(address);
-            });
+        final WalletCoinsReceivedEventListener listener = (w, incomingTx, prevBalance, newBalance) -> {
+            // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
+            Coin value = incomingTx.getValueSentToMe(forwardingService.kit.wallet());
+            System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), incomingTx);
+            System.out.println("Transaction will be forwarded after it confirms.");
+            forwardingService.waitForConfirmation(incomingTx)
+                .thenCompose(confidence -> {
+                    // Required confirmations received, now compose a call to broadcast the forwarding transaction
+                    System.out.printf("Incoming tx has received %d confirmations.", confidence.getDepthInBlocks());
+                    // TODO: Don't forward total contents of wallet only funds received with incoming Tx
+                    return forwardingService.forwardCoins(address);
+                })
+                .thenAccept(tx ->
+                    System.out.printf("Sent %s onwards! Transaction hash is %s\n", tx.getOutputSum().toFriendlyString(),  tx.getTxId())
+                );
+        };
+
+        forwardingService.kit.wallet().addCoinsReceivedEventListener(listener);
 
         // After we start listening, we can tell the user the receiving address
         System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
         System.out.printf("Will send coins to %s\n", address);
+        System.out.println("Type control-c to cancel");
 
-        // Wait for the forwarding transaction to be broadcast or a {@code RuntimeException} if timeout or error
-        forwardedTxFuture.orTimeout(1, TimeUnit.HOURS)
-            .thenAccept(
-                tx -> System.out.printf("Sent %s onwards! Transaction hash is %s\n", tx.getOutputSum().toFriendlyString(),  tx.getTxId())
-            )
-            .join();
+        // TODO: For completeness, add termination handler to remove listener and close the wallet, etc.
+        // kit.wallet().removeCoinsReceivedEventListener(listener)
     }
 
     /**
@@ -130,22 +129,6 @@ public class ForwardingService {
         // Download the blockchain and wait until it's done.
         kit.startAsync();
         kit.awaitRunning();
-    }
-
-    /**
-     * Setup the listener to forward received coins and wait
-     */
-    CompletableFuture<Transaction> waitForCoins() {
-        final CompletableFuture<Transaction> txFuture = new CompletableFuture<>();
-        // We want to know when we receive money.
-        final WalletCoinsReceivedEventListener listener = (w, tx, prevBalance, newBalance) -> {
-            // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
-            txFuture.complete(tx);
-        };
-        kit.wallet().addCoinsReceivedEventListener(listener);
-        return txFuture.whenComplete((tx, err) ->
-            kit.wallet().removeCoinsReceivedEventListener(listener)
-        );
     }
 
     /**
