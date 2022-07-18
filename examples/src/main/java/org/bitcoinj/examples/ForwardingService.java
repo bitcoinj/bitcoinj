@@ -42,8 +42,8 @@ import java.util.concurrent.CompletableFuture;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService {
-    static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
-    static final int requiredConfirmations = 1;
+    static final String USAGE = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
+    static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
@@ -55,7 +55,7 @@ public class ForwardingService {
         Context.propagate(new Context());
 
         if (args.length < 1) {
-            System.err.println(usage);
+            System.err.println(USAGE);
             throw new IllegalArgumentException("Address required");
         }
 
@@ -179,7 +179,7 @@ public class ForwardingService {
      * @return a future for an object that contains transaction confidence information
      */
     CompletableFuture<TransactionConfidence> waitForConfirmation(Transaction tx) {
-        return tx.getConfidence().getDepthFuture(requiredConfirmations);
+        return tx.getConfidence().getDepthFuture(REQUIRED_CONFIRMATIONS);
     }
 
     /**
