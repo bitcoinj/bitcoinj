@@ -41,13 +41,14 @@ import java.util.concurrent.CompletableFuture;
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
  * sends them onwards to an address given on the command line.
  */
-public class ForwardingService {
+public class ForwardingService implements AutoCloseable {
     static final String usage = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int requiredConfirmations = 1;
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
     private final WalletAppKit kit;
+    private final WalletCoinsReceivedEventListener listener;
 
     public static void main(String[] args) {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
@@ -73,26 +74,19 @@ public class ForwardingService {
             System.out.println("Forwarding address: " + address);
 
             // Create the Service (and WalletKit)
-            ForwardingService forwardingService = new ForwardingService(address, network);
+            try (ForwardingService forwardingService = new ForwardingService(address, network)) {
+                // Start the Service (and WalletKit)
+                forwardingService.start();
 
-            // Start the Service (and WalletKit)
-            forwardingService.start();
+                // After we start listening, we can tell the user the receiving address
+                System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
+                System.out.printf("Will send coins to %s\n", address);
+                System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
 
-            // Start listening and forwarding
-            final WalletCoinsReceivedEventListener listener = forwardingService::coinsReceivedListener;
-            forwardingService.kit.wallet().addCoinsReceivedEventListener(forwardingService::coinsReceivedListener);
-
-            // After we start listening, we can tell the user the receiving address
-            System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
-            System.out.printf("Will send coins to %s\n", address);
-            System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
-
-            try {
-                Thread.sleep(Long.MAX_VALUE);
-            } catch (InterruptedException ignored) {}
-
-            forwardingService.kit.wallet().removeCoinsReceivedEventListener(listener);
-            // TODO: More complete cleanup, closing wallet, etc. perhaps in a process termination handler
+                try {
+                    Thread.sleep(Long.MAX_VALUE);
+                } catch (InterruptedException ignored) {}
+            }
         }
     }
 
@@ -105,6 +99,7 @@ public class ForwardingService {
     public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
+        listener = this::coinsReceivedListener;
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(network,
                 ScriptType.P2WPKH,
@@ -127,6 +122,16 @@ public class ForwardingService {
         kit.startAsync();
         kit.awaitRunning();
         kit.peerGroup().setMaxConnections(MAX_CONNECTIONS);
+
+        // Start listening and forwarding
+        kit.wallet().addCoinsReceivedEventListener(listener);
+    }
+
+    @Override
+    public void close() {
+        kit.wallet().removeCoinsReceivedEventListener(listener);
+        kit.stopAsync();
+        kit.awaitTerminated();
     }
 
     /**
