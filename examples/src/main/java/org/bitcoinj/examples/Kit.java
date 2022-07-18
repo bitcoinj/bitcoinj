@@ -71,7 +71,7 @@ public class Kit {
 
         kit.wallet().addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
             System.out.println("-----> coins resceived: " + tx.getTxId());
-            System.out.println("received: " + tx.getValue(wallet));
+            System.out.println("received: " + wallet.getValue(tx));
         });
 
         kit.wallet().addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> System.out.println("coins sent"));

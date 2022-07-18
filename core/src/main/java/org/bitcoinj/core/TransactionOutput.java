@@ -18,14 +18,12 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -274,7 +272,7 @@ public class TransactionOutput extends ChildMessage {
 
     /**
      * Returns whether {@link TransactionOutput#markAsSpent(TransactionInput)} has been called on this class. A
-     * {@link Wallet} will mark a transaction output as spent once it sees a transaction input that is connected to it.
+     * {@link org.bitcoinj.wallet.Wallet} will mark a transaction output as spent once it sees a transaction input that is connected to it.
      * Note that this flag can be false when an output has in fact been spent according to the rest of the network if
      * the spending transaction wasn't downloaded yet, and it can be marked as spent when in reality the rest of the
      * network believes it to be unspent if the signature or script connecting to it was not actually valid.
@@ -293,49 +291,29 @@ public class TransactionOutput extends ChildMessage {
 
     /**
      * Returns true if this output is to a key in the wallet or to an address/script we are watching.
+     * @deprecated Use {@link TransactionBag#isMineOrWatched(TransactionOutput)}
      */
+    @Deprecated
     public boolean isMineOrWatched(TransactionBag transactionBag) {
-        return isMine(transactionBag) || isWatched(transactionBag);
+        return transactionBag.isMineOrWatched(this);
     }
 
     /**
      * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
+     * @deprecated Use {@link TransactionBag#isWatched(TransactionOutput)}
      */
+    @Deprecated
     public boolean isWatched(TransactionBag transactionBag) {
-        try {
-            Script script = getScriptPubKey();
-            return transactionBag.isWatchedScript(script);
-        } catch (ScriptException e) {
-            // Just means we didn't understand the output of this transaction: ignore it.
-            log.debug("Could not parse tx output script: {}", e.toString());
-            return false;
-        }
+        return transactionBag.isWatched(this);
     }
 
     /**
      * Returns true if this output is to a key, or an address we have the keys for, in the wallet.
+     * @deprecated Use {@link TransactionBag#isMine(TransactionOutput)}
      */
+    @Deprecated
     public boolean isMine(TransactionBag transactionBag) {
-        try {
-            Script script = getScriptPubKey();
-            if (ScriptPattern.isP2PK(script))
-                return transactionBag.isPubKeyMine(ScriptPattern.extractKeyFromP2PK(script));
-            else if (ScriptPattern.isP2SH(script))
-                return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromP2SH(script));
-            else if (ScriptPattern.isP2PKH(script))
-                return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        ScriptType.P2PKH);
-            else if (ScriptPattern.isP2WPKH(script))
-                return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2WH(script),
-                        ScriptType.P2WPKH);
-            else
-                return false;
-        } catch (ScriptException e) {
-            // Just means we didn't understand the output of this transaction: ignore it.
-            log.debug("Could not parse tx {} output script: {}",
-                    parent != null ? ((Transaction) parent).getTxId() : "(no parent)", e.toString());
-            return false;
-        }
+        return transactionBag.isMine(this);
     }
 
     /**
