@@ -54,44 +54,46 @@ public class ForwardingService {
         BriefLogFormatter.init();
         Context.propagate(new Context());
 
-        if (args.length < 1) {
-            System.err.println(usage);
-            throw new IllegalArgumentException("Address required");
-        }
-
-        // Figure out which network we should connect to. Each network gets its own set of files.
-        var networkString = (args.length > 1) ? args[1] : "mainnet";
-        var network = BitcoinNetwork.fromString(networkString).orElseThrow();
-        var address = Address.fromString(NetworkParameters.of(network), args[0]);
-
-        forward(network, address);
+        new ForwardingTool().run(args);
     }
 
-    public static void forward(BitcoinNetwork network, Address address) {
-        System.out.println("Network: " + network.id());
-        System.out.println("Forwarding address: " + address);
+    public static class ForwardingTool {
+        public void run(String[] args) {
+            if (args.length < 1) {
+                System.err.println(usage);
+                throw new IllegalArgumentException("Address required");
+            }
 
-        // Create the Service (and WalletKit)
-        ForwardingService forwardingService = new ForwardingService(address, network);
+            // Figure out which network we should connect to. Each network gets its own set of files.
+            var networkString = (args.length > 1) ? args[1] : "mainnet";
+            var network = BitcoinNetwork.fromString(networkString).orElseThrow();
+            var address = Address.fromString(NetworkParameters.of(network), args[0]);
 
-        // Start the Service (and WalletKit)
-        forwardingService.start();
+            System.out.println("Network: " + network.id());
+            System.out.println("Forwarding address: " + address);
 
-        // Start listening and forwarding
-        final WalletCoinsReceivedEventListener listener = forwardingService::coinsReceivedListener;
-        forwardingService.kit.wallet().addCoinsReceivedEventListener(forwardingService::coinsReceivedListener);
+            // Create the Service (and WalletKit)
+            ForwardingService forwardingService = new ForwardingService(address, network);
 
-        // After we start listening, we can tell the user the receiving address
-        System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
-        System.out.printf("Will send coins to %s\n", address);
-        System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
+            // Start the Service (and WalletKit)
+            forwardingService.start();
 
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException ignored) {}
+            // Start listening and forwarding
+            final WalletCoinsReceivedEventListener listener = forwardingService::coinsReceivedListener;
+            forwardingService.kit.wallet().addCoinsReceivedEventListener(forwardingService::coinsReceivedListener);
 
-        forwardingService.kit.wallet().removeCoinsReceivedEventListener(listener);
-        // TODO: More complete cleanup, closing wallet, etc. perhaps in a process termination handler
+            // After we start listening, we can tell the user the receiving address
+            System.out.printf("Waiting to receive coins on %s\n", forwardingService.receivingAddress());
+            System.out.printf("Will send coins to %s\n", address);
+            System.out.println("Waiting for coins to arrive. Press Ctrl-C to quit.");
+
+            try {
+                Thread.sleep(Long.MAX_VALUE);
+            } catch (InterruptedException ignored) {}
+
+            forwardingService.kit.wallet().removeCoinsReceivedEventListener(listener);
+            // TODO: More complete cleanup, closing wallet, etc. perhaps in a process termination handler
+        }
     }
 
     /**
