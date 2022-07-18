@@ -60,9 +60,17 @@ public class ForwardingService {
         }
 
         // Figure out which network we should connect to. Each network gets its own set of files.
-        var networkString = (args.length > 1) ? args[1] : "mainnet";
-        var network = BitcoinNetwork.fromString(networkString).orElseThrow();
-        var address = Address.fromString(NetworkParameters.of(network), args[0]);
+        Address address;
+        BitcoinNetwork network;
+        if (args.length >= 2) {
+            // Verify address belongs to network
+            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
+            address = Address.fromString(NetworkParameters.of(network), args[0]);
+        } else {
+            // Infer network from address
+            address = Address.fromString(null, args[0]);
+            network = address.network();
+        }
 
         forward(network, address);
     }
