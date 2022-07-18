@@ -453,20 +453,17 @@ public class WalletTool implements Callable<Integer> {
                         }
                         final Address validSelectAddr = selectAddr;
                         coinSelector = (target, candidates) -> {
-                            Coin valueGathered = Coin.ZERO;
                             List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
                             for (TransactionOutput candidate : candidates) {
                                 try {
                                     Address candidateAddr = candidate.getScriptPubKey().getToAddress(params);
-                                    if (validSelectAddr.equals(candidateAddr)) {
+                                    if (validSelectAddr.equals(candidateAddr))
                                         gathered.add(candidate);
-                                        valueGathered = valueGathered.add(candidate.getValue());
-                                    }
                                 } catch (ScriptException x) {
                                     // swallow
                                 }
                             }
-                            return new CoinSelection(valueGathered, gathered);
+                            return new CoinSelection(gathered);
                         };
                     }
                     if (selectOutputStr != null) {
@@ -474,17 +471,14 @@ public class WalletTool implements Callable<Integer> {
                         Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
                         int selectIndex = Integer.parseInt(parts[1]);
                         coinSelector = (target, candidates) -> {
-                            Coin valueGathered = Coin.ZERO;
                             List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
                             for (TransactionOutput candidate : candidates) {
                                 int candicateIndex = candidate.getIndex();
                                 final Sha256Hash candidateTransactionHash = candidate.getParentTransactionHash();
-                                if (selectIndex == candicateIndex && selectTransactionHash.equals(candidateTransactionHash)) {
+                                if (selectIndex == candicateIndex && selectTransactionHash.equals(candidateTransactionHash))
                                     gathered.add(candidate);
-                                    valueGathered = valueGathered.add(candidate.getValue());
-                                }
                             }
-                            return new CoinSelection(valueGathered, gathered);
+                            return new CoinSelection(gathered);
                         };
                     }
                     send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);

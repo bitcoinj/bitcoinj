@@ -58,7 +58,6 @@ public class KeyTimeCoinSelector implements CoinSelector {
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
             LinkedList<TransactionOutput> gathered = new LinkedList<>();
-            Coin valueGathered = Coin.ZERO;
             for (TransactionOutput output : candidates) {
                 if (ignorePending && !isConfirmed(output))
                     continue;
@@ -79,14 +78,13 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 checkNotNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
                 if (controllingKey.getCreationTimeSeconds() >= unixTimeSeconds) continue;
                 // It's older than the cutoff time so select.
-                valueGathered = valueGathered.add(output.getValue());
                 gathered.push(output);
                 if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {
                     log.warn("Reached {} inputs, going further would yield a tx that is too large, stopping here.", gathered.size());
                     break;
                 }
             }
-            return new CoinSelection(valueGathered, gathered);
+            return new CoinSelection(gathered);
         } catch (ScriptException e) {
             throw new RuntimeException(e);  // We should never have problems understanding scripts in our wallet.
         }

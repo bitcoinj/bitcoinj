@@ -33,8 +33,23 @@ public class CoinSelection {
     public final Coin valueGathered;
     public final Collection<TransactionOutput> gathered;
 
-    public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
-        this.valueGathered = valueGathered;
+    public CoinSelection(Collection<TransactionOutput> gathered) {
+        this.valueGathered = sumOutputValues(gathered);
         this.gathered = gathered;
+    }
+
+    /**
+     * @deprecated use {@link #CoinSelection(Collection<TransactionOutput>)}
+     */
+    @Deprecated
+    public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
+        // ignore valueGathered
+        this(gathered);
+    }
+
+    private static Coin sumOutputValues(Collection<TransactionOutput> outputs) {
+        return outputs.stream()
+                .map(TransactionOutput::getValue)
+                .reduce(Coin.ZERO, Coin::add);
     }
 }

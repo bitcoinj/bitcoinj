@@ -61,7 +61,7 @@ public class DefaultCoinSelector implements CoinSelector {
         }
         // Total may be lower than target here, if the given candidates were insufficient to create to requested
         // transaction.
-        return new CoinSelection(Coin.valueOf(total), selected);
+        return new CoinSelection(selected);
     }
 
     @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
