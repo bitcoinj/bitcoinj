@@ -18,6 +18,7 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
@@ -26,16 +27,21 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.CoinSelection;
+import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -169,8 +175,9 @@ public class ForwardingService implements AutoCloseable {
             .thenCompose(confidence -> {
                 // Required confirmations received, now compose a call to broadcast the forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
-                // Now send the coins onwards by sending the entire contents of our wallet
+                // Now send the coins onwards by sending exactly the outputs that have been sent to us
                 SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
+                sendRequest.coinSelector = new ForwardingCoinSelector(incomingTx);
                 System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
                 return sendTransaction(sendRequest);
             })
@@ -242,5 +249,22 @@ public class ForwardingService implements AutoCloseable {
 
     static String getPrefix(BitcoinNetwork network) {
         return String.format("forwarding-service-%s", network.toString());
+    }
+
+    static class ForwardingCoinSelector implements CoinSelector {
+        private final Sha256Hash forwardTxId;
+
+        public ForwardingCoinSelector(Transaction transactionToForward) {
+            this.forwardTxId = transactionToForward.getTxId();
+        }
+
+        @Override
+        public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
+            var selected =
+                    candidates.stream()
+                            .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
+                            .collect(Collectors.toList());
+            return new CoinSelection(selected);
+        }
     }
 }
