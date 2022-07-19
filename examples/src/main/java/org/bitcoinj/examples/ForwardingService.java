@@ -133,11 +133,20 @@ public class ForwardingService implements AutoCloseable {
         kit.wallet().addCoinsReceivedEventListener(listener);
     }
 
+    /**
+     * Close the service. {@link AutoCloseable} will be triggered if an unhandled exception occurs within
+     * a <i>try-with-resources</i> block.
+     * <p>
+     * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
+     * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
+     * the {@code WalletAppKit} if the process is terminated.
+     */
     @Override
     public void close() {
-        kit.wallet().removeCoinsReceivedEventListener(listener);
+        if (kit.isRunning()) {
+            kit.wallet().removeCoinsReceivedEventListener(listener);
+        }
         kit.stopAsync();
-        kit.awaitTerminated();
     }
 
     /**
