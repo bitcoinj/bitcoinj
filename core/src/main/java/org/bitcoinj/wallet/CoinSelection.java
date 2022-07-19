@@ -39,7 +39,7 @@ public class CoinSelection {
     }
 
     /**
-     * @deprecated use {@link #CoinSelection(Collection<TransactionOutput>)}
+     * @deprecated use {@link #CoinSelection(Collection)}
      */
     @Deprecated
     public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
