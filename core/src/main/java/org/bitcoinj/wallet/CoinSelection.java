@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.TransactionOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,23 +32,23 @@ import java.util.List;
  */
 public class CoinSelection {
     public final Coin valueGathered;
-    public final Collection<TransactionOutput> gathered;
+    public final List<TransactionOutput> gathered;
 
-    public CoinSelection(Collection<TransactionOutput> gathered) {
+    public CoinSelection(List<TransactionOutput> gathered) {
         this.valueGathered = sumOutputValues(gathered);
         this.gathered = gathered;
     }
 
     /**
-     * @deprecated use {@link #CoinSelection(Collection)}
+     * @deprecated use {@link #CoinSelection(List)}
      */
     @Deprecated
     public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
         // ignore valueGathered
-        this(gathered);
+        this(new ArrayList<>(gathered));
     }
 
-    private static Coin sumOutputValues(Collection<TransactionOutput> outputs) {
+    private static Coin sumOutputValues(List<TransactionOutput> outputs) {
         return outputs.stream()
                 .map(TransactionOutput::getValue)
                 .reduce(Coin.ZERO, Coin::add);
