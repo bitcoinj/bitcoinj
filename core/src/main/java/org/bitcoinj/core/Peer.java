@@ -1709,7 +1709,7 @@ public class Peer extends PeerSocketHandler {
             }
             // Ping/pong to wait for blocks that are still being streamed to us to finish being downloaded and
             // discarded.
-            ping().addListener(() -> {
+            ping().thenRunAsync(() -> {
                 lock.lock();
                 checkNotNull(awaitingFreshFilter);
                 GetDataMessage getdata = new GetDataMessage(params);
