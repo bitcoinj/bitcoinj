@@ -92,7 +92,9 @@ public class ForwardingService implements AutoCloseable {
 
             try {
                 Thread.sleep(Long.MAX_VALUE);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
