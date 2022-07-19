@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -151,14 +152,12 @@ public class TransactionBroadcast {
             // transaction or not. However, we are not a fully validating node and this is advertised in
             // our version message, as SPV nodes cannot relay it doesn't give away any additional information
             // to skip the inv here - we wouldn't send invs anyway.
-            int numConnected = peers.size();
-            int numToBroadcastTo = (int) Math.max(1, Math.round(Math.ceil(peers.size() / 2.0)));
+            List<Peer> broadcastPeers = chooseBroadcastPeers(peers);
+            int numToBroadcastTo = broadcastPeers.size();
             numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
-            Collections.shuffle(peers, random);
-            peers = peers.subList(0, numToBroadcastTo);
-            log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", numConnected, tx.getTxId());
+            log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", peers.size(), tx.getTxId());
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, InternalUtils.joiner(",").join(peers));
-            for (final Peer peer : peers) {
+            for (final Peer peer : broadcastPeers) {
                 try {
                     CompletableFuture<Void> future = peer.sendMessage(tx);
                     if (dropPeersAfterBroadcast) {
@@ -177,6 +176,18 @@ public class TransactionBroadcast {
             }
         }, Threading.SAME_THREAD);
         return ListenableCompletableFuture.of(future);
+    }
+
+    /**
+     * Randomly choose a subset of connected peers to broadcast to
+     * @param connectedPeers connected peers to chose from
+     * @return list of chosen broadcast peers
+     */
+    private List<Peer> chooseBroadcastPeers(List<Peer> connectedPeers) {
+        int numToBroadcastTo = (int) Math.max(1, Math.round(Math.ceil(connectedPeers.size() / 2.0)));
+        List<Peer> peerListCopy = new ArrayList<>(connectedPeers);
+        Collections.shuffle(peerListCopy, random);
+        return peerListCopy.subList(0, numToBroadcastTo);
     }
 
     private int numSeemPeers;
