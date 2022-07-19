@@ -128,19 +128,8 @@ public class TransactionBroadcast {
     public ListenableCompletableFuture<Transaction> broadcast() {
         peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
-        peerGroup.waitForPeers(minConnections).thenRunAsync(new EnoughAvailablePeers(), Threading.SAME_THREAD);
-        return ListenableCompletableFuture.of(future);
-    }
-
-    private class EnoughAvailablePeers implements Runnable {
-        private Context context;
-
-        public EnoughAvailablePeers() {
-            this.context = Context.get();
-        }
-
-        @Override
-        public void run() {
+        final Context context = Context.get();
+        peerGroup.waitForPeers(minConnections).thenRunAsync(() -> {
             Context.propagate(context);
             // We now have enough connected peers to send the transaction.
             // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
@@ -186,7 +175,8 @@ public class TransactionBroadcast {
                     log.error("Caught exception sending to {}", peer, e);
                 }
             }
-        }
+        }, Threading.SAME_THREAD);
+        return ListenableCompletableFuture.of(future);
     }
 
     private int numSeemPeers;
