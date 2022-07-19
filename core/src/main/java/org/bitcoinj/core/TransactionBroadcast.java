@@ -128,7 +128,7 @@ public class TransactionBroadcast {
     public ListenableCompletableFuture<Transaction> broadcast() {
         peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
-        peerGroup.waitForPeers(minConnections).addListener(new EnoughAvailablePeers(), Threading.SAME_THREAD);
+        peerGroup.waitForPeers(minConnections).thenRunAsync(new EnoughAvailablePeers(), Threading.SAME_THREAD);
         return ListenableCompletableFuture.of(future);
     }
 
