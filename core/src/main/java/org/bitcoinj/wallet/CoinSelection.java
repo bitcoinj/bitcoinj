@@ -34,7 +34,7 @@ public class CoinSelection {
     public final Collection<TransactionOutput> gathered;
 
     public CoinSelection(Collection<TransactionOutput> gathered) {
-        this.valueGathered = sumOutputValues(gathered);
+        this.valueGathered = TransactionOutput.sum(gathered);
         this.gathered = gathered;
     }
 
@@ -45,11 +45,5 @@ public class CoinSelection {
     public CoinSelection(Coin valueGathered, Collection<TransactionOutput> gathered) {
         // ignore valueGathered
         this(gathered);
-    }
-
-    private static Coin sumOutputValues(Collection<TransactionOutput> outputs) {
-        return outputs.stream()
-                .map(TransactionOutput::getValue)
-                .reduce(Coin.ZERO, Coin::add);
     }
 }
