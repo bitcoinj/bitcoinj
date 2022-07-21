@@ -24,7 +24,20 @@ import java.math.BigDecimal;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Represents a monetary Bitcoin value. This class is immutable.
+ * Represents a monetary Bitcoin value. This class is immutable and should be treated as a Java <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html#Value-basedClasses">Value-based class</a>.
+ * We recommend using the {@code Coin} class wherever possible to represent Bitcoin monetary values. If you have existing
+ * code that uses other numeric types and need to convert there are conversion methods.
+ * <p>
+ * Internally {@code Coin} is implemented as a {@code long} (see {@link #value}) that represents a number of <a href="https://en.bitcoin.it/wiki/Satoshi_(unit)">satoshis</a>. It
+ * can also be considered a <a href="https://en.wikipedia.org/wiki/Fixed-point_arithmetic">fixed-point</a> number of <a href="https://en.bitcoin.it/wiki/Units">bitcoins</a>.
+ * <p>
+ * To create a {@code Coin} from an integer number of satoshis, use {@link #ofSat(long)}. To convert to a {@code long} number
+ * of satoshis use {@link #toSat()}. (You can also use {@link #valueOf(long)}, {@link #getValue()} or {@link #value}.)
+ * <p>
+ * To create a {@code Coin} from a decimal number of bitcoins, use {@link #ofBtc(BigDecimal)}. To convert to a {@link BigDecimal}
+ * of bitcoins use {@link #toBtc()}. (Performing fixed-point <a href="https://en.wikipedia.org/wiki/Fixed-point_arithmetic#Conversion_to_and_from_floating-point">conversion</a>, these methods essentially multiply or divide by {@code Coin.COIN.toSat()}.)
+ * <p>
+ * <b>Never ever</b> use {@code float} or {@code double} to represent monetary values.
  */
 public final class Coin implements Monetary, Comparable<Coin> {
 
@@ -129,8 +142,9 @@ public final class Coin implements Monetary, Comparable<Coin> {
      *
      * @param coins number of coins
      * @return number of satoshis
+     * @throws ArithmeticException if value has too much precision or will not fit in a long
      */
-    public static long btcToSatoshi(BigDecimal coins) {
+    public static long btcToSatoshi(BigDecimal coins) throws ArithmeticException {
         return coins.movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
     }
 
@@ -149,8 +163,9 @@ public final class Coin implements Monetary, Comparable<Coin> {
      *
      * @param coins number of coins (in BTC)
      * @return {@code Coin} object containing value in satoshis
+     * @throws ArithmeticException if value has too much precision or will not fit in a long
      */
-    public static Coin ofBtc(BigDecimal coins) {
+    public static Coin ofBtc(BigDecimal coins) throws ArithmeticException {
         return Coin.valueOf(btcToSatoshi(coins));
     }
 
