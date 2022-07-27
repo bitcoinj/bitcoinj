@@ -318,88 +318,85 @@ public class WalletAppKit extends AbstractIdleService {
             }
         }
         log.info("Starting up with directory = {}", directory);
-        try {
-            File chainFile = new File(directory, filePrefix + ".spvchain");
-            boolean chainFileExists = chainFile.exists();
-            vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null || restoreFromKey != null;
-            vWallet = createOrLoadWallet(shouldReplayWallet);
 
-            // Initiate Bitcoin network objects (block store, blockchain and peer group)
-            vStore = new SPVBlockStore(params, chainFile);
-            if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
-                if (checkpoints == null && !Utils.isAndroidRuntime()) {
-                    checkpoints = CheckpointManager.openStream(params);
+        File chainFile = new File(directory, filePrefix + ".spvchain");
+        boolean chainFileExists = chainFile.exists();
+        vWalletFile = new File(directory, filePrefix + ".wallet");
+        boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null || restoreFromKey != null;
+        vWallet = createOrLoadWallet(shouldReplayWallet);
+
+        // Initiate Bitcoin network objects (block store, blockchain and peer group)
+        vStore = new SPVBlockStore(params, chainFile);
+        if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
+            if (checkpoints == null && !Utils.isAndroidRuntime()) {
+                checkpoints = CheckpointManager.openStream(params);
+            }
+
+            if (checkpoints != null) {
+                // Initialize the chain file with a checkpoint to speed up first-run sync.
+                long time;
+                if (restoreFromSeed != null) {
+                    time = restoreFromSeed.getCreationTimeSeconds();
+                    if (chainFileExists) {
+                        log.info("Clearing the chain file in preparation for restore.");
+                        vStore.clear();
+                    }
+                } else if (restoreFromKey != null) {
+                    time = restoreFromKey.getCreationTimeSeconds();
+                    if (chainFileExists) {
+                        log.info("Clearing the chain file in preparation for restore.");
+                        vStore.clear();
+                    }
                 }
-
-                if (checkpoints != null) {
-                    // Initialize the chain file with a checkpoint to speed up first-run sync.
-                    long time;
-                    if (restoreFromSeed != null) {
-                        time = restoreFromSeed.getCreationTimeSeconds();
-                        if (chainFileExists) {
-                            log.info("Clearing the chain file in preparation for restore.");
-                            vStore.clear();
-                        }
-                    } else if (restoreFromKey != null) {
-                        time = restoreFromKey.getCreationTimeSeconds();
-                        if (chainFileExists) {
-                            log.info("Clearing the chain file in preparation for restore.");
-                            vStore.clear();
-                        }
-                    }
-                    else
-                    {
-                        time = vWallet.getEarliestKeyCreationTime();
-                    }
-                    if (time > 0)
-                        CheckpointManager.checkpoint(params, checkpoints, vStore, time);
-                    else
-                        log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
-                } else if (chainFileExists) {
-                    log.info("Clearing the chain file in preparation for restore.");
-                    vStore.clear();
+                else
+                {
+                    time = vWallet.getEarliestKeyCreationTime();
                 }
+                if (time > 0)
+                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                else
+                    log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
+            } else if (chainFileExists) {
+                log.info("Clearing the chain file in preparation for restore.");
+                vStore.clear();
             }
-            vChain = new BlockChain(params, vStore);
-            vPeerGroup = createPeerGroup();
-            if (this.userAgent != null)
-                vPeerGroup.setUserAgent(userAgent, version);
+        }
+        vChain = new BlockChain(params, vStore);
+        vPeerGroup = createPeerGroup();
+        if (this.userAgent != null)
+            vPeerGroup.setUserAgent(userAgent, version);
 
-            // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
-            // before we're actually connected the broadcast waits for an appropriate number of connections.
-            if (peerAddresses != null) {
-                for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
-                vPeerGroup.setMaxConnections(peerAddresses.length);
-                peerAddresses = null;
-            } else if (!params.getId().equals(BitcoinNetwork.ID_REGTEST)) {
-                vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
-            }
-            vChain.addWallet(vWallet);
-            vPeerGroup.addWallet(vWallet);
-            onSetupCompleted();
+        // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
+        // before we're actually connected the broadcast waits for an appropriate number of connections.
+        if (peerAddresses != null) {
+            for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
+            vPeerGroup.setMaxConnections(peerAddresses.length);
+            peerAddresses = null;
+        } else if (!params.getId().equals(BitcoinNetwork.ID_REGTEST)) {
+            vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
+        }
+        vChain.addWallet(vWallet);
+        vPeerGroup.addWallet(vWallet);
+        onSetupCompleted();
 
-            if (blockingStartup) {
-                vPeerGroup.start();
-                // Make sure we shut down cleanly.
-                installShutdownHook();
+        if (blockingStartup) {
+            vPeerGroup.start();
+            // Make sure we shut down cleanly.
+            installShutdownHook();
 
-                // TODO: Be able to use the provided download listener when doing a blocking startup.
-                final DownloadProgressTracker listener = new DownloadProgressTracker();
-                vPeerGroup.startBlockChainDownload(listener);
-                listener.await();
-            } else {
-                vPeerGroup.startAsync().whenComplete((result, t) -> {
-                    if (t == null) {
-                        final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
-                        vPeerGroup.startBlockChainDownload(l);
-                    } else {
-                        throw new RuntimeException(t);
-                    }
-                });
-            }
-        } catch (BlockStoreException e) {
-            throw new IOException(e);
+            // TODO: Be able to use the provided download listener when doing a blocking startup.
+            final DownloadProgressTracker listener = new DownloadProgressTracker();
+            vPeerGroup.startBlockChainDownload(listener);
+            listener.await();
+        } else {
+            vPeerGroup.startAsync().whenComplete((result, t) -> {
+                if (t == null) {
+                    final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
+                    vPeerGroup.startBlockChainDownload(l);
+                } else {
+                    throw new RuntimeException(t);
+                }
+            });
         }
     }
 
